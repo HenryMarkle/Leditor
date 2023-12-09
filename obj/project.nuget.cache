@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "QpwA8/xjtIE9ABAusqN3bPj+A3baTZAG6KvU882+EFrh9oOpNZ2wg+sU/AqkIHvC0f3KXse7/wT4aCQM0kK6Iw==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Henry Markle\\Projects\\Language-Specific\\C#\\leditor\\leditor.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Henry Markle\\.nuget\\packages\\raylib-cs\\5.0.0\\raylib-cs.5.0.0.nupkg.sha512",
+    "C:\\Users\\Henry Markle\\.nuget\\packages\\system.numerics.vectors\\4.5.0\\system.numerics.vectors.4.5.0.nupkg.sha512"
+  ],
+  "logs": []
+}
