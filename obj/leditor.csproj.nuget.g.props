@@ -13,4 +13,22 @@
     <SourceRoot Include="C:\Users\Henry Markle\.nuget\packages\" />
     <SourceRoot Include="C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages\" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Content Include="$(NuGetPackageRoot)raylib-cslo\4.2.0.9\contentFiles\any\netstandard2.1\raylib.dll" Condition="Exists('$(NuGetPackageRoot)raylib-cslo\4.2.0.9\contentFiles\any\netstandard2.1\raylib.dll')">
+      <NuGetPackageId>Raylib-CsLo</NuGetPackageId>
+      <NuGetPackageVersion>4.2.0.9</NuGetPackageVersion>
+      <NuGetItemType>Content</NuGetItemType>
+      <Pack>false</Pack>
+      <Private>False</Private>
+      <Link>raylib.dll</Link>
+    </Content>
+    <Content Include="$(NuGetPackageRoot)raylib-cslo\4.2.0.9\contentFiles\any\netstandard2.1\raylib.pdb" Condition="Exists('$(NuGetPackageRoot)raylib-cslo\4.2.0.9\contentFiles\any\netstandard2.1\raylib.pdb')">
+      <NuGetPackageId>Raylib-CsLo</NuGetPackageId>
+      <NuGetPackageVersion>4.2.0.9</NuGetPackageVersion>
+      <NuGetItemType>Content</NuGetItemType>
+      <Pack>false</Pack>
+      <Private>False</Private>
+      <Link>raylib.pdb</Link>
+    </Content>
+  </ItemGroup>
 </Project>

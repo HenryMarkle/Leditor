@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Leditor;
 
 public struct Cell(int geo, int[] stackables)
@@ -14,24 +16,30 @@ public struct Cell(int geo, int[] stackables)
             sta[s] = true;
         }
 
-        return new RunCell(0, sta);
+        return new RunCell {
+            Geo = geo,
+            Stackables = sta,
+        };
     }
 }
 
-public class RunCell(int geo, bool[] stackables) {
-    public int geo = geo;
-    public bool[] stackables = stackables;
+public struct RunCell {
+    public int Geo { get; set; } = 0;
+    public bool[] Stackables { get; set; } = new bool[22];
 
-    public RunCell() : this(0, new bool[22]) {}
+    public RunCell() {
+        Geo = 0;
+        Stackables = new bool[22];
+    }
 
     public Cell ToCell() {
         List<int> sta = [];
 
-        for (int i = 1; i < stackables.Length; i++) {
-            if (stackables[i]) sta.Add(i);
+        for (int i = 1; i < Stackables.Length; i++) {
+            if (Stackables[i]) sta.Add(i);
         }
 
-        return new Cell(geo, [.. sta]);
+        return new Cell(Geo, [.. sta]);
     }
 }
 
@@ -41,3 +49,4 @@ public struct BufferTiles(int left, int right, int top, int bottom) {
     public int Top { get; set; } = top;
     public int Bottom { get; set; } = bottom;
 }
+
