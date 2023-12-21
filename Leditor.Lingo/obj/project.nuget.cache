@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "Vxkroaq6xyslStQdC1WcX4w6005uBFP5IUXI8cjyWsZAc9HnzjurMTxd5V5CGq2iNvqSth+++vjd5jVvKZw7dQ==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Henry Markle\\Projects\\Language-Specific\\C#\\leditor\\Leditor.Lingo\\Leditor.Lingo.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Henry Markle\\.nuget\\packages\\pidgin\\3.2.2\\pidgin.3.2.2.nupkg.sha512",
+    "C:\\Users\\Henry Markle\\.nuget\\packages\\serilog\\2.12.0\\serilog.2.12.0.nupkg.sha512"
+  ],
+  "logs": []
+}

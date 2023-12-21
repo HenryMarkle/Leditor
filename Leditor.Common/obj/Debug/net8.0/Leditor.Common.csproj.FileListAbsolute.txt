@@ -1,0 +1,9 @@
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Common\bin\Debug\net8.0\Leditor.Common.deps.json
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Common\bin\Debug\net8.0\Leditor.Common.dll
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Common\bin\Debug\net8.0\Leditor.Common.pdb
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Common\obj\Debug\net8.0\Leditor.Common.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Common\obj\Debug\net8.0\Leditor.Common.csproj.CoreCompileInputs.cache
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Common\obj\Debug\net8.0\Leditor.Common.dll
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Common\obj\Debug\net8.0\refint\Leditor.Common.dll
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Common\obj\Debug\net8.0\Leditor.Common.pdb
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Common\obj\Debug\net8.0\ref\Leditor.Common.dll

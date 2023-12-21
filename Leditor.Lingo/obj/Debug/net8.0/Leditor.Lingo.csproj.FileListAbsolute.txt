@@ -1,0 +1,13 @@
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Lingo\bin\Debug\net8.0\Leditor.Lingo.deps.json
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Lingo\bin\Debug\net8.0\Leditor.Lingo.dll
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Lingo\bin\Debug\net8.0\Leditor.Lingo.pdb
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Lingo\bin\Debug\net8.0\Leditor.Common.dll
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Lingo\bin\Debug\net8.0\Leditor.Common.pdb
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Lingo\obj\Debug\net8.0\Leditor.Lingo.csproj.AssemblyReference.cache
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Lingo\obj\Debug\net8.0\Leditor.Lingo.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Lingo\obj\Debug\net8.0\Leditor.Lingo.csproj.CoreCompileInputs.cache
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Lingo\obj\Debug\net8.0\Leditor.Lingo.csproj.CopyComplete
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Lingo\obj\Debug\net8.0\Leditor.Lingo.dll
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Lingo\obj\Debug\net8.0\refint\Leditor.Lingo.dll
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Lingo\obj\Debug\net8.0\Leditor.Lingo.pdb
+C:\Users\Henry Markle\Projects\Language-Specific\C#\leditor\Leditor.Lingo\obj\Debug\net8.0\ref\Leditor.Lingo.dll

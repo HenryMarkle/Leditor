@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("leditor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+98ab2663834a0704e3dc672575cdc61b7b0fc018")]
 [assembly: System.Reflection.AssemblyProductAttribute("leditor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("leditor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
