@@ -31,7 +31,4 @@
       <Link>raylib.pdb</Link>
     </Content>
   </ItemGroup>
-  <PropertyGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
-    <Pkgxunit_analyzers Condition=" '$(Pkgxunit_analyzers)' == '' ">C:\Users\Henry Markle\.nuget\packages\xunit.analyzers\1.0.0</Pkgxunit_analyzers>
-  </PropertyGroup>
 </Project>

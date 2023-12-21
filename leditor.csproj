@@ -18,10 +18,4 @@
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="Leditor.Lingo\Leditor.Lingo.csproj" />
-    <ProjectReference Include="Testing\Testing.csproj" />
-    <ProjectReference Include="Leditor.Common\Leditor.Common.csproj" />
-  </ItemGroup>
-
 </Project>

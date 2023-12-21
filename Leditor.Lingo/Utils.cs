@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Pidgin;
 using System.Security.Cryptography;
 using System.Runtime.CompilerServices;
+using System.Numerics;
 
 namespace Leditor.Lingo;
 
@@ -119,10 +120,24 @@ public static class Tools {
 
         var result = new RenderCamera[cameras.Length];
 
-        for (int c = 0; c < cameras.Length; c++) result[c] = new() {
-            Coords = cameras[c],
-            Quads = quads[c]
-        };
+        for (int c = 0; c < cameras.Length; c++) {
+            var currentQuads = quads[c];
+
+            var topLeft = new Vector2((float) (currentQuads.Item1.radius * Math.Cos(currentQuads.Item1.angle)), (float) (currentQuads.Item1.radius * Math.Sin(currentQuads.Item1.angle)));
+            var topRight = new Vector2((float) (currentQuads.Item2.radius * Math.Cos(currentQuads.Item2.angle)), (float) (currentQuads.Item2.radius * Math.Sin(currentQuads.Item2.angle)));
+            var bottomRight = new Vector2((float) (currentQuads.Item3.radius * Math.Cos(currentQuads.Item3.angle)), (float) (currentQuads.Item3.radius * Math.Sin(currentQuads.Item3.angle)));
+            var bottomLeft = new Vector2((float) (currentQuads.Item4.radius * Math.Cos(currentQuads.Item4.angle)), (float) (currentQuads.Item4.radius * Math.Sin(currentQuads.Item4.angle)));
+
+            result[c] = new() {
+                Coords = cameras[c],
+
+                Quads = new CameraQuads(
+                    topLeft, 
+                    topRight, 
+                    bottomRight, 
+                    bottomLeft)
+            };
+        }
 
         return result.ToList();
     }

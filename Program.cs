@@ -50,33 +50,33 @@ class Program
     static Texture2D[] LoadUITextures() => [
         Raylib.LoadTexture("assets/geo/ui/solid.png"),          // 0
         Raylib.LoadTexture("assets/geo/ui/air.png"),            // 1
-        Raylib.LoadTexture("assets/geo/ui/slopebr.png"),        // 2
-        Raylib.LoadTexture("assets/geo/ui/slopebl.png"),        // 3
-        Raylib.LoadTexture("assets/geo/ui/multisolid.png"),     // 4
-        Raylib.LoadTexture("assets/geo/ui/multiair.png"),       // 5
-        Raylib.LoadTexture("assets/geo/ui/slopetr.png"),        // 6
-        Raylib.LoadTexture("assets/geo/ui/slopetl.png"),        // 7
-        Raylib.LoadTexture("assets/geo/ui/platform.png"),       // 8
-        Raylib.LoadTexture("assets/geo/ui/move.png"),           // 9
-        Raylib.LoadTexture("assets/geo/ui/rock.png"),           // 10
-        Raylib.LoadTexture("assets/geo/ui/spear.png"),          // 11
-        Raylib.LoadTexture("assets/geo/ui/crack.png"),          // 12
-        Raylib.LoadTexture("assets/geo/ui/ph.png"),             // 13
-        Raylib.LoadTexture("assets/geo/ui/pv.png"),             // 14
-        Raylib.LoadTexture("assets/geo/ui/glass.png"),          // 15
-        Raylib.LoadTexture("assets/geo/ui/backcopy.png"),       // 16
-        Raylib.LoadTexture("assets/geo/ui/entry.png"),          // 17
-        Raylib.LoadTexture("assets/geo/ui/shortcut.png"),       // 18
-        Raylib.LoadTexture("assets/geo/ui/den.png"),            // 19
-        Raylib.LoadTexture("assets/geo/ui/passage.png"),        // 20
-        Raylib.LoadTexture("assets/geo/ui/bathive.png"),        // 21
-        Raylib.LoadTexture("assets/geo/ui/waterfall.png"),      // 22
-        Raylib.LoadTexture("assets/geo/ui/scav.png"),           // 23
-        Raylib.LoadTexture("assets/geo/ui/wack.png"),           // 24
-        Raylib.LoadTexture("assets/geo/ui/garbageworm.png"),    // 25
-        Raylib.LoadTexture("assets/geo/ui/worm.png"),           // 26
-        Raylib.LoadTexture("assets/geo/ui/forbidflychains.png"),// 27
-        Raylib.LoadTexture("assets/geo/ui/clearall.png"),       // 28
+        // Raylib.LoadTexture("assets/geo/ui/slopebr.png"),     
+        Raylib.LoadTexture("assets/geo/ui/slopebl.png"),        // 2
+        Raylib.LoadTexture("assets/geo/ui/multisolid.png"),     // 3
+        Raylib.LoadTexture("assets/geo/ui/multiair.png"),       // 4
+        // Raylib.LoadTexture("assets/geo/ui/slopetr.png"),        
+        // Raylib.LoadTexture("assets/geo/ui/slopetl.png"),        
+        Raylib.LoadTexture("assets/geo/ui/platform.png"),       // 5
+        Raylib.LoadTexture("assets/geo/ui/move.png"),           // 6
+        Raylib.LoadTexture("assets/geo/ui/rock.png"),           // 7
+        Raylib.LoadTexture("assets/geo/ui/spear.png"),          // 8
+        Raylib.LoadTexture("assets/geo/ui/crack.png"),          // 9
+        Raylib.LoadTexture("assets/geo/ui/ph.png"),             // 10
+        Raylib.LoadTexture("assets/geo/ui/pv.png"),             // 11
+        Raylib.LoadTexture("assets/geo/ui/glass.png"),          // 12
+        Raylib.LoadTexture("assets/geo/ui/backcopy.png"),       // 13
+        Raylib.LoadTexture("assets/geo/ui/entry.png"),          // 14
+        Raylib.LoadTexture("assets/geo/ui/shortcut.png"),       // 15
+        Raylib.LoadTexture("assets/geo/ui/den.png"),            // 16
+        Raylib.LoadTexture("assets/geo/ui/passage.png"),        // 17
+        Raylib.LoadTexture("assets/geo/ui/bathive.png"),        // 18
+        Raylib.LoadTexture("assets/geo/ui/waterfall.png"),      // 19
+        Raylib.LoadTexture("assets/geo/ui/scav.png"),           // 20
+        Raylib.LoadTexture("assets/geo/ui/wack.png"),           // 21
+        Raylib.LoadTexture("assets/geo/ui/garbageworm.png"),    // 22
+        Raylib.LoadTexture("assets/geo/ui/worm.png"),           // 23
+        Raylib.LoadTexture("assets/geo/ui/forbidflychains.png"),// 24
+        Raylib.LoadTexture("assets/geo/ui/clearall.png"),       // 25
     ];
 
     static Texture2D[] LoadGeoTextures() => [
@@ -175,10 +175,14 @@ class Program
     const int screenMinWidth = 1280;
     const int screenMinHeight = 800;
 
+    const int renderCameraWidth = 1400;
+    const int renderCameraHeight = 800;
+
     const int geoselectWidth = 200;
     const int geoselectHeight = 600;
     const int scale = 20;
     const int uiScale = 40;
+    static bool camScaleMode = false;
     const int previewScale = 10;
     const float zoomIncrement = 0.125f;
     const int initialMatrixWidth = 72;
@@ -218,8 +222,8 @@ class Program
         6 => 5,
         3 => 2,
         2 => 3,
-        8 => 6,
-        15 => 9,
+        5 => 6,
+        12 => 9,
         _ => -1
     };
 
@@ -230,22 +234,22 @@ class Program
     /// </summary>
     public static int GetStackableID(uint index) => index switch
     {
-        13 => 1,
-        14 => 2,
-        21 => 3,
-        17 => 4,
-        18 => 5,
-        20 => 6,
-        19 => 7,
-        10 => 9,
-        11 => 10,
-        12 => 11,
-        27 => 12,
-        25 => 13,
-        22 => 18,
-        24 => 19,
-        26 => 20,
-        23 => 21,
+        7 => 9,
+        8 => 10,
+        9 => 11,
+        10 => 1,
+        11 => 2,
+        14 => 4,
+        15 => 5,
+        16 => 7,
+        17 => 6,
+        18 => 3,
+        19 => 18,
+        20 => 21,
+        21 => 19,
+        22 => 13,
+        23 => 20,
+        24 => 12,
 
         _ => -1
     };
@@ -509,6 +513,38 @@ class Program
         return i;
     }
 
+    public static int GetCorrectSlopeID(RunCell[][] context) {
+        return (
+            false, context[0][1].Geo == 1, false,
+            context[1][0].Geo == 1, false, context[1][2].Geo == 1,
+            false, context[2][1].Geo == 1, false
+        ) switch {
+            (
+                _    , false, _    ,
+                true,     _,  false,
+                _    , true , _
+            ) => 2,
+            (
+                _    , false, _    ,
+                false,     _,  true,
+                _    , true , _
+            ) => 3,
+            (
+                _    , true , _    ,
+                true ,    _ , false,
+                _    , false, _
+            ) => 4,
+            (
+                _    , true , _    ,
+                false,     _,  true,
+                _    , false, _
+            ) => 5,
+
+            _ => -1
+
+        };
+    }
+
     static void PaintEffect(double[,] matrix, (int x, int y) matrixSize, (int x, int y) center, int brushSize, double strength)
     {
         for (int y = center.y - brushSize; y < center.y + brushSize + 1; y++)
@@ -527,16 +563,26 @@ class Program
         }
     }
 
-    static (bool clicked, bool hovered) DrawCameraSprite(Vector2 origin, Raylib_cs.Camera2D camera, int index = -1)
+    static (bool clicked, bool hovered) DrawCameraSprite(
+        Vector2 origin, 
+        CameraQuads quads, 
+        Raylib_cs.Camera2D camera, 
+        int index = -1)
     {
-        var hover = Raylib.CheckCollisionPointCircle(Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera), new(origin.X + (72 * 20 - 40) / 2, origin.Y + (43 * 20 - 60) / 2), 50);
-        var biggerHover = Raylib.CheckCollisionPointRec(Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera), new(origin.X, origin.Y, 72 * 20 - 40, 43 * 20 - 60));
-
+        var mouse = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
+        var hover = Raylib.CheckCollisionPointCircle(mouse, new(origin.X + renderCameraWidth / 2, origin.Y + renderCameraHeight / 2), 50);
+        var biggerHover = Raylib.CheckCollisionPointRec(mouse, new(origin.X, origin.Y, renderCameraWidth, renderCameraHeight));
+        
+        Vector2 pointOrigin1 = new(origin.X, origin.Y),
+            pointOrigin2 = new(origin.X + renderCameraWidth, origin.Y),
+            pointOrigin3 = new(origin.X, origin.Y + renderCameraHeight),
+            pointOrigin4 = new(origin.X + renderCameraWidth, origin.Y + renderCameraHeight);
+        
         if (biggerHover)
         {
             Raylib.DrawRectangleV(
                 origin,
-                new(72 * 20 - 40, 43 * 20 - 60),
+                new(renderCameraWidth, renderCameraHeight),
                 new(0, 255, 150, 70)
             );
         }
@@ -544,7 +590,7 @@ class Program
         {
             Raylib.DrawRectangleV(
                 origin,
-                new(72 * 20 - 40, 43 * 20 - 60),
+                new(renderCameraWidth, renderCameraHeight),
                 new(0, 255, 0, 70)
             );
         }
@@ -561,20 +607,20 @@ class Program
         }
 
         Raylib.DrawRectangleLinesEx(
-            new(origin.X, origin.Y, 72 * 20 - 40, 43 * 20 - 60),
+            new(origin.X, origin.Y, renderCameraWidth, renderCameraHeight),
             4f,
             Raylib_cs.Color.WHITE
         );
 
         Raylib.DrawRectangleLinesEx(
-            new(origin.X, origin.Y, 72 * 20 - 40, 43 * 20 - 60),
+            new(origin.X, origin.Y, renderCameraWidth, renderCameraHeight),
             2f,
             Raylib_cs.Color.BLACK
         );
 
         Raylib.DrawCircleLines(
-            (int)(origin.X + (72 * 20 - 40) / 2),
-            (int)(origin.Y + (43 * 20 - 60) / 2),
+            (int)(origin.X + renderCameraWidth / 2),
+            (int)(origin.Y + renderCameraHeight / 2),
             50,
             Raylib_cs.Color.BLACK
         );
@@ -582,15 +628,15 @@ class Program
         if (hover)
         {
             Raylib.DrawCircleV(
-                new(origin.X + (72 * 20 - 40) / 2, origin.Y + (43 * 20 - 60) / 2),
+                new(origin.X + renderCameraWidth / 2, origin.Y + renderCameraHeight / 2),
                 50,
                 new Raylib_cs.Color(255, 255, 255, 100)
             );
         }
 
         Raylib.DrawLineEx(
-            new(origin.X + 4, origin.Y + (43 * 20 - 60) / 2),
-            new(origin.X + 72 * 20 - 44, origin.Y + (43 * 20 - 60) / 2),
+            new(origin.X + 4, origin.Y + renderCameraHeight / 2),
+            new(origin.X + renderCameraWidth - 4, origin.Y + renderCameraHeight / 2),
             4f,
             Raylib_cs.Color.BLACK
         );
@@ -598,13 +644,63 @@ class Program
         Raylib.DrawRectangleLinesEx(
             new(
                 origin.X + 190,
-                origin.Y,
+                origin.Y + 20,
                 51 * scale,
-                40 * scale
+                40 * scale - 40
             ),
             4f,
             Raylib_cs.Color.RED
         );
+
+        var quarter1 = new Rectangle(origin.X - 150, origin.Y - 150, renderCameraWidth/2 + 150, renderCameraHeight/2 + 150);
+        var quarter2 = new Rectangle(renderCameraWidth/2 + origin.X, origin.Y - 150, renderCameraWidth/2 + 150, renderCameraHeight/2 + 150);
+        var quarter3 = new Rectangle(origin.X - 150, origin.Y + renderCameraHeight/2, renderCameraWidth/2 + 150, renderCameraHeight/2 + 150);
+        var quarter4 = new Rectangle(renderCameraWidth/2 + origin.X, renderCameraHeight/2 +  origin.Y, renderCameraWidth/2 + 150, renderCameraHeight/2 + 150);
+        
+        if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT)) camScaleMode = false;
+
+        if (Raylib.CheckCollisionPointRec(mouse, quarter1)) {
+
+            if ((Raylib.CheckCollisionPointCircle(mouse, Raymath.Vector2Add(quads.TopLeft, pointOrigin1), 10) || camScaleMode) && 
+                Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) {
+                camScaleMode = true;
+
+                quads.TopLeft = Raymath.Vector2Subtract(mouse, pointOrigin1);
+            }
+
+            Raylib.DrawCircleV(Raymath.Vector2Add(quads.TopLeft, origin), 10, Color.GREEN);
+        }
+
+
+        if (Raylib.CheckCollisionPointRec(mouse, quarter2)) {
+            if ((Raylib.CheckCollisionPointCircle(mouse, Raymath.Vector2Add(quads.TopRight, pointOrigin2), 10) || camScaleMode) && 
+                Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) {
+                camScaleMode = true;
+                quads.TopRight = Raymath.Vector2Subtract(mouse, pointOrigin2);
+            }
+
+            Raylib.DrawCircleV(Raymath.Vector2Add(quads.TopRight, pointOrigin2), 10, Color.GREEN);
+        }
+
+        if (Raylib.CheckCollisionPointRec(mouse, quarter3)) {
+            if ((Raylib.CheckCollisionPointCircle(mouse, Raymath.Vector2Add(quads.BottomRight, pointOrigin3), 10) || camScaleMode) && 
+                Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) {
+                camScaleMode = true;
+                quads.BottomRight = Raymath.Vector2Subtract(mouse, pointOrigin3);
+            }
+
+            Raylib.DrawCircleV(Raymath.Vector2Add(quads.BottomRight, pointOrigin3), 10, Color.GREEN);
+        }
+
+        if (Raylib.CheckCollisionPointRec(mouse, quarter4)) {
+            if ((Raylib.CheckCollisionPointCircle(mouse, Raymath.Vector2Add(quads.BottomLeft, pointOrigin4), 10) || camScaleMode) && 
+                Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) {
+                camScaleMode = true;
+                quads.BottomLeft = Raymath.Vector2Subtract(mouse, pointOrigin4);
+            }
+
+            Raylib.DrawCircleV(Raymath.Vector2Add(quads.BottomLeft, pointOrigin4), 10, Color.GREEN);
+        }
 
         return (hover && Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT), biggerHover);
     }
@@ -651,8 +747,6 @@ class Program
         (string, EffectOptions, double[,])[] effectList = [];
         bool[,] lightMatrix = CommonUtils.NewLightMatrix(matrixWidth, matrixHeight, scale);
 
-        bool initial = true;
-
         int flatness = 0;
         double lightAngleVariable = 0;
         double lightAngle = 90;
@@ -664,8 +758,6 @@ class Program
         bool shading = true;
 
         int explorerPage = 0;
-
-        bool lockUi = false;
 
         bool addNewEffectMode = false;
 
@@ -1242,47 +1334,61 @@ class Program
                         {
                             switch (geoIndex)
                             {
-                                // blocks
-                                case 0: // solid
-                                case 1: // air
-                                case 2: // slopebr
-                                case 3: // slopebl
-                                case 6: // slopetr
-                                case 7: // slopetl
-                                case 8: // platform
-                                case 15: // glass
+                                case 2: // slopebl
                                     var cell = geoMatrix[matrixY, matrixX, currentLayer];
 
-                                    cell.Geo = GetBlockID(geoIndex);
+                                    var slope = GetCorrectSlopeID(CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, matrixX, matrixY, currentLayer));
+
+                                    if (slope == -1) break;
+
+                                    cell.Geo = slope;
                                     geoMatrix[matrixY, matrixX, currentLayer] = cell;
+                                    break;
+                                
+                                case 0: // solid
+                                case 1: // air
+                                case 5: // platform
+                                case 12: // glass
+                                    var cell2 = geoMatrix[matrixY, matrixX, currentLayer];
+
+                                    cell2.Geo = GetBlockID(geoIndex);
+                                    geoMatrix[matrixY, matrixX, currentLayer] = cell2;
                                     break;
 
                                 // multi-select: forward to next if-statement
+                                case 3:
                                 case 4:
-                                case 5:
-                                case 16:
-                                case 28:
+                                case 13:
+                                case 25:
                                     break;
 
                                 // stackables
-                                case 10: // rock
-                                case 11: // spear
-                                case 12: // crack
-                                case 13: // ph
-                                case 14: // pv
-                                case 17: // entry
-                                case 18: // shortcut
-                                case 19: // den
-                                case 20: // passage
-                                case 21: // bathive
-                                case 22: // waterfall
-                                case 23: // scav
-                                case 24: // wac
-                                case 25: // garbageworm
-                                case 26: // worm
-                                case 27: // forbidflychains
+                                case 7: // rock
+                                case 8: // spear
+                                case 9: // crack
+                                case 10: // ph
+                                case 11: // pv
+                                case 14: // entry
+                                case 15: // shortcut
+                                case 16: // den
+                                case 17: // passage
+                                case 18: // bathive
+                                case 19: // waterfall
+                                case 20: // scav
+                                case 21: // wac
+                                case 22: // garbageworm
+                                case 23: // worm
+                                case 24: // forbidflychains
                                     if (geoIndex is 17 or 18 or 19 or 20 or 22 or 23 or 24 or 25 or 26 or 27 && currentLayer != 0)
                                     {
+                                        break;
+                                    }
+
+                                    if (
+                                        matrixX * scale < border.X || 
+                                        matrixX * scale >= border.Width + border.X || 
+                                        matrixY * scale < border.Y || 
+                                        matrixY * scale >= border.Height + border.Y) {
                                         break;
                                     }
 
@@ -1322,7 +1428,7 @@ class Program
                         {
                             switch (geoIndex)
                             {
-                                case 28:
+                                case 25:
                                     multiselect = !multiselect;
 
                                     if (multiselect)
@@ -1370,7 +1476,7 @@ class Program
                                         }
                                     }
                                     break;
-                                case 16:
+                                case 13:
                                     multiselect = !multiselect;
 
                                     if (multiselect)
@@ -1419,8 +1525,8 @@ class Program
                                         }
                                     }
                                     break;
+                                case 3:
                                 case 4:
-                                case 5:
                                     multiselect = !multiselect;
 
                                     if (multiselect)
@@ -1457,7 +1563,7 @@ class Program
                                             endY = prevCoordsY;
                                         }
 
-                                        int value = geoIndex == 4 ? 1 : 0;
+                                        int value = geoIndex == 3 ? 1 : 0;
 
                                         for (int y = startY; y < endY; y++)
                                         {
@@ -1804,7 +1910,7 @@ class Program
                     if (Raylib.IsKeyPressed(KeyboardKey.KEY_N) && draggedCamera == -1)
                     {
                         var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), cameraCamera);
-                        renderCamers = [ ..renderCamers, new() { Coords = (0, 0), Quads = ((0, 0), (0, 0), (0, 0), (0, 0)) } ];
+                        renderCamers = [ ..renderCamers, new() { Coords = (0, 0), Quads = new(new(), new(), new(), new()) } ];
                         draggedCamera = renderCamers.Count - 1;
                     }
 
@@ -1819,7 +1925,7 @@ class Program
                         if (draggedCamera == -1)
                         {
                             var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), cameraCamera);
-                            renderCamers = [.. renderCamers, new() { Coords = (0, 0), Quads = ((0, 0), (0, 0), (0, 0), (0, 0)) }];
+                            renderCamers = [.. renderCamers, new() { Coords = (0, 0), Quads = new(new(), new(), new(), new()) }];
                             draggedCamera = renderCamers.Count - 1;
                         }
                         else
@@ -1958,10 +2064,10 @@ class Program
                                 if (index == draggedCamera)
                                 {
                                     var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), cameraCamera);
-                                    DrawCameraSprite(new(pos.X - (72 * scale - 40) / 2, pos.Y - (43 * scale - 60) / 2), cameraCamera, index + 1);
+                                    DrawCameraSprite(new(pos.X - (72 * scale - 40) / 2, pos.Y - (43 * scale - 60) / 2), cam.Quads, cameraCamera, index + 1);
                                     continue;
                                 }
-                                var (clicked, hovered) = DrawCameraSprite(new(cam.Coords.x, cam.Coords.y), cameraCamera, index + 1);
+                                var (clicked, hovered) = DrawCameraSprite(new(cam.Coords.x, cam.Coords.y), cam.Quads, cameraCamera, index + 1);
 
                                 if (clicked && !clickTracker2)
                                 {
@@ -1979,14 +2085,8 @@ class Program
                         Raylib.EndMode2D();
 
                         #region CameraEditorUI
-                        
-                        fixed (byte* pt = cameraQuadsPanelBytes)
-                        {
-                            Raylib_CsLo.RayGui.GuiPanel(
-                                new(100, Raylib.GetScreenHeight() - 200, Raylib.GetScreenWidth() - 200, 190),
-                                (sbyte*) pt
-                            );
-                        }
+
+
 
                         #endregion
                     }
@@ -2598,7 +2698,7 @@ class Program
                                 Raylib.ClearBackground(Raylib_cs.Color.WHITE);
                                 Raylib.EndTextureMode();
 
-                                renderCamers = [new RenderCamera() { Coords = (20f, 30f), Quads = ((0, 0), (0, 0), (0, 0), (0, 0)) }];
+                                renderCamers = [new RenderCamera() { Coords = (20f, 30f), Quads = new(new(), new(), new(), new()) }];
 
                                 newFlag = false;
                             }
@@ -2619,8 +2719,6 @@ class Program
                             matrixHeight = matrixHeightValue;
 
                             page = prevPage;
-
-                            initial = false;
                         }
 
                     }

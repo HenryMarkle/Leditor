@@ -1,4 +1,6 @@
 ﻿namespace Leditor.Common;
+
+using System.Numerics;
 using Quad = (int angle, float radius);
 
 public struct RunCell {
@@ -77,7 +79,26 @@ public readonly record struct InitTile(
 
 public readonly record struct BufferTiles(int Left, int Right, int Top, int Bottom);
 
+public class CameraQuads(
+    Vector2 topLeft, 
+    Vector2 topRight, 
+    Vector2 bottomRight, 
+    Vector2 bottomLeft
+) {
+    public Vector2 TopLeft { get; set; } = topLeft; 
+    public Vector2 TopRight { get; set; } = topRight;
+    public Vector2 BottomRight { get; set; } = bottomRight; 
+    public Vector2 BottomLeft { get; set; } = bottomLeft;
+};
+
+public record CameraQuadsRecord(
+    (int Angle, float Radius) TopLeft, 
+    (int Angle, float Radius) TopRight, 
+    (int Angle, float Radius) BottomRight, 
+    (int Angle, float Radius) BottomLeft
+);
+
 public class RenderCamera {
     public (float x, float y) Coords { get; set; }
-    public (Quad, Quad, Quad, Quad) Quads { get; set; }
+    public CameraQuads Quads { get; set; }
 }
