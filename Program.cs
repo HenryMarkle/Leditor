@@ -18,12 +18,9 @@ class Program
     static readonly string[] geoNames = [
         "Solid",
         "air",
-        "Slope ES",
-        "Slope SW",
+        "Slope",
         "Rectangle wall",
         "Rectangle air",
-        "Slope NE",
-        "Slope NW",
         "Platform",
         "Move level",
         "Place rock",
@@ -3588,7 +3585,7 @@ class Program
 
                         switch (helpSubSection)
                         {
-                            case 0:
+                            case 0: // main screen
                                 Raylib.DrawText(
                                     " [1] - Main screen\n[2] - Geometry editor\n[3] - Tiles editor\n[4] - Cameras editor\n" +
                                     "[5] - Light editor\n[6] - Edit dimensions\n[7] - Effects editor\n[8] - Props editor",
@@ -3599,7 +3596,7 @@ class Program
                                 );
                                 break;
 
-                            case 1:
+                            case 1: // geometry editor
                                 Raylib.DrawText(
                                     "[W] [A] [S] [D] - Navigate the geometry tiles menu\n" +
                                     "[L] - Change current layer\n" +
@@ -3611,7 +3608,7 @@ class Program
                                 );
                                 break;
 
-                            case 2:
+                            case 2: // cameras editor
                                 Raylib.DrawText(
                                     "[N] - New Camera\n" +
                                     "[D] - Delete dragged camera\n"+
@@ -3625,7 +3622,7 @@ class Program
                                 );
                                 break;
 
-                            case 3:
+                            case 3: // light editor
                                 Raylib.DrawText(
                                     "[Q] [E] - Rotate brush (counter-)clockwise\n" +
                                     "[SHIFT] + [Q] [R] - Rotate brush faster\n" +
@@ -3640,7 +3637,7 @@ class Program
                                 );
                                 break;
 
-                            case 4:
+                            case 4: // effects editor
                                 Raylib.DrawText(
                                     "[Right Click] - Drag level\n" +
                                     "[Left Click] - Paint/erase effect\n" +
