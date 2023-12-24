@@ -14,3 +14,8 @@ An alternative to the current Rain World's official level editor, powered by .NE
 This project is still work in progress; expect to face issues when using this tool. Please report any bugs you see or experience.
 
 ### What's not working yet:
+
+- Tile editor
+- Props editor
+- Light editor stretch map
+- Geo editor's multi-select feature needs more polishing

@@ -1,7 +1,7 @@
 ﻿namespace Leditor.Common;
 
 using System.Numerics;
-using Quad = (int angle, float radius);
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 public struct RunCell {
     public int Geo { get; set; } = 0;
@@ -17,41 +17,49 @@ public enum TileType { Default, Material, TileHead, TileBody }
 
 public struct TileCell {
     public TileType Type { get; set; }
-    public TileDataBase Data { get; set; }
-}
+    public dynamic Data { get; set; }
 
-public abstract class TileDataBase {
-    public abstract dynamic Value { get; set; }
-}
-
-public class TileData1 : TileDataBase {
-    public override dynamic Value {
-        get => 0;
-        set {  }
+    public TileCell()
+    {
+        Type = TileType.Default;
+        Data = new TileDefault();
     }
 }
 
-public class TileData2(string data) : TileDataBase {
+
+public struct TileDefault
+{
+    public int Value => 0;
+}
+
+public struct TileMaterial(string data)
+{
     private string _data = data;
-    
-    public override dynamic Value {
-        get => _data;
+
+    public string Name
+    {
+        readonly get => _data;
         set { _data = value; }
     }
 }
 
-public class TileData3(int category, int position, string name) : TileDataBase {
+public struct TileHead(int category, int position, string name)
+{
     private (int, int, string) _data = (category, position, name);
-    public override dynamic Value {
-        get => _data;
+    
+    public (int, int, string) CategoryPostition
+    {
+        readonly get => _data;
         set { _data = value; }
     }
 }
 
-public class TileData4(int category, int position, int z) : TileDataBase {
+public struct TileBody(int category, int position, int z)
+{
     private (int, int, int) _data = (category, position, z);
-    public override dynamic Value {
-        get => _data;
+    public (int, int, int) HeadPosition
+    {
+        readonly get => _data;
         set { _data = value; }
     }
 }
@@ -90,6 +98,8 @@ public class CameraQuads(
     public Vector2 BottomRight { get; set; } = bottomRight; 
     public Vector2 BottomLeft { get; set; } = bottomLeft;
 };
+
+public record struct TileTexture(Texture2D[] Layers, Texture2D Preview);
 
 public record CameraQuadsRecord(
     (int Angle, float Radius) TopLeft, 

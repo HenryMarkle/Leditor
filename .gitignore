@@ -1,6 +1,8 @@
 /obj
 /bin
-/.vscode
-/.vs
 /example
 /target
+/logs
+settings.json
+Init.txt
+/assets/test

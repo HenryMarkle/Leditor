@@ -263,25 +263,18 @@ public static class Tools {
         return new InitTile(name, size, specs, specs2, tp, repeatL, bfTiles, rnd, 0, tags);
     }
 
-    public static OrderedDictionary GetTileInit(string text) {
+    public static ((string, (int, int, int))[], InitTile[][]) GetTileInit(string text) {
         var lines = text.ReplaceLineEndings().Split(Environment.NewLine);
 
-        var dict = new OrderedDictionary();
-
-        string key = "";
-        var color = (0, 0, 0);
-
-        List<InitTile> tiles = [];
+        List<(string, (int, int, int))> keys = [];
+        List<InitTile[]> tiles = [];
+        
 
         foreach (var line in lines) {
             if (string.IsNullOrEmpty(line)) continue;
 
             if (line.StartsWith('-')) {
-                if (key != "") {
-                    dict.Add(key, (color, tiles));
-                    key = "";
-                    tiles = [];
-                }
+                tiles.Add([]);
 
                 var headerList = (AstNode.List) LingoParser.Expression.ParseOrThrow(line.TrimStart('-'));
 
@@ -290,18 +283,17 @@ public static class Tools {
                 var colorArgs = ((AstNode.GlobalCall) headerList.Values[1]).Arguments;
                 var headerColor = (((AstNode.Number)colorArgs[0]).Value.IntValue, ((AstNode.Number)colorArgs[1]).Value.IntValue, ((AstNode.Number)colorArgs[2]).Value.IntValue);
 
-                key = name;
-                color = headerColor;
+                keys.Add((name, headerColor));
             } else {
                 var obj = LingoParser.Expression.ParseOrThrow(line);
 
                 var tile = GetInitTile(obj);
 
-                tiles.Add(tile);
+                tiles[^1] = [..tiles[^1], tile ];
             }
         }
 
-        return dict;
+        return (keys.ToArray(), tiles.ToArray());
     }
 
     public static BufferTiles GetBufferTiles(AstNode.Base @base) {
@@ -386,15 +378,15 @@ public static class Tools {
         string tp = ((AstNode.String)((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "tp").Value).Value;
         AstNode.Base data = ((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "data").Value;
 
-        TileDataBase casted;
+        dynamic casted;
 
         switch (tp) {
             case "default": 
-                casted = new TileData1();
+                casted = new TileDefault();
                 break;
             
             case "material": 
-                casted = new TileData2(((AstNode.String)data).Value);
+                casted = new TileMaterial(((AstNode.String)data).Value);
                 break;
 
             case "tileHead":
@@ -406,7 +398,7 @@ public static class Tools {
                 var category = ((AstNode.Number)pointArgs[0]).Value.IntValue;
                 var position = ((AstNode.Number)pointArgs[1]).Value.IntValue;
 
-                casted = new TileData3(category, position, name);
+                casted = new TileHead(category, position, name);
                 break;
 
             case "tileBody":
@@ -418,7 +410,7 @@ public static class Tools {
                 var category2 = ((AstNode.Number)pointArgs2[0]).Value.IntValue;
                 var position2 = ((AstNode.Number)pointArgs2[1]).Value.IntValue;
 
-                casted = new TileData4(category2, position2, zPosition);
+                casted = new TileBody(category2, position2, zPosition);
                 break;
 
             default:
@@ -435,9 +427,11 @@ public static class Tools {
     }
 
     public static TileCell[,,] GetTileMatrix(AstNode.Base @base, out int height, out int width) {
-        if (@base is not AstNode.List) throw new ArgumentException("object is not a list", nameof(@base));
+        if (@base is not AstNode.PropertyList) throw new ArgumentException("object is not a property list", nameof(@base));
 
-        var columns = ((AstNode.List)@base).Values;
+        var tlMatrix = (AstNode.List)((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "tlmatrix").Value;
+
+        var columns = tlMatrix.Values;
 
         height = 0;
         width = columns.Length;

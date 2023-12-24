@@ -1,10 +1,10 @@
 namespace Leditor;
 
-using System.Numerics;
-
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using Leditor.Common;
 #nullable enable
 
-using Leditor.Common;
 
 public class LoadFileResult {
     public bool Success { get; init; } = false;
@@ -16,6 +16,7 @@ public class LoadFileResult {
     public (string, double[,])[] Effects { get; init; } = [];
 
     public RunCell[,,]? GeoMatrix { get; init; } = null;
+    public TileCell[,,]? TileMatrix { get; init; } = null;
 
     public Image LightMapImage { get; init; }
 
@@ -212,3 +213,31 @@ public static class Effects {
         _ => new()
     };
 }
+
+public record GeoShortcuts(
+    KeyboardKey ToRightGeo  = KeyboardKey.KEY_D,
+    KeyboardKey ToLeftGeo   = KeyboardKey.KEY_A,
+    KeyboardKey ToTopGeo    = KeyboardKey.KEY_W,
+    KeyboardKey ToBottomGeo = KeyboardKey.KEY_S,
+    KeyboardKey CycleLayer  = KeyboardKey.KEY_L,
+    KeyboardKey ToggleGrid  = KeyboardKey.KEY_M,
+
+    MouseButton DrawButton = MouseButton.MOUSE_BUTTON_LEFT,
+    MouseButton DragButton = MouseButton.MOUSE_BUTTON_RIGHT
+);
+
+public record Shortcuts(
+    GeoShortcuts GeoEditor
+);
+
+public record Misc(bool SplashScreen = true);
+
+public record LayerColors(Raylib_cs.Color Layer1, Raylib_cs.Color Layer2, Raylib_cs.Color Layer3);
+
+public record GeoEditor(LayerColors LayerColors);
+
+public record Settings(
+    Shortcuts Shortcuts,
+    Misc Misc,
+    GeoEditor GeomentryEditor
+);
