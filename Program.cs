@@ -1,14 +1,13 @@
-﻿global using Raylib_cs;
+﻿global using Raylib_CsLo;
+using static Raylib_CsLo.Raylib;
+
 using System.Numerics;
 using System.Text;
 using Leditor.Common;
 using Leditor.Lingo;
 using Pidgin;
-using System.Collections.Specialized;
 using System.Text.Json;
 using Serilog;
-using System.Diagnostics;
-using Raylib_CsLo.InternalHelpers;
 
 
 namespace Leditor;
@@ -44,116 +43,116 @@ class Program
         "Clear All"
     ];
 
-    static Texture2D[] LoadUITextures() => [
-        Raylib.LoadTexture("assets/geo/ui/solid.png"),          // 0
-        Raylib.LoadTexture("assets/geo/ui/air.png"),            // 1
-        // Raylib.LoadTexture("assets/geo/ui/slopebr.png"),     
-        Raylib.LoadTexture("assets/geo/ui/slopebl.png"),        // 2
-        Raylib.LoadTexture("assets/geo/ui/multisolid.png"),     // 3
-        Raylib.LoadTexture("assets/geo/ui/multiair.png"),       // 4
-        // Raylib.LoadTexture("assets/geo/ui/slopetr.png"),        
-        // Raylib.LoadTexture("assets/geo/ui/slopetl.png"),        
-        Raylib.LoadTexture("assets/geo/ui/platform.png"),       // 5
-        Raylib.LoadTexture("assets/geo/ui/move.png"),           // 6
-        Raylib.LoadTexture("assets/geo/ui/rock.png"),           // 7
-        Raylib.LoadTexture("assets/geo/ui/spear.png"),          // 8
-        Raylib.LoadTexture("assets/geo/ui/crack.png"),          // 9
-        Raylib.LoadTexture("assets/geo/ui/ph.png"),             // 10
-        Raylib.LoadTexture("assets/geo/ui/pv.png"),             // 11
-        Raylib.LoadTexture("assets/geo/ui/glass.png"),          // 12
-        Raylib.LoadTexture("assets/geo/ui/backcopy.png"),       // 13
-        Raylib.LoadTexture("assets/geo/ui/entry.png"),          // 14
-        Raylib.LoadTexture("assets/geo/ui/shortcut.png"),       // 15
-        Raylib.LoadTexture("assets/geo/ui/den.png"),            // 16
-        Raylib.LoadTexture("assets/geo/ui/passage.png"),        // 17
-        Raylib.LoadTexture("assets/geo/ui/bathive.png"),        // 18
-        Raylib.LoadTexture("assets/geo/ui/waterfall.png"),      // 19
-        Raylib.LoadTexture("assets/geo/ui/scav.png"),           // 20
-        Raylib.LoadTexture("assets/geo/ui/wack.png"),           // 21
-        Raylib.LoadTexture("assets/geo/ui/garbageworm.png"),    // 22
-        Raylib.LoadTexture("assets/geo/ui/worm.png"),           // 23
-        Raylib.LoadTexture("assets/geo/ui/forbidflychains.png"),// 24
-        Raylib.LoadTexture("assets/geo/ui/clearall.png"),       // 25
+    static Texture[] LoadUITextures() => [
+        LoadTexture("assets/geo/ui/solid.png"),          // 0
+        LoadTexture("assets/geo/ui/air.png"),            // 1
+        // LoadTexture("assets/geo/ui/slopebr.png"),     
+        LoadTexture("assets/geo/ui/slopebl.png"),        // 2
+        LoadTexture("assets/geo/ui/multisolid.png"),     // 3
+        LoadTexture("assets/geo/ui/multiair.png"),       // 4
+        // LoadTexture("assets/geo/ui/slopetr.png"),        
+        // LoadTexture("assets/geo/ui/slopetl.png"),        
+        LoadTexture("assets/geo/ui/platform.png"),       // 5
+        LoadTexture("assets/geo/ui/move.png"),           // 6
+        LoadTexture("assets/geo/ui/rock.png"),           // 7
+        LoadTexture("assets/geo/ui/spear.png"),          // 8
+        LoadTexture("assets/geo/ui/crack.png"),          // 9
+        LoadTexture("assets/geo/ui/ph.png"),             // 10
+        LoadTexture("assets/geo/ui/pv.png"),             // 11
+        LoadTexture("assets/geo/ui/glass.png"),          // 12
+        LoadTexture("assets/geo/ui/backcopy.png"),       // 13
+        LoadTexture("assets/geo/ui/entry.png"),          // 14
+        LoadTexture("assets/geo/ui/shortcut.png"),       // 15
+        LoadTexture("assets/geo/ui/den.png"),            // 16
+        LoadTexture("assets/geo/ui/passage.png"),        // 17
+        LoadTexture("assets/geo/ui/bathive.png"),        // 18
+        LoadTexture("assets/geo/ui/waterfall.png"),      // 19
+        LoadTexture("assets/geo/ui/scav.png"),           // 20
+        LoadTexture("assets/geo/ui/wack.png"),           // 21
+        LoadTexture("assets/geo/ui/garbageworm.png"),    // 22
+        LoadTexture("assets/geo/ui/worm.png"),           // 23
+        LoadTexture("assets/geo/ui/forbidflychains.png"),// 24
+        LoadTexture("assets/geo/ui/clearall.png"),       // 25
     ];
 
-    static Texture2D[] LoadGeoTextures() => [
+    static Texture[] LoadGeoTextures() => [
         // 0: air
-        Raylib.LoadTexture("assets/geo/solid.png"),
-        Raylib.LoadTexture("assets/geo/cbl.png"),
-        Raylib.LoadTexture("assets/geo/cbr.png"),
-        Raylib.LoadTexture("assets/geo/ctl.png"),
-        Raylib.LoadTexture("assets/geo/ctr.png"),
-        Raylib.LoadTexture("assets/geo/platform.png"),
-        Raylib.LoadTexture("assets/geo/entryblock.png"),
+        LoadTexture("assets/geo/solid.png"),
+        LoadTexture("assets/geo/cbl.png"),
+        LoadTexture("assets/geo/cbr.png"),
+        LoadTexture("assets/geo/ctl.png"),
+        LoadTexture("assets/geo/ctr.png"),
+        LoadTexture("assets/geo/platform.png"),
+        LoadTexture("assets/geo/entryblock.png"),
         // 7: NONE
         // 8: NONE
-        Raylib.LoadTexture("assets/geo/thickglass.png"),
+        LoadTexture("assets/geo/thickglass.png"),
     ];
 
-    static Texture2D[] LoadStackableTextures() => [
-        Raylib.LoadTexture("assets/geo/ph.png"),             // 0
-        Raylib.LoadTexture("assets/geo/pv.png"),             // 1
-        Raylib.LoadTexture("assets/geo/bathive.png"),        // 2
-        Raylib.LoadTexture("assets/geo/dot.png"),            // 3
-        Raylib.LoadTexture("assets/geo/crackbl.png"),        // 4
-        Raylib.LoadTexture("assets/geo/crackbr.png"),        // 5
-        Raylib.LoadTexture("assets/geo/crackc.png"),         // 6
-        Raylib.LoadTexture("assets/geo/crackh.png"),         // 7
-        Raylib.LoadTexture("assets/geo/cracklbr.png"),       // 8
-        Raylib.LoadTexture("assets/geo/cracktbr.png"),       // 9
-        Raylib.LoadTexture("assets/geo/cracktl.png"),        // 10
-        Raylib.LoadTexture("assets/geo/cracktlb.png"),       // 11
-        Raylib.LoadTexture("assets/geo/cracktlr.png"),       // 12
-        Raylib.LoadTexture("assets/geo/cracktr.png"),        // 13
-        Raylib.LoadTexture("assets/geo/cracku.png"),         // 14
-        Raylib.LoadTexture("assets/geo/crackv.png"),         // 15
-        Raylib.LoadTexture("assets/geo/garbageworm.png"),    // 16
-        Raylib.LoadTexture("assets/geo/scav.png"),           // 17
-        Raylib.LoadTexture("assets/geo/rock.png"),           // 18
-        Raylib.LoadTexture("assets/geo/waterfall.png"),      // 19
-        Raylib.LoadTexture("assets/geo/wack.png"),           // 20
-        Raylib.LoadTexture("assets/geo/worm.png"),           // 21
-        Raylib.LoadTexture("assets/geo/entryb.png"),         // 22
-        Raylib.LoadTexture("assets/geo/entryl.png"),         // 23
-        Raylib.LoadTexture("assets/geo/entryr.png"),         // 24
-        Raylib.LoadTexture("assets/geo/entryt.png"),         // 25
-        Raylib.LoadTexture("assets/geo/looseentry.png"),     // 26
-        Raylib.LoadTexture("assets/geo/passage.png"),        // 27
-        Raylib.LoadTexture("assets/geo/den.png"),            // 28
-        Raylib.LoadTexture("assets/geo/spear.png"),          // 29
-        Raylib.LoadTexture("assets/geo/forbidflychains.png"),// 30
-        Raylib.LoadTexture("assets/geo/crackb.png"),         // 31
-        Raylib.LoadTexture("assets/geo/crackr.png"),         // 32
-        Raylib.LoadTexture("assets/geo/crackt.png"),         // 33
-        Raylib.LoadTexture("assets/geo/crackl.png"),         // 34
+    static Texture[] LoadStackableTextures() => [
+        LoadTexture("assets/geo/ph.png"),             // 0
+        LoadTexture("assets/geo/pv.png"),             // 1
+        LoadTexture("assets/geo/bathive.png"),        // 2
+        LoadTexture("assets/geo/dot.png"),            // 3
+        LoadTexture("assets/geo/crackbl.png"),        // 4
+        LoadTexture("assets/geo/crackbr.png"),        // 5
+        LoadTexture("assets/geo/crackc.png"),         // 6
+        LoadTexture("assets/geo/crackh.png"),         // 7
+        LoadTexture("assets/geo/cracklbr.png"),       // 8
+        LoadTexture("assets/geo/cracktbr.png"),       // 9
+        LoadTexture("assets/geo/cracktl.png"),        // 10
+        LoadTexture("assets/geo/cracktlb.png"),       // 11
+        LoadTexture("assets/geo/cracktlr.png"),       // 12
+        LoadTexture("assets/geo/cracktr.png"),        // 13
+        LoadTexture("assets/geo/cracku.png"),         // 14
+        LoadTexture("assets/geo/crackv.png"),         // 15
+        LoadTexture("assets/geo/garbageworm.png"),    // 16
+        LoadTexture("assets/geo/scav.png"),           // 17
+        LoadTexture("assets/geo/rock.png"),           // 18
+        LoadTexture("assets/geo/waterfall.png"),      // 19
+        LoadTexture("assets/geo/wack.png"),           // 20
+        LoadTexture("assets/geo/worm.png"),           // 21
+        LoadTexture("assets/geo/entryb.png"),         // 22
+        LoadTexture("assets/geo/entryl.png"),         // 23
+        LoadTexture("assets/geo/entryr.png"),         // 24
+        LoadTexture("assets/geo/entryt.png"),         // 25
+        LoadTexture("assets/geo/looseentry.png"),     // 26
+        LoadTexture("assets/geo/passage.png"),        // 27
+        LoadTexture("assets/geo/den.png"),            // 28
+        LoadTexture("assets/geo/spear.png"),          // 29
+        LoadTexture("assets/geo/forbidflychains.png"),// 30
+        LoadTexture("assets/geo/crackb.png"),         // 31
+        LoadTexture("assets/geo/crackr.png"),         // 32
+        LoadTexture("assets/geo/crackt.png"),         // 33
+        LoadTexture("assets/geo/crackl.png"),         // 34
     ];
 
-    static Texture2D[] LoadLightTextures() => [
-        Raylib.LoadTexture("assets/light/inverted/Drought_393275_sawbladeGraf.png"),             // 0
-        Raylib.LoadTexture("assets/light/inverted/Drought_393400_pentagonLightEmpty.png"),       // 1
-        Raylib.LoadTexture("assets/light/inverted/Drought_393401_pentagonLight.png"),            // 2
-        Raylib.LoadTexture("assets/light/inverted/Drought_393402_roundedRectLightEmpty.png"),    // 3
-        Raylib.LoadTexture("assets/light/inverted/Drought_393403_squareLightEmpty.png"),         // 4
-        Raylib.LoadTexture("assets/light/inverted/Drought_393404_triangleLight.png"),            // 5
-        Raylib.LoadTexture("assets/light/inverted/Drought_393405_triangleLightEmpty.png"),       // 6
-        Raylib.LoadTexture("assets/light/inverted/Drought_393406_curvedTriangleLight.png"),      // 7
-        Raylib.LoadTexture("assets/light/inverted/Drought_393407_curvedTriangleLightEmpty.png"), // 8
-        Raylib.LoadTexture("assets/light/inverted/Drought_393408_discLightEmpty.png"),           // 9
-        Raylib.LoadTexture("assets/light/inverted/Drought_393409_hexagonLight.png"),             // 10
-        Raylib.LoadTexture("assets/light/inverted/Drought_393410_hexagonLightEmpty.png"),        // 11
-        Raylib.LoadTexture("assets/light/inverted/Drought_393411_octagonLight.png"),             // 12
-        Raylib.LoadTexture("assets/light/inverted/Drought_393412_octagonLightEmpty.png"),        // 13
-        Raylib.LoadTexture("assets/light/inverted/Internal_265_bigCircle.png"),                  // 14
-        Raylib.LoadTexture("assets/light/inverted/Internal_266_leaves.png"),                     // 15
-        Raylib.LoadTexture("assets/light/inverted/Internal_267_oilyLight.png"),                  // 16
-        Raylib.LoadTexture("assets/light/inverted/Internal_268_directionalLight.png"),           // 17
-        Raylib.LoadTexture("assets/light/inverted/Internal_269_blobLight1.png"),                 // 18
-        Raylib.LoadTexture("assets/light/inverted/Internal_270_blobLight2.png"),                 // 19
-        Raylib.LoadTexture("assets/light/inverted/Internal_271_wormsLight.png"),                 // 20
-        Raylib.LoadTexture("assets/light/inverted/Internal_272_crackLight.png"),                 // 21
-        Raylib.LoadTexture("assets/light/inverted/Internal_273_squareishLight.png"),             // 22
-        Raylib.LoadTexture("assets/light/inverted/Internal_274_holeLight.png"),                  // 23
-        Raylib.LoadTexture("assets/light/inverted/Internal_275_roundedRectLight.png"),           // 24
+    static Texture[] LoadLightTextures() => [
+        LoadTexture("assets/light/inverted/Drought_393275_sawbladeGraf.png"),             // 0
+        LoadTexture("assets/light/inverted/Drought_393400_pentagonLightEmpty.png"),       // 1
+        LoadTexture("assets/light/inverted/Drought_393401_pentagonLight.png"),            // 2
+        LoadTexture("assets/light/inverted/Drought_393402_roundedRectLightEmpty.png"),    // 3
+        LoadTexture("assets/light/inverted/Drought_393403_squareLightEmpty.png"),         // 4
+        LoadTexture("assets/light/inverted/Drought_393404_triangleLight.png"),            // 5
+        LoadTexture("assets/light/inverted/Drought_393405_triangleLightEmpty.png"),       // 6
+        LoadTexture("assets/light/inverted/Drought_393406_curvedTriangleLight.png"),      // 7
+        LoadTexture("assets/light/inverted/Drought_393407_curvedTriangleLightEmpty.png"), // 8
+        LoadTexture("assets/light/inverted/Drought_393408_discLightEmpty.png"),           // 9
+        LoadTexture("assets/light/inverted/Drought_393409_hexagonLight.png"),             // 10
+        LoadTexture("assets/light/inverted/Drought_393410_hexagonLightEmpty.png"),        // 11
+        LoadTexture("assets/light/inverted/Drought_393411_octagonLight.png"),             // 12
+        LoadTexture("assets/light/inverted/Drought_393412_octagonLightEmpty.png"),        // 13
+        LoadTexture("assets/light/inverted/Internal_265_bigCircle.png"),                  // 14
+        LoadTexture("assets/light/inverted/Internal_266_leaves.png"),                     // 15
+        LoadTexture("assets/light/inverted/Internal_267_oilyLight.png"),                  // 16
+        LoadTexture("assets/light/inverted/Internal_268_directionalLight.png"),           // 17
+        LoadTexture("assets/light/inverted/Internal_269_blobLight1.png"),                 // 18
+        LoadTexture("assets/light/inverted/Internal_270_blobLight2.png"),                 // 19
+        LoadTexture("assets/light/inverted/Internal_271_wormsLight.png"),                 // 20
+        LoadTexture("assets/light/inverted/Internal_272_crackLight.png"),                 // 21
+        LoadTexture("assets/light/inverted/Internal_273_squareishLight.png"),             // 22
+        LoadTexture("assets/light/inverted/Internal_274_holeLight.png"),                  // 23
+        LoadTexture("assets/light/inverted/Internal_275_roundedRectLight.png"),           // 24
     ];
 
     static ((string, Color)[], InitTile[][]) LoadTileInit()
@@ -181,8 +180,8 @@ class Program
         return images.Select(t => t.ToArray()).ToArray();
     }
 
-    static Texture2D[][] LoadTileTextures(in InitTile[][] init) {
-        List<List<Texture2D>> textures = [];
+    static Texture[][] LoadTileTextures(in InitTile[][] init) {
+        List<List<Texture>> textures = [];
         
         for (int category = 0; category < init.Length; category++) {
             textures.Add([]);
@@ -197,7 +196,7 @@ class Program
         return textures.Select(t => t.ToArray()).ToArray();
     }
 
-    static Texture2D LoadTilePreviewTexture(in InitTile init) {
+    static Texture LoadTilePreviewTexture(in InitTile init) {
         var (width, height) = init.Size;
         Image img = Raylib.LoadImage($"assets/tiles/{init.Name}.png");
         
@@ -211,18 +210,20 @@ class Program
             _ => 1 + 20 * ((init.BufferTiles*2) + height) * init.Repeat.Length
         };
 
-        Raylib.ImageCrop(ref img, new Rectangle(0, previewHeightStart, 16*width, 16*height));
+        unsafe {
+            Raylib.ImageCrop(&img, new Rectangle(0, previewHeightStart, 16*width, 16*height));
+        }
 
-        Texture2D texture = Raylib.LoadTextureFromImage(img);
+        Texture texture = Raylib.LoadTextureFromImage(img);
         Raylib.UnloadImage(img);
         return texture;
     }
 
-    static string executablePath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+    static string executableDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
-    static string projectsDirectory = Path.Combine(executablePath, "projects");
-    static string tilesInitPath = Path.Combine(executablePath, "Init.txt");
-    static string assetsDirectory = Path.Combine(executablePath, "assets");
+    static string projectsDirectory = Path.Combine(executableDirectory, "projects");
+    static string tilesInitPath = Path.Combine(executableDirectory, "Init.txt");
+    static string assetsDirectory = Path.Combine(executableDirectory, "assets");
 
     const int screenMinWidth = 1280;
     const int screenMinHeight = 800;
@@ -240,10 +241,10 @@ class Program
     const int initialMatrixWidth = 72;
     const int initialMatrixHeight = 43;
 
-    static Raylib_cs.Color[] layerColors;
+    static Color[] layerColors;
 
-    static readonly Raylib_cs.Color whiteStackable = new(255, 255, 255, 200);
-    static readonly Raylib_cs.Color blackStackable = new(0, 0, 0, 200);
+    static readonly Color whiteStackable = new(255, 255, 255, 200);
+    static readonly Color blackStackable = new(0, 0, 0, 200);
 
     public static int GetBlockIndex(int id) => id switch
     {
@@ -319,20 +320,6 @@ class Program
         20 => 21,
         21 => 17,
         _ => -1
-    };
-
-    public static int GetStackablePreviewTextureIndex(int id) => id switch
-    {
-        1 => 0,
-        2 => 1,
-    };
-
-    public static int GetBlockPreviewTextureIndex(int id) => id switch
-    {
-        2 => 3,
-        3 => 2,
-        4 => 1,
-        5 => 0,
     };
 
     public static int GetStackableTextureIndex(int id, RunCell[][] context)
@@ -616,7 +603,7 @@ class Program
     static (bool clicked, bool hovered) DrawCameraSprite(
         Vector2 origin,
         CameraQuads quads,
-        Raylib_cs.Camera2D camera,
+        Camera2D camera,
         int index = -1)
     {
         var mouse = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
@@ -652,27 +639,27 @@ class Program
                 (int)origin.X + 10,
                 (int)origin.Y + 10,
                 20,
-                Raylib_cs.Color.WHITE
+                new(255, 255, 255, 255)
             );
         }
 
         Raylib.DrawRectangleLinesEx(
             new(origin.X, origin.Y, renderCameraWidth, renderCameraHeight),
             4f,
-            Raylib_cs.Color.WHITE
+            new(255, 255, 255, 255)
         );
 
         Raylib.DrawRectangleLinesEx(
             new(origin.X, origin.Y, renderCameraWidth, renderCameraHeight),
             2f,
-            Raylib_cs.Color.BLACK
+            new(0, 0, 0, 255)
         );
 
         Raylib.DrawCircleLines(
             (int)(origin.X + renderCameraWidth / 2),
             (int)(origin.Y + renderCameraHeight / 2),
             50,
-            Raylib_cs.Color.BLACK
+            new(0, 0, 0, 255)
         );
 
         if (hover)
@@ -680,7 +667,7 @@ class Program
             Raylib.DrawCircleV(
                 new(origin.X + renderCameraWidth / 2, origin.Y + renderCameraHeight / 2),
                 50,
-                new Raylib_cs.Color(255, 255, 255, 100)
+                new Color(255, 255, 255, 100)
             );
         }
 
@@ -688,7 +675,7 @@ class Program
             new(origin.X + 4, origin.Y + renderCameraHeight / 2),
             new(origin.X + renderCameraWidth - 4, origin.Y + renderCameraHeight / 2),
             4f,
-            Raylib_cs.Color.BLACK
+            new(0, 0, 0, 255)
         );
 
         Raylib.DrawRectangleLinesEx(
@@ -699,7 +686,7 @@ class Program
                 40 * scale - 40
             ),
             4f,
-            Raylib_cs.Color.RED
+            new(255, 0, 0, 255)
         );
 
         var quarter1 = new Rectangle(origin.X - 150, origin.Y - 150, renderCameraWidth / 2 + 150, renderCameraHeight / 2 + 150);
@@ -712,61 +699,61 @@ class Program
         if (Raylib.CheckCollisionPointRec(mouse, quarter1))
         {
 
-            if ((Raylib.CheckCollisionPointCircle(mouse, Raymath.Vector2Add(quads.TopLeft, pointOrigin1), 10) || camScaleMode) &&
+            if ((Raylib.CheckCollisionPointCircle(mouse, RayMath.Vector2Add(quads.TopLeft, pointOrigin1), 10) || camScaleMode) &&
                 Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
             {
                 camScaleMode = true;
 
-                quads.TopLeft = Raymath.Vector2Subtract(mouse, pointOrigin1);
+                quads.TopLeft = RayMath.Vector2Subtract(mouse, pointOrigin1);
             }
 
-            Raylib.DrawCircleV(Raymath.Vector2Add(quads.TopLeft, origin), 10, Color.GREEN);
+            Raylib.DrawCircleV(RayMath.Vector2Add(quads.TopLeft, origin), 10, new(0, 255, 0, 255));
         }
 
 
         if (Raylib.CheckCollisionPointRec(mouse, quarter2))
         {
-            if ((Raylib.CheckCollisionPointCircle(mouse, Raymath.Vector2Add(quads.TopRight, pointOrigin2), 10) || camScaleMode) &&
+            if ((Raylib.CheckCollisionPointCircle(mouse, RayMath.Vector2Add(quads.TopRight, pointOrigin2), 10) || camScaleMode) &&
                 Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
             {
                 camScaleMode = true;
-                quads.TopRight = Raymath.Vector2Subtract(mouse, pointOrigin2);
+                quads.TopRight = RayMath.Vector2Subtract(mouse, pointOrigin2);
             }
 
-            Raylib.DrawCircleV(Raymath.Vector2Add(quads.TopRight, pointOrigin2), 10, Color.GREEN);
+            Raylib.DrawCircleV(RayMath.Vector2Add(quads.TopRight, pointOrigin2), 10, new(0, 255, 0, 255));
         }
 
         if (Raylib.CheckCollisionPointRec(mouse, quarter3))
         {
-            if ((Raylib.CheckCollisionPointCircle(mouse, Raymath.Vector2Add(quads.BottomRight, pointOrigin3), 10) || camScaleMode) &&
+            if ((Raylib.CheckCollisionPointCircle(mouse, RayMath.Vector2Add(quads.BottomRight, pointOrigin3), 10) || camScaleMode) &&
                 Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
             {
                 camScaleMode = true;
-                quads.BottomRight = Raymath.Vector2Subtract(mouse, pointOrigin3);
+                quads.BottomRight = RayMath.Vector2Subtract(mouse, pointOrigin3);
             }
 
-            Raylib.DrawCircleV(Raymath.Vector2Add(quads.BottomRight, pointOrigin3), 10, Color.GREEN);
+            Raylib.DrawCircleV(RayMath.Vector2Add(quads.BottomRight, pointOrigin3), 10, new(0, 255, 0, 255));
         }
 
         if (Raylib.CheckCollisionPointRec(mouse, quarter4))
         {
-            if ((Raylib.CheckCollisionPointCircle(mouse, Raymath.Vector2Add(quads.BottomLeft, pointOrigin4), 10) || camScaleMode) &&
+            if ((Raylib.CheckCollisionPointCircle(mouse, RayMath.Vector2Add(quads.BottomLeft, pointOrigin4), 10) || camScaleMode) &&
                 Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
             {
                 camScaleMode = true;
-                quads.BottomLeft = Raymath.Vector2Subtract(mouse, pointOrigin4);
+                quads.BottomLeft = RayMath.Vector2Subtract(mouse, pointOrigin4);
             }
 
-            Raylib.DrawCircleV(Raymath.Vector2Add(quads.BottomLeft, pointOrigin4), 10, Color.GREEN);
+            Raylib.DrawCircleV(RayMath.Vector2Add(quads.BottomLeft, pointOrigin4), 10, new(0, 255, 0, 255));
         }
 
         return (hover && Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT), biggerHover);
     }
 
 
-    static void ResizeLightMap(ref RenderTexture2D buffer, int newWidth, int newHeight)
+    static void ResizeLightMap(ref RenderTexture buffer, int newWidth, int newHeight)
     {
-        var image = Raylib.LoadImageFromTexture(buffer.Texture);
+        var image = Raylib.LoadImageFromTexture(buffer.texture);
         Raylib.UnloadRenderTexture(buffer);
         var texture = Raylib.LoadTextureFromImage(image);
         Raylib.UnloadImage(image);
@@ -774,8 +761,8 @@ class Program
         buffer = Raylib.LoadRenderTexture((newWidth * scale) + 300, (newHeight) * scale + 300);
 
         Raylib.BeginTextureMode(buffer);
-        Raylib.ClearBackground(Raylib_cs.Color.WHITE);
-        Raylib.DrawTexture(texture, 0, 0, Raylib_cs.Color.WHITE);
+        Raylib.ClearBackground(new(255, 255, 255, 255));
+        Raylib.DrawTexture(texture, 0, 0, new(255, 255, 255, 255));
         Raylib.EndTextureMode();
 
         Raylib.UnloadTexture(texture);
@@ -844,7 +831,7 @@ class Program
 
         try
         {
-            if (!Directory.Exists("logs")) Directory.CreateDirectory("logs");
+            if (!Directory.Exists(Path.Combine(executableDirectory, "logs"))) Directory.CreateDirectory(Path.Combine(executableDirectory, "logs"));
         }
         catch
         {
@@ -852,7 +839,7 @@ class Program
         }
 
         using var logger = new LoggerConfiguration().WriteTo.File(
-            "logs/logs.txt",
+            Path.Combine(executableDirectory, "logs/logs.txt"),
             fileSizeLimitBytes: 10000000,
             rollOnFileSizeLimit: true
             ).CreateLogger();
@@ -864,6 +851,11 @@ class Program
         logger.Information("importing settings");
 
         // Default settings
+
+        Color layer1Color = new(0, 0, 0, 170);
+        Color layer2Color = new(0, 250, 94, 140);
+        Color layer3Color = new(159, 77, 77, 140);
+
         Settings settings = new(
             new(
                 new()
@@ -871,9 +863,9 @@ class Program
             new(), 
             new(
                 new(
-                    Layer1: new(0, 0, 0, 170), 
-                    Layer2: new(0, 250, 94, 140),
-                    Layer3: new(159, 77, 77, 140)
+                    Layer1: layer1Color, 
+                    Layer2: layer2Color,
+                    Layer3: layer3Color
                     )
                 )
         );
@@ -888,16 +880,16 @@ class Program
 
         try
         {
-            if (File.Exists("settings.json"))
+            if (File.Exists(Path.Combine(executableDirectory, "settings.json")))
             {
-                string settingsText = File.ReadAllText("settings.json");
+                string settingsText = File.ReadAllText(Path.Combine(executableDirectory, "settings.json"));
                 settings = JsonSerializer.Deserialize<Settings>(settingsText);
             }
             else
             {
                 logger.Debug("settings.json file not found; exporting default settings");
                 var text = JsonSerializer.Serialize(settings, serOptions);
-                File.WriteAllText("settings.json", text);
+                File.WriteAllText(Path.Combine(executableDirectory, "settings.json"), text);
             }
         }
         catch (UnauthorizedAccessException)
@@ -911,7 +903,7 @@ class Program
             try
             {
                 var text = JsonSerializer.Serialize(settings, serOptions);
-                File.WriteAllText("settings.json", text);
+                File.WriteAllText(Path.Combine(executableDirectory, "settings.json"), text);
             }
             catch
             {
@@ -1093,7 +1085,6 @@ class Program
         
         var tileScrollIndex = 0;
         var tileIndex = 0;
-        var tileSubIndex = 0;
 
         bool tileCategoryFocus = false;
 
@@ -1101,14 +1092,14 @@ class Program
 
         //
 
-        Raylib_cs.Camera2D camera = new() { Zoom = 1.0f };
-        Raylib_cs.Camera2D tileCamera = new() { Zoom = 1.0f };
-        Raylib_cs.Camera2D mainPageCamera = new() { Zoom = 0.5f };
-        Raylib_cs.Camera2D effectsCamera = new() { Zoom = 0.8f };
-        Raylib_cs.Camera2D lightPageCamera = new() { Zoom = 0.5f, Target = new(-500, -200) };
-        Raylib_cs.Camera2D cameraCamera = new() { Zoom = 0.8f, Target = new(-100, -100) };
+        Camera2D camera = new() { zoom = 1.0f };
+        Camera2D tileCamera = new() { zoom = 1.0f };
+        Camera2D mainPageCamera = new() { zoom = 0.5f };
+        Camera2D effectsCamera = new() { zoom = 0.8f };
+        Camera2D lightPageCamera = new() { zoom = 0.5f, target = new(-500, -200) };
+        Camera2D cameraCamera = new() { zoom = 0.8f, target = new(-100, -100) };
 
-        Raylib_cs.Rectangle border = new(
+        Rectangle border = new(
             bufferTiles.Left * scale,
             bufferTiles.Top * scale,
             (matrixWidth - (bufferTiles.Right * 2)) * scale,
@@ -1117,43 +1108,43 @@ class Program
 
         logger.Information("initializing window");
 
-        Image icon = Raylib.LoadImage("icon.png");
+        Image icon = LoadImage("icon.png");
 
-        Raylib.SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE);
-        Raylib.InitWindow(screenMinWidth, screenMinHeight, "Henry's Leditor");
-        Raylib.SetWindowIcon(icon);
-        Raylib.SetWindowMinSize(screenMinWidth, screenMinHeight);
+        SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE);
+        InitWindow(screenMinWidth, screenMinHeight, "Henry's Leditor");
+        SetWindowIcon(icon);
+        SetWindowMinSize(screenMinWidth, screenMinHeight);
 
-        RenderTexture2D lightMapBuffer = Raylib.LoadRenderTexture(
+        RenderTexture lightMapBuffer = LoadRenderTexture(
             matrixWidth * scale + 300,
             matrixHeight * scale + 300
         );
 
         logger.Information("loading textures");
 
-        Texture2D[] uiTextures = LoadUITextures();
-        Texture2D[] geoTextures = LoadGeoTextures();
-        Texture2D[] stackableTextures = LoadStackableTextures();
-        Texture2D[] lightTextures = LoadLightTextures();
-        Texture2D[][] tileTextures = LoadTileTextures(initTiles);
-        Texture2D[][] tilePreviewTextures = initTiles.Select(category => category.Select(init => LoadTilePreviewTexture(init)).ToArray()).ToArray();
+        Texture[] uiTextures = LoadUITextures();
+        Texture[] geoTextures = LoadGeoTextures();
+        Texture[] stackableTextures = LoadStackableTextures();
+        Texture[] lightTextures = LoadLightTextures();
+        Texture[][] tileTextures = LoadTileTextures(initTiles);
+        Texture[][] tilePreviewTextures = initTiles.Select(category => category.Select(init => LoadTilePreviewTexture(init)).ToArray()).ToArray();
 
         //
 
         logger.Information("loading shaders");
 
-        var tilePreviewShader = Raylib.LoadShader(
+        var tilePreviewShader = LoadShader(
             Path.Combine(assetsDirectory, @"shaders/tile_preview.vs"),
             Path.Combine(assetsDirectory, @"shaders/tile_preview.fs"));
 
         //
 
-        Raylib.SetTargetFPS(60);
+        SetTargetFPS(60);
 
         logger.Information("begin main loop");
 
-        var titleSize = Raylib.MeasureText("Henry's Leditor", 60)/2;
-        var poweredBySize = Raylib.MeasureText("Powered by", 30)/2;
+        var titleSize = MeasureText("Henry's Leditor", 60)/2;
+        var poweredBySize = MeasureText("Powered by", 30)/2;
 
         float initialFrames = 0;
         //bool initialized = false;
@@ -1164,29 +1155,29 @@ class Program
 
         try
         {
-            while (!Raylib.WindowShouldClose())
+            while (!WindowShouldClose())
             {
                 // Splash screen
                 if (initialFrames < 120 && settings.Misc.SplashScreen)
                 {
                     initialFrames++;
 
-                    var width = Raylib.GetScreenWidth();
-                    var height = Raylib.GetScreenHeight();
+                    var width = GetScreenWidth();
+                    var height = GetScreenHeight();
 
-                    Raylib.BeginDrawing();
+                    BeginDrawing();
 
-                    Raylib.ClearBackground(Raylib_cs.Color.BLACK);
+                    ClearBackground(new(0, 0, 0, 255));
 
-                    Raylib.DrawText("Henry's Leditor", width / 2 - titleSize, 200, 60, Raylib_cs.Color.RAYWHITE);
+                    DrawText("Henry's Leditor", width / 2 - titleSize, 200, 60, new(250, 250, 250, 255));
 
-                    Raylib.DrawText("Powered by", width / 2 - 128, height/2 - 60, 30, Raylib_cs.Color.RAYWHITE);
+                    DrawText("Powered by", width / 2 - 128, height/2 - 60, 30, new(250, 250, 250, 255));
 
-                    Raylib.DrawRectangle(width / 2 - 128, height / 2 - 28, 256, 256, Raylib_cs.Color.RAYWHITE);
-                    Raylib.DrawRectangle(width / 2 - 112, height / 2 - 12, 224, 224, Raylib_cs.Color.BLACK);
-                    Raylib.DrawText("raylib", width / 2 - 44, height / 2 + 148, 50, Raylib_cs.Color.RAYWHITE);
+                    DrawRectangle(width / 2 - 128, height / 2 - 28, 256, 256, new(250, 250, 250, 255));
+                    DrawRectangle(width / 2 - 112, height / 2 - 12, 224, 224, new(0, 0, 0, 255));
+                    DrawText("raylib", width / 2 - 44, height / 2 + 148, 50, new(250, 250, 250, 255));
 
-                    Raylib.EndDrawing();
+                    EndDrawing();
 
                     continue;
                 }
@@ -1203,7 +1194,7 @@ class Program
 
                         Raylib.BeginDrawing();
                         {
-                            Raylib.ClearBackground(Raylib_cs.Color.GRAY);
+                            Raylib.ClearBackground(new(170, 170, 170, 255));
 
                             if (Raylib_CsLo.RayGui.GuiButton(new(Raylib.GetScreenWidth() / 2 - 150, Raylib.GetScreenHeight() / 2 - 40, 300, 40), "Create New Project"))
                             {
@@ -1264,27 +1255,27 @@ class Program
                         if (mainPageWheel != 0)
                         {
                             Vector2 mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), mainPageCamera);
-                            mainPageCamera.Offset = Raylib.GetMousePosition();
-                            mainPageCamera.Target = mouseWorldPosition;
-                            mainPageCamera.Zoom += mainPageWheel * zoomIncrement;
-                            if (mainPageCamera.Zoom < zoomIncrement) mainPageCamera.Zoom = zoomIncrement;
+                            mainPageCamera.offset = Raylib.GetMousePosition();
+                            mainPageCamera.target = mouseWorldPosition;
+                            mainPageCamera.zoom += mainPageWheel * zoomIncrement;
+                            if (mainPageCamera.zoom < zoomIncrement) mainPageCamera.zoom = zoomIncrement;
                         }
 
                         // handle mouse drag
                         if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
                         {
                             Vector2 delta = Raylib.GetMouseDelta();
-                            delta = Raymath.Vector2Scale(delta, -1.0f / mainPageCamera.Zoom);
-                            mainPageCamera.Target = Raymath.Vector2Add(mainPageCamera.Target, delta);
+                            delta = RayMath.Vector2Scale(delta, -1.0f / mainPageCamera.zoom);
+                            mainPageCamera.target = RayMath.Vector2Add(mainPageCamera.target, delta);
                         }
 
                         Raylib.BeginDrawing();
                         {
-                            Raylib.ClearBackground(Raylib_cs.Color.GRAY);
+                            Raylib.ClearBackground(new(170, 170, 170, 255));
 
                             Raylib.BeginMode2D(mainPageCamera);
                             {
-                                Raylib.DrawRectangle(0, 0, matrixWidth * scale, matrixHeight * scale, Color.WHITE);
+                                Raylib.DrawRectangle(0, 0, matrixWidth * scale, matrixHeight * scale, new(255, 255, 255, 255));
 
                                 for (int y = 0; y < matrixHeight; y++)
                                 {
@@ -1311,7 +1302,7 @@ class Program
                                         (matrixHeight - waterLevel) * scale,
                                         (matrixWidth + 2) * scale,
                                         waterLevel * scale,
-                                        Raylib_cs.Color.DARKBLUE
+                                        new(0, 0, 255, 250)
                                     );
                                 }
 
@@ -1409,7 +1400,7 @@ class Program
                                     Raylib.GetScreenWidth() - 350,
                                     100,
                                     30,
-                                    Raylib_cs.Color.BLACK
+                                    new(0,0,0,255)
                                 );
 
                                 var helpPressed = Raylib_CsLo.RayGui.GuiButton(new(
@@ -1423,7 +1414,7 @@ class Program
 
                                 if (helpPressed) page = 9;
 
-                                Raylib.DrawText("Seed", Raylib.GetScreenWidth() - 380, 205, 11, Raylib_cs.Color.BLACK);
+                                Raylib.DrawText("Seed", Raylib.GetScreenWidth() - 380, 205, 11, new(0,0,0,255));
 
                                 tileSeed = (int)Math.Round(Raylib_CsLo.RayGui.GuiSlider(
                                     new(
@@ -1461,7 +1452,7 @@ class Program
                                     Raylib.GetScreenWidth() - 380,
                                     335,
                                     11,
-                                    Raylib_cs.Color.BLACK
+                                    new(0,0,0,255)
                                 );
 
                                 waterLevel = (int)Math.Round(Raylib_CsLo.RayGui.GuiSlider(
@@ -1634,8 +1625,8 @@ class Program
                         if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
                         {
                             Vector2 delta = Raylib.GetMouseDelta();
-                            delta = Raymath.Vector2Scale(delta, -1.0f / camera.Zoom);
-                            camera.Target = Raymath.Vector2Add(camera.Target, delta);
+                            delta = RayMath.Vector2Scale(delta, -1.0f / camera.zoom);
+                            camera.target = RayMath.Vector2Add(camera.target, delta);
                         }
 
 
@@ -1644,10 +1635,10 @@ class Program
                         if (wheel != 0)
                         {
                             Vector2 mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-                            camera.Offset = Raylib.GetMousePosition();
-                            camera.Target = mouseWorldPosition;
-                            camera.Zoom += wheel * zoomIncrement;
-                            if (camera.Zoom < zoomIncrement) camera.Zoom = zoomIncrement;
+                            camera.offset = Raylib.GetMousePosition();
+                            camera.target = mouseWorldPosition;
+                            camera.zoom += wheel * zoomIncrement;
+                            if (camera.zoom < zoomIncrement) camera.zoom = zoomIncrement;
                         }
 
                         // handle placing geo
@@ -1710,9 +1701,9 @@ class Program
 
                                         if (
                                             matrixX * scale < border.X ||
-                                            matrixX * scale >= border.Width + border.X ||
+                                            matrixX * scale >= border.width + border.X ||
                                             matrixY * scale < border.Y ||
-                                            matrixY * scale >= border.Height + border.Y)
+                                            matrixY * scale >= border.height + border.Y)
                                         {
                                             break;
                                         }
@@ -1747,7 +1738,7 @@ class Program
                             clickTracker = false;
                         }
 
-                        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_LEFT_BUTTON))
+                        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
                         {
                             if (canDrawGeo && matrixY >= 0 && matrixY < matrixHeight && matrixX >= 0 && matrixX < matrixWidth)
                             {
@@ -1910,7 +1901,7 @@ class Program
 
                         Raylib.BeginDrawing();
                         {
-                            Raylib.ClearBackground(new Raylib_cs.Color(136, 136, 136, 255));
+                            Raylib.ClearBackground(new Color(136, 136, 136, 255));
 
 
                             Raylib.BeginMode2D(camera);
@@ -1918,13 +1909,13 @@ class Program
                                 if (!gridContrast)
                                 {
                                     // the grid
-                                    Rlgl.PushMatrix();
+                                    RlGl.rlPushMatrix();
                                     {
-                                        Rlgl.Translatef(0, 0, -1);
-                                        Rlgl.Rotatef(90, 1, 0, 0);
+                                        RlGl.rlTranslatef(0, 0, -1);
+                                        RlGl.rlRotatef(90, 1, 0, 0);
                                         Raylib.DrawGrid(matrixHeight > matrixWidth ? matrixHeight * 2 : matrixWidth * 2, scale);
                                     }
-                                    Rlgl.PopMatrix();
+                                    RlGl.rlPopMatrix();
                                 }
 
                                 // geo matrix
@@ -2002,13 +1993,13 @@ class Program
                                 if (gridContrast)
                                 {
                                     // the grid
-                                    Rlgl.PushMatrix();
+                                    RlGl.rlPushMatrix();
                                     {
-                                        Rlgl.Translatef(0, 0, -1);
-                                        Rlgl.Rotatef(90, 1, 0, 0);
+                                        RlGl.rlTranslatef(0, 0, -1);
+                                        RlGl.rlRotatef(90, 1, 0, 0);
                                         Raylib.DrawGrid(matrixHeight > matrixWidth ? matrixHeight * 2 : matrixWidth * 2, scale);
                                     }
-                                    Rlgl.PopMatrix();
+                                    RlGl.rlPopMatrix();
                                 }
 
 
@@ -2025,7 +2016,7 @@ class Program
                                             var width = Math.Abs(XS == 0 ? 1 : XS + (XS > 0 ? 1 : -1)) * scale;
                                             var height = Math.Abs(YS == 0 ? 1 : YS + (YS > 0 ? 1 : -1)) * scale;
 
-                                            Raylib_cs.Rectangle rec = (XS >= 0, YS >= 0) switch
+                                            Rectangle rec = (XS >= 0, YS >= 0) switch
                                             {
                                                 // br
                                                 (true, true) => new(prevCoordsX * scale, prevCoordsY * scale, width, height),
@@ -2040,35 +2031,35 @@ class Program
                                                 (false, false) => new(matrixX * scale, matrixY * scale, width, height)
                                             };
 
-                                            Raylib.DrawRectangleLinesEx(rec, 2, Raylib_cs.Color.RED);
+                                            Raylib.DrawRectangleLinesEx(rec, 2, new(255, 0,0,255));
 
                                             Raylib.DrawText(
                                                 $"{width / scale:0}x{height / scale:0}",
                                                 (int)mouse.X + 10,
                                                 (int)mouse.Y,
                                                 4,
-                                                Raylib_cs.Color.WHITE
+                                                new(255,255,255,255)
                                                 );
                                         }
                                         else
                                         {
                                             if (matrixX == x && matrixY == y)
                                             {
-                                                Raylib.DrawRectangleLinesEx(new(x * scale, y * scale, scale, scale), 2, Raylib_cs.Color.RED);
+                                                Raylib.DrawRectangleLinesEx(new(x * scale, y * scale, scale, scale), 2, new(255,0,0,255));
                                             }
                                         }
                                     }
                                 }
 
                                 // the outbound border
-                                Raylib.DrawRectangleLinesEx(new(0, 0, matrixWidth * scale, matrixHeight * scale), 2, Raylib_cs.Color.BLACK);
+                                Raylib.DrawRectangleLinesEx(new(0, 0, matrixWidth * scale, matrixHeight * scale), 2, new(0,0,0,255));
 
                                 // the border
-                                Raylib.DrawRectangleLinesEx(border, camera.Zoom < zoomIncrement ? 5 : 2, Raylib_cs.Color.WHITE);
+                                Raylib.DrawRectangleLinesEx(border, camera.zoom < zoomIncrement ? 5 : 2, new(255, 255, 255, 255));
 
                                 // a lazy way to hide the rest of the grid
-                                Raylib.DrawRectangle(matrixWidth * -scale, -3, matrixWidth * scale, matrixHeight * 2 * scale, Raylib_cs.Color.GRAY);
-                                Raylib.DrawRectangle(0, matrixHeight * scale, matrixWidth * scale + 2, matrixHeight * scale, Raylib_cs.Color.GRAY);
+                                Raylib.DrawRectangle(matrixWidth * -scale, -3, matrixWidth * scale, matrixHeight * 2 * scale, new(170, 170, 170, 255));
+                                Raylib.DrawRectangle(0, matrixHeight * scale, matrixWidth * scale + 2, matrixHeight * scale, new(170, 170, 170, 255));
                             }
                             Raylib.EndMode2D();
 
@@ -2093,32 +2084,32 @@ class Program
                                             uiTextures[index],
                                             Raylib.GetScreenWidth() - 195 + w * uiScale + 5,
                                             h * uiScale + 100,
-                                            Raylib_cs.Color.BLACK
+                                            new(0, 0, 0, 255)
                                         );
                                     }
 
                                     if (w == geoSelectionX && h == geoSelectionY)
-                                        Raylib.DrawRectangleLinesEx(new(Raylib.GetScreenWidth() - 195 + w * uiScale + 5, h * uiScale + 100, uiScale, uiScale), 2, Raylib_cs.Color.RED);
+                                        Raylib.DrawRectangleLinesEx(new(Raylib.GetScreenWidth() - 195 + w * uiScale + 5, h * uiScale + 100, uiScale, uiScale), 2, new(255, 0, 0, 255));
                                     else
-                                        Raylib.DrawRectangleLinesEx(new(Raylib.GetScreenWidth() - 195 + w * uiScale + 5, h * uiScale + 100, uiScale, uiScale), 1, Raylib_cs.Color.BLACK);
+                                        Raylib.DrawRectangleLinesEx(new(Raylib.GetScreenWidth() - 195 + w * uiScale + 5, h * uiScale + 100, uiScale, uiScale), 1, new(0, 0, 0, 255));
                                 }
                             }
 
-                            if (geoIndex < uiTextures.Length) Raylib.DrawText(geoNames[geoIndex], Raylib.GetScreenWidth() - 190, 8 * uiScale + 110, 18, Raylib_cs.Color.BLACK);
+                            if (geoIndex < uiTextures.Length) Raylib.DrawText(geoNames[geoIndex], Raylib.GetScreenWidth() - 190, 8 * uiScale + 110, 18, new(0, 0, 0, 255));
 
                             switch (currentLayer)
                             {
                                 case 0:
-                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, Raylib_cs.Color.BLACK);
-                                    Raylib.DrawText("L1", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, Raylib_cs.Color.WHITE);
+                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, new(0, 0, 0, 255));
+                                    Raylib.DrawText("L1", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, new(255, 255, 255, 255));
                                     break;
                                 case 1:
-                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, Raylib_cs.Color.DARKGREEN);
-                                    Raylib.DrawText("L2", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, Raylib_cs.Color.WHITE);
+                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, new(0, 255, 0, 255));
+                                    Raylib.DrawText("L2", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, new(255, 255, 255, 255));
                                     break;
                                 case 2:
-                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, Raylib_cs.Color.RED);
-                                    Raylib.DrawText("L3", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, Raylib_cs.Color.WHITE);
+                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, new(255, 0, 0, 255));
+                                    Raylib.DrawText("L3", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, new(255, 255, 255, 255));
                                     break;
                             }
 
@@ -2128,14 +2119,14 @@ class Program
                                     Raylib.GetScreenWidth() - 195,
                                     Raylib.GetScreenHeight() - 100,
                                     12,
-                                    Raylib_cs.Color.BLACK);
+                                    new(0, 0, 0, 255));
 
                             else Raylib.DrawText(
                                     $"X = -\nY = -",
                                     Raylib.GetScreenWidth() - 195,
                                     Raylib.GetScreenHeight() - 100,
                                     12,
-                                    Raylib_cs.Color.BLACK);
+                                    new(0, 0, 0, 255));
 
                             showLayer1 = Raylib_CsLo.RayGui.GuiCheckBox(
                                 new(Raylib.GetScreenWidth() - 190, 8 * uiScale + 190, 20, 20),
@@ -2224,8 +2215,8 @@ class Program
                             {
                                 clickTracker = true;
                                 Vector2 delta = Raylib.GetMouseDelta();
-                                delta = Raymath.Vector2Scale(delta, -1.0f / tileCamera.Zoom);
-                                tileCamera.Target = Raymath.Vector2Add(tileCamera.Target, delta);
+                                delta = RayMath.Vector2Scale(delta, -1.0f / tileCamera.zoom);
+                                tileCamera.target = RayMath.Vector2Add(tileCamera.target, delta);
                             }
 
                             if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_RIGHT)) clickTracker = false;
@@ -2235,10 +2226,10 @@ class Program
                             if (tileWheel != 0)
                             {
                                 Vector2 mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), tileCamera);
-                                tileCamera.Offset = Raylib.GetMousePosition();
-                                tileCamera.Target = mouseWorldPosition;
-                                tileCamera.Zoom += tileWheel * zoomIncrement;
-                                if (tileCamera.Zoom < zoomIncrement) tileCamera.Zoom = zoomIncrement;
+                                tileCamera.offset = Raylib.GetMousePosition();
+                                tileCamera.target = mouseWorldPosition;
+                                tileCamera.zoom += tileWheel * zoomIncrement;
+                                if (tileCamera.zoom < zoomIncrement) tileCamera.zoom = zoomIncrement;
                             }
                         }
 
@@ -2334,7 +2325,7 @@ class Program
                         }
 
                         var currentTilePreviewColor = tileCategories[tileCategoryIndex].Item2;
-                        Texture2D currentTileTexture = tilePreviewTextures[tileCategoryIndex][tileIndex];
+                        Texture currentTileTexture = tilePreviewTextures[tileCategoryIndex][tileIndex];
                         var uniformLoc = Raylib.GetShaderLocation(tilePreviewShader, "inputTexture");
                         var colorLoc = Raylib.GetShaderLocation(tilePreviewShader, "highlightColor");
 
@@ -2343,7 +2334,7 @@ class Program
                         #region TileEditorDrawing
                         Raylib.BeginDrawing();
 
-                        Raylib.ClearBackground(Raylib_cs.Color.GRAY);
+                        Raylib.ClearBackground(new(170, 170, 170, 255));
 
                         Raylib.BeginMode2D(tileCamera);
                         {
@@ -2542,17 +2533,17 @@ class Program
                                         Raylib.SetShaderValue(
                                             tilePreviewShader,
                                             colorLoc, 
-                                            new Vector4(color.R, color.G, color.B, 1), 
+                                            new Vector4(color.r, color.g, color.b, 1), 
                                             ShaderUniformDataType.SHADER_UNIFORM_VEC4
                                         );
                                         Raylib.DrawTexturePro(
                                             tileTexture,
-                                            new(0, 0, tileTexture.Width, tileTexture.Height),
-                                            new(x*16, y*16, tileTexture.Width, tileTexture.Height),
+                                            new(0, 0, tileTexture.width, tileTexture.height),
+                                            new(x*16, y*16, tileTexture.width, tileTexture.height),
                                             // tileWidth > 2 && tileHeight > 2 ? new(16, 16) : new(0, 0),
-                                            Raymath.Vector2Scale(GetTileHeadOrigin(initTile), previewScale),
+                                            RayMath.Vector2Scale(GetTileHeadOrigin(initTile), previewScale),
                                             0,
-                                            z == currentLayer ? Color.WHITE : new(200, 200, 200, 150)
+                                            z == currentLayer ? new(255, 255, 255, 255) : new(200, 200, 200, 150)
                                         );
                                         Raylib.EndShaderMode();
                                     }
@@ -2749,17 +2740,17 @@ class Program
                                         Raylib.SetShaderValue(
                                             tilePreviewShader,
                                             colorLoc, 
-                                            new Vector4(color.R, color.G, color.B, 1), 
+                                            new Vector4(color.r, color.g, color.b, 1), 
                                             ShaderUniformDataType.SHADER_UNIFORM_VEC4
                                         );
                                         Raylib.DrawTexturePro(
                                             tileTexture,
-                                            new(0, 0, tileTexture.Width, tileTexture.Height),
-                                            new(x*16, y*16, tileTexture.Width, tileTexture.Height),
+                                            new(0, 0, tileTexture.width, tileTexture.height),
+                                            new(x*16, y*16, tileTexture.width, tileTexture.height),
                                             // tileWidth > 2 && tileHeight > 2 ? new(16, 16) : new(0, 0),
-                                            Raymath.Vector2Scale(GetTileHeadOrigin(initTile), previewScale),
+                                            RayMath.Vector2Scale(GetTileHeadOrigin(initTile), previewScale),
                                             0,
-                                            z == currentLayer ? Color.WHITE : new(200, 200, 200, 150)
+                                            z == currentLayer ? new(255, 255, 255, 255) : new(200, 200, 200, 150)
                                         );
                                         Raylib.EndShaderMode();
                                     }
@@ -2955,17 +2946,17 @@ class Program
                                         Raylib.SetShaderValue(
                                             tilePreviewShader,
                                             colorLoc, 
-                                            new Vector4(color.R, color.G, color.B, 1), 
+                                            new Vector4(color.r, color.g, color.b, 1), 
                                             ShaderUniformDataType.SHADER_UNIFORM_VEC4
                                         );
                                         Raylib.DrawTexturePro(
                                             tileTexture,
-                                            new(0, 0, tileTexture.Width, tileTexture.Height),
-                                            new(x*16, y*16, tileTexture.Width, tileTexture.Height),
+                                            new(0, 0, tileTexture.width, tileTexture.height),
+                                            new(x*16, y*16, tileTexture.width, tileTexture.height),
                                             // tileWidth > 2 && tileHeight > 2 ? new(16, 16) : new(0, 0),
-                                            Raymath.Vector2Scale(GetTileHeadOrigin(initTile), previewScale),
+                                            RayMath.Vector2Scale(GetTileHeadOrigin(initTile), previewScale),
                                             0,
-                                            z == currentLayer ? Color.WHITE : new(200, 200, 200, 150)
+                                            z == currentLayer ? new(255, 255, 255, 255) : new(200, 200, 200, 150)
                                         );
 
                                         Raylib.EndShaderMode();
@@ -2985,7 +2976,7 @@ class Program
                                 Raylib.SetShaderValue(
                                     tilePreviewShader, 
                                     colorLoc, 
-                                    new Vector4(currentTilePreviewColor.R, currentTilePreviewColor.G, currentTilePreviewColor.B, 1), 
+                                    new Vector4(currentTilePreviewColor.r, currentTilePreviewColor.g, currentTilePreviewColor.b, 1), 
                                     ShaderUniformDataType.SHADER_UNIFORM_VEC4
                                 );
                                 // Raylib.DrawTextureV(
@@ -2996,11 +2987,11 @@ class Program
 
                                 Raylib.DrawTexturePro(
                                     currentTileTexture,
-                                    new(0, 0, currentTileTexture.Width, currentTileTexture.Height),
-                                    new(tileMatrixX*previewScale, tileMatrixY*previewScale, currentTileTexture.Width, currentTileTexture.Height),
-                                    Raymath.Vector2Scale(GetTileHeadOrigin(initTiles[tileCategoryIndex][tileIndex]), previewScale),
+                                    new(0, 0, currentTileTexture.width, currentTileTexture.height),
+                                    new(tileMatrixX*previewScale, tileMatrixY*previewScale, currentTileTexture.width, currentTileTexture.height),
+                                    RayMath.Vector2Scale(GetTileHeadOrigin(initTiles[tileCategoryIndex][tileIndex]), previewScale),
                                     0,
-                                    Color.WHITE
+                                    new(255, 255, 255, 255)
                                 );
                             Raylib.EndShaderMode();
 
@@ -3027,7 +3018,7 @@ class Program
                                     leftPanelSideStart,
                                     leftPanelSideEnd,
                                     4,
-                                    Color.BLUE
+                                    new(0, 0, 255, 255)
                                 );
                             } else {
                                 Raylib.SetMouseCursor(MouseCursor.MOUSE_CURSOR_ARROW);
@@ -3035,13 +3026,13 @@ class Program
                                     leftPanelSideStart,
                                     leftPanelSideEnd,
                                     4,
-                                    Color.BLACK
+                                    new(0, 0, 0, 255)
                                 );
                             }
 
                             // draw categories list
 
-                            var newSubIndex = Raylib_CsLo.RayGui.GuiListView(
+                            var newSubIndex = RayGui.GuiListView(
                                 new(teWidth - (tilePanelWidth + 10) + 10, 90, tilePanelWidth*0.3f, teHeight - 200),
                                 string.Join(";", tileCategories.Skip(categoriesPageSize * tileCategoryCurrentPage).Take(categoriesPageSize).Select(t => t.Item1)),
                                 &tileCategoryScrollIndex,
@@ -3089,29 +3080,29 @@ class Program
                                 Raylib.DrawRectangleLinesEx(
                                     new(teWidth - (tilePanelWidth + 10) + 10, 90, tilePanelWidth*0.3f, teHeight - 200),
                                     4f,
-                                    Color.BLUE
+                                    new(0, 0, 255, 255)
                                 );
                             } else {
                                 Raylib.DrawRectangleLinesEx(
                                     new(teWidth - (tilePanelWidth + 10) + 15 + (tilePanelWidth*0.3f), 90, tilePanelWidth*0.7f - 25, teHeight - 200),
                                     4f,
-                                    Color.BLUE
+                                    new(0, 0, 255, 255)
                                 );
                             }
 
                             // layer indicator
 
                             if (currentLayer == 2) {
-                                Raylib.DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), Color.RED);
-                                Raylib.DrawText("L3", teWidth - 50, (int)tilePanelRect.height + 10, 20, Color.WHITE);
+                                Raylib.DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), new(255, 0, 0, 255));
+                                Raylib.DrawText("L3", teWidth - 50, (int)tilePanelRect.height + 10, 20, new(255, 255, 255, 255));
                             }
                             if (currentLayer == 1) {
-                                Raylib.DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), Color.LIME);
-                                Raylib.DrawText("L2", teWidth - 50, (int)tilePanelRect.height + 10, 20, Color.WHITE);
+                                Raylib.DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), new(0, 255, 0, 255));
+                                Raylib.DrawText("L2", teWidth - 50, (int)tilePanelRect.height + 10, 20, new(255, 255, 255, 255));
                             }
                             if (currentLayer == 0) {
-                                Raylib.DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), Color.BLACK);
-                                Raylib.DrawText("L1", teWidth - 47, (int)tilePanelRect.height + 10, 20, Color.WHITE);
+                                Raylib.DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), new(0, 0, 0, 255));
+                                Raylib.DrawText("L1", teWidth - 47, (int)tilePanelRect.height + 10, 20, new(255, 255, 255, 255));
                             }
 
                             // tile specs panel
@@ -3175,8 +3166,8 @@ class Program
                         if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
                         {
                             Vector2 delta = Raylib.GetMouseDelta();
-                            delta = Raymath.Vector2Scale(delta, -1.0f / cameraCamera.Zoom);
-                            cameraCamera.Target = Raymath.Vector2Add(cameraCamera.Target, delta);
+                            delta = RayMath.Vector2Scale(delta, -1.0f / cameraCamera.zoom);
+                            cameraCamera.target = RayMath.Vector2Add(cameraCamera.target, delta);
                         }
 
                         // handle zoom
@@ -3184,10 +3175,10 @@ class Program
                         if (cameraWheel != 0)
                         {
                             Vector2 mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), cameraCamera);
-                            cameraCamera.Offset = Raylib.GetMousePosition();
-                            cameraCamera.Target = mouseWorldPosition;
-                            cameraCamera.Zoom += cameraWheel * zoomIncrement;
-                            if (cameraCamera.Zoom < zoomIncrement) cameraCamera.Zoom = zoomIncrement;
+                            cameraCamera.offset = Raylib.GetMousePosition();
+                            cameraCamera.target = mouseWorldPosition;
+                            cameraCamera.zoom += cameraWheel * zoomIncrement;
+                            if (cameraCamera.zoom < zoomIncrement) cameraCamera.zoom = zoomIncrement;
                         }
 
                         if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && clickTracker2)
@@ -3235,7 +3226,7 @@ class Program
 
                         Raylib.BeginDrawing();
                         {
-                            Raylib.ClearBackground(Raylib_cs.Color.GRAY);
+                            Raylib.ClearBackground(new(170, 170, 170, 255));
 
                             Raylib.BeginMode2D(cameraCamera);
                             {
@@ -3244,7 +3235,7 @@ class Program
                                     0, 0,
                                     matrixWidth * scale,
                                     matrixHeight * scale,
-                                    Raylib_cs.Color.WHITE
+                                    new(255, 255, 255, 255)
                                 );
 
                                 #region CamerasLevelBackground
@@ -3274,7 +3265,7 @@ class Program
                                         (matrixHeight - waterLevel) * scale,
                                         (matrixWidth + 2) * scale,
                                         waterLevel * scale,
-                                        Raylib_cs.Color.DARKBLUE
+                                        new(0, 0, 255, 255)
                                     );
                                 }
 
@@ -3375,7 +3366,7 @@ class Program
                                 Raylib.DrawRectangleLinesEx(
                                     border,
                                     4f,
-                                    Raylib_cs.Color.PINK
+                                    new(200, 66, 245, 255)
                                 );
                             }
                             Raylib.EndMode2D();
@@ -3447,8 +3438,8 @@ class Program
                         if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
                         {
                             Vector2 delta = Raylib.GetMouseDelta();
-                            delta = Raymath.Vector2Scale(delta, -1.0f / lightPageCamera.Zoom);
-                            lightPageCamera.Target = Raymath.Vector2Add(lightPageCamera.Target, delta);
+                            delta = RayMath.Vector2Scale(delta, -1.0f / lightPageCamera.zoom);
+                            lightPageCamera.target = RayMath.Vector2Add(lightPageCamera.target, delta);
                         }
 
 
@@ -3457,10 +3448,10 @@ class Program
                         if (wheel2 != 0)
                         {
                             Vector2 mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), lightPageCamera);
-                            lightPageCamera.Offset = Raylib.GetMousePosition();
-                            lightPageCamera.Target = mouseWorldPosition;
-                            lightPageCamera.Zoom += wheel2 * zoomIncrement;
-                            if (lightPageCamera.Zoom < zoomIncrement) lightPageCamera.Zoom = zoomIncrement;
+                            lightPageCamera.offset = Raylib.GetMousePosition();
+                            lightPageCamera.target = mouseWorldPosition;
+                            lightPageCamera.zoom += wheel2 * zoomIncrement;
+                            if (lightPageCamera.zoom < zoomIncrement) lightPageCamera.zoom = zoomIncrement;
                         }
 
                         // update light brush
@@ -3469,7 +3460,7 @@ class Program
                             var texture = lightTextures[lightBrushTextureIndex];
                             var lightMouse = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), lightPageCamera);
 
-                            lightBrushSource = new(0, 0, texture.Width, texture.Height);
+                            lightBrushSource = new(0, 0, texture.width, texture.height);
                             lightBrushDest = new(lightMouse.X, lightMouse.Y, lightBrushWidth, lightBrushHeight);
                             lightBrushOrigin = new(lightBrushWidth / 2, lightBrushHeight / 2);
                         }
@@ -3580,7 +3571,7 @@ class Program
                                         lightBrushDest,
                                         lightBrushOrigin,
                                         lightBrushRotation,
-                                        Raylib_cs.Color.WHITE
+                                        new(255, 255, 255, 255)
                                         );
                                 }
                                 else
@@ -3591,7 +3582,7 @@ class Program
                                         lightBrushDest,
                                         lightBrushOrigin,
                                         lightBrushRotation,
-                                        Raylib_cs.Color.BLACK
+                                        new(0, 0, 0, 255)
                                         );
                                 }
                             }
@@ -3605,25 +3596,25 @@ class Program
                         {
                             if (Raylib.IsKeyDown(KeyboardKey.KEY_W))
                             {
-                                lightRecSize = Raymath.Vector2Add(lightRecSize, new(0, growthFactor));
+                                lightRecSize = RayMath.Vector2Add(lightRecSize, new(0, growthFactor));
                                 growthFactor += 0.03f;
                             }
 
                             if (Raylib.IsKeyDown(KeyboardKey.KEY_S))
                             {
-                                lightRecSize = Raymath.Vector2Add(lightRecSize, new(0, -growthFactor));
+                                lightRecSize = RayMath.Vector2Add(lightRecSize, new(0, -growthFactor));
                                 growthFactor += 0.03f;
                             }
 
                             if (Raylib.IsKeyDown(KeyboardKey.KEY_D))
                             {
-                                lightRecSize = Raymath.Vector2Add(lightRecSize, new(growthFactor, 0));
+                                lightRecSize = RayMath.Vector2Add(lightRecSize, new(growthFactor, 0));
                                 growthFactor += 0.03f;
                             }
 
                             if (Raylib.IsKeyDown(KeyboardKey.KEY_A))
                             {
-                                lightRecSize = Raymath.Vector2Add(lightRecSize, new(-growthFactor, 0));
+                                lightRecSize = RayMath.Vector2Add(lightRecSize, new(-growthFactor, 0));
                                 growthFactor += 0.03f;
                             }
 
@@ -3634,16 +3625,16 @@ class Program
                         }
                         else
                         {
-                            if (Raylib.IsKeyDown(KeyboardKey.KEY_W)) lightRecSize = Raymath.Vector2Add(lightRecSize, new(0, 3));
-                            if (Raylib.IsKeyDown(KeyboardKey.KEY_S)) lightRecSize = Raymath.Vector2Add(lightRecSize, new(0, -3));
-                            if (Raylib.IsKeyDown(KeyboardKey.KEY_D)) lightRecSize = Raymath.Vector2Add(lightRecSize, new(3, 0));
-                            if (Raylib.IsKeyDown(KeyboardKey.KEY_A)) lightRecSize = Raymath.Vector2Add(lightRecSize, new(-3, 0));
+                            if (Raylib.IsKeyDown(KeyboardKey.KEY_W)) lightRecSize = RayMath.Vector2Add(lightRecSize, new(0, 3));
+                            if (Raylib.IsKeyDown(KeyboardKey.KEY_S)) lightRecSize = RayMath.Vector2Add(lightRecSize, new(0, -3));
+                            if (Raylib.IsKeyDown(KeyboardKey.KEY_D)) lightRecSize = RayMath.Vector2Add(lightRecSize, new(3, 0));
+                            if (Raylib.IsKeyDown(KeyboardKey.KEY_A)) lightRecSize = RayMath.Vector2Add(lightRecSize, new(-3, 0));
                         }
 
 
                         Raylib.BeginDrawing();
                         {
-                            Raylib.ClearBackground(Raylib_cs.Color.BLUE);
+                            Raylib.ClearBackground(new(66, 108, 245, 255));
 
                             Raylib.BeginMode2D(lightPageCamera);
                             {
@@ -3651,7 +3642,7 @@ class Program
                                     0, 0,
                                     matrixWidth * scale + 300,
                                     matrixHeight * scale + 300,
-                                    Raylib_cs.Color.WHITE
+                                    new(255, 255, 255, 255)
                                 );
 
                                 for (int y = 0; y < matrixHeight; y++)
@@ -3679,7 +3670,7 @@ class Program
                                         (matrixHeight - waterLevel) * scale + 300,
                                         (matrixWidth + 2) * scale,
                                         waterLevel * scale,
-                                        Raylib_cs.Color.DARKBLUE
+                                        new(0, 0, 255, 255)
                                     );
                                 }
 
@@ -3759,8 +3750,8 @@ class Program
                                 }
 
                                 Raylib.DrawTextureRec(
-                                    lightMapBuffer.Texture,
-                                    new Raylib_cs.Rectangle(0, 0, lightMapBuffer.Texture.Width, -lightMapBuffer.Texture.Height),
+                                    lightMapBuffer.texture,
+                                    new Rectangle(0, 0, lightMapBuffer.texture.width, -lightMapBuffer.texture.height),
                                     new(0, 0),
                                     new(255, 255, 255, 150)
                                 );
@@ -3773,7 +3764,7 @@ class Program
                                         lightBrushDest,
                                         lightBrushOrigin,
                                         lightBrushRotation,
-                                        Raylib_cs.Color.PINK
+                                        new(200, 66, 245, 255)
                                         );
                                 }
                                 else
@@ -3784,7 +3775,7 @@ class Program
                                         lightBrushDest,
                                         lightBrushOrigin,
                                         lightBrushRotation,
-                                        Raylib_cs.Color.RED
+                                        new(255, 0, 0, 255)
                                         );
                                 }
 
@@ -3813,11 +3804,11 @@ class Program
                                 {
                                     Raylib.DrawTexturePro(
                                         texture,
-                                        new(0, 0, texture.Width, texture.Height),
+                                        new(0, 0, texture.width, texture.height),
                                         new(20, (textureSize + 1) * pageIndex + 80, textureSize, textureSize),
                                         new(0, 0),
                                         0,
-                                        Raylib_cs.Color.BLACK
+                                        new(0, 0, 0, 255)
                                         );
 
                                     if (index == lightBrushTextureIndex) Raylib.DrawRectangleLinesEx(
@@ -3828,7 +3819,7 @@ class Program
                                             textureSize
                                         ),
                                         2.0f,
-                                        Raylib_cs.Color.BLUE
+                                        new(0, 0, 255, 255)
                                         );
                                 }
                             }
@@ -3840,14 +3831,14 @@ class Program
                                 Raylib.GetScreenWidth() - 100,
                                 Raylib.GetScreenHeight() - 100,
                                 50.0f,
-                                Raylib_cs.Color.RED
+                                new(255, 0, 0, 255)
                             );
 
                             Raylib.DrawCircleLines(
                                 Raylib.GetScreenWidth() - 100,
                                 Raylib.GetScreenHeight() - 100,
                                 15 + (flatness * 7),
-                                Raylib_cs.Color.RED
+                                new(255, 0, 0, 255)
                             );
 
 
@@ -3856,7 +3847,7 @@ class Program
                                 (Raylib.GetScreenHeight() - 100) + (float)((15 + flatness * 7) * Math.Sin(lightAngle))
                                 ),
                                 10.0f,
-                                Raylib_cs.Color.RED
+                                new(255, 0, 0, 255)
                             );
 
 
@@ -3869,20 +3860,20 @@ class Program
                     case 6:
                         Raylib.BeginDrawing();
                         {
-                            Raylib.ClearBackground(Raylib_cs.Color.GRAY);
+                            Raylib.ClearBackground(new(170, 170, 170, 255));
 
                             fixed (byte* pt = panelBytes)
                             {
                                 Raylib_CsLo.RayGui.GuiPanel(new(30, 60, Raylib.GetScreenWidth() - 60, Raylib.GetScreenHeight() - 120), (sbyte*)pt);
                             }
 
-                            Raylib.DrawText("Width", 50, 110, 20, Raylib_cs.Color.BLACK);
+                            Raylib.DrawText("Width", 50, 110, 20, new(0, 0, 0, 255));
                             if (Raylib_CsLo.RayGui.GuiSpinner(new(130, 100, 300, 40), "", &matrixWidthValue, 72, 999, editControl == 0))
                             {
                                 editControl = 0;
                             }
 
-                            Raylib.DrawText("Height", 50, 160, 20, Raylib_cs.Color.BLACK);
+                            Raylib.DrawText("Height", 50, 160, 20, new(0, 0, 0, 255));
                             if (Raylib_CsLo.RayGui.GuiSpinner(new(130, 150, 300, 40), "", &matrixHeightValue, 43, 999, editControl == 1))
                             {
                                 editControl = 1;
@@ -3890,25 +3881,25 @@ class Program
 
                             Raylib_CsLo.RayGui.GuiLine(new(50, 200, Raylib.GetScreenWidth() - 100, 40), "Padding");
 
-                            Raylib.DrawText("Left", 50, 260, 20, Raylib_cs.Color.BLACK);
+                            Raylib.DrawText("Left", 50, 260, 20, new(0, 0, 0, 255));
                             if (Raylib_CsLo.RayGui.GuiSpinner(new(130, 250, 300, 40), "", &leftPadding, 0, 333, editControl == 2))
                             {
                                 editControl = 2;
                             }
 
-                            Raylib.DrawText("Right", 50, 310, 20, Raylib_cs.Color.BLACK);
+                            Raylib.DrawText("Right", 50, 310, 20, new(0, 0, 0, 255));
                             if (Raylib_CsLo.RayGui.GuiSpinner(new(130, 300, 300, 40), "", &rightPadding, 0, 333, editControl == 3))
                             {
                                 editControl = 3;
                             }
 
-                            Raylib.DrawText("Top", 50, 360, 20, Raylib_cs.Color.BLACK);
+                            Raylib.DrawText("Top", 50, 360, 20, new(0, 0, 0, 255));
                             if (Raylib_CsLo.RayGui.GuiSpinner(new(130, 350, 300, 40), "", &topPadding, 0, 111, editControl == 4))
                             {
                                 editControl = 4;
                             }
 
-                            Raylib.DrawText("Bottom", 50, 410, 20, Raylib_cs.Color.BLACK);
+                            Raylib.DrawText("Bottom", 50, 410, 20, new(0, 0, 0, 255));
                             if (Raylib_CsLo.RayGui.GuiSpinner(new(130, 400, 300, 40), "", &bottomPadding, 0, 111, editControl == 5))
                             {
                                 editControl = 5;
@@ -4040,7 +4031,7 @@ class Program
                                     lightMapBuffer = Raylib.LoadRenderTexture((matrixWidth * scale) + 300, (matrixHeight * scale) + 300);
 
                                     Raylib.BeginTextureMode(lightMapBuffer);
-                                    Raylib.ClearBackground(Raylib_cs.Color.WHITE);
+                                    Raylib.ClearBackground(new(255, 255, 255, 255));
                                     Raylib.EndTextureMode();
 
                                     renderCamers = [new RenderCamera() { Coords = (20f, 30f), Quads = new(new(), new(), new(), new()) }];
@@ -4160,7 +4151,7 @@ class Program
                                     0,
                                     Raylib.GetScreenWidth(),
                                     Raylib.GetScreenHeight(),
-                                    new Raylib_cs.Color(0, 0, 0, 90)
+                                    new Color(0, 0, 0, 90)
                                 );
 
                                 fixed (byte* pt = addNewEffectPanelBytes)
@@ -4206,7 +4197,7 @@ class Program
                                         540
                                     ),
                                     2.0f,
-                                    Raylib_cs.Color.BLUE
+                                    new(0, 0, 255, 255)
                                 );
 
                                 newEffectSelectedValue = Raylib_CsLo.RayGui.GuiListView(
@@ -4229,7 +4220,7 @@ class Program
                                         540
                                     ),
                                     2.0f,
-                                    Raylib_cs.Color.BLUE
+                                    new(0, 0, 255, 255)
                                 );
                             }
                             Raylib.EndDrawing();
@@ -4272,8 +4263,8 @@ class Program
                             if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
                             {
                                 Vector2 delta = Raylib.GetMouseDelta();
-                                delta = Raymath.Vector2Scale(delta, -1.0f / effectsCamera.Zoom);
-                                effectsCamera.Target = Raymath.Vector2Add(effectsCamera.Target, delta);
+                                delta = RayMath.Vector2Scale(delta, -1.0f / effectsCamera.zoom);
+                                effectsCamera.target = RayMath.Vector2Add(effectsCamera.target, delta);
                             }
 
                             // Brush size
@@ -4401,7 +4392,7 @@ class Program
                             Raylib.BeginDrawing();
                             {
 
-                                Raylib.ClearBackground(Raylib_cs.Color.BLACK);
+                                Raylib.ClearBackground(new(0, 0, 0, 255));
 
                                 Raylib.BeginMode2D(effectsCamera);
                                 {
@@ -4412,9 +4403,9 @@ class Program
                                             (matrixHeight * scale) + 4
                                         ),
                                         2f,
-                                        Color.WHITE
+                                        new(255, 255, 255, 255)
                                     );
-                                    Raylib.DrawRectangle(0, 0, matrixWidth * scale, matrixHeight * scale, Color.WHITE);
+                                    Raylib.DrawRectangle(0, 0, matrixWidth * scale, matrixHeight * scale, new(255, 255, 255, 255));
 
                                     for (int y = 0; y < matrixHeight; y++)
                                     {
@@ -4441,7 +4432,7 @@ class Program
                                             (matrixHeight - waterLevel) * scale,
                                             (matrixWidth + 2) * scale,
                                             waterLevel * scale,
-                                            Raylib_cs.Color.DARKBLUE
+                                            new(0, 0, 255, 255)
                                         );
                                     }
 
@@ -4549,14 +4540,14 @@ class Program
                                                 if (brushEraseMode)
                                                 {
                                                     Raylib.DrawRectangleLinesEx(
-                                                        new Raylib_cs.Rectangle(
+                                                        new Rectangle(
                                                             x * scale,
                                                             y * scale,
                                                             scale,
                                                             scale
                                                         ),
                                                         2.0f,
-                                                        Raylib_cs.Color.RED
+                                                        new(255, 0, 0, 255)
                                                     );
 
 
@@ -4565,19 +4556,19 @@ class Program
                                                         (effectsMatrixY - brushRadius) * scale,
                                                         (brushRadius * 2 + 1) * scale,
                                                         (brushRadius * 2 + 1) * scale,
-                                                        Raylib_cs.Color.RED);
+                                                        new(255, 0, 0, 255));
                                                 }
                                                 else
                                                 {
                                                     Raylib.DrawRectangleLinesEx(
-                                                        new Raylib_cs.Rectangle(
+                                                        new Rectangle(
                                                             x * scale,
                                                             y * scale,
                                                             scale,
                                                             scale
                                                         ),
                                                         2.0f,
-                                                        Raylib_cs.Color.WHITE
+                                                        new(255, 255, 255, 255)
                                                     );
 
                                                     Raylib.DrawRectangleLines(
@@ -4585,7 +4576,7 @@ class Program
                                                         (effectsMatrixY - brushRadius) * scale,
                                                         (brushRadius * 2 + 1) * scale,
                                                         (brushRadius * 2 + 1) * scale,
-                                                        Raylib_cs.Color.WHITE);
+                                                        new(255, 255, 255, 255));
                                                 }
                                             }
                                         }
@@ -4663,7 +4654,7 @@ class Program
                                         130 + (35 * i),
                                         260,
                                         appliedEffectRecHeight,
-                                        Color.BLACK
+                                        new(0, 0, 0, 255)
                                     );
 
                                     if (oi == currentAppliedEffect) Raylib.DrawRectangleLinesEx(
@@ -4674,7 +4665,7 @@ class Program
                                             appliedEffectRecHeight
                                         ),
                                         2.0f,
-                                        Raylib_cs.Color.BLUE
+                                        new(0, 0, 255, 255)
                                     );
 
                                     Raylib.DrawText(
@@ -4682,7 +4673,7 @@ class Program
                                         Raylib.GetScreenWidth() - 280,
                                         138 + (35 * i),
                                         14,
-                                        Raylib_cs.Color.BLACK
+                                        new(0, 0, 0, 255)
                                     );
 
                                     var deletePressed = Raylib_CsLo.RayGui.GuiButton(
@@ -4907,7 +4898,7 @@ class Program
 
                         Raylib.BeginDrawing();
                         {
-                            Raylib.ClearBackground(Raylib_cs.Color.GRAY);
+                            Raylib.ClearBackground(new(170, 170, 170, 255));
 
                             fixed (byte* pt = helpPanelBytes)
                             {
@@ -4929,7 +4920,7 @@ class Program
                                 150,
                                 Raylib.GetScreenWidth() - 510,
                                 Raylib.GetScreenHeight() - 270,
-                                Raylib_cs.Color.GRAY
+                                new(170, 170, 170, 255)
                             );
 
                             switch (helpSubSection)
@@ -4941,7 +4932,7 @@ class Program
                                         400,
                                         160,
                                         20,
-                                        Raylib_cs.Color.BLACK
+                                        new(0, 0, 0, 255)
                                     );
                                     break;
 
@@ -4953,7 +4944,7 @@ class Program
                                         400,
                                         160,
                                         20,
-                                        Raylib_cs.Color.BLACK
+                                        new(0, 0, 0, 255)
                                     );
                                     break;
 
@@ -4967,7 +4958,7 @@ class Program
                                         400,
                                         160,
                                         20,
-                                        Raylib_cs.Color.BLACK
+                                        new(0, 0, 0, 255)
                                     );
                                     break;
 
@@ -4982,7 +4973,7 @@ class Program
                                         400,
                                         160,
                                         20,
-                                        Raylib_cs.Color.BLACK
+                                        new(0, 0, 0, 255)
                                     );
                                     break;
 
@@ -4998,7 +4989,7 @@ class Program
                                         400,
                                         160,
                                         20,
-                                        Raylib_cs.Color.BLACK
+                                        new(0, 0, 0, 255)
                                     );
                                     break;
 
@@ -5042,17 +5033,17 @@ class Program
                         {
                             if (Raylib_CsLo.RayGui.GuiIsLocked()) // loading a project
                             {
-                                Raylib.ClearBackground(new Raylib_cs.Color(0, 0, 0, 130));
+                                Raylib.ClearBackground(new Color(0, 0, 0, 130));
 
-                                Raylib.DrawText("Please wait..", Raylib.GetScreenWidth() / 2 - 100, Raylib.GetScreenHeight() / 2 - 20, 30, Raylib_cs.Color.WHITE);
+                                Raylib.DrawText("Please wait..", Raylib.GetScreenWidth() / 2 - 100, Raylib.GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
 
                                 if (loadFileTask.IsCompleted)
                                 {
                                     var res = loadFileTask.Result;
                                     if (res.Success)
                                     {
-                                        cameraCamera.Target = new(-100, -100);
-                                        lightPageCamera.Target = new(-500, -200);
+                                        cameraCamera.target = new(-100, -100);
+                                        lightPageCamera.target = new(-500, -200);
 
                                         renderCamers = res.Cameras;
                                         geoMatrix = res.GeoMatrix;
@@ -5074,9 +5065,9 @@ class Program
                                         Raylib.BeginTextureMode(lightMapBuffer);
                                         Raylib.DrawTextureRec(
                                             lightMapTexture,
-                                            new(0, 0, lightMapTexture.Width, lightMapTexture.Height),
+                                            new(0, 0, lightMapTexture.width, lightMapTexture.height),
                                             new(0, 0),
-                                            Raylib_cs.Color.WHITE
+                                            new(255, 255, 255, 255)
                                         );
                                         Raylib.EndTextureMode();
 
@@ -5096,7 +5087,7 @@ class Program
                             else // choosing a project
                             {
 
-                                Raylib.ClearBackground(Raylib_cs.Color.GRAY);
+                                Raylib.ClearBackground(new(170, 170, 170, 255));
 
                                 Raylib_CsLo.Rectangle panelRect = new(100, 100, Raylib.GetScreenWidth() - 200, Raylib.GetScreenHeight() - 200);
 
@@ -5116,7 +5107,7 @@ class Program
                                         Raylib.GetScreenWidth()/2 - 200, 
                                         Raylib.GetScreenHeight()/2 - 50, 
                                         30, 
-                                        Raylib_cs.Color.BLACK
+                                        new(0, 0, 0, 255)
                                     );
 
                                     if (Raylib_CsLo.RayGui.GuiButton(new(Raylib.GetScreenWidth()/2 - 100, Raylib.GetScreenHeight()/2 + 50, 200, 50), "Create New Project"))
@@ -5128,7 +5119,7 @@ class Program
                                 // there are projects
                                 else
                                 {
-                                    Raylib.DrawText("[W] - Page Up  [S] - Page Down", Raylib.GetScreenWidth() / 2 - 220, 150, 30, Raylib_cs.Color.BLACK);
+                                    Raylib.DrawText("[W] - Page Up  [S] - Page Down", Raylib.GetScreenWidth() / 2 - 220, 150, 30, new(0, 0, 0, 255));
 
                                     if (maxCount > projectFiles.Length)
                                     {
@@ -5170,7 +5161,7 @@ class Program
                                         Raylib.GetScreenWidth() / 2 - 90,
                                         Raylib.GetScreenHeight() - 160,
                                         30,
-                                        Raylib_cs.Color.BLACK
+                                        new(0, 0, 0, 255)
                                     );
                                 }
                                 
@@ -5185,7 +5176,7 @@ class Program
 
                         Raylib.BeginDrawing();
                         {
-                            Raylib.ClearBackground(Raylib_cs.Color.GRAY);
+                            Raylib.ClearBackground(new(170, 170, 170, 255));
 
                             fixed (byte* pt = saveProjectPanelBytes)
                             {

@@ -232,7 +232,7 @@ public record Shortcuts(
 
 public record Misc(bool SplashScreen = true);
 
-public record LayerColors(Raylib_cs.Color Layer1, Raylib_cs.Color Layer2, Raylib_cs.Color Layer3);
+public record LayerColors(Color Layer1, Color Layer2, Color Layer3);
 
 public record GeoEditor(LayerColors LayerColors);
 

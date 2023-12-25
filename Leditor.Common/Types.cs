@@ -1,7 +1,6 @@
 ﻿namespace Leditor.Common;
 
 using System.Numerics;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 public struct RunCell {
     public int Geo { get; set; } = 0;
@@ -98,8 +97,6 @@ public class CameraQuads(
     public Vector2 BottomRight { get; set; } = bottomRight; 
     public Vector2 BottomLeft { get; set; } = bottomLeft;
 };
-
-public record struct TileTexture(Texture2D[] Layers, Texture2D Preview);
 
 public record CameraQuadsRecord(
     (int Angle, float Radius) TopLeft, 
