@@ -1129,8 +1129,6 @@ class Program
             matrixHeight * scale + 300
         );
 
-        Modules.OpenFileDialog openDialog = new("Open Project", projectsDirectory, [ ".txt" ]);
-
         logger.Information("loading textures");
 
         Texture2D[] uiTextures = LoadUITextures();
