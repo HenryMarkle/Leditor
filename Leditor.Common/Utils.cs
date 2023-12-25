@@ -119,8 +119,9 @@ public static class CommonUtils {
     public static T[,,] Resize<T>(T[,,] array, int width, int height, int newWidth, int newHeight, T[] layersFill)
         where T : notnull, new()
     {
-        T[,,] newArray = new T[newWidth, newHeight, 3];
+        T[,,] newArray = new T[newHeight, newWidth, 3];
 
+        // old height is larger
         if (height > newHeight)
         {
             if (width > newWidth)
@@ -156,6 +157,7 @@ public static class CommonUtils {
             }
 
         }
+        // new height is larger or equal
         else
         {
             if (width > newWidth)
@@ -180,8 +182,10 @@ public static class CommonUtils {
                     }
                 }
             }
+            // new width is larger
             else
             {
+                
                 for (int y = 0; y < height; y++)
                 {
                     for (int x = 0; x < width; x++)

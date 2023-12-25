@@ -20,7 +20,7 @@ public class LoadFileResult {
 
     public Image LightMapImage { get; init; }
 
-    public List<RenderCamera> Cameras { get; set; }
+    public List<RenderCamera> Cameras { get; set; } = [];
 
     public string Name { get; init; } = "New Project";
 }
