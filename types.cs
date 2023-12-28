@@ -1,10 +1,11 @@
 namespace Leditor;
 
-using System.Text.Json.Serialization;
-using System.Text.Json;
 using Leditor.Common;
 #nullable enable
 
+public enum TileCheckResult {
+    Ok, Missing, NotFound, MissingTexture, MissingMaterial
+}
 
 public class LoadFileResult {
     public bool Success { get; init; } = false;
@@ -17,6 +18,7 @@ public class LoadFileResult {
 
     public RunCell[,,]? GeoMatrix { get; init; } = null;
     public TileCell[,,]? TileMatrix { get; init; } = null;
+    public Color[,,]? MaterialColorMatrix { get; init; } = null;
 
     public Image LightMapImage { get; init; }
 
@@ -232,12 +234,27 @@ public record Shortcuts(
 
 public record Misc(bool SplashScreen = true);
 
-public record LayerColors(Color Layer1, Color Layer2, Color Layer3);
+public record LayerColor(byte R, byte G, byte B, byte A) {
+    public void Deconstruct(out byte r, out byte g, out byte b, out byte a) {
+        r = R;
+        g = G;
+        b = B;
+        a = A;
+    }
+
+    public static implicit operator LayerColor(Color c) => new(c.r, c.g, c.b, c.a);
+    public static implicit operator Color(LayerColor c) => new(c.R, c.G, c.B, c.A);
+}
+
+public record LayerColors(LayerColor Layer1, LayerColor Layer2, LayerColor Layer3);
 
 public record GeoEditor(LayerColors LayerColors);
+
+public record TileEditor(bool VisibleSpecs);
 
 public record Settings(
     Shortcuts Shortcuts,
     Misc Misc,
-    GeoEditor GeomentryEditor
+    GeoEditor GeomentryEditor,
+    TileEditor TileEditor
 );

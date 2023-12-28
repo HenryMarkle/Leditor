@@ -69,6 +69,7 @@ public enum InitTileType {
     VoxelStructRandomDisplaceHorizontal,
     VoxelStructRandomDisplaceVertical,
     VoxelStructRockType,
+    VoxelStructSandtype
 }
 
 public readonly record struct InitTile(

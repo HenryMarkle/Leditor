@@ -89,6 +89,23 @@ public static class CommonUtils {
         return matrix;
     }
 
+    public static Color[,,] NewMaterialColorMatrix(int width, int height, Color @default)
+    {
+        Color[,,] matrix = new Color[height, width, 3];
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                matrix[y, x, 0] = @default;
+                matrix[y, x, 1] = @default;
+                matrix[y, x, 2] = @default;
+            }
+        }
+
+        return matrix;
+    }
+
     public static RunCell[][] GetContext(RunCell[,,] matrix, int width, int height, int x, int y, int z) =>
         [
             [ 
@@ -221,25 +238,25 @@ public static class CommonUtils {
 
     public static TileCell[,,] NewTileMatrix(int width, int height)
     {
-        TileCell[,,] matrix = new TileCell[width, height, 3];
+        TileCell[,,] matrix = new TileCell[height, width, 3];
         
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                matrix[x, y, 0] = new()
+                matrix[y, x, 0] = new()
                 {
                     Type = TileType.Default,
                     Data = new TileDefault()
                 };
                 
-                matrix[x, y, 1] = new()
+                matrix[y, x, 1] = new()
                 {
                     Type = TileType.Default,
                     Data = new TileDefault()
                 };
                 
-                matrix[x, y, 2] = new()
+                matrix[y, x, 2] = new()
                 {
                     Type = TileType.Default,
                     Data = new TileDefault()

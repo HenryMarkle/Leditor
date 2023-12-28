@@ -231,6 +231,7 @@ public static class Tools {
             "voxelStructRandomDisplaceHorizontal" => InitTileType.VoxelStructRandomDisplaceHorizontal,
             "voxelStructRandomDisplaceVertical" => InitTileType.VoxelStructRandomDisplaceVertical,
             "voxelStructRockType" => InitTileType.VoxelStructRockType,
+            "voxrlStructSandType" => InitTileType.VoxelStructSandtype,
 
             _ => throw new Exception("Invalid tile init tag: "+ tpString)
         };

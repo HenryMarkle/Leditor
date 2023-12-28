@@ -8,7 +8,11 @@ using Leditor.Lingo;
 using Pidgin;
 using System.Text.Json;
 using Serilog;
+using System.ComponentModel.DataAnnotations;
+using System.Globalization;
+using System.Reflection;
 
+#nullable enable
 
 namespace Leditor;
 
@@ -43,6 +47,93 @@ class Program
         "Clear All"
     ];
 
+    static string[] UIImages => [
+        "assets/geo/ui/solid.png",          // 0
+        "assets/geo/ui/air.png",            // 1
+        // "assets/geo/ui/slopebr.png",     
+        "assets/geo/ui/slopebl.png",        // 2
+        "assets/geo/ui/multisolid.png",     // 3
+        "assets/geo/ui/multiair.png",       // 4
+        // "assets/geo/ui/slopetr.png",        
+        // "assets/geo/ui/slopetl.png",        
+        "assets/geo/ui/platform.png",       // 5
+        "assets/geo/ui/move.png",           // 6
+        "assets/geo/ui/rock.png",           // 7
+        "assets/geo/ui/spear.png",          // 8
+        "assets/geo/ui/crack.png",          // 9
+        "assets/geo/ui/ph.png",             // 10
+        "assets/geo/ui/pv.png",             // 11
+        "assets/geo/ui/glass.png",          // 12
+        "assets/geo/ui/backcopy.png",       // 13
+        "assets/geo/ui/entry.png",          // 14
+        "assets/geo/ui/shortcut.png",       // 15
+        "assets/geo/ui/den.png",            // 16
+        "assets/geo/ui/passage.png",        // 17
+        "assets/geo/ui/bathive.png",        // 18
+        "assets/geo/ui/waterfall.png",      // 19
+        "assets/geo/ui/scav.png",           // 20
+        "assets/geo/ui/wack.png",           // 21
+        "assets/geo/ui/garbageworm.png",    // 22
+        "assets/geo/ui/worm.png",           // 23
+        "assets/geo/ui/forbidflychains.png",// 24
+        "assets/geo/ui/clearall.png",       // 25
+    ];
+
+    static string[] GeoImages => [
+        // 0: air
+        "assets/geo/solid.png",
+        "assets/geo/cbl.png",
+        "assets/geo/cbr.png",
+        "assets/geo/ctl.png",
+        "assets/geo/ctr.png",
+        "assets/geo/platform.png",
+        "assets/geo/entryblock.png",
+        // 7: NONE
+        // 8: NONE
+        "assets/geo/thickglass.png",
+    ];
+
+    static string[] StackableImages => [
+        "assets/geo/ph.png",             // 0
+        "assets/geo/pv.png",             // 1
+        "assets/geo/bathive.png",        // 2
+        "assets/geo/dot.png",            // 3
+        "assets/geo/crackbl.png",        // 4
+        "assets/geo/crackbr.png",        // 5
+        "assets/geo/crackc.png",         // 6
+        "assets/geo/crackh.png",         // 7
+        "assets/geo/cracklbr.png",       // 8
+        "assets/geo/cracktbr.png",       // 9
+        "assets/geo/cracktl.png",        // 10
+        "assets/geo/cracktlb.png",       // 11
+        "assets/geo/cracktlr.png",       // 12
+        "assets/geo/cracktr.png",        // 13
+        "assets/geo/cracku.png",         // 14
+        "assets/geo/crackv.png",         // 15
+        "assets/geo/garbageworm.png",    // 16
+        "assets/geo/scav.png",           // 17
+        "assets/geo/rock.png",           // 18
+        "assets/geo/waterfall.png",      // 19
+        "assets/geo/wack.png",           // 20
+        "assets/geo/worm.png",           // 21
+        "assets/geo/entryb.png",         // 22
+        "assets/geo/entryl.png",         // 23
+        "assets/geo/entryr.png",         // 24
+        "assets/geo/entryt.png",         // 25
+        "assets/geo/looseentry.png",     // 26
+        "assets/geo/passage.png",        // 27
+        "assets/geo/den.png",            // 28
+        "assets/geo/spear.png",          // 29
+        "assets/geo/forbidflychains.png",// 30
+        "assets/geo/crackb.png",         // 31
+        "assets/geo/crackr.png",         // 32
+        "assets/geo/crackt.png",         // 33
+        "assets/geo/crackl.png",         // 34
+    ];
+
+
+
+
     static Texture[] LoadUITextures() => [
         LoadTexture("assets/geo/ui/solid.png"),          // 0
         LoadTexture("assets/geo/ui/air.png"),            // 1
@@ -75,6 +166,7 @@ class Program
         LoadTexture("assets/geo/ui/clearall.png"),       // 25
     ];
 
+
     static Texture[] LoadGeoTextures() => [
         // 0: air
         LoadTexture("assets/geo/solid.png"),
@@ -88,6 +180,7 @@ class Program
         // 8: NONE
         LoadTexture("assets/geo/thickglass.png"),
     ];
+
 
     static Texture[] LoadStackableTextures() => [
         LoadTexture("assets/geo/ph.png"),             // 0
@@ -155,6 +248,233 @@ class Program
         LoadTexture("assets/light/inverted/Internal_275_roundedRectLight.png"),           // 24
     ];
 
+    static readonly (string, Color)[] embeddedCategories = [
+        ("Drought 4Mosaic", new(227, 76, 13, 255)),
+        ("Drought Missing 3DBricks", new(255, 150, 0, 255)),
+        ("Drought Alt Grates", new(75, 75, 240, 255)),
+        ("Drought Missing Stone", new(200, 165, 135, 255)),
+        ("Drought Missing Machine", new(230, 160, 230, 255)),
+        ("Drought Metal", new(100, 185, 245, 255)),
+        ("Drought Missing Metal", new(180, 10, 10, 255)),
+        ("Dune", new(255, 255, 180, 255)),
+    ];
+
+    static readonly InitTile[][] embeddedTiles = [
+        [
+            new InitTile("4Mosaic Square", (1, 1), [1], [], InitTileType.VoxelStruct, [1, 1, 8], 0, 1, 0, ["INTERNAL"]),
+            new InitTile("4Mosaic Slope NE", (1, 1), [2], [], InitTileType.VoxelStruct, [1, 1, 8], 0, 1, 0, ["INTERNAL"]),
+            new InitTile("4Mosaic Slope NW", (1, 1), [3], [], InitTileType.VoxelStruct, [1, 1, 8], 0, 1, 0, ["INTERNAL"]),
+            new InitTile("4Mosaic Slope SW", (1, 1), [5], [], InitTileType.VoxelStruct, [1, 1, 8], 0, 1, 0, ["INTERNAL"]),
+            new InitTile("4Mosaic Slope SE", (1, 1), [4], [], InitTileType.VoxelStruct, [1, 1, 8], 0, 1, 0, ["INTERNAL"]),
+            new InitTile("4Mosaic Floor", (1, 1), [6], [], InitTileType.VoxelStruct, [1, 1, 8], 0, 1, 0, ["INTERNAL"]),
+        ],
+        [
+            new InitTile("3DBrick Square", (1, 1), [1], [], InitTileType.VoxelStruct, [1, 1, 1, 7], 0, 1, 0, ["INTERNAL"]),
+            new InitTile("3DBrick Slope NE", (1, 1), [2], [], InitTileType.VoxelStruct, [1, 1, 1, 7], 0, 1, 0, ["INTERNAL"]),
+            new InitTile("3DBrick Slope NW", (1, 1), [3], [], InitTileType.VoxelStruct, [1, 1, 1, 7], 0, 1, 0, ["INTERNAL"]),
+            new InitTile("3DBrick Slope SW", (1, 1), [5], [], InitTileType.VoxelStruct, [1, 1, 1, 7], 0, 1, 0, ["INTERNAL"]),
+            new InitTile("3DBrick Slope SE", (1, 1), [4], [], InitTileType.VoxelStruct, [1, 1, 1, 7], 0, 1, 0, ["INTERNAL"]),
+            new InitTile("3DBrick Floor", (1, 1), [6], [], InitTileType.VoxelStruct, [1, 1, 1, 7], 0, 1, 0, ["INTERNAL"]),
+        ],
+        [
+            new InitTile("AltGradeA", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeB1", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeB2", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeB3", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeB4", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeC1", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeC2", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeE1", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeE2", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeF1", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeF2", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeF3", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeF4", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeG1", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeG2", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeH", (3, 4), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+
+            new InitTile("AltGradeI", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeJ1", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeJ2", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeJ3", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeJ4", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeK1", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeK2", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeK3", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeK4", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeL", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeM", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeN", (4, 4), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGradeO", (5, 5), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+        ],
+        [
+            new InitTile("Small Stone Slope NE", (1, 1), [2], [], InitTileType.VoxelStructRockType, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
+            new InitTile("Small Stone Slope NW", (1, 1), [3], [], InitTileType.VoxelStructRockType, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
+            new InitTile("Small Stone Slope SW", (1, 1), [5], [], InitTileType.VoxelStructRockType, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
+            new InitTile("Small Stone Slope SE", (1, 1), [4], [], InitTileType.VoxelStructRockType, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
+            new InitTile("Small Stone Floor", (1, 1), [6], [], InitTileType.VoxelStructRockType, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
+
+            new InitTile("Small Stone Marked", (1, 1), [1], [], InitTileType.VoxelStructRockType, [], 1, 4, 0, ["nonSolid", "chaoticStone2 : very rare", "INTERNAL"]),
+            new InitTile("Square Stone Marked", (2, 2), [1, 1, 1, 1], [], InitTileType.VoxelStructRockType, [], 1, 3, 0, ["chaoticStone2 : very rare", "INTERNAL"]),
+        ],
+        [
+            new InitTile("Small Machine Slope NE", (1, 1), [2], [], InitTileType.VoxelStruct, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1, 1, 0, ["nonSolid", "INTERNAL"]),
+            new InitTile("Small Machine Slope NW", (1, 1), [3], [], InitTileType.VoxelStruct, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1, 1, 0, ["nonSolid", "INTERNAL"]),
+            new InitTile("Small Machine Slope SW", (1, 1), [5], [], InitTileType.VoxelStruct, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1, 1, 0, ["nonSolid", "INTERNAL"]),
+            new InitTile("Small Machine Slope SE", (1, 1), [4], [], InitTileType.VoxelStruct, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1, 1, 0, ["nonSolid", "INTERNAL"]),
+            new InitTile("Small Machine Floor", (1, 1), [6], [], InitTileType.VoxelStruct, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1, 1, 0, ["nonSolid", "INTERNAL"]),
+        ],
+        [
+            new InitTile("Small Metal Alt", (1, 1), [1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
+            new InitTile("Small Metal Marked", (1, 1), [1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
+            new InitTile("Small Metal X", (1, 1), [1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
+
+            new InitTile("Metal Floor Alt", (2, 1), [1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
+
+            new InitTile("Metal Wall", (1, 2), [1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
+            new InitTile("Metal Wall Alt", (1, 2), [1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
+
+            new InitTile("Square Metal Marked", (2, 2), [1, 1, 1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
+            new InitTile("Square Metal X", (2, 2), [1, 1, 1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
+
+            new InitTile("Wide Metal", (3, 2), [1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 1, 1, 0, ["randomMetal", "INTERNAL"]),
+
+            new InitTile("Tail Metal", (2, 3), [1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 1, 1, 0, ["randomMetal", "INTERNAL"]),
+
+            new InitTile("Big Metal X", (3, 3), [1, 1, 1, 1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 1, 1, 0, ["randomMetal", "INTERNAL"]),
+
+            new InitTile("Large Big Metal", (4, 4), [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
+            new InitTile("Large Big Metal Marked", (4, 4), [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
+            new InitTile("Large Big Metal X", (4, 4), [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
+        ],
+        [
+            new InitTile("Missing Metal Slope NE", (1, 1), [2], [], InitTileType.VoxelStruct, [1, 9], 0, 1, 0, ["INTERNAL"]),
+            new InitTile("Missing Metal Slope NW", (1, 1), [3], [], InitTileType.VoxelStruct, [1, 9], 0, 1, 0, ["INTERNAL"]),
+            new InitTile("Missing Metal Slope SW", (1, 1), [5], [], InitTileType.VoxelStruct, [1, 9], 0, 1, 0, ["INTERNAL"]),
+            new InitTile("Missing Metal Slope SE", (1, 1), [4], [], InitTileType.VoxelStruct, [1, 9], 0, 1, 0, ["INTERNAL"]),
+            new InitTile("Missing Metal Floor", (1, 1), [6], [], InitTileType.VoxelStruct, [5, 1, 1, 1, 1, 1], 0, 1, 0, ["INTERNAL"]),
+        ],
+        [
+            new InitTile("Dune Sand", (1, 1), [1], [], InitTileType.VoxelStructSandtype, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
+        ]
+    ];
+
+    static string[] MaterialCategories => [
+        "Materials", "Drought Materials", "Community Materials"
+    ];
+ 
+    static (string, Color)[][] Materials => [
+        [
+            ("Standard", new(150, 150, 150, 255)),
+            ("Concrete", new(150, 255, 255, 255)),
+            ("RainStone", new(0, 0, 255, 255)),
+            ("Bricks", new(200, 150, 100, 255)),
+            ("BigMetal", new(255, 0, 0, 255)),
+            ("Tiny Signs", new(255, 255, 255, 255)),
+            ("Scaffolding", new(60, 60, 40, 255)),
+            ("Dense Pipes", new(10, 10, 255, 255)),
+            ("SuperStructure", new(160, 180, 255, 255)),
+            ("SuperStructure2", new(190, 160, 0, 255)),
+            ("Tiled Stone", new(100, 0, 255, 255)),
+            ("Chaotic Stone", new(255, 0, 255, 255)),
+            ("Small Pipes", new(255, 255, 0, 255)),
+            ("Trash", new(90, 255, 0, 255)),
+            ("Invisible", new(200, 200, 200, 255)),
+            ("LargeTrash", new(150, 30, 255, 255)),
+            ("3DBricks", new(255, 150, 0, 255)),
+            ("Random Machines", new(72, 116, 80, 255)),
+            ("Dirt", new(124, 72, 52, 255)),
+            ("Ceramic Tile", new(60, 60, 100, 255)),
+            ("Temple Stone", new(0, 120, 180, 255)),
+            ("Circuits", new(15, 200, 15, 255)),
+            ("Ridge", new(200, 15, 60, 255))
+        ],
+        [
+            ("Steel", new(220, 170, 195, 255)),
+            ("4Mosaic", new(227, 76, 13, 255)),
+            ("Color A Ceramic", new(120, 0, 90, 255)),
+            ("Color B Ceramic", new(0, 175, 175, 255)),
+            ("Rocks", new(185, 200, 0, 255)),
+            ("Rough Rock", new(155, 170, 0, 255)),
+            ("Random Metal", new(180, 10, 10, 255)),
+            ("Non-Slip Metal", new(180, 80, 80, 255)),
+            ("Stained Glass", new(180, 80, 180, 255)),
+            ("Sandy Dirt", new(180, 180, 80, 255)),
+            ("MegaTrash", new(135, 10, 255, 255)),
+            ("Shallow Dense Pipes", new(13, 23, 110, 255)),
+            ("Sheet Metal", new(145, 135, 125, 255)),
+            ("Chaotic Stone 2", new(90, 90, 90, 255)),
+            ("Asphalt", new(115, 115, 115, 255))
+        ],
+        [
+            ("Shallow Circuits", new(15, 200, 155, 255)),
+            ("Random Machines 2", new(116, 116, 80, 255)),
+            ("Small Machines", new(80, 116, 116, 255)),
+            ("Random Metals", new(255, 0, 80, 255)),
+            ("ElectricMetal", new(255, 0, 100, 255)),
+            ("Grate", new(190, 50, 190, 255)),
+            ("CageGrate", new(50, 190, 190, 255)),
+            ("BulkMetal", new(50, 19, 190, 255)),
+            ("MassiveBulkMetal", new(255, 19, 19, 255)),
+            ("Dune Sand", new(255, 255, 100, 255))
+        ]
+    ];
+
+    static Dictionary<string, Color> MaterialColors => new()
+    {
+        ["Standard"] = new(150, 150, 150, 255),
+        ["Concrete"] = new(150, 255, 255, 255),
+        ["RainStone"] = new(0, 0, 255, 255),
+        ["Bricks"] = new(200, 150, 100, 255),
+        ["BigMetal"] = new(255, 0, 0, 255),
+        ["Tiny Signs"] = new(255, 255, 255, 255),
+        ["Scaffolding"] = new(60, 60, 40, 255),
+        ["Dense Pipes"] = new(10, 10, 255, 255),
+        ["SuperStructure"] = new(160, 180, 255, 255),
+        ["SuperStructure2"] = new(190, 160, 0, 255),
+        ["Tiled Stone"] = new(100, 0, 255, 255),
+        ["Chaotic Stone"] = new(255, 0, 255, 255),
+        ["Small Pipes"] = new(255, 255, 0, 255),
+        ["Trash"] = new(90, 255, 0, 255),
+        ["Invisible"] = new(200, 200, 200, 255),
+        ["LargeTrash"] = new(150, 30, 255, 255),
+        ["3DBricks"] = new(255, 150, 0, 255),
+        ["Random Machines"] = new(72, 116, 80, 255),
+        ["Dirt"] = new(124, 72, 52, 255),
+        ["Ceramic Tile"] = new(60, 60, 100, 255),
+        ["Temple Stone"] = new(0, 120, 180, 255),
+        ["Circuits"] = new(15, 200, 15, 255),
+        ["Ridge"] = new(200, 15, 60, 255),
+
+        ["Steel"] = new(220, 170, 195, 255),
+        ["4Mosaic"] = new(227, 76, 13, 255),
+        ["Color A Ceramic"] = new(120, 0, 90, 255),
+        ["Color B Ceramic"] = new(0, 175, 175, 255),
+        ["Rocks"] = new(185, 200, 0, 255),
+        ["Rough Rock"] = new(155, 170, 0, 255),
+        ["Random Metal"] = new(180, 10, 10, 255),
+        ["Non-Slip Metal"] = new(180, 80, 80, 255),
+        ["Stained Glass"] = new(180, 80, 180, 255),
+        ["Sandy Dirt"] = new(180, 180, 80, 255),
+        ["MegaTrash"] = new(135, 10, 255, 255),
+        ["Shallow Dense Pipes"] = new(13, 23, 110, 255),
+        ["Sheet Metal"] = new(145, 135, 125, 255),
+        ["Chaotic Stone 2"] = new(90, 90, 90, 255),
+        ["Asphalt"] = new(115, 115, 115, 255),
+
+        ["Shallow Circuits"] = new(15, 200, 155, 255),
+        ["Random Machines 2"] = new(116, 116, 80, 255),
+        ["Small Machines"] = new(80, 116, 116, 255),
+        ["Random Metals"] = new(255, 0, 80, 255),
+        ["ElectricMetal"] = new(255, 0, 100, 255),
+        ["Grate"] = new(190, 50, 190, 255),
+        ["CageGrate"] = new(50, 190, 190, 255),
+        ["BulkMetal"] = new(50, 19, 190, 255),
+        ["MassiveBulkMetal"] = new(255, 19, 19, 255),
+        ["Dune Sand"] = new(255, 255, 100, 255)
+    };
+
     static ((string, Color)[], InitTile[][]) LoadTileInit()
     {
         var path = tilesInitPath;
@@ -164,13 +484,16 @@ class Program
         return Tools.GetTileInit(text);
     }
 
-    static Image[][] LoadTileImages(in InitTile[][] init) {
+    static Image[][] LoadTileImages(in InitTile[][] init)
+    {
         List<List<Image>> images = [];
-        
-        for (int category = 0; category < init.Length; category++) {
+
+        for (int category = 0; category < init.Length; category++)
+        {
             images.Add([]);
 
-            for (int tile = 0; tile < init[category].Length; tile++) {
+            for (int tile = 0; tile < init[category].Length; tile++)
+            {
                 var tileInit = init[category][tile];
 
                 images[0].Add(Raylib.LoadImage($"assets/tiles/{tileInit.Name}.png"));
@@ -180,13 +503,16 @@ class Program
         return images.Select(t => t.ToArray()).ToArray();
     }
 
-    static Texture[][] LoadTileTextures(in InitTile[][] init) {
+    static Texture[][] LoadTileTextures(in InitTile[][] init)
+    {
         List<List<Texture>> textures = [];
-        
-        for (int category = 0; category < init.Length; category++) {
+
+        for (int category = 0; category < init.Length; category++)
+        {
             textures.Add([]);
 
-            for (int tile = 0; tile < init[category].Length; tile++) {
+            for (int tile = 0; tile < init[category].Length; tile++)
+            {
                 var tileInit = init[category][tile];
 
                 textures[category].Add(Raylib.LoadTexture($"assets/tiles/{tileInit.Name}.png"));
@@ -196,27 +522,54 @@ class Program
         return textures.Select(t => t.ToArray()).ToArray();
     }
 
-    static Texture LoadTilePreviewTexture(in InitTile init) {
+    static int GetTilePreviewStartingHeight(in InitTile init)
+    {
+        var (width, height) = init.Size;
+        var bufferTiles = init.BufferTiles;
+        var repeatL = init.Repeat.Length;
+
+        return init.Type switch
+        {
+            InitTileType.VoxelStruct => 1 + scale * ((bufferTiles * 2) + height) * repeatL,
+            InitTileType.VoxelStructRockType => 1 + scale * ((bufferTiles * 2) + height),
+            InitTileType.Box => scale * height * width + (scale * (height + (2 * bufferTiles))),
+            InitTileType.VoxelStructRandomDisplaceVertical => 1 + scale * ((bufferTiles * 2) + height) * repeatL,
+            InitTileType.VoxelStructRandomDisplaceHorizontal => 1 + scale * ((bufferTiles * 2) + height) * repeatL,
+
+            _ => 1 + scale * ((bufferTiles * 2) + height) * repeatL
+        };
+    }
+
+    static Texture LoadTilePreviewTexture(in InitTile init)
+    {
         var (width, height) = init.Size;
         Image img = Raylib.LoadImage($"assets/tiles/{init.Name}.png");
-        
-        var previewHeightStart = init.Type switch {
-            InitTileType.VoxelStruct => 1 + 20 * ((init.BufferTiles*2) + height) * init.Repeat.Length,
-            InitTileType.VoxelStructRockType => 1 + 20 * ((init.BufferTiles*2) + height),
-            InitTileType.Box => 20 * height * width + (20*(height + (2*init.BufferTiles))),
-            InitTileType.VoxelStructRandomDisplaceVertical => 1 + 20 * ((init.BufferTiles*2) + height) * init.Repeat.Length,
-            InitTileType.VoxelStructRandomDisplaceHorizontal => 1 + 20 * ((init.BufferTiles*2) + height) * init.Repeat.Length,
-            
-            _ => 1 + 20 * ((init.BufferTiles*2) + height) * init.Repeat.Length
-        };
 
-        unsafe {
-            Raylib.ImageCrop(&img, new Rectangle(0, previewHeightStart, 16*width, 16*height));
+        var previewHeightStart = GetTilePreviewStartingHeight(init);
+
+        unsafe
+        {
+            Raylib.ImageCrop(&img, new Rectangle(0, previewHeightStart, 16 * width, 16 * height));
         }
 
         Texture texture = Raylib.LoadTextureFromImage(img);
         Raylib.UnloadImage(img);
         return texture;
+    }
+
+    static Image LoadTilePreviewImageFromFile(in InitTile init, string path)
+    {
+        var (width, height) = init.Size;
+        Image img = Raylib.LoadImage(path);
+
+        var previewHeightStart = GetTilePreviewStartingHeight(init);
+
+        unsafe
+        {
+            Raylib.ImageCrop(&img, new Rectangle(0, previewHeightStart, 16 * width, 16 * height));
+        }
+
+        return img;
     }
 
     static string executableDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
@@ -750,6 +1103,70 @@ class Program
         return (hover && Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT), biggerHover);
     }
 
+    static void DrawTileSpec(int id, Vector2 origin, int scale, Color color)
+    {
+        switch (id)
+        {
+            // air
+            case 0: break;
+
+            // solid
+            case 1:
+                DrawRectangleV(origin, RayMath.Vector2Scale(new(1, 1), scale), color);
+                break;
+
+            // slopes
+            case 2:
+                DrawTriangle(
+                    origin,
+                    new(origin.X, origin.Y + scale),
+                    new(origin.X + scale, origin.Y + scale),
+                    color
+                );
+                break;
+
+            case 3:
+                DrawTriangle(
+                    new(origin.X + scale, origin.Y),
+                    new(origin.X, origin.Y + scale),
+                    new(origin.X + scale, origin.Y + scale),
+                    color
+                );
+                break;
+
+            case 4:
+                DrawTriangle(
+                    origin,
+                    new(origin.X, origin.Y + scale),
+                    new(origin.X + scale, origin.Y),
+                    color
+                );
+                break;
+            case 5:
+                DrawTriangle(
+                    origin,
+                    new(origin.X + scale, origin.Y + scale),
+                    new(origin.X + scale, origin.Y),
+                    color
+                );
+                break;
+
+            // platform
+            case 6:
+                DrawRectangleV(
+                    origin,
+                    new(scale, scale / 2),
+                    color
+                );
+                break;
+
+            // shortcut entrance
+            case 7: break;
+
+            // glass
+            case 9: break;
+        }
+    }
 
     static void ResizeLightMap(ref RenderTexture buffer, int newWidth, int newHeight)
     {
@@ -768,7 +1185,8 @@ class Program
         Raylib.UnloadTexture(texture);
     }
 
-    static LoadFileResult LoadProject(string filePath) {
+    static LoadFileResult LoadProject(string filePath)
+    {
         try
         {
             var text = File.ReadAllText(filePath).Split('\r');
@@ -788,10 +1206,33 @@ class Program
             var camsObj = Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[6]);
 
             var mtx = Tools.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
-            var tlMtx = Tools.GetTileMatrix(tilesObj, out _, out _);
+            var tlMtx = Tools.GetTileMatrix(tilesObj, out int tlHeight, out int tlWidth);
             var buffers = Tools.GetBufferTiles(obj2);
             var effects = Tools.GetEffects(effObj, givenWidth, givenHeight);
             var cams = Tools.GetCameras(camsObj);
+
+            // map material colors
+
+            Color[,,] materialColors = CommonUtils.NewMaterialColorMatrix(givenWidth, givenHeight, new(0, 0, 0, 255));
+
+            for (int y = 0; y < givenHeight; y++)
+            {
+                for (int x = 0; x < givenWidth; x++)
+                {
+                    for (int z = 0; z < 3; z++)
+                    {
+                        var cell = tlMtx[y, x, z];
+
+                        if (cell.Type != TileType.Material) continue;
+
+                        var materialName = ((TileMaterial)cell.Data).Name;
+
+                        if (MaterialColors.TryGetValue(materialName, out Color color)) materialColors[y, x, z] = color; 
+                    }
+                }
+            }
+
+            //
 
             return new()
             {
@@ -801,6 +1242,7 @@ class Program
                 BufferTiles = buffers,
                 GeoMatrix = mtx,
                 TileMatrix = tlMtx,
+                MaterialColorMatrix = materialColors,
                 Effects = effects,
                 LightMapImage = lightMap,
                 Cameras = cams,
@@ -814,15 +1256,48 @@ class Program
         }
     }
 
-    static int GetMiddle(int number) {
+    static int GetMiddle(int number)
+    {
         if (number < 3) return 0;
-        if (number % 2 == 0) return number / 2 - 1; 
+        if (number % 2 == 0) return number / 2 - 1;
         else return number / 2;
     }
 
-    static Vector2 GetTileHeadOrigin(in InitTile init) {
+    static Vector2 GetTileHeadOrigin(in InitTile init)
+    {
         var (width, height) = init.Size;
         return new Vector2(GetMiddle(width), GetMiddle(height));
+    }
+
+    static bool IsTileLegal(ref InitTile init, Vector2 point, TileCell[,,] tileMatrix, RunCell[,,] geoMatrix, int currentLayer)
+    {
+        var (width, height) = init.Size;
+        var specs = init.Specs;
+        var specs2 = init.Specs2;
+
+        // get the "middle" point of the tile
+        var head = GetTileHeadOrigin(init);
+
+        // the top-left of the tile
+        var start = RayMath.Vector2Subtract(
+            RayMath.Vector2Scale(point, 16),
+            RayMath.Vector2Scale(head, 16)
+        );
+
+        for (int y = (int)start.Y; y < height; y++)
+        {
+            for (int x = (int)start.X; x < width; x++)
+            {
+                var tileCell = tileMatrix[y, x, currentLayer];
+                var geoCell = geoMatrix[y, x, currentLayer];
+
+                var spec = specs[(x - (int)start.X - height) + y - (int)start.Y];
+
+                if (spec != -1 && (geoCell.Geo != spec || tileCell.Type != TileType.Default || tileCell.Type != TileType.Material)) return false;
+            }
+        }
+
+        return true;
     }
 
     static unsafe void Main(string[] args)
@@ -852,29 +1327,24 @@ class Program
 
         // Default settings
 
-        Color layer1Color = new(0, 0, 0, 170);
-        Color layer2Color = new(0, 250, 94, 140);
-        Color layer3Color = new(159, 77, 77, 140);
+        Color layer1Color = new(0, 0, 0, 255);
+        Color layer2Color = new(0, 255, 0, 50);
+        Color layer3Color = new(255, 0, 0, 50);
 
         Settings settings = new(
             new(
                 new()
-                ), 
-            new(), 
+                ),
+            new(),
             new(
                 new(
-                    Layer1: layer1Color, 
+                    Layer1: layer1Color,
                     Layer2: layer2Color,
                     Layer3: layer3Color
                     )
-                )
+                ),
+            new(true)
         );
-
-        layerColors = [ 
-            settings.GeomentryEditor.LayerColors.Layer1, 
-            settings.GeomentryEditor.LayerColors.Layer2, 
-            settings.GeomentryEditor.LayerColors.Layer3 
-        ];
 
         var serOptions = new JsonSerializerOptions { WriteIndented = true };
 
@@ -916,6 +1386,12 @@ class Program
             logger.Error($"failed to import settings from settings.json: {e}\nusing default settings");
         }
 
+        layerColors = [
+            settings.GeomentryEditor.LayerColors.Layer1,
+            settings.GeomentryEditor.LayerColors.Layer2,
+            settings.GeomentryEditor.LayerColors.Layer3
+        ];
+
         //
 
         if (!Directory.Exists(projectsDirectory))
@@ -935,10 +1411,12 @@ class Program
 
         logger.Information("initializing data");
 
+        string version = "0.3.21";
+
         int page = 0;
         int prevPage = 0;
 
-        BufferTiles bufferTiles = new(12, 12, 3, 3);
+        BufferTiles bufferTiles = new(12, 12, 3, 5);
 
         int tileSeed = 141;
         bool lightMode = true;
@@ -960,6 +1438,16 @@ class Program
         bool showLayer2 = true;
         bool showLayer3 = true;
 
+        bool showTilesInGeo = false;
+
+        bool showTileLayer1 = true;
+        bool showTileLayer2 = true;
+        bool showTileLayer3 = true;
+
+        bool showLayer1Tiles = true;
+        bool showLayer2Tiles = true;
+        bool showLayer3Tiles = true;
+
         int prevCoordsX = -1;
         int prevCoordsY = -1;
         bool multiselect = false;
@@ -977,12 +1465,18 @@ class Program
 
         RunCell[,,] geoMatrix = CommonUtils.NewGeoMatrix(matrixWidth, matrixHeight, 1);
         TileCell[,,] tileMatrix = CommonUtils.NewTileMatrix(matrixWidth, matrixHeight);
+        Color[,,] materialColorMatrix = CommonUtils.NewMaterialColorMatrix(matrixWidth, matrixHeight, new(0, 0, 0, 255));
         (string, EffectOptions, double[,])[] effectList = [];
 
         logger.Information("indexing tile");
 
         var (tileCategories, initTiles) = LoadTileInit();
-        
+
+        // APPEND INTERNAL TILES
+        tileCategories = [.. tileCategories, .. embeddedCategories];
+        initTiles = [.. initTiles, .. embeddedTiles];
+        //
+
         int flatness = 0;
         double lightAngleVariable = 0;
         double lightAngle = 90;
@@ -1027,8 +1521,19 @@ class Program
         List<RenderCamera> renderCamers = [];
 
         Task<LoadFileResult> loadFileTask = Task.FromResult(new LoadFileResult());
+        Task<TileCheckResult>? tileCheckTask = null;
 
         int tilePanelWidth = 390;
+
+        bool showTileSpecs = settings.TileEditor.VisibleSpecs;
+
+        var missingTileWarnTitleText = "Your project seems to contain undefined tiles";
+        var notFoundTileWarnTitleText = "Your project seems to have old tiles";
+        var missingTileTextureWarnTitleText = "Your project contains a tile with no texture";
+        var missingTileWarnSubtitleText = "If you used custom tiles on this project from a different level editor, please use its Init.txt";
+        var missingTileTextureWarnSubTitleText = "If you have appended to the Init.txt file, please make sure you include the textures as well";
+        var missingMaterialWarnTitleText = "Your project seems to have undefined materials";
+        var missingMaterialWarnSubtitleText = "Please update the materials init.txt file before loading this project";
 
         // UNSAFE VARIABLES
 
@@ -1038,7 +1543,7 @@ class Program
         int leftPadding = 12;
         int rightPadding = 12;
         int topPadding = 3;
-        int bottomPadding = 3;
+        int bottomPadding = 5;
 
         int editControl = 0;
 
@@ -1080,9 +1585,7 @@ class Program
         var tileCategoryScrollIndex = 0;
 
         var tileCategoryIndex = 0;
-        var tileCategorySubIndex = 0;
-        var tileCategoryCurrentPage = 0;
-        
+
         var tileScrollIndex = 0;
         var tileIndex = 0;
 
@@ -1102,9 +1605,9 @@ class Program
         Rectangle border = new(
             bufferTiles.Left * scale,
             bufferTiles.Top * scale,
-            (matrixWidth - (bufferTiles.Right * 2)) * scale,
-            (matrixHeight - (bufferTiles.Bottom * 2)) * scale
-            );
+            (matrixWidth - (bufferTiles.Right + bufferTiles.Left)) * scale,
+            (matrixHeight - (bufferTiles.Bottom + bufferTiles.Top)) * scale
+        );
 
         logger.Information("initializing window");
 
@@ -1120,14 +1623,50 @@ class Program
             matrixHeight * scale + 300
         );
 
+        //
+
         logger.Information("loading textures");
+
+        Task<Image>[][] tileImagesTasks = initTiles
+                .Select((category, index) =>
+                    index < initTiles.Length - 8
+                        ? category.Select(tile => Task.Factory.StartNew(() => LoadImage($"assets/tiles/{tile.Name}.png"))).ToArray()
+                        : category.Select(tile => Task.Factory.StartNew(() => LoadImage($"assets/tiles/embedded/{tile.Name}.png"))).ToArray()
+                )
+                .ToArray();
+
+        Task<Image>[][] tilePreviewImagesTasks = initTiles
+            .Select((category, index) =>
+                index < initTiles.Length - 8
+                    ? category.Select(tile => Task.Factory.StartNew(() => LoadTilePreviewImageFromFile(tile, $"assets/tiles/{tile.Name}.png"))).ToArray()
+                    : category.Select(tile => Task.Factory.StartNew(() => LoadTilePreviewImageFromFile(tile, $"assets/tiles/embedded/{tile.Name}.png"))).ToArray())
+            .ToArray();
+
+        Task[] tileImageCategoriesDone = tileImagesTasks.Select(Task.WhenAll).ToArray();
+        Task[] tilePreviewImageCategoriesDone = tilePreviewImagesTasks.Select(Task.WhenAll).ToArray();
+
+        int totalTileImageNumber = 0;
+
+        for (int c = 0; c < tileImagesTasks.Length; c++)
+        {
+            for (int t = 0; t < tileImagesTasks[c].Length; t++)
+            {
+                totalTileImageNumber += 2;
+            }
+        }
+
+        bool imagesLoaded = false;
+        bool texturesLoaded = false;
+
+        //
 
         Texture[] uiTextures = LoadUITextures();
         Texture[] geoTextures = LoadGeoTextures();
         Texture[] stackableTextures = LoadStackableTextures();
         Texture[] lightTextures = LoadLightTextures();
-        Texture[][] tileTextures = LoadTileTextures(initTiles);
-        Texture[][] tilePreviewTextures = initTiles.Select(category => category.Select(init => LoadTilePreviewTexture(init)).ToArray()).ToArray();
+
+        Texture[][] tileTextures = [];
+        Texture[][] tilePreviewTextures = [];
 
         //
 
@@ -1143,8 +1682,8 @@ class Program
 
         logger.Information("begin main loop");
 
-        var titleSize = MeasureText("Henry's Leditor", 60)/2;
-        var poweredBySize = MeasureText("Powered by", 30)/2;
+        var titleSize = MeasureText("Henry's Leditor", 60) / 2;
+        var poweredBySize = MeasureText("Powered by", 30) / 2;
 
         float initialFrames = 0;
         //bool initialized = false;
@@ -1171,11 +1710,13 @@ class Program
 
                     DrawText("Henry's Leditor", width / 2 - titleSize, 200, 60, new(250, 250, 250, 255));
 
-                    DrawText("Powered by", width / 2 - 128, height/2 - 60, 30, new(250, 250, 250, 255));
+                    DrawText("Powered by", width / 2 - 128, height / 2 - 60, 30, new(250, 250, 250, 255));
 
                     DrawRectangle(width / 2 - 128, height / 2 - 28, 256, 256, new(250, 250, 250, 255));
                     DrawRectangle(width / 2 - 112, height / 2 - 12, 224, 224, new(0, 0, 0, 255));
                     DrawText("raylib", width / 2 - 44, height / 2 + 148, 50, new(250, 250, 250, 255));
+
+                    DrawText(version, 0, height - 15, 15, new(255, 255, 255, 255));
 
                     EndDrawing();
 
@@ -1184,6 +1725,60 @@ class Program
 
                 if (settings.Misc.SplashScreen) logger.Debug("splash screen over");
 
+                // Loading screen
+
+                if (!imagesLoaded)
+                {
+                    int doneCount = 0;
+                    int prevDoneCount = 0;
+                    int completedProgress = 0;
+
+
+                    for (int c = 0; c < tileImageCategoriesDone.Length; c++)
+                    {
+                        if (tileImageCategoriesDone[c].IsCompletedSuccessfully) doneCount++;
+                        if (tilePreviewImageCategoriesDone[c].IsCompletedSuccessfully) prevDoneCount++;
+
+                        for (int t = 0; t < tileImagesTasks[c].Length; t++)
+                        {
+                            if (tileImagesTasks[c][t].IsCompletedSuccessfully) completedProgress++;
+                            if (tilePreviewImagesTasks[c][t].IsCompletedSuccessfully) completedProgress++;
+                        }
+                    }
+
+
+                    if (doneCount == tileImageCategoriesDone.Length &&
+                        prevDoneCount == tilePreviewImageCategoriesDone.Length) imagesLoaded = true;
+
+                    var width = GetScreenWidth();
+                    var height = GetScreenHeight();
+
+                    BeginDrawing();
+                    ClearBackground(new(0, 0, 0, 255));
+
+                    DrawText("Henry's Leditor", width / 2 - titleSize, 200, 60, new(250, 250, 250, 255));
+
+                    DrawText("Powered by", width / 2 - 128, height / 2 - 60, 30, new(250, 250, 250, 255));
+
+                    DrawRectangle(width / 2 - 128, height / 2 - 28, 256, 256, new(250, 250, 250, 255));
+                    DrawRectangle(width / 2 - 112, height / 2 - 12, 224, 224, new(0, 0, 0, 255));
+                    DrawText("raylib", width / 2 - 44, height / 2 + 148, 50, new(250, 250, 250, 255));
+
+                    DrawText(version, 0, height - 15, 15, new(255, 255, 255, 255));
+
+                    RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", completedProgress, 0, totalTileImageNumber);
+                    EndDrawing();
+
+                    continue;
+                }
+                else if (!texturesLoaded)
+                {
+                    tileTextures = tileImagesTasks.Select(c => c.Select(t => LoadTextureFromImage(t.Result)).ToArray()).ToArray();
+                    tilePreviewTextures = tilePreviewImagesTasks.Select(c => c.Select(t => LoadTextureFromImage(t.Result)).ToArray()).ToArray();
+
+                    texturesLoaded = true;
+                    continue;
+                }
 
                 switch (page)
                 {
@@ -1400,7 +1995,7 @@ class Program
                                     Raylib.GetScreenWidth() - 350,
                                     100,
                                     30,
-                                    new(0,0,0,255)
+                                    new(0, 0, 0, 255)
                                 );
 
                                 var helpPressed = Raylib_CsLo.RayGui.GuiButton(new(
@@ -1414,7 +2009,7 @@ class Program
 
                                 if (helpPressed) page = 9;
 
-                                Raylib.DrawText("Seed", Raylib.GetScreenWidth() - 380, 205, 11, new(0,0,0,255));
+                                Raylib.DrawText("Seed", Raylib.GetScreenWidth() - 380, 205, 11, new(0, 0, 0, 255));
 
                                 tileSeed = (int)Math.Round(Raylib_CsLo.RayGui.GuiSlider(
                                     new(
@@ -1452,7 +2047,7 @@ class Program
                                     Raylib.GetScreenWidth() - 380,
                                     335,
                                     11,
-                                    new(0,0,0,255)
+                                    new(0, 0, 0, 255)
                                 );
 
                                 waterLevel = (int)Math.Round(Raylib_CsLo.RayGui.GuiSlider(
@@ -1516,7 +2111,11 @@ class Program
                                 );
 
                                 if (loadPressed) page = 11;
-                                if (newPressed) page = 6;
+                                if (newPressed)
+                                {
+                                    newFlag = true;
+                                    page = 6;
+                                }
                             }
 
                         }
@@ -1529,42 +2128,42 @@ class Program
                     case 2:
                         prevPage = 2;
 
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_ONE))
+                        if (IsKeyPressed(KeyboardKey.KEY_ONE))
                         {
                             page = 1;
                         }
-                        // if (Raylib.IsKeyReleased(KeyboardKey.KEY_TWO)) page = 2;
-                        if (Raylib.IsKeyReleased(KeyboardKey.KEY_THREE))
+                        // if (IsKeyReleased(KeyboardKey.KEY_TWO)) page = 2;
+                        if (IsKeyReleased(KeyboardKey.KEY_THREE))
                         {
                             page = 3;
                         }
-                        if (Raylib.IsKeyReleased(KeyboardKey.KEY_FOUR))
+                        if (IsKeyReleased(KeyboardKey.KEY_FOUR))
                         {
                             page = 4;
                         }
-                        if (Raylib.IsKeyReleased(KeyboardKey.KEY_FIVE))
+                        if (IsKeyReleased(KeyboardKey.KEY_FIVE))
                         {
                             page = 5;
                         }
-                        if (Raylib.IsKeyReleased(KeyboardKey.KEY_SIX))
+                        if (IsKeyReleased(KeyboardKey.KEY_SIX))
                         {
                             resizeFlag = true;
                             page = 6;
                         }
-                        if (Raylib.IsKeyReleased(KeyboardKey.KEY_SEVEN))
+                        if (IsKeyReleased(KeyboardKey.KEY_SEVEN))
                         {
                             page = 7;
                         }
-                        if (Raylib.IsKeyReleased(KeyboardKey.KEY_EIGHT))
+                        if (IsKeyReleased(KeyboardKey.KEY_EIGHT))
                         {
                             page = 8;
                         }
-                        if (Raylib.IsKeyReleased(KeyboardKey.KEY_NINE))
+                        if (IsKeyReleased(KeyboardKey.KEY_NINE))
                         {
                             page = 9;
                         }
 
-                        Vector2 mouse = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
+                        Vector2 mouse = GetScreenToWorld2D(GetMousePosition(), camera);
 
                         //                        v this was done to avoid rounding errors
                         int matrixY = mouse.Y < 0 ? -1 : (int)mouse.Y / scale;
@@ -1899,33 +2498,63 @@ class Program
                             }
                         }
 
-                        Raylib.BeginDrawing();
+                        BeginDrawing();
                         {
-                            Raylib.ClearBackground(new Color(136, 136, 136, 255));
+                            ClearBackground(new Color(120, 120, 120, 255));
 
 
-                            Raylib.BeginMode2D(camera);
+                            BeginMode2D(camera);
                             {
-                                if (!gridContrast)
+                                // geo matrix
+
+                                // first layer without stackables
+
+                                if (showLayer1)
+                                {
+                                    for (int y = 0; y < matrixHeight; y++)
+                                    {
+                                        for (int x = 0; x < matrixWidth; x++)
+                                        {
+                                            const int z = 0;
+
+                                            var cell = geoMatrix[y, x, z];
+
+                                            var texture = GetBlockIndex(cell.Geo);
+
+                                            if (texture >= 0)
+                                            {
+                                                DrawTexture(geoTextures[texture], x * scale, y * scale, layerColors[z]);
+                                            }
+
+                                            if (!gridContrast) DrawRectangleLinesEx(
+                                                new(x * scale, y * scale, scale, scale),
+                                                0.5f,
+                                                new(255, 255, 255, 100)
+                                            );
+                                        }
+                                    }
+                                }
+
+                                /*if (gridContrast)
                                 {
                                     // the grid
                                     RlGl.rlPushMatrix();
                                     {
                                         RlGl.rlTranslatef(0, 0, -1);
                                         RlGl.rlRotatef(90, 1, 0, 0);
-                                        Raylib.DrawGrid(matrixHeight > matrixWidth ? matrixHeight * 2 : matrixWidth * 2, scale);
+                                        DrawGrid(matrixHeight > matrixWidth ? matrixHeight : matrixWidth, scale);
                                     }
                                     RlGl.rlPopMatrix();
-                                }
+                                }*/
 
-                                // geo matrix
+                                // the rest of the layers
+
                                 for (int y = 0; y < matrixHeight; y++)
                                 {
                                     for (int x = 0; x < matrixWidth; x++)
                                     {
-                                        for (int z = 2; z > -1; z--)
+                                        for (int z = 1; z < 3; z++)
                                         {
-                                            if (z == 0 && !showLayer1) continue;
                                             if (z == 1 && !showLayer2) continue;
                                             if (z == 2 && !showLayer3) continue;
 
@@ -1937,6 +2566,82 @@ class Program
                                             {
                                                 Raylib.DrawTexture(geoTextures[texture], x * scale, y * scale, layerColors[z]);
                                             }
+
+                                            if (!gridContrast && !showLayer1 && z == 1) DrawRectangleLinesEx(
+                                                new(x * scale, y * scale, scale, scale),
+                                                0.5f,
+                                                new(255, 255, 255, 100)
+                                            );
+
+                                            if (!gridContrast && !showLayer1 && z == 2) DrawRectangleLinesEx(
+                                                new(x * scale, y * scale, scale, scale),
+                                                0.5f,
+                                                new(255, 255, 255, 100)
+                                            );
+
+                                            for (int s = 1; s < cell.Stackables.Length; s++)
+                                            {
+                                                if (cell.Stackables[s])
+                                                {
+                                                    switch (s)
+                                                    {
+                                                        // dump placement
+                                                        case 1:     // ph
+                                                        case 2:     // pv
+                                                            Raylib.DrawTexture(stackableTextures[GetStackableTextureIndex(s)], x * scale, y * scale, layerColors[z]);
+                                                            break;
+                                                        case 3:     // bathive
+                                                            /*case 5:     // entrance
+                                                            case 6:     // passage
+                                                            case 7:     // den
+                                                            case 9:     // rock
+                                                            case 10:    // spear
+                                                            case 12:    // forbidflychains
+                                                            case 13:    // garbagewormhole
+                                                            case 18:    // waterfall
+                                                            case 19:    // wac
+                                                            case 20:    // worm
+                                                            case 21:    // scav*/
+                                                            Raylib.DrawTexture(stackableTextures[GetStackableTextureIndex(s)], x * scale, y * scale, whiteStackable); // TODO: remove opacity from entrances
+                                                            break;
+
+                                                        // directional placement
+                                                        /*case 4:     // entrance
+                                                            var index = GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z));
+
+                                                            if (index is 22 or 23 or 24 or 25)
+                                                            {
+                                                                geoMatrix[y, x, 0].Geo = 7;
+                                                            }
+
+                                                            Raylib.DrawTexture(stackableTextures[index], x * scale, y * scale, whiteStackable);
+                                                            break;*/
+                                                        case 11:    // crack
+                                                            Raylib.DrawTexture(
+                                                                stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
+                                                                x * scale,
+                                                                y * scale,
+                                                                whiteStackable
+                                                            );
+                                                            break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // draw stackables
+
+                                if (showLayer1)
+                                {
+                                    for (int y = 0; y < matrixHeight; y++)
+                                    {
+                                        for (int x = 0; x < matrixWidth; x++)
+                                        {
+                                            const int z = 0;
+
+                                            var cell = geoMatrix[y, x, z];
 
                                             for (int s = 1; s < cell.Stackables.Length; s++)
                                             {
@@ -1961,7 +2666,7 @@ class Program
                                                         case 19:    // wac
                                                         case 20:    // worm
                                                         case 21:    // scav
-                                                            Raylib.DrawTexture(stackableTextures[GetStackableTextureIndex(s)], x * scale, y * scale, whiteStackable); // TODO: remove opacity from entrances
+                                                            Raylib.DrawTexture(stackableTextures[GetStackableTextureIndex(s)], x * scale, y * scale, new(255, 255, 255, 255)); // TODO: remove opacity from entrances
                                                             break;
 
                                                         // directional placement
@@ -1973,14 +2678,14 @@ class Program
                                                                 geoMatrix[y, x, 0].Geo = 7;
                                                             }
 
-                                                            Raylib.DrawTexture(stackableTextures[index], x * scale, y * scale, whiteStackable);
+                                                            Raylib.DrawTexture(stackableTextures[index], x * scale, y * scale, new(255, 255, 255, 255));
                                                             break;
                                                         case 11:    // crack
                                                             Raylib.DrawTexture(
                                                                 stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
                                                                 x * scale,
                                                                 y * scale,
-                                                                whiteStackable
+                                                                new(255, 255, 255, 255)
                                                             );
                                                             break;
                                                     }
@@ -1988,18 +2693,6 @@ class Program
                                             }
                                         }
                                     }
-                                }
-
-                                if (gridContrast)
-                                {
-                                    // the grid
-                                    RlGl.rlPushMatrix();
-                                    {
-                                        RlGl.rlTranslatef(0, 0, -1);
-                                        RlGl.rlRotatef(90, 1, 0, 0);
-                                        Raylib.DrawGrid(matrixHeight > matrixWidth ? matrixHeight * 2 : matrixWidth * 2, scale);
-                                    }
-                                    RlGl.rlPopMatrix();
                                 }
 
 
@@ -2031,35 +2724,35 @@ class Program
                                                 (false, false) => new(matrixX * scale, matrixY * scale, width, height)
                                             };
 
-                                            Raylib.DrawRectangleLinesEx(rec, 2, new(255, 0,0,255));
+                                            Raylib.DrawRectangleLinesEx(rec, 2, new(255, 0, 0, 255));
 
                                             Raylib.DrawText(
                                                 $"{width / scale:0}x{height / scale:0}",
                                                 (int)mouse.X + 10,
                                                 (int)mouse.Y,
                                                 4,
-                                                new(255,255,255,255)
+                                                new(255, 255, 255, 255)
                                                 );
                                         }
                                         else
                                         {
                                             if (matrixX == x && matrixY == y)
                                             {
-                                                Raylib.DrawRectangleLinesEx(new(x * scale, y * scale, scale, scale), 2, new(255,0,0,255));
+                                                Raylib.DrawRectangleLinesEx(new(x * scale, y * scale, scale, scale), 2, new(255, 0, 0, 255));
                                             }
                                         }
                                     }
                                 }
 
                                 // the outbound border
-                                Raylib.DrawRectangleLinesEx(new(0, 0, matrixWidth * scale, matrixHeight * scale), 2, new(0,0,0,255));
+                                Raylib.DrawRectangleLinesEx(new(0, 0, matrixWidth * scale, matrixHeight * scale), 2, new(0, 0, 0, 255));
 
                                 // the border
                                 Raylib.DrawRectangleLinesEx(border, camera.zoom < zoomIncrement ? 5 : 2, new(255, 255, 255, 255));
 
                                 // a lazy way to hide the rest of the grid
-                                Raylib.DrawRectangle(matrixWidth * -scale, -3, matrixWidth * scale, matrixHeight * 2 * scale, new(170, 170, 170, 255));
-                                Raylib.DrawRectangle(0, matrixHeight * scale, matrixWidth * scale + 2, matrixHeight * scale, new(170, 170, 170, 255));
+                                Raylib.DrawRectangle(matrixWidth * -scale, -3, matrixWidth * scale, matrixHeight * 2 * scale, new(120, 120, 120, 255));
+                                Raylib.DrawRectangle(0, matrixHeight * scale, matrixWidth * scale + 2, matrixHeight * scale, new(120, 120, 120, 255));
                             }
                             Raylib.EndMode2D();
 
@@ -2153,971 +2846,1385 @@ class Program
 
                     #region TileEditor
                     case 3:
-                    {
-                        page = 3;
-
-                        var teWidth = Raylib.GetScreenWidth();
-                        var teHeight = Raylib.GetScreenHeight();
-
-                        var tileMouseWorld = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), tileCamera);
-                        var tileMouse = Raylib.GetMousePosition();
-                        var tilePanelRect = new Raylib_CsLo.Rectangle(teWidth - (tilePanelWidth + 10), 50, tilePanelWidth, teHeight - 100);
-                        var leftPanelSideStart = new Vector2(teWidth - (tilePanelWidth + 10), 50);
-                        var leftPanelSideEnd = new Vector2(teWidth - (tilePanelWidth + 10), teHeight - 50);
-                        bool canDrawTile = Raylib_CsLo.Raylib.CheckCollisionPointRec(tileMouse, tilePanelRect);
-
-                        var categoriesPageSize = (int) tilePanelRect.height / 30;
-
-                        #region TileEditorShortcuts
-
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_ONE))
                         {
-                            page = 1;
-                        }
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_TWO)) {
-                            page = 2;
-                        }
+                            page = 3;
 
-                        // if (Raylib.IsKeyPressed(KeyboardKey.KEY_THREE))
-                        // {
-                        //     page = 3;
-                        // }
+                            var teWidth = GetScreenWidth();
+                            var teHeight = GetScreenHeight();
 
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_FOUR))
-                        {
-                            page = 4;
-                        }
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_FIVE))
-                        {
-                            page = 5;
-                        }
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_SIX))
-                        {
-                            resizeFlag = true;
-                            page = 6;
-                        }
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_SEVEN))
-                        {
-                            page = 7;
-                        }
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_EIGHT))
-                        {
-                            page = 8;
-                        }
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_NINE))
-                        {
-                            page = 9;
-                        }
+                            var tileMouseWorld = GetScreenToWorld2D(GetMousePosition(), tileCamera);
+                            var tileMouse = GetMousePosition();
+                            var tilePanelRect = new Rectangle(teWidth - (tilePanelWidth + 10), 50, tilePanelWidth, teHeight - 100);
+                            var leftPanelSideStart = new Vector2(teWidth - (tilePanelWidth + 10), 50);
+                            var leftPanelSideEnd = new Vector2(teWidth - (tilePanelWidth + 10), teHeight - 50);
+                            var specsRect = showTileSpecs ? new Rectangle(0, GetScreenHeight() - 300, 300, 300) :
+                                new(-276, GetScreenHeight() - 300, 300, 300);
+                            bool canDrawTile = !CheckCollisionPointRec(tileMouse, tilePanelRect) && !CheckCollisionPointRec(tileMouse, specsRect);
 
-                        if (!Raylib_CsLo.Raylib.CheckCollisionPointRec(tileMouse, tilePanelRect) || clickTracker) {
-                            // handle mouse drag
-                            if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+                            var categoriesPageSize = (int)tilePanelRect.height / 30;
+                            var currentTileInit = initTiles[tileCategoryIndex][tileIndex];
+
+
+                            #region TileEditorShortcuts
+
+                            if (IsKeyPressed(KeyboardKey.KEY_ONE))
+                            {
+                                page = 1;
+                            }
+                            if (IsKeyPressed(KeyboardKey.KEY_TWO))
+                            {
+                                page = 2;
+                            }
+
+                            // if (Raylib.IsKeyPressed(KeyboardKey.KEY_THREE))
+                            // {
+                            //     page = 3;
+                            // }
+
+                            if (IsKeyPressed(KeyboardKey.KEY_FOUR))
+                            {
+                                page = 4;
+                            }
+                            if (IsKeyPressed(KeyboardKey.KEY_FIVE))
+                            {
+                                page = 5;
+                            }
+                            if (IsKeyPressed(KeyboardKey.KEY_SIX))
+                            {
+                                resizeFlag = true;
+                                page = 6;
+                            }
+                            if (IsKeyPressed(KeyboardKey.KEY_SEVEN))
+                            {
+                                page = 7;
+                            }
+                            if (IsKeyPressed(KeyboardKey.KEY_EIGHT))
+                            {
+                                page = 8;
+                            }
+                            if (IsKeyPressed(KeyboardKey.KEY_NINE))
+                            {
+                                page = 9;
+                            }
+
+                            if (canDrawTile || clickTracker)
+                            {
+                                // handle mouse drag
+                                if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+                                {
+                                    clickTracker = true;
+                                    Vector2 delta = GetMouseDelta();
+                                    delta = RayMath.Vector2Scale(delta, -1.0f / tileCamera.zoom);
+                                    tileCamera.target = RayMath.Vector2Add(tileCamera.target, delta);
+                                }
+
+                                if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_RIGHT)) clickTracker = false;
+
+                                // handle zoom
+                                var tileWheel = Raylib.GetMouseWheelMove();
+                                if (tileWheel != 0)
+                                {
+                                    Vector2 mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), tileCamera);
+                                    tileCamera.offset = Raylib.GetMousePosition();
+                                    tileCamera.target = mouseWorldPosition;
+                                    tileCamera.zoom += tileWheel * zoomIncrement;
+                                    if (tileCamera.zoom < zoomIncrement) tileCamera.zoom = zoomIncrement;
+                                }
+                            }
+
+
+                            if (Raylib.IsKeyPressed(KeyboardKey.KEY_L))
+                            {
+                                currentLayer++;
+
+                                if (currentLayer > 2) currentLayer = 0;
+                            }
+
+                            // handle resizing tile panel
+
+                            if (((tileMouse.X <= leftPanelSideStart.X + 5 && tileMouse.X >= leftPanelSideStart.X - 5 && tileMouse.Y >= leftPanelSideStart.Y && tileMouse.Y <= leftPanelSideEnd.Y) || clickTracker) &&
+                            Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
                             {
                                 clickTracker = true;
-                                Vector2 delta = Raylib.GetMouseDelta();
-                                delta = RayMath.Vector2Scale(delta, -1.0f / tileCamera.zoom);
-                                tileCamera.target = RayMath.Vector2Add(tileCamera.target, delta);
+
+                                var delta = Raylib.GetMouseDelta();
+
+                                if (tilePanelWidth - (int)delta.X >= 400 && tilePanelWidth - (int)delta.X <= 700)
+                                {
+                                    tilePanelWidth -= (int)delta.X;
+                                }
                             }
 
-                            if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_RIGHT)) clickTracker = false;
-
-                            // handle zoom
-                            var tileWheel = Raylib.GetMouseWheelMove();
-                            if (tileWheel != 0)
+                            if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
                             {
-                                Vector2 mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), tileCamera);
-                                tileCamera.offset = Raylib.GetMousePosition();
-                                tileCamera.target = mouseWorldPosition;
-                                tileCamera.zoom += tileWheel * zoomIncrement;
-                                if (tileCamera.zoom < zoomIncrement) tileCamera.zoom = zoomIncrement;
+                                clickTracker = false;
                             }
-                        }
 
+                            // change focus
 
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_L)) {
-                            currentLayer++;
-
-                            if (currentLayer > 2) currentLayer = 0;
-                        }
-
-                        // handle resizing tile panel
-
-                        if (((tileMouse.X <= leftPanelSideStart.X + 5 && tileMouse.X >= leftPanelSideStart.X - 5 && tileMouse.Y >= leftPanelSideStart.Y && tileMouse.Y <= leftPanelSideEnd.Y ) || clickTracker) &&
-                        Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) {
-                            clickTracker = true;
-
-                            var delta = Raylib.GetMouseDelta();
-
-                            if (tilePanelWidth - (int)delta.X >= 400 && tilePanelWidth - (int)delta.X <= 700) {
-                                tilePanelWidth -= (int)delta.X;
+                            if (Raylib.IsKeyPressed(KeyboardKey.KEY_D))
+                            {
+                                tileCategoryFocus = false;
                             }
-                        }
 
-                        if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT)) {
-                            clickTracker = false;
-                        }
-
-                        // change focus
-
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_D)) {
-                            tileCategoryFocus = false;
-                        }
-
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_A)) {
-                            tileCategoryFocus = true;
-                        }
-
-                        // change tile category
-
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_S)) {
-                            if (tileCategoryFocus) {
-                                tileCategoryIndex = ++tileCategoryIndex % tileCategories.Length;
-                                tileCategorySubIndex = ++tileCategorySubIndex % categoriesPageSize;
-
-                                tileCategoryCurrentPage = tileCategoryIndex / categoriesPageSize;
-                                if (tileCategoryIndex == 0) tileCategorySubIndex = 0;
-
-                                tileScrollIndex = 0;
-                                tileIndex = 0;
-                            } else {
-                                tileIndex = ++tileIndex % initTiles[tileCategoryIndex].Length;
-                                
-                                if (
-                                    tileIndex % (categoriesPageSize + tileScrollIndex) == categoriesPageSize + tileScrollIndex - 1 && 
-                                    tileIndex != initTiles[tileCategoryIndex].Length -1) tileScrollIndex++;
-                                
-                                if (tileIndex == 0) tileScrollIndex = 0;
+                            if (Raylib.IsKeyPressed(KeyboardKey.KEY_A))
+                            {
+                                tileCategoryFocus = true;
                             }
-                        }
 
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_W)) {
-                            if (tileCategoryFocus) {
+                            // change tile category
 
-                                tileCategoryIndex--;
-                                tileCategorySubIndex--;
-
-                                if (tileCategoryIndex < 0) {
-                                    tileCategoryIndex = tileCategories.Length - 1;
-                                }
-
-                                tileCategoryCurrentPage = tileCategoryIndex / categoriesPageSize;
-
-
-                                if (tileCategorySubIndex < 0) {
-                                    tileCategorySubIndex = categoriesPageSize - 1;
-                                }
-
-                                if (tileCategoryIndex == tileCategories.Length - 1) {
-                                    
-                                    tileCategorySubIndex = tileCategories.Length % categoriesPageSize - 1;
-                                }
-
-                                tileScrollIndex = 0;
-                                tileIndex = 0;
-                            } else {
-                                if (tileIndex == (tileScrollIndex + 1) && tileIndex != 1) tileScrollIndex--;
-                                
-                                tileIndex--;
-                                if (tileIndex < 0) tileIndex = initTiles[tileCategoryIndex].Length - 1;
-
-                                if (tileIndex == initTiles[tileCategoryIndex].Length - 1) tileScrollIndex += initTiles[tileCategoryIndex].Length - categoriesPageSize; 
-                            }
-                        }
-
-                        var currentTilePreviewColor = tileCategories[tileCategoryIndex].Item2;
-                        Texture currentTileTexture = tilePreviewTextures[tileCategoryIndex][tileIndex];
-                        var uniformLoc = Raylib.GetShaderLocation(tilePreviewShader, "inputTexture");
-                        var colorLoc = Raylib.GetShaderLocation(tilePreviewShader, "highlightColor");
-
-                        #endregion
-
-                        #region TileEditorDrawing
-                        Raylib.BeginDrawing();
-
-                        Raylib.ClearBackground(new(170, 170, 170, 255));
-
-                        Raylib.BeginMode2D(tileCamera);
-                        {
-                            Raylib.DrawRectangle(0, 0, matrixWidth*previewScale, matrixHeight*previewScale, new Color(255, 255, 255, 255));
-
-                            #region TileEditorGeoMatrix
-                            //                        v this was done to avoid rounding errors
-                            int tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / previewScale;
-                            int tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / previewScale;
-
-                            // Draw geos first
-                            #region TileEditorLayer3
-                            for (int y = 0; y < matrixHeight; y++) {
-                                for (int x = 0; x < matrixWidth; x++)
+                            if (Raylib.IsKeyPressed(KeyboardKey.KEY_S))
+                            {
+                                if (tileCategoryFocus)
                                 {
-                                    const int z = 2;
+                                    tileCategoryIndex = ++tileCategoryIndex % tileCategories.Length;
 
-                                    if (!showLayer3) continue;
+                                    if (tileCategoryIndex % (categoriesPageSize + tileCategoryScrollIndex) == categoriesPageSize + tileCategoryScrollIndex - 1
+                                        && tileCategoryIndex != tileCategories.Length - 1)
+                                        tileCategoryScrollIndex++;
 
-                                    var cell = geoMatrix[y, x, z];
-
-                                    var texture = GetBlockIndex(cell.Geo);
-
-                                    if (texture >= 0)
+                                    if (tileCategoryIndex == 0)
                                     {
-                                        if (z == currentLayer) {
+                                        tileCategoryScrollIndex = 0;
+                                    }
 
-                                            Raylib.DrawTexturePro(
-                                                geoTextures[texture], 
-                                                new(0, 0, 20, 20),
-                                                new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0, 
-                                                new(0,0,0,255));
-                                        } else {
+                                    tileIndex = 0;
+                                }
+                                else
+                                {
+                                    tileIndex = ++tileIndex % initTiles[tileCategoryIndex].Length;
 
-                                            Raylib.DrawTexturePro(
-                                                geoTextures[texture], 
-                                                new(0, 0, 20, 20),
-                                                new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0, 
-                                                new(0,0,0,170));
+                                    if (
+                                        tileIndex % (categoriesPageSize + tileScrollIndex) == categoriesPageSize + tileScrollIndex - 1 &&
+                                        tileIndex != initTiles[tileCategoryIndex].Length - 1) tileScrollIndex++;
+
+                                    if (tileIndex == 0) tileScrollIndex = 0;
+                                }
+                            }
+
+                            if (Raylib.IsKeyPressed(KeyboardKey.KEY_W))
+                            {
+                                if (tileCategoryFocus)
+                                {
+
+                                    tileCategoryIndex--;
+
+                                    if (tileCategoryIndex < 0)
+                                    {
+                                        tileCategoryIndex = tileCategories.Length - 1;
+                                    }
+
+                                    if (tileCategoryIndex == (tileCategoryScrollIndex + 1) && tileCategoryIndex != 1) tileCategoryScrollIndex--;
+                                    if (tileCategoryIndex == tileCategories.Length - 1)
+                                    {
+                                        tileCategoryScrollIndex += Math.Abs(tileCategories.Length - categoriesPageSize);
+                                    }
+                                    tileIndex = 0;
+                                }
+                                else
+                                {
+                                    if (tileIndex == (tileScrollIndex) && tileIndex != 1) tileScrollIndex--;
+
+                                    tileIndex--;
+                                    if (tileIndex < 0) tileIndex = initTiles[tileCategoryIndex].Length - 1;
+
+                                    if (tileIndex == initTiles[tileCategoryIndex].Length - 1) tileScrollIndex += initTiles[tileCategoryIndex].Length - categoriesPageSize;
+                                }
+                            }
+
+                            if (IsKeyPressed(KeyboardKey.KEY_T)) showTileSpecs = !showTileSpecs;
+
+                            if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+                            {
+                                if (IsKeyPressed(KeyboardKey.KEY_Z)) showLayer1Tiles = !showLayer1Tiles;
+                                if (IsKeyPressed(KeyboardKey.KEY_X)) showLayer2Tiles = !showLayer2Tiles;
+                                if (IsKeyPressed(KeyboardKey.KEY_C)) showLayer3Tiles = !showLayer3Tiles;
+                            }
+                            else
+                            {
+                                if (IsKeyPressed(KeyboardKey.KEY_Z)) showTileLayer1 = !showTileLayer1;
+                                if (IsKeyPressed(KeyboardKey.KEY_X)) showTileLayer2 = !showTileLayer2;
+                                if (IsKeyPressed(KeyboardKey.KEY_C)) showTileLayer3 = !showTileLayer3;
+                            }
+
+
+                            var currentTilePreviewColor = tileCategories[tileCategoryIndex].Item2;
+                            Texture currentTileTexture = tilePreviewTextures[tileCategoryIndex][tileIndex];
+                            var uniformLoc = Raylib.GetShaderLocation(tilePreviewShader, "inputTexture");
+                            var colorLoc = Raylib.GetShaderLocation(tilePreviewShader, "highlightColor");
+
+                            #endregion
+
+                            #region TileEditorDrawing
+                            BeginDrawing();
+
+                            ClearBackground(new(170, 170, 170, 255));
+
+                            BeginMode2D(tileCamera);
+                            {
+                                DrawRectangle(0, 0, matrixWidth * previewScale, matrixHeight * previewScale, new Color(255, 255, 255, 255));
+
+                                #region TileEditorGeoMatrix
+                                //                        v this was done to avoid rounding errors
+                                int tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / previewScale;
+                                int tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / previewScale;
+
+                                // Draw geos first
+                                if (showTileLayer3)
+                                {
+                                    #region TileEditorLayer3
+
+                                    for (int y = 0; y < matrixHeight; y++)
+                                    {
+                                        for (int x = 0; x < matrixWidth; x++)
+                                        {
+                                            const int z = 2;
+
+                                            if (!showLayer3) continue;
+
+                                            var cell = geoMatrix[y, x, z];
+
+                                            var texture = GetBlockIndex(cell.Geo);
+
+                                            if (texture >= 0)
+                                            {
+                                                if (z == currentLayer)
+                                                {
+
+                                                    Raylib.DrawTexturePro(
+                                                        geoTextures[texture],
+                                                        new(0, 0, 20, 20),
+                                                        new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                        new(0, 0),
+                                                        0,
+                                                        new(0, 0, 0, 255));
+                                                }
+                                                else
+                                                {
+
+                                                    Raylib.DrawTexturePro(
+                                                        geoTextures[texture],
+                                                        new(0, 0, 20, 20),
+                                                        new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                        new(0, 0),
+                                                        0,
+                                                        new(0, 0, 0, 120));
+                                                }
+                                            }
+
+                                            for (int s = 1; s < cell.Stackables.Length; s++)
+                                            {
+                                                if (cell.Stackables[s])
+                                                {
+                                                    switch (s)
+                                                    {
+                                                        // dump placement
+                                                        case 1:     // ph
+                                                        case 2:     // pv
+
+                                                            if (z == currentLayer)
+                                                            {
+
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s)],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(0, 0, 0, 255)
+                                                                );
+                                                            }
+                                                            else
+                                                            {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s)],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(0, 0, 0, 170)
+                                                                );
+                                                            }
+                                                            break;
+                                                        case 3:     // bathive
+                                                            /*case 5:     // entrance
+                                                            case 6:     // passage
+                                                            case 7:     // den
+                                                            case 9:     // rock
+                                                            case 10:    // spear
+                                                            case 12:    // forbidflychains
+                                                            case 13:    // garbagewormhole
+                                                            case 18:    // waterfall
+                                                            case 19:    // wac
+                                                            case 20:    // worm
+                                                            case 21:*/    // scav
+
+                                                            if (z == currentLayer)
+                                                            {
+
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s)],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(255, 255, 255, 255)
+                                                                ); // TODO: remove opacity from entrances
+                                                            }
+                                                            else
+                                                            {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s)],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(255, 255, 255, 170)
+                                                                );
+                                                            }
+                                                            break;
+
+                                                        // directional placement
+                                                        /*case 4:     // entrance
+                                                            var index = GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z));
+
+                                                            if (index is 22 or 23 or 24 or 25)
+                                                            {
+                                                                geoMatrix[y, x, 0].Geo = 7;
+                                                            }
+
+                                                            if (z == currentLayer) {
+
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[index], 
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x*previewScale, y*previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0, 
+                                                                    new(255, 255, 255, 255)
+                                                                );
+                                                            }
+                                                            else {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[index], 
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x*previewScale, y*previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0, 
+                                                                    new(255, 255, 255, 170)
+                                                                );
+                                                            }
+
+                                                            break;*/
+                                                        case 11:    // crack
+                                                            if (z == currentLayer)
+                                                            {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(255, 255, 255, 255)
+                                                                );
+                                                            }
+                                                            else
+                                                            {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(255, 255, 255, 170)
+                                                                );
+                                                            }
+                                                            break;
+                                                    }
+                                                }
+                                            }
+
                                         }
                                     }
 
-                                    for (int s = 1; s < cell.Stackables.Length; s++)
+                                    // then draw the tiles
+
+                                    if (showLayer3Tiles)
                                     {
-                                        if (cell.Stackables[s])
+                                        for (int y = 0; y < matrixHeight; y++)
                                         {
-                                            switch (s)
+                                            for (int x = 0; x < matrixWidth; x++)
                                             {
-                                                // dump placement
-                                                case 1:     // ph
-                                                case 2:     // pv
+                                                const int z = 2;
+                                                var tileCell = tileMatrix[y, x, z];
 
-                                                    if (z == currentLayer) {
+                                                if (tileCell.Type == TileType.TileHead)
+                                                {
+                                                    (int, int, string) tile = ((int, int, string))tileCell.Data.CategoryPostition;
 
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s)], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(0,0,0,255)
-                                                        );
-                                                    }
-                                                    else {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s)], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(0,0,0,170)
-                                                        );
-                                                    }
-                                                    break;
-                                                case 3:     // bathive
-                                                case 5:     // entrance
-                                                case 6:     // passage
-                                                case 7:     // den
-                                                case 9:     // rock
-                                                case 10:    // spear
-                                                case 12:    // forbidflychains
-                                                case 13:    // garbagewormhole
-                                                case 18:    // waterfall
-                                                case 19:    // wac
-                                                case 20:    // worm
-                                                case 21:    // scav
-                                                    
-                                                    if (z == currentLayer) {
+                                                    var category = tilePreviewTextures[tile.Item1 - 5];
+                                                    var tileTexture = category[tile.Item2 - 1];
+                                                    var color = tileCategories[tile.Item1 - 5].Item2;
+                                                    var initTile = initTiles[tile.Item1 - 5][tile.Item2 - 1];
+                                                    var (tileWidth, tileHeight) = initTile.Size;
 
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s)], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 255)
-                                                        ); // TODO: remove opacity from entrances
-                                                    }
-                                                    else {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s)], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 170)
-                                                        );
-                                                    }
-                                                    break;
 
-                                                // directional placement
-                                                case 4:     // entrance
-                                                    var index = GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z));
 
-                                                    if (index is 22 or 23 or 24 or 25)
+                                                    BeginShaderMode(tilePreviewShader);
+                                                    SetShaderValueTexture(tilePreviewShader, uniformLoc, tileTexture);
+
+                                                    SetShaderValue(
+                                                        tilePreviewShader,
+                                                        colorLoc,
+                                                        new Vector4(color.r, color.g, color.b, 1),
+                                                        ShaderUniformDataType.SHADER_UNIFORM_VEC4
+                                                    );
+                                                    DrawTexturePro(
+                                                        tileTexture,
+                                                        new(0, 0, tileTexture.width, tileTexture.height),
+                                                        new(x * 16, y * 16, tileTexture.width, tileTexture.height),
+                                                        // tileWidth > 2 && tileHeight > 2 ? new(16, 16) : new(0, 0),
+                                                        RayMath.Vector2Scale(GetTileHeadOrigin(initTile), previewScale),
+                                                        0,
+                                                        z == currentLayer ? new(255, 255, 255, 255) : new(170, 170, 170, 120)
+                                                    );
+                                                    EndShaderMode();
+                                                }
+                                                else if (tileCell.Type == TileType.Material)
+                                                {
+                                                    var materialName = ((TileMaterial)tileCell.Data).Name;
+                                                    var origin = new Vector2(x * previewScale + 5, y * previewScale + 5);
+                                                    var color = materialColorMatrix[y, x, 0];
+
+                                                    if (z != currentLayer) color.a = 120;
+
+                                                    if (color.r != 0 || color.g != 0 || color.b != 0)
                                                     {
-                                                        geoMatrix[y, x, 0].Geo = 7;
-                                                    }
 
-                                                    if (z == currentLayer) {
+                                                        switch (geoMatrix[y, x, 2].Geo)
+                                                        {
+                                                            case 1:
+                                                                DrawRectangle(
+                                                                    x * previewScale + 5,
+                                                                    y * previewScale + 5,
+                                                                    6,
+                                                                    6,
+                                                                    color
+                                                                );
+                                                                break;
 
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[index], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 255)
-                                                        );
-                                                    }
-                                                    else {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[index], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 170)
-                                                        );
-                                                    }
 
-                                                    break;
-                                                case 11:    // crack
-                                                    if (z == currentLayer) {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 255)
-                                                        );
+                                                            case 2:
+                                                                DrawTriangle(
+                                                                    origin,
+                                                                    new(origin.X, origin.Y + previewScale - 10),
+                                                                    new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
+                                                                    color
+                                                                );
+                                                                break;
+
+
+                                                            case 3:
+                                                                DrawTriangle(
+                                                                    new(origin.X + previewScale - 10, origin.Y),
+                                                                    new(origin.X, origin.Y + previewScale - 10),
+                                                                    new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
+                                                                    color
+                                                                );
+                                                                break;
+
+                                                            case 4:
+                                                                DrawTriangle(
+                                                                    origin,
+                                                                    new(origin.X, origin.Y + previewScale - 10),
+                                                                    new(origin.X + previewScale - 10, origin.Y),
+                                                                    color
+                                                                );
+                                                                break;
+
+                                                            case 5:
+                                                                DrawTriangle(
+                                                                    origin,
+                                                                    new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
+                                                                    new(origin.X + previewScale - 10, origin.Y),
+                                                                    color
+                                                                );
+                                                                break;
+
+                                                            case 6:
+                                                                DrawRectangleV(
+                                                                    origin,
+                                                                    new(previewScale - 10, (previewScale - 10) / 2),
+                                                                    color
+                                                                );
+                                                                break;
+                                                        }
                                                     }
-                                                    else {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 170)
-                                                        );
-                                                    }
-                                                    break;
+                                                }
                                             }
                                         }
                                     }
-                                    
+                                    #endregion
                                 }
-                            }
-                            
-                            for (int y = 0; y < matrixHeight; y++) {
-                                for (int x = 0; x < matrixWidth; x++) {
-                                    const int z = 2;
 
-                                    var tileCell = tileMatrix[y, x, z];
-
-                                    if (tileCell.Type == TileType.TileHead && z == currentLayer) {
-                                        (int, int, string) tile = ((int, int, string))tileCell.Data.CategoryPostition;
-
-                                        var category = tilePreviewTextures[tile.Item1 - 5];
-                                        var tileTexture = category[tile.Item2 - 1];
-                                        var color = tileCategories[tile.Item1 - 5].Item2;
-                                        var initTile = initTiles[tile.Item1 - 5][tile.Item2-1];
-                                        var (tileWidth, tileHeight) = initTile.Size;
-
-
-
-                                        Raylib.BeginShaderMode(tilePreviewShader);
-                                        Raylib.SetShaderValueTexture(tilePreviewShader, uniformLoc, tileTexture);
-
-                                        Raylib.SetShaderValue(
-                                            tilePreviewShader,
-                                            colorLoc, 
-                                            new Vector4(color.r, color.g, color.b, 1), 
-                                            ShaderUniformDataType.SHADER_UNIFORM_VEC4
-                                        );
-                                        Raylib.DrawTexturePro(
-                                            tileTexture,
-                                            new(0, 0, tileTexture.width, tileTexture.height),
-                                            new(x*16, y*16, tileTexture.width, tileTexture.height),
-                                            // tileWidth > 2 && tileHeight > 2 ? new(16, 16) : new(0, 0),
-                                            RayMath.Vector2Scale(GetTileHeadOrigin(initTile), previewScale),
-                                            0,
-                                            z == currentLayer ? new(255, 255, 255, 255) : new(200, 200, 200, 150)
-                                        );
-                                        Raylib.EndShaderMode();
-                                    }
-                                }
-                            }
-                            #endregion
-
-                            #region TileEditorLayer2
-                            for (int y = 0; y < matrixHeight; y++) {
-                                for (int x = 0; x < matrixWidth; x++)
+                                if (showTileLayer2)
                                 {
-                                    const int z = 1;
+                                    #region TileEditorLayer2
+                                    if (currentLayer != 2) DrawRectangle(0, 0, matrixWidth * previewScale, matrixHeight * previewScale, new(90, 90, 90, 120));
 
-                                    if (!showLayer2) continue;
-
-                                    var cell = geoMatrix[y, x, z];
-
-                                    var texture = GetBlockIndex(cell.Geo);
-
-                                    if (texture >= 0)
+                                    for (int y = 0; y < matrixHeight; y++)
                                     {
-                                        if (z == currentLayer) {
+                                        for (int x = 0; x < matrixWidth; x++)
+                                        {
+                                            const int z = 1;
 
-                                            Raylib.DrawTexturePro(
-                                                geoTextures[texture], 
-                                                new(0, 0, 20, 20),
-                                                new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0, 
-                                                new(0,0,0,255));
-                                        } else {
+                                            if (!showLayer2) continue;
 
-                                            Raylib.DrawTexturePro(
-                                                geoTextures[texture], 
-                                                new(0, 0, 20, 20),
-                                                new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0, 
-                                                new(0,0,0,170));
+                                            var cell = geoMatrix[y, x, z];
+
+                                            var texture = GetBlockIndex(cell.Geo);
+
+                                            if (texture >= 0)
+                                            {
+                                                if (z == currentLayer)
+                                                {
+
+                                                    Raylib.DrawTexturePro(
+                                                        geoTextures[texture],
+                                                        new(0, 0, 20, 20),
+                                                        new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                        new(0, 0),
+                                                        0,
+                                                        new(0, 0, 0, 255));
+                                                }
+                                                else
+                                                {
+
+                                                    Raylib.DrawTexturePro(
+                                                        geoTextures[texture],
+                                                        new(0, 0, 20, 20),
+                                                        new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                        new(0, 0),
+                                                        0,
+                                                        new(0, 0, 0, 120));
+                                                }
+                                            }
+
+                                            for (int s = 1; s < cell.Stackables.Length; s++)
+                                            {
+                                                if (cell.Stackables[s])
+                                                {
+                                                    switch (s)
+                                                    {
+                                                        // dump placement
+                                                        case 1:     // ph
+                                                        case 2:     // pv
+
+                                                            if (z == currentLayer)
+                                                            {
+
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s)],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(0, 0, 0, 255)
+                                                                );
+                                                            }
+                                                            else
+                                                            {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s)],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(0, 0, 0, 170)
+                                                                );
+                                                            }
+                                                            break;
+                                                        case 3:     // bathive
+                                                            /*case 5:*/     // shortcut path
+                                                            /*case 6:*/     // passage
+                                                            /*case 7:*/     // den
+                                                            /*case 9:*/     // rock
+                                                            /*case 10:*/    // spear
+                                                            /*case 12:*/    // forbidflychains
+                                                            /*case 13:*/    // garbagewormhole
+                                                            /*case 18:*/    // waterfall
+                                                            /*case 19:*/    // wac
+                                                            /*case 20:*/    // worm
+                                                            /*case 21:*/    // scav
+
+                                                            if (z == currentLayer)
+                                                            {
+
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s)],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(255, 255, 255, 255)
+                                                                ); // TODO: remove opacity from entrances
+                                                            }
+                                                            else
+                                                            {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s)],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(255, 255, 255, 170)
+                                                                );
+                                                            }
+                                                            break;
+
+                                                        // directional placement
+                                                        /*case 4:     // entrance
+                                                            var index = GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z));
+
+                                                            if (index is 22 or 23 or 24 or 25)
+                                                            {
+                                                                geoMatrix[y, x, 0].Geo = 7;
+                                                            }
+
+                                                            if (z == currentLayer) {
+
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[index], 
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x*previewScale, y*previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0, 
+                                                                    new(255, 255, 255, 255)
+                                                                );
+                                                            }
+                                                            else {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[index], 
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x*previewScale, y*previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0, 
+                                                                    new(255, 255, 255, 170)
+                                                                );
+                                                            }
+
+                                                            break;*/
+                                                        case 11:    // crack
+                                                            if (z == currentLayer)
+                                                            {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(255, 255, 255, 255)
+                                                                );
+                                                            }
+                                                            else
+                                                            {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(255, 255, 255, 170)
+                                                                );
+                                                            }
+                                                            break;
+                                                    }
+                                                }
+                                            }
+
                                         }
                                     }
 
-                                    for (int s = 1; s < cell.Stackables.Length; s++)
+                                    // Draw layer 2 tiles
+
+                                    if (showLayer2Tiles)
                                     {
-                                        if (cell.Stackables[s])
+                                        for (int y = 0; y < matrixHeight; y++)
                                         {
-                                            switch (s)
+                                            for (int x = 0; x < matrixWidth; x++)
                                             {
-                                                // dump placement
-                                                case 1:     // ph
-                                                case 2:     // pv
+                                                const int z = 1;
 
-                                                    if (z == currentLayer) {
+                                                if (!showLayer2) continue;
 
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s)], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(0,0,0,255)
-                                                        );
-                                                    }
-                                                    else {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s)], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(0,0,0,170)
-                                                        );
-                                                    }
-                                                    break;
-                                                case 3:     // bathive
-                                                case 5:     // entrance
-                                                case 6:     // passage
-                                                case 7:     // den
-                                                case 9:     // rock
-                                                case 10:    // spear
-                                                case 12:    // forbidflychains
-                                                case 13:    // garbagewormhole
-                                                case 18:    // waterfall
-                                                case 19:    // wac
-                                                case 20:    // worm
-                                                case 21:    // scav
-                                                    
-                                                    if (z == currentLayer) {
+                                                var tileCell = tileMatrix[y, x, z];
 
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s)], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 255)
-                                                        ); // TODO: remove opacity from entrances
-                                                    }
-                                                    else {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s)], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 170)
-                                                        );
-                                                    }
-                                                    break;
+                                                if (tileCell.Type == TileType.TileHead)
+                                                {
+                                                    (int, int, string) tile = ((int, int, string))tileCell.Data.CategoryPostition;
 
-                                                // directional placement
-                                                case 4:     // entrance
-                                                    var index = GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z));
+                                                    var category = tilePreviewTextures[tile.Item1 - 5];
+                                                    var tileTexture = category[tile.Item2 - 1];
+                                                    var color = tileCategories[tile.Item1 - 5].Item2;
+                                                    var initTile = initTiles[tile.Item1 - 5][tile.Item2 - 1];
+                                                    var (tileWidth, tileHeight) = initTile.Size;
 
-                                                    if (index is 22 or 23 or 24 or 25)
+
+
+                                                    Raylib.BeginShaderMode(tilePreviewShader);
+                                                    Raylib.SetShaderValueTexture(tilePreviewShader, uniformLoc, tileTexture);
+
+                                                    Raylib.SetShaderValue(
+                                                        tilePreviewShader,
+                                                        colorLoc,
+                                                        new Vector4(color.r, color.g, color.b, 1),
+                                                        ShaderUniformDataType.SHADER_UNIFORM_VEC4
+                                                    );
+                                                    Raylib.DrawTexturePro(
+                                                        tileTexture,
+                                                        new(0, 0, tileTexture.width, tileTexture.height),
+                                                        new(x * 16, y * 16, tileTexture.width, tileTexture.height),
+                                                        // tileWidth > 2 && tileHeight > 2 ? new(16, 16) : new(0, 0),
+                                                        RayMath.Vector2Scale(GetTileHeadOrigin(initTile), previewScale),
+                                                        0,
+                                                        z == currentLayer ? new(255, 255, 255, 255) : new(170, 170, 170, 120)
+                                                    );
+                                                    Raylib.EndShaderMode();
+                                                }
+                                                else if (tileCell.Type == TileType.Material)
+                                                {
+                                                    var materialName = ((TileMaterial)tileCell.Data).Name;
+                                                    var origin = new Vector2(x * previewScale + 5, y * previewScale + 5);
+                                                    var color = materialColorMatrix[y, x, 0];
+
+                                                    if (z != currentLayer) color.a = 120;
+
+                                                    if (color.r != 0 || color.g != 0 || color.b != 0)
                                                     {
-                                                        geoMatrix[y, x, 0].Geo = 7;
-                                                    }
 
-                                                    if (z == currentLayer) {
+                                                            switch (geoMatrix[y, x, 1].Geo)
+                                                        {
+                                                            case 1:
+                                                                DrawRectangle(
+                                                                    x * previewScale + 5,
+                                                                    y * previewScale + 5,
+                                                                    6,
+                                                                    6,
+                                                                    color
+                                                                );
+                                                                break;
 
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[index], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 255)
-                                                        );
-                                                    }
-                                                    else {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[index], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 170)
-                                                        );
-                                                    }
 
-                                                    break;
-                                                case 11:    // crack
-                                                    if (z == currentLayer) {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 255)
-                                                        );
+                                                            case 2:
+                                                                DrawTriangle(
+                                                                    origin,
+                                                                    new(origin.X, origin.Y + previewScale - 10),
+                                                                    new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
+                                                                    color
+                                                                );
+                                                                break;
+
+
+                                                            case 3:
+                                                                DrawTriangle(
+                                                                    new(origin.X + previewScale - 10, origin.Y),
+                                                                    new(origin.X, origin.Y + previewScale - 10),
+                                                                    new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
+                                                                    color
+                                                                );
+                                                                break;
+
+                                                            case 4:
+                                                                DrawTriangle(
+                                                                    origin,
+                                                                    new(origin.X, origin.Y + previewScale - 10),
+                                                                    new(origin.X + previewScale - 10, origin.Y),
+                                                                    color
+                                                                );
+                                                                break;
+
+                                                            case 5:
+                                                                DrawTriangle(
+                                                                    origin,
+                                                                    new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
+                                                                    new(origin.X + previewScale - 10, origin.Y),
+                                                                    color
+                                                                );
+                                                                break;
+
+                                                            case 6:
+                                                                DrawRectangleV(
+                                                                    origin,
+                                                                    new(previewScale - 10, (previewScale - 10) / 2),
+                                                                    color
+                                                                );
+                                                                break;
+                                                        }
                                                     }
-                                                    else {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 170)
-                                                        );
-                                                    }
-                                                    break;
+                                                }
                                             }
                                         }
                                     }
-                                    
+                                    #endregion
                                 }
-                            }
-                            
-                            for (int y = 0; y < matrixHeight; y++) {
-                                for (int x = 0; x < matrixWidth; x++) {
-                                    const int z = 1;
 
-                                    if (!showLayer2) continue;
-
-                                    var tileCell = tileMatrix[y, x, z];
-
-                                    if (tileCell.Type == TileType.TileHead && z == currentLayer) {
-                                        (int, int, string) tile = ((int, int, string))tileCell.Data.CategoryPostition;
-
-                                        var category = tilePreviewTextures[tile.Item1 - 5];
-                                        var tileTexture = category[tile.Item2 - 1];
-                                        var color = tileCategories[tile.Item1 - 5].Item2;
-                                        var initTile = initTiles[tile.Item1 - 5][tile.Item2-1];
-                                        var (tileWidth, tileHeight) = initTile.Size;
-
-
-
-                                        Raylib.BeginShaderMode(tilePreviewShader);
-                                        Raylib.SetShaderValueTexture(tilePreviewShader, uniformLoc, tileTexture);
-
-                                        Raylib.SetShaderValue(
-                                            tilePreviewShader,
-                                            colorLoc, 
-                                            new Vector4(color.r, color.g, color.b, 1), 
-                                            ShaderUniformDataType.SHADER_UNIFORM_VEC4
-                                        );
-                                        Raylib.DrawTexturePro(
-                                            tileTexture,
-                                            new(0, 0, tileTexture.width, tileTexture.height),
-                                            new(x*16, y*16, tileTexture.width, tileTexture.height),
-                                            // tileWidth > 2 && tileHeight > 2 ? new(16, 16) : new(0, 0),
-                                            RayMath.Vector2Scale(GetTileHeadOrigin(initTile), previewScale),
-                                            0,
-                                            z == currentLayer ? new(255, 255, 255, 255) : new(200, 200, 200, 150)
-                                        );
-                                        Raylib.EndShaderMode();
-                                    }
-                                }
-                            }
-                            #endregion
-
-                            #region TileEditorLayer1
-                            for (int y = 0; y < matrixHeight; y++) {
-                                for (int x = 0; x < matrixWidth; x++)
+                                if (showTileLayer1)
                                 {
-                                    const int z = 0;
+                                    #region TileEditorLayer1
+                                    if (currentLayer != 1 && currentLayer != 2) DrawRectangle(0, 0, matrixWidth * previewScale, matrixHeight * previewScale, new(100, 100, 100, 100));
 
-                                    if (!showLayer1) continue;
-
-                                    var cell = geoMatrix[y, x, z];
-
-                                    var texture = GetBlockIndex(cell.Geo);
-
-                                    if (texture >= 0)
+                                    for (int y = 0; y < matrixHeight; y++)
                                     {
-                                        if (z == currentLayer) {
+                                        for (int x = 0; x < matrixWidth; x++)
+                                        {
+                                            const int z = 0;
 
-                                            Raylib.DrawTexturePro(
-                                                geoTextures[texture], 
-                                                new(0, 0, 20, 20),
-                                                new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0, 
-                                                new(0,0,0,255));
-                                        } else {
+                                            if (!showLayer1) continue;
 
-                                            Raylib.DrawTexturePro(
-                                                geoTextures[texture], 
-                                                new(0, 0, 20, 20),
-                                                new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0, 
-                                                new(0,0,0,170));
+                                            var cell = geoMatrix[y, x, z];
+
+                                            var texture = GetBlockIndex(cell.Geo);
+
+                                            if (texture >= 0)
+                                            {
+                                                if (z == currentLayer)
+                                                {
+
+                                                    Raylib.DrawTexturePro(
+                                                        geoTextures[texture],
+                                                        new(0, 0, 20, 20),
+                                                        new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                        new(0, 0),
+                                                        0,
+                                                        new(0, 0, 0, 255));
+                                                }
+                                                else
+                                                {
+
+                                                    Raylib.DrawTexturePro(
+                                                        geoTextures[texture],
+                                                        new(0, 0, 20, 20),
+                                                        new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                        new(0, 0),
+                                                        0,
+                                                        new(0, 0, 0, 120));
+                                                }
+                                            }
+
+                                            for (int s = 1; s < cell.Stackables.Length; s++)
+                                            {
+                                                if (cell.Stackables[s])
+                                                {
+                                                    switch (s)
+                                                    {
+                                                        // dump placement
+                                                        case 1:     // ph
+                                                        case 2:     // pv
+
+                                                            if (z == currentLayer)
+                                                            {
+
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s)],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(0, 0, 0, 255)
+                                                                );
+                                                            }
+                                                            else
+                                                            {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s)],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(0, 0, 0, 170)
+                                                                );
+                                                            }
+                                                            break;
+                                                        case 3:     // bathive
+                                                        case 5:     // entrance
+                                                        case 6:     // passage
+                                                        case 7:     // den
+                                                        case 9:     // rock
+                                                        case 10:    // spear
+                                                        case 12:    // forbidflychains
+                                                        case 13:    // garbagewormhole
+                                                        case 18:    // waterfall
+                                                        case 19:    // wac
+                                                        case 20:    // worm
+                                                        case 21:    // scav
+
+                                                            if (z == currentLayer)
+                                                            {
+
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s)],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(255, 255, 255, 255)
+                                                                ); // TODO: remove opacity from entrances
+                                                            }
+                                                            else
+                                                            {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s)],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(255, 255, 255, 170)
+                                                                );
+                                                            }
+                                                            break;
+
+                                                        // directional placement
+                                                        case 4:     // entrance
+                                                            var index = GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z));
+
+                                                            if (index is 22 or 23 or 24 or 25)
+                                                            {
+                                                                geoMatrix[y, x, 0].Geo = 7;
+                                                            }
+
+                                                            if (z == currentLayer)
+                                                            {
+
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[index],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(255, 255, 255, 255)
+                                                                );
+                                                            }
+                                                            else
+                                                            {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[index],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(255, 255, 255, 170)
+                                                                );
+                                                            }
+
+                                                            break;
+                                                        case 11:    // crack
+                                                            if (z == currentLayer)
+                                                            {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(255, 255, 255, 255)
+                                                                );
+                                                            }
+                                                            else
+                                                            {
+                                                                Raylib.DrawTexturePro(
+                                                                    stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
+                                                                    new(0, 0, 20, 20),
+                                                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
+                                                                    new(0, 0),
+                                                                    0,
+                                                                    new(255, 255, 255, 170)
+                                                                );
+                                                            }
+                                                            break;
+                                                    }
+                                                }
+                                            }
+
                                         }
                                     }
 
-                                    for (int s = 1; s < cell.Stackables.Length; s++)
+                                    // Draw layer 1 tiles
+
+                                    if (showLayer1Tiles)
                                     {
-                                        if (cell.Stackables[s])
+                                        for (int y = 0; y < matrixHeight; y++)
                                         {
-                                            switch (s)
+                                            for (int x = 0; x < matrixWidth; x++)
                                             {
-                                                // dump placement
-                                                case 1:     // ph
-                                                case 2:     // pv
+                                                const int z = 0;
 
-                                                    if (z == currentLayer) {
+                                                if (!showLayer1) continue;
 
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s)], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(0,0,0,255)
-                                                        );
-                                                    }
-                                                    else {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s)], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(0,0,0,170)
-                                                        );
-                                                    }
-                                                    break;
-                                                case 3:     // bathive
-                                                case 5:     // entrance
-                                                case 6:     // passage
-                                                case 7:     // den
-                                                case 9:     // rock
-                                                case 10:    // spear
-                                                case 12:    // forbidflychains
-                                                case 13:    // garbagewormhole
-                                                case 18:    // waterfall
-                                                case 19:    // wac
-                                                case 20:    // worm
-                                                case 21:    // scav
-                                                    
-                                                    if (z == currentLayer) {
+                                                var tileCell = tileMatrix[y, x, z];
 
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s)], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 255)
-                                                        ); // TODO: remove opacity from entrances
-                                                    }
-                                                    else {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s)], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 170)
-                                                        );
-                                                    }
-                                                    break;
+                                                if (tileCell.Type == TileType.TileHead)
+                                                {
+                                                    (int, int, string) tile = ((int, int, string))tileCell.Data.CategoryPostition;
 
-                                                // directional placement
-                                                case 4:     // entrance
-                                                    var index = GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z));
+                                                    /*Console.WriteLine($"Index: {tile.Item1 - 5}; Length: {tilePreviewTextures.Length}; Name = {tile.Item3}");*/
+                                                    var category = tilePreviewTextures[tile.Item1 - 5];
 
-                                                    if (index is 22 or 23 or 24 or 25)
+                                                    var tileTexture = category[tile.Item2 - 1];
+                                                    var color = tileCategories[tile.Item1 - 5].Item2;
+                                                    var initTile = initTiles[tile.Item1 - 5][tile.Item2 - 1];
+                                                    var (tileWidth, tileHeight) = initTile.Size;
+
+
+                                                    BeginShaderMode(tilePreviewShader);
+                                                    SetShaderValueTexture(tilePreviewShader, uniformLoc, tileTexture);
+
+                                                    SetShaderValue(
+                                                        tilePreviewShader,
+                                                        colorLoc,
+                                                        new Vector4(color.r, color.g, color.b, 1),
+                                                        ShaderUniformDataType.SHADER_UNIFORM_VEC4
+                                                    );
+                                                    DrawTexturePro(
+                                                        tileTexture,
+                                                        new(0, 0, tileTexture.width, tileTexture.height),
+                                                        new(x * 16, y * 16, tileTexture.width, tileTexture.height),
+                                                        // tileWidth > 2 && tileHeight > 2 ? new(16, 16) : new(0, 0),
+                                                        RayMath.Vector2Scale(GetTileHeadOrigin(initTile), previewScale),
+                                                        0,
+                                                        z == currentLayer ? new(255, 255, 255, 255) : new(170, 170, 170, 120)
+                                                    );
+
+                                                    EndShaderMode();
+                                                }
+                                                else if (tileCell.Type == TileType.Material)
+                                                {
+                                                    var materialName = ((TileMaterial)tileCell.Data).Name;
+                                                    var origin = new Vector2(x * previewScale + 5, y * previewScale + 5);
+                                                    var color = materialColorMatrix[y, x, 0];
+
+                                                    if (z != currentLayer) color.a = 120;
+
+                                                    if (color.r != 0 || color.g != 0 || color.b != 0)
                                                     {
-                                                        geoMatrix[y, x, 0].Geo = 7;
-                                                    }
 
-                                                    if (z == currentLayer) {
+                                                        switch (geoMatrix[y, x, 0].Geo)
+                                                        {
+                                                            case 1:
+                                                                DrawRectangle(
+                                                                    x * previewScale + 5,
+                                                                    y * previewScale + 5,
+                                                                    6,
+                                                                    6,
+                                                                    color
+                                                                );
+                                                                break;
 
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[index], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 255)
-                                                        );
-                                                    }
-                                                    else {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[index], 
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 170)
-                                                        );
-                                                    }
 
-                                                    break;
-                                                case 11:    // crack
-                                                    if (z == currentLayer) {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 255)
-                                                        );
+                                                            case 2:
+                                                                DrawTriangle(
+                                                                    origin,
+                                                                    new(origin.X, origin.Y + previewScale - 10),
+                                                                    new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
+                                                                    color
+                                                                );
+                                                                break;
+
+
+                                                            case 3:
+                                                                DrawTriangle(
+                                                                    new(origin.X + previewScale - 10, origin.Y),
+                                                                    new(origin.X, origin.Y + previewScale - 10),
+                                                                    new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
+                                                                    color
+                                                                );
+                                                                break;
+
+                                                            case 4:
+                                                                DrawTriangle(
+                                                                    origin,
+                                                                    new(origin.X, origin.Y + previewScale - 10),
+                                                                    new(origin.X + previewScale - 10, origin.Y),
+                                                                    color
+                                                                );
+                                                                break;
+
+                                                            case 5:
+                                                                DrawTriangle(
+                                                                    origin,
+                                                                    new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
+                                                                    new(origin.X + previewScale - 10, origin.Y),
+                                                                    color
+                                                                );
+                                                                break;
+
+                                                            case 6:
+                                                                DrawRectangleV(
+                                                                    origin,
+                                                                    new(previewScale - 10, (previewScale - 10) / 2),
+                                                                    color
+                                                                );
+                                                                break;
+                                                        }
                                                     }
-                                                    else {
-                                                        Raylib.DrawTexturePro(
-                                                            stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
-                                                            new(0, 0, 20, 20),
-                                                            new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                            new(0, 0),
-                                                            0, 
-                                                            new(255, 255, 255, 170)
-                                                        );
-                                                    }
-                                                    break;
+                                                }
                                             }
                                         }
                                     }
-                                    
+                                    #endregion
                                 }
-                            }
-                            
-                            for (int y = 0; y < matrixHeight; y++) {
-                                for (int x = 0; x < matrixWidth; x++) {
-                                    const int z = 0;
 
-                                    if (!showLayer1) continue;
-
-                                    var tileCell = tileMatrix[y, x, z];
-
-                                    if (tileCell.Type == TileType.TileHead && z == currentLayer) {
-                                        (int, int, string) tile = ((int, int, string))tileCell.Data.CategoryPostition;
-
-                                        var category = tilePreviewTextures[tile.Item1 - 5];
-                                        var tileTexture = category[tile.Item2 - 1];
-                                        var color = tileCategories[tile.Item1 - 5].Item2;
-                                        var initTile = initTiles[tile.Item1 - 5][tile.Item2-1];
-                                        var (tileWidth, tileHeight) = initTile.Size;
+                                #endregion
 
 
-                                        Raylib.BeginShaderMode(tilePreviewShader);
-                                        Raylib.SetShaderValueTexture(tilePreviewShader, uniformLoc, tileTexture);
+                                // currently held tile
 
-                                        Raylib.SetShaderValue(
-                                            tilePreviewShader,
-                                            colorLoc, 
-                                            new Vector4(color.r, color.g, color.b, 1), 
-                                            ShaderUniformDataType.SHADER_UNIFORM_VEC4
-                                        );
-                                        Raylib.DrawTexturePro(
-                                            tileTexture,
-                                            new(0, 0, tileTexture.width, tileTexture.height),
-                                            new(x*16, y*16, tileTexture.width, tileTexture.height),
-                                            // tileWidth > 2 && tileHeight > 2 ? new(16, 16) : new(0, 0),
-                                            RayMath.Vector2Scale(GetTileHeadOrigin(initTile), previewScale),
-                                            0,
-                                            z == currentLayer ? new(255, 255, 255, 255) : new(200, 200, 200, 150)
-                                        );
+                                var isTileLegel = IsTileLegal(ref currentTileInit, new(tileMatrixX, tileMatrixY), tileMatrix, geoMatrix, currentLayer);
 
-                                        Raylib.EndShaderMode();
-                                    }
+                                Console.WriteLine(isTileLegel ? "LEGAL" : "ILLEGAL");
+
+                                BeginShaderMode(tilePreviewShader);
+                                SetShaderValueTexture(tilePreviewShader, uniformLoc, currentTileTexture);
+
+                                if (isTileLegel)
+                                {
+
+                                    SetShaderValue(
+                                        tilePreviewShader,
+                                        colorLoc,
+                                        new Vector4(currentTilePreviewColor.r, currentTilePreviewColor.g, currentTilePreviewColor.b, 1),
+                                        ShaderUniformDataType.SHADER_UNIFORM_VEC4
+                                    );
+
+
                                 }
-                            }
-                            #endregion
-                            
-                            #endregion
+                                else
+                                {
+
+                                    SetShaderValue(
+                                        tilePreviewShader,
+                                        colorLoc,
+                                        new Vector4(255, 0, 0, 255),
+                                        ShaderUniformDataType.SHADER_UNIFORM_VEC4
+                                    );
+
+                                }
 
 
-                            #region TestingTileTextures
-
-                            Raylib.BeginShaderMode(tilePreviewShader);
-                                Raylib.SetShaderValueTexture(tilePreviewShader, uniformLoc, currentTileTexture);
-
-                                Raylib.SetShaderValue(
-                                    tilePreviewShader, 
-                                    colorLoc, 
-                                    new Vector4(currentTilePreviewColor.r, currentTilePreviewColor.g, currentTilePreviewColor.b, 1), 
-                                    ShaderUniformDataType.SHADER_UNIFORM_VEC4
-                                );
-                                // Raylib.DrawTextureV(
-                                //     currentTileTexture, 
-                                //     new(tileMatrixX * previewScale, tileMatrixY * previewScale), 
-                                //     Color.WHITE
-                                // );
-
-                                Raylib.DrawTexturePro(
+                                DrawTexturePro(
                                     currentTileTexture,
                                     new(0, 0, currentTileTexture.width, currentTileTexture.height),
-                                    new(tileMatrixX*previewScale, tileMatrixY*previewScale, currentTileTexture.width, currentTileTexture.height),
-                                    RayMath.Vector2Scale(GetTileHeadOrigin(initTiles[tileCategoryIndex][tileIndex]), previewScale),
+                                    new(tileMatrixX * previewScale, tileMatrixY * previewScale, currentTileTexture.width, currentTileTexture.height),
+                                    RayMath.Vector2Scale(GetTileHeadOrigin(currentTileInit), previewScale),
                                     0,
                                     new(255, 255, 255, 255)
                                 );
-                            Raylib.EndShaderMode();
+                                EndShaderMode();
 
+                            }
+                            EndMode2D();
+
+                            #region TileEditorUI
+                            {
+                                fixed (byte* pt = tilesPanelBytes)
+                                {
+                                    RayGui.GuiPanel(
+                                        tilePanelRect,
+                                        (sbyte*)pt
+                                    );
+                                }
+
+                                // detect resize attempt
+
+                                if (tileMouse.X <= leftPanelSideStart.X + 5 && tileMouse.X >= leftPanelSideStart.X - 5 && tileMouse.Y >= leftPanelSideStart.Y && tileMouse.Y <= leftPanelSideEnd.Y)
+                                {
+                                    Raylib.SetMouseCursor(MouseCursor.MOUSE_CURSOR_RESIZE_EW);
+
+                                    Raylib.DrawLineEx(
+                                        leftPanelSideStart,
+                                        leftPanelSideEnd,
+                                        4,
+                                        new(0, 0, 255, 255)
+                                    );
+                                }
+                                else
+                                {
+                                    Raylib.SetMouseCursor(MouseCursor.MOUSE_CURSOR_ARROW);
+                                    Raylib.DrawLineEx(
+                                        leftPanelSideStart,
+                                        leftPanelSideEnd,
+                                        4,
+                                        new(0, 0, 0, 255)
+                                    );
+                                }
+
+                                // draw categories list
+
+                                var newCategoryIndex = RayGui.GuiListView(
+                                    new(teWidth - (tilePanelWidth + 10) + 10, 90, tilePanelWidth * 0.3f, teHeight - 200),
+                                    string.Join(";", tileCategories.Select(t => t.Item1)),
+                                    &tileCategoryScrollIndex,
+                                    tileCategoryIndex
+                                );
+
+                                if (newCategoryIndex != tileCategoryIndex)
+                                {
+                                    tileCategoryIndex = newCategoryIndex;
+                                    tileIndex = 0;
+                                }
+
+                                // draw category tiles list
+
+
+                                tileIndex = Raylib_CsLo.RayGui.GuiListView(
+                                    new(teWidth - (tilePanelWidth + 10) + 15 + (tilePanelWidth * 0.3f), 90, tilePanelWidth * 0.7f - 25, teHeight - 200),
+                                    string.Join(";", initTiles[tileCategoryIndex].Select(i => i.Name)),
+                                    &tileScrollIndex,
+                                    tileIndex
+                                );
+
+                                // focus indictor rectangles
+
+                                if (tileCategoryFocus)
+                                {
+                                    Raylib.DrawRectangleLinesEx(
+                                        new(teWidth - (tilePanelWidth + 10) + 10, 90, tilePanelWidth * 0.3f, teHeight - 200),
+                                        4f,
+                                        new(0, 0, 255, 255)
+                                    );
+                                }
+                                else
+                                {
+                                    Raylib.DrawRectangleLinesEx(
+                                        new(teWidth - (tilePanelWidth + 10) + 15 + (tilePanelWidth * 0.3f), 90, tilePanelWidth * 0.7f - 25, teHeight - 200),
+                                        4f,
+                                        new(0, 0, 255, 255)
+                                    );
+                                }
+
+                                // layer indicator
+
+                                if (currentLayer == 2)
+                                {
+                                    DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), new(255, 0, 0, 255));
+                                    DrawText("L3", teWidth - 50, (int)tilePanelRect.height + 10, 20, new(255, 255, 255, 255));
+                                }
+                                if (currentLayer == 1)
+                                {
+                                    DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), new(0, 255, 0, 255));
+                                    DrawText("L2", teWidth - 50, (int)tilePanelRect.height + 10, 20, new(255, 255, 255, 255));
+                                }
+                                if (currentLayer == 0)
+                                {
+                                    DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), new(0, 0, 0, 255));
+                                    DrawText("L1", teWidth - 47, (int)tilePanelRect.height + 10, 20, new(255, 255, 255, 255));
+                                }
+
+                                // tile specs panel
+
+                                fixed (byte* pt = tileSpecsPanelBytes)
+                                {
+                                    RayGui.GuiPanel(
+                                        specsRect,
+                                        (sbyte*)pt
+                                    );
+                                }
+
+                                DrawRectangleRec(
+                                    new(
+                                        specsRect.X,
+                                        specsRect.Y + 24,
+                                        specsRect.width,
+                                        specsRect.height
+                                    ),
+                                    new(120, 120, 120, 255)
+                                );
+
+                                if (RayGui.GuiButton(
+                                    new(specsRect.X + 276, specsRect.Y, 24, 24),
+                                    showTileSpecs ? "<" : ">"
+                                )) showTileSpecs = !showTileSpecs;
+
+                                {
+                                    // Console.WriteLine($"Category: {tileCategoryIndex}, Tile: {tileIndex}; ({initTiles.Length}, {initTiles[tileCategoryIndex].Length})");
+                                    var (tileWidth, tileHeight) = initTiles[tileCategoryIndex][tileIndex].Size;
+
+                                    var newWholeScale = Math.Min(300 / tileWidth * 20, 200 / tileHeight * 20);
+                                    var newCellScale = newWholeScale / 20;
+
+                                    var specs = initTiles[tileCategoryIndex][tileIndex].Specs;
+                                    var specs2 = initTiles[tileCategoryIndex][tileIndex].Specs2;
+
+                                    var textLength = MeasureText($"{tileWidth} x {tileHeight}", 20);
+
+                                    if (showTileSpecs)
+                                    {
+                                        DrawText(
+                                            $"{tileWidth} x {tileHeight}",
+                                            (specsRect.X + specsRect.width) / 2 - textLength / 2,
+                                            specsRect.Y + 50, 20, new(0, 0, 0, 255)
+                                        );
+
+                                        for (int x = 0; x < tileWidth; x++)
+                                        {
+                                            for (int y = 0; y < tileHeight; y++)
+                                            {
+                                                var spec = specs[(x * tileHeight) + y];
+
+                                                if (spec is > 0 and < 9 and not 8)
+                                                {
+                                                    DrawTileSpec(
+                                                        spec,
+                                                        new Vector2((300 - newCellScale * tileWidth) / 2 + x * newCellScale, (int)specsRect.Y + 100 + y * newCellScale),
+                                                        newCellScale,
+                                                        new(0, 0, 0, 255)
+                                                    );
+                                                }
+                                            }
+                                        }
+
+                                        for (int x = 0; x < tileWidth; x++)
+                                        {
+                                            for (int y = 0; y < tileHeight; y++)
+                                            {
+                                                DrawRectangleLinesEx(
+                                                    new(
+                                                        (300 - newCellScale * tileWidth) / 2 + x * newCellScale,
+                                                        (int)specsRect.Y + 100 + y * newCellScale,
+                                                        newCellScale,
+                                                        newCellScale
+                                                    ),
+                                                    Math.Max(tileWidth, tileHeight) switch
+                                                    {
+                                                        > 25 => 0.3f,
+                                                        > 10 => 0.5f,
+                                                        _ => 1f
+                                                    },
+                                                    new(255, 255, 255, 255)
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // layer visibility
+
+                                {
+                                    showTileLayer1 = RayGui.GuiCheckBox(new(tilePanelRect.X + 10, tilePanelRect.height, 20, 20), "Layer 1", showTileLayer1);
+                                    showTileLayer2 = RayGui.GuiCheckBox(new(tilePanelRect.X + 90, tilePanelRect.height, 20, 20), "Layer 2", showTileLayer2);
+                                    showTileLayer3 = RayGui.GuiCheckBox(new(tilePanelRect.X + 170, tilePanelRect.height, 20, 20), "Layer 3", showTileLayer3);
+
+                                    showLayer1Tiles = RayGui.GuiCheckBox(new(tilePanelRect.X + 10, tilePanelRect.height + 25, 20, 20), "Tiles", showLayer1Tiles);
+                                    showLayer2Tiles = RayGui.GuiCheckBox(new(tilePanelRect.X + 90, tilePanelRect.height + 25, 20, 20), "Tiles", showLayer2Tiles);
+                                    showLayer3Tiles = RayGui.GuiCheckBox(new(tilePanelRect.X + 170, tilePanelRect.height + 25, 20, 20), "Tiles", showLayer3Tiles);
+                                }
+                            }
+                            #endregion
+
+                            EndDrawing();
                             #endregion
 
                         }
-                        Raylib.EndMode2D();
-
-                        #region TileEditorUI
-                        {
-                            fixed (byte* pt = tilesPanelBytes) {
-                                Raylib_CsLo.RayGui.GuiPanel(
-                                    tilePanelRect,
-                                    (sbyte*)pt
-                                );
-                            }
-
-                            // detect resize attempt
-
-                            if (tileMouse.X <= leftPanelSideStart.X + 5 && tileMouse.X >= leftPanelSideStart.X - 5 && tileMouse.Y >= leftPanelSideStart.Y && tileMouse.Y <= leftPanelSideEnd.Y) {
-                                Raylib.SetMouseCursor(MouseCursor.MOUSE_CURSOR_RESIZE_EW);
-                                
-                                Raylib.DrawLineEx(
-                                    leftPanelSideStart,
-                                    leftPanelSideEnd,
-                                    4,
-                                    new(0, 0, 255, 255)
-                                );
-                            } else {
-                                Raylib.SetMouseCursor(MouseCursor.MOUSE_CURSOR_ARROW);
-                                Raylib.DrawLineEx(
-                                    leftPanelSideStart,
-                                    leftPanelSideEnd,
-                                    4,
-                                    new(0, 0, 0, 255)
-                                );
-                            }
-
-                            // draw categories list
-
-                            var newSubIndex = RayGui.GuiListView(
-                                new(teWidth - (tilePanelWidth + 10) + 10, 90, tilePanelWidth*0.3f, teHeight - 200),
-                                string.Join(";", tileCategories.Skip(categoriesPageSize * tileCategoryCurrentPage).Take(categoriesPageSize).Select(t => t.Item1)),
-                                &tileCategoryScrollIndex,
-                                tileCategorySubIndex
-                            );
-
-                            if (newSubIndex != tileCategorySubIndex) {
-                                tileCategoryIndex += newSubIndex - tileCategorySubIndex;
-                                tileCategorySubIndex = newSubIndex;
-                                tileIndex = 0;
-                            }
-
-
-                            if (tileCategoryCurrentPage > 0 && Raylib_CsLo.RayGui.GuiButton(
-                                new(teWidth - (tilePanelWidth + 10) + 10, 100 + (teHeight - 200), tilePanelWidth*0.3f/2, 30), 
-                                "Up"
-                            )) {
-                                tileCategoryIndex -= tileCategorySubIndex + 1;
-                                tileCategorySubIndex = categoriesPageSize - 1;
-                                tileCategoryCurrentPage--;
-                            }
-
-                            if (tileCategoryCurrentPage < tileCategories.Length / categoriesPageSize && Raylib_CsLo.RayGui.GuiButton(
-                                new(teWidth - (tilePanelWidth + 10) + 10 + (tilePanelWidth*0.3f/2), 100 + (teHeight - 200), tilePanelWidth*0.3f/2, 30), 
-                                "Down"
-                            )) {
-                                tileCategoryIndex += categoriesPageSize - tileCategorySubIndex;
-                                tileCategorySubIndex = 0;
-                                tileCategoryCurrentPage++;
-                            }
-                        
-                            // draw category tiles list
-
-                             
-                            tileIndex = Raylib_CsLo.RayGui.GuiListView(
-                                new(teWidth - (tilePanelWidth + 10) + 15 + (tilePanelWidth*0.3f), 90, tilePanelWidth*0.7f - 25, teHeight - 200),
-                                string.Join(";", initTiles[tileCategoryIndex].Select(i => i.Name)), 
-                                &tileScrollIndex,
-                                tileIndex
-                            );
-
-                            // focus indictor rectangles
-
-                            if (tileCategoryFocus) {
-                                Raylib.DrawRectangleLinesEx(
-                                    new(teWidth - (tilePanelWidth + 10) + 10, 90, tilePanelWidth*0.3f, teHeight - 200),
-                                    4f,
-                                    new(0, 0, 255, 255)
-                                );
-                            } else {
-                                Raylib.DrawRectangleLinesEx(
-                                    new(teWidth - (tilePanelWidth + 10) + 15 + (tilePanelWidth*0.3f), 90, tilePanelWidth*0.7f - 25, teHeight - 200),
-                                    4f,
-                                    new(0, 0, 255, 255)
-                                );
-                            }
-
-                            // layer indicator
-
-                            if (currentLayer == 2) {
-                                Raylib.DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), new(255, 0, 0, 255));
-                                Raylib.DrawText("L3", teWidth - 50, (int)tilePanelRect.height + 10, 20, new(255, 255, 255, 255));
-                            }
-                            if (currentLayer == 1) {
-                                Raylib.DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), new(0, 255, 0, 255));
-                                Raylib.DrawText("L2", teWidth - 50, (int)tilePanelRect.height + 10, 20, new(255, 255, 255, 255));
-                            }
-                            if (currentLayer == 0) {
-                                Raylib.DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), new(0, 0, 0, 255));
-                                Raylib.DrawText("L1", teWidth - 47, (int)tilePanelRect.height + 10, 20, new(255, 255, 255, 255));
-                            }
-
-                            // tile specs panel
-
-                            fixed (byte* pt = tileSpecsPanelBytes) {
-                                
-                            }
-
-                        }
-                        #endregion
-
-                        Raylib.EndDrawing();
-                        #endregion
-                        
-                    }
                         break;
                     #endregion
 
@@ -3907,7 +5014,8 @@ class Program
 
                             var isBecomingLarger = matrixWidthValue > matrixWidth || matrixHeightValue > matrixHeight;
 
-                            if (isBecomingLarger) {
+                            if (isBecomingLarger)
+                            {
                                 Raylib_CsLo.RayGui.GuiLine(new(600, 100, 400, 20), "Fill extra space");
                                 fillLayer1 = Raylib_CsLo.RayGui.GuiCheckBox(new(600, 130, 28, 28), "Fill Layer 1", fillLayer1);
                                 fillLayer2 = Raylib_CsLo.RayGui.GuiCheckBox(new(750, 130, 28, 28), "Fill Layer 2", fillLayer2);
@@ -3917,6 +5025,22 @@ class Program
                             if (Raylib_CsLo.RayGui.GuiButton(new(360, Raylib.GetScreenHeight() - 160, 300, 40), "Ok") || Raylib.IsKeyPressed(KeyboardKey.KEY_ENTER))
                             {
                                 logger.Debug("page 6: Ok button clicked");
+
+                                if (
+                                        bufferTiles.Left != leftPadding ||
+                                        bufferTiles.Right != rightPadding ||
+                                        bufferTiles.Top != topPadding ||
+                                        bufferTiles.Bottom != bottomPadding
+                                        )
+                                {
+                                    bufferTiles = new BufferTiles
+                                    {
+                                        Left = leftPadding,
+                                        Right = rightPadding,
+                                        Top = topPadding,
+                                        Bottom = bottomPadding,
+                                    };
+                                }
 
                                 if (resizeFlag)
                                 {
@@ -3933,7 +5057,8 @@ class Program
 
                                         // I know this can be simplified, but I'm keeping it in case 
                                         // it becomes useful in the future
-                                        if (isBecomingLarger) {
+                                        if (isBecomingLarger)
+                                        {
                                             var fillCell = new RunCell { Geo = 1, Stackables = [] };
                                             var emptyCell = new RunCell { Geo = 0, Stackables = [] };
 
@@ -3949,7 +5074,9 @@ class Program
                                                     fillLayer3 ? fillCell : emptyCell
                                                 ]
                                             );
-                                        } else {
+                                        }
+                                        else
+                                        {
                                             var emptyCell = new RunCell { Geo = 0, Stackables = [] };
 
                                             geoMatrix = CommonUtils.Resize(
@@ -3969,15 +5096,28 @@ class Program
                                         logger.Debug("resizing tile matrix");
 
                                         tileMatrix = CommonUtils.Resize(
-                                            tileMatrix, 
-                                            matrixWidth, 
-                                            matrixHeight, 
-                                            matrixWidthValue, 
-                                            matrixHeightValue, 
+                                            tileMatrix,
+                                            matrixWidth,
+                                            matrixHeight,
+                                            matrixWidthValue,
+                                            matrixHeightValue,
                                             [
                                                 new TileCell(),
                                                 new TileCell(),
                                                 new TileCell()
+                                            ]
+                                        );
+
+                                        materialColorMatrix = CommonUtils.Resize(
+                                            materialColorMatrix, 
+                                            matrixWidth, 
+                                            matrixHeight, 
+                                            matrixHeightValue, 
+                                            matrixWidthValue,
+                                            [
+                                                new(0, 0, 0, 255),
+                                                new(0, 0, 0, 255),
+                                                new(0, 0, 0, 255)
                                             ]
                                         );
 
@@ -3992,27 +5132,11 @@ class Program
 
                                     logger.Debug("calculating borders");
 
-                                    if (
-                                        bufferTiles.Left != leftPadding ||
-                                        bufferTiles.Right != rightPadding ||
-                                        bufferTiles.Top != topPadding ||
-                                        bufferTiles.Bottom != bottomPadding
-                                        )
-                                    {
-                                        bufferTiles = new BufferTiles
-                                        {
-                                            Left = leftPadding,
-                                            Right = rightPadding,
-                                            Top = topPadding,
-                                            Bottom = bottomPadding,
-                                        };
-                                    }
-
                                     border = new(
                                         bufferTiles.Left * scale,
                                         bufferTiles.Top * scale,
-                                        (matrixWidth - (bufferTiles.Right * 2)) * scale,
-                                        (matrixHeight - (bufferTiles.Bottom * 2)) * scale
+                                        (matrixWidth - (bufferTiles.Right + bufferTiles.Left)) * scale,
+                                        (matrixHeight - (bufferTiles.Bottom + bufferTiles.Top)) * scale
                                     );
 
                                     resizeFlag = false;
@@ -4023,9 +5147,17 @@ class Program
 
                                     geoMatrix = CommonUtils.NewGeoMatrix(matrixWidthValue, matrixHeightValue, 1);
                                     tileMatrix = CommonUtils.NewTileMatrix(matrixWidthValue, matrixHeightValue);
+                                    materialColorMatrix = CommonUtils.NewMaterialColorMatrix(matrixWidthValue, matrixHeightValue, new(0, 0, 0, 255));
 
                                     matrixHeight = matrixHeightValue;
                                     matrixWidth = matrixWidthValue;
+
+                                    border = new(
+                                        leftPadding * scale,
+                                        topPadding * scale,
+                                        (matrixWidth - (rightPadding + leftPadding)) * scale,
+                                        (matrixHeight - (bottomPadding + topPadding)) * scale
+                                    );
 
                                     Raylib.UnloadRenderTexture(lightMapBuffer);
                                     lightMapBuffer = Raylib.LoadRenderTexture((matrixWidth * scale) + 300, (matrixHeight * scale) + 300);
@@ -5035,54 +6167,158 @@ class Program
                             {
                                 Raylib.ClearBackground(new Color(0, 0, 0, 130));
 
-                                Raylib.DrawText("Please wait..", Raylib.GetScreenWidth() / 2 - 100, Raylib.GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
 
-                                if (loadFileTask.IsCompleted)
+                                if (!loadFileTask.IsCompleted)
                                 {
-                                    var res = loadFileTask.Result;
-                                    if (res.Success)
-                                    {
-                                        cameraCamera.target = new(-100, -100);
-                                        lightPageCamera.target = new(-500, -200);
-
-                                        renderCamers = res.Cameras;
-                                        geoMatrix = res.GeoMatrix;
-                                        tileMatrix = res.TileMatrix;
-                                        matrixHeight = res.Height;
-                                        matrixWidth = res.Width;
-                                        bufferTiles = res.BufferTiles;
-
-                                        effectList = res.Effects.Select(effect => (effect.Item1, Effects.GetEffectOptions(effect.Item1), effect.Item2)).ToArray();
-
-                                        matrixWidthValue = matrixWidth;
-                                        matrixHeightValue = matrixHeight;
-
-                                        var lightMapTexture = Raylib.LoadTextureFromImage(res.LightMapImage);
-
-                                        Raylib.UnloadRenderTexture(lightMapBuffer);
-                                        lightMapBuffer = Raylib.LoadRenderTexture(matrixWidth * scale + 300, matrixHeight * scale + 300);
-
-                                        Raylib.BeginTextureMode(lightMapBuffer);
-                                        Raylib.DrawTextureRec(
-                                            lightMapTexture,
-                                            new(0, 0, lightMapTexture.width, lightMapTexture.height),
-                                            new(0, 0),
-                                            new(255, 255, 255, 255)
-                                        );
-                                        Raylib.EndTextureMode();
-
-                                        Raylib.UnloadImage(res.LightMapImage);
-
-                                        projectName = res.Name;
-                                        page = 1;
-                                    }
-                                    else
-                                    {
-                                        logger.Debug("failed to load level project");
-                                    }
-
-                                    Raylib_CsLo.RayGui.GuiUnlock();
+                                    Raylib.DrawText("Please wait..", Raylib.GetScreenWidth() / 2 - 100, Raylib.GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
+                                    Raylib.EndDrawing();
+                                    continue;
                                 }
+
+                                LoadFileResult res = loadFileTask.Result;
+
+                                if (!res.Success)
+                                {
+                                    logger.Debug("failed to load level project");
+                                    Raylib_CsLo.RayGui.GuiUnlock();
+                                    Raylib.EndDrawing();
+                                    continue;
+                                }
+
+                                // validate if tiles are defiend in Init.txt
+
+                                if (tileCheckTask is null)
+                                {
+
+                                    tileCheckTask = Task.Factory.StartNew(() =>
+                                    {
+                                        for (int y = 0; y < res.Height; y++)
+                                        {
+                                            for (int x = 0; x < res.Width; x++)
+                                            {
+                                                for (int z = 0; z < 3; z++)
+                                                {
+                                                    var cell = res.TileMatrix![y, x, z];
+
+                                                    if (cell.Type == TileType.TileHead)
+                                                    {
+                                                        var (category, position, name) = ((TileHead)cell.Data).CategoryPostition;
+
+                                                        // code readibility could be optimized using System.Linq
+
+                                                        for (var c = 0; c < initTiles.Length; c++)
+                                                        {
+                                                            for (var i = 0; i < initTiles[c].Length; i++)
+                                                            {
+                                                                if (initTiles[c][i].Name == name)
+                                                                {
+                                                                    res.TileMatrix![y, x, z].Data.CategoryPostition = (c + 5, i + 1, name);
+
+                                                                    try
+                                                                    {
+                                                                        var texture = tileTextures[c][i];
+                                                                    }
+                                                                    catch
+                                                                    {
+                                                                        logger.Warning($"missing tile texture detected: matrix index: ({x}, {y}, {z}); category {category}, position: {position}, name: \"{name}\"");
+                                                                        return TileCheckResult.MissingTexture;
+                                                                    }
+
+                                                                    goto skip;
+                                                                }
+                                                            }
+                                                        }
+
+                                                        // Tile not found
+                                                        return TileCheckResult.Missing;
+                                                    }
+                                                    else if (cell.Type == TileType.Material)
+                                                    {
+                                                        var materialName = ((TileMaterial)cell.Data).Name;
+
+                                                        if (!MaterialColors.ContainsKey(materialName))
+                                                        {
+                                                            logger.Warning($"missing material: matrix index: ({x}, {y}, {z}); Name: \"{materialName}\"");
+                                                            return TileCheckResult.MissingMaterial;
+                                                        }
+                                                    }
+
+                                                skip:
+                                                    { }
+                                                }
+                                            }
+                                        }
+
+                                        logger.Debug("tile check passed");
+
+                                        return TileCheckResult.Ok;
+                                    });
+
+                                    Raylib.EndDrawing();
+                                    continue;
+                                }
+
+                                if (!tileCheckTask.IsCompleted)
+                                {
+                                    Raylib.DrawText("Validating..", Raylib.GetScreenWidth() / 2 - 100, Raylib.GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
+                                    Raylib.EndDrawing();
+                                    continue;
+                                }
+
+                                if (tileCheckTask.Result != TileCheckResult.Ok)
+                                {
+                                    page = 13;
+                                    Raylib_CsLo.RayGui.GuiUnlock();
+                                    Raylib.EndDrawing();
+                                    continue;
+                                }
+
+
+                                cameraCamera.target = new(-100, -100);
+                                lightPageCamera.target = new(-500, -200);
+
+                                renderCamers = res.Cameras;
+                                geoMatrix = res.GeoMatrix!;
+                                tileMatrix = res.TileMatrix!;
+                                materialColorMatrix = res.MaterialColorMatrix!;
+                                matrixHeight = res.Height;
+                                matrixWidth = res.Width;
+                                bufferTiles = res.BufferTiles;
+
+
+                                effectList = res.Effects.Select(effect => (effect.Item1, Effects.GetEffectOptions(effect.Item1), effect.Item2)).ToArray();
+
+                                matrixWidthValue = matrixWidth;
+                                matrixHeightValue = matrixHeight;
+
+                                border = new(
+                                    bufferTiles.Left * scale,
+                                    bufferTiles.Top * scale,
+                                    (matrixWidth - (bufferTiles.Right + bufferTiles.Left)) * scale,
+                                    (matrixHeight - (bufferTiles.Bottom + bufferTiles.Top)) * scale
+                                );
+
+                                var lightMapTexture = Raylib.LoadTextureFromImage(res.LightMapImage);
+
+                                Raylib.UnloadRenderTexture(lightMapBuffer);
+                                lightMapBuffer = Raylib.LoadRenderTexture(matrixWidth * scale + 300, matrixHeight * scale + 300);
+
+                                Raylib.BeginTextureMode(lightMapBuffer);
+                                Raylib.DrawTextureRec(
+                                    lightMapTexture,
+                                    new(0, 0, lightMapTexture.width, lightMapTexture.height),
+                                    new(0, 0),
+                                    new(255, 255, 255, 255)
+                                );
+                                Raylib.EndTextureMode();
+
+                                Raylib.UnloadImage(res.LightMapImage);
+
+                                projectName = res.Name;
+                                page = 1;
+
+                                tileCheckTask = null;
+                                Raylib_CsLo.RayGui.GuiUnlock();
                             }
                             else // choosing a project
                             {
@@ -5098,19 +6334,19 @@ class Program
                                         (sbyte*)pt
                                     );
                                 }
-                                
+
                                 //no projects
                                 if (projectFiles.Length == 0)
                                 {
                                     Raylib.DrawText(
-                                        "You have no projects yet", 
-                                        Raylib.GetScreenWidth()/2 - 200, 
-                                        Raylib.GetScreenHeight()/2 - 50, 
-                                        30, 
+                                        "You have no projects yet",
+                                        Raylib.GetScreenWidth() / 2 - 200,
+                                        Raylib.GetScreenHeight() / 2 - 50,
+                                        30,
                                         new(0, 0, 0, 255)
                                     );
 
-                                    if (Raylib_CsLo.RayGui.GuiButton(new(Raylib.GetScreenWidth()/2 - 100, Raylib.GetScreenHeight()/2 + 50, 200, 50), "Create New Project"))
+                                    if (Raylib_CsLo.RayGui.GuiButton(new(Raylib.GetScreenWidth() / 2 - 100, Raylib.GetScreenHeight() / 2 + 50, 200, 50), "Create New Project"))
                                     {
                                         newFlag = true;
                                         page = 6;
@@ -5149,6 +6385,7 @@ class Program
                                             {
                                                 Raylib_CsLo.RayGui.GuiLock();
 
+                                                // LOAD PROJECT FILE
                                                 loadFileTask = Task.Factory.StartNew(() => LoadProject(f));
                                             }
 
@@ -5164,7 +6401,7 @@ class Program
                                         new(0, 0, 0, 255)
                                     );
                                 }
-                                
+
                             }
                         }
                         Raylib.EndDrawing();
@@ -5234,8 +6471,95 @@ class Program
                         break;
                     #endregion
 
+                    #region FailedTileCheckPage
+                    case 13:
+                        var sWidth = GetScreenWidth();
+                        var sHeight = GetScreenHeight();
+
+                        var okButtonRect = new Rectangle(sWidth / 2 - 100, sHeight - 200, 200, 60);
+
+                        BeginDrawing();
+                        {
+                            ClearBackground(new(0, 0, 0, 255));
+
+                            switch (tileCheckTask!.Result)
+                            {
+                                case TileCheckResult.Missing:
+                                    DrawText(
+                                        missingTileWarnTitleText,
+                                        (sWidth - MeasureText(missingTileWarnTitleText, 50)) / 2,
+                                        200,
+                                        50,
+                                        new(255, 255, 255, 255)
+                                    );
+                                    DrawText(missingTileWarnSubtitleText, (sWidth - MeasureText(missingTileWarnSubtitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
+                                    break;
+
+                                case TileCheckResult.NotFound:
+                                    DrawText(
+                                        notFoundTileWarnTitleText,
+                                        (sWidth - MeasureText(notFoundTileWarnTitleText, 50)) / 2,
+                                        200,
+                                        50,
+                                        new(255, 255, 255, 255)
+                                    );
+                                    DrawText(missingTileWarnSubtitleText, (sWidth - MeasureText(missingTileWarnSubtitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
+                                    break;
+
+                                case TileCheckResult.MissingTexture:
+                                    DrawText(
+                                        missingTileTextureWarnTitleText,
+                                        (sWidth - MeasureText(missingTileTextureWarnTitleText, 50)) / 2,
+                                        200,
+                                        50,
+                                        new(255, 255, 255, 255)
+                                    );
+                                    DrawText(missingTileTextureWarnSubTitleText, (sWidth - MeasureText(missingTileTextureWarnSubTitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
+                                    break;
+
+                                case TileCheckResult.MissingMaterial:
+                                    DrawText(
+                                        missingMaterialWarnTitleText,
+                                        (sWidth - MeasureText(missingMaterialWarnTitleText, 50)) / 2,
+                                        200,
+                                        50,
+                                        new(255, 255, 255, 255)
+                                    );
+
+                                    DrawText(
+                                        missingMaterialWarnSubtitleText,
+                                        (sWidth - MeasureText(missingMaterialWarnSubtitleText, 20)) / 2,
+                                        400,
+                                        20,
+                                        new(255, 255, 255, 255)
+                                    );
+                                    break;
+                            }
+
+
+                            DrawRectangleRoundedLines(okButtonRect, 3, 6, 3, new(255, 255, 255, 255));
+                            DrawText("Ok", okButtonRect.X + (okButtonRect.width - MeasureText("Ok", 20)) / 2, okButtonRect.Y + 15, 20, new(255, 255, 255, 255));
+
+                            if (CheckCollisionPointRec(GetMousePosition(), okButtonRect))
+                            {
+                                SetMouseCursor(MouseCursor.MOUSE_CURSOR_POINTING_HAND);
+
+                                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                                {
+                                    SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+
+                                    tileCheckTask = null;
+                                    page = 0;
+                                }
+                            }
+                            else SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+                        }
+                        EndDrawing();
+                        break;
+                    #endregion
+
                     default:
-                        page = 1;
+                        page = prevPage;
                         break;
                 }
             }
