@@ -8,3 +8,5 @@ Init.txt
 /assets/test
 .vs
 .vscode
+/assets
+/assets/*
