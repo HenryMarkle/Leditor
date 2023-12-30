@@ -3,10 +3,12 @@ namespace Leditor;
 using Leditor.Common;
 #nullable enable
 
+// Used to report the tile check staatus when loading a project
 public enum TileCheckResult {
     Ok, Missing, NotFound, MissingTexture, MissingMaterial
 }
 
+// Used for loading project files
 public class LoadFileResult {
     public bool Success { get; init; } = false;
 
@@ -140,6 +142,7 @@ public static class Effects {
         _ => 10
     };
 
+    // Used in the effects editor
     public static EffectOptions GetEffectOptions(string effect) => effect switch {
         "Slime"                 => new(threeD: false),
         "SlimeX3"               => new(threeD: false),
@@ -224,15 +227,69 @@ public record GeoShortcuts(
     KeyboardKey CycleLayer  = KeyboardKey.KEY_L,
     KeyboardKey ToggleGrid  = KeyboardKey.KEY_M,
 
-    MouseButton DrawButton = MouseButton.MOUSE_BUTTON_LEFT,
-    MouseButton DragButton = MouseButton.MOUSE_BUTTON_RIGHT
+    MouseButton Draw = MouseButton.MOUSE_BUTTON_LEFT,
+    MouseButton DragLevel = MouseButton.MOUSE_BUTTON_RIGHT
+);
+
+public record TileShortcuts(
+    KeyboardKey FocusOnTileMenue            = KeyboardKey.KEY_D,
+    KeyboardKey FocusOnTileCategoryMenu     = KeyboardKey.KEY_A,
+    KeyboardKey MoveDown                    = KeyboardKey.KEY_S,
+    KeyboardKey MoveUp                      = KeyboardKey.KEY_W,
+    KeyboardKey CycleLayer                  = KeyboardKey.KEY_L,
+    KeyboardKey ToggleTileSpecs             = KeyboardKey.KEY_T,
+    
+    KeyboardKey ToggleLayer1 = KeyboardKey.KEY_Z,
+    KeyboardKey ToggleLayer2 = KeyboardKey.KEY_X,
+    KeyboardKey ToggleLayer3 = KeyboardKey.KEY_C,
+
+    KeyboardKey ToggleLayer1Tiles = KeyboardKey.KEY_Z,
+    KeyboardKey ToggleLayer2Tiles = KeyboardKey.KEY_X,
+    KeyboardKey ToggleLayer3Tiles = KeyboardKey.KEY_C,
+
+    MouseButton Draw = MouseButton.MOUSE_BUTTON_LEFT,
+    MouseButton DragLevel = MouseButton.MOUSE_BUTTON_RIGHT
+);
+
+public record CameraShortcust(
+    MouseButton DragButton   = MouseButton.MOUSE_BUTTON_RIGHT,
+    KeyboardKey NewCamera    = KeyboardKey.KEY_N,
+    KeyboardKey DeleteCamera = KeyboardKey.KEY_D,
+    KeyboardKey NewAndDelete = KeyboardKey.KEY_SPACE
+);
+
+public record LightShortcuts(
+    KeyboardKey IncreaseFlatness = KeyboardKey.KEY_I,
+    KeyboardKey DecreaseFlatness = KeyboardKey.KEY_K,
+    KeyboardKey IncreaseAngle = KeyboardKey.KEY_L,
+    KeyboardKey DecreaseAngle = KeyboardKey.KEY_J,
+
+    KeyboardKey NextBrush = KeyboardKey.KEY_F,
+    KeyboardKey PreviousBrush = KeyboardKey.KEY_R,
+
+    KeyboardKey RotateBrushCounterClockwise = KeyboardKey.KEY_Q,
+    KeyboardKey RotateBrushClockwise = KeyboardKey.KEY_E,
+
+    KeyboardKey StretchBrushVertically = KeyboardKey.KEY_W,
+    KeyboardKey SqueezeBrushVertically = KeyboardKey.KEY_S,
+    KeyboardKey StretchBrushHorizontally = KeyboardKey.KEY_D,
+    KeyboardKey SqueezeBrushHorizontally = KeyboardKey.KEY_A,
+
+    MouseButton DragLevel = MouseButton.MOUSE_BUTTON_RIGHT
 );
 
 public record Shortcuts(
-    GeoShortcuts GeoEditor
+    GeoShortcuts GeoEditor,
+    TileShortcuts TileEditor,
+    CameraShortcust CameraEditor,
+    LightShortcuts LightEditor
 );
 
-public record Misc(bool SplashScreen = true);
+public record Misc(
+    bool SplashScreen = true,
+    int TileImageScansPerFrame = 20,
+    int FPS = 60
+);
 
 public record LayerColor(byte R, byte G, byte B, byte A) {
     public void Deconstruct(out byte r, out byte g, out byte b, out byte a) {

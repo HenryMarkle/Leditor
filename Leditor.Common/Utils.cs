@@ -106,6 +106,7 @@ public static class CommonUtils {
         return matrix;
     }
 
+    // Used to send data to a function in Program.cs to detrermine a direction of a stackable like shortcut entrance
     public static RunCell[][] GetContext(RunCell[,,] matrix, int width, int height, int x, int y, int z) =>
         [
             [ 
@@ -115,7 +116,7 @@ public static class CommonUtils {
             ],
             [
                 x > 0 ? matrix[y, x - 1, z] : new(),
-                new(),
+                matrix[y, x, z],
                 x < width -1 ? matrix[y, x + 1, z] : new(),
             ],
             [
@@ -124,7 +125,9 @@ public static class CommonUtils {
                 x < width -1 && y < height -1 ? matrix[y + 1, x + 1, z] : new()
             ]
         ];
-    
+
+
+    // Meaningless name; this function turns a sequel of stackable IDs to an array that can be used at leditor runtime
     public static bool[] DecomposeStackables(IEnumerable<int> seq) {
         bool[] bools = new bool[22];
 
@@ -133,6 +136,7 @@ public static class CommonUtils {
         return bools;
     }
     
+    // Generic resize method of a 3D array (with the z dimension being exactly 3)
     public static T[,,] Resize<T>(T[,,] array, int width, int height, int newWidth, int newHeight, T[] layersFill)
         where T : notnull, new()
     {

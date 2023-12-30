@@ -11,6 +11,8 @@ using Serilog;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Buffers.Text;
 
 #nullable enable
 
@@ -18,6 +20,8 @@ namespace Leditor;
 
 class Program
 {
+    // This is used to display geo names in the geo editor.
+    // Do not alter the indices
     static readonly string[] geoNames = [
         "Solid",
         "air",
@@ -47,6 +51,8 @@ class Program
         "Clear All"
     ];
 
+    // This is for the geo blocks menu.
+    // Do not alter the indices
     static string[] UIImages => [
         "assets/geo/ui/solid.png",          // 0
         "assets/geo/ui/air.png",            // 1
@@ -79,6 +85,8 @@ class Program
         "assets/geo/ui/clearall.png",       // 25
     ];
 
+    // Geo block png file paths.
+    // Do not alter the indices
     static string[] GeoImages => [
         // 0: air
         "assets/geo/solid.png",
@@ -93,6 +101,8 @@ class Program
         "assets/geo/thickglass.png",
     ];
 
+    // Stackable png file paths.
+    // Do not alter the indices
     static string[] StackableImages => [
         "assets/geo/ph.png",             // 0
         "assets/geo/pv.png",             // 1
@@ -133,7 +143,8 @@ class Program
 
 
 
-
+    // Used to load geo blocks menu item textures.
+    // Do not alter the indices, and do NOT call before InitWindow()
     static Texture[] LoadUITextures() => [
         LoadTexture("assets/geo/ui/solid.png"),          // 0
         LoadTexture("assets/geo/ui/air.png"),            // 1
@@ -166,7 +177,8 @@ class Program
         LoadTexture("assets/geo/ui/clearall.png"),       // 25
     ];
 
-
+    // Used to load geo block textures.
+    // Do not alter the indices, and do NOT call before InitWindow()
     static Texture[] LoadGeoTextures() => [
         // 0: air
         LoadTexture("assets/geo/solid.png"),
@@ -182,6 +194,8 @@ class Program
     ];
 
 
+    // Used to load geo stackables textures.
+    // And you guessed it: do not alter the indices, and do NOT call before InitWindow()
     static Texture[] LoadStackableTextures() => [
         LoadTexture("assets/geo/ph.png"),             // 0
         LoadTexture("assets/geo/pv.png"),             // 1
@@ -220,33 +234,39 @@ class Program
         LoadTexture("assets/geo/crackl.png"),         // 34
     ];
 
+    // Used to load light/shadow brush images as textures.
+    // Actually you can alter the indices here, but absolutely do not call before InitWindow()
     static Texture[] LoadLightTextures() => [
-        LoadTexture("assets/light/inverted/Drought_393275_sawbladeGraf.png"),             // 0
-        LoadTexture("assets/light/inverted/Drought_393400_pentagonLightEmpty.png"),       // 1
-        LoadTexture("assets/light/inverted/Drought_393401_pentagonLight.png"),            // 2
-        LoadTexture("assets/light/inverted/Drought_393402_roundedRectLightEmpty.png"),    // 3
-        LoadTexture("assets/light/inverted/Drought_393403_squareLightEmpty.png"),         // 4
-        LoadTexture("assets/light/inverted/Drought_393404_triangleLight.png"),            // 5
-        LoadTexture("assets/light/inverted/Drought_393405_triangleLightEmpty.png"),       // 6
-        LoadTexture("assets/light/inverted/Drought_393406_curvedTriangleLight.png"),      // 7
-        LoadTexture("assets/light/inverted/Drought_393407_curvedTriangleLightEmpty.png"), // 8
-        LoadTexture("assets/light/inverted/Drought_393408_discLightEmpty.png"),           // 9
-        LoadTexture("assets/light/inverted/Drought_393409_hexagonLight.png"),             // 10
-        LoadTexture("assets/light/inverted/Drought_393410_hexagonLightEmpty.png"),        // 11
-        LoadTexture("assets/light/inverted/Drought_393411_octagonLight.png"),             // 12
-        LoadTexture("assets/light/inverted/Drought_393412_octagonLightEmpty.png"),        // 13
-        LoadTexture("assets/light/inverted/Internal_265_bigCircle.png"),                  // 14
-        LoadTexture("assets/light/inverted/Internal_266_leaves.png"),                     // 15
-        LoadTexture("assets/light/inverted/Internal_267_oilyLight.png"),                  // 16
-        LoadTexture("assets/light/inverted/Internal_268_directionalLight.png"),           // 17
-        LoadTexture("assets/light/inverted/Internal_269_blobLight1.png"),                 // 18
-        LoadTexture("assets/light/inverted/Internal_270_blobLight2.png"),                 // 19
-        LoadTexture("assets/light/inverted/Internal_271_wormsLight.png"),                 // 20
-        LoadTexture("assets/light/inverted/Internal_272_crackLight.png"),                 // 21
-        LoadTexture("assets/light/inverted/Internal_273_squareishLight.png"),             // 22
-        LoadTexture("assets/light/inverted/Internal_274_holeLight.png"),                  // 23
-        LoadTexture("assets/light/inverted/Internal_275_roundedRectLight.png"),           // 24
+        LoadTexture("assets/light/Drought_393275_sawbladeGraf.png"),             // 0
+        LoadTexture("assets/light/Drought_393400_pentagonLightEmpty.png"),       // 1
+        LoadTexture("assets/light/Drought_393401_pentagonLight.png"),            // 2
+        LoadTexture("assets/light/Drought_393402_roundedRectLightEmpty.png"),    // 3
+        LoadTexture("assets/light/Drought_393403_squareLightEmpty.png"),         // 4
+        LoadTexture("assets/light/Drought_393404_triangleLight.png"),            // 5
+        LoadTexture("assets/light/Drought_393405_triangleLightEmpty.png"),       // 6
+        LoadTexture("assets/light/Drought_393406_curvedTriangleLight.png"),      // 7
+        LoadTexture("assets/light/Drought_393407_curvedTriangleLightEmpty.png"), // 8
+        LoadTexture("assets/light/Drought_393408_discLightEmpty.png"),           // 9
+        LoadTexture("assets/light/Drought_393409_hexagonLight.png"),             // 10
+        LoadTexture("assets/light/Drought_393410_hexagonLightEmpty.png"),        // 11
+        LoadTexture("assets/light/Drought_393411_octagonLight.png"),             // 12
+        LoadTexture("assets/light/Drought_393412_octagonLightEmpty.png"),        // 13
+        LoadTexture("assets/light/Internal_265_bigCircle.png"),                  // 14
+        LoadTexture("assets/light/Internal_266_leaves.png"),                     // 15
+        LoadTexture("assets/light/Internal_267_oilyLight.png"),                  // 16
+        LoadTexture("assets/light/Internal_268_directionalLight.png"),           // 17
+        LoadTexture("assets/light/Internal_269_blobLight1.png"),                 // 18
+        LoadTexture("assets/light/Internal_270_blobLight2.png"),                 // 19
+        LoadTexture("assets/light/Internal_271_wormsLight.png"),                 // 20
+        LoadTexture("assets/light/Internal_272_crackLight.png"),                 // 21
+        LoadTexture("assets/light/Internal_273_squareishLight.png"),             // 22
+        LoadTexture("assets/light/Internal_274_holeLight.png"),                  // 23
+        LoadTexture("assets/light/Internal_275_roundedRectLight.png"),           // 24
     ];
+
+    // Embedded tiles and their categories.
+    // They probably be should externalized and turned to normal tiles.
+    // Maybe one day.
 
     static readonly (string, Color)[] embeddedCategories = [
         ("Drought 4Mosaic", new(227, 76, 13, 255)),
@@ -277,36 +297,36 @@ class Program
             new InitTile("3DBrick Floor", (1, 1), [6], [], InitTileType.VoxelStruct, [1, 1, 1, 7], 0, 1, 0, ["INTERNAL"]),
         ],
         [
-            new InitTile("AltGradeA", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeB1", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeB2", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeB3", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeB4", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeC1", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeC2", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeE1", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeE2", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeF1", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeF2", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeF3", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeF4", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeG1", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeG2", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeH", (3, 4), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateA", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateB1", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateB2", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateB3", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateB4", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateC1", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateC2", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateE1", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateE2", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateF1", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateF2", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateF3", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateF4", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateG1", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateG2", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateH", (3, 4), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
 
-            new InitTile("AltGradeI", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeJ1", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeJ2", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeJ3", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeJ4", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeK1", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeK2", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeK3", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeK4", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeL", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeM", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeN", (4, 4), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGradeO", (5, 5), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateI", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateJ1", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateJ2", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateJ3", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateJ4", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateK1", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateK2", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateK3", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateK4", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateL", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateM", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateN", (4, 4), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
+            new InitTile("AltGrateO", (5, 5), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
         ],
         [
             new InitTile("Small Stone Slope NE", (1, 1), [2], [], InitTileType.VoxelStructRockType, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
@@ -340,7 +360,7 @@ class Program
 
             new InitTile("Wide Metal", (3, 2), [1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 1, 1, 0, ["randomMetal", "INTERNAL"]),
 
-            new InitTile("Tail Metal", (2, 3), [1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 1, 1, 0, ["randomMetal", "INTERNAL"]),
+            new InitTile("Tall Metal", (2, 3), [1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 1, 1, 0, ["randomMetal", "INTERNAL"]),
 
             new InitTile("Big Metal X", (3, 3), [1, 1, 1, 1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 1, 1, 0, ["randomMetal", "INTERNAL"]),
 
@@ -359,6 +379,11 @@ class Program
             new InitTile("Dune Sand", (1, 1), [1], [], InitTileType.VoxelStructSandtype, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
         ]
     ];
+
+
+    // Embedded materials and their categories.
+    // They will be externalized and put in a material Init.txt, just like tiles.
+
 
     static string[] MaterialCategories => [
         "Materials", "Drought Materials", "Community Materials"
@@ -572,33 +597,50 @@ class Program
         return img;
     }
 
-    static string executableDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+    // This is used to check whether the Init.txt file has been altered
+    static readonly string initChecksum = "77-D1-5E-5F-D7-EF-80-6B-0B-12-30-C1-7E-39-A6-CD-C1-9A-8A-7B-E6-E4-F8-EA-15-3B-85-89-73-BE-9B-0B-AD-35-8C-9E-89-AE-34-42-57-1B-A6-A8-BE-8A-9B-CB-97-3E-AE-33-98-E1-51-92-74-24-2F-DF-81-E6-58-A2";
+
+    static string executableDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? throw new Exception("unable to retreive current executable's path");
 
     static string projectsDirectory = Path.Combine(executableDirectory, "projects");
     static string tilesInitPath = Path.Combine(executableDirectory, "Init.txt");
     static string assetsDirectory = Path.Combine(executableDirectory, "assets");
+    static string cacheDirectory = Path.Combine(executableDirectory, "cache");
 
     const int screenMinWidth = 1280;
     const int screenMinHeight = 800;
 
+    // These are for the camera sprite in the camera editor.
     const int renderCameraWidth = 1400;
     const int renderCameraHeight = 800;
 
+    // The dimensions for the geo menu in the geo editor.
+    // They should probably be brought down to the function scope.
     const int geoselectWidth = 200;
     const int geoselectHeight = 600;
+
+    // This is the scale of a single geo cell
     const int scale = 20;
-    const int uiScale = 40;
-    static bool camScaleMode = false;
+    
+    // This is the scale of a single square in the tile editor
     const int previewScale = 16;
+
+    // This is for a single slot from the geo menu in the geo editor.
+    const int uiScale = 40;
+
+    static bool camScaleMode = false;
+    
+    
     const float zoomIncrement = 0.125f;
+
     const int initialMatrixWidth = 72;
     const int initialMatrixHeight = 43;
 
-    static Color[] layerColors;
-
+    // These two should probably be deleted
     static readonly Color whiteStackable = new(255, 255, 255, 200);
     static readonly Color blackStackable = new(0, 0, 0, 200);
 
+    // Maps a geo block id to a block texture index
     public static int GetBlockIndex(int id) => id switch
     {
         1 => 0,
@@ -675,6 +717,7 @@ class Program
         _ => -1
     };
 
+    // This is used to determin the index of the stackable texture, including the directional ones
     public static int GetStackableTextureIndex(int id, RunCell[][] context)
     {
         var i = id switch
@@ -708,9 +751,9 @@ class Program
             ) return 26;
 
             var pattern = (
-                false, context[0][1].Stackables[5] ^ context[0][1].Stackables[6] ^ context[0][1].Stackables[7] ^ context[0][1].Stackables[19], false,
-                context[1][0].Stackables[5] ^ context[1][0].Stackables[6] ^ context[1][0].Stackables[7] ^ context[1][0].Stackables[19], false, context[1][2].Stackables[5] ^ context[1][2].Stackables[6] ^ context[1][2].Stackables[7] ^ context[1][2].Stackables[19],
-                false, context[2][1].Stackables[5] ^ context[2][1].Stackables[6] ^ context[2][1].Stackables[7] ^ context[2][1].Stackables[19], false
+                false, context[0][1].Stackables[5] ^ context[0][1].Stackables[6] ^ context[0][1].Stackables[7] ^ context[0][1].Stackables[19] ^ context[0][1].Stackables[21], false,
+                context[1][0].Stackables[5] ^ context[1][0].Stackables[6] ^ context[1][0].Stackables[7] ^ context[1][0].Stackables[19] ^ context[1][0].Stackables[21], false, context[1][2].Stackables[5] ^ context[1][2].Stackables[6] ^ context[1][2].Stackables[7] ^ context[1][2].Stackables[19] ^ context[1][2].Stackables[21],
+                false, context[2][1].Stackables[5] ^ context[2][1].Stackables[6] ^ context[2][1].Stackables[7] ^ context[2][1].Stackables[19] ^ context[2][1].Stackables[21], false
             );
 
             var directionIndex = pattern switch
@@ -891,16 +934,34 @@ class Program
                 ) => 6,
 
                 (
-                    _, false, _,
-                    false, _, false,
-                    _, false, _
-                ) => 14,
+                    _    , false, _    ,
+                    false, _    , false,
+                    _    , false, _
+                ) => (
+                false, context[0][1].Geo == 1, false,
+                context[1][0].Geo == 1, context[1][1].Geo == 1, context[1][2].Geo == 1,
+                false, context[2][0].Geo == 1, false
+                ) switch {
+                    (
+                    _   , false, _,
+                    true, true , true,
+                    _   , false, _
+                    ) => 15,
+                    (
+                    _    , true, _    ,
+                    false, true, false,
+                    _    , true, _
+                    ) => 7,
+                    _ => 14
+                }
             };
         }
 
         return i;
     }
 
+
+    // Determines the id of the slope depending on the sorrounding geos
     public static int GetCorrectSlopeID(RunCell[][] context)
     {
         return (
@@ -935,6 +996,7 @@ class Program
         };
     }
 
+    // Paints an effect in the effects editor
     static void PaintEffect(double[,] matrix, (int x, int y) matrixSize, (int x, int y) center, int brushSize, double strength)
     {
         for (int y = center.y - brushSize; y < center.y + brushSize + 1; y++)
@@ -953,6 +1015,7 @@ class Program
         }
     }
 
+    // This is pretty self-explanatory
     static (bool clicked, bool hovered) DrawCameraSprite(
         Vector2 origin,
         CameraQuads quads,
@@ -1168,6 +1231,7 @@ class Program
         }
     }
 
+    // For the light editor
     static void ResizeLightMap(ref RenderTexture buffer, int newWidth, int newHeight)
     {
         var image = Raylib.LoadImageFromTexture(buffer.texture);
@@ -1263,12 +1327,15 @@ class Program
         else return number / 2;
     }
 
+    // Determines the head of a tile
     static Vector2 GetTileHeadOrigin(in InitTile init)
     {
         var (width, height) = init.Size;
         return new Vector2(GetMiddle(width), GetMiddle(height));
     }
 
+    
+    // Needs more work.
     static bool IsTileLegal(ref InitTile init, Vector2 point, TileCell[,,] tileMatrix, RunCell[,,] geoMatrix, int currentLayer)
     {
         var (width, height) = init.Size;
@@ -1300,6 +1367,16 @@ class Program
         return true;
     }
 
+    static bool CheckInit() {
+        using var stream = File.OpenRead(tilesInitPath);
+        using SHA512 sha = SHA512.Create();
+
+        var hash = sha.ComputeHash(stream);
+        
+        return BitConverter.ToString(hash) == initChecksum;
+    }
+
+    // MAIN FUNCTION
     static unsafe void Main(string[] args)
     {
         // Initialize logging
@@ -1311,6 +1388,7 @@ class Program
         catch
         {
             Console.WriteLine("Failed to create logs directory");
+            // The program should halt here..
         }
 
         using var logger = new LoggerConfiguration().WriteTo.File(
@@ -1320,6 +1398,42 @@ class Program
             ).CreateLogger();
 
         logger.Information("program has started");
+
+        // check cache directory
+
+        if (!Directory.Exists(cacheDirectory)) {
+            try {
+                Directory.CreateDirectory(cacheDirectory);
+            } catch (Exception e) {
+                logger.Error($"failed to create cache directory: {e}");
+            }
+        }
+
+        DateTime assetsLastModified = DateTime.Now;
+
+        if (File.Exists(Path.Combine(cacheDirectory, "ttc.json"))) {
+            try {
+                using var stream = File.OpenRead(Path.Combine(cacheDirectory, "ttc.json"));
+                assetsLastModified = JsonSerializer.Deserialize<DateTime>(stream);
+            } catch (Exception e) {
+                logger.Error($"failed to read cahce: {e}");
+            }
+        }
+
+        // check for the assets folder and subfolders
+
+        bool geoAssetsExists = Directory.Exists(Path.Combine(assetsDirectory, "geo"));
+        bool tileAssetsExists = Directory.Exists(Path.Combine(assetsDirectory, "tiles"));
+        bool lightAssetsExists = Directory.Exists(Path.Combine(assetsDirectory, "light"));
+        bool shadersAssetsExists = Directory.Exists(Path.Combine(assetsDirectory, "shaders"));
+
+        bool assetsExist = Directory.Exists(assetsDirectory);
+            
+        if (!assetsExist) logger.Fatal("assets folder not found");
+        if (!geoAssetsExists) logger.Fatal("assets/geo folder not found");
+        if (!tileAssetsExists) logger.Fatal("assets/tile folder not found");
+        if (!lightAssetsExists) logger.Fatal("assets/light folder not found");
+        if (!shadersAssetsExists) logger.Fatal("assets/shaders folder not found");
 
         // Import settings
 
@@ -1333,6 +1447,9 @@ class Program
 
         Settings settings = new(
             new(
+                new(),
+                new(),
+                new(),
                 new()
                 ),
             new(),
@@ -1348,12 +1465,14 @@ class Program
 
         var serOptions = new JsonSerializerOptions { WriteIndented = true };
 
+        // load the settings.json file
+
         try
         {
             if (File.Exists(Path.Combine(executableDirectory, "settings.json")))
             {
                 string settingsText = File.ReadAllText(Path.Combine(executableDirectory, "settings.json"));
-                settings = JsonSerializer.Deserialize<Settings>(settingsText);
+                settings = JsonSerializer.Deserialize<Settings>(settingsText) ?? throw new Exception("failed to deserialize settings.json");
             }
             else
             {
@@ -1362,37 +1481,25 @@ class Program
                 File.WriteAllText(Path.Combine(executableDirectory, "settings.json"), text);
             }
         }
-        catch (UnauthorizedAccessException)
-        {
-            logger.Error("access was denied to settings.json; using default settings");
-        }
-        catch (JsonException)
-        {
-            logger.Error("settings.json containes invalid information; exporting default settings");
-
-            try
-            {
-                var text = JsonSerializer.Serialize(settings, serOptions);
-                File.WriteAllText(Path.Combine(executableDirectory, "settings.json"), text);
-            }
-            catch
-            {
-                logger.Debug("failed to export default settings after finding settings.json to be corrupt; using default settings");
-            }
-
-        }
         catch (Exception e)
         {
             logger.Error($"failed to import settings from settings.json: {e}\nusing default settings");
+
+            try {
+                var text = JsonSerializer.Serialize(settings, serOptions);
+                File.WriteAllText(Path.Combine(executableDirectory, "settings.json"), text);
+            } catch {
+
+            }
         }
 
-        layerColors = [
+        Color[] layerColors = [
             settings.GeomentryEditor.LayerColors.Layer1,
             settings.GeomentryEditor.LayerColors.Layer2,
             settings.GeomentryEditor.LayerColors.Layer3
         ];
 
-        //
+        // check for projects folder
 
         if (!Directory.Exists(projectsDirectory))
         {
@@ -1407,11 +1514,18 @@ class Program
             }
         }
 
+        // checksum files
+
+        bool initChecksum = CheckInit();
+
+        logger.Debug(initChecksum ? "Init.txt passed checksum" : "Init.txt failed checksum");
+
         //
 
         logger.Information("initializing data");
 
-        string version = "0.3.21";
+        string version = "Henry's Leditor v0.3.21";
+        string raylibVersion = "Raylib v4.2.0.9";
 
         int page = 0;
         int prevPage = 0;
@@ -1468,13 +1582,47 @@ class Program
         Color[,,] materialColorMatrix = CommonUtils.NewMaterialColorMatrix(matrixWidth, matrixHeight, new(0, 0, 0, 255));
         (string, EffectOptions, double[,])[] effectList = [];
 
-        logger.Information("indexing tile");
+        logger.Information("indexing tiles");
 
         var (tileCategories, initTiles) = LoadTileInit();
 
+        int tileNumber = 0;
+        int embeddedTileNumber = 0;
+
+        for (int c = 0; c < initTiles.Length; c++) {
+            for (int t = 0; t < initTiles[c].Length; t++) tileNumber++;
+        }
+
+        for (int c = 0; c < embeddedTiles.Length; c++) {
+            for (int t = 0; t < embeddedTiles[c].Length; t++) embeddedTileNumber++;
+        }
+
+        // check for missing textures
+        
+        var missingTileImagesTask = from category in initTiles from tile in category select Task.Factory.StartNew(() => { var path = Path.Combine(assetsDirectory, "tiles", $"{tile.Name}.png"); return (File.Exists(path), path); });
+        var missingEmbeddedTileImagesTask = from category in embeddedTiles from tile in category select Task.Factory.StartNew(() => { var path = Path.Combine(assetsDirectory, "tiles","embedded", $"{tile.Name}.png"); return (File.Exists(path), path); });
+
+        var missingTileImagesTaskEnum = missingTileImagesTask.GetEnumerator();
+        var missingEmbeddedTileImagesTaskEnum = missingEmbeddedTileImagesTask.GetEnumerator();
+
+        bool missingTextureFound = false;
+
+        int checkMissingTextureProgress = 0;
+        int checkMissingEmbeddedTextureProgress = 0;
+
+        bool checkMissingTextureDone = false;
+        bool checkMissingEmbeddedTextureDone = false;
+
+        // if the enumerators are empty, there are missing textures.
+
+        if (!missingTileImagesTaskEnum.MoveNext()) missingTextureFound = true;
+        if (!missingEmbeddedTileImagesTaskEnum.MoveNext()) missingTextureFound = true;
+
         // APPEND INTERNAL TILES
+        
         tileCategories = [.. tileCategories, .. embeddedCategories];
         initTiles = [.. initTiles, .. embeddedTiles];
+        
         //
 
         int flatness = 0;
@@ -1527,6 +1675,8 @@ class Program
 
         bool showTileSpecs = settings.TileEditor.VisibleSpecs;
 
+        // message texts
+
         var missingTileWarnTitleText = "Your project seems to contain undefined tiles";
         var notFoundTileWarnTitleText = "Your project seems to have old tiles";
         var missingTileTextureWarnTitleText = "Your project contains a tile with no texture";
@@ -1535,7 +1685,16 @@ class Program
         var missingMaterialWarnTitleText = "Your project seems to have undefined materials";
         var missingMaterialWarnSubtitleText = "Please update the materials init.txt file before loading this project";
 
+        var missingAssetsFolderWarnTitleText = "The assets folder is missing";
+        var missingAssetsFolderWarnSubtitleText = "The program cannot work without it; Please restore it before trying again.";
+
+        var missingAssetsSubfoldersWarnTitleText = "The editor is missing some essential assets";
+        var missingAssetsSubfoldersWarnSubtitleText = "The program cannot function without them; Please restore them before trying again.";
+
+
         // UNSAFE VARIABLES
+        // Variables that are accessed by unsafe functions.
+        // (some of them aren't)
 
         int matrixWidthValue = 72;  // default width
         int matrixHeightValue = 43; // default height
@@ -1618,6 +1777,10 @@ class Program
         SetWindowIcon(icon);
         SetWindowMinSize(screenMinWidth, screenMinHeight);
 
+        // The splashscreen
+        Texture splashScreen = LoadTexture(Path.Combine(executableDirectory, "splashscreen.png"));
+
+        // This is the level's light map, which will be used to draw textures on called "light/shadow brushes"
         RenderTexture lightMapBuffer = LoadRenderTexture(
             matrixWidth * scale + 300,
             matrixHeight * scale + 300
@@ -1627,33 +1790,30 @@ class Program
 
         logger.Information("loading textures");
 
+        // Load images to RAM cuncurrently first, then load them to VRAM in the main thread.
+        // Do NOT load textures directly to VRAM on a seperate thread.
+
         Task<Image>[][] tileImagesTasks = initTiles
                 .Select((category, index) =>
                     index < initTiles.Length - 8
-                        ? category.Select(tile => Task.Factory.StartNew(() => LoadImage($"assets/tiles/{tile.Name}.png"))).ToArray()
-                        : category.Select(tile => Task.Factory.StartNew(() => LoadImage($"assets/tiles/embedded/{tile.Name}.png"))).ToArray()
+                        ? category.Select(tile => Task.Factory.StartNew(() => LoadImage(Path.Combine(assetsDirectory, "tiles", $"{tile.Name}.png")))).ToArray()
+                        : category.Select(tile => Task.Factory.StartNew(() => LoadImage(Path.Combine(assetsDirectory, "tiles", "embedded", $"{tile.Name}.png")))).ToArray()
                 )
                 .ToArray();
 
         Task<Image>[][] tilePreviewImagesTasks = initTiles
             .Select((category, index) =>
                 index < initTiles.Length - 8
-                    ? category.Select(tile => Task.Factory.StartNew(() => LoadTilePreviewImageFromFile(tile, $"assets/tiles/{tile.Name}.png"))).ToArray()
-                    : category.Select(tile => Task.Factory.StartNew(() => LoadTilePreviewImageFromFile(tile, $"assets/tiles/embedded/{tile.Name}.png"))).ToArray())
+                    ? category.Select(tile => Task.Factory.StartNew(() => LoadTilePreviewImageFromFile(tile, Path.Combine(assetsDirectory, "tiles", $"{tile.Name}.png")))).ToArray()
+                    : category.Select(tile => Task.Factory.StartNew(() => LoadTilePreviewImageFromFile(tile, Path.Combine(assetsDirectory, "tiles", "embedded", $"{tile.Name}.png")))).ToArray())
             .ToArray();
 
         Task[] tileImageCategoriesDone = tileImagesTasks.Select(Task.WhenAll).ToArray();
         Task[] tilePreviewImageCategoriesDone = tilePreviewImagesTasks.Select(Task.WhenAll).ToArray();
 
-        int totalTileImageNumber = 0;
-
-        for (int c = 0; c < tileImagesTasks.Length; c++)
-        {
-            for (int t = 0; t < tileImagesTasks[c].Length; t++)
-            {
-                totalTileImageNumber += 2;
-            }
-        }
+        // Of course, don't forget to unload the images after loading the textures to VRAM.
+        Task? unloadTileImages = null;
+        Task? unloadTilePreviewImages = null;
 
         bool imagesLoaded = false;
         bool texturesLoaded = false;
@@ -1663,8 +1823,11 @@ class Program
         Texture[] uiTextures = LoadUITextures();
         Texture[] geoTextures = LoadGeoTextures();
         Texture[] stackableTextures = LoadStackableTextures();
+
+        // Light textures need to be loaded on a seperate thread, just like tile textures
         Texture[] lightTextures = LoadLightTextures();
 
+        // These two are going to be populated with textures later
         Texture[][] tileTextures = [];
         Texture[][] tilePreviewTextures = [];
 
@@ -1672,13 +1835,22 @@ class Program
 
         logger.Information("loading shaders");
 
-        var tilePreviewShader = LoadShader(
-            Path.Combine(assetsDirectory, @"shaders/tile_preview.vs"),
-            Path.Combine(assetsDirectory, @"shaders/tile_preview.fs"));
+        Shader tilePreviewShader = LoadShader(
+            Path.Combine(assetsDirectory, "shaders", "tile_preview.vs"),
+            Path.Combine(assetsDirectory, "shaders", "tile_preview.fs")
+        );
+
+        // These two are used to display the light/shadow brush beneath the cursor
+        Shader shadowBrushShader = LoadShader(null, Path.Combine(assetsDirectory, "shaders", "shadow_brush.fs"));
+        Shader lightBrushShader = LoadShader(null, Path.Combine(assetsDirectory, "shaders", "light_brush.fs"));
+
+        // These two are used to actually draw/erase the shadow on the light map
+        Shader applyLightBrushShader = LoadShader(null, Path.Combine(assetsDirectory, "shaders", "apply_light_brush.fs"));
+        Shader applyShadowBrushShader = LoadShader(null, Path.Combine(assetsDirectory, "shaders", "apply_shadow_brush.fs"));
 
         //
 
-        SetTargetFPS(60);
+        SetTargetFPS(settings.Misc.FPS);
 
         logger.Information("begin main loop");
 
@@ -1686,6 +1858,10 @@ class Program
         var poweredBySize = MeasureText("Powered by", 30) / 2;
 
         float initialFrames = 0;
+
+        // Do not remove this commented code.
+        // It'll be used for the props editor
+
         //bool initialized = false;
 
         /*Raylib_CsLo.Texture testTexture = Raylib_CsLo.Raylib.LoadTexture("assets/test/solid.png");
@@ -1696,8 +1872,8 @@ class Program
         {
             while (!WindowShouldClose())
             {
-                // Splash screen
-                if (initialFrames < 120 && settings.Misc.SplashScreen)
+                #region Splashscreen
+                if (initialFrames < 180 && settings.Misc.SplashScreen)
                 {
                     initialFrames++;
 
@@ -1708,77 +1884,274 @@ class Program
 
                     ClearBackground(new(0, 0, 0, 255));
 
-                    DrawText("Henry's Leditor", width / 2 - titleSize, 200, 60, new(250, 250, 250, 255));
+                    DrawTexturePro(
+                        splashScreen,
+                        new(0, 0, splashScreen.width, splashScreen.height),
+                        new(0, 0, screenMinWidth, screenMinHeight),
+                        new(0, 0),
+                        0,
+                        new(255, 255, 255, 255)
+                    );
 
-                    DrawText("Powered by", width / 2 - 128, height / 2 - 60, 30, new(250, 250, 250, 255));
 
-                    DrawRectangle(width / 2 - 128, height / 2 - 28, 256, 256, new(250, 250, 250, 255));
-                    DrawRectangle(width / 2 - 112, height / 2 - 12, 224, 224, new(0, 0, 0, 255));
-                    DrawText("raylib", width / 2 - 44, height / 2 + 148, 50, new(250, 250, 250, 255));
+                    if (initialFrames > 60) {
+                        DrawText(version, 700, 50, 15, WHITE);
+                        
+                    }
 
-                    DrawText(version, 0, height - 15, 15, new(255, 255, 255, 255));
+                    if (initialFrames > 70) {
+                        DrawText(raylibVersion, 700, 70, 15, WHITE);
+                    }
+
+                    if (initialFrames > 80) {
+                        #if DEBUG
+                        if (!initChecksum) DrawText("Init.txt failed checksum", 700, 300, 16, YELLOW);
+                        #else
+                        if (!initChecksum) DrawText("Tiles have been modified", 700, 300, 16, YELLOW);
+                        #endif
+                    }
+
+                    if (initialFrames > 90) {
+                        if (!assetsExist) DrawText("assets folder not found", 700, 320, 16, new(252, 38, 38, 255));
+                    }
+
+                    if (initialFrames > 100) {
+                        if (assetsExist && !geoAssetsExists) DrawText("assets/geo folder not found", 700, 340, 16, new(252, 38, 38, 255));
+                    }
+
+                    if (initialFrames > 110) {
+                        if (assetsExist && !tileAssetsExists) DrawText("assets/tiles folder not found", 700, 360, 16, new(252, 38, 38, 255));
+                    }
+
+                    if (initialFrames > 120) {
+                        if (assetsExist && !lightAssetsExists) DrawText("assets/light folder not found", 700, 380, 16, new(252, 38, 38, 255));
+                    }
+
+                    if (initialFrames > 130) {
+                        if (assetsExist && !shadersAssetsExists) DrawText("assets/shaders folder not found", 700, 400, 16, new(252, 38, 38, 255));
+                    }
+
 
                     EndDrawing();
 
                     continue;
                 }
+                #endregion
 
-                if (settings.Misc.SplashScreen) logger.Debug("splash screen over");
+                // First, check if the folders exist at all
+                if (!assetsExist) {
+                    page = 14;
+                } else if (!(geoAssetsExists && tileAssetsExists && lightAssetsExists && shadersAssetsExists)) {
+                    page = 15;
+                }
+                // Then check tile textures indivitually
+                else if (!checkMissingTextureDone) {
+                    int r = 0;
 
-                // Loading screen
+                    do {
+                        var currentTileTask = missingTileImagesTaskEnum.Current;
 
-                if (!imagesLoaded)
-                {
-                    int doneCount = 0;
-                    int prevDoneCount = 0;
-                    int completedProgress = 0;
+                        if (!currentTileTask.IsCompleted) goto skip;
 
+                        var currentTile = currentTileTask.Result;
 
-                    for (int c = 0; c < tileImageCategoriesDone.Length; c++)
-                    {
-                        if (tileImageCategoriesDone[c].IsCompletedSuccessfully) doneCount++;
-                        if (tilePreviewImageCategoriesDone[c].IsCompletedSuccessfully) prevDoneCount++;
-
-                        for (int t = 0; t < tileImagesTasks[c].Length; t++)
-                        {
-                            if (tileImagesTasks[c][t].IsCompletedSuccessfully) completedProgress++;
-                            if (tilePreviewImagesTasks[c][t].IsCompletedSuccessfully) completedProgress++;
+                        if (!currentTile.Item1) {
+                            missingTextureFound = true;
+                            logger.Fatal($"missing texture: \"{currentTile.Item2}\""); 
                         }
-                    }
 
+                        checkMissingTextureProgress++;
 
-                    if (doneCount == tileImageCategoriesDone.Length &&
-                        prevDoneCount == tilePreviewImageCategoriesDone.Length) imagesLoaded = true;
+                        if (!missingTileImagesTaskEnum.MoveNext()) {
+                            checkMissingTextureDone = true;
+                            goto out_;
+                        }
+
+                        r++;
+
+                        // Do not remove this label
+                        skip:
+                        {}
+
+                        // settings.Misc.TileImageScansPerFrame is used to determine the number of scans oer frame.
+                    } while (r < settings.Misc.TileImageScansPerFrame);
+
+                    // Do not remove this label
+                    out_:
 
                     var width = GetScreenWidth();
                     var height = GetScreenHeight();
 
                     BeginDrawing();
-                    ClearBackground(new(0, 0, 0, 255));
+                        ClearBackground(new(0, 0, 0, 255));
 
-                    DrawText("Henry's Leditor", width / 2 - titleSize, 200, 60, new(250, 250, 250, 255));
+                        DrawTexturePro(
+                            splashScreen,
+                            new(0, 0, splashScreen.width, splashScreen.height),
+                            new(0, 0, screenMinWidth, screenMinHeight),
+                            new(0, 0),
+                            0,
+                            new(255, 255, 255, 255)
+                        );
 
-                    DrawText("Powered by", width / 2 - 128, height / 2 - 60, 30, new(250, 250, 250, 255));
+                        if (missingTextureFound) DrawText("missing textures found", 700, 300, 16, new(252, 38, 38, 255));
 
-                    DrawRectangle(width / 2 - 128, height / 2 - 28, 256, 256, new(250, 250, 250, 255));
-                    DrawRectangle(width / 2 - 112, height / 2 - 12, 224, 224, new(0, 0, 0, 255));
-                    DrawText("raylib", width / 2 - 44, height / 2 + 148, 50, new(250, 250, 250, 255));
+                        DrawText(version, 700, 50, 15, WHITE);
+                        DrawText(raylibVersion, 700, 70, 15, WHITE);
 
-                    DrawText(version, 0, height - 15, 15, new(255, 255, 255, 255));
-
-                    RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", completedProgress, 0, totalTileImageNumber);
+                        RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", checkMissingTextureProgress, 0, tileNumber);
                     EndDrawing();
 
                     continue;
                 }
-                else if (!texturesLoaded)
-                {
-                    tileTextures = tileImagesTasks.Select(c => c.Select(t => LoadTextureFromImage(t.Result)).ToArray()).ToArray();
-                    tilePreviewTextures = tilePreviewImagesTasks.Select(c => c.Select(t => LoadTextureFromImage(t.Result)).ToArray()).ToArray();
+                else if (!checkMissingEmbeddedTextureDone) {
+                    int r = 0;
 
-                    texturesLoaded = true;
+                    do {
+                        var currentEmbeddedTileTask = missingEmbeddedTileImagesTaskEnum.Current;
+
+                        if (!currentEmbeddedTileTask.IsCompleted) goto skip2;
+
+                        var currentEmbeddedTile = currentEmbeddedTileTask.Result;
+
+                        if (!currentEmbeddedTile.Item1) {
+                            missingTextureFound = true;
+                            logger.Fatal($"missing texture: \"{currentEmbeddedTile.Item2}\""); 
+                        }
+
+                        checkMissingEmbeddedTextureProgress++;
+
+                        if (!missingEmbeddedTileImagesTaskEnum.MoveNext()) {
+                            checkMissingEmbeddedTextureDone = true;
+                            goto out2_;
+                        }
+
+                        r++;
+
+                        skip2:
+                        {}
+                    } while (r < settings.Misc.TileImageScansPerFrame);
+
+                    out2_:
+
+
+                    var width = GetScreenWidth();
+                    var height = GetScreenHeight();
+
+                    BeginDrawing();
+                        ClearBackground(new(0, 0, 0, 255));
+
+                        DrawTexturePro(
+                            splashScreen,
+                            new(0, 0, splashScreen.width, splashScreen.height),
+                            new(0, 0, screenMinWidth, screenMinHeight),
+                            new(0, 0),
+                            0,
+                            new(255, 255, 255, 255)
+                        );
+
+                        if (missingTextureFound) DrawText("missing textures found", 700, 300, 16, new(252, 38, 38, 255));
+
+                        DrawText(version, 700, 50, 15, WHITE);
+                        DrawText(raylibVersion, 700, 70, 15, WHITE);
+
+                        RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", checkMissingEmbeddedTextureProgress, 0, embeddedTileNumber);
+                    EndDrawing();
+
                     continue;
                 }
+                else if (missingTextureFound) {
+                    page = 16;
+                }
+                else {
+                    // Loading screen
+
+                    if (!imagesLoaded)
+                    {
+                        int doneCount = 0;
+                        int prevDoneCount = 0;
+                        int completedProgress = 0;
+
+
+                        for (int c = 0; c < tileImageCategoriesDone.Length; c++)
+                        {
+                            if (tileImageCategoriesDone[c].IsCompletedSuccessfully) doneCount++;
+                            if (tilePreviewImageCategoriesDone[c].IsCompletedSuccessfully) prevDoneCount++;
+
+                            for (int t = 0; t < tileImagesTasks[c].Length; t++)
+                            {
+                                if (tileImagesTasks[c][t].IsCompletedSuccessfully) completedProgress++;
+                                if (tilePreviewImagesTasks[c][t].IsCompletedSuccessfully) completedProgress++;
+                            }
+                        }
+
+
+                        if (doneCount == tileImageCategoriesDone.Length &&
+                            prevDoneCount == tilePreviewImageCategoriesDone.Length) imagesLoaded = true;
+
+                        var width = GetScreenWidth();
+                        var height = GetScreenHeight();
+
+                        BeginDrawing();
+                        ClearBackground(new(0, 0, 0, 255));
+
+                        DrawTexturePro(
+                            splashScreen,
+                            new(0, 0, splashScreen.width, splashScreen.height),
+                            new(0, 0, screenMinWidth, screenMinHeight),
+                            new(0, 0),
+                            0,
+                            new(255, 255, 255, 255)
+                        );
+
+                        #if DEBUG
+                        if (!initChecksum) DrawText("Init.txt failed checksum", 10, 300, 16, YELLOW);
+                        #else
+                        if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, YELLOW);
+                        #endif
+
+
+                        DrawText(version, 700, 50, 15, WHITE);
+                        DrawText(raylibVersion, 700, 70, 15, WHITE);
+
+                        RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", completedProgress, 0, (tileNumber + embeddedTileNumber)*2);
+                        EndDrawing();
+
+                        continue;
+                    }
+                    else if (!texturesLoaded)
+                    {
+                        tileTextures = tileImagesTasks.Select(c => c.Select(t => LoadTextureFromImage(t.Result)).ToArray()).ToArray();
+                        tilePreviewTextures = tilePreviewImagesTasks.Select(c => c.Select(t => LoadTextureFromImage(t.Result)).ToArray()).ToArray();
+
+                        unloadTileImages = Task.Factory.StartNew(() =>
+                        {
+                            foreach (var category in tileImagesTasks)
+                            {
+                                foreach (var imageTask in category) UnloadImage(imageTask.Result);
+                            }
+                        });
+
+                        unloadTilePreviewImages = Task.Factory.StartNew(() =>
+                        {
+                            foreach (var category in tilePreviewImagesTasks)
+                            {
+                                foreach (var imageTask in category) UnloadImage(imageTask.Result);
+                            }
+                        });
+
+
+                        texturesLoaded = true;
+                        continue;
+                    }
+                }
+
+                if (assetsExist && geoAssetsExists && tileAssetsExists && lightAssetsExists && shadersAssetsExists) {
+                } else {
+                    if (!assetsExist) page = 14;
+                    else page = 15;
+                }
+
 
                 switch (page)
                 {
@@ -1787,22 +2160,22 @@ class Program
                     case 0:
                         prevPage = 0;
 
-                        Raylib.BeginDrawing();
+                        BeginDrawing();
                         {
-                            Raylib.ClearBackground(new(170, 170, 170, 255));
+                            ClearBackground(new(170, 170, 170, 255));
 
-                            if (Raylib_CsLo.RayGui.GuiButton(new(Raylib.GetScreenWidth() / 2 - 150, Raylib.GetScreenHeight() / 2 - 40, 300, 40), "Create New Project"))
+                            if (RayGui.GuiButton(new(GetScreenWidth() / 2 - 150, GetScreenHeight() / 2 - 40, 300, 40), "Create New Project"))
                             {
                                 newFlag = true;
                                 page = 6;
                             }
 
-                            if (Raylib_CsLo.RayGui.GuiButton(new(Raylib.GetScreenWidth() / 2 - 150, Raylib.GetScreenHeight() / 2, 300, 40), "Load Project"))
+                            if (RayGui.GuiButton(new(GetScreenWidth() / 2 - 150, GetScreenHeight() / 2, 300, 40), "Load Project"))
                             {
                                 page = 11;
                             }
                         }
-                        Raylib.EndDrawing();
+                        EndDrawing();
                         break;
                     #endregion
 
@@ -2793,15 +3166,15 @@ class Program
                             switch (currentLayer)
                             {
                                 case 0:
-                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, new(0, 0, 0, 255));
+                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, settings.GeomentryEditor.LayerColors.Layer1);
                                     Raylib.DrawText("L1", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, new(255, 255, 255, 255));
                                     break;
                                 case 1:
-                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, new(0, 255, 0, 255));
+                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, settings.GeomentryEditor.LayerColors.Layer2);
                                     Raylib.DrawText("L2", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, new(255, 255, 255, 255));
                                     break;
                                 case 2:
-                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, new(255, 0, 0, 255));
+                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, settings.GeomentryEditor.LayerColors.Layer3);
                                     Raylib.DrawText("L3", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, new(255, 255, 255, 255));
                                     break;
                             }
@@ -4106,17 +4479,17 @@ class Program
 
                                 if (currentLayer == 2)
                                 {
-                                    DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), new(255, 0, 0, 255));
+                                    DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), settings.GeomentryEditor.LayerColors.Layer3);
                                     DrawText("L3", teWidth - 50, (int)tilePanelRect.height + 10, 20, new(255, 255, 255, 255));
                                 }
                                 if (currentLayer == 1)
                                 {
-                                    DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), new(0, 255, 0, 255));
+                                    DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), settings.GeomentryEditor.LayerColors.Layer2);
                                     DrawText("L2", teWidth - 50, (int)tilePanelRect.height + 10, 20, new(255, 255, 255, 255));
                                 }
                                 if (currentLayer == 0)
                                 {
-                                    DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), new(0, 0, 0, 255));
+                                    DrawRectangleV(new(teWidth - 60, tilePanelRect.height), new(40, 40), settings.GeomentryEditor.LayerColors.Layer1);
                                     DrawText("L1", teWidth - 47, (int)tilePanelRect.height + 10, 20, new(255, 255, 255, 255));
                                 }
 
@@ -4521,6 +4894,8 @@ class Program
                         if (Raylib.IsKeyReleased(KeyboardKey.KEY_EIGHT)) page = 8;
                         if (Raylib.IsKeyReleased(KeyboardKey.KEY_NINE)) page = 9;
 
+
+
                         if (Raylib.IsKeyDown(KeyboardKey.KEY_I) && flatness < 10) flatness++;
                         if (Raylib.IsKeyDown(KeyboardKey.KEY_K) && flatness > 0) flatness--;
 
@@ -4672,6 +5047,8 @@ class Program
                             {
                                 if (eraseShadow)
                                 {
+                                    BeginShaderMode(applyLightBrushShader);
+                                    SetShaderValueTexture(applyLightBrushShader, GetShaderLocation(applyLightBrushShader, "inputTexture"), lightTextures[lightBrushTextureIndex]);
                                     Raylib.DrawTexturePro(
                                         lightTextures[lightBrushTextureIndex],
                                         lightBrushSource,
@@ -4680,9 +5057,12 @@ class Program
                                         lightBrushRotation,
                                         new(255, 255, 255, 255)
                                         );
+                                    EndShaderMode();
                                 }
                                 else
                                 {
+                                    BeginShaderMode(applyShadowBrushShader);
+                                    SetShaderValueTexture(applyShadowBrushShader, GetShaderLocation(applyShadowBrushShader, "inputTexture"), lightTextures[lightBrushTextureIndex]);
                                     Raylib.DrawTexturePro(
                                         lightTextures[lightBrushTextureIndex],
                                         lightBrushSource,
@@ -4691,6 +5071,7 @@ class Program
                                         lightBrushRotation,
                                         new(0, 0, 0, 255)
                                         );
+                                    EndShaderMode();
                                 }
                             }
                             Raylib.EndTextureMode();
@@ -4863,27 +5244,37 @@ class Program
                                     new(255, 255, 255, 150)
                                 );
 
+                                // The brush
+
                                 if (eraseShadow)
                                 {
+                                    BeginShaderMode(lightBrushShader);
+                                    SetShaderValueTexture(lightBrushShader, GetShaderLocation(lightBrushShader, "inputTexture"), lightTextures[lightBrushTextureIndex]);
+
                                     Raylib.DrawTexturePro(
                                         lightTextures[lightBrushTextureIndex],
                                         lightBrushSource,
                                         lightBrushDest,
                                         lightBrushOrigin,
                                         lightBrushRotation,
-                                        new(200, 66, 245, 255)
+                                        WHITE
                                         );
+                                    EndShaderMode();
                                 }
                                 else
                                 {
+                                    BeginShaderMode(shadowBrushShader);
+                                    SetShaderValueTexture(shadowBrushShader, GetShaderLocation(shadowBrushShader, "inputTexture"), lightTextures[lightBrushTextureIndex]);
+
                                     Raylib.DrawTexturePro(
                                         lightTextures[lightBrushTextureIndex],
                                         lightBrushSource,
                                         lightBrushDest,
                                         lightBrushOrigin,
                                         lightBrushRotation,
-                                        new(255, 0, 0, 255)
+                                        WHITE
                                         );
+                                    EndShaderMode();
                                 }
 
                             }
@@ -4907,16 +5298,21 @@ class Program
                                     .Take(pageSize)
                                     .Select((value, index) => (index, value));
 
+                                // Brush menu
+
                                 foreach (var (pageIndex, (index, texture)) in currentPage)
                                 {
+                                    BeginShaderMode(applyShadowBrushShader);
+                                    SetShaderValueTexture(applyShadowBrushShader, GetShaderLocation(applyShadowBrushShader, "inputTexture"), texture);
                                     Raylib.DrawTexturePro(
                                         texture,
                                         new(0, 0, texture.width, texture.height),
-                                        new(20, (textureSize + 1) * pageIndex + 80, textureSize, textureSize),
+                                        new(25, (textureSize + 1) * pageIndex + 80 + 5, textureSize - 10, textureSize - 10),
                                         new(0, 0),
                                         0,
                                         new(0, 0, 0, 255)
                                         );
+                                    EndShaderMode();
 
                                     if (index == lightBrushTextureIndex) Raylib.DrawRectangleLinesEx(
                                         new(
@@ -4925,7 +5321,7 @@ class Program
                                             textureSize,
                                             textureSize
                                         ),
-                                        2.0f,
+                                        4.0f,
                                         new(0, 0, 255, 255)
                                         );
                                 }
@@ -6471,8 +6867,10 @@ class Program
                         break;
                     #endregion
 
-                    #region FailedTileCheckPage
+                    #region FailedTileCheckOnLoadPage
                     case 13:
+                    {
+                        
                         var sWidth = GetScreenWidth();
                         var sHeight = GetScreenHeight();
 
@@ -6555,9 +6953,104 @@ class Program
                             else SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
                         }
                         EndDrawing();
+                    }
                         break;
                     #endregion
 
+                    #region AssetsNukedPage
+                    case 14:
+                    {
+                        var sWidth = GetScreenWidth();
+                        var sHeight = GetScreenHeight();
+
+                        BeginDrawing();
+                        ClearBackground(BLACK);
+
+                        DrawText(
+                            missingAssetsFolderWarnTitleText, 
+                            (sWidth - MeasureText(missingAssetsFolderWarnTitleText, 50))/2, 
+                            200, 
+                            50, 
+                            WHITE
+                        );
+                        DrawText(missingAssetsFolderWarnSubtitleText,
+                            (sWidth - MeasureText(missingAssetsFolderWarnSubtitleText, 20))/2,
+                            400,
+                            20,
+                            WHITE
+                        );
+                        EndDrawing();
+                    }
+                        break;
+                    #endregion
+
+                    #region MissingAssetsPage
+                    case 15:
+                    {
+                        var sWidth = GetScreenWidth();
+                        var sHeight = GetScreenHeight();
+
+                        BeginDrawing();
+                        ClearBackground(BLACK);
+
+                        DrawText(
+                            missingAssetsSubfoldersWarnTitleText, 
+                            (sWidth - MeasureText(missingAssetsSubfoldersWarnTitleText, 50))/2, 
+                            200, 
+                            50, 
+                            WHITE
+                        );
+                        DrawText(missingAssetsSubfoldersWarnSubtitleText,
+                            (sWidth - MeasureText(missingAssetsSubfoldersWarnSubtitleText, 20))/2,
+                            400,
+                            20,
+                            WHITE
+                        );
+
+                        DrawText(
+                            $"Missing folders:\n\n{(geoAssetsExists ? "" : "- assets/geo")}\n"+
+                            $"{(tileAssetsExists ? "" : "\t- assets/tiles")}\n" +
+                            $"{(lightAssetsExists ? "" : "\t- assets/light")}\n" +
+                            $"{(shadersAssetsExists ? "" : "\t- assets/shaders")}",
+                            300,
+                            500,
+                            20,
+                            WHITE
+                        );
+                        EndDrawing();
+                    }
+                        break;
+                    #endregion
+
+                    #region MissingTexturesPage
+                    case 16:
+                    {
+                        var sWidth = GetScreenWidth();
+                        var sHeight = GetScreenHeight();
+
+                        BeginDrawing();
+                        ClearBackground(BLACK);
+
+                        DrawText(
+                            "The editor is missing tile textures",
+                            (sWidth - MeasureText("The editor is missing tile textures", 50))/2,
+                            200,
+                            50,
+                            WHITE
+                        );
+
+                        DrawText(
+                            "Check the logs for the list of missing textures; Please restore them and try again",
+                            (sWidth - MeasureText("Check the logs for the list of missing textures; Please restore them and try again", 20))/2,
+                            400,
+                            20,
+                            WHITE
+                        );
+                        EndDrawing();
+                    }
+                    break;
+                    #endregion
+                    
                     default:
                         page = prevPage;
                         break;
@@ -6566,8 +7059,8 @@ class Program
         }
         catch (Exception e)
         {
-            logger.Fatal($"Bruh Moment detected: loop try-catch block has cought an expected error: {e}");
-            throw new Exception(innerException: e, message: "Fucked up runtime. Figure it out.");
+            logger.Fatal($"Bruh Moment detected: loop try-catch block has cought an unexpected error: {e}");
+            throw new Exception(innerException: e, message: "Have fun figuring it out.");
         }
 
         logger.Debug("close program detected; exiting main loop");
@@ -6577,9 +7070,18 @@ class Program
         foreach (var texture in geoTextures) Raylib.UnloadTexture(texture);
         foreach (var texture in stackableTextures) Raylib.UnloadTexture(texture);
         foreach (var texture in lightTextures) Raylib.UnloadTexture(texture);
-        Raylib.UnloadRenderTexture(lightMapBuffer);
+        UnloadRenderTexture(lightMapBuffer);
 
-        Raylib.CloseWindow();
+        UnloadShader(tilePreviewShader);
+        UnloadShader(shadowBrushShader);
+        UnloadShader(lightBrushShader);
+        UnloadShader(applyLightBrushShader);
+        UnloadShader(applyShadowBrushShader);
+
+        unloadTileImages?.Wait();
+        unloadTilePreviewImages?.Wait();
+
+        CloseWindow();
 
         logger.Information("program has terminated");
         return;
