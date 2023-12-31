@@ -20,12 +20,16 @@ public static class AstNode
 
     public sealed record Assignment(
         Base Assigned,
+#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         string? Type,
+#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         Base Value
     ) : Base;
 
     public sealed record Return(
+#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         Base? Value
+#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
     ) : Base;
 
     public sealed record ExitRepeat : Base;
@@ -181,7 +185,9 @@ public static class AstNode
     public sealed record If(
         Base Condition,
         StatementBlock Statements,
+#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         StatementBlock? Else
+#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
     ) : Base
     {
         public override void DebugPrint(StringBuilder sb, int indentation)
@@ -227,7 +233,9 @@ public static class AstNode
     public sealed record Case(
         Base Expression,
         (Base[] exprs, StatementBlock)[] Cases,
+#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         StatementBlock? Otherwise
+#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
     ) : Base;
 
     public sealed record GlobalCall(
@@ -314,7 +322,9 @@ public static class AstNode
         }
     }
 
+#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
     public sealed record TypedVariable(string Name, string? Type) : Base
+#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
     {
         public override string ToString()
         {

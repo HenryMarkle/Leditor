@@ -89,6 +89,24 @@ public static class CommonUtils {
         return matrix;
     }
 
+    public static Color[,,] NewMaterialColorMatrix(int width, int height, Color @default)
+    {
+        Color[,,] matrix = new Color[height, width, 3];
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                matrix[y, x, 0] = @default;
+                matrix[y, x, 1] = @default;
+                matrix[y, x, 2] = @default;
+            }
+        }
+
+        return matrix;
+    }
+
+    // Used to send data to a function in Program.cs to detrermine a direction of a stackable like shortcut entrance
     public static RunCell[][] GetContext(RunCell[,,] matrix, int width, int height, int x, int y, int z) =>
         [
             [ 
@@ -98,7 +116,7 @@ public static class CommonUtils {
             ],
             [
                 x > 0 ? matrix[y, x - 1, z] : new(),
-                new(),
+                matrix[y, x, z],
                 x < width -1 ? matrix[y, x + 1, z] : new(),
             ],
             [
@@ -107,7 +125,9 @@ public static class CommonUtils {
                 x < width -1 && y < height -1 ? matrix[y + 1, x + 1, z] : new()
             ]
         ];
-    
+
+
+    // Meaningless name; this function turns a sequel of stackable IDs to an array that can be used at leditor runtime
     public static bool[] DecomposeStackables(IEnumerable<int> seq) {
         bool[] bools = new bool[22];
 
@@ -116,11 +136,13 @@ public static class CommonUtils {
         return bools;
     }
     
+    // Generic resize method of a 3D array (with the z dimension being exactly 3)
     public static T[,,] Resize<T>(T[,,] array, int width, int height, int newWidth, int newHeight, T[] layersFill)
         where T : notnull, new()
     {
-        T[,,] newArray = new T[newWidth, newHeight, 3];
+        T[,,] newArray = new T[newHeight, newWidth, 3];
 
+        // old height is larger
         if (height > newHeight)
         {
             if (width > newWidth)
@@ -156,6 +178,7 @@ public static class CommonUtils {
             }
 
         }
+        // new height is larger or equal
         else
         {
             if (width > newWidth)
@@ -180,8 +203,10 @@ public static class CommonUtils {
                     }
                 }
             }
+            // new width is larger
             else
             {
+                
                 for (int y = 0; y < height; y++)
                 {
                     for (int x = 0; x < width; x++)
@@ -217,25 +242,25 @@ public static class CommonUtils {
 
     public static TileCell[,,] NewTileMatrix(int width, int height)
     {
-        TileCell[,,] matrix = new TileCell[width, height, 3];
+        TileCell[,,] matrix = new TileCell[height, width, 3];
         
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                matrix[x, y, 0] = new()
+                matrix[y, x, 0] = new()
                 {
                     Type = TileType.Default,
                     Data = new TileDefault()
                 };
                 
-                matrix[x, y, 1] = new()
+                matrix[y, x, 1] = new()
                 {
                     Type = TileType.Default,
                     Data = new TileDefault()
                 };
                 
-                matrix[x, y, 2] = new()
+                matrix[y, x, 2] = new()
                 {
                     Type = TileType.Default,
                     Data = new TileDefault()

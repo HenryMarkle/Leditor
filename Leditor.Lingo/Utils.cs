@@ -231,6 +231,7 @@ public static class Tools {
             "voxelStructRandomDisplaceHorizontal" => InitTileType.VoxelStructRandomDisplaceHorizontal,
             "voxelStructRandomDisplaceVertical" => InitTileType.VoxelStructRandomDisplaceVertical,
             "voxelStructRockType" => InitTileType.VoxelStructRockType,
+            "voxrlStructSandType" => InitTileType.VoxelStructSandtype,
 
             _ => throw new Exception("Invalid tile init tag: "+ tpString)
         };
@@ -263,10 +264,10 @@ public static class Tools {
         return new InitTile(name, size, specs, specs2, tp, repeatL, bfTiles, rnd, 0, tags);
     }
 
-    public static ((string, (int, int, int))[], InitTile[][]) GetTileInit(string text) {
+    public static ((string, Color)[], InitTile[][]) GetTileInit(string text) {
         var lines = text.ReplaceLineEndings().Split(Environment.NewLine);
 
-        List<(string, (int, int, int))> keys = [];
+        List<(string, Color)> keys = [];
         List<InitTile[]> tiles = [];
         
 
@@ -283,7 +284,7 @@ public static class Tools {
                 var colorArgs = ((AstNode.GlobalCall) headerList.Values[1]).Arguments;
                 var headerColor = (((AstNode.Number)colorArgs[0]).Value.IntValue, ((AstNode.Number)colorArgs[1]).Value.IntValue, ((AstNode.Number)colorArgs[2]).Value.IntValue);
 
-                keys.Add((name, headerColor));
+                keys.Add((name, new(headerColor.Item1, headerColor.Item2, headerColor.Item3, 255)));
             } else {
                 var obj = LingoParser.Expression.ParseOrThrow(line);
 
