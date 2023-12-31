@@ -307,11 +307,14 @@ public record LayerColors(LayerColor Layer1, LayerColor Layer2, LayerColor Layer
 
 public record GeoEditor(LayerColors LayerColors);
 
-public record TileEditor(bool VisibleSpecs);
+public record TileEditor(bool VisibleSpecs = true, bool HoveredTileInfo = false);
+
+public record Experimental(bool NewGeometryEditor = false);
 
 public record Settings(
     Shortcuts Shortcuts,
     Misc Misc,
     GeoEditor GeomentryEditor,
-    TileEditor TileEditor
+    TileEditor TileEditor,
+    Experimental Experimental
 );

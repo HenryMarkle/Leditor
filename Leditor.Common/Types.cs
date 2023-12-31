@@ -1,6 +1,7 @@
 ﻿namespace Leditor.Common;
 
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 public struct RunCell {
     public int Geo { get; set; } = 0;
@@ -23,12 +24,16 @@ public struct TileCell {
         Type = TileType.Default;
         Data = new TileDefault();
     }
+
+    public readonly override string ToString() => Data.ToString();
 }
 
 
 public struct TileDefault
 {
     public int Value => 0;
+
+    public readonly override string ToString() => $"TileDefault";
 }
 
 public struct TileMaterial(string data)
@@ -40,6 +45,8 @@ public struct TileMaterial(string data)
         readonly get => _data;
         set { _data = value; }
     }
+
+    public override string ToString() => $"TileMaterial(\"{_data}\")";
 }
 
 public struct TileHead(int category, int position, string name)
@@ -51,16 +58,20 @@ public struct TileHead(int category, int position, string name)
         readonly get => _data;
         set { _data = value; }
     }
+
+    public readonly override string ToString() => $"TileHead({_data.Item1}, {_data.Item2}, \"{_data.Item3}\")";
 }
 
-public struct TileBody(int category, int position, int z)
+public struct TileBody(int x, int y, int z)
 {
-    private (int, int, int) _data = (category, position, z);
-    public (int, int, int) HeadPosition
+    private (int x, int y, int z) _data = (x, y, z);
+    public (int x, int y, int z) HeadPosition
     {
         readonly get => _data;
         set { _data = value; }
     }
+
+    public readonly override string ToString() => $"TileBody({_data.x}, {_data.y}, {_data.z})";
 }
 
 public enum InitTileType { 

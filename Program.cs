@@ -13,6 +13,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Buffers.Text;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 #nullable enable
 
@@ -235,34 +236,11 @@ class Program
     ];
 
     // Used to load light/shadow brush images as textures.
-    // Actually you can alter the indices here, but absolutely do not call before InitWindow()
-    static Texture[] LoadLightTextures() => [
-        LoadTexture("assets/light/Drought_393275_sawbladeGraf.png"),             // 0
-        LoadTexture("assets/light/Drought_393400_pentagonLightEmpty.png"),       // 1
-        LoadTexture("assets/light/Drought_393401_pentagonLight.png"),            // 2
-        LoadTexture("assets/light/Drought_393402_roundedRectLightEmpty.png"),    // 3
-        LoadTexture("assets/light/Drought_393403_squareLightEmpty.png"),         // 4
-        LoadTexture("assets/light/Drought_393404_triangleLight.png"),            // 5
-        LoadTexture("assets/light/Drought_393405_triangleLightEmpty.png"),       // 6
-        LoadTexture("assets/light/Drought_393406_curvedTriangleLight.png"),      // 7
-        LoadTexture("assets/light/Drought_393407_curvedTriangleLightEmpty.png"), // 8
-        LoadTexture("assets/light/Drought_393408_discLightEmpty.png"),           // 9
-        LoadTexture("assets/light/Drought_393409_hexagonLight.png"),             // 10
-        LoadTexture("assets/light/Drought_393410_hexagonLightEmpty.png"),        // 11
-        LoadTexture("assets/light/Drought_393411_octagonLight.png"),             // 12
-        LoadTexture("assets/light/Drought_393412_octagonLightEmpty.png"),        // 13
-        LoadTexture("assets/light/Internal_265_bigCircle.png"),                  // 14
-        LoadTexture("assets/light/Internal_266_leaves.png"),                     // 15
-        LoadTexture("assets/light/Internal_267_oilyLight.png"),                  // 16
-        LoadTexture("assets/light/Internal_268_directionalLight.png"),           // 17
-        LoadTexture("assets/light/Internal_269_blobLight1.png"),                 // 18
-        LoadTexture("assets/light/Internal_270_blobLight2.png"),                 // 19
-        LoadTexture("assets/light/Internal_271_wormsLight.png"),                 // 20
-        LoadTexture("assets/light/Internal_272_crackLight.png"),                 // 21
-        LoadTexture("assets/light/Internal_273_squareishLight.png"),             // 22
-        LoadTexture("assets/light/Internal_274_holeLight.png"),                  // 23
-        LoadTexture("assets/light/Internal_275_roundedRectLight.png"),           // 24
-    ];
+    static Texture[] LoadLightTextures() => Directory
+        .GetFileSystemEntries(Path.Combine(assetsDirectory, "light"))
+        .Where(e => e.EndsWith(".png"))
+        .Select(f => LoadTexture(f))
+        .ToArray();
 
     // Embedded tiles and their categories.
     // They probably be should externalized and turned to normal tiles.
@@ -386,9 +364,11 @@ class Program
 
 
     static string[] MaterialCategories => [
-        "Materials", "Drought Materials", "Community Materials"
+        "Materials",
+        "Drought Materials",
+        "Community Materials"
     ];
- 
+
     static (string, Color)[][] Materials => [
         [
             ("Standard", new(150, 150, 150, 255)),
@@ -621,7 +601,7 @@ class Program
 
     // This is the scale of a single geo cell
     const int scale = 20;
-    
+
     // This is the scale of a single square in the tile editor
     const int previewScale = 16;
 
@@ -629,8 +609,8 @@ class Program
     const int uiScale = 40;
 
     static bool camScaleMode = false;
-    
-    
+
+
     const float zoomIncrement = 0.125f;
 
     const int initialMatrixWidth = 72;
@@ -934,23 +914,24 @@ class Program
                 ) => 6,
 
                 (
-                    _    , false, _    ,
-                    false, _    , false,
-                    _    , false, _
+                    _, false, _,
+                    false, _, false,
+                    _, false, _
                 ) => (
                 false, context[0][1].Geo == 1, false,
                 context[1][0].Geo == 1, context[1][1].Geo == 1, context[1][2].Geo == 1,
                 false, context[2][0].Geo == 1, false
-                ) switch {
+                ) switch
+                {
                     (
-                    _   , false, _,
-                    true, true , true,
-                    _   , false, _
+                    _, false, _,
+                    true, true, true,
+                    _, false, _
                     ) => 15,
                     (
-                    _    , true, _    ,
+                    _, true, _,
                     false, true, false,
-                    _    , true, _
+                    _, true, _
                     ) => 7,
                     _ => 14
                 }
@@ -1171,7 +1152,13 @@ class Program
         switch (id)
         {
             // air
-            case 0: break;
+            case 0:
+                DrawRectangleLinesEx(
+                    new(origin.X + 10, origin.Y + 10, scale - 20, scale - 20),
+                    2,
+                    color
+                );
+                break;
 
             // solid
             case 1:
@@ -1291,7 +1278,7 @@ class Program
 
                         var materialName = ((TileMaterial)cell.Data).Name;
 
-                        if (MaterialColors.TryGetValue(materialName, out Color color)) materialColors[y, x, z] = color; 
+                        if (MaterialColors.TryGetValue(materialName, out Color color)) materialColors[y, x, z] = color;
                     }
                 }
             }
@@ -1334,9 +1321,15 @@ class Program
         return new Vector2(GetMiddle(width), GetMiddle(height));
     }
 
-    
-    // Needs more work.
-    static bool IsTileLegal(ref InitTile init, Vector2 point, TileCell[,,] tileMatrix, RunCell[,,] geoMatrix, int currentLayer)
+
+    // Checks if the tile's position is legal to place
+    static bool IsTileLegal(
+        ref InitTile init,
+        Vector2 point,
+        TileCell[,,] tileMatrix,
+        RunCell[,,] geoMatrix,
+        int currentLayer
+    )
     {
         var (width, height) = init.Size;
         var specs = init.Specs;
@@ -1346,33 +1339,249 @@ class Program
         var head = GetTileHeadOrigin(init);
 
         // the top-left of the tile
-        var start = RayMath.Vector2Subtract(
-            RayMath.Vector2Scale(point, 16),
-            RayMath.Vector2Scale(head, 16)
-        );
+        var start = RayMath.Vector2Subtract(point, head);
 
-        for (int y = (int)start.Y; y < height; y++)
+        for (int y = 0; y < height; y++)
         {
-            for (int x = (int)start.X; x < width; x++)
+            for (int x = 0; x < width; x++)
             {
-                var tileCell = tileMatrix[y, x, currentLayer];
-                var geoCell = geoMatrix[y, x, currentLayer];
+                int matrixX = x + (int)start.X;
+                int matrixY = y + (int)start.Y;
 
-                var spec = specs[(x - (int)start.X - height) + y - (int)start.Y];
+                // This function depends on the rest of the program to guarantee that all level matrices have the same x and y dimensions
+                if (
+                    matrixX >= 0 &&
+                    matrixX < geoMatrix.GetLength(1) &&
+                    matrixY >= 0 &&
+                    matrixY < geoMatrix.GetLength(0)
+                )
+                {
+                    var tileCell = tileMatrix[matrixY, matrixX, currentLayer];
+                    var geoCell = geoMatrix[matrixY, matrixX, currentLayer];
+                    var specsIndex = (x * height) + y;
 
-                if (spec != -1 && (geoCell.Geo != spec || tileCell.Type != TileType.Default || tileCell.Type != TileType.Material)) return false;
+
+                    var spec = specs[specsIndex];
+
+                    bool isLegal = false;
+
+                    if (specs2.Length > 0 && currentLayer != 2)
+                    {
+                        var tileCellNextLayer = tileMatrix[matrixY, matrixX, currentLayer + 1];
+                        var geoCellNextLayer = geoMatrix[matrixY, matrixX, currentLayer + 1];
+
+                        var spec2 = specs2[specsIndex];
+
+                        isLegal =
+                            (tileCell.Type == TileType.Default || tileCell.Type == TileType.Material)
+                            &&
+                            (tileCellNextLayer.Type == TileType.Default || tileCellNextLayer.Type == TileType.Material)
+                            &&
+                            (spec == -1 || geoCell.Geo == spec)
+                            &&
+                            (spec2 == -1 || geoCellNextLayer.Geo == spec2);
+                    }
+                    else
+                    {
+                        isLegal = (tileCell.Type == TileType.Default || tileCell.Type == TileType.Material) && (spec == -1 || geoCell.Geo == spec);
+                    }
+
+                    if (!isLegal) return false;
+                }
+                else return false;
+
             }
         }
 
         return true;
     }
 
-    static bool CheckInit() {
+    static void ForcePlaceTileWithGeo(
+        TileCell[,,] tileMatrix,
+        RunCell[,,] geoMatrix,
+        ref InitTile init,
+        int tileCategoryIndex,
+        int tileIndex,
+        (int x, int y, int z) matrixPosition
+    )
+    {
+        var (mx, my, mz) = matrixPosition;
+        var (width, height) = init.Size;
+        var specs = init.Specs;
+        var specs2 = init.Specs2;
+
+        // get the "middle" point of the tile
+        var head = GetTileHeadOrigin(init);
+
+        // the top-left of the tile
+        var start = RayMath.Vector2Subtract(new(mx, my), head);
+
+        // first: place the head of the tile at matrixPosition
+        tileMatrix[my, mx, mz] = new TileCell()
+        {
+            Type = TileType.TileHead,
+            Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
+        };
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                // leave the newly placed tile head
+                if (x == (int)head.X && y == (int)head.Y) continue;
+
+                int matrixX = x + (int)start.X;
+                int matrixY = y + (int)start.Y;
+
+                // This function depends on the rest of the program to guarantee that all level matrices have the same x and y dimensions
+                if (
+                    matrixX >= 0 &&
+                    matrixX < geoMatrix.GetLength(1) &&
+                    matrixY >= 0 &&
+                    matrixY < geoMatrix.GetLength(0)
+                )
+                {
+                    var specsIndex = (x * height) + y;
+
+                    var spec = specs[specsIndex];
+                    var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
+
+                    if (spec != -1) geoMatrix[matrixY, matrixX, mz].Geo = spec;
+                    if (spec2 != -1 && mz != 2) geoMatrix[matrixY, matrixX, mz + 1].Geo = spec2;
+
+                    tileMatrix[matrixY, matrixX, mz] = new TileCell
+                    {
+                        Type = TileType.TileBody,
+                        Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                    };
+
+                    if (specs2.Length > 0 && mz != 2)
+                    {
+                        tileMatrix[matrixY, matrixX, mz + 1] = new TileCell
+                        {
+                            Type = TileType.TileBody,
+                            Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                        };
+                    }
+                }
+            }
+        }
+    }
+
+    static void RemoveTile(
+        TileCell[,,] tileMatrix,
+        InitTile[][] init,
+        (int x, int y, int z) matrixPosition
+    )
+    {
+        var (mx, my, mz) = matrixPosition;
+
+        var cell = tileMatrix[my, mx, mz];
+
+        if (cell.Type == TileType.TileHead)
+        {
+            //Console.WriteLine($"Deleting tile head at ({mx},{my},{mz})");
+            var data = (TileHead)cell.Data;
+            var tileInit = init[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
+            var (width, height) = tileInit.Size;
+
+            bool isThick = tileInit.Specs2.Length > 0;
+
+            // get the "middle" point of the tile
+            var head = GetTileHeadOrigin(tileInit);
+
+            // the top-left of the tile
+            var start = RayMath.Vector2Subtract(new(mx, my), head);
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int matrixX = x + (int)start.X;
+                    int matrixY = y + (int)start.Y;
+
+                    tileMatrix[matrixY, matrixX, mz] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                    if (isThick && mz != 2) tileMatrix[matrixY, matrixX, mz + 1] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                }
+            }
+        }
+        else if (cell.Type == TileType.TileBody)
+        {
+            var (headX, headY, headZ) = ((TileBody)cell.Data).HeadPosition;
+
+            // This is done because Lingo is 1-based index
+            var supposedHead = tileMatrix[headY - 1, headX - 1, headZ - 1];
+
+            // if the head was not found, only delete the given tile body
+            if (supposedHead.Type != TileType.TileHead)
+            {
+                //Console.WriteLine($"({mx}, {my}, {mz}) reported that ({headX}, {headY}, {headZ}) is supposed to be a tile head, but was found to be a body");
+                tileMatrix[my, mx, mz] = new TileCell() { Type = TileType.Default, Data = new TileDefault() };
+                return;
+            }
+
+            var headTile = (TileHead)supposedHead.Data;
+            var tileInit = init[headTile.CategoryPostition.Item1 - 5][headTile.CategoryPostition.Item2 - 1];
+            var (width, height) = tileInit.Size;
+
+            bool isThick = tileInit.Specs2.Length > 0;
+
+            // get the "middle" point of the tile
+            var head = GetTileHeadOrigin(tileInit);
+
+            // the top-left of the tile
+            var start = RayMath.Vector2Subtract(new(headX, headY), RayMath.Vector2AddValue(head, 1));
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int matrixX = x + (int)start.X;
+                    int matrixY = y + (int)start.Y;
+
+                    tileMatrix[matrixY, matrixX, mz] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                    if (isThick && mz != 2) tileMatrix[matrixY, matrixX, mz + 1] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                }
+            }
+        }
+    }
+
+    static InitTile? PickupTile(TileCell[,,] tileMatrix, InitTile[][] tilesInit, (int x, int y, int z) matrixPosition)
+    {
+        var (x, y, z) = matrixPosition;
+        var cell = tileMatrix[y, x, z];
+
+        if (cell.Type == TileType.TileHead)
+        {
+            var (category, index, _) = ((TileHead)cell.Data).CategoryPostition;
+            return tilesInit[category][index];
+        }
+        else if (cell.Type != TileType.TileBody)
+        {
+            // find where the head is
+
+
+            var (headX, headY, headZ) = ((TileBody)cell.Data).HeadPosition;
+            // This is done because Lingo is 1-based index
+            var supposedHead = tileMatrix[headY - 1, headX - 1, headZ - 1];
+
+            if (supposedHead.Type != TileType.TileHead) return null;
+
+            var headTile = (TileHead)supposedHead.Data;
+            return tilesInit[headTile.CategoryPostition.Item1 - 5][headTile.CategoryPostition.Item2 - 1];
+        }
+
+
+        return null;
+    }
+
+    static bool CheckInit()
+    {
         using var stream = File.OpenRead(tilesInitPath);
         using SHA512 sha = SHA512.Create();
 
         var hash = sha.ComputeHash(stream);
-        
+
         return BitConverter.ToString(hash) == initChecksum;
     }
 
@@ -1401,22 +1610,15 @@ class Program
 
         // check cache directory
 
-        if (!Directory.Exists(cacheDirectory)) {
-            try {
+        if (!Directory.Exists(cacheDirectory))
+        {
+            try
+            {
                 Directory.CreateDirectory(cacheDirectory);
-            } catch (Exception e) {
-                logger.Error($"failed to create cache directory: {e}");
             }
-        }
-
-        DateTime assetsLastModified = DateTime.Now;
-
-        if (File.Exists(Path.Combine(cacheDirectory, "ttc.json"))) {
-            try {
-                using var stream = File.OpenRead(Path.Combine(cacheDirectory, "ttc.json"));
-                assetsLastModified = JsonSerializer.Deserialize<DateTime>(stream);
-            } catch (Exception e) {
-                logger.Error($"failed to read cahce: {e}");
+            catch (Exception e)
+            {
+                logger.Error($"failed to create cache directory: {e}");
             }
         }
 
@@ -1428,7 +1630,7 @@ class Program
         bool shadersAssetsExists = Directory.Exists(Path.Combine(assetsDirectory, "shaders"));
 
         bool assetsExist = Directory.Exists(assetsDirectory);
-            
+
         if (!assetsExist) logger.Fatal("assets folder not found");
         if (!geoAssetsExists) logger.Fatal("assets/geo folder not found");
         if (!tileAssetsExists) logger.Fatal("assets/tile folder not found");
@@ -1460,7 +1662,8 @@ class Program
                     Layer3: layer3Color
                     )
                 ),
-            new(true)
+            new(true),
+            new()
         );
 
         var serOptions = new JsonSerializerOptions { WriteIndented = true };
@@ -1485,14 +1688,18 @@ class Program
         {
             logger.Error($"failed to import settings from settings.json: {e}\nusing default settings");
 
-            try {
+            try
+            {
                 var text = JsonSerializer.Serialize(settings, serOptions);
                 File.WriteAllText(Path.Combine(executableDirectory, "settings.json"), text);
-            } catch {
+            }
+            catch
+            {
 
             }
         }
 
+        // I don't think this is used anymore
         Color[] layerColors = [
             settings.GeomentryEditor.LayerColors.Layer1,
             settings.GeomentryEditor.LayerColors.Layer2,
@@ -1514,17 +1721,27 @@ class Program
             }
         }
 
+        // Check for Init.txt
+
+        bool initExists = File.Exists(tilesInitPath);
+
+        if (!initExists)
+        {
+            logger.Fatal("Init.txt not found");
+            //throw new Exception("Init.txt not found");
+        }
+
         // checksum files
 
-        bool initChecksum = CheckInit();
+        bool initChecksum = initExists ? CheckInit() : true;
 
-        logger.Debug(initChecksum ? "Init.txt passed checksum" : "Init.txt failed checksum");
+        if (initExists) logger.Debug(initChecksum ? "Init.txt passed checksum" : "Init.txt failed checksum");
 
         //
 
         logger.Information("initializing data");
 
-        string version = "Henry's Leditor v0.3.21";
+        string version = "Henry's Leditor v0.3.25";
         string raylibVersion = "Raylib v4.2.0.9";
 
         int page = 0;
@@ -1552,6 +1769,7 @@ class Program
         bool showLayer2 = true;
         bool showLayer3 = true;
 
+        // Not used yet
         bool showTilesInGeo = false;
 
         bool showTileLayer1 = true;
@@ -1584,23 +1802,25 @@ class Program
 
         logger.Information("indexing tiles");
 
-        var (tileCategories, initTiles) = LoadTileInit();
+        var (tileCategories, initTiles) = initExists ? LoadTileInit() : ([], []);
 
         int tileNumber = 0;
         int embeddedTileNumber = 0;
 
-        for (int c = 0; c < initTiles.Length; c++) {
+        for (int c = 0; c < initTiles.Length; c++)
+        {
             for (int t = 0; t < initTiles[c].Length; t++) tileNumber++;
         }
 
-        for (int c = 0; c < embeddedTiles.Length; c++) {
+        for (int c = 0; c < embeddedTiles.Length; c++)
+        {
             for (int t = 0; t < embeddedTiles[c].Length; t++) embeddedTileNumber++;
         }
 
         // check for missing textures
-        
+
         var missingTileImagesTask = from category in initTiles from tile in category select Task.Factory.StartNew(() => { var path = Path.Combine(assetsDirectory, "tiles", $"{tile.Name}.png"); return (File.Exists(path), path); });
-        var missingEmbeddedTileImagesTask = from category in embeddedTiles from tile in category select Task.Factory.StartNew(() => { var path = Path.Combine(assetsDirectory, "tiles","embedded", $"{tile.Name}.png"); return (File.Exists(path), path); });
+        var missingEmbeddedTileImagesTask = from category in embeddedTiles from tile in category select Task.Factory.StartNew(() => { var path = Path.Combine(assetsDirectory, "tiles", "embedded", $"{tile.Name}.png"); return (File.Exists(path), path); });
 
         var missingTileImagesTaskEnum = missingTileImagesTask.GetEnumerator();
         var missingEmbeddedTileImagesTaskEnum = missingEmbeddedTileImagesTask.GetEnumerator();
@@ -1619,10 +1839,10 @@ class Program
         if (!missingEmbeddedTileImagesTaskEnum.MoveNext()) missingTextureFound = true;
 
         // APPEND INTERNAL TILES
-        
+
         tileCategories = [.. tileCategories, .. embeddedCategories];
         initTiles = [.. initTiles, .. embeddedTiles];
-        
+
         //
 
         int flatness = 0;
@@ -1859,6 +2079,8 @@ class Program
 
         float initialFrames = 0;
 
+        Exception? fatalException = null;
+
         // Do not remove this commented code.
         // It'll be used for the props editor
 
@@ -1868,9 +2090,9 @@ class Program
         Vector2[] textureQuads = [ new(1f, 0f), new(0f, 0f), new(0f, 1f), new(1f, 1f), new(1f, 0f) ];
         Vector2[] testQuads = [new(50f, -50f), new(0f, 0f), new(-10f, 50f), new(50f, 50f), new(50f, -50f)];*/
 
-        try
+        while (!WindowShouldClose())
         {
-            while (!WindowShouldClose())
+            try
             {
                 #region Splashscreen
                 if (initialFrames < 180 && settings.Misc.SplashScreen)
@@ -1894,40 +2116,53 @@ class Program
                     );
 
 
-                    if (initialFrames > 60) {
+                    if (initialFrames > 60)
+                    {
                         DrawText(version, 700, 50, 15, WHITE);
-                        
+
                     }
 
-                    if (initialFrames > 70) {
+                    if (initialFrames > 70)
+                    {
                         DrawText(raylibVersion, 700, 70, 15, WHITE);
                     }
 
-                    if (initialFrames > 80) {
-                        #if DEBUG
-                        if (!initChecksum) DrawText("Init.txt failed checksum", 700, 300, 16, YELLOW);
-                        #else
-                        if (!initChecksum) DrawText("Tiles have been modified", 700, 300, 16, YELLOW);
-                        #endif
+                    if (initialFrames > 75)
+                    {
+                        if (!initExists) DrawText("Init.txt not found", 700, 280, 16, new(252, 38, 38, 255));
                     }
 
-                    if (initialFrames > 90) {
+                    if (initialFrames > 80)
+                    {
+#if DEBUG
+                        if (!initChecksum) DrawText("Init.txt failed checksum", 700, 300, 16, YELLOW);
+#else
+                        if (!initChecksum) DrawText("Tiles have been modified", 700, 300, 16, YELLOW);
+#endif
+                    }
+
+                    if (initialFrames > 90)
+                    {
                         if (!assetsExist) DrawText("assets folder not found", 700, 320, 16, new(252, 38, 38, 255));
                     }
 
-                    if (initialFrames > 100) {
+                    if (initialFrames > 100)
+                    {
                         if (assetsExist && !geoAssetsExists) DrawText("assets/geo folder not found", 700, 340, 16, new(252, 38, 38, 255));
                     }
 
-                    if (initialFrames > 110) {
+                    if (initialFrames > 110)
+                    {
                         if (assetsExist && !tileAssetsExists) DrawText("assets/tiles folder not found", 700, 360, 16, new(252, 38, 38, 255));
                     }
 
-                    if (initialFrames > 120) {
+                    if (initialFrames > 120)
+                    {
                         if (assetsExist && !lightAssetsExists) DrawText("assets/light folder not found", 700, 380, 16, new(252, 38, 38, 255));
                     }
 
-                    if (initialFrames > 130) {
+                    if (initialFrames > 130)
+                    {
                         if (assetsExist && !shadersAssetsExists) DrawText("assets/shaders folder not found", 700, 400, 16, new(252, 38, 38, 255));
                     }
 
@@ -1938,132 +2173,149 @@ class Program
                 }
                 #endregion
 
+                if (!initExists)
+                {
+                    page = 17;
+                }
                 // First, check if the folders exist at all
-                if (!assetsExist) {
+                else if (!assetsExist)
+                {
                     page = 14;
-                } else if (!(geoAssetsExists && tileAssetsExists && lightAssetsExists && shadersAssetsExists)) {
+                }
+                else if (!(geoAssetsExists && tileAssetsExists && lightAssetsExists && shadersAssetsExists))
+                {
                     page = 15;
                 }
                 // Then check tile textures indivitually
-                else if (!checkMissingTextureDone) {
+                else if (!checkMissingTextureDone)
+                {
                     int r = 0;
 
-                    do {
+                    do
+                    {
                         var currentTileTask = missingTileImagesTaskEnum.Current;
 
                         if (!currentTileTask.IsCompleted) goto skip;
 
                         var currentTile = currentTileTask.Result;
 
-                        if (!currentTile.Item1) {
+                        if (!currentTile.Item1)
+                        {
                             missingTextureFound = true;
-                            logger.Fatal($"missing texture: \"{currentTile.Item2}\""); 
+                            logger.Fatal($"missing texture: \"{currentTile.Item2}\"");
                         }
 
                         checkMissingTextureProgress++;
 
-                        if (!missingTileImagesTaskEnum.MoveNext()) {
+                        if (!missingTileImagesTaskEnum.MoveNext())
+                        {
                             checkMissingTextureDone = true;
                             goto out_;
                         }
 
                         r++;
 
-                        // Do not remove this label
-                        skip:
-                        {}
+                    // Do not remove this label
+                    skip:
+                        { }
 
                         // settings.Misc.TileImageScansPerFrame is used to determine the number of scans oer frame.
                     } while (r < settings.Misc.TileImageScansPerFrame);
 
-                    // Do not remove this label
-                    out_:
+                // Do not remove this label
+                out_:
 
                     var width = GetScreenWidth();
                     var height = GetScreenHeight();
 
                     BeginDrawing();
-                        ClearBackground(new(0, 0, 0, 255));
+                    ClearBackground(new(0, 0, 0, 255));
 
-                        DrawTexturePro(
-                            splashScreen,
-                            new(0, 0, splashScreen.width, splashScreen.height),
-                            new(0, 0, screenMinWidth, screenMinHeight),
-                            new(0, 0),
-                            0,
-                            new(255, 255, 255, 255)
-                        );
+                    DrawTexturePro(
+                        splashScreen,
+                        new(0, 0, splashScreen.width, splashScreen.height),
+                        new(0, 0, screenMinWidth, screenMinHeight),
+                        new(0, 0),
+                        0,
+                        new(255, 255, 255, 255)
+                    );
 
-                        if (missingTextureFound) DrawText("missing textures found", 700, 300, 16, new(252, 38, 38, 255));
+                    if (missingTextureFound) DrawText("missing textures found", 700, 300, 16, new(252, 38, 38, 255));
 
-                        DrawText(version, 700, 50, 15, WHITE);
-                        DrawText(raylibVersion, 700, 70, 15, WHITE);
+                    DrawText(version, 700, 50, 15, WHITE);
+                    DrawText(raylibVersion, 700, 70, 15, WHITE);
 
-                        RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", checkMissingTextureProgress, 0, tileNumber);
+                    RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", checkMissingTextureProgress, 0, tileNumber);
                     EndDrawing();
 
                     continue;
                 }
-                else if (!checkMissingEmbeddedTextureDone) {
+                else if (!checkMissingEmbeddedTextureDone)
+                {
                     int r = 0;
 
-                    do {
+                    do
+                    {
                         var currentEmbeddedTileTask = missingEmbeddedTileImagesTaskEnum.Current;
 
                         if (!currentEmbeddedTileTask.IsCompleted) goto skip2;
 
                         var currentEmbeddedTile = currentEmbeddedTileTask.Result;
 
-                        if (!currentEmbeddedTile.Item1) {
+                        if (!currentEmbeddedTile.Item1)
+                        {
                             missingTextureFound = true;
-                            logger.Fatal($"missing texture: \"{currentEmbeddedTile.Item2}\""); 
+                            logger.Fatal($"missing texture: \"{currentEmbeddedTile.Item2}\"");
                         }
 
                         checkMissingEmbeddedTextureProgress++;
 
-                        if (!missingEmbeddedTileImagesTaskEnum.MoveNext()) {
+                        if (!missingEmbeddedTileImagesTaskEnum.MoveNext())
+                        {
                             checkMissingEmbeddedTextureDone = true;
                             goto out2_;
                         }
 
                         r++;
 
-                        skip2:
-                        {}
+                    skip2:
+                        { }
                     } while (r < settings.Misc.TileImageScansPerFrame);
 
-                    out2_:
+                out2_:
 
 
                     var width = GetScreenWidth();
                     var height = GetScreenHeight();
 
                     BeginDrawing();
-                        ClearBackground(new(0, 0, 0, 255));
+                    ClearBackground(new(0, 0, 0, 255));
 
-                        DrawTexturePro(
-                            splashScreen,
-                            new(0, 0, splashScreen.width, splashScreen.height),
-                            new(0, 0, screenMinWidth, screenMinHeight),
-                            new(0, 0),
-                            0,
-                            new(255, 255, 255, 255)
-                        );
+                    DrawTexturePro(
+                        splashScreen,
+                        new(0, 0, splashScreen.width, splashScreen.height),
+                        new(0, 0, screenMinWidth, screenMinHeight),
+                        new(0, 0),
+                        0,
+                        new(255, 255, 255, 255)
+                    );
 
-                        if (missingTextureFound) DrawText("missing textures found", 700, 300, 16, new(252, 38, 38, 255));
+                    if (missingTextureFound) DrawText("missing textures found", 700, 300, 16, new(252, 38, 38, 255));
 
-                        DrawText(version, 700, 50, 15, WHITE);
-                        DrawText(raylibVersion, 700, 70, 15, WHITE);
+                    DrawText(version, 700, 50, 15, WHITE);
+                    DrawText(raylibVersion, 700, 70, 15, WHITE);
 
-                        RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", checkMissingEmbeddedTextureProgress, 0, embeddedTileNumber);
+                    RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", checkMissingEmbeddedTextureProgress, 0, embeddedTileNumber);
                     EndDrawing();
 
                     continue;
                 }
-                else if (missingTextureFound) {
+                else if (missingTextureFound)
+                {
                     page = 16;
                 }
-                else {
+                else
+                {
                     // Loading screen
 
                     if (!imagesLoaded)
@@ -2104,17 +2356,17 @@ class Program
                             new(255, 255, 255, 255)
                         );
 
-                        #if DEBUG
+#if DEBUG
                         if (!initChecksum) DrawText("Init.txt failed checksum", 10, 300, 16, YELLOW);
-                        #else
+#else
                         if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, YELLOW);
-                        #endif
+#endif
 
 
                         DrawText(version, 700, 50, 15, WHITE);
                         DrawText(raylibVersion, 700, 70, 15, WHITE);
 
-                        RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", completedProgress, 0, (tileNumber + embeddedTileNumber)*2);
+                        RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", completedProgress, 0, (tileNumber + embeddedTileNumber) * 2);
                         EndDrawing();
 
                         continue;
@@ -2146,12 +2398,20 @@ class Program
                     }
                 }
 
-                if (assetsExist && geoAssetsExists && tileAssetsExists && lightAssetsExists && shadersAssetsExists) {
-                } else {
+                if (assetsExist && geoAssetsExists && tileAssetsExists && lightAssetsExists && shadersAssetsExists)
+                {
+                }
+                else
+                {
                     if (!assetsExist) page = 14;
                     else page = 15;
                 }
 
+                // page preprocessing
+
+                if (page == 2 && settings.Experimental.NewGeometryEditor) page = 18;
+
+                // page switch
 
                 switch (page)
                 {
@@ -2499,472 +2759,537 @@ class Program
 
                     #region GeoEditor
                     case 2:
-                        prevPage = 2;
-
-                        if (IsKeyPressed(KeyboardKey.KEY_ONE))
                         {
-                            page = 1;
-                        }
-                        // if (IsKeyReleased(KeyboardKey.KEY_TWO)) page = 2;
-                        if (IsKeyReleased(KeyboardKey.KEY_THREE))
-                        {
-                            page = 3;
-                        }
-                        if (IsKeyReleased(KeyboardKey.KEY_FOUR))
-                        {
-                            page = 4;
-                        }
-                        if (IsKeyReleased(KeyboardKey.KEY_FIVE))
-                        {
-                            page = 5;
-                        }
-                        if (IsKeyReleased(KeyboardKey.KEY_SIX))
-                        {
-                            resizeFlag = true;
-                            page = 6;
-                        }
-                        if (IsKeyReleased(KeyboardKey.KEY_SEVEN))
-                        {
-                            page = 7;
-                        }
-                        if (IsKeyReleased(KeyboardKey.KEY_EIGHT))
-                        {
-                            page = 8;
-                        }
-                        if (IsKeyReleased(KeyboardKey.KEY_NINE))
-                        {
-                            page = 9;
-                        }
+                            prevPage = 2;
 
-                        Vector2 mouse = GetScreenToWorld2D(GetMousePosition(), camera);
-
-                        //                        v this was done to avoid rounding errors
-                        int matrixY = mouse.Y < 0 ? -1 : (int)mouse.Y / scale;
-                        int matrixX = mouse.X < 0 ? -1 : (int)mouse.X / scale;
-
-                        var canDrawGeo = !Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), new(Raylib.GetScreenWidth() - 210, 50, 200, Raylib.GetScreenHeight() - 100));
-
-                        // handle geo selection
-
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_D))
-                        {
-                            geoSelectionX = ++geoSelectionX % 4;
-
-                            multiselect = false;
-                            prevCoordsX = -1;
-                            prevCoordsY = -1;
-                        }
-                        else if (Raylib.IsKeyPressed(KeyboardKey.KEY_A))
-                        {
-                            geoSelectionX = --geoSelectionX % 4;
-
-                            multiselect = false;
-                            prevCoordsX = -1;
-                            prevCoordsY = -1;
-                        }
-                        else if (Raylib.IsKeyPressed(KeyboardKey.KEY_W))
-                        {
-                            geoSelectionY = (--geoSelectionY) % 8;
-
-                            multiselect = false;
-                            prevCoordsX = -1;
-                            prevCoordsY = -1;
-                        }
-                        else if (Raylib.IsKeyPressed(KeyboardKey.KEY_S))
-                        {
-                            geoSelectionY = (++geoSelectionY) % 8;
-
-                            multiselect = false;
-                            prevCoordsX = -1;
-                            prevCoordsY = -1;
-                        }
-
-                        // handle changing layers
-
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_L))
-                        {
-                            currentLayer = ++currentLayer % 3;
-                        }
-
-                        uint geoIndex = (4 * geoSelectionY) + geoSelectionX;
-
-                        if (Raylib.IsKeyPressed(KeyboardKey.KEY_M))
-                        {
-                            gridContrast = !gridContrast;
-                        }
-
-                        // handle mouse drag
-                        if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
-                        {
-                            Vector2 delta = Raylib.GetMouseDelta();
-                            delta = RayMath.Vector2Scale(delta, -1.0f / camera.zoom);
-                            camera.target = RayMath.Vector2Add(camera.target, delta);
-                        }
-
-
-                        // handle zoom
-                        var wheel = Raylib.GetMouseWheelMove();
-                        if (wheel != 0)
-                        {
-                            Vector2 mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-                            camera.offset = Raylib.GetMousePosition();
-                            camera.target = mouseWorldPosition;
-                            camera.zoom += wheel * zoomIncrement;
-                            if (camera.zoom < zoomIncrement) camera.zoom = zoomIncrement;
-                        }
-
-                        // handle placing geo
-
-                        if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
-                        {
-                            if (canDrawGeo && matrixY >= 0 && matrixY < matrixHeight && matrixX >= 0 && matrixX < matrixWidth)
+                            if (IsKeyPressed(KeyboardKey.KEY_ONE))
                             {
-                                switch (geoIndex)
-                                {
-                                    case 2: // slopebl
-                                        var cell = geoMatrix[matrixY, matrixX, currentLayer];
-
-                                        var slope = GetCorrectSlopeID(CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, matrixX, matrixY, currentLayer));
-
-                                        if (slope == -1) break;
-
-                                        cell.Geo = slope;
-                                        geoMatrix[matrixY, matrixX, currentLayer] = cell;
-                                        break;
-
-                                    case 0: // solid
-                                    case 1: // air
-                                    case 5: // platform
-                                    case 12: // glass
-                                        var cell2 = geoMatrix[matrixY, matrixX, currentLayer];
-
-                                        cell2.Geo = GetBlockID(geoIndex);
-                                        geoMatrix[matrixY, matrixX, currentLayer] = cell2;
-                                        break;
-
-                                    // multi-select: forward to next if-statement
-                                    case 3:
-                                    case 4:
-                                    case 13:
-                                    case 25:
-                                        break;
-
-                                    // stackables
-                                    case 7: // rock
-                                    case 8: // spear
-                                    case 9: // crack
-                                    case 10: // ph
-                                    case 11: // pv
-                                    case 14: // entry
-                                    case 15: // shortcut
-                                    case 16: // den
-                                    case 17: // passage
-                                    case 18: // bathive
-                                    case 19: // waterfall
-                                    case 20: // scav
-                                    case 21: // wac
-                                    case 22: // garbageworm
-                                    case 23: // worm
-                                    case 24: // forbidflychains
-                                        if (geoIndex is 17 or 18 or 19 or 20 or 22 or 23 or 24 or 25 or 26 or 27 && currentLayer != 0)
-                                        {
-                                            break;
-                                        }
-
-                                        if (
-                                            matrixX * scale < border.X ||
-                                            matrixX * scale >= border.width + border.X ||
-                                            matrixY * scale < border.Y ||
-                                            matrixY * scale >= border.height + border.Y)
-                                        {
-                                            break;
-                                        }
-
-                                        var id = GetStackableID(geoIndex);
-                                        var cell_ = geoMatrix[matrixY, matrixX, currentLayer];
-
-                                        var newValue = !cell_.Stackables[id];
-                                        if (matrixX != prevMatrixX || matrixY != prevMatrixY || !clickTracker)
-                                        {
-
-                                            if (cell_.Stackables[id] != newValue)
-                                            {
-                                                cell_.Stackables[id] = newValue;
-                                                if (id == 4) { cell_.Geo = 0; }
-                                                geoMatrix[matrixY, matrixX, currentLayer] = cell_;
-
-                                            }
-                                        }
-
-                                        prevMatrixX = matrixX;
-                                        prevMatrixY = matrixY;
-                                        break;
-                                }
+                                page = 1;
+                            }
+                            // if (IsKeyReleased(KeyboardKey.KEY_TWO)) page = 2;
+                            if (IsKeyReleased(KeyboardKey.KEY_THREE))
+                            {
+                                page = 3;
+                            }
+                            if (IsKeyReleased(KeyboardKey.KEY_FOUR))
+                            {
+                                page = 4;
+                            }
+                            if (IsKeyReleased(KeyboardKey.KEY_FIVE))
+                            {
+                                page = 5;
+                            }
+                            if (IsKeyReleased(KeyboardKey.KEY_SIX))
+                            {
+                                resizeFlag = true;
+                                page = 6;
+                            }
+                            if (IsKeyReleased(KeyboardKey.KEY_SEVEN))
+                            {
+                                page = 7;
+                            }
+                            if (IsKeyReleased(KeyboardKey.KEY_EIGHT))
+                            {
+                                page = 8;
+                            }
+                            if (IsKeyReleased(KeyboardKey.KEY_NINE))
+                            {
+                                page = 9;
                             }
 
-                            clickTracker = true;
-                        }
+                            Vector2 mouse = GetScreenToWorld2D(GetMousePosition(), camera);
 
-                        if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
-                        {
-                            clickTracker = false;
-                        }
+                            //                        v this was done to avoid rounding errors
+                            int matrixY = mouse.Y < 0 ? -1 : (int)mouse.Y / scale;
+                            int matrixX = mouse.X < 0 ? -1 : (int)mouse.X / scale;
 
-                        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                        {
-                            if (canDrawGeo && matrixY >= 0 && matrixY < matrixHeight && matrixX >= 0 && matrixX < matrixWidth)
+                            var canDrawGeo = !Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), new(Raylib.GetScreenWidth() - 210, 50, 200, Raylib.GetScreenHeight() - 100));
+
+                            // handle geo selection
+
+                            if (Raylib.IsKeyPressed(KeyboardKey.KEY_D))
                             {
-                                switch (geoIndex)
+                                geoSelectionX = ++geoSelectionX % 4;
+
+                                multiselect = false;
+                                prevCoordsX = -1;
+                                prevCoordsY = -1;
+                            }
+                            else if (Raylib.IsKeyPressed(KeyboardKey.KEY_A))
+                            {
+                                geoSelectionX = --geoSelectionX % 4;
+
+                                multiselect = false;
+                                prevCoordsX = -1;
+                                prevCoordsY = -1;
+                            }
+                            else if (Raylib.IsKeyPressed(KeyboardKey.KEY_W))
+                            {
+                                geoSelectionY = (--geoSelectionY) % 8;
+
+                                multiselect = false;
+                                prevCoordsX = -1;
+                                prevCoordsY = -1;
+                            }
+                            else if (Raylib.IsKeyPressed(KeyboardKey.KEY_S))
+                            {
+                                geoSelectionY = (++geoSelectionY) % 8;
+
+                                multiselect = false;
+                                prevCoordsX = -1;
+                                prevCoordsY = -1;
+                            }
+
+                            // handle changing layers
+
+                            if (Raylib.IsKeyPressed(KeyboardKey.KEY_L))
+                            {
+                                currentLayer = ++currentLayer % 3;
+                            }
+
+                            uint geoIndex = (4 * geoSelectionY) + geoSelectionX;
+
+                            if (Raylib.IsKeyPressed(KeyboardKey.KEY_M))
+                            {
+                                gridContrast = !gridContrast;
+                            }
+
+                            // handle mouse drag
+                            if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+                            {
+                                Vector2 delta = Raylib.GetMouseDelta();
+                                delta = RayMath.Vector2Scale(delta, -1.0f / camera.zoom);
+                                camera.target = RayMath.Vector2Add(camera.target, delta);
+                            }
+
+
+                            // handle zoom
+                            var wheel = Raylib.GetMouseWheelMove();
+                            if (wheel != 0)
+                            {
+                                Vector2 mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
+                                camera.offset = Raylib.GetMousePosition();
+                                camera.target = mouseWorldPosition;
+                                camera.zoom += wheel * zoomIncrement;
+                                if (camera.zoom < zoomIncrement) camera.zoom = zoomIncrement;
+                            }
+
+                            // handle placing geo
+
+                            if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                            {
+                                if (canDrawGeo && matrixY >= 0 && matrixY < matrixHeight && matrixX >= 0 && matrixX < matrixWidth)
                                 {
-                                    case 25:
-                                        multiselect = !multiselect;
+                                    switch (geoIndex)
+                                    {
+                                        case 2: // slopebl
+                                            var cell = geoMatrix[matrixY, matrixX, currentLayer];
 
-                                        if (multiselect)
-                                        {
-                                            prevCoordsX = matrixX;
-                                            prevCoordsY = matrixY;
-                                        }
-                                        else
-                                        {
-                                            int startX,
-                                                startY,
-                                                endX,
-                                                endY;
+                                            var slope = GetCorrectSlopeID(CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, matrixX, matrixY, currentLayer));
 
-                                            if (matrixX > prevCoordsX)
+                                            if (slope == -1) break;
+
+                                            cell.Geo = slope;
+                                            geoMatrix[matrixY, matrixX, currentLayer] = cell;
+                                            break;
+
+                                        case 0: // solid
+                                        case 1: // air
+                                        case 5: // platform
+                                        case 12: // glass
+                                            var cell2 = geoMatrix[matrixY, matrixX, currentLayer];
+
+                                            cell2.Geo = GetBlockID(geoIndex);
+                                            geoMatrix[matrixY, matrixX, currentLayer] = cell2;
+                                            break;
+
+                                        // multi-select: forward to next if-statement
+                                        case 3:
+                                        case 4:
+                                        case 13:
+                                        case 25:
+                                            break;
+
+                                        // stackables
+                                        case 7: // rock
+                                        case 8: // spear
+                                        case 9: // crack
+                                        case 10: // ph
+                                        case 11: // pv
+                                        case 14: // entry
+                                        case 15: // shortcut
+                                        case 16: // den
+                                        case 17: // passage
+                                        case 18: // bathive
+                                        case 19: // waterfall
+                                        case 20: // scav
+                                        case 21: // wac
+                                        case 22: // garbageworm
+                                        case 23: // worm
+                                        case 24: // forbidflychains
+                                            if (geoIndex is 17 or 18 or 19 or 20 or 22 or 23 or 24 or 25 or 26 or 27 && currentLayer != 0)
                                             {
-                                                startX = prevCoordsX;
-                                                endX = matrixX;
-                                            }
-                                            else
-                                            {
-                                                startX = matrixX;
-                                                endX = prevCoordsX;
+                                                break;
                                             }
 
-                                            if (matrixY > prevCoordsY)
+                                            if (
+                                                matrixX * scale < border.X ||
+                                                matrixX * scale >= border.width + border.X ||
+                                                matrixY * scale < border.Y ||
+                                                matrixY * scale >= border.height + border.Y)
                                             {
-                                                startY = prevCoordsY;
-                                                endY = matrixY;
-                                            }
-                                            else
-                                            {
-                                                startY = matrixY;
-                                                endY = prevCoordsY;
+                                                break;
                                             }
 
-                                            for (int y = startY; y <= endY; y++)
+                                            var id = GetStackableID(geoIndex);
+                                            var cell_ = geoMatrix[matrixY, matrixX, currentLayer];
+
+                                            var newValue = !cell_.Stackables[id];
+                                            if (matrixX != prevMatrixX || matrixY != prevMatrixY || !clickTracker)
                                             {
-                                                for (int x = startX; x <= endX; x++)
+
+                                                if (cell_.Stackables[id] != newValue)
                                                 {
-                                                    geoMatrix[y, x, 0].Geo = 0;
-                                                    geoMatrix[y, x, 1].Geo = 0;
-                                                    geoMatrix[y, x, 2].Geo = 0;
+                                                    cell_.Stackables[id] = newValue;
+                                                    if (id == 4) { cell_.Geo = 0; }
+                                                    geoMatrix[matrixY, matrixX, currentLayer] = cell_;
+
                                                 }
                                             }
-                                        }
-                                        break;
-                                    case 13:
-                                        multiselect = !multiselect;
 
-                                        if (multiselect)
-                                        {
-                                            prevCoordsX = matrixX;
-                                            prevCoordsY = matrixY;
-                                        }
-                                        else
-                                        {
-                                            int startX,
-                                                startY,
-                                                endX,
-                                                endY;
+                                            prevMatrixX = matrixX;
+                                            prevMatrixY = matrixY;
+                                            break;
+                                    }
+                                }
 
-                                            if (matrixX > prevCoordsX)
+                                clickTracker = true;
+                            }
+
+                            if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                            {
+                                clickTracker = false;
+                            }
+
+                            if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                            {
+                                if (canDrawGeo && matrixY >= 0 && matrixY < matrixHeight && matrixX >= 0 && matrixX < matrixWidth)
+                                {
+                                    switch (geoIndex)
+                                    {
+                                        case 25:
+                                            multiselect = !multiselect;
+
+                                            if (multiselect)
                                             {
-                                                startX = prevCoordsX;
-                                                endX = matrixX;
+                                                prevCoordsX = matrixX;
+                                                prevCoordsY = matrixY;
                                             }
                                             else
                                             {
-                                                startX = matrixX;
-                                                endX = prevCoordsX;
-                                            }
+                                                int startX,
+                                                    startY,
+                                                    endX,
+                                                    endY;
 
-                                            if (matrixY > prevCoordsY)
-                                            {
-                                                startY = prevCoordsY;
-                                                endY = matrixY;
-                                            }
-                                            else
-                                            {
-                                                startY = matrixY;
-                                                endY = prevCoordsY;
-                                            }
+                                                if (matrixX > prevCoordsX)
+                                                {
+                                                    startX = prevCoordsX;
+                                                    endX = matrixX;
+                                                }
+                                                else
+                                                {
+                                                    startX = matrixX;
+                                                    endX = prevCoordsX;
+                                                }
 
-                                            if (currentLayer is 0 or 1)
-                                            {
+                                                if (matrixY > prevCoordsY)
+                                                {
+                                                    startY = prevCoordsY;
+                                                    endY = matrixY;
+                                                }
+                                                else
+                                                {
+                                                    startY = matrixY;
+                                                    endY = prevCoordsY;
+                                                }
+
                                                 for (int y = startY; y <= endY; y++)
                                                 {
                                                     for (int x = startX; x <= endX; x++)
                                                     {
-                                                        geoMatrix[y, x, currentLayer + 1].Geo = geoMatrix[y, x, currentLayer].Geo;
+                                                        geoMatrix[y, x, 0].Geo = 0;
+                                                        geoMatrix[y, x, 1].Geo = 0;
+                                                        geoMatrix[y, x, 2].Geo = 0;
                                                     }
                                                 }
                                             }
-                                        }
-                                        break;
-                                    case 3:
-                                    case 4:
-                                        multiselect = !multiselect;
+                                            break;
+                                        case 13:
+                                            multiselect = !multiselect;
 
-                                        if (multiselect)
-                                        {
-                                            prevCoordsX = matrixX;
-                                            prevCoordsY = matrixY;
-                                        }
-                                        else
-                                        {
-                                            int startX,
-                                                startY,
-                                                endX,
-                                                endY;
-
-                                            if (matrixX > prevCoordsX)
+                                            if (multiselect)
                                             {
-                                                startX = prevCoordsX;
-                                                endX = matrixX;
+                                                prevCoordsX = matrixX;
+                                                prevCoordsY = matrixY;
                                             }
                                             else
                                             {
-                                                startX = matrixX;
-                                                endX = prevCoordsX;
-                                            }
+                                                int startX,
+                                                    startY,
+                                                    endX,
+                                                    endY;
 
-                                            if (matrixY > prevCoordsY)
-                                            {
-                                                startY = prevCoordsY;
-                                                endY = matrixY;
-                                            }
-                                            else
-                                            {
-                                                startY = matrixY;
-                                                endY = prevCoordsY;
-                                            }
-
-                                            int value = geoIndex == 3 ? 1 : 0;
-
-                                            for (int y = startY; y <= endY; y++)
-                                            {
-                                                for (int x = startX; x <= endX; x++)
+                                                if (matrixX > prevCoordsX)
                                                 {
-                                                    var cell = geoMatrix[y, x, currentLayer];
-                                                    cell.Geo = value;
-                                                    geoMatrix[y, x, currentLayer] = cell;
+                                                    startX = prevCoordsX;
+                                                    endX = matrixX;
+                                                }
+                                                else
+                                                {
+                                                    startX = matrixX;
+                                                    endX = prevCoordsX;
+                                                }
+
+                                                if (matrixY > prevCoordsY)
+                                                {
+                                                    startY = prevCoordsY;
+                                                    endY = matrixY;
+                                                }
+                                                else
+                                                {
+                                                    startY = matrixY;
+                                                    endY = prevCoordsY;
+                                                }
+
+                                                if (currentLayer is 0 or 1)
+                                                {
+                                                    for (int y = startY; y <= endY; y++)
+                                                    {
+                                                        for (int x = startX; x <= endX; x++)
+                                                        {
+                                                            geoMatrix[y, x, currentLayer + 1].Geo = geoMatrix[y, x, currentLayer].Geo;
+                                                        }
+                                                    }
                                                 }
                                             }
+                                            break;
+                                        case 3:
+                                        case 4:
+                                            multiselect = !multiselect;
 
-                                            prevCoordsX = -1;
-                                            prevCoordsY = -1;
-                                        }
-                                        break;
+                                            if (multiselect)
+                                            {
+                                                prevCoordsX = matrixX;
+                                                prevCoordsY = matrixY;
+                                            }
+                                            else
+                                            {
+                                                int startX,
+                                                    startY,
+                                                    endX,
+                                                    endY;
+
+                                                if (matrixX > prevCoordsX)
+                                                {
+                                                    startX = prevCoordsX;
+                                                    endX = matrixX;
+                                                }
+                                                else
+                                                {
+                                                    startX = matrixX;
+                                                    endX = prevCoordsX;
+                                                }
+
+                                                if (matrixY > prevCoordsY)
+                                                {
+                                                    startY = prevCoordsY;
+                                                    endY = matrixY;
+                                                }
+                                                else
+                                                {
+                                                    startY = matrixY;
+                                                    endY = prevCoordsY;
+                                                }
+
+                                                int value = geoIndex == 3 ? 1 : 0;
+
+                                                for (int y = startY; y <= endY; y++)
+                                                {
+                                                    for (int x = startX; x <= endX; x++)
+                                                    {
+                                                        var cell = geoMatrix[y, x, currentLayer];
+                                                        cell.Geo = value;
+                                                        geoMatrix[y, x, currentLayer] = cell;
+                                                    }
+                                                }
+
+                                                prevCoordsX = -1;
+                                                prevCoordsY = -1;
+                                            }
+                                            break;
+                                    }
                                 }
                             }
-                        }
 
-                        BeginDrawing();
-                        {
-                            ClearBackground(new Color(120, 120, 120, 255));
-
-
-                            BeginMode2D(camera);
+                            BeginDrawing();
                             {
-                                // geo matrix
+                                ClearBackground(new Color(120, 120, 120, 255));
 
-                                // first layer without stackables
 
-                                if (showLayer1)
+                                BeginMode2D(camera);
                                 {
+                                    // geo matrix
+
+                                    // first layer without stackables
+
+                                    if (showLayer1)
+                                    {
+                                        for (int y = 0; y < matrixHeight; y++)
+                                        {
+                                            for (int x = 0; x < matrixWidth; x++)
+                                            {
+                                                const int z = 0;
+
+                                                var cell = geoMatrix[y, x, z];
+
+                                                var texture = GetBlockIndex(cell.Geo);
+
+                                                if (texture >= 0)
+                                                {
+                                                    DrawTexture(geoTextures[texture], x * scale, y * scale, layerColors[z]);
+                                                }
+
+                                                if (!gridContrast) DrawRectangleLinesEx(
+                                                    new(x * scale, y * scale, scale, scale),
+                                                    0.5f,
+                                                    new(255, 255, 255, 100)
+                                                );
+                                            }
+                                        }
+                                    }
+
+                                    /*if (gridContrast)
+                                    {
+                                        // the grid
+                                        RlGl.rlPushMatrix();
+                                        {
+                                            RlGl.rlTranslatef(0, 0, -1);
+                                            RlGl.rlRotatef(90, 1, 0, 0);
+                                            DrawGrid(matrixHeight > matrixWidth ? matrixHeight : matrixWidth, scale);
+                                        }
+                                        RlGl.rlPopMatrix();
+                                    }*/
+
+                                    // the rest of the layers
+
                                     for (int y = 0; y < matrixHeight; y++)
                                     {
                                         for (int x = 0; x < matrixWidth; x++)
                                         {
-                                            const int z = 0;
-
-                                            var cell = geoMatrix[y, x, z];
-
-                                            var texture = GetBlockIndex(cell.Geo);
-
-                                            if (texture >= 0)
+                                            for (int z = 1; z < 3; z++)
                                             {
-                                                DrawTexture(geoTextures[texture], x * scale, y * scale, layerColors[z]);
-                                            }
+                                                if (z == 1 && !showLayer2) continue;
+                                                if (z == 2 && !showLayer3) continue;
 
-                                            if (!gridContrast) DrawRectangleLinesEx(
-                                                new(x * scale, y * scale, scale, scale),
-                                                0.5f,
-                                                new(255, 255, 255, 100)
-                                            );
+                                                var cell = geoMatrix[y, x, z];
+
+                                                var texture = GetBlockIndex(cell.Geo);
+
+                                                if (texture >= 0)
+                                                {
+                                                    Raylib.DrawTexture(geoTextures[texture], x * scale, y * scale, layerColors[z]);
+                                                }
+
+                                                if (!gridContrast && !showLayer1 && z == 1) DrawRectangleLinesEx(
+                                                    new(x * scale, y * scale, scale, scale),
+                                                    0.5f,
+                                                    new(255, 255, 255, 100)
+                                                );
+
+                                                if (!gridContrast && !showLayer1 && z == 2) DrawRectangleLinesEx(
+                                                    new(x * scale, y * scale, scale, scale),
+                                                    0.5f,
+                                                    new(255, 255, 255, 100)
+                                                );
+
+                                                for (int s = 1; s < cell.Stackables.Length; s++)
+                                                {
+                                                    if (cell.Stackables[s])
+                                                    {
+                                                        switch (s)
+                                                        {
+                                                            // dump placement
+                                                            case 1:     // ph
+                                                            case 2:     // pv
+                                                                Raylib.DrawTexture(stackableTextures[GetStackableTextureIndex(s)], x * scale, y * scale, layerColors[z]);
+                                                                break;
+                                                            case 3:     // bathive
+                                                                /*case 5:     // entrance
+                                                                case 6:     // passage
+                                                                case 7:     // den
+                                                                case 9:     // rock
+                                                                case 10:    // spear
+                                                                case 12:    // forbidflychains
+                                                                case 13:    // garbagewormhole
+                                                                case 18:    // waterfall
+                                                                case 19:    // wac
+                                                                case 20:    // worm
+                                                                case 21:    // scav*/
+                                                                Raylib.DrawTexture(stackableTextures[GetStackableTextureIndex(s)], x * scale, y * scale, whiteStackable); // TODO: remove opacity from entrances
+                                                                break;
+
+                                                            // directional placement
+                                                            /*case 4:     // entrance
+                                                                var index = GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z));
+
+                                                                if (index is 22 or 23 or 24 or 25)
+                                                                {
+                                                                    geoMatrix[y, x, 0].Geo = 7;
+                                                                }
+
+                                                                Raylib.DrawTexture(stackableTextures[index], x * scale, y * scale, whiteStackable);
+                                                                break;*/
+                                                            case 11:    // crack
+                                                                Raylib.DrawTexture(
+                                                                    stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
+                                                                    x * scale,
+                                                                    y * scale,
+                                                                    whiteStackable
+                                                                );
+                                                                break;
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
-                                }
 
-                                /*if (gridContrast)
-                                {
-                                    // the grid
-                                    RlGl.rlPushMatrix();
+                                    // draw stackables
+
+                                    if (showLayer1)
                                     {
-                                        RlGl.rlTranslatef(0, 0, -1);
-                                        RlGl.rlRotatef(90, 1, 0, 0);
-                                        DrawGrid(matrixHeight > matrixWidth ? matrixHeight : matrixWidth, scale);
-                                    }
-                                    RlGl.rlPopMatrix();
-                                }*/
-
-                                // the rest of the layers
-
-                                for (int y = 0; y < matrixHeight; y++)
-                                {
-                                    for (int x = 0; x < matrixWidth; x++)
-                                    {
-                                        for (int z = 1; z < 3; z++)
+                                        for (int y = 0; y < matrixHeight; y++)
                                         {
-                                            if (z == 1 && !showLayer2) continue;
-                                            if (z == 2 && !showLayer3) continue;
-
-                                            var cell = geoMatrix[y, x, z];
-
-                                            var texture = GetBlockIndex(cell.Geo);
-
-                                            if (texture >= 0)
+                                            for (int x = 0; x < matrixWidth; x++)
                                             {
-                                                Raylib.DrawTexture(geoTextures[texture], x * scale, y * scale, layerColors[z]);
-                                            }
+                                                const int z = 0;
 
-                                            if (!gridContrast && !showLayer1 && z == 1) DrawRectangleLinesEx(
-                                                new(x * scale, y * scale, scale, scale),
-                                                0.5f,
-                                                new(255, 255, 255, 100)
-                                            );
+                                                var cell = geoMatrix[y, x, z];
 
-                                            if (!gridContrast && !showLayer1 && z == 2) DrawRectangleLinesEx(
-                                                new(x * scale, y * scale, scale, scale),
-                                                0.5f,
-                                                new(255, 255, 255, 100)
-                                            );
-
-                                            for (int s = 1; s < cell.Stackables.Length; s++)
-                                            {
-                                                if (cell.Stackables[s])
+                                                for (int s = 1; s < cell.Stackables.Length; s++)
                                                 {
-                                                    switch (s)
+                                                    if (cell.Stackables[s])
                                                     {
-                                                        // dump placement
-                                                        case 1:     // ph
-                                                        case 2:     // pv
-                                                            Raylib.DrawTexture(stackableTextures[GetStackableTextureIndex(s)], x * scale, y * scale, layerColors[z]);
-                                                            break;
-                                                        case 3:     // bathive
-                                                            /*case 5:     // entrance
+                                                        switch (s)
+                                                        {
+                                                            // dump placement
+                                                            case 1:     // ph
+                                                            case 2:     // pv
+                                                                Raylib.DrawTexture(stackableTextures[GetStackableTextureIndex(s)], x * scale, y * scale, layerColors[z]);
+                                                                break;
+                                                            case 3:     // bathive
+                                                            case 5:     // entrance
                                                             case 6:     // passage
                                                             case 7:     // den
                                                             case 9:     // rock
@@ -2974,246 +3299,183 @@ class Program
                                                             case 18:    // waterfall
                                                             case 19:    // wac
                                                             case 20:    // worm
-                                                            case 21:    // scav*/
-                                                            Raylib.DrawTexture(stackableTextures[GetStackableTextureIndex(s)], x * scale, y * scale, whiteStackable); // TODO: remove opacity from entrances
-                                                            break;
+                                                            case 21:    // scav
+                                                                Raylib.DrawTexture(stackableTextures[GetStackableTextureIndex(s)], x * scale, y * scale, new(255, 255, 255, 255)); // TODO: remove opacity from entrances
+                                                                break;
 
-                                                        // directional placement
-                                                        /*case 4:     // entrance
-                                                            var index = GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z));
+                                                            // directional placement
+                                                            case 4:     // entrance
+                                                                var index = GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z));
 
-                                                            if (index is 22 or 23 or 24 or 25)
-                                                            {
-                                                                geoMatrix[y, x, 0].Geo = 7;
-                                                            }
+                                                                if (index is 22 or 23 or 24 or 25)
+                                                                {
+                                                                    geoMatrix[y, x, 0].Geo = 7;
+                                                                }
 
-                                                            Raylib.DrawTexture(stackableTextures[index], x * scale, y * scale, whiteStackable);
-                                                            break;*/
-                                                        case 11:    // crack
-                                                            Raylib.DrawTexture(
-                                                                stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
-                                                                x * scale,
-                                                                y * scale,
-                                                                whiteStackable
-                                                            );
-                                                            break;
+                                                                Raylib.DrawTexture(stackableTextures[index], x * scale, y * scale, new(255, 255, 255, 255));
+                                                                break;
+                                                            case 11:    // crack
+                                                                Raylib.DrawTexture(
+                                                                    stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
+                                                                    x * scale,
+                                                                    y * scale,
+                                                                    new(255, 255, 255, 255)
+                                                                );
+                                                                break;
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
                                     }
-                                }
 
-                                // draw stackables
 
-                                if (showLayer1)
-                                {
+                                    // the red selection rectangle
+
                                     for (int y = 0; y < matrixHeight; y++)
                                     {
                                         for (int x = 0; x < matrixWidth; x++)
                                         {
-                                            const int z = 0;
-
-                                            var cell = geoMatrix[y, x, z];
-
-                                            for (int s = 1; s < cell.Stackables.Length; s++)
+                                            if (multiselect)
                                             {
-                                                if (cell.Stackables[s])
+                                                var XS = matrixX - prevCoordsX;
+                                                var YS = matrixY - prevCoordsY;
+                                                var width = Math.Abs(XS == 0 ? 1 : XS + (XS > 0 ? 1 : -1)) * scale;
+                                                var height = Math.Abs(YS == 0 ? 1 : YS + (YS > 0 ? 1 : -1)) * scale;
+
+                                                Rectangle rec = (XS >= 0, YS >= 0) switch
                                                 {
-                                                    switch (s)
-                                                    {
-                                                        // dump placement
-                                                        case 1:     // ph
-                                                        case 2:     // pv
-                                                            Raylib.DrawTexture(stackableTextures[GetStackableTextureIndex(s)], x * scale, y * scale, layerColors[z]);
-                                                            break;
-                                                        case 3:     // bathive
-                                                        case 5:     // entrance
-                                                        case 6:     // passage
-                                                        case 7:     // den
-                                                        case 9:     // rock
-                                                        case 10:    // spear
-                                                        case 12:    // forbidflychains
-                                                        case 13:    // garbagewormhole
-                                                        case 18:    // waterfall
-                                                        case 19:    // wac
-                                                        case 20:    // worm
-                                                        case 21:    // scav
-                                                            Raylib.DrawTexture(stackableTextures[GetStackableTextureIndex(s)], x * scale, y * scale, new(255, 255, 255, 255)); // TODO: remove opacity from entrances
-                                                            break;
+                                                    // br
+                                                    (true, true) => new(prevCoordsX * scale, prevCoordsY * scale, width, height),
 
-                                                        // directional placement
-                                                        case 4:     // entrance
-                                                            var index = GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z));
+                                                    // tr
+                                                    (true, false) => new(prevCoordsX * scale, matrixY * scale, width, height),
 
-                                                            if (index is 22 or 23 or 24 or 25)
-                                                            {
-                                                                geoMatrix[y, x, 0].Geo = 7;
-                                                            }
+                                                    // bl
+                                                    (false, true) => new(matrixX * scale, prevCoordsY * scale, width, height),
 
-                                                            Raylib.DrawTexture(stackableTextures[index], x * scale, y * scale, new(255, 255, 255, 255));
-                                                            break;
-                                                        case 11:    // crack
-                                                            Raylib.DrawTexture(
-                                                                stackableTextures[GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z))],
-                                                                x * scale,
-                                                                y * scale,
-                                                                new(255, 255, 255, 255)
-                                                            );
-                                                            break;
-                                                    }
+                                                    // tl
+                                                    (false, false) => new(matrixX * scale, matrixY * scale, width, height)
+                                                };
+
+                                                Raylib.DrawRectangleLinesEx(rec, 2, new(255, 0, 0, 255));
+
+                                                Raylib.DrawText(
+                                                    $"{width / scale:0}x{height / scale:0}",
+                                                    (int)mouse.X + 10,
+                                                    (int)mouse.Y,
+                                                    4,
+                                                    new(255, 255, 255, 255)
+                                                    );
+                                            }
+                                            else
+                                            {
+                                                if (matrixX == x && matrixY == y)
+                                                {
+                                                    Raylib.DrawRectangleLinesEx(new(x * scale, y * scale, scale, scale), 2, new(255, 0, 0, 255));
                                                 }
                                             }
                                         }
                                     }
+
+                                    // the outbound border
+                                    Raylib.DrawRectangleLinesEx(new(0, 0, matrixWidth * scale, matrixHeight * scale), 2, new(0, 0, 0, 255));
+
+                                    // the border
+                                    Raylib.DrawRectangleLinesEx(border, camera.zoom < zoomIncrement ? 5 : 2, new(255, 255, 255, 255));
+
+                                    // a lazy way to hide the rest of the grid
+                                    Raylib.DrawRectangle(matrixWidth * -scale, -3, matrixWidth * scale, matrixHeight * 2 * scale, new(120, 120, 120, 255));
+                                    Raylib.DrawRectangle(0, matrixHeight * scale, matrixWidth * scale + 2, matrixHeight * scale, new(120, 120, 120, 255));
+                                }
+                                Raylib.EndMode2D();
+
+                                // geo menu
+
+                                fixed (byte* pt = geoMenuPanelBytes)
+                                {
+                                    Raylib_CsLo.RayGui.GuiPanel(
+                                        new(Raylib.GetScreenWidth() - 210, 50, 200, Raylib.GetScreenHeight() - 100),
+                                        (sbyte*)pt
+                                    );
                                 }
 
-
-                                // the red selection rectangle
-
-                                for (int y = 0; y < matrixHeight; y++)
+                                for (int w = 0; w < 4; w++)
                                 {
-                                    for (int x = 0; x < matrixWidth; x++)
+                                    for (int h = 0; h < 8; h++)
                                     {
-                                        if (multiselect)
+                                        var index = (4 * h) + w;
+                                        if (index < uiTextures.Length)
                                         {
-                                            var XS = matrixX - prevCoordsX;
-                                            var YS = matrixY - prevCoordsY;
-                                            var width = Math.Abs(XS == 0 ? 1 : XS + (XS > 0 ? 1 : -1)) * scale;
-                                            var height = Math.Abs(YS == 0 ? 1 : YS + (YS > 0 ? 1 : -1)) * scale;
-
-                                            Rectangle rec = (XS >= 0, YS >= 0) switch
-                                            {
-                                                // br
-                                                (true, true) => new(prevCoordsX * scale, prevCoordsY * scale, width, height),
-
-                                                // tr
-                                                (true, false) => new(prevCoordsX * scale, matrixY * scale, width, height),
-
-                                                // bl
-                                                (false, true) => new(matrixX * scale, prevCoordsY * scale, width, height),
-
-                                                // tl
-                                                (false, false) => new(matrixX * scale, matrixY * scale, width, height)
-                                            };
-
-                                            Raylib.DrawRectangleLinesEx(rec, 2, new(255, 0, 0, 255));
-
-                                            Raylib.DrawText(
-                                                $"{width / scale:0}x{height / scale:0}",
-                                                (int)mouse.X + 10,
-                                                (int)mouse.Y,
-                                                4,
-                                                new(255, 255, 255, 255)
-                                                );
+                                            Raylib.DrawTexture(
+                                                uiTextures[index],
+                                                Raylib.GetScreenWidth() - 195 + w * uiScale + 5,
+                                                h * uiScale + 100,
+                                                new(0, 0, 0, 255)
+                                            );
                                         }
+
+                                        if (w == geoSelectionX && h == geoSelectionY)
+                                            Raylib.DrawRectangleLinesEx(new(Raylib.GetScreenWidth() - 195 + w * uiScale + 5, h * uiScale + 100, uiScale, uiScale), 2, new(255, 0, 0, 255));
                                         else
-                                        {
-                                            if (matrixX == x && matrixY == y)
-                                            {
-                                                Raylib.DrawRectangleLinesEx(new(x * scale, y * scale, scale, scale), 2, new(255, 0, 0, 255));
-                                            }
-                                        }
+                                            Raylib.DrawRectangleLinesEx(new(Raylib.GetScreenWidth() - 195 + w * uiScale + 5, h * uiScale + 100, uiScale, uiScale), 1, new(0, 0, 0, 255));
                                     }
                                 }
 
-                                // the outbound border
-                                Raylib.DrawRectangleLinesEx(new(0, 0, matrixWidth * scale, matrixHeight * scale), 2, new(0, 0, 0, 255));
+                                if (geoIndex < uiTextures.Length) Raylib.DrawText(geoNames[geoIndex], Raylib.GetScreenWidth() - 190, 8 * uiScale + 110, 18, new(0, 0, 0, 255));
 
-                                // the border
-                                Raylib.DrawRectangleLinesEx(border, camera.zoom < zoomIncrement ? 5 : 2, new(255, 255, 255, 255));
+                                switch (currentLayer)
+                                {
+                                    case 0:
+                                        Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, settings.GeomentryEditor.LayerColors.Layer1);
+                                        Raylib.DrawText("L1", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, new(255, 255, 255, 255));
+                                        break;
+                                    case 1:
+                                        Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, settings.GeomentryEditor.LayerColors.Layer2);
+                                        Raylib.DrawText("L2", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, new(255, 255, 255, 255));
+                                        break;
+                                    case 2:
+                                        Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, settings.GeomentryEditor.LayerColors.Layer3);
+                                        Raylib.DrawText("L3", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, new(255, 255, 255, 255));
+                                        break;
+                                }
 
-                                // a lazy way to hide the rest of the grid
-                                Raylib.DrawRectangle(matrixWidth * -scale, -3, matrixWidth * scale, matrixHeight * 2 * scale, new(120, 120, 120, 255));
-                                Raylib.DrawRectangle(0, matrixHeight * scale, matrixWidth * scale + 2, matrixHeight * scale, new(120, 120, 120, 255));
-                            }
-                            Raylib.EndMode2D();
+                                if (matrixX >= 0 && matrixX < matrixWidth && matrixY >= 0 && matrixY < matrixHeight)
+                                    Raylib.DrawText(
+                                        $"X = {matrixX:0}\nY = {matrixY:0}",
+                                        Raylib.GetScreenWidth() - 195,
+                                        Raylib.GetScreenHeight() - 100,
+                                        12,
+                                        new(0, 0, 0, 255));
 
-                            // geo menu
+                                else Raylib.DrawText(
+                                        $"X = -\nY = -",
+                                        Raylib.GetScreenWidth() - 195,
+                                        Raylib.GetScreenHeight() - 100,
+                                        12,
+                                        new(0, 0, 0, 255));
 
-                            fixed (byte* pt = geoMenuPanelBytes)
-                            {
-                                Raylib_CsLo.RayGui.GuiPanel(
-                                    new(Raylib.GetScreenWidth() - 210, 50, 200, Raylib.GetScreenHeight() - 100),
-                                    (sbyte*)pt
+                                showLayer1 = Raylib_CsLo.RayGui.GuiCheckBox(
+                                    new(Raylib.GetScreenWidth() - 190, 8 * uiScale + 190, 20, 20),
+                                    "Layer 1",
+                                    showLayer1
+                                );
+
+                                showLayer2 = Raylib_CsLo.RayGui.GuiCheckBox(
+                                    new(Raylib.GetScreenWidth() - 190, 8 * uiScale + 210, 20, 20),
+                                    "Layer 2",
+                                    showLayer2
+                                );
+
+                                showLayer3 = Raylib_CsLo.RayGui.GuiCheckBox(
+                                    new(Raylib.GetScreenWidth() - 190, 8 * uiScale + 230, 20, 20),
+                                    "Layer 3",
+                                    showLayer3
                                 );
                             }
+                            Raylib.EndDrawing();
 
-                            for (int w = 0; w < 4; w++)
-                            {
-                                for (int h = 0; h < 8; h++)
-                                {
-                                    var index = (4 * h) + w;
-                                    if (index < uiTextures.Length)
-                                    {
-                                        Raylib.DrawTexture(
-                                            uiTextures[index],
-                                            Raylib.GetScreenWidth() - 195 + w * uiScale + 5,
-                                            h * uiScale + 100,
-                                            new(0, 0, 0, 255)
-                                        );
-                                    }
-
-                                    if (w == geoSelectionX && h == geoSelectionY)
-                                        Raylib.DrawRectangleLinesEx(new(Raylib.GetScreenWidth() - 195 + w * uiScale + 5, h * uiScale + 100, uiScale, uiScale), 2, new(255, 0, 0, 255));
-                                    else
-                                        Raylib.DrawRectangleLinesEx(new(Raylib.GetScreenWidth() - 195 + w * uiScale + 5, h * uiScale + 100, uiScale, uiScale), 1, new(0, 0, 0, 255));
-                                }
-                            }
-
-                            if (geoIndex < uiTextures.Length) Raylib.DrawText(geoNames[geoIndex], Raylib.GetScreenWidth() - 190, 8 * uiScale + 110, 18, new(0, 0, 0, 255));
-
-                            switch (currentLayer)
-                            {
-                                case 0:
-                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, settings.GeomentryEditor.LayerColors.Layer1);
-                                    Raylib.DrawText("L1", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, new(255, 255, 255, 255));
-                                    break;
-                                case 1:
-                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, settings.GeomentryEditor.LayerColors.Layer2);
-                                    Raylib.DrawText("L2", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, new(255, 255, 255, 255));
-                                    break;
-                                case 2:
-                                    Raylib.DrawRectangle(Raylib.GetScreenWidth() - 190, 8 * uiScale + 140, 40, 40, settings.GeomentryEditor.LayerColors.Layer3);
-                                    Raylib.DrawText("L3", Raylib.GetScreenWidth() - 182, 8 * uiScale + 148, 26, new(255, 255, 255, 255));
-                                    break;
-                            }
-
-                            if (matrixX >= 0 && matrixX < matrixWidth && matrixY >= 0 && matrixY < matrixHeight)
-                                Raylib.DrawText(
-                                    $"X = {matrixX:0}\nY = {matrixY:0}",
-                                    Raylib.GetScreenWidth() - 195,
-                                    Raylib.GetScreenHeight() - 100,
-                                    12,
-                                    new(0, 0, 0, 255));
-
-                            else Raylib.DrawText(
-                                    $"X = -\nY = -",
-                                    Raylib.GetScreenWidth() - 195,
-                                    Raylib.GetScreenHeight() - 100,
-                                    12,
-                                    new(0, 0, 0, 255));
-
-                            showLayer1 = Raylib_CsLo.RayGui.GuiCheckBox(
-                                new(Raylib.GetScreenWidth() - 190, 8 * uiScale + 190, 20, 20),
-                                "Layer 1",
-                                showLayer1
-                            );
-
-                            showLayer2 = Raylib_CsLo.RayGui.GuiCheckBox(
-                                new(Raylib.GetScreenWidth() - 190, 8 * uiScale + 210, 20, 20),
-                                "Layer 2",
-                                showLayer2
-                            );
-
-                            showLayer3 = Raylib_CsLo.RayGui.GuiCheckBox(
-                                new(Raylib.GetScreenWidth() - 190, 8 * uiScale + 230, 20, 20),
-                                "Layer 3",
-                                showLayer3
-                            );
                         }
-                        Raylib.EndDrawing();
-
                         break;
                     #endregion
 
@@ -3230,9 +3492,20 @@ class Program
                             var tilePanelRect = new Rectangle(teWidth - (tilePanelWidth + 10), 50, tilePanelWidth, teHeight - 100);
                             var leftPanelSideStart = new Vector2(teWidth - (tilePanelWidth + 10), 50);
                             var leftPanelSideEnd = new Vector2(teWidth - (tilePanelWidth + 10), teHeight - 50);
-                            var specsRect = showTileSpecs ? new Rectangle(0, GetScreenHeight() - 300, 300, 300) :
-                                new(-276, GetScreenHeight() - 300, 300, 300);
-                            bool canDrawTile = !CheckCollisionPointRec(tileMouse, tilePanelRect) && !CheckCollisionPointRec(tileMouse, specsRect);
+                            var specsRect = showTileSpecs
+                                ? new Rectangle(0, GetScreenHeight() - 300, 300, 300)
+                                : new(-276, GetScreenHeight() - 300, 300, 300);
+
+                            //                        v this was done to avoid rounding errors
+                            int tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / previewScale;
+                            int tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / previewScale;
+
+                            bool canDrawTile =
+                                !CheckCollisionPointRec(tileMouse, tilePanelRect)
+                                &&
+                                !CheckCollisionPointRec(tileMouse, specsRect);
+
+                            bool inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < matrixWidth && tileMatrixY >= 0 && tileMatrixY < matrixHeight;
 
                             var categoriesPageSize = (int)tilePanelRect.height / 30;
                             var currentTileInit = initTiles[tileCategoryIndex][tileIndex];
@@ -3280,18 +3553,43 @@ class Program
                                 page = 9;
                             }
 
+                            if (IsKeyPressed(KeyboardKey.KEY_Q) && canDrawTile && inMatrixBounds)
+                            {
+                                currentTileInit = PickupTile(tileMatrix, initTiles, (tileMatrixX, tileMatrixY, currentLayer)) ?? currentTileInit;
+                            }
+
+                            var isTileLegel = IsTileLegal(ref currentTileInit, new(tileMatrixX, tileMatrixY), tileMatrix, geoMatrix, currentLayer);
+
+                            // handle placing tiles
+
+                            if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT) && isTileLegel && canDrawTile && inMatrixBounds)
+                            {
+                                ForcePlaceTileWithGeo(tileMatrix, geoMatrix, ref currentTileInit, tileCategoryIndex + 5, tileIndex + 1, (tileMatrixX, tileMatrixY, currentLayer));
+                            }
+
                             if (canDrawTile || clickTracker)
                             {
-                                // handle mouse drag
-                                if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+                                if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
                                 {
-                                    clickTracker = true;
-                                    Vector2 delta = GetMouseDelta();
-                                    delta = RayMath.Vector2Scale(delta, -1.0f / tileCamera.zoom);
-                                    tileCamera.target = RayMath.Vector2Add(tileCamera.target, delta);
-                                }
+                                    // handle mouse drag
+                                    if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+                                    {
+                                        clickTracker = true;
+                                        Vector2 delta = GetMouseDelta();
+                                        delta = RayMath.Vector2Scale(delta, -1.0f / tileCamera.zoom);
+                                        tileCamera.target = RayMath.Vector2Add(tileCamera.target, delta);
+                                    }
 
-                                if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_RIGHT)) clickTracker = false;
+                                    if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_RIGHT)) clickTracker = false;
+                                }
+                                else
+                                {
+                                    // handle removing tiles
+                                    if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT) && inMatrixBounds)
+                                    {
+                                        RemoveTile(tileMatrix, initTiles, (tileMatrixX, tileMatrixY, currentLayer));
+                                    }
+                                }
 
                                 // handle zoom
                                 var tileWheel = Raylib.GetMouseWheelMove();
@@ -3408,6 +3706,9 @@ class Program
 
                             if (IsKeyPressed(KeyboardKey.KEY_T)) showTileSpecs = !showTileSpecs;
 
+                            // what a shitty way to update settings
+                            if (IsKeyPressed(KeyboardKey.KEY_P)) settings = settings with { TileEditor = settings.TileEditor with { HoveredTileInfo = !settings.TileEditor.HoveredTileInfo } }; ;
+
                             if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
                             {
                                 if (IsKeyPressed(KeyboardKey.KEY_Z)) showLayer1Tiles = !showLayer1Tiles;
@@ -3439,9 +3740,6 @@ class Program
                                 DrawRectangle(0, 0, matrixWidth * previewScale, matrixHeight * previewScale, new Color(255, 255, 255, 255));
 
                                 #region TileEditorGeoMatrix
-                                //                        v this was done to avoid rounding errors
-                                int tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / previewScale;
-                                int tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / previewScale;
 
                                 // Draw geos first
                                 if (showTileLayer3)
@@ -3976,7 +4274,7 @@ class Program
                                                     if (color.r != 0 || color.g != 0 || color.b != 0)
                                                     {
 
-                                                            switch (geoMatrix[y, x, 1].Geo)
+                                                        switch (geoMatrix[y, x, 1].Geo)
                                                         {
                                                             case 1:
                                                                 DrawRectangle(
@@ -4352,10 +4650,6 @@ class Program
 
                                 // currently held tile
 
-                                var isTileLegel = IsTileLegal(ref currentTileInit, new(tileMatrixX, tileMatrixY), tileMatrix, geoMatrix, currentLayer);
-
-                                Console.WriteLine(isTileLegel ? "LEGAL" : "ILLEGAL");
-
                                 BeginShaderMode(tilePreviewShader);
                                 SetShaderValueTexture(tilePreviewShader, uniformLoc, currentTileTexture);
 
@@ -4393,12 +4687,37 @@ class Program
                                     new(255, 255, 255, 255)
                                 );
                                 EndShaderMode();
-
                             }
                             EndMode2D();
 
                             #region TileEditorUI
                             {
+                                // Coordiantes
+
+                                if (settings.TileEditor.HoveredTileInfo && canDrawTile)
+                                {
+                                    if (inMatrixBounds) DrawText(
+                                        $"x: {tileMatrixX}, y: {tileMatrixY}\n{tileMatrix[tileMatrixY, tileMatrixX, currentLayer]}",
+                                        tileMouse.X + previewScale,
+                                        tileMouse.Y + previewScale,
+                                        15,
+                                        WHITE
+                                    );
+                                }
+                                else
+                                {
+                                    if (inMatrixBounds) DrawText(
+                                        $"x: {tileMatrixX}, y: {tileMatrixY}",
+                                        tileMouse.X + previewScale,
+                                        tileMouse.Y + previewScale,
+                                        15,
+                                        WHITE
+                                    );
+                                }
+
+
+                                // Menu
+
                                 fixed (byte* pt = tilesPanelBytes)
                                 {
                                     RayGui.GuiPanel(
@@ -4542,15 +4861,25 @@ class Program
                                         {
                                             for (int y = 0; y < tileHeight; y++)
                                             {
-                                                var spec = specs[(x * tileHeight) + y];
+                                                var specsIndex = (x * tileHeight) + y;
+                                                var spec = specs[specsIndex];
+                                                var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
+                                                var specOrigin = new Vector2((300 - newCellScale * tileWidth) / 2 + x * newCellScale, (int)specsRect.Y + 100 + y * newCellScale);
 
-                                                if (spec is > 0 and < 9 and not 8)
+                                                if (spec is >= 0 and < 9 and not 8)
                                                 {
                                                     DrawTileSpec(
                                                         spec,
-                                                        new Vector2((300 - newCellScale * tileWidth) / 2 + x * newCellScale, (int)specsRect.Y + 100 + y * newCellScale),
+                                                        specOrigin,
                                                         newCellScale,
-                                                        new(0, 0, 0, 255)
+                                                        settings.GeomentryEditor.LayerColors.Layer1
+                                                    );
+
+                                                    DrawTileSpec(
+                                                        spec2,
+                                                        specOrigin,
+                                                        newCellScale,
+                                                        settings.GeomentryEditor.LayerColors.Layer2 with { A = 100 } // this can be optimized
                                                     );
                                                 }
                                             }
@@ -5505,10 +5834,10 @@ class Program
                                         );
 
                                         materialColorMatrix = CommonUtils.Resize(
-                                            materialColorMatrix, 
-                                            matrixWidth, 
-                                            matrixHeight, 
-                                            matrixHeightValue, 
+                                            materialColorMatrix,
+                                            matrixWidth,
+                                            matrixHeight,
+                                            matrixHeightValue,
                                             matrixWidthValue,
                                             [
                                                 new(0, 0, 0, 255),
@@ -6869,198 +7198,259 @@ class Program
 
                     #region FailedTileCheckOnLoadPage
                     case 13:
-                    {
-                        
-                        var sWidth = GetScreenWidth();
-                        var sHeight = GetScreenHeight();
-
-                        var okButtonRect = new Rectangle(sWidth / 2 - 100, sHeight - 200, 200, 60);
-
-                        BeginDrawing();
                         {
-                            ClearBackground(new(0, 0, 0, 255));
 
-                            switch (tileCheckTask!.Result)
+                            var sWidth = GetScreenWidth();
+                            var sHeight = GetScreenHeight();
+
+                            var okButtonRect = new Rectangle(sWidth / 2 - 100, sHeight - 200, 200, 60);
+
+                            BeginDrawing();
                             {
-                                case TileCheckResult.Missing:
-                                    DrawText(
-                                        missingTileWarnTitleText,
-                                        (sWidth - MeasureText(missingTileWarnTitleText, 50)) / 2,
-                                        200,
-                                        50,
-                                        new(255, 255, 255, 255)
-                                    );
-                                    DrawText(missingTileWarnSubtitleText, (sWidth - MeasureText(missingTileWarnSubtitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
-                                    break;
+                                ClearBackground(new(0, 0, 0, 255));
 
-                                case TileCheckResult.NotFound:
-                                    DrawText(
-                                        notFoundTileWarnTitleText,
-                                        (sWidth - MeasureText(notFoundTileWarnTitleText, 50)) / 2,
-                                        200,
-                                        50,
-                                        new(255, 255, 255, 255)
-                                    );
-                                    DrawText(missingTileWarnSubtitleText, (sWidth - MeasureText(missingTileWarnSubtitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
-                                    break;
-
-                                case TileCheckResult.MissingTexture:
-                                    DrawText(
-                                        missingTileTextureWarnTitleText,
-                                        (sWidth - MeasureText(missingTileTextureWarnTitleText, 50)) / 2,
-                                        200,
-                                        50,
-                                        new(255, 255, 255, 255)
-                                    );
-                                    DrawText(missingTileTextureWarnSubTitleText, (sWidth - MeasureText(missingTileTextureWarnSubTitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
-                                    break;
-
-                                case TileCheckResult.MissingMaterial:
-                                    DrawText(
-                                        missingMaterialWarnTitleText,
-                                        (sWidth - MeasureText(missingMaterialWarnTitleText, 50)) / 2,
-                                        200,
-                                        50,
-                                        new(255, 255, 255, 255)
-                                    );
-
-                                    DrawText(
-                                        missingMaterialWarnSubtitleText,
-                                        (sWidth - MeasureText(missingMaterialWarnSubtitleText, 20)) / 2,
-                                        400,
-                                        20,
-                                        new(255, 255, 255, 255)
-                                    );
-                                    break;
-                            }
-
-
-                            DrawRectangleRoundedLines(okButtonRect, 3, 6, 3, new(255, 255, 255, 255));
-                            DrawText("Ok", okButtonRect.X + (okButtonRect.width - MeasureText("Ok", 20)) / 2, okButtonRect.Y + 15, 20, new(255, 255, 255, 255));
-
-                            if (CheckCollisionPointRec(GetMousePosition(), okButtonRect))
-                            {
-                                SetMouseCursor(MouseCursor.MOUSE_CURSOR_POINTING_HAND);
-
-                                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                                switch (tileCheckTask!.Result)
                                 {
-                                    SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+                                    case TileCheckResult.Missing:
+                                        DrawText(
+                                            missingTileWarnTitleText,
+                                            (sWidth - MeasureText(missingTileWarnTitleText, 50)) / 2,
+                                            200,
+                                            50,
+                                            new(255, 255, 255, 255)
+                                        );
+                                        DrawText(missingTileWarnSubtitleText, (sWidth - MeasureText(missingTileWarnSubtitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
+                                        break;
 
-                                    tileCheckTask = null;
-                                    page = 0;
+                                    case TileCheckResult.NotFound:
+                                        DrawText(
+                                            notFoundTileWarnTitleText,
+                                            (sWidth - MeasureText(notFoundTileWarnTitleText, 50)) / 2,
+                                            200,
+                                            50,
+                                            new(255, 255, 255, 255)
+                                        );
+                                        DrawText(missingTileWarnSubtitleText, (sWidth - MeasureText(missingTileWarnSubtitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
+                                        break;
+
+                                    case TileCheckResult.MissingTexture:
+                                        DrawText(
+                                            missingTileTextureWarnTitleText,
+                                            (sWidth - MeasureText(missingTileTextureWarnTitleText, 50)) / 2,
+                                            200,
+                                            50,
+                                            new(255, 255, 255, 255)
+                                        );
+                                        DrawText(missingTileTextureWarnSubTitleText, (sWidth - MeasureText(missingTileTextureWarnSubTitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
+                                        break;
+
+                                    case TileCheckResult.MissingMaterial:
+                                        DrawText(
+                                            missingMaterialWarnTitleText,
+                                            (sWidth - MeasureText(missingMaterialWarnTitleText, 50)) / 2,
+                                            200,
+                                            50,
+                                            new(255, 255, 255, 255)
+                                        );
+
+                                        DrawText(
+                                            missingMaterialWarnSubtitleText,
+                                            (sWidth - MeasureText(missingMaterialWarnSubtitleText, 20)) / 2,
+                                            400,
+                                            20,
+                                            new(255, 255, 255, 255)
+                                        );
+                                        break;
                                 }
+
+
+                                DrawRectangleRoundedLines(okButtonRect, 3, 6, 3, new(255, 255, 255, 255));
+                                DrawText("Ok", okButtonRect.X + (okButtonRect.width - MeasureText("Ok", 20)) / 2, okButtonRect.Y + 15, 20, new(255, 255, 255, 255));
+
+                                if (CheckCollisionPointRec(GetMousePosition(), okButtonRect))
+                                {
+                                    SetMouseCursor(MouseCursor.MOUSE_CURSOR_POINTING_HAND);
+
+                                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                                    {
+                                        SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+
+                                        tileCheckTask = null;
+                                        page = 0;
+                                    }
+                                }
+                                else SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
                             }
-                            else SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+                            EndDrawing();
                         }
-                        EndDrawing();
-                    }
                         break;
                     #endregion
 
                     #region AssetsNukedPage
                     case 14:
-                    {
-                        var sWidth = GetScreenWidth();
-                        var sHeight = GetScreenHeight();
+                        {
+                            var sWidth = GetScreenWidth();
+                            var sHeight = GetScreenHeight();
 
-                        BeginDrawing();
-                        ClearBackground(BLACK);
+                            BeginDrawing();
+                            ClearBackground(BLACK);
 
-                        DrawText(
-                            missingAssetsFolderWarnTitleText, 
-                            (sWidth - MeasureText(missingAssetsFolderWarnTitleText, 50))/2, 
-                            200, 
-                            50, 
-                            WHITE
-                        );
-                        DrawText(missingAssetsFolderWarnSubtitleText,
-                            (sWidth - MeasureText(missingAssetsFolderWarnSubtitleText, 20))/2,
-                            400,
-                            20,
-                            WHITE
-                        );
-                        EndDrawing();
-                    }
+                            DrawText(
+                                missingAssetsFolderWarnTitleText,
+                                (sWidth - MeasureText(missingAssetsFolderWarnTitleText, 50)) / 2,
+                                200,
+                                50,
+                                WHITE
+                            );
+                            DrawText(missingAssetsFolderWarnSubtitleText,
+                                (sWidth - MeasureText(missingAssetsFolderWarnSubtitleText, 20)) / 2,
+                                400,
+                                20,
+                                WHITE
+                            );
+                            EndDrawing();
+                        }
                         break;
                     #endregion
 
                     #region MissingAssetsPage
                     case 15:
-                    {
-                        var sWidth = GetScreenWidth();
-                        var sHeight = GetScreenHeight();
+                        {
+                            var sWidth = GetScreenWidth();
+                            var sHeight = GetScreenHeight();
 
-                        BeginDrawing();
-                        ClearBackground(BLACK);
+                            BeginDrawing();
+                            ClearBackground(BLACK);
 
-                        DrawText(
-                            missingAssetsSubfoldersWarnTitleText, 
-                            (sWidth - MeasureText(missingAssetsSubfoldersWarnTitleText, 50))/2, 
-                            200, 
-                            50, 
-                            WHITE
-                        );
-                        DrawText(missingAssetsSubfoldersWarnSubtitleText,
-                            (sWidth - MeasureText(missingAssetsSubfoldersWarnSubtitleText, 20))/2,
-                            400,
-                            20,
-                            WHITE
-                        );
+                            DrawText(
+                                missingAssetsSubfoldersWarnTitleText,
+                                (sWidth - MeasureText(missingAssetsSubfoldersWarnTitleText, 50)) / 2,
+                                200,
+                                50,
+                                WHITE
+                            );
+                            DrawText(missingAssetsSubfoldersWarnSubtitleText,
+                                (sWidth - MeasureText(missingAssetsSubfoldersWarnSubtitleText, 20)) / 2,
+                                400,
+                                20,
+                                WHITE
+                            );
 
-                        DrawText(
-                            $"Missing folders:\n\n{(geoAssetsExists ? "" : "- assets/geo")}\n"+
-                            $"{(tileAssetsExists ? "" : "\t- assets/tiles")}\n" +
-                            $"{(lightAssetsExists ? "" : "\t- assets/light")}\n" +
-                            $"{(shadersAssetsExists ? "" : "\t- assets/shaders")}",
-                            300,
-                            500,
-                            20,
-                            WHITE
-                        );
-                        EndDrawing();
-                    }
+                            DrawText(
+                                $"Missing folders:\n\n{(geoAssetsExists ? "" : "- assets/geo")}\n" +
+                                $"{(tileAssetsExists ? "" : "\t- assets/tiles")}\n" +
+                                $"{(lightAssetsExists ? "" : "\t- assets/light")}\n" +
+                                $"{(shadersAssetsExists ? "" : "\t- assets/shaders")}",
+                                300,
+                                500,
+                                20,
+                                WHITE
+                            );
+                            EndDrawing();
+                        }
                         break;
                     #endregion
 
                     #region MissingTexturesPage
                     case 16:
-                    {
-                        var sWidth = GetScreenWidth();
-                        var sHeight = GetScreenHeight();
+                        {
+                            var sWidth = GetScreenWidth();
+                            var sHeight = GetScreenHeight();
 
-                        BeginDrawing();
-                        ClearBackground(BLACK);
+                            BeginDrawing();
+                            ClearBackground(BLACK);
 
-                        DrawText(
-                            "The editor is missing tile textures",
-                            (sWidth - MeasureText("The editor is missing tile textures", 50))/2,
-                            200,
-                            50,
-                            WHITE
-                        );
+                            DrawText(
+                                "The editor is missing tile textures",
+                                (sWidth - MeasureText("The editor is missing tile textures", 50)) / 2,
+                                200,
+                                50,
+                                WHITE
+                            );
 
-                        DrawText(
-                            "Check the logs for the list of missing textures; Please restore them and try again",
-                            (sWidth - MeasureText("Check the logs for the list of missing textures; Please restore them and try again", 20))/2,
-                            400,
-                            20,
-                            WHITE
-                        );
-                        EndDrawing();
-                    }
-                    break;
+                            DrawText(
+                                "Check the logs for the list of missing textures; Please restore them and try again",
+                                (sWidth - MeasureText("Check the logs for the list of missing textures; Please restore them and try again", 20)) / 2,
+                                400,
+                                20,
+                                WHITE
+                            );
+                            EndDrawing();
+                        }
+                        break;
                     #endregion
-                    
+
+                    #region MissingInitFile
+                    case 17:
+                        {
+                            var sWidth = GetScreenWidth();
+                            var sHeight = GetScreenHeight();
+
+                            BeginDrawing();
+                            ClearBackground(BLACK);
+
+                            DrawText(
+                                "The editor is missing the Init.txt file",
+                                (sWidth - MeasureText("The editor is missing the Init.txt file", 50)) / 2,
+                                200,
+                                50,
+                                WHITE
+                            );
+
+                            DrawText(
+                                "The editor cannot function without it; Please restore it and try again.",
+                                (sWidth - MeasureText("The editor cannot function without it; Please restore it and try again.", 20)) / 2,
+                                400,
+                                20,
+                                WHITE
+                            );
+                            EndDrawing();
+                        }
+                        break;
+                    #endregion
+
+                    #region NewGeoEditor
+                    case 18:
+                        
+                        break;
+                    #endregion
+
+                    #region TheBlackScreenOfDeath
+                    case 99:
+                        {
+                            var sWidth = GetScreenWidth();
+                            var sHeight = GetScreenHeight();
+
+                            BeginDrawing();
+                            ClearBackground(BLACK);
+
+                            DrawText("The editor has crashed", (sWidth - MeasureText("The editor has crashed", 50)), 50, 50, WHITE);
+
+                            if (fatalException is null)
+                            {
+                                DrawText("There's no information to display unfortunately", (sWidth - MeasureText("There's no information to display unfortunately", 40)), 200, 40, WHITE);
+                            }
+                            else
+                            {
+                                DrawText($"{fatalException}", 50, 200, 40, WHITE);
+                            }
+                            EndDrawing();
+                        }
+                        break;
+                    #endregion
                     default:
                         page = prevPage;
                         break;
                 }
             }
-        }
-        catch (Exception e)
-        {
-            logger.Fatal($"Bruh Moment detected: loop try-catch block has cought an unexpected error: {e}");
-            throw new Exception(innerException: e, message: "Have fun figuring it out.");
+            catch (Exception e)
+            {
+                logger.Fatal($"Bruh Moment detected: loop try-catch block has cought an unexpected error: {e}");
+
+                fatalException = e;
+
+                page = 99; // game over
+            }
         }
 
         logger.Debug("close program detected; exiting main loop");
