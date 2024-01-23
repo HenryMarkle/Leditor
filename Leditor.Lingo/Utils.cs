@@ -1,15 +1,21 @@
 using Leditor.Lingo.Drizzle;
-using Leditor.Common;
-using System.Collections.Specialized;
-using System.Text.RegularExpressions;
 using Pidgin;
-using System.Security.Cryptography;
-using System.Runtime.CompilerServices;
 using System.Numerics;
+using Leditor.Leditor.Lingo;
 
 namespace Leditor.Lingo;
 
 public static class Tools {
+    // Meaningless name; this function turns a sequel of stackable IDs to an array that can be used at leditor runtime
+    private static bool[] DecomposeStackables(IEnumerable<int> seq)
+    {
+        bool[] bools = new bool[22];
+
+        foreach (var i in seq) bools[i] = true;
+
+        return bools;
+    }
+    
     public static string StringifyBase(AstNode.Base b) {
         System.Text.StringBuilder sb = new();
         
@@ -60,8 +66,8 @@ public static class Tools {
             case AstNode.UnaryOperator u:
                 if (u.Type == AstNode.UnaryOperatorType.Negate)
                     return (float)((AstNode.Number)u.Expression).Value.DecimalValue * -1;
-                else 
-                    throw new ArgumentException("argument is not a number", nameof(number));
+                
+                throw new ArgumentException("argument is not a number", nameof(number));
 
             case AstNode.Number n: return (float) n.Value.DecimalValue;
 
@@ -75,14 +81,349 @@ public static class Tools {
             case AstNode.UnaryOperator u:
                 if (u.Type == AstNode.UnaryOperatorType.Negate)
                     return ((AstNode.Number)u.Expression).Value.IntValue * -1;
-                else 
-                    throw new ArgumentException("argument is not a number", nameof(number));
+                
+                throw new ArgumentException("argument is not a number", nameof(number));
 
             case AstNode.Number n: return n.Value.IntValue;
 
             default:
                 throw new ArgumentException("argument is not a number", nameof(number));
         }
+    }
+
+    public static InitPropBase GetInitProp(AstNode.Base @base)
+    {
+        var propertList = ((AstNode.PropertyList)@base).Values;
+
+        string name = ((AstNode.String)propertList.Single(p => ((AstNode.Symbol)p.Key).Value == "nm").Value).Value;
+        string typeStr = ((AstNode.String)propertList.Single(p => ((AstNode.Symbol)p.Key).Value == "tp").Value).Value;
+
+        // retrieve all possible properties
+
+#nullable enable
+
+        AstNode.String? colorTreatment      = (AstNode.String?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "colortreatment").Value;
+        AstNode.Number? bevel               = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "bevel").Value;
+        AstNode.Number? depth               = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "depth").Value;
+        AstNode.GlobalCall? sz              = (AstNode.GlobalCall?) propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "sz").Value;
+        AstNode.GlobalCall? pxlSize         = (AstNode.GlobalCall?) propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "pxlsize").Value;
+        AstNode.List? repeatL               = (AstNode.List?)       propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "repeatl").Value;
+        AstNode.Number? vars                = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "vars").Value;
+        AstNode.Number? round               = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "round").Value;
+        AstNode.Number? selfShade           = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "selfshade").Value;
+        AstNode.Number? highLightBorder     = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "highlightborder").Value;
+        AstNode.Number? depthAffectHilites  = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "depthaffecthilites").Value;
+        AstNode.Number? shadowBorder        = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "shadowborder").Value;
+        AstNode.Number? smoothShading       = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "smoothshading").Value;
+        AstNode.Number? random              = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "random").Value;
+        AstNode.Number? colorize            = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "colorize").Value;
+        AstNode.Number? contourExp          = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "contourexp").Value;
+
+        InitPropColorTreatment getColorTreatment() => colorTreatment is null
+                    ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(colorTreatment))
+                    : colorTreatment.Value switch { "standard" => InitPropColorTreatment.Standard, "bevel" => InitPropColorTreatment.Bevel, _ => throw new InvalidInitPropertyValueException("", StringifyBase(@base), "colorTreatment", colorTreatment.Value) };
+
+        int getIntProperty(AstNode.Number? property) => property is null
+                    ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(property))
+                    : NumberToInteger(property);
+
+        float getFloatProperty(AstNode.Number? property) => property is null
+                    ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(property))
+                    : NumberToFloat(property);
+#nullable disable
+
+        //
+
+        var type = typeStr switch
+        {
+            "standard"          => InitPropType.Standard,
+            "variedStandard"    => InitPropType.VariedStandard,
+            "soft"              => InitPropType.Soft,
+            "variedSoft"        => InitPropType.VariedSoft,
+            "simpleDecal"       => InitPropType.SimpleDecal,
+            "variedDecal"       => InitPropType.VariedDecal,
+            "antimatter"        => InitPropType.Antimatter,
+            "softeffect"        => InitPropType.SoftEffect,
+            "long"              => InitPropType.Long,
+
+            _ => throw new InvalidPropTypeException("", StringifyBase(@base), typeStr)
+        };
+
+        InitPropBase init = type switch
+        {
+            InitPropType.Standard => new InitStandardProp(
+                name, 
+                type,
+                depth is null ? 0 :  getIntProperty(depth),
+                getColorTreatment(),
+                getColorTreatment() is InitPropColorTreatment.Bevel 
+                    ? getIntProperty(bevel) 
+                    : bevel is null 
+                        ? 0 
+                        : NumberToInteger(bevel),
+                sz is null
+                    ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(sz))
+                    : (NumberToInteger((AstNode.Number)sz.Arguments[0]), NumberToInteger((AstNode.Number)sz.Arguments[1])),
+                repeatL is null
+                    ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(repeatL))
+                    : repeatL.Values.Select(n => NumberToInteger((AstNode.Number)n)).ToArray()
+                ),
+
+            InitPropType.VariedStandard => new InitVariedStandardProp(
+                name, 
+                type,
+                depth is null ? 0 :  getIntProperty(depth),
+                getColorTreatment(),
+                getColorTreatment() is InitPropColorTreatment.Bevel 
+                    ? getIntProperty(bevel) 
+                    : bevel is null 
+                        ? 0 
+                        : NumberToInteger(bevel),
+                sz is null
+                    ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(sz))
+                    : (NumberToInteger((AstNode.Number)sz.Arguments[0]), NumberToInteger((AstNode.Number)sz.Arguments[1])),
+                repeatL is null
+                    ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(repeatL))
+                    : repeatL.Values.Select(n => NumberToInteger((AstNode.Number)n)).ToArray(),
+                getIntProperty(vars),
+                random is null ? 0 : getIntProperty(random)
+                ),
+            
+            InitPropType.Soft => new InitSoftProp(
+                name,
+                type,
+                depth is null ? 0 :  getIntProperty(depth),
+                getIntProperty(round),
+                getFloatProperty(contourExp),
+                getIntProperty(selfShade),
+                getFloatProperty(highLightBorder),
+                getFloatProperty(depthAffectHilites),
+                getFloatProperty(shadowBorder),
+                getIntProperty(smoothShading)
+                ),
+            
+            InitPropType.SoftEffect => new InitSoftEffectProp(
+                name,
+                type,
+                depth is null ? 0 :  getIntProperty(depth)
+            ),
+
+            InitPropType.VariedSoft => new InitVariedSoftProp(
+                name,
+                type,
+                depth is null ? 0 :  getIntProperty(depth),
+                getIntProperty(round),
+                getIntProperty(contourExp),
+                getIntProperty(selfShade),
+                getFloatProperty(highLightBorder),
+                getIntProperty(depthAffectHilites),
+                getIntProperty(shadowBorder),
+                getIntProperty(smoothShading),
+                pxlSize is null
+                    ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(pxlSize))
+                    : (NumberToInteger((AstNode.Number)pxlSize.Arguments[0]), NumberToInteger((AstNode.Number)pxlSize.Arguments[1])),
+                getIntProperty(vars),
+                random is null ? 0 : getIntProperty(random),
+                getIntProperty(colorize)),
+
+            InitPropType.SimpleDecal => new InitSimpleDecalProp(name, type, depth is null ? 0 :  getIntProperty(depth)),
+            InitPropType.VariedDecal => new InitVariedDecalProp(
+                name, 
+                type, 
+                depth is null ? 0 :  getIntProperty(depth),
+                pxlSize is null
+                    ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(pxlSize))
+                    : (NumberToInteger((AstNode.Number)pxlSize.Arguments[0]), NumberToInteger((AstNode.Number)pxlSize.Arguments[1])),
+                getIntProperty(vars),
+                random is null ? 0 : getIntProperty(random)
+            ),
+            InitPropType.Antimatter => new InitAntimatterProp(name, type, depth is null ? 0 :  getIntProperty(depth), getFloatProperty(contourExp)),
+            InitPropType.Long => new InitLongProp(name, type, depth is null ? 0 : getIntProperty(depth)),
+            _ => throw new InvalidPropTypeException("", StringifyBase(@base), typeStr)
+        };
+
+        return init;
+    }
+
+    public static ((string category, Color color)[] categories, InitPropBase[][] init) GetPropsInit(string text)
+    {
+        var lines = text.ReplaceLineEndings().Split(Environment.NewLine);
+
+        List<(string, Color)> categories = [];
+        List<InitPropBase[]> props = [];
+
+        foreach (var line in lines)
+        {
+            if (string.IsNullOrEmpty(line) || line.StartsWith("--")) continue;
+
+            // category
+            if (line.StartsWith('-'))
+            {
+                props.Add([]);
+
+                AstNode.List headerList;
+
+                try
+                {
+                    headerList = (AstNode.List)LingoParser.Expression.ParseOrThrow(line.TrimStart('-'));
+                }
+                catch
+                {
+                    throw new PropInitParseException("failed to parse prop init line", line);
+                }
+
+                string name = ((AstNode.String)headerList.Values[0]).Value;
+
+                var colorArgs = ((AstNode.GlobalCall)headerList.Values[1]).Arguments;
+                var headerColor = (((AstNode.Number)colorArgs[0]).Value.IntValue, ((AstNode.Number)colorArgs[1]).Value.IntValue, ((AstNode.Number)colorArgs[2]).Value.IntValue);
+
+                categories.Add((name, new(headerColor.Item1, headerColor.Item2, headerColor.Item3, 255)));
+            }
+            // prop list
+            else
+            {
+                var obj = LingoParser.Expression.ParseOrThrow(line);
+
+                var prop = GetInitProp(obj);
+
+                props[^1] = [.. props[^1], prop];
+            }
+        }
+
+        return (categories.ToArray(), props.ToArray());
+    }
+
+    /// <summary>
+    /// Retrieves the props from an object parsed from line (9) of the project file
+    /// </summary>
+    /// <param name="base">parsed <see cref="AstNode.Base"/> object</param>
+    /// <param name="init">prop definitions</param>
+    /// <param name="tileInit">tile definitions</param>
+    /// <returns>a list of (type, position, prop) tuples, where 'position' points to the definition index in the appropriate definitions array depending on the type (prop/tile)</returns>
+    /// <exception cref="PropNotFoundException">prop not not found in neither the prop definitions nor the tile definitions</exception>
+    /// <exception cref="MissingInitPropertyException">retrieved prop is missing a setting</exception>
+    public static List<(InitPropType type, (int category, int index) position, Prop prop)>GetProps(AstNode.Base @base, InitPropBase[][] init, InitTile[][] tileInit)
+    {
+#nullable enable
+        var list = (AstNode.List)((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "props").Value;
+
+        List<(InitPropType type, (int category, int index) position, Prop prop)> props = [];
+
+        Random rng = new();
+
+        foreach (var prop in list.Values)
+        {
+            var casted = ((AstNode.List)prop).Values;
+
+            var depth = NumberToInteger(casted[0]);
+            var name = ((AstNode.String)casted[1]).Value;
+
+            var indexGlobalCall = (AstNode.GlobalCall)casted[2];
+
+            var category = NumberToInteger(indexGlobalCall.Arguments[0]);
+            var index = NumberToInteger(indexGlobalCall.Arguments[1]);
+
+            var quads = ((AstNode.List)casted[3]).Values.Select(q =>
+            {
+                var globalCallArgs = ((AstNode.GlobalCall)q).Arguments;
+
+                return new Vector2(NumberToInteger(globalCallArgs[0]), NumberToInteger(globalCallArgs[1]));
+            }).ToArray();
+
+            var type = InitPropType.Tile;
+
+            (int category, int index) position;
+            
+            // check if it's a prop
+
+            for (var c = 0; c < init.Length; c++)
+            {
+                for (var p = 0; p < init[c].Length; p++)
+                {
+                    var initProp = init[c][p];
+                    
+                    if (initProp.Name == name)
+                    {
+                        type = initProp.Type;
+                        position = (c, p);
+                        
+                        goto end_check;
+                    }
+                }
+            }
+            
+            // if not found, then check if it's a tile
+
+            for (var c = 0; c < tileInit.Length; c++)
+            {
+                for (var t = 0; t < tileInit[c].Length; t++)
+                {
+                    var tile = tileInit[c][t];
+
+                    if (tile.Name == name)
+                    {
+                        position = (c, t);
+                        goto end_check;
+                    }
+                }
+            }
+
+            throw new PropNotFoundException($"prop not found: {name}", name);
+
+        end_check:
+
+            var extraPropList = (AstNode.PropertyList)casted[4];
+
+            var settingsPropList = (AstNode.PropertyList)extraPropList.Values.Single(p => ((AstNode.Symbol)p.Key).Value == "settings").Value;
+            AstNode.List? ropePoints = (AstNode.List?) extraPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "points").Value;
+
+            AstNode.Number? variation = (AstNode.Number?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "variation").Value;
+            AstNode.Base? release = (AstNode.Base?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "release").Value;
+            AstNode.Number? customDepth = (AstNode.Number?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "customdepth").Value;
+            AstNode.Number? applyColor = (AstNode.Number?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "applycolor").Value;
+            AstNode.Number? thickness = (AstNode.Number?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "thickness").Value;
+
+            int getIntProperty(AstNode.Number? property) => property is null
+                    ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(property))
+                    : NumberToInteger(property);
+
+            BasicPropSettings settings = type switch
+            {
+                InitPropType.VariedStandard => new PropVariedSettings(depth, rng.Next(1000), 0, getIntProperty(variation)),
+                InitPropType.Rope => new PropRopeSettings(depth, rng.Next(1000), 0, getIntProperty(release switch
+                {
+                    AstNode.Number n => n,
+                    AstNode.UnaryOperator u => (AstNode.Number)u.Expression,
+                    _ => null
+                }) switch { 1 => PropRopeRelease.Right, -1 => PropRopeRelease.Left, _ => PropRopeRelease.None }, name is "Wire" or "Zero-G Wire" ? thickness is null ? 2 : NumberToFloat(thickness) : null),
+                InitPropType.VariedDecal => new PropVariedDecalSettings(depth, rng.Next(1000), 0, getIntProperty(variation), getIntProperty(customDepth)),
+                InitPropType.VariedSoft => new PropVariedSoftSettings(depth, rng.Next(1000), 0, getIntProperty(variation), getIntProperty(customDepth), getIntProperty(applyColor) != 0),
+                InitPropType.SimpleDecal => new PropSimpleDecalSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
+                InitPropType.Soft => new PropSoftSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
+                InitPropType.SoftEffect => new PropSoftEffectSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
+                InitPropType.Antimatter => new PropAntimatterSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
+                _ => new BasicPropSettings(seed: rng.Next(1000))
+            };
+
+            var parsedProp = new Prop(depth, name, type == InitPropType.Tile, (category, index),
+                (quads[0], quads[1], quads[2], quads[3]))
+            {
+                Extras = new()
+                {
+                    RopePoints = ropePoints?.Values.Select(p =>
+                    {
+                        var args = ((AstNode.GlobalCall)p).Arguments;
+                        return new Vector2(NumberToInteger(args[0]), NumberToInteger(args[1]));
+                    }).ToArray() ?? [],
+                    Settings = settings
+                },
+                IsTile = type == InitPropType.Tile
+            };
+
+            props.Add((type, position, parsedProp));
+        }
+#nullable disable
+        return props;
     }
 
     public static List<RenderCamera> GetCameras(AstNode.Base @base) {
@@ -176,15 +517,6 @@ public static class Tools {
         
         AstNode.Base[] sizeArgs;
 
-        // try {
-        //     sizeArgs = ((AstNode.GlobalCall)propList.Values.First(p => ((AstNode.Symbol)p.Key).Value == "sz").Value).Arguments;
-        // } catch (Exception e) {
-        //     if (e.Message.Contains("Sequence contains more than one matching element"))
-        //         throw new Exception(innerException: e, message: "Field 'sz' was defined more than once");
-
-        //     throw new Exception(innerException: e, message: "Error retrieving field 'sz': "+e.Message);
-        // }
-
         sizeArgs = ((AstNode.GlobalCall)propList.Values.First(p => ((AstNode.Symbol)p.Key).Value == "sz").Value).Arguments;
         
         var size = (((AstNode.Number)sizeArgs[0]).Value.IntValue, ((AstNode.Number)sizeArgs[1]).Value.IntValue);
@@ -272,7 +604,7 @@ public static class Tools {
         
 
         foreach (var line in lines) {
-            if (string.IsNullOrEmpty(line)) continue;
+            if (string.IsNullOrEmpty(line) || line.StartsWith("--")) continue;
 
             if (line.StartsWith('-')) {
                 tiles.Add([]);
@@ -357,17 +689,17 @@ public static class Tools {
 
                 matrix[y, x, 0] = new() { 
                     Geo = ((AstNode.Number)((AstNode.List)layer1).Values[0]).Value.IntValue,
-                    Stackables = CommonUtils.DecomposeStackables(((AstNode.List)((AstNode.List)layer1).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
+                    Stackables = DecomposeStackables(((AstNode.List)((AstNode.List)layer1).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
                 };
 
                 matrix[y, x, 1] = new() {
                     Geo = ((AstNode.Number)((AstNode.List)layer2).Values[0]).Value.IntValue,
-                    Stackables = CommonUtils.DecomposeStackables(((AstNode.List)((AstNode.List)layer2).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
+                    Stackables = DecomposeStackables(((AstNode.List)((AstNode.List)layer2).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
                 };
 
                 matrix[y, x, 2] = new() {
                     Geo = ((AstNode.Number)((AstNode.List)layer3).Values[0]).Value.IntValue,
-                    Stackables = CommonUtils.DecomposeStackables(((AstNode.List)((AstNode.List)layer3).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
+                    Stackables = DecomposeStackables(((AstNode.List)((AstNode.List)layer3).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
                 };
             }
         }

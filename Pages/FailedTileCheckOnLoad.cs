@@ -1,0 +1,106 @@
+using static Raylib_CsLo.Raylib;
+
+namespace Leditor;
+
+public class FailedTileCheckOnLoadPage(Serilog.Core.Logger logger) : IPage
+{
+    private readonly Serilog.Core.Logger _logger = logger;
+    
+    private const string MissingTileWarnTitleText = "Your project seems to contain undefined tiles";
+    private const string MissingTileWarnSubtitleText = "If you used custom tiles on this project from a different level editor, please use its Init.txt";
+    
+    private const string NotFoundTileWarnTitleText = "Your project seems to have old tiles";
+    
+    private const string MissingTileTextureWarnTitleText = "Your project contains a tile with no texture";
+    private const string MissingTileTextureWarnSubTitleText = "If you have appended to the Init.txt file, please make sure you include the textures as well";
+    
+    private const string MissingMaterialWarnTitleText = "Your project seems to have undefined materials";
+    private const string MissingMaterialWarnSubtitleText = "Please update the materials init.txt file before loading this project";
+
+    
+    public void Draw()
+    {
+        var width = GetScreenWidth();
+        var height = GetScreenHeight();
+
+        var okButtonRect = new Rectangle(width / 2 - 100, height - 200, 200, 60);
+
+        BeginDrawing();
+        {
+            ClearBackground(new(0, 0, 0, 255));
+
+            switch (GLOBALS.TileCheck!.Result)
+            {
+                case TileCheckResult.Missing:
+                    DrawText(
+                        MissingTileWarnTitleText,
+                        (width - MeasureText(MissingTileWarnTitleText, 50)) / 2,
+                        200,
+                        50,
+                        new(255, 255, 255, 255)
+                    );
+                    DrawText(MissingTileWarnSubtitleText, (width - MeasureText(MissingTileWarnSubtitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
+                    break;
+
+                case TileCheckResult.NotFound:
+                    DrawText(
+                        NotFoundTileWarnTitleText,
+                        (width - MeasureText(NotFoundTileWarnTitleText, 50)) / 2,
+                        200,
+                        50,
+                        new(255, 255, 255, 255)
+                    );
+                    DrawText(MissingTileWarnSubtitleText, (width - MeasureText(MissingTileWarnSubtitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
+                    break;
+
+                case TileCheckResult.MissingTexture:
+                    DrawText(
+                        MissingTileTextureWarnTitleText,
+                        (width - MeasureText(MissingTileTextureWarnTitleText, 50)) / 2,
+                        200,
+                        50,
+                        new(255, 255, 255, 255)
+                    );
+                    DrawText(MissingTileTextureWarnSubTitleText, (width - MeasureText(MissingTileTextureWarnSubTitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
+                    break;
+
+                case TileCheckResult.MissingMaterial:
+                    DrawText(
+                        MissingMaterialWarnTitleText,
+                        (width - MeasureText(MissingMaterialWarnTitleText, 50)) / 2,
+                        200,
+                        50,
+                        new(255, 255, 255, 255)
+                    );
+
+                    DrawText(
+                        MissingMaterialWarnSubtitleText,
+                        (width - MeasureText(MissingMaterialWarnSubtitleText, 20)) / 2,
+                        400,
+                        20,
+                        new(255, 255, 255, 255)
+                    );
+                    break;
+            }
+
+
+            DrawRectangleRoundedLines(okButtonRect, 3, 6, 3, new(255, 255, 255, 255));
+            DrawText("Ok", okButtonRect.X + (okButtonRect.width - MeasureText("Ok", 20)) / 2, okButtonRect.Y + 15, 20, new(255, 255, 255, 255));
+
+            if (CheckCollisionPointRec(GetMousePosition(), okButtonRect))
+            {
+                SetMouseCursor(MouseCursor.MOUSE_CURSOR_POINTING_HAND);
+
+                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+
+                    GLOBALS.TileCheck = null;
+                    GLOBALS.Page = 0;
+                }
+            }
+            else SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+        }
+        EndDrawing();    
+    }
+}
