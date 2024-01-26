@@ -522,12 +522,12 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 
                             if (tileCell.Type == TileType.TileHead)
                             {
-                                (int, int, string) tile = ((int, int, string))tileCell.Data.CategoryPostition;
+                                var data = (TileHead)tileCell.Data;
 
-                                var category = GLOBALS.Textures.Tiles[tile.Item1 - 5];
-                                var tileTexture = category[tile.Item2 - 1];
-                                var color = GLOBALS.TileCategories[tile.Item1 - 5].Item2;
-                                var initTile = GLOBALS.Tiles[tile.Item1 - 5][tile.Item2 - 1];
+                                var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1 - 5];
+                                var tileTexture = category[data.CategoryPostition.Item2 - 1];
+                                var color = GLOBALS.TileCategories[data.CategoryPostition.Item1 - 5].Item2;
+                                var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
 
                                 Vector2 center = new Vector2(
                                     initTile.Size.Item1 % 2 == 0 ? x * GLOBALS.PreviewScale + GLOBALS.PreviewScale : x * GLOBALS.PreviewScale + GLOBALS.PreviewScale/2f, 
@@ -577,16 +577,16 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                             }
                             else if (tileCell.Type == TileType.Material)
                             {
-                                var materialName = ((TileMaterial)tileCell.Data).Name;
+                                // var materialName = ((TileMaterial)tileCell.Data).Name;
                                 var origin = new Vector2(x * GLOBALS.PreviewScale + 5, y * GLOBALS.PreviewScale + 5);
-                                var color = GLOBALS.Level.MaterialColors[y, x, 0];
+                                var color = GLOBALS.Level.MaterialColors[y, x, z];
 
                                 if (z != GLOBALS.Layer) color.a = 120;
 
                                 if (color.r != 0 || color.g != 0 || color.b != 0)
                                 {
 
-                                    switch (GLOBALS.Level.GeoMatrix[y, x, 2].Geo)
+                                    switch (GLOBALS.Level.GeoMatrix[y, x, z].Geo)
                                     {
                                         case 1:
                                             DrawRectangle(
@@ -842,12 +842,12 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 
                             if (tileCell.Type == TileType.TileHead)
                             {
-                                (int, int, string) tile = ((int, int, string))tileCell.Data.CategoryPostition;
+                                var data = (TileHead)tileCell.Data;
 
-                                var category = GLOBALS.Textures.Tiles[tile.Item1 - 5];
-                                var tileTexture = category[tile.Item2 - 1];
-                                var color = GLOBALS.TileCategories[tile.Item1 - 5].Item2;
-                                var initTile = GLOBALS.Tiles[tile.Item1 - 5][tile.Item2 - 1];
+                                var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1 - 5];
+                                var tileTexture = category[data.CategoryPostition.Item2 - 1];
+                                var color = GLOBALS.TileCategories[data.CategoryPostition.Item1 - 5].Item2;
+                                var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
                                 
                                 Vector2 center = new Vector2(
                                     initTile.Size.Item1 % 2 == 0 ? x * GLOBALS.PreviewScale + GLOBALS.PreviewScale : x * GLOBALS.PreviewScale + GLOBALS.PreviewScale/2f, 
@@ -871,7 +871,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                                                 new(width, height),
                                                 new(width, -height)
                                             ],
-                                            color,
+                                            new Color(color.r, color.g, (int)color.b, 255 - (GLOBALS.Layer - 1)*100),
                                             10 - (GLOBALS.Layer*10 % 10)
                                         );
                                     }
@@ -887,7 +887,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                                                 new(-width, height),
                                                 new(width, height),
                                                 new(width, -height)
-                                            ]
+                                            ],
+                                            255 - (GLOBALS.Layer - 1)*100
                                         );
                                     }
                                 }
@@ -895,9 +896,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                             }
                             else if (tileCell.Type == TileType.Material)
                             {
-                                var materialName = ((TileMaterial)tileCell.Data).Name;
+                                // var materialName = ((TileMaterial)tileCell.Data).Name;
                                 var origin = new Vector2(x * GLOBALS.PreviewScale + 5, y * GLOBALS.PreviewScale + 5);
-                                var color = GLOBALS.Level.MaterialColors[y, x, 0];
+                                var color = GLOBALS.Level.MaterialColors[y, x, z];
 
                                 if (z != GLOBALS.Layer) color.a = 120;
 
@@ -1162,14 +1163,14 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 
                             if (tileCell.Type == TileType.TileHead)
                             {
-                                (int, int, string) tile = ((int, int, string))tileCell.Data.CategoryPostition;
+                                var data = (TileHead)tileCell.Data;
 
                                 /*Console.WriteLine($"Index: {tile.Item1 - 5}; Length: {tilePreviewTextures.Length}; Name = {tile.Item3}");*/
-                                var category = GLOBALS.Textures.Tiles[tile.Item1 - 5];
+                                var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1 - 5];
 
-                                var tileTexture = category[tile.Item2 - 1];
-                                var color = GLOBALS.TileCategories[tile.Item1 - 5].Item2;
-                                var initTile = GLOBALS.Tiles[tile.Item1 - 5][tile.Item2 - 1];
+                                var tileTexture = category[data.CategoryPostition.Item2 - 1];
+                                var color = GLOBALS.TileCategories[data.CategoryPostition.Item1 - 5].Item2;
+                                var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
                                 
                                 Vector2 center = new Vector2(
                                     initTile.Size.Item1 % 2 == 0 ? x * GLOBALS.PreviewScale + GLOBALS.PreviewScale : x * GLOBALS.PreviewScale + GLOBALS.PreviewScale/2f, 
@@ -1193,7 +1194,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                                                 new(width, height),
                                                 new(width, -height)
                                             ],
-                                            color,
+                                            new Color(color.r, color.g, color.b, 255 - GLOBALS.Layer*100),
                                             0
                                         );
                                     }
@@ -1209,7 +1210,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                                                 new(-width, height),
                                                 new(width, height),
                                                 new(width, -height)
-                                            ]
+                                            ],
+                                            255 - GLOBALS.Layer*100
                                         );
                                     }
                                 }
@@ -1217,7 +1219,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                             }
                             else if (tileCell.Type == TileType.Material)
                             {
-                                var materialName = ((TileMaterial)tileCell.Data).Name;
+                                // var materialName = ((TileMaterial)tileCell.Data).Name;
                                 var origin = new Vector2(x * GLOBALS.PreviewScale + 5, y * GLOBALS.PreviewScale + 5);
                                 var color = GLOBALS.Level.MaterialColors[y, x, 0];
 

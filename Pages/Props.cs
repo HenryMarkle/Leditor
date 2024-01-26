@@ -8,6 +8,8 @@ internal class PropsEditorPage : IPage
     private readonly Serilog.Core.Logger _logger;
 
     private Camera2D _camera = new () { zoom = 0.8f };
+    
+    private const float SelectionMargin = 3f;
 
     private bool _showLayer1Tiles = true;
     private bool _showLayer2Tiles = true;
@@ -31,16 +33,26 @@ internal class PropsEditorPage : IPage
     private int _propsMenuOthersCategoryIndex;
     private int _propsMenuOthersIndex;
 
+    private int _spinnerLock;
+    
+    private const float PropScale = 0.4f;
+
     private int _selectedListPage;
+
+    private int _quadLock;
+
+    private bool _clickTracker;
 
     private int _mode;
 
-    private bool _clickTracker;
     private bool _movingProps;
     private bool _rotatingProps;
-
+    private bool _stretchingProp;
+    
     private Vector2 _selection1 = new(-100, -100);
     private Rectangle _selection;
+    private Rectangle _selectedPropsEncloser;
+    private Vector2 _selectedPropsCenter;
 
     private bool[] _selected = [];
     private bool[] _hidden = [];
@@ -188,51 +200,57 @@ internal class PropsEditorPage : IPage
 
         int menuPageSize = (int)menuPanelRect.height / 30;
 
-        if (IsKeyPressed(KeyboardKey.KEY_ONE))
+        if (_spinnerLock == 0)
         {
-            GLOBALS.Page = 1;
-        }
-        if (IsKeyPressed(KeyboardKey.KEY_TWO))
-        {
-            GLOBALS.Page = 2;
-        }
+            if (IsKeyPressed(KeyboardKey.KEY_ONE))
+            {
+                GLOBALS.Page = 1;
+            }
+            if (IsKeyPressed(KeyboardKey.KEY_TWO))
+            {
+                GLOBALS.Page = 2;
+            }
 
-        if (IsKeyPressed(KeyboardKey.KEY_THREE))
-        {
-            GLOBALS.Page = 3;
-        }
+            if (IsKeyPressed(KeyboardKey.KEY_THREE))
+            {
+                GLOBALS.Page = 3;
+            }
 
-        if (IsKeyPressed(KeyboardKey.KEY_FOUR))
-        {
-            GLOBALS.Page = 4;
+            if (IsKeyPressed(KeyboardKey.KEY_FOUR))
+            {
+                GLOBALS.Page = 4;
+            }
+            if (IsKeyPressed(KeyboardKey.KEY_FIVE))
+            {
+                GLOBALS.Page = 5;
+            }
+            if (IsKeyPressed(KeyboardKey.KEY_SIX))
+            {
+                GLOBALS.ResizeFlag = true;
+                GLOBALS.Page = 6;
+            }
+            if (IsKeyPressed(KeyboardKey.KEY_SEVEN))
+            {
+                GLOBALS.Page = 7;
+            }
+            /*if (IsKeyPressed(KeyboardKey.KEY_EIGHT))
+            {
+                GLOBALS.Page = 8;
+            }*/
+            if (IsKeyPressed(KeyboardKey.KEY_NINE))
+            {
+                GLOBALS.Page = 9;
+            }
         }
-        if (IsKeyPressed(KeyboardKey.KEY_FIVE))
+        else
         {
-            GLOBALS.Page = 5;
+            if (IsKeyPressed(KeyboardKey.KEY_ESCAPE)) _spinnerLock = 0;
         }
-        if (IsKeyPressed(KeyboardKey.KEY_SIX))
-        {
-            GLOBALS.ResizeFlag = true;
-            GLOBALS.Page = 6;
-        }
-        if (IsKeyPressed(KeyboardKey.KEY_SEVEN))
-        {
-            GLOBALS.Page = 7;
-        }
-        /*if (IsKeyPressed(KeyboardKey.KEY_EIGHT))
-        {
-            GLOBALS.Page = 8;
-        }*/
-        if (IsKeyPressed(KeyboardKey.KEY_NINE))
-        {
-            GLOBALS.Page = 9;
-        }
-
 
         // handle mouse drag
-        if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
         {
-            Vector2 delta = GetMouseDelta();
+            var delta = GetMouseDelta();
             delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
             _camera.target = RayMath.Vector2Add(_camera.target, delta);
         }
@@ -241,7 +259,7 @@ internal class PropsEditorPage : IPage
         var tileWheel = GetMouseWheelMove();
         if (tileWheel != 0 && canDrawTile)
         {
-            Vector2 mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
+            var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
             _camera.offset = GetMousePosition();
             _camera.target = mouseWorldPosition;
             _camera.zoom += tileWheel * GLOBALS.ZoomIncrement;
@@ -284,6 +302,99 @@ internal class PropsEditorPage : IPage
         switch (_mode)
         {
             case 1: // Place Mode
+
+                // Place Prop
+                if (canDrawTile && IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    switch (_menuRootCategoryIndex)
+                    {
+                        case 0: // Tiles as props
+                        {
+                            var currentTileAsProp = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
+                            var width = (float)(currentTileAsProp.init.Size.Item1 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
+                            var height = (float)(currentTileAsProp.init.Size.Item2 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
+                            
+                            GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
+                                (
+                                    InitPropType.Tile, 
+                                    (currentTileAsPropCategory.index, currentTileAsProp.index),
+                                    new Prop(
+                                        GLOBALS.Layer * -10, 
+                                        currentTileAsProp.init.Name, 
+                                        true, 
+                                        (currentTileAsPropCategory.index, currentTileAsProp.index), 
+                                        new PropQuads(
+                                        new(tileMouseWorld.X - width, tileMouseWorld.Y - height), 
+                                        new(tileMouseWorld.X + width, tileMouseWorld.Y - height), 
+                                        new(tileMouseWorld.X + width, tileMouseWorld.Y + height), 
+                                        new(tileMouseWorld.X - width, tileMouseWorld.Y + height)
+                                        )
+                                    )
+                                    {
+                                        Extras = new()
+                                        {
+                                            Settings = new BasicPropSettings(),
+                                            RopePoints = []
+                                        }
+                                    }
+                                )
+                            ];
+                        }
+                            break;
+                        
+                        case 1: // Ropes
+                            break;
+
+                        case 2: // Others
+                        {
+                            var init = _propsOnly[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
+                            var texture = GLOBALS.Textures.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
+                            
+                            var (width, height, settings) = init switch
+                            {
+                                InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings()),
+                                InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
+                                InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings()),
+                                InitSoftProp => (texture.width  / 2f, texture.height  / 2f, new PropSoftSettings()),
+                                InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings()),
+                                InitSimpleDecalProp => (texture.width / 2f, texture.height / 2f, new PropSimpleDecalSettings()), 
+                                InitSoftEffectProp => (texture.width / 2f, texture.height / 2f, new PropSoftEffectSettings()), 
+                                InitAntimatterProp => (texture.width / 2f, texture.height / 2f, new PropAntimatterSettings()),
+                                InitLongProp => (texture.width / 2f, texture.height / 2f, new PropLongSettings()), 
+                                InitRopeProp => (texture.width / 2f, texture.height / 2f, new PropRopeSettings()),
+                                
+                                _ => (texture.width / 2f, texture.height / 2f, new BasicPropSettings())
+                            };
+                            
+                            GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
+                                (
+                                    init.Type, 
+                                    (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex),
+                                    new Prop(GLOBALS.Layer * -10, init.Name, false, (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex), new PropQuads(
+                                        new(tileMouseWorld.X - width, tileMouseWorld.Y - height), 
+                                        new(tileMouseWorld.X + width, tileMouseWorld.Y - height), 
+                                        new(tileMouseWorld.X + width, tileMouseWorld.Y + height), 
+                                        new(tileMouseWorld.X - width, tileMouseWorld.Y + height))
+                                    )
+                                    {
+                                        Extras = new PropExtras
+                                        {
+                                            Settings = settings,
+                                            RopePoints = []
+                                        }
+                                    }
+                                )
+                            ];
+                        }
+                            break;
+                    }
+                    
+                    // Do not forget to update _selected and _hidden
+
+                    _selected = [.._selected, false];
+                    _hidden = [.._hidden, false];
+                }
+                
                 if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
                 {
                     // Cycle categories
@@ -297,8 +408,6 @@ internal class PropsEditorPage : IPage
                         _menuRootCategoryIndex--;
                         if (_menuRootCategoryIndex < 0) _menuRootCategoryIndex = 2;
                     }
-                    
-                    
                 }
                 else
                 {
@@ -320,23 +429,115 @@ internal class PropsEditorPage : IPage
                     {
                         DecrementMenuIndex();
                     }
-                    break;
+                    
+                    // Pickup Prop
+                    if (IsKeyPressed(KeyboardKey.KEY_Q))
+                    {
+                        for (var i = 0; i < GLOBALS.Level.Props.Length; i++)
+                        {
+                            var current = GLOBALS.Level.Props[i];
+        
+                            if (!CheckCollisionPointRec(tileMouseWorld, Utils.EncloseQuads(current.prop.Quads)) || 
+                                current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || 
+                                current.prop.Depth > GLOBALS.Layer * -10) 
+                                continue;
+
+                            if (current.type == InitPropType.Tile)
+                            {
+                                for (var c = 0; c < _tilesAsPropsIndices.Length; c++)
+                                {
+                                    for (var p = 0; p < _tilesAsPropsIndices[c].Length; p++)
+                                    {
+                                        var currentTileAsProp = _tilesAsPropsIndices[c][p];
+
+                                        if (currentTileAsProp.init.Name != current.prop.Name) continue;
+
+                                        currentTileAsPropCategory = _tilesAsPropsCategoryIndices[c];
+                                        _propsMenuTilesCategoryIndex = c;
+                                        _propsMenuTilesIndex = p;
+                                    }
+                                }
+                            }
+                            else if (current.type == InitPropType.Rope)
+                            {
+                                
+                            }
+                            else
+                            {
+                                (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex) = current.position;
+                            }
+                        }
+                    }
                 }
+                
                 break;
             
             case 0: // Select Mode
                 var anySelected = _selected.Any(s => s);
+                var fetchedSelected = GLOBALS.Level.Props
+                    .Select((prop, index) => (prop, index))
+                    .Where(p => _selected[p.index])
+                    .Select(p => p)
+                    .ToArray();
                 
+                if (anySelected)
+                {
+                    _selectedPropsEncloser = Utils.EncloseProps(fetchedSelected.Select(p => p.prop.prop.Quads));
+                    _selectedPropsCenter = new Vector2(
+                        _selectedPropsEncloser.x + 
+                        _selectedPropsEncloser.width/2, 
+                        _selectedPropsEncloser.y + 
+                        _selectedPropsEncloser.height/2
+                    );
+                }
+                else
+                {
+                    _selectedPropsEncloser.width = 0;
+                    _selectedPropsEncloser.height = 0;
+
+                    _selectedPropsCenter.X = 0;
+                    _selectedPropsCenter.Y = 0;
+                }
+                
+                // Move
                 if (IsKeyPressed(KeyboardKey.KEY_F) && anySelected)
                 {
                     _movingProps = true;
                     _rotatingProps = false;
+                    _stretchingProp = false;
                 }
+                // Rotate
                 else if (IsKeyPressed(KeyboardKey.KEY_R) && anySelected)
                 {
                     _movingProps = false;
                     _rotatingProps = true;
+                    _stretchingProp = false;
                 }
+                // Hide
+                else if (IsKeyPressed(KeyboardKey.KEY_H) && anySelected)
+                {
+                    for (var i = 0; i < GLOBALS.Level.Props.Length; i++)
+                    {
+                        if (_selected[i]) _hidden[i] = !_hidden[i];
+                    }
+                }
+                // Edit Quads
+                else if (IsKeyPressed(KeyboardKey.KEY_S) && fetchedSelected.Length == 1)
+                {
+                    _movingProps = false;
+                    _rotatingProps = false;
+                    _stretchingProp = !_stretchingProp;
+                }
+                // Delete
+                else if (IsKeyPressed(KeyboardKey.KEY_D) && anySelected)
+                {
+                    GLOBALS.Level.Props = _selected
+                        .Select((s, i) => (s, i))
+                        .Where(v => !v.Item1)
+                        .Select(v => GLOBALS.Level.Props[v.Item2])
+                        .ToArray();
+                }
+                
                 
                 if (_movingProps)
                 {
@@ -362,16 +563,56 @@ internal class PropsEditorPage : IPage
                     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _rotatingProps = false;
 
                     var delta = GetMouseDelta();
-
-                    for (var s = 0; s < _selected.Length; s++)
+                    
+                    // Collective Rotation
+                    
+                    for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
                     {
-                        if (!_selected[s]) continue;
+                        if (!_selected[p]) continue;
+                        
+                        var quads = GLOBALS.Level.Props[p].prop.Quads;
 
-                        if (delta.X != 0) GLOBALS.Level.Props[s].prop.Quads = Utils.RotatePropQuads(
-                            GLOBALS.Level.Props[s].prop.Quads, 
-                            delta.X
-                        );
+                        GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(quads, delta.X, _selectedPropsCenter);
                     }
+                }
+                else if (_stretchingProp)
+                {
+                    var currentQuads = fetchedSelected[0].prop.prop.Quads;
+                    
+                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                    {
+                        // Check Top-Left
+                        if (CheckCollisionPointCircle(tileMouseWorld, currentQuads.TopLeft, 5f) || _quadLock == 1)
+                        {
+                            _quadLock = 1;
+                            currentQuads.TopLeft = tileMouseWorld;
+                        }
+                        // Check Top-Right
+                        else if (CheckCollisionPointCircle(tileMouseWorld, currentQuads.TopRight, 5f)  || _quadLock == 2)
+                        {
+                            _quadLock = 2;
+                            currentQuads.TopRight = tileMouseWorld;
+                        }
+                        // Check Bottom-Right 
+                        else if (CheckCollisionPointCircle(tileMouseWorld, currentQuads.BottomRight, 5f)  || _quadLock == 3)
+                        {
+                            _quadLock = 3;
+                            currentQuads.BottomRight = tileMouseWorld;
+                        }
+                        // Check Bottom-Left
+                        else if (CheckCollisionPointCircle(tileMouseWorld, currentQuads.BottomLeft, 5f)  || _quadLock == 4)
+                        {
+                            _quadLock = 4;
+                            currentQuads.BottomLeft = tileMouseWorld;
+                        }
+                        else
+                        {
+                            _quadLock = 0;
+                        }
+                        
+                        GLOBALS.Level.Props[fetchedSelected[0].index].prop.Quads = currentQuads;
+                    }
+                    else if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _quadLock != 0) _quadLock = 0;
                 }
                 else
                 {
@@ -391,45 +632,17 @@ internal class PropsEditorPage : IPage
                         // If selection rectangle is too small, it's treated
                         // like a point
 
-                        if (_selection is { width: < 5f, height: < 5f })
+                        for (var i = 0; i < GLOBALS.Level.Props.Length; i++)
                         {
-                            for (var i = 0; i < GLOBALS.Level.Props.Length; i++)
+                            var current = GLOBALS.Level.Props[i];
+                            var propSelectRect = Utils.EncloseQuads(current.prop.Quads);
+                            if (CheckCollisionRecs(propSelectRect, _selection) && !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10))
                             {
-                                if (GLOBALS.Level.Props[i].prop.Depth <= (GLOBALS.Layer + 1) * -10) continue;
-                                
-                                var quads = GLOBALS.Level.Props[i].prop.Quads;
-                        
-                                unsafe
-                                {
-                                    fixed (Vector2* q = new Vector2[] { quads.TopRight, quads.TopLeft, quads.BottomLeft, quads.BottomRight, quads.TopRight })
-                                    {
-                                        if (CheckCollisionPointPoly(tileMouseWorld, q, 5)) _selected[i] = true;
-                                        else _selected[i] = false;
-                                    }
-                                }
-                        
+                                _selected[i] = true;
                             }
-                        }
-                        else
-                        {
-                            for (var i = 0; i < GLOBALS.Level.Props.Length; i++)
+                            else
                             {
-                                if (GLOBALS.Level.Props[i].prop.Depth <= (GLOBALS.Layer + 1) * -10) continue;
-                                
-                                var quads = GLOBALS.Level.Props[i].prop.Quads;
-                            
-                                if (
-                                    CheckCollisionPointRec(quads.TopLeft, _selection) ||
-                                    CheckCollisionPointRec(quads.TopRight, _selection) ||
-                                    CheckCollisionPointRec(quads.BottomRight, _selection) ||
-                                    CheckCollisionPointRec(quads.BottomLeft, _selection))
-                                {
-                                    _selected[i] = true;
-                                }
-                                else
-                                {
-                                    _selected[i] = false;
-                                }
+                                _selected[i] = false;
                             }
                         }
                     }   
@@ -446,14 +659,14 @@ internal class PropsEditorPage : IPage
 
         BeginMode2D(_camera);
         {
-            DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, new Color(255, 255, 255, 255));
+            DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, new Color(215, 215, 215, 255));
 
-            // Draw geos first
             if (_showTileLayer3)
             {
                 #region TileEditorLayer3
 
-                for (int y = 0; y < GLOBALS.Level.Height; y++)
+                // Draw geos first
+                for (var y = 0; y < GLOBALS.Level.Height; y++)
                 {
                     for (int x = 0; x < GLOBALS.Level.Width; x++)
                     {
@@ -625,7 +838,7 @@ internal class PropsEditorPage : IPage
                     }
                 }
 
-                // then draw the tiles
+                // Then draw the tiles
 
                 if (_showLayer3Tiles)
                 {
@@ -638,19 +851,19 @@ internal class PropsEditorPage : IPage
 
                             if (tileCell.Type == TileType.TileHead)
                             {
-                                (int, int, string) tile = ((int, int, string))tileCell.Data.CategoryPostition;
+                                var data = (TileHead)tileCell.Data;
 
-                                var category = GLOBALS.Textures.Tiles[tile.Item1 - 5];
-                                var tileTexture = category[tile.Item2 - 1];
-                                var color = GLOBALS.TileCategories[tile.Item1 - 5].Item2;
-                                var initTile = GLOBALS.Tiles[tile.Item1 - 5][tile.Item2 - 1];
+                                var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1 - 5];
+                                var tileTexture = category[data.CategoryPostition.Item2 - 1];
+                                var color = GLOBALS.TileCategories[data.CategoryPostition.Item1 - 5].Item2;
+                                var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
 
 
                                 Printers.DrawTilePreview(ref initTile, ref tileTexture, ref color, (x, y));
                             }
                             else if (tileCell.Type == TileType.Material)
                             {
-                                var materialName = ((TileMaterial)tileCell.Data).Name;
+                                // var materialName = ((TileMaterial)tileCell.Data).Name;
                                 var origin = new Vector2(x * previewScale + 5, y * previewScale + 5);
                                 var color = GLOBALS.Level.MaterialColors[y, x, 0];
 
@@ -723,7 +936,7 @@ internal class PropsEditorPage : IPage
                     }
                 }
                 
-                // then draw the props
+                // Then draw the props
 
                 for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
                 {
@@ -735,42 +948,46 @@ internal class PropsEditorPage : IPage
                     if (current.prop.Depth > -20 || current.type == InitPropType.Rope) continue;
 
                     var (category, index) = current.position;
-                    var (tl, tr, br, bl) = current.prop.Quads;
+                    var quads = current.prop.Quads;
                     
                     // origin must be the center
-                    var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
+                    // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
+                    Printers.DrawProp(category, index, current.prop);
                     
-                    if (current.prop.IsTile) 
-                        Printers.DrawTileAsProp(
-                            ref GLOBALS.Textures.Tiles[category][index],
-                            ref GLOBALS.Tiles[category][index],
-                            (tr, tl, bl, br)
-                        );
-                    else 
-                        Printers.DrawProp(
-                            GLOBALS.Props[category][index], 
-                            ref GLOBALS.Textures.Props[category][index],
-                            ref origin,
-                            [
-                                new(tr.X - origin.X, tr.Y - origin.Y),
-                                new(tl.X - origin.X, tl.Y - origin.Y),
-                                new(bl.X - origin.X, bl.Y - origin.Y),
-                                new(br.X - origin.X, br.Y - origin.Y),
-                                new(tr.X - origin.X, tr.Y - origin.Y),
-                            ]
-                        );
+                    // if (current.prop.IsTile) 
+                    //     Printers.DrawTileAsProp(
+                    //         ref GLOBALS.Textures.Tiles[category][index],
+                    //         ref GLOBALS.Tiles[category][index],
+                    //         (tr, tl, bl, br)
+                    //     );
+                    // else 
+                    //     Printers.DrawProp(
+                    //         GLOBALS.Props[category][index], 
+                    //         ref GLOBALS.Textures.Props[category][index],
+                    //         ref origin,
+                    //         [
+                    //             new(tr.X - origin.X, tr.Y - origin.Y),
+                    //             new(tl.X - origin.X, tl.Y - origin.Y),
+                    //             new(bl.X - origin.X, bl.Y - origin.Y),
+                    //             new(br.X - origin.X, br.Y - origin.Y),
+                    //             new(tr.X - origin.X, tr.Y - origin.Y),
+                    //         ]
+                    //     );
                     
                     if (_selected[p])
                     {
                         DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1f, BLUE);
                         
                         // Quad Points
-                        
-                        DrawCircleV(tl, 5f, BLUE);
-                        DrawCircleV(tr, 5f, BLUE);
-                        DrawCircleV(br, 5f, BLUE);
-                        DrawCircleV(bl, 5f, BLUE);
+
+                        if (_stretchingProp)
+                        {
+                            DrawCircleV(quads.TopLeft, 5f, BLUE);
+                            DrawCircleV(quads.TopRight, 5f, BLUE);
+                            DrawCircleV(quads.BottomRight, 5f, BLUE);
+                            DrawCircleV(quads.BottomLeft, 5f, BLUE);
+                        }
                     }
                 }
                 #endregion
@@ -966,19 +1183,19 @@ internal class PropsEditorPage : IPage
 
                             if (tileCell.Type == TileType.TileHead)
                             {
-                                (int, int, string) tile = ((int, int, string))tileCell.Data.CategoryPostition;
+                                var data = (TileHead)tileCell.Data;
 
-                                var category = GLOBALS.Textures.Tiles[tile.Item1 - 5];
-                                var tileTexture = category[tile.Item2 - 1];
-                                var color = GLOBALS.TileCategories[tile.Item1 - 5].Item2;
-                                var initTile = GLOBALS.Tiles[tile.Item1 - 5][tile.Item2 - 1];
+                                var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1 - 5];
+                                var tileTexture = category[data.CategoryPostition.Item2 - 1];
+                                var color = GLOBALS.TileCategories[data.CategoryPostition.Item1 - 5].Item2;
+                                var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
 
 
                                 Printers.DrawTilePreview(ref initTile, ref tileTexture, ref color, (x, y));
                             }
                             else if (tileCell.Type == TileType.Material)
                             {
-                                var materialName = ((TileMaterial)tileCell.Data).Name;
+                                // var materialName = ((TileMaterial)tileCell.Data).Name;
                                 var origin = new Vector2(x * previewScale + 5, y * previewScale + 5);
                                 var color = GLOBALS.Level.MaterialColors[y, x, 0];
 
@@ -1053,8 +1270,6 @@ internal class PropsEditorPage : IPage
                 
                 // then draw the props
 
-                // then draw the props
-
                 for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
                 {
                     if (_hidden[p]) continue;
@@ -1065,42 +1280,46 @@ internal class PropsEditorPage : IPage
                     if (current.prop.Depth > -10 || current.prop.Depth < -19 || current.type == InitPropType.Rope) continue;
 
                     var (category, index) = current.position;
-                    var (tl, tr, br, bl) = current.prop.Quads;
+                    var quads = current.prop.Quads;
                     
                     // origin must be the center
-                    var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
+                    // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
+                    Printers.DrawProp(category, index, current.prop);
                     
-                    if (current.prop.IsTile) 
-                        Printers.DrawTileAsProp(
-                            ref GLOBALS.Textures.Tiles[category][index],
-                            ref GLOBALS.Tiles[category][index],
-                            (tr, tl, bl, br)
-                        );
-                    else 
-                        Printers.DrawProp(
-                            GLOBALS.Props[category][index], 
-                            ref GLOBALS.Textures.Props[category][index],
-                            ref origin,
-                            [
-                                new(tr.X - origin.X, tr.Y - origin.Y),
-                                new(tl.X - origin.X, tl.Y - origin.Y),
-                                new(bl.X - origin.X, bl.Y - origin.Y),
-                                new(br.X - origin.X, br.Y - origin.Y),
-                                new(tr.X - origin.X, tr.Y - origin.Y),
-                            ]
-                        );
+                    // if (current.prop.IsTile) 
+                    //     Printers.DrawTileAsProp(
+                    //         ref GLOBALS.Textures.Tiles[category][index],
+                    //         ref GLOBALS.Tiles[category][index],
+                    //         (tr, tl, bl, br)
+                    //     );
+                    // else 
+                    //     Printers.DrawProp(
+                    //         GLOBALS.Props[category][index], 
+                    //         ref GLOBALS.Textures.Props[category][index],
+                    //         ref origin,
+                    //         [
+                    //             new(tr.X - origin.X, tr.Y - origin.Y),
+                    //             new(tl.X - origin.X, tl.Y - origin.Y),
+                    //             new(bl.X - origin.X, bl.Y - origin.Y),
+                    //             new(br.X - origin.X, br.Y - origin.Y),
+                    //             new(tr.X - origin.X, tr.Y - origin.Y),
+                    //         ]
+                    //     );
                     
                     if (_selected[p])
                     {
                         DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1f, BLUE);
                         
                         // Quad Points
-                        
-                        DrawCircleV(tl, 5f, BLUE);
-                        DrawCircleV(tr, 5f, BLUE);
-                        DrawCircleV(br, 5f, BLUE);
-                        DrawCircleV(bl, 5f, BLUE);
+
+                        if (_stretchingProp)
+                        {
+                            DrawCircleV(quads.TopLeft, 5f, BLUE);
+                            DrawCircleV(quads.TopRight, 5f, BLUE);
+                            DrawCircleV(quads.BottomRight, 5f, BLUE);
+                            DrawCircleV(quads.BottomLeft, 5f, BLUE);
+                        }
                     }
                 }
                 
@@ -1299,20 +1518,20 @@ internal class PropsEditorPage : IPage
 
                             if (tileCell.Type == TileType.TileHead)
                             {
-                                (int, int, string) tile = ((int, int, string))tileCell.Data.CategoryPostition;
+                                var data = (TileHead)tileCell.Data;
 
                                 /*Console.WriteLine($"Index: {tile.Item1 - 5}; Length: {tilePreviewTextures.Length}; Name = {tile.Item3}");*/
-                                var category = GLOBALS.Textures.Tiles[tile.Item1 - 5];
+                                var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1 - 5];
 
-                                var tileTexture = category[tile.Item2 - 1];
-                                var color = GLOBALS.TileCategories[tile.Item1 - 5].Item2;
-                                var initTile = GLOBALS.Tiles[tile.Item1 - 5][tile.Item2 - 1];
+                                var tileTexture = category[data.CategoryPostition.Item2 - 1];
+                                var color = GLOBALS.TileCategories[data.CategoryPostition.Item1 - 5].Item2;
+                                var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
 
                                 Printers.DrawTilePreview(ref initTile, ref tileTexture, ref color, (x, y));
                             }
                             else if (tileCell.Type == TileType.Material)
                             {
-                                var materialName = ((TileMaterial)tileCell.Data).Name;
+                                // var materialName = ((TileMaterial)tileCell.Data).Name;
                                 var origin = new Vector2(x * previewScale + 5, y * previewScale + 5);
                                 var color = GLOBALS.Level.MaterialColors[y, x, 0];
 
@@ -1397,31 +1616,25 @@ internal class PropsEditorPage : IPage
                     if (current.prop.Depth < -9 || current.type == InitPropType.Rope) continue;
 
                     var (category, index) = current.position;
-                    var (tl, tr, br, bl) = current.prop.Quads;
+                    var quads = current.prop.Quads;
                     
                     // origin must be the center
-                    var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
+                    // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
+                    Printers.DrawProp(category, index, current.prop);
                     
-                    if (current.prop.IsTile) 
-                        Printers.DrawTileAsProp(
-                            ref GLOBALS.Textures.Tiles[category][index],
-                            ref GLOBALS.Tiles[category][index],
-                            (tr, tl, bl, br)
-                        );
-                    else 
-                        Printers.DrawProp(
-                            GLOBALS.Props[category][index], 
-                            ref GLOBALS.Textures.Props[category][index],
-                            ref origin,
-                            [
-                                new(tr.X - origin.X, tr.Y - origin.Y),
-                                new(tl.X - origin.X, tl.Y - origin.Y),
-                                new(bl.X - origin.X, bl.Y - origin.Y),
-                                new(br.X - origin.X, br.Y - origin.Y),
-                                new(tr.X - origin.X, tr.Y - origin.Y),
-                            ]
-                        );
+                    // if (current.prop.IsTile) 
+                    //     Printers.DrawTileAsProp(
+                    //         ref GLOBALS.Textures.Tiles[category][index],
+                    //         ref GLOBALS.Tiles[category][index],
+                    //         (tr, tl, bl, br)
+                    //     );
+                    // else 
+                    //     Printers.DrawProp(
+                    //         GLOBALS.Props[category][index], 
+                    //         ref GLOBALS.Textures.Props[category][index],
+                    //         (tr, tl, bl, br)
+                    //     );
 
                     if (_selected[p])
                     {
@@ -1430,15 +1643,23 @@ internal class PropsEditorPage : IPage
                         DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1f, BLUE);
                         
                         // Quad Points
+
+                        if (_stretchingProp)
+                        {
+                            DrawCircleV(quads.TopLeft, 5f, BLUE);
+                            DrawCircleV(quads.TopRight, 5f, BLUE);
+                            DrawCircleV(quads.BottomRight, 5f, BLUE);
+                            DrawCircleV(quads.BottomLeft, 5f, BLUE);
+                        }
                         
-                        DrawCircleV(tl, 5f, BLUE);
-                        DrawCircleV(tr, 5f, BLUE);
-                        DrawCircleV(br, 5f, BLUE);
-                        DrawCircleV(bl, 5f, BLUE);
                     }
                 }
+                
                 #endregion
             }
+            
+            // Draw the enclosing rectangle for selected props
+            // DEBUG: DrawRectangleLinesEx(_selectedPropsEncloser, 3f, WHITE);
 
             switch (_mode)
             {
@@ -1479,131 +1700,30 @@ internal class PropsEditorPage : IPage
                 {
                     var prop = _propsOnly[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
                     var texture = GLOBALS.Textures.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
-                    const float scaleConst = 0.4f;
-
-                    switch (prop)
+                    
+                    var (width, height, settings) = prop switch
                     {
-                        case InitVariedStandardProp variedStandard:
-                        {
-                            var height = variedStandard.Size.y * GLOBALS.Scale;
-                            var width =  variedStandard.Size.x * GLOBALS.Scale;
-                            
-                            Printers.DrawVariedStandardProp(
-                                variedStandard, 
-                                ref texture, 
-                                ref tileMouseWorld, 
-                                [
-                                    new(width * scaleConst, -height * scaleConst),
-                                    new(-width * scaleConst, -height * scaleConst),
-                                    new(-width * scaleConst, height * scaleConst),
-                                    new(width * scaleConst, height * scaleConst),
-                                    new(width * scaleConst, -height * scaleConst),
-                                ],
-                                0
-                            );
-                        }
-                            break;
-                        case InitStandardProp standard:
-                        {
-                            var height = standard.Size.y * GLOBALS.Scale;
-                            var width =  standard.Size.x * GLOBALS.Scale;
-                            
-                            Printers.DrawStandardProp(
-                                standard, 
-                                ref texture, 
-                                ref tileMouseWorld, 
-                                [
-                                    new(width * scaleConst, -height * scaleConst),
-                                    new(-width * scaleConst, -height * scaleConst),
-                                    new(-width * scaleConst, height * scaleConst),
-                                    new(width * scaleConst, height * scaleConst),
-                                    new(width * scaleConst, -height * scaleConst),
-                                ]
-                            );
-                        }
-                            break;
-
-                        case InitVariedSoftProp variedSoft:
-                        {
-                            var height = (float) variedSoft.SizeInPixels.y * scaleConst;
-                            var width = (float) variedSoft.SizeInPixels.x * scaleConst;
-                            
-                            Printers.DrawVariedSoftProp(
-                                variedSoft,
-                                ref texture,
-                                ref tileMouseWorld,
-                                [
-                                    new(width, -height),
-                                    new(-width, -height),
-                                    new(-width, height),
-                                    new(width, height),
-                                    new(width, -height),
-                                ],
-                                0
-                            );
-                        }
-                            break;
-
-                        case InitSoftProp soft:
-                        {
-                            var width = texture.width * scaleConst;
-                            var height = texture.height * scaleConst;
-                            
-                            Printers.DrawSoftProp(
-                                soft, 
-                                ref texture, 
-                                ref tileMouseWorld,
-                                [
-                                    new(width, -height),
-                                    new(-width, -height),
-                                    new(-width, height),
-                                    new(width, height),
-                                    new(width, -height),
-                                ]
-                            );
-                        }
-                            break;
-
-                        case InitVariedDecalProp variedDecal:
-                        {
-                            var width = variedDecal.SizeInPixels.x * scaleConst;
-                            var height = variedDecal.SizeInPixels.y * scaleConst;
-                            
-                            Printers.DrawVariedDecalProp(
-                                variedDecal,
-                                ref texture,
-                                ref tileMouseWorld,
-                                [
-                                    new(width, -height),
-                                    new(-width, -height),
-                                    new(-width, height),
-                                    new(width, height),
-                                    new(width, -height),
-                                ],
-                                0
-                            );
-                        }
-                            break;
-
-                        case InitSimpleDecalProp simpleDecal:
-                        {
-                            var width = texture.width * scaleConst;
-                            var height = texture.height * scaleConst;
-                            
-                            Printers.DrawSimpleDecalProp(
-                                ref texture,
-                                ref tileMouseWorld,
-                                [
-                                    new(width, -height),
-                                    new(-width, -height),
-                                    new(-width, height),
-                                    new(width, height),
-                                    new(width, -height),
-                                ]
-                            );
-                        }
-                            break;
-                    }
+                        InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings()),
+                        InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
+                        InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings()),
+                        InitSoftProp => (texture.width  / 2f, texture.height  / 2f, new PropSoftSettings()),
+                        InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings()),
+                        InitSimpleDecalProp => (texture.width / 2f, texture.height / 2f, new PropSimpleDecalSettings()), 
+                        InitSoftEffectProp => (texture.width / 2f, texture.height / 2f, new PropSoftEffectSettings()), 
+                        InitAntimatterProp => (texture.width / 2f, texture.height / 2f, new PropAntimatterSettings()),
+                        InitLongProp => (texture.width / 2f, texture.height / 2f, new PropLongSettings()), 
+                        InitRopeProp => (texture.width / 2f, texture.height / 2f, new PropRopeSettings()),
+                                
+                        _ => (texture.width / 2f, texture.height / 2f, new BasicPropSettings())
+                    };
+                    
+                    Printers.DrawProp(settings, prop, ref texture, new PropQuads(
+                        new Vector2(tileMouseWorld.X - width, tileMouseWorld.Y - height), 
+                        new Vector2(tileMouseWorld.X + width, tileMouseWorld.Y - height), 
+                        new Vector2(tileMouseWorld.X + width, tileMouseWorld.Y + height), 
+                        new Vector2(tileMouseWorld.X - width, tileMouseWorld.Y + height)),
+                        0
+                    );
                 }
                     break;
             }
@@ -1612,15 +1732,15 @@ internal class PropsEditorPage : IPage
                 case 0: // Select Mode
                     
                     // TODO: tweak selection cancellation
-                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT) && _clickTracker && _selection1.X > -1)
+                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT) && _clickTracker)
                     {
                         var mouse = GetScreenToWorld2D(GetMousePosition(), _camera);
                         var diff = RayMath.Vector2Subtract(mouse, _selection1);
                         var position = (diff.X > 0, diff.Y > 0) switch
                         {
                             (true, true) => _selection1,
-                            (true, false) => new(_selection1.X, mouse.Y),
-                            (false, true) => new(mouse.X, _selection1.Y),
+                            (true, false) => new Vector2(_selection1.X, mouse.Y),
+                            (false, true) => new Vector2(mouse.X, _selection1.Y),
                             (false, false) => mouse
                         };
 
@@ -1631,7 +1751,7 @@ internal class PropsEditorPage : IPage
                             Math.Abs(diff.Y)
                         );
                         
-                        DrawRectangleRec(_selection, new(0, 0, 255, 90));
+                        DrawRectangleRec(_selection, new Color(0, 0, 255, 90));
                         
                         DrawRectangleLinesEx(
                             _selection,
@@ -1798,11 +1918,17 @@ internal class PropsEditorPage : IPage
 
                 case 0: // Select Mode
                 {
+                    var fetchedSelected = GLOBALS.Level.Props
+                        .Select((prop, index) => (prop, index))
+                        .Where(p => _selected[p.index])
+                        .Select(p => p)
+                        .ToArray();
+                    
                     var listRect = new Rectangle(
                         (int)(menuPanelRect.x + 5), 
                         90, 
-                        menuPanelRect.width - 5, 
-                        (int)(menuPanelRect.height - 300)
+                        menuPanelRect.width - 10, 
+                        (int)(menuPanelRect.height - 400)
                     );
                     
                     DrawRectangleLinesEx(listRect, 1f, GRAY);
@@ -1868,6 +1994,109 @@ internal class PropsEditorPage : IPage
                     
                     DrawLineEx(new(menuPanelRect.x + 11, listRect.y - 32), new(menuPanelRect.x + 29, listRect.y - 11), 2f, WHITE);
                     DrawLineEx(new(menuPanelRect.x + 11, listRect.y - 11), new(menuPanelRect.x + 29, listRect.y - 32), 2f, WHITE);
+                    
+                    // Prop Settings
+
+                    var indicatorOffset = listRect.x + (listRect.width - 290) / 2f;
+                    
+                    if (fetchedSelected.Length == 1)
+                    {
+                        // Depth indicator
+                        var (c, i) = fetchedSelected[0].prop.prop.Position;
+
+                        if (fetchedSelected[0].prop.type == InitPropType.Tile)
+                        {
+                            var init = GLOBALS.Tiles[c][i];
+                            var depth = init.Repeat.Sum() * 10;
+                            var offset = indicatorOffset - fetchedSelected[0].prop.prop.Depth * 10;
+                            var overflow = offset + depth - (indicatorOffset + 290);
+                            
+                            DrawRectangleRec(
+                                new Rectangle(
+                                    offset, 
+                                    listRect.y + listRect.height + 10, 
+                                    depth - (overflow > 0 ? overflow : 0), 
+                                    30
+                                ),
+                                new Color(100, 100, 180, 255)
+                            );
+                        }
+                        else
+                        {
+                            var init = GLOBALS.Props[c][i];
+                            
+                            DrawRectangleRec(
+                                new Rectangle(
+                                    indicatorOffset - fetchedSelected[0].prop.prop.Depth * 10, 
+                                    listRect.y + listRect.height + 10, 
+                                    init switch
+                                    {
+                                        InitVariedStandardProp v => v.Repeat.Length, 
+                                        InitStandardProp s => s.Repeat.Length, 
+                                        _ => init.Depth
+                                    } * 10, 
+                                    30
+                                ),
+                                new Color(100, 100, 180, 255)
+                            );
+                        }
+                        
+                        DrawRectangleLinesEx(
+                            new Rectangle(indicatorOffset, listRect.y + listRect.height + 10, 290, 30),
+                            2f,
+                            BLACK
+                        );
+                    
+                        DrawLineEx(
+                            new Vector2(indicatorOffset + 90, listRect.y + listRect.height + 10),
+                            new Vector2(indicatorOffset + 90, listRect.y + listRect.height + 15),
+                            2f,
+                            BLACK
+                        );
+                    
+                        DrawLineEx(
+                            new Vector2(indicatorOffset + 180, listRect.y + listRect.height + 10),
+                            new Vector2(indicatorOffset + 180, listRect.y + listRect.height + 15),
+                            2f,
+                            BLACK
+                        );
+                        
+                        unsafe
+                        {
+                            var depth = -fetchedSelected[0].prop.prop.Depth;
+
+                            if (RayGui.GuiSpinner(
+                                new Rectangle(indicatorOffset, listRect.y + listRect.height + 50, 290, 40),
+                                "",
+                                &depth,
+                                0,
+                                29,
+                                _spinnerLock == 1
+                            )) _spinnerLock = 1;
+                            
+                            fetchedSelected[0].prop.prop.Depth = -depth;
+                            GLOBALS.Level.Props[fetchedSelected[0].index].prop.Depth = -depth;
+                            
+                            // Variation Selector
+
+                            if (fetchedSelected[0].prop.prop.Extras.Settings is IVariable variable)
+                            {
+                                var init = GLOBALS.Props[c][i];
+                                var variations = ((IVariableInit)init).Variations + 1;
+                                var variation = variable.Variation + 1;
+
+                                RayGui.GuiSpinner(new Rectangle(indicatorOffset, listRect.y + listRect.height + 100, 290, 40), 
+                                    "", 
+                                    &variation, 
+                                    1, 
+                                    variations + 1, 
+                                    false
+                                );
+
+                                variable.Variation = variation - 1;
+                            }
+                        }
+                    }
                     
                     //
                     

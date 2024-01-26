@@ -470,12 +470,15 @@ class Program
         SetTraceLogLevel(7);
         #endif
         
+        //----------------------------------------------------------------------------
         // No texture loading prior to this point
+        //----------------------------------------------------------------------------
         InitWindow(GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight, "Henry's Leditor");
         //
         
         SetWindowIcon(icon);
         SetWindowMinSize(GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight);
+        SetExitKey(KeyboardKey.KEY_NULL);
 
         // The splashscreen
         GLOBALS.Textures.SplashScreen = LoadTexture(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "splashscreen.png"));

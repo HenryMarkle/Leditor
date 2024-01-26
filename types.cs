@@ -16,6 +16,9 @@ public enum PropCheckResult
     Ok, Undefined, MissingTexture
 }
 
+public interface IVariableInit { int Variations { get; } }
+public interface IVariable { int Variation { get; set; } }
+
 // TODO: improve the success status reporting
 /// Used for loading project files
 public class LoadFileResult
@@ -433,49 +436,49 @@ public struct TileCell {
 }
 
 
-public struct TileDefault
+public class TileDefault
 {
     public int Value => 0;
 
-    public readonly override string ToString() => $"TileDefault";
+    public override string ToString() => $"TileDefault";
 }
 
-public struct TileMaterial(string material)
+public class TileMaterial(string material)
 {
     private string _data = material;
 
     public string Name
     {
-        readonly get => _data;
+        get => _data;
         set { _data = value; }
     }
 
     public override string ToString() => $"TileMaterial(\"{_data}\")";
 }
 
-public struct TileHead(int category, int position, string name)
+public class TileHead(int category, int position, string name)
 {
     private (int, int, string) _data = (category, position, name);
     
     public (int, int, string) CategoryPostition
     {
-        readonly get => _data;
+        get => _data;
         set { _data = value; }
     }
 
-    public readonly override string ToString() => $"TileHead({_data.Item1}, {_data.Item2}, \"{_data.Item3}\")";
+    public override string ToString() => $"TileHead({_data.Item1}, {_data.Item2}, \"{_data.Item3}\")";
 }
 
-public struct TileBody(int x, int y, int z)
+public class TileBody(int x, int y, int z)
 {
     private (int x, int y, int z) _data = (x, y, z);
     public (int x, int y, int z) HeadPosition
     {
-        readonly get => _data;
+        get => _data;
         set { _data = value; }
     }
 
-    public readonly override string ToString() => $"TileBody({_data.x}, {_data.y}, {_data.z})";
+    public override string ToString() => $"TileBody({_data.x}, {_data.y}, {_data.z})";
 }
 
 public enum InitTileType { 
@@ -562,7 +565,7 @@ public class InitVariedStandardProp(
     (int, int) size,
     int[] repeat,
     int variations,
-    int random) : InitStandardProp(name, type, depth, colorTreatment, bevel, size, repeat)
+    int random) : InitStandardProp(name, type, depth, colorTreatment, bevel, size, repeat), IVariableInit
 {
     public int Variations { get; set; } = variations;
     public int Random { get; set; } = random;
@@ -621,7 +624,7 @@ public class InitVariedSoftProp(
     (int x, int y) sizeInPixels,
     int variations,
     int random,
-    int colorize) : InitSoftProp(name, type, depth, round, contourExp, selfShade, highlightBorder, depthAffectHilits, shadowBorder, smoothShading)
+    int colorize) : InitSoftProp(name, type, depth, round, contourExp, selfShade, highlightBorder, depthAffectHilits, shadowBorder, smoothShading), IVariableInit
 {
     public (int x, int y) SizeInPixels { get; init; } = sizeInPixels;
     public int Variations { get; init; } = variations;
@@ -637,7 +640,7 @@ public class InitVariedSoftProp(
 
 public class InitSimpleDecalProp(string name, InitPropType type, int depth) : InitPropBase(name, type, depth);
 
-public class InitVariedDecalProp(string name, InitPropType type, int depth, (int x, int y) sizeInPixels, int variations, int random) : InitSimpleDecalProp(name, type, depth)
+public class InitVariedDecalProp(string name, InitPropType type, int depth, (int x, int y) sizeInPixels, int variations, int random) : InitSimpleDecalProp(name, type, depth), IVariableInit
 {
     public (int x, int y) SizeInPixels { get; init; } = sizeInPixels;
     public int Variations { get; init; } = variations;
@@ -708,13 +711,25 @@ public class InitRopeProp(
 public class InitLongProp(string name, InitPropType type, int depth) : InitPropBase(name, type, depth);
 #endregion
 
-public struct Prop(int depth, string name, bool isTile, (int, int) position, (Vector2, Vector2, Vector2, Vector2) quads)
+public struct PropQuads(
+    Vector2 topLeft, 
+    Vector2 topRight, 
+    Vector2 bottomRight, 
+    Vector2 bottomLeft)
+{
+    public Vector2 TopLeft { get; set; } = topLeft;
+    public Vector2 TopRight { get; set; } = topRight;
+    public Vector2 BottomRight { get; set; } = bottomRight;
+    public Vector2 BottomLeft { get; set; } = bottomLeft;
+}
+
+public struct Prop(int depth, string name, bool isTile, (int, int) position, PropQuads quads)
 {
     public int Depth { get; set; } = depth;
     public string Name { get; set; } = name;
     public bool IsTile { get; set; } = isTile;
     public (int category, int index) Position { get; set; } = position;
-    public (Vector2 TopLeft, Vector2 TopRight, Vector2 BottomRight, Vector2 BottomLeft) Quads { get; set; } = quads;
+    public PropQuads Quads { get; set; } = quads;
     
     public PropExtras Extras { get; set; }
 }
@@ -734,7 +749,9 @@ public class BasicPropSettings(int renderOrder = 0, int seed = 0, int renderTime
     public int RenderTime { get; set; } = renderTime;
 }
 
-public class PropVariedSettings(int renderOrder = 0, int seed = 200, int renderTime = 0, int variation = 0) : BasicPropSettings(renderOrder, seed, renderTime)
+public class PropLongSettings(int renderOrder = 0, int seed = 0, int renderTime = 0) : BasicPropSettings(renderOrder, seed, renderTime);
+
+public class PropVariedSettings(int renderOrder = 0, int seed = 200, int renderTime = 0, int variation = 0) : BasicPropSettings(renderOrder, seed, renderTime), IVariable
 {
     public int Variation { get; set; } = variation;
 }
@@ -747,12 +764,12 @@ public class PropRopeSettings(int renderOrder = 0, int seed = 0, int renderTime 
     public float? Thickness { get; set; } = thickness;
 }
 
-public class PropVariedDecalSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime)
+public class PropVariedDecalSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime), IVariable
 {
     public int Variation { get; set; } = variation;
     public int CustomDepth { get; set; } = customDepth;
 }
-public class PropVariedSoftSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0, bool applyColor = false) : BasicPropSettings(renderOrder, seed, renderTime)
+public class PropVariedSoftSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0, bool applyColor = false) : BasicPropSettings(renderOrder, seed, renderTime), IVariable
 {
     public int Variation { get; set; } = variation;
     public int CustomDepth { get; set; } = customDepth;

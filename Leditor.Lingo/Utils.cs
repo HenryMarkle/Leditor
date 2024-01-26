@@ -320,8 +320,8 @@ public static class Tools {
 
             var indexGlobalCall = (AstNode.GlobalCall)casted[2];
 
-            var category = NumberToInteger(indexGlobalCall.Arguments[0]);
-            var index = NumberToInteger(indexGlobalCall.Arguments[1]);
+            var category = NumberToInteger(indexGlobalCall.Arguments[0]) - 1;
+            var index = NumberToInteger(indexGlobalCall.Arguments[1]) - 1;
 
             var quads = ((AstNode.List)casted[3]).Values.Select(q =>
             {
@@ -389,15 +389,15 @@ public static class Tools {
 
             BasicPropSettings settings = type switch
             {
-                InitPropType.VariedStandard => new PropVariedSettings(depth, rng.Next(1000), 0, getIntProperty(variation)),
+                InitPropType.VariedStandard => new PropVariedSettings(depth, rng.Next(1000), 0, getIntProperty(variation) - 1),
                 InitPropType.Rope => new PropRopeSettings(depth, rng.Next(1000), 0, getIntProperty(release switch
                 {
                     AstNode.Number n => n,
                     AstNode.UnaryOperator u => (AstNode.Number)u.Expression,
                     _ => null
                 }) switch { 1 => PropRopeRelease.Right, -1 => PropRopeRelease.Left, _ => PropRopeRelease.None }, name is "Wire" or "Zero-G Wire" ? thickness is null ? 2 : NumberToFloat(thickness) : null),
-                InitPropType.VariedDecal => new PropVariedDecalSettings(depth, rng.Next(1000), 0, getIntProperty(variation), getIntProperty(customDepth)),
-                InitPropType.VariedSoft => new PropVariedSoftSettings(depth, rng.Next(1000), 0, getIntProperty(variation), getIntProperty(customDepth), getIntProperty(applyColor) != 0),
+                InitPropType.VariedDecal => new PropVariedDecalSettings(depth, rng.Next(1000), 0, getIntProperty(variation) - 1, getIntProperty(customDepth)),
+                InitPropType.VariedSoft => new PropVariedSoftSettings(depth, rng.Next(1000), 0, getIntProperty(variation) - 1, getIntProperty(customDepth), getIntProperty(applyColor) != 0),
                 InitPropType.SimpleDecal => new PropSimpleDecalSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
                 InitPropType.Soft => new PropSoftSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
                 InitPropType.SoftEffect => new PropSoftEffectSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
@@ -406,7 +406,7 @@ public static class Tools {
             };
 
             var parsedProp = new Prop(depth, name, type == InitPropType.Tile, (category, index),
-                (quads[0], quads[1], quads[2], quads[3]))
+                new(quads[0], quads[1], quads[2], quads[3]))
             {
                 Extras = new()
                 {
