@@ -470,7 +470,7 @@ public static class Tools {
             var bottomLeft = new Vector2((float) (currentQuads.Item4.radius * Math.Cos(currentQuads.Item4.angle)), (float) (currentQuads.Item4.radius * Math.Sin(currentQuads.Item4.angle)));
 
             result[c] = new() {
-                Coords = cameras[c],
+                Coords = new Vector2(cameras[c].x, cameras[c].y),
 
                 Quads = new CameraQuads(
                     topLeft, 

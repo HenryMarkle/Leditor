@@ -247,15 +247,21 @@ public static class Effects
 
 public class GeoShortcuts
 {
-    public KeyboardKey ToRightGeo { get; set; } = KeyboardKey.KEY_D;
-    public KeyboardKey ToLeftGeo { get; set; } = KeyboardKey.KEY_A;
-    public KeyboardKey ToTopGeo { get; set; } = KeyboardKey.KEY_W;
-    public KeyboardKey ToBottomGeo { get; set; } = KeyboardKey.KEY_S;
-    public KeyboardKey CycleLayer { get; set; } = KeyboardKey.KEY_L;
-    public KeyboardKey ToggleGrid { get; set; } = KeyboardKey.KEY_M;
+    public KeyboardShortcut ToRightGeo { get; set; } = new(KeyboardKey.KEY_D);
+    public KeyboardShortcut ToLeftGeo { get; set; } = new(KeyboardKey.KEY_A);
+    public KeyboardShortcut ToTopGeo { get; set; } = new(KeyboardKey.KEY_W);
+    public KeyboardShortcut ToBottomGeo { get; set; } = new(KeyboardKey.KEY_S);
+    public KeyboardShortcut CycleLayer { get; set; } = new(KeyboardKey.KEY_L);
+    public KeyboardShortcut ToggleGrid { get; set; } = new(KeyboardKey.KEY_M);
+    public KeyboardShortcut ShowCameras { get; set; } = new(KeyboardKey.KEY_C);
 
-    public MouseButton Draw { get; set; } = MouseButton.MOUSE_BUTTON_LEFT;
-    public MouseButton DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_RIGHT;
+    public MouseShortcut Draw { get; set; } = new(MouseButton.MOUSE_BUTTON_LEFT, Hold:true);
+    public MouseShortcut DragLevel { get; set; } = new(MouseButton.MOUSE_BUTTON_RIGHT, Hold:true);
+
+    public KeyboardShortcut AltDraw { get; set; } = new(KeyboardKey.KEY_Z, Hold:true);
+    public KeyboardShortcut AltDrag { get; set; } = new(KeyboardKey.KEY_F, Hold:true);
+    public KeyboardShortcut Undo { get; set; } = new(Ctrl:true, Key:KeyboardKey.KEY_Z);
+    public KeyboardShortcut Redo { get; set; } = new(Ctrl:true, Shift:true, Key:KeyboardKey.KEY_Z);
 }
 
 public record TileShortcuts
@@ -308,13 +314,28 @@ public class LightShortcuts
     public MouseButton DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_RIGHT;
 }
 
+public class GlobalShortcuts
+{
+    public KeyboardShortcut ToMainPage { get; set; } = new(KeyboardKey.KEY_ONE);
+    public KeyboardShortcut ToGeometryEditor { get; set; } = new(KeyboardKey.KEY_TWO);
+    public KeyboardShortcut ToTileEditor { get; set; } = new(KeyboardKey.KEY_THREE);
+    public KeyboardShortcut ToCameraEditor { get; set; } = new(KeyboardKey.KEY_FOUR);
+    public KeyboardShortcut ToLightEditor { get; set; } = new(KeyboardKey.KEY_FIVE);
+    public KeyboardShortcut ToDimensionsEditor { get; set; } = new(KeyboardKey.KEY_SIX);
+    public KeyboardShortcut ToEffectsEditor { get; set; } = new(KeyboardKey.KEY_SEVEN);
+    public KeyboardShortcut ToPropsEditor { get; set; } = new(KeyboardKey.KEY_EIGHT);
+    public KeyboardShortcut ToSettingsPage { get; set; } = new(KeyboardKey.KEY_NINE);
+}
+
 public class Shortcuts(
+    GlobalShortcuts globalShortcuts,
     GeoShortcuts geoEditor,
     TileShortcuts tileEditor,
     CameraShortcut cameraEditor,
     LightShortcuts lightEditor
 )
 {
+    public GlobalShortcuts GlobalShortcuts { get; set; } = globalShortcuts;
     public GeoShortcuts GeoEditor { get; set; } = geoEditor;
     public TileShortcuts TileEditor { get; set; } = tileEditor;
     public CameraShortcut CameraEditor { get; set; } = cameraEditor;
@@ -361,10 +382,19 @@ public class LayerColors(ConColor layer1, ConColor layer2, ConColor layer3)
     public ConColor Layer3 { get; set; } = layer3;
 }
 
-public class GeoEditor(LayerColors layerColors, bool legacyGeoTools = false)
+public class GeoEditor(
+    LayerColors layerColors, 
+    bool legacyGeoTools = false,
+    bool allowOutboundsPlacement = false,
+    bool showCameras = false,
+    bool showTiles = false
+)
 {
     public LayerColors LayerColors { get; set; } = layerColors;
     public bool LegacyGeoTools { get; set; } = legacyGeoTools;
+    public bool ShowCameras { get; set; } = showCameras;
+    public bool ShowTiles { get; set; } = showTiles;
+    public bool AllowOutboundsPlacement { get; set; } = allowOutboundsPlacement;
 }
 
 public class TileEditor(
@@ -384,6 +414,36 @@ public class LightEditor(ConColor background)
 {
     public ConColor Background { get; set; } = background;
 }
+
+#region ShortcutSystem
+
+public interface IShortcut { 
+    bool Ctrl { get; } 
+    bool Shift { get; }
+    bool Check(bool ctrl = false, bool shift = false);
+}
+
+public record KeyboardShortcut(KeyboardKey Key, bool Ctrl = false, bool Shift = false, bool Hold = false) : IShortcut
+{
+    public static implicit operator KeyboardKey(KeyboardShortcut k) => k.Key;
+    public bool Check(bool ctrl = false, bool shift = false)
+    {
+        return Ctrl == ctrl && Shift == shift && (Hold ? Raylib.IsKeyDown(Key) : Raylib.IsKeyPressed(Key));
+    }
+}
+
+public record MouseShortcut(MouseButton Button, bool Ctrl = false, bool Shift = false, bool Hold = false) : IShortcut
+{
+    public static implicit operator MouseButton(MouseShortcut b) => b.Button;
+    public bool Check(bool ctrl = false, bool shift = false)
+    {
+        return Ctrl == ctrl && 
+               Shift == shift && 
+               (Hold ? Raylib.IsMouseButtonDown(Button) : Raylib.IsMouseButtonPressed(Button));
+    }
+}
+
+#endregion
 
 public class Experimental(bool newGeometryEditor = false)
 {
@@ -818,7 +878,7 @@ public record CameraQuadsRecord(
 );
 
 public class RenderCamera {
-    public (float x, float y) Coords { get; set; }
+    public Vector2 Coords { get; set; }
     public CameraQuads Quads { get; set; }
 }
 

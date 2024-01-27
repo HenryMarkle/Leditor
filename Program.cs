@@ -591,6 +591,8 @@ class Program
 
         Texture? screenshotTexture = null;
 
+        var shortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
+
         // Initialize pages
 
         GeoEditorPage geoPage = new(logger);

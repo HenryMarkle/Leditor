@@ -1346,7 +1346,7 @@ internal class PropsEditorPage : IPage
                             if (z == GLOBALS.Layer)
                             {
 
-                                Raylib.DrawTexturePro(
+                                DrawTexturePro(
                                     GLOBALS.Textures.GeoBlocks[texture],
                                     new(0, 0, 20, 20),
                                     new(x * previewScale, y * previewScale, previewScale, previewScale),
@@ -1357,7 +1357,7 @@ internal class PropsEditorPage : IPage
                             else
                             {
 
-                                Raylib.DrawTexturePro(
+                                DrawTexturePro(
                                     GLOBALS.Textures.GeoBlocks[texture],
                                     new(0, 0, 20, 20),
                                     new(x * previewScale, y * previewScale, previewScale, previewScale),

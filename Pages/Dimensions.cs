@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Numerics;
+using System.Text;
 using static Raylib_CsLo.Raylib;
 
 namespace Leditor;
@@ -296,7 +297,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                             {
                                 if (i == 0 && j == 0) continue;
 
-                                GLOBALS.Level.Cameras.Add(new RenderCamera() { Coords = (20f + j*(GLOBALS.EditorCameraWidth - 380), 30f + i*(GLOBALS.EditorCameraHeight - 40)), Quads = new(new(), new(), new(), new()) });
+                                GLOBALS.Level.Cameras.Add(new RenderCamera() { Coords = new Vector2(20f + j*(GLOBALS.EditorCameraWidth - 380), 30f + i*(GLOBALS.EditorCameraHeight - 40)), Quads = new(new(), new(), new(), new()) });
                             }
                         }
                     }

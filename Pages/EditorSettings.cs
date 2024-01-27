@@ -209,11 +209,17 @@ public class SettingsPage : IPage
                     "Legacy tools",
                     GLOBALS.Settings.GeometryEditor.LegacyGeoTools
                 );
-                
-                DrawText("Experimental", subPanelX, subPanelY + 460, 30, BLACK);
+
+                GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement = GuiCheckBox(
+                    new (subPanelX, subPanelY + 410, 20, 20),
+                    "Allow placing out of bounds",
+                    GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement
+                );
+
+                DrawText("Experimental", subPanelX, subPanelY + 500, 30, BLACK);
 
                 GLOBALS.Settings.Experimental.NewGeometryEditor = GuiCheckBox(
-                    new(subPanelX, subPanelY + 510, 20, 20), 
+                    new(subPanelX, subPanelY + 550, 20, 20), 
                     "New Interface",
                     GLOBALS.Settings.Experimental.NewGeometryEditor
                 );

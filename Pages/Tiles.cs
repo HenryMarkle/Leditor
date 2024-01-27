@@ -6,8 +6,11 @@ namespace Leditor;
 
 internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 {
-    readonly Serilog.Core.Logger logger = logger;
+    readonly Serilog.Core.Logger _logger = logger;
     Camera2D tileCamera = new() { zoom = 1.0f };
+
+    private readonly GlobalShortcuts _gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
+    
     int tilePanelWidth = 390;
     bool materialTileSwitch = false;
     int tileCategoryIndex = 0;
@@ -68,46 +71,20 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 
 
         #region TileEditorShortcuts
+        
+        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
+        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+        
+        if (_gShortcuts.ToMainPage.Check(ctrl, shift)) GLOBALS.Page = 1;
+        // if (_gShortcuts.ToGeometryEditor.Check(ctrl, shift)) GLOBALS.Page = 2;
+        if (_gShortcuts.ToTileEditor.Check(ctrl, shift)) GLOBALS.Page = 3;
+        if (_gShortcuts.ToCameraEditor.Check(ctrl, shift)) GLOBALS.Page = 4;
+        if (_gShortcuts.ToLightEditor.Check(ctrl, shift)) GLOBALS.Page = 5;
+        if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift)) { GLOBALS.ResizeFlag = true; GLOBALS.Page = 6; }
+        if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift)) GLOBALS.Page = 7;
+        if (_gShortcuts.ToPropsEditor.Check(ctrl, shift)) GLOBALS.Page = 8;
+        if (_gShortcuts.ToSettingsPage.Check(ctrl, shift)) GLOBALS.Page = 9;
 
-        if (IsKeyPressed(KeyboardKey.KEY_ONE))
-        {
-            GLOBALS.Page = 1;
-        }
-        if (IsKeyPressed(KeyboardKey.KEY_TWO))
-        {
-            GLOBALS.Page = 2;
-        }
-
-        // if (Raylib.IsKeyPressed(KeyboardKey.KEY_THREE))
-        // {
-        //     page = 3;
-        // }
-
-        if (IsKeyPressed(KeyboardKey.KEY_FOUR))
-        {
-            GLOBALS.Page = 4;
-        }
-        if (IsKeyPressed(KeyboardKey.KEY_FIVE))
-        {
-            GLOBALS.Page = 5;
-        }
-        if (IsKeyPressed(KeyboardKey.KEY_SIX))
-        {
-            GLOBALS.ResizeFlag = true;
-            GLOBALS.Page = 6;
-        }
-        if (IsKeyPressed(KeyboardKey.KEY_SEVEN))
-        {
-            GLOBALS.Page = 7;
-        }
-        if (IsKeyPressed(KeyboardKey.KEY_EIGHT))
-        {
-            GLOBALS.Page = 8;
-        }
-        if (IsKeyPressed(KeyboardKey.KEY_NINE))
-        {
-            GLOBALS.Page = 9;
-        }
 
         if (IsKeyPressed(KeyboardKey.KEY_Q) && canDrawTile && inMatrixBounds)
         {

@@ -79,7 +79,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
         if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT) && !clickTracker && draggedCamera != -1)
         {
             var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-            GLOBALS.Level.Cameras[draggedCamera].Coords = (pos.X - (72 * GLOBALS.Scale - 40) / 2, pos.Y - (43 * GLOBALS.Scale - 60) / 2);
+            GLOBALS.Level.Cameras[draggedCamera].Coords = new Vector2(pos.X - (72 * GLOBALS.Scale - 40) / 2f, pos.Y - (43 * GLOBALS.Scale - 60) / 2f);
             draggedCamera = -1;
             clickTracker = true;
         }
@@ -87,7 +87,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
         if (Raylib.IsKeyPressed(KeyboardKey.KEY_N) && draggedCamera == -1)
         {
             var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-            GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = (0, 0), Quads = new(new(), new(), new(), new()) }];
+            GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = new Vector2(0, 0), Quads = new(new(), new(), new(), new()) }];
             draggedCamera = GLOBALS.Level.Cameras.Count - 1;
         }
 
@@ -102,7 +102,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
             if (draggedCamera == -1)
             {
                 var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-                GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = (0, 0), Quads = new(new(), new(), new(), new()) }];
+                GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = new Vector2(0, 0), Quads = new(new(), new(), new(), new()) }];
                 draggedCamera = GLOBALS.Level.Cameras.Count - 1;
             }
             else
@@ -244,7 +244,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
                         Printers.DrawCameraSprite(new(pos.X - (72 * GLOBALS.Scale - 40) / 2, pos.Y - (43 * GLOBALS.Scale - 60) / 2), cam.Quads, camera, index + 1);
                         continue;
                     }
-                    var (clicked, hovered) = Printers.DrawCameraSprite(new(cam.Coords.x, cam.Coords.y), cam.Quads, camera, index + 1);
+                    var (clicked, hovered) = Printers.DrawCameraSprite(cam.Coords, cam.Quads, camera, index + 1);
 
                     if (clicked && !clickTracker)
                     {

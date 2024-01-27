@@ -178,7 +178,7 @@ internal static class GLOBALS
                 (Height - (Padding.bottom + Padding.top)) * Scale
             );
 
-            Cameras = [new RenderCamera() { Coords = (20f, 30f), Quads = new(new(), new(), new(), new()) }];
+            Cameras = [new RenderCamera { Coords = new Vector2(20f, 30f), Quads = new(new(), new(), new(), new()) }];
 
             // Geo Matrix
             {
@@ -805,16 +805,17 @@ internal static class GLOBALS
                 new(),
                 new(),
                 new(),
+                new(),
                 new()
-                ),
+            ),
             new(),
             new(
                 new(
                     layer1: new(0, 0, 0, 255),
                     layer2: new(0, 255, 0, 50),
                     layer3: new(255, 0, 0, 50)
-                    )
-                ),
+                )
+            ),
             new(true),
             new(background: new(66, 108, 245, 255)),
             new()
@@ -1651,6 +1652,15 @@ internal static class Utils
         return matrix;
     }
 
+    internal static bool[] NewStackables(bool fill = false)
+    {
+        var array = new bool[22];
+        
+        for (var i = 0; i < array.Length; i++) array[i] = fill;
+
+        return array;
+    }
+
     /// <summary>
     /// Determines where the tile preview texture starts in the tile texture.
     /// </summary>
@@ -1876,7 +1886,246 @@ internal static class Utils
 /// </summary>
 internal static class Printers
 {
-    internal static void DrawTextureQuads(
+    internal static void DrawGeoLayer(int layer, bool grid, Color color)
+    {
+        for (var y = 0; y < GLOBALS.Level.Height; y++)
+        {
+            for (var x = 0; x < GLOBALS.Level.Width; x++)
+            {
+                var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
+
+                var texture = Utils.GetBlockIndex(cell.Geo);
+
+                if (texture >= 0)
+                {
+                    DrawTexture(
+                        GLOBALS.Textures.GeoBlocks[texture], 
+                        x * GLOBALS.Scale, 
+                        y * GLOBALS.Scale, 
+                        color
+                    );
+                }
+
+                if (grid) DrawRectangleLinesEx(
+                    new(x * GLOBALS.Scale, y * GLOBALS.Scale, GLOBALS.Scale, GLOBALS.Scale),
+                    0.5f,
+                    new(255, 255, 255, 100)
+                );
+
+                for (var s = 1; s < cell.Stackables.Length; s++)
+                {
+                    if (cell.Stackables[s])
+                    {
+                        switch (s)
+                        {
+                            // dump placement
+                            case 1:     // ph
+                            case 2:     // pv
+                                DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, color);
+                                break;
+                            case 3:     // bathive
+                                case 5:     // entrance
+                                case 6:     // passage
+                                case 7:     // den
+                                case 9:     // rock
+                                case 10:    // spear
+                                case 12:    // forbidflychains
+                                case 13:    // garbagewormhole
+                                case 18:    // waterfall
+                                case 19:    // wac
+                                case 20:    // worm
+                                case 21:    // scav
+                                Raylib.DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE); // TODO: remove opacity from entrances
+                                break;
+
+                            // directional placement
+                            case 4:     // entrance
+                                var index = Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, layer));
+
+                                if (index is 22 or 23 or 24 or 25)
+                                {
+                                    GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
+                                }
+
+                                DrawTexture(GLOBALS.Textures.GeoStackables[index], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE);
+                                break;
+                            case 11:    // crack
+                                DrawTexture(
+                                    GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, layer))],
+                                    x * GLOBALS.Scale,
+                                    y * GLOBALS.Scale,
+                                    WHITE
+                                );
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    internal static void DrawGeoLayer(int layer, bool grid, Color color, bool[] stackableFilter)
+    {
+        for (var y = 0; y < GLOBALS.Level.Height; y++)
+        {
+            for (var x = 0; x < GLOBALS.Level.Width; x++)
+            {
+                var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
+
+                var texture = Utils.GetBlockIndex(cell.Geo);
+
+                if (texture >= 0)
+                {
+                    DrawTexture(
+                        GLOBALS.Textures.GeoBlocks[texture], 
+                        x * GLOBALS.Scale, 
+                        y * GLOBALS.Scale, 
+                        color
+                    );
+                }
+
+                if (grid) DrawRectangleLinesEx(
+                    new(x * GLOBALS.Scale, y * GLOBALS.Scale, GLOBALS.Scale, GLOBALS.Scale),
+                    0.5f,
+                    new(255, 255, 255, 100)
+                );
+
+                for (var s = 1; s < cell.Stackables.Length; s++)
+                {
+                    if (stackableFilter[s] && cell.Stackables[s])
+                    {
+                        switch (s)
+                        {
+                            // dump placement
+                            case 1:     // ph
+                            case 2:     // pv
+                                DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, color);
+                                break;
+                            case 3:     // bathive
+                                case 5:     // entrance
+                                case 6:     // passage
+                                case 7:     // den
+                                case 9:     // rock
+                                case 10:    // spear
+                                case 12:    // forbidflychains
+                                case 13:    // garbagewormhole
+                                case 18:    // waterfall
+                                case 19:    // wac
+                                case 20:    // worm
+                                case 21:    // scav
+                                    DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE); // TODO: remove opacity from entrances
+                                break;
+
+                            // directional placement
+                            case 4:     // entrance
+                                var index = Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, layer));
+
+                                if (index is 22 or 23 or 24 or 25)
+                                {
+                                    GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
+                                }
+
+                                DrawTexture(GLOBALS.Textures.GeoStackables[index], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE);
+                                break;
+                            case 11:    // crack
+                                DrawTexture(
+                                    GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, layer))],
+                                    x * GLOBALS.Scale,
+                                    y * GLOBALS.Scale,
+                                    WHITE
+                                );
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    internal static void DrawGeoLayer(int layer, bool grid, Color color, bool geos, bool stackables)
+    {
+        for (var y = 0; y < GLOBALS.Level.Height; y++)
+        {
+            for (var x = 0; x < GLOBALS.Level.Width; x++)
+            {
+                var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
+
+                if (!geos) goto skipGeos;
+
+                var texture = Utils.GetBlockIndex(cell.Geo);
+
+                if (texture >= 0)
+                {
+                    DrawTexture(
+                        GLOBALS.Textures.GeoBlocks[texture], 
+                        x * GLOBALS.Scale, 
+                        y * GLOBALS.Scale, 
+                        color
+                    );
+                }
+
+                if (grid) DrawRectangleLinesEx(
+                    new(x * GLOBALS.Scale, y * GLOBALS.Scale, GLOBALS.Scale, GLOBALS.Scale),
+                    0.5f,
+                    new(255, 255, 255, 100)
+                );
+                
+                skipGeos:
+
+                if (!stackables) continue;
+
+                for (var s = 1; s < cell.Stackables.Length; s++)
+                {
+                    if (cell.Stackables[s])
+                    {
+                        switch (s)
+                        {
+                            // dump placement
+                            case 1:     // ph
+                            case 2:     // pv
+                                DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, color);
+                                break;
+                            case 3:     // bathive
+                                case 5:     // entrance
+                                case 6:     // passage
+                                case 7:     // den
+                                case 9:     // rock
+                                case 10:    // spear
+                                case 12:    // forbidflychains
+                                case 13:    // garbagewormhole
+                                case 18:    // waterfall
+                                case 19:    // wac
+                                case 20:    // worm
+                                case 21:    // scav
+                                    DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE); // TODO: remove opacity from entrances
+                                break;
+
+                            // directional placement
+                            case 4:     // entrance
+                                var index = Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, layer));
+
+                                if (index is 22 or 23 or 24 or 25)
+                                {
+                                    GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
+                                }
+
+                                DrawTexture(GLOBALS.Textures.GeoStackables[index], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE);
+                                break;
+                            case 11:    // crack
+                                DrawTexture(
+                                    GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, layer))],
+                                    x * GLOBALS.Scale,
+                                    y * GLOBALS.Scale,
+                                    WHITE
+                                );
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+internal static void DrawTextureQuads(
         Texture texture, 
         PropQuads quads
     )
@@ -2002,11 +2251,11 @@ internal static class Printers
         Camera2D camera,
         int index = -1)
     {
-        var mouse = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-        var hover = Raylib.CheckCollisionPointCircle(mouse, new(origin.X + GLOBALS.EditorCameraWidth / 2, origin.Y + GLOBALS.EditorCameraHeight / 2), 50);
-        var biggerHover = Raylib.CheckCollisionPointRec(mouse, new(origin.X, origin.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight));
+        var mouse = GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
+        var hover = CheckCollisionPointCircle(mouse, new(origin.X + GLOBALS.EditorCameraWidth / 2f, origin.Y + GLOBALS.EditorCameraHeight / 2f), 50);
+        var biggerHover = CheckCollisionPointRec(mouse, new(origin.X, origin.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight));
 
-        System.Numerics.Vector2 pointOrigin1 = new(origin.X, origin.Y),
+        Vector2 pointOrigin1 = new(origin.X, origin.Y),
             pointOrigin2 = new(origin.X + GLOBALS.EditorCameraWidth, origin.Y),
             pointOrigin3 = new(origin.X, origin.Y + GLOBALS.EditorCameraHeight),
             pointOrigin4 = new(origin.X + GLOBALS.EditorCameraWidth, origin.Y + GLOBALS.EditorCameraHeight);
@@ -2039,13 +2288,13 @@ internal static class Printers
             );
         }
 
-        Raylib.DrawRectangleLinesEx(
+        DrawRectangleLinesEx(
             new(origin.X, origin.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
             4f,
             new(255, 255, 255, 255)
         );
 
-        Raylib.DrawRectangleLinesEx(
+        DrawRectangleLinesEx(
             new(origin.X, origin.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
             2f,
             new(0, 0, 0, 255)
