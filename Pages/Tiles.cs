@@ -76,8 +76,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
         var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
         
         if (_gShortcuts.ToMainPage.Check(ctrl, shift)) GLOBALS.Page = 1;
-        // if (_gShortcuts.ToGeometryEditor.Check(ctrl, shift)) GLOBALS.Page = 2;
-        if (_gShortcuts.ToTileEditor.Check(ctrl, shift)) GLOBALS.Page = 3;
+        if (_gShortcuts.ToGeometryEditor.Check(ctrl, shift)) GLOBALS.Page = 2;
+        // if (_gShortcuts.ToTileEditor.Check(ctrl, shift)) GLOBALS.Page = 3;
         if (_gShortcuts.ToCameraEditor.Check(ctrl, shift)) GLOBALS.Page = 4;
         if (_gShortcuts.ToLightEditor.Check(ctrl, shift)) GLOBALS.Page = 5;
         if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift)) { GLOBALS.ResizeFlag = true; GLOBALS.Page = 6; }
@@ -339,7 +339,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 
 
         var currentTilePreviewColor = GLOBALS.TileCategories[tileCategoryIndex].Item2;
-        Texture currentTileTexture = GLOBALS.Textures.Tiles[tileCategoryIndex][tileIndex];
+        var currentTileTexture = GLOBALS.Textures.Tiles[tileCategoryIndex][tileIndex];
 
         #endregion
 
@@ -351,925 +351,94 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
         {
             DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.PreviewScale, GLOBALS.Level.Height * GLOBALS.PreviewScale, new Color(255, 255, 255, 255));
 
-            #region TileEditorGeoMatrix
+            #region Matrix
 
+            #region TileEditorLayer3
             // Draw geos first
             if (showTileLayer3)
             {
-                #region TileEditorLayer3
 
-                for (int y = 0; y < GLOBALS.Level.Height; y++)
-                {
-                    for (int x = 0; x < GLOBALS.Level.Width; x++)
-                    {
-                        const int z = 2;
-
-                        var cell = GLOBALS.Level.GeoMatrix[y, x, z];
-
-                        var texture = Utils.GetBlockIndex(cell.Geo);
-
-                        if (texture >= 0)
-                        {
-                            if (z == GLOBALS.Layer)
-                            {
-
-                                DrawTexturePro(
-                                    GLOBALS.Textures.GeoBlocks[texture],
-                                    new(0, 0, 20, 20),
-                                    new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                    new(0, 0),
-                                    0,
-                                    new(0, 0, 0, 255));
-                            }
-                            else
-                            {
-
-                                Raylib.DrawTexturePro(
-                                    GLOBALS.Textures.GeoBlocks[texture],
-                                    new(0, 0, 20, 20),
-                                    new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                    new(0, 0),
-                                    0,
-                                    new(0, 0, 0, 120));
-                            }
-                        }
-
-                        for (int s = 1; s < cell.Stackables.Length; s++)
-                        {
-                            if (cell.Stackables[s])
-                            {
-                                switch (s)
-                                {
-                                    // dump placement
-                                    case 1:     // ph
-                                    case 2:     // pv
-
-                                        if (z == GLOBALS.Layer)
-                                        {
-
-                                            DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(0, 0, 0, 255)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(0, 0, 0, 170)
-                                            );
-                                        }
-                                        break;
-                                    case 3:     // bathive
-
-                                        if (z == GLOBALS.Layer)
-                                        {
-
-                                            DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 255)
-                                            ); // TODO: remove opacity from entrances
-                                        }
-                                        else
-                                        {
-                                            DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-                                        break;
-
-                                    case 11:    // crack
-                                        if (z == GLOBALS.Layer)
-                                        {
-                                            DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 255)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-                                        break;
-                                }
-                            }
-                        }
-
-                    }
-                }
+                Printers.DrawGeoLayer(
+                    2, 
+                    GLOBALS.PreviewScale, 
+                    false, 
+                    GLOBALS.Layer == 2
+                        ? BLACK 
+                        : new(0, 0, 0, 120)
+                );
 
                 // then draw the tiles
 
                 if (showLayer3Tiles)
                 {
-                    for (int y = 0; y < GLOBALS.Level.Height; y++)
-                    {
-                        for (int x = 0; x < GLOBALS.Level.Width; x++)
-                        {
-                            const int z = 2;
-                            var tileCell = GLOBALS.Level.TileMatrix[y, x, z];
-
-                            if (tileCell.Type == TileType.TileHead)
-                            {
-                                var data = (TileHead)tileCell.Data;
-
-                                var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1 - 5];
-                                var tileTexture = category[data.CategoryPostition.Item2 - 1];
-                                var color = GLOBALS.TileCategories[data.CategoryPostition.Item1 - 5].Item2;
-                                var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
-
-                                Vector2 center = new Vector2(
-                                    initTile.Size.Item1 % 2 == 0 ? x * GLOBALS.PreviewScale + GLOBALS.PreviewScale : x * GLOBALS.PreviewScale + GLOBALS.PreviewScale/2f, 
-                                    initTile.Size.Item2 % 2 == 0 ? y * GLOBALS.PreviewScale + GLOBALS.PreviewScale : y * GLOBALS.PreviewScale + GLOBALS.PreviewScale/2f);
-
-                                float width = 0.4f * (initTile.Type == InitTileType.Box ? initTile.Size.Item1 : initTile.Size.Item1 + initTile.BufferTiles * 2) * GLOBALS.Scale;
-                                float height = 0.4f * (initTile.Size.Item2 + (initTile.BufferTiles * 2)) * GLOBALS.Scale;
-                                
-                                if (GLOBALS.Settings.TileEditor.UseTextures)
-                                {
-                                    if (GLOBALS.Settings.TileEditor.TintedTiles)
-                                    {
-                                        Printers.DrawTileAsPropColored(
-                                            ref tileTexture,
-                                            ref initTile,
-                                            ref center,
-                                            [
-                                                new(width, -height),
-                                                new(-width, -height),
-                                                new(-width, height),
-                                                new(width, height),
-                                                new(width, -height)
-                                            ],
-                                            color,
-                                            20 - GLOBALS.Layer*10
-                                        );
-                                    }
-                                    else
-                                    {
-                                        Printers.DrawTileAsProp(
-                                            ref tileTexture,
-                                            ref initTile,
-                                            ref center,
-                                            [
-                                                new(width, -height),
-                                                new(-width, -height),
-                                                new(-width, height),
-                                                new(width, height),
-                                                new(width, -height)
-                                            ]
-                                        );
-                                    }
-                                }
-                                else Printers.DrawTilePreview(ref initTile, ref tileTexture, ref color, (x, y));
-
-                                EndShaderMode();
-                            }
-                            else if (tileCell.Type == TileType.Material)
-                            {
-                                // var materialName = ((TileMaterial)tileCell.Data).Name;
-                                var origin = new Vector2(x * GLOBALS.PreviewScale + 5, y * GLOBALS.PreviewScale + 5);
-                                var color = GLOBALS.Level.MaterialColors[y, x, z];
-
-                                if (z != GLOBALS.Layer) color.a = 120;
-
-                                if (color.r != 0 || color.g != 0 || color.b != 0)
-                                {
-
-                                    switch (GLOBALS.Level.GeoMatrix[y, x, z].Geo)
-                                    {
-                                        case 1:
-                                            DrawRectangle(
-                                                x * GLOBALS.PreviewScale + 5,
-                                                y * GLOBALS.PreviewScale + 5,
-                                                6,
-                                                6,
-                                                color
-                                            );
-                                            break;
-
-
-                                        case 2:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X, origin.Y + GLOBALS.PreviewScale - 10),
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y + GLOBALS.PreviewScale - 10),
-                                                color
-                                            );
-                                            break;
-
-
-                                        case 3:
-                                            DrawTriangle(
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y),
-                                                new(origin.X, origin.Y + GLOBALS.PreviewScale - 10),
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y + GLOBALS.PreviewScale - 10),
-                                                color
-                                            );
-                                            break;
-
-                                        case 4:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X, origin.Y + GLOBALS.PreviewScale - 10),
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y),
-                                                color
-                                            );
-                                            break;
-
-                                        case 5:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y + GLOBALS.PreviewScale - 10),
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y),
-                                                color
-                                            );
-                                            break;
-
-                                        case 6:
-                                            DrawRectangleV(
-                                                origin,
-                                                new(GLOBALS.PreviewScale - 10, (GLOBALS.PreviewScale - 10) / 2),
-                                                color
-                                            );
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Printers.DrawTileLayer(
+                        2, 
+                        GLOBALS.PreviewScale, 
+                        false, 
+                        !GLOBALS.Settings.TileEditor.UseTextures,
+                        GLOBALS.Settings.TileEditor.TintedTiles
+                    );
                 }
-                #endregion
             }
+            #endregion
 
+            #region TileEditorLayer2
             if (showTileLayer2)
             {
-                #region TileEditorLayer2
                 if (GLOBALS.Layer != 2) DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.PreviewScale, GLOBALS.Level.Height * GLOBALS.PreviewScale, new(90, 90, 90, 120));
 
-                for (int y = 0; y < GLOBALS.Level.Height; y++)
-                {
-                    for (int x = 0; x < GLOBALS.Level.Width; x++)
-                    {
-                        const int z = 1;
-
-                        var cell = GLOBALS.Level.GeoMatrix[y, x, z];
-
-                        var texture = Utils.GetBlockIndex(cell.Geo);
-
-                        if (texture >= 0)
-                        {
-                            if (z == GLOBALS.Layer)
-                            {
-
-                                Raylib.DrawTexturePro(
-                                    GLOBALS.Textures.GeoBlocks[texture],
-                                    new(0, 0, 20, 20),
-                                    new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                    new(0, 0),
-                                    0,
-                                    new(0, 0, 0, 255));
-                            }
-                            else
-                            {
-
-                                Raylib.DrawTexturePro(
-                                    GLOBALS.Textures.GeoBlocks[texture],
-                                    new(0, 0, 20, 20),
-                                    new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                    new(0, 0),
-                                    0,
-                                    new(0, 0, 0, 120));
-                            }
-                        }
-
-                        for (int s = 1; s < cell.Stackables.Length; s++)
-                        {
-                            if (cell.Stackables[s])
-                            {
-                                switch (s)
-                                {
-                                    // dump placement
-                                    case 1:     // ph
-                                    case 2:     // pv
-
-                                        if (z == GLOBALS.Layer)
-                                        {
-
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(0, 0, 0, 255)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(0, 0, 0, 170)
-                                            );
-                                        }
-                                        break;
-                                    case 3:     // bathive
-                                        /*case 5:*/     // shortcut path
-                                        /*case 6:*/     // passage
-                                        /*case 7:*/     // den
-                                        /*case 9:*/     // rock
-                                        /*case 10:*/    // spear
-                                        /*case 12:*/    // forbidflychains
-                                        /*case 13:*/    // garbagewormhole
-                                        /*case 18:*/    // waterfall
-                                        /*case 19:*/    // wac
-                                        /*case 20:*/    // worm
-                                        /*case 21:*/    // scav
-
-                                        if (z == GLOBALS.Layer)
-                                        {
-
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 255)
-                                            ); // TODO: remove opacity from entrances
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-                                        break;
-
-                                    // directional placement
-                                    /*case 4:     // entrance
-                                        var index = Utils.GetStackableTextureIndex(s, CommonUtils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z));
-
-                                        if (index is 22 or 23 or 24 or 25)
-                                        {
-                                            GLOBALS.Level.GeoMatrix[y, x, 0].Geo = 7;
-                                        }
-
-                                        if (z == GLOBALS.Layer) {
-
-                                            Raylib.DrawTexturePro(
-                                                stackableTextures[index], 
-                                                new(0, 0, 20, 20),
-                                                new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0, 
-                                                new(255, 255, 255, 255)
-                                            );
-                                        }
-                                        else {
-                                            Raylib.DrawTexturePro(
-                                                stackableTextures[index], 
-                                                new(0, 0, 20, 20),
-                                                new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0, 
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-
-                                        break;*/
-                                    case 11:    // crack
-                                        if (z == GLOBALS.Layer)
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 255)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-                                        break;
-                                }
-                            }
-                        }
-
-                    }
-                }
+                Printers.DrawGeoLayer(
+                    1, 
+                    GLOBALS.PreviewScale, 
+                    false, 
+                    GLOBALS.Layer == 1
+                        ? BLACK 
+                        : new(0, 0, 0, 120)
+                );
 
                 // Draw layer 2 tiles
 
                 if (showLayer2Tiles)
                 {
-                    for (int y = 0; y < GLOBALS.Level.Height; y++)
-                    {
-                        for (int x = 0; x < GLOBALS.Level.Width; x++)
-                        {
-                            const int z = 1;
-
-                            var tileCell = GLOBALS.Level.TileMatrix[y, x, z];
-
-                            if (tileCell.Type == TileType.TileHead)
-                            {
-                                var data = (TileHead)tileCell.Data;
-
-                                var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1 - 5];
-                                var tileTexture = category[data.CategoryPostition.Item2 - 1];
-                                var color = GLOBALS.TileCategories[data.CategoryPostition.Item1 - 5].Item2;
-                                var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
-                                
-                                Vector2 center = new Vector2(
-                                    initTile.Size.Item1 % 2 == 0 ? x * GLOBALS.PreviewScale + GLOBALS.PreviewScale : x * GLOBALS.PreviewScale + GLOBALS.PreviewScale/2f, 
-                                    initTile.Size.Item2 % 2 == 0 ? y * GLOBALS.PreviewScale + GLOBALS.PreviewScale : y * GLOBALS.PreviewScale + GLOBALS.PreviewScale/2f);
-
-                                float width = 0.4f * (initTile.Type == InitTileType.Box ? initTile.Size.Item1 : initTile.Size.Item1 + initTile.BufferTiles * 2) * GLOBALS.Scale;
-                                float height = 0.4f * (initTile.Size.Item2 + (initTile.BufferTiles * 2)) * GLOBALS.Scale;
-                                
-                                if (GLOBALS.Settings.TileEditor.UseTextures)
-                                {
-                                    if (GLOBALS.Settings.TileEditor.TintedTiles)
-                                    {
-                                        Printers.DrawTileAsPropColored(
-                                            ref tileTexture,
-                                            ref initTile,
-                                            ref center,
-                                            [
-                                                new(width, -height),
-                                                new(-width, -height),
-                                                new(-width, height),
-                                                new(width, height),
-                                                new(width, -height)
-                                            ],
-                                            new Color(color.r, color.g, (int)color.b, 255 - (GLOBALS.Layer - 1)*100),
-                                            10 - (GLOBALS.Layer*10 % 10)
-                                        );
-                                    }
-                                    else
-                                    {
-                                        Printers.DrawTileAsProp(
-                                            ref tileTexture,
-                                            ref initTile,
-                                            ref center,
-                                            [
-                                                new(width, -height),
-                                                new(-width, -height),
-                                                new(-width, height),
-                                                new(width, height),
-                                                new(width, -height)
-                                            ],
-                                            255 - (GLOBALS.Layer - 1)*100
-                                        );
-                                    }
-                                }
-                                else Printers.DrawTilePreview(ref initTile, ref tileTexture, ref color, (x, y));
-                            }
-                            else if (tileCell.Type == TileType.Material)
-                            {
-                                // var materialName = ((TileMaterial)tileCell.Data).Name;
-                                var origin = new Vector2(x * GLOBALS.PreviewScale + 5, y * GLOBALS.PreviewScale + 5);
-                                var color = GLOBALS.Level.MaterialColors[y, x, z];
-
-                                if (z != GLOBALS.Layer) color.a = 120;
-
-                                if (color.r != 0 || color.g != 0 || color.b != 0)
-                                {
-
-                                    switch (GLOBALS.Level.GeoMatrix[y, x, 1].Geo)
-                                    {
-                                        case 1:
-                                            DrawRectangle(
-                                                x * GLOBALS.PreviewScale + 5,
-                                                y * GLOBALS.PreviewScale + 5,
-                                                6,
-                                                6,
-                                                color
-                                            );
-                                            break;
-
-
-                                        case 2:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X, origin.Y + GLOBALS.PreviewScale - 10),
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y + GLOBALS.PreviewScale - 10),
-                                                color
-                                            );
-                                            break;
-
-
-                                        case 3:
-                                            DrawTriangle(
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y),
-                                                new(origin.X, origin.Y + GLOBALS.PreviewScale - 10),
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y + GLOBALS.PreviewScale - 10),
-                                                color
-                                            );
-                                            break;
-
-                                        case 4:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X, origin.Y + GLOBALS.PreviewScale - 10),
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y),
-                                                color
-                                            );
-                                            break;
-
-                                        case 5:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y + GLOBALS.PreviewScale - 10),
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y),
-                                                color
-                                            );
-                                            break;
-
-                                        case 6:
-                                            DrawRectangleV(
-                                                origin,
-                                                new(GLOBALS.PreviewScale - 10, (GLOBALS.PreviewScale - 10) / 2),
-                                                color
-                                            );
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Printers.DrawTileLayer(
+                        1, 
+                        GLOBALS.PreviewScale, 
+                        false, 
+                        !GLOBALS.Settings.TileEditor.UseTextures,
+                        GLOBALS.Settings.TileEditor.TintedTiles
+                    );
                 }
-                #endregion
             }
+            #endregion
 
+            #region TileEditorLayer1
             if (showTileLayer1)
             {
-                #region TileEditorLayer1
                 if (GLOBALS.Layer != 1 && GLOBALS.Layer!= 2) DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.PreviewScale, GLOBALS.Level.Height * GLOBALS.PreviewScale, new(100, 100, 100, 100));
 
-                for (int y = 0; y < GLOBALS.Level.Height; y++)
-                {
-                    for (int x = 0; x < GLOBALS.Level.Width; x++)
-                    {
-                        const int z = 0;
-
-                        var cell = GLOBALS.Level.GeoMatrix[y, x, z];
-
-                        var texture = Utils.GetBlockIndex(cell.Geo);
-
-                        if (texture >= 0)
-                        {
-                            if (z == GLOBALS.Layer)
-                            {
-
-                                Raylib.DrawTexturePro(
-                                    GLOBALS.Textures.GeoBlocks[texture],
-                                    new(0, 0, 20, 20),
-                                    new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                    new(0, 0),
-                                    0,
-                                    new(0, 0, 0, 255));
-                            }
-                            else
-                            {
-
-                                Raylib.DrawTexturePro(
-                                    GLOBALS.Textures.GeoBlocks[texture],
-                                    new(0, 0, 20, 20),
-                                    new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                    new(0, 0),
-                                    0,
-                                    new(0, 0, 0, 120));
-                            }
-                        }
-
-                        for (int s = 1; s < cell.Stackables.Length; s++)
-                        {
-                            if (cell.Stackables[s])
-                            {
-                                switch (s)
-                                {
-                                    // dump placement
-                                    case 1:     // ph
-                                    case 2:     // pv
-
-                                        if (z == GLOBALS.Layer)
-                                        {
-
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(0, 0, 0, 255)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(0, 0, 0, 170)
-                                            );
-                                        }
-                                        break;
-                                    case 3:     // bathive
-                                    case 5:     // entrance
-                                    case 6:     // passage
-                                    case 7:     // den
-                                    case 9:     // rock
-                                    case 10:    // spear
-                                    case 12:    // forbidflychains
-                                    case 13:    // garbagewormhole
-                                    case 18:    // waterfall
-                                    case 19:    // wac
-                                    case 20:    // worm
-                                    case 21:    // scav
-
-                                        if (z == GLOBALS.Layer)
-                                        {
-
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 255)
-                                            ); // TODO: remove opacity from entrances
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-                                        break;
-
-                                    // directional placement
-                                    case 4:     // entrance
-                                        var index = Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z));
-
-                                        if (index is 22 or 23 or 24 or 25)
-                                        {
-                                            GLOBALS.Level.GeoMatrix[y, x, 0].Geo = 7;
-                                        }
-
-                                        if (z == GLOBALS.Layer)
-                                        {
-
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[index],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 255)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[index],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-
-                                        break;
-                                    case 11:    // crack
-                                        if (z == GLOBALS.Layer)
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 255)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
-                                                new(0, 0, 20, 20),
-                                                new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-                                        break;
-                                }
-                            }
-                        }
-
-                    }
-                }
+                Printers.DrawGeoLayer(
+                    0, 
+                    GLOBALS.PreviewScale, 
+                    false, 
+                    GLOBALS.Layer == 0
+                        ? BLACK 
+                        : new(0, 0, 0, 120)
+                );
 
                 // Draw layer 1 tiles
 
                 if (showLayer1Tiles)
                 {
-                    for (int y = 0; y < GLOBALS.Level.Height; y++)
-                    {
-                        for (int x = 0; x < GLOBALS.Level.Width; x++)
-                        {
-                            const int z = 0;
-
-                            var tileCell = GLOBALS.Level.TileMatrix[y, x, z];
-
-                            if (tileCell.Type == TileType.TileHead)
-                            {
-                                var data = (TileHead)tileCell.Data;
-
-                                /*Console.WriteLine($"Index: {tile.Item1 - 5}; Length: {tilePreviewTextures.Length}; Name = {tile.Item3}");*/
-                                var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1 - 5];
-
-                                var tileTexture = category[data.CategoryPostition.Item2 - 1];
-                                var color = GLOBALS.TileCategories[data.CategoryPostition.Item1 - 5].Item2;
-                                var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
-                                
-                                Vector2 center = new Vector2(
-                                    initTile.Size.Item1 % 2 == 0 ? x * GLOBALS.PreviewScale + GLOBALS.PreviewScale : x * GLOBALS.PreviewScale + GLOBALS.PreviewScale/2f, 
-                                    initTile.Size.Item2 % 2 == 0 ? y * GLOBALS.PreviewScale + GLOBALS.PreviewScale : y * GLOBALS.PreviewScale + GLOBALS.PreviewScale/2f);
-
-                                float width = 0.4f * (initTile.Type == InitTileType.Box ? initTile.Size.Item1 : initTile.Size.Item1 + initTile.BufferTiles * 2) * GLOBALS.Scale;
-                                float height = 0.4f * (initTile.Size.Item2 + initTile.BufferTiles*2) * GLOBALS.Scale;
-                                
-                                if (GLOBALS.Settings.TileEditor.UseTextures)
-                                {
-                                    if (GLOBALS.Settings.TileEditor.TintedTiles)
-                                    {
-                                        Printers.DrawTileAsPropColored(
-                                            ref tileTexture,
-                                            ref initTile,
-                                            ref center,
-                                            [
-                                                new(width, -height),
-                                                new(-width, -height),
-                                                new(-width, height),
-                                                new(width, height),
-                                                new(width, -height)
-                                            ],
-                                            new Color(color.r, color.g, color.b, 255 - GLOBALS.Layer*100),
-                                            0
-                                        );
-                                    }
-                                    else
-                                    {
-                                        Printers.DrawTileAsProp(
-                                            ref tileTexture,
-                                            ref initTile,
-                                            ref center,
-                                            [
-                                                new(width, -height),
-                                                new(-width, -height),
-                                                new(-width, height),
-                                                new(width, height),
-                                                new(width, -height)
-                                            ],
-                                            255 - GLOBALS.Layer*100
-                                        );
-                                    }
-                                }
-                                else Printers.DrawTilePreview(ref initTile, ref tileTexture, ref color, (x, y));
-                            }
-                            else if (tileCell.Type == TileType.Material)
-                            {
-                                // var materialName = ((TileMaterial)tileCell.Data).Name;
-                                var origin = new Vector2(x * GLOBALS.PreviewScale + 5, y * GLOBALS.PreviewScale + 5);
-                                var color = GLOBALS.Level.MaterialColors[y, x, 0];
-
-                                if (z != GLOBALS.Layer) color.a = 120;
-
-                                if (color.r != 0 || color.g != 0 || color.b != 0)
-                                {
-
-                                    switch (GLOBALS.Level.GeoMatrix[y, x, 0].Geo)
-                                    {
-                                        case 1:
-                                            DrawRectangle(
-                                                x * GLOBALS.PreviewScale + 5,
-                                                y * GLOBALS.PreviewScale + 5,
-                                                6,
-                                                6,
-                                                color
-                                            );
-                                            break;
-
-
-                                        case 2:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X, origin.Y + GLOBALS.PreviewScale - 10),
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y + GLOBALS.PreviewScale - 10),
-                                                color
-                                            );
-                                            break;
-
-
-                                        case 3:
-                                            DrawTriangle(
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y),
-                                                new(origin.X, origin.Y + GLOBALS.PreviewScale - 10),
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y + GLOBALS.PreviewScale - 10),
-                                                color
-                                            );
-                                            break;
-
-                                        case 4:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X, origin.Y + GLOBALS.PreviewScale - 10),
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y),
-                                                color
-                                            );
-                                            break;
-
-                                        case 5:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y + GLOBALS.PreviewScale - 10),
-                                                new(origin.X + GLOBALS.PreviewScale - 10, origin.Y),
-                                                color
-                                            );
-                                            break;
-
-                                        case 6:
-                                            DrawRectangleV(
-                                                origin,
-                                                new(GLOBALS.PreviewScale - 10, (GLOBALS.PreviewScale - 10) / 2),
-                                                color
-                                            );
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Printers.DrawTileLayer(
+                        0, 
+                        GLOBALS.PreviewScale, 
+                        false, 
+                        !GLOBALS.Settings.TileEditor.UseTextures,
+                        GLOBALS.Settings.TileEditor.TintedTiles
+                    );
                 }
-                #endregion
             }
+            #endregion
 
             #endregion
 

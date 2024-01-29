@@ -40,6 +40,7 @@ internal class PropsEditorPage : IPage
     private int _selectedListPage;
 
     private int _quadLock;
+    private int _pointLock = -1;
 
     private bool _clickTracker;
 
@@ -47,7 +48,11 @@ internal class PropsEditorPage : IPage
 
     private bool _movingProps;
     private bool _rotatingProps;
+    private bool _scalingProps;
     private bool _stretchingProp;
+    private bool _editingPropPoints;
+
+    private byte _stretchAxes;
     
     private Vector2 _selection1 = new(-100, -100);
     private Rectangle _selection;
@@ -56,12 +61,42 @@ internal class PropsEditorPage : IPage
 
     private bool[] _selected = [];
     private bool[] _hidden = [];
+    private float[] _ropeRadius = [];
 
     private readonly (string name, Color color)[] _propCategoriesOnly = GLOBALS.PropCategories[..^2]; // a risky move..
     private readonly InitPropBase[][] _propsOnly = GLOBALS.Props[..^2]; // a risky move..
 
     private readonly (int index, string category)[] _tilesAsPropsCategoryIndices = [];
     private readonly (int index, InitTile init)[][] _tilesAsPropsIndices = [];
+    
+    // Layers 2 and 3 do not show geo features like shortcuts and entrances 
+    private readonly bool[] _layerStackableFilter =
+    [
+        false, 
+        true, 
+        true, 
+        true, 
+        false, // 5
+        false, // 6
+        false, // 7
+        true, 
+        false, // 9
+        false, // 10
+        true, 
+        false, // 12
+        false, // 13
+        true, 
+        true, 
+        true, 
+        true, 
+        false, // 18
+        false, // 19
+        false, // 20
+        false, // 21
+        true
+    ];
+
+    private readonly string[] _menuCategoryNames = [ "Tiles", "Ropes", "Long Props", "Other" ];
 
     private readonly byte[] _menuPanelBytes = "Menu"u8.ToArray();
 
@@ -174,6 +209,11 @@ internal class PropsEditorPage : IPage
         if (_hidden.Length != GLOBALS.Level.Props.Length)
         {
             _hidden = new bool[GLOBALS.Level.Props.Length];
+        }
+
+        if (_ropeRadius.Length != GLOBALS.Level.Props.Length)
+        {
+            
         }
 
         GLOBALS.PreviousPage = 8;
@@ -293,9 +333,9 @@ internal class PropsEditorPage : IPage
         }
         else
         {
-            if (IsKeyPressed(KeyboardKey.KEY_Z)) _showTileLayer1 = !_showTileLayer1;
-            if (IsKeyPressed(KeyboardKey.KEY_X)) _showTileLayer2 = !_showTileLayer2;
-            if (IsKeyPressed(KeyboardKey.KEY_C)) _showTileLayer3 = !_showTileLayer3;
+            if (IsKeyPressed(KeyboardKey.KEY_Z) && !_scalingProps) _showTileLayer1 = !_showTileLayer1;
+            if (IsKeyPressed(KeyboardKey.KEY_X) && !_scalingProps) _showTileLayer2 = !_showTileLayer2;
+            if (IsKeyPressed(KeyboardKey.KEY_C) && !_scalingProps) _showTileLayer3 = !_showTileLayer3;
         }
 
         // Mode-based hotkeys
@@ -344,8 +384,11 @@ internal class PropsEditorPage : IPage
                         
                         case 1: // Ropes
                             break;
+                        
+                        case 2: // Long Props
+                            break;
 
-                        case 2: // Others
+                        case 3: // Others
                         {
                             var init = _propsOnly[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
                             var texture = GLOBALS.Textures.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
@@ -401,12 +444,12 @@ internal class PropsEditorPage : IPage
                     if (IsKeyPressed(KeyboardKey.KEY_D))
                     {
                         _menuRootCategoryIndex++;
-                        if (_menuRootCategoryIndex > 2) _menuRootCategoryIndex = 0;
+                        if (_menuRootCategoryIndex > 3) _menuRootCategoryIndex = 0;
                     }
                     else if (IsKeyPressed(KeyboardKey.KEY_A))
                     {
                         _menuRootCategoryIndex--;
-                        if (_menuRootCategoryIndex < 0) _menuRootCategoryIndex = 2;
+                        if (_menuRootCategoryIndex < 0) _menuRootCategoryIndex = 3;
                     }
                 }
                 else
@@ -502,16 +545,32 @@ internal class PropsEditorPage : IPage
                 // Move
                 if (IsKeyPressed(KeyboardKey.KEY_F) && anySelected)
                 {
+                    _scalingProps = false;
                     _movingProps = true;
                     _rotatingProps = false;
                     _stretchingProp = false;
+                    _editingPropPoints = false;
                 }
                 // Rotate
                 else if (IsKeyPressed(KeyboardKey.KEY_R) && anySelected)
                 {
+                    _scalingProps = false;
                     _movingProps = false;
                     _rotatingProps = true;
                     _stretchingProp = false;
+                    _editingPropPoints = false;
+                }
+                // Scale
+                else if (IsKeyPressed(KeyboardKey.KEY_S) && anySelected)
+                {
+                    _movingProps = false;
+                    _rotatingProps = false;
+                    _stretchingProp = false;
+                    _editingPropPoints = false;
+                    _scalingProps = !_scalingProps;
+                    _stretchAxes = 0;
+                    
+                    SetMouseCursor(_scalingProps ? MouseCursor.MOUSE_CURSOR_RESIZE_NESW : MouseCursor.MOUSE_CURSOR_DEFAULT);
                 }
                 // Hide
                 else if (IsKeyPressed(KeyboardKey.KEY_H) && anySelected)
@@ -522,27 +581,53 @@ internal class PropsEditorPage : IPage
                     }
                 }
                 // Edit Quads
-                else if (IsKeyPressed(KeyboardKey.KEY_S) && fetchedSelected.Length == 1)
+                else if (IsKeyPressed(KeyboardKey.KEY_Q) && fetchedSelected.Length == 1)
                 {
+                    _scalingProps = false;
                     _movingProps = false;
                     _rotatingProps = false;
                     _stretchingProp = !_stretchingProp;
+                    _editingPropPoints = false;
                 }
                 // Delete
                 else if (IsKeyPressed(KeyboardKey.KEY_D) && anySelected)
                 {
+                    _scalingProps = false;
+                    _movingProps = false;
+                    _rotatingProps = false;
+                    _stretchingProp = false;
+                    _editingPropPoints = false;
+                    
                     GLOBALS.Level.Props = _selected
                         .Select((s, i) => (s, i))
                         .Where(v => !v.Item1)
                         .Select(v => GLOBALS.Level.Props[v.Item2])
                         .ToArray();
                 }
+                // Edit Rope Points
+                else if (
+                    fetchedSelected.Length == 1 &&
+                    fetchedSelected[0].prop.type == InitPropType.Rope &&
+                    IsKeyPressed(KeyboardKey.KEY_P)
+                )
+                {
+                    _scalingProps = false;
+                    _movingProps = false;
+                    _rotatingProps = false;
+                    _stretchingProp = false;
+                    _editingPropPoints = !_editingPropPoints;
+                }
                 
-                
+                // TODO: Use enums instead
                 if (_movingProps)
                 {
                     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _movingProps = false;
-                    var delta = GetMouseDelta();
+                    var delta = GetMouseDelta(); // TODO: Scale to world2D
+                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+                    {
+                        delta.X = 0;
+                        delta.Y = 0;
+                    }
 
                     for (var s = 0; s < _selected.Length; s++)
                     {
@@ -556,6 +641,14 @@ internal class PropsEditorPage : IPage
                         quads.BottomLeft = RayMath.Vector2Add(quads.BottomLeft, delta);
 
                         GLOBALS.Level.Props[s].prop.Quads = quads;
+
+                        if (GLOBALS.Level.Props[s].type == InitPropType.Rope)
+                        {
+                            for (var p = 0; p < GLOBALS.Level.Props[s].prop.Extras.RopePoints.Length; p++)
+                            {
+                                GLOBALS.Level.Props[s].prop.Extras.RopePoints[p] = RayMath.Vector2Add(GLOBALS.Level.Props[s].prop.Extras.RopePoints[p], delta);
+                            }
+                        }
                     }
                 }
                 else if (_rotatingProps)
@@ -573,46 +666,225 @@ internal class PropsEditorPage : IPage
                         var quads = GLOBALS.Level.Props[p].prop.Quads;
 
                         GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(quads, delta.X, _selectedPropsCenter);
+
+                        if (GLOBALS.Level.Props[p].type == InitPropType.Rope)
+                        {
+                            Utils.RotatePoints(delta.X, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
+                        }
+                    }
+                }
+                else if (_scalingProps)
+                {
+                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                    {
+                        _stretchAxes = 0;
+                        _scalingProps = false;
+                        SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+                    }
+
+                    if (IsKeyPressed(KeyboardKey.KEY_X))
+                    {
+                        _stretchAxes = (byte)(_stretchAxes == 1 ? 0 : 1);
+                        SetMouseCursor(MouseCursor.MOUSE_CURSOR_RESIZE_EW);
+                    }
+                    if (IsKeyPressed(KeyboardKey.KEY_Y))
+                    {
+                        _stretchAxes =  (byte)(_stretchAxes == 2 ? 0 : 2);
+                        SetMouseCursor(MouseCursor.MOUSE_CURSOR_RESIZE_NS);
+                    }
+
+                    var delta = GetMouseDelta();
+
+                    switch (_stretchAxes)
+                    {
+                        case 0: // Uniform Scaling
+                        {
+                            var enclose = Utils.EncloseProps(fetchedSelected.Select(s => s.prop.prop.Quads));
+                            var center = Utils.RectangleCenter(ref enclose);
+
+                            foreach (var selected in fetchedSelected)
+                            {
+                                var quads = selected.prop.prop.Quads;
+                                Utils.ScaleQuads(ref quads, center, 1f + delta.X*0.01f);
+                                GLOBALS.Level.Props[selected.index].prop.Quads = quads;
+                            }
+                        }
+                            break;
+
+                        case 1: // X-axes Scaling
+                        {
+                            foreach (var selected in fetchedSelected)
+                            {
+                                var quads = selected.prop.prop.Quads;
+                                var center = Utils.QuadsCenter(ref quads);
+                                
+                                Utils.ScaleQuadsX(ref quads, center, 1f + delta.X * 0.01f);
+                                
+                                GLOBALS.Level.Props[selected.index].prop.Quads = quads;
+                            }
+                        }
+                            break;
+
+                        case 2: // Y-axes Scaling
+                        {
+                            foreach (var selected in fetchedSelected)
+                            {
+                                var quads = selected.prop.prop.Quads;
+                                var center = Utils.QuadsCenter(ref quads);
+
+                                Utils.ScaleQuadsY(ref quads, center, 1f - delta.Y * 0.01f);
+                                
+                                GLOBALS.Level.Props[selected.index].prop.Quads = quads;
+                            }
+                        }
+                            break;
                     }
                 }
                 else if (_stretchingProp)
                 {
                     var currentQuads = fetchedSelected[0].prop.prop.Quads;
-                    
+
                     if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
                     {
-                        // Check Top-Left
-                        if (CheckCollisionPointCircle(tileMouseWorld, currentQuads.TopLeft, 5f) || _quadLock == 1)
+                        if (fetchedSelected[0].prop.type == InitPropType.Rope)
                         {
-                            _quadLock = 1;
-                            currentQuads.TopLeft = tileMouseWorld;
-                        }
-                        // Check Top-Right
-                        else if (CheckCollisionPointCircle(tileMouseWorld, currentQuads.TopRight, 5f)  || _quadLock == 2)
-                        {
-                            _quadLock = 2;
-                            currentQuads.TopRight = tileMouseWorld;
-                        }
-                        // Check Bottom-Right 
-                        else if (CheckCollisionPointCircle(tileMouseWorld, currentQuads.BottomRight, 5f)  || _quadLock == 3)
-                        {
-                            _quadLock = 3;
-                            currentQuads.BottomRight = tileMouseWorld;
-                        }
-                        // Check Bottom-Left
-                        else if (CheckCollisionPointCircle(tileMouseWorld, currentQuads.BottomLeft, 5f)  || _quadLock == 4)
-                        {
-                            _quadLock = 4;
-                            currentQuads.BottomLeft = tileMouseWorld;
+                            var middleLeft = RayMath.Vector2Divide(
+                                RayMath.Vector2Add(currentQuads.TopLeft, currentQuads.BottomLeft),
+                                new(2f, 2f)
+                            );
+
+                            var middleRight = RayMath.Vector2Divide(
+                                RayMath.Vector2Add(currentQuads.TopRight, currentQuads.BottomRight),
+                                new(2f, 2f)
+                            );
+                            
+                            var beta = RayMath.Vector2Angle(RayMath.Vector2Subtract(middleLeft, middleRight), new(1.0f, 0.0f));
+                            
+                            var r = RayMath.Vector2Length(RayMath.Vector2Subtract(currentQuads.TopLeft, middleLeft));
+                            
+                            if (
+                                CheckCollisionPointCircle(
+                                    tileMouseWorld, middleLeft,
+                                    5f
+                                ) || _quadLock == 1)
+                            {
+                                _quadLock = 1;
+                                currentQuads.TopLeft = RayMath.Vector2Add(
+                                    tileMouseWorld, 
+                                    new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
+                                    );
+                                
+                                currentQuads.BottomLeft = RayMath.Vector2Add(
+                                    tileMouseWorld, 
+                                    new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
+                                    );
+                                
+                                currentQuads.TopRight = RayMath.Vector2Add(
+                                    middleRight, 
+                                    new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
+                                );
+                                
+                                currentQuads.BottomRight = RayMath.Vector2Add(
+                                    middleRight, 
+                                    new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
+                                );
+                            }
+
+                            if (
+                                CheckCollisionPointCircle(
+                                    tileMouseWorld, middleRight,
+                                    5f
+                                    ) || _quadLock == 2)
+                            {
+                                _quadLock = 2;
+                                
+                                currentQuads.TopLeft = RayMath.Vector2Add(
+                                    middleLeft, 
+                                    new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
+                                );
+                                
+                                currentQuads.BottomLeft = RayMath.Vector2Add(
+                                    middleLeft, 
+                                    new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
+                                );
+                                
+                                currentQuads.TopRight = RayMath.Vector2Add(
+                                    tileMouseWorld, 
+                                    new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
+                                );
+                                
+                                currentQuads.BottomRight = RayMath.Vector2Add(
+                                    tileMouseWorld, 
+                                    new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
+                                );
+                            }
                         }
                         else
                         {
-                            _quadLock = 0;
+                            if (CheckCollisionPointCircle(tileMouseWorld, currentQuads.TopLeft, 5f) && _quadLock == 0)
+                            {
+                                _quadLock = 1;
+                            }
+                            else if (CheckCollisionPointCircle(tileMouseWorld, currentQuads.TopRight, 5f) &&
+                                     _quadLock == 0)
+                            {
+                                _quadLock = 2;
+                            }
+                            else if (CheckCollisionPointCircle(tileMouseWorld, currentQuads.BottomRight, 5f) &&
+                                     _quadLock == 0)
+                            {
+                                _quadLock = 3;
+                            }
+                            else if (CheckCollisionPointCircle(tileMouseWorld, currentQuads.BottomLeft, 5f) &&
+                                     _quadLock == 0)
+                            {
+                                _quadLock = 4;
+                            }
+                            
+                            // Check Top-Left
+                            if (_quadLock == 1)
+                            {
+                                currentQuads.TopLeft = tileMouseWorld;
+                            }
+                            // Check Top-Right
+                            else if (_quadLock == 2)
+                            {
+                                currentQuads.TopRight = tileMouseWorld;
+                            }
+                            // Check Bottom-Right 
+                            else if (_quadLock == 3)
+                            {
+                                currentQuads.BottomRight = tileMouseWorld;
+                            }
+                            // Check Bottom-Left
+                            else if (_quadLock == 4)
+                            {
+                                currentQuads.BottomLeft = tileMouseWorld;
+                            }
                         }
                         
                         GLOBALS.Level.Props[fetchedSelected[0].index].prop.Quads = currentQuads;
                     }
                     else if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _quadLock != 0) _quadLock = 0;
+                }
+                else if (_editingPropPoints)
+                {
+                    var points = fetchedSelected[0].prop.prop.Extras.RopePoints;
+                    
+                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                    {
+                        // Check Collision of Each Point
+
+                        for (var p = 0; p < points.Length; p++)
+                        {
+                            if (CheckCollisionPointCircle(tileMouseWorld, points[p], 3f) || _pointLock == p)
+                            {
+                                _pointLock = p;
+                                points[p] = tileMouseWorld;
+                            }
+                        }
+                    }
+                    else if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _pointLock != -1) _pointLock = -1;
                 }
                 else
                 {
@@ -622,7 +894,6 @@ internal class PropsEditorPage : IPage
                         _clickTracker = true;
                     }
 
-                    // TODO: Selection feature is incomplete
                     if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _clickTracker)
                     {
                         _clickTracker = false;
@@ -636,13 +907,23 @@ internal class PropsEditorPage : IPage
                         {
                             var current = GLOBALS.Level.Props[i];
                             var propSelectRect = Utils.EncloseQuads(current.prop.Quads);
-                            if (CheckCollisionRecs(propSelectRect, _selection) && !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10))
+                            if (IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL))
                             {
-                                _selected[i] = true;
+                                if (CheckCollisionRecs(propSelectRect, _selection) && !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10))
+                                {
+                                    _selected[i] = !_selected[i];
+                                }
                             }
                             else
                             {
-                                _selected[i] = false;
+                                if (CheckCollisionRecs(propSelectRect, _selection) && !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10))
+                                {
+                                    _selected[i] = true;
+                                }
+                                else
+                                {
+                                    _selected[i] = false;
+                                }
                             }
                         }
                     }   
@@ -661,279 +942,32 @@ internal class PropsEditorPage : IPage
         {
             DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, new Color(215, 215, 215, 255));
 
+            #region TileEditorLayer3
             if (_showTileLayer3)
             {
-                #region TileEditorLayer3
-
                 // Draw geos first
-                for (var y = 0; y < GLOBALS.Level.Height; y++)
-                {
-                    for (int x = 0; x < GLOBALS.Level.Width; x++)
-                    {
-                        const int z = 2;
 
-                        var cell = GLOBALS.Level.GeoMatrix[y, x, z];
-
-                        var texture = Utils.GetBlockIndex(cell.Geo);
-
-                        if (texture >= 0)
-                        {
-                            if (z == GLOBALS.Layer)
-                            {
-
-                                DrawTexturePro(
-                                    GLOBALS.Textures.GeoBlocks[texture],
-                                    new(0, 0, 20, 20),
-                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                    new(0, 0),
-                                    0,
-                                    new(0, 0, 0, 255)
-                                );
-                            }
-                            else
-                            {
-
-                                Raylib.DrawTexturePro(
-                                    GLOBALS.Textures.GeoBlocks[texture],
-                                    new(0, 0, 20, 20),
-                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                    new(0, 0),
-                                    0,
-                                    new(0, 0, 0, 120));
-                            }
-                        }
-
-                        for (int s = 1; s < cell.Stackables.Length; s++)
-                        {
-                            if (cell.Stackables[s])
-                            {
-                                switch (s)
-                                {
-                                    // dump placement
-                                    case 1:     // ph
-                                    case 2:     // pv
-
-                                        if (z == GLOBALS.Layer)
-                                        {
-
-                                            DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(0, 0, 0, 255)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(0, 0, 0, 170)
-                                            );
-                                        }
-                                        break;
-                                    case 3:     // bathive
-                                        /*case 5:     // entrance
-                                        case 6:     // passage
-                                        case 7:     // den
-                                        case 9:     // rock
-                                        case 10:    // spear
-                                        case 12:    // forbidflychains
-                                        case 13:    // garbagewormhole
-                                        case 18:    // waterfall
-                                        case 19:    // wac
-                                        case 20:    // worm
-                                        case 21:*/    // scav
-
-                                        if (z == GLOBALS.Layer)
-                                        {
-
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 255)
-                                            ); // TODO: remove opacity from entrances
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-                                        break;
-
-                                    // directional placement
-                                    /*case 4:     // entrance
-                                        var index = Utils.GetStackableTextureIndex(s, CommonUtils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z));
-
-                                        if (index is 22 or 23 or 24 or 25)
-                                        {
-                                            GLOBALS.Level.GeoMatrix[y, x, 0].Geo = 7;
-                                        }
-
-                                        if (z == GLOBALS.Layer) {
-
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[index], 
-                                                new(0, 0, 20, 20),
-                                                new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0, 
-                                                new(255, 255, 255, 255)
-                                            );
-                                        }
-                                        else {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[index], 
-                                                new(0, 0, 20, 20),
-                                                new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0, 
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-
-                                        break;*/
-                                    case 11:    // crack
-                                        if (z == GLOBALS.Layer)
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 255)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-                                        break;
-                                }
-                            }
-                        }
-
-                    }
-                }
+                Printers.DrawGeoLayer(
+                    2, 
+                    GLOBALS.PreviewScale, 
+                    false, 
+                    GLOBALS.Layer == 2 
+                        ? BLACK 
+                        : new(0, 0, 0, 120), 
+                    _layerStackableFilter
+                );
 
                 // Then draw the tiles
 
                 if (_showLayer3Tiles)
                 {
-                    for (int y = 0; y < GLOBALS.Level.Height; y++)
-                    {
-                        for (int x = 0; x < GLOBALS.Level.Width; x++)
-                        {
-                            const int z = 2;
-                            var tileCell = GLOBALS.Level.TileMatrix[y, x, z];
-
-                            if (tileCell.Type == TileType.TileHead)
-                            {
-                                var data = (TileHead)tileCell.Data;
-
-                                var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1 - 5];
-                                var tileTexture = category[data.CategoryPostition.Item2 - 1];
-                                var color = GLOBALS.TileCategories[data.CategoryPostition.Item1 - 5].Item2;
-                                var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
-
-
-                                Printers.DrawTilePreview(ref initTile, ref tileTexture, ref color, (x, y));
-                            }
-                            else if (tileCell.Type == TileType.Material)
-                            {
-                                // var materialName = ((TileMaterial)tileCell.Data).Name;
-                                var origin = new Vector2(x * previewScale + 5, y * previewScale + 5);
-                                var color = GLOBALS.Level.MaterialColors[y, x, 0];
-
-                                if (z != GLOBALS.Layer) color.a = 120;
-
-                                if (color.r != 0 || color.g != 0 || color.b != 0)
-                                {
-
-                                    switch (GLOBALS.Level.GeoMatrix[y, x, 2].Geo)
-                                    {
-                                        case 1:
-                                            DrawRectangle(
-                                                x * previewScale + 5,
-                                                y * previewScale + 5,
-                                                6,
-                                                6,
-                                                color
-                                            );
-                                            break;
-
-
-                                        case 2:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X, origin.Y + previewScale - 10),
-                                                new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
-                                                color
-                                            );
-                                            break;
-
-
-                                        case 3:
-                                            DrawTriangle(
-                                                new(origin.X + previewScale - 10, origin.Y),
-                                                new(origin.X, origin.Y + previewScale - 10),
-                                                new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
-                                                color
-                                            );
-                                            break;
-
-                                        case 4:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X, origin.Y + previewScale - 10),
-                                                new(origin.X + previewScale - 10, origin.Y),
-                                                color
-                                            );
-                                            break;
-
-                                        case 5:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
-                                                new(origin.X + previewScale - 10, origin.Y),
-                                                color
-                                            );
-                                            break;
-
-                                        case 6:
-                                            DrawRectangleV(
-                                                origin,
-                                                new(previewScale - 10, (previewScale - 10) / 2),
-                                                color
-                                            );
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Printers.DrawTileLayer(
+                        2, 
+                        GLOBALS.PreviewScale, 
+                        false, 
+                        !GLOBALS.Settings.TileEditor.UseTextures,
+                        GLOBALS.Settings.TileEditor.TintedTiles
+                    );
                 }
                 
                 // Then draw the props
@@ -953,319 +987,130 @@ internal class PropsEditorPage : IPage
                     // origin must be the center
                     // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
-                    Printers.DrawProp(category, index, current.prop);
+                    Printers.DrawProp(current.type, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
                     
-                    // if (current.prop.IsTile) 
-                    //     Printers.DrawTileAsProp(
-                    //         ref GLOBALS.Textures.Tiles[category][index],
-                    //         ref GLOBALS.Tiles[category][index],
-                    //         (tr, tl, bl, br)
-                    //     );
-                    // else 
-                    //     Printers.DrawProp(
-                    //         GLOBALS.Props[category][index], 
-                    //         ref GLOBALS.Textures.Props[category][index],
-                    //         ref origin,
-                    //         [
-                    //             new(tr.X - origin.X, tr.Y - origin.Y),
-                    //             new(tl.X - origin.X, tl.Y - origin.Y),
-                    //             new(bl.X - origin.X, bl.Y - origin.Y),
-                    //             new(br.X - origin.X, br.Y - origin.Y),
-                    //             new(tr.X - origin.X, tr.Y - origin.Y),
-                    //         ]
-                    //     );
+                    // Draw Rope Point
+                    if (current.type == InitPropType.Rope)
+                    {
+                        foreach (var point in current.prop.Extras.RopePoints)
+                        {
+                            DrawCircleV(point, 3f, WHITE);
+                        }
+                    }
                     
                     if (_selected[p])
                     {
-                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1f, BLUE);
+                        // Side Lines
+                        
+                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, BLUE);
                         
                         // Quad Points
 
                         if (_stretchingProp)
                         {
-                            DrawCircleV(quads.TopLeft, 5f, BLUE);
-                            DrawCircleV(quads.TopRight, 5f, BLUE);
-                            DrawCircleV(quads.BottomRight, 5f, BLUE);
-                            DrawCircleV(quads.BottomLeft, 5f, BLUE);
-                        }
-                    }
-                }
-                #endregion
-            }
-
-            if (_showTileLayer2)
-            {
-                #region TileEditorLayer2
-                if (GLOBALS.Layer != 2) DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, new(90, 90, 90, 120));
-
-                for (int y = 0; y < GLOBALS.Level.Height; y++)
-                {
-                    for (int x = 0; x < GLOBALS.Level.Width; x++)
-                    {
-                        const int z = 1;
-
-                        var cell = GLOBALS.Level.GeoMatrix[y, x, z];
-
-                        var texture = Utils.GetBlockIndex(cell.Geo);
-
-                        if (texture >= 0)
-                        {
-                            if (z == GLOBALS.Layer)
+                            if (current.type == InitPropType.Rope)
                             {
-
-                                Raylib.DrawTexturePro(
-                                    GLOBALS.Textures.GeoBlocks[texture],
-                                    new(0, 0, 20, 20),
-                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                    new(0, 0),
-                                    0,
-                                    new(0, 0, 0, 255));
+                                DrawCircleV(
+                                    RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
+                                        new(2f, 2f)), 
+                                    5f, 
+                                    BLUE
+                                );
+                                
+                                DrawCircleV(
+                                    RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopRight, quads.BottomRight), 
+                                        new(2f, 2f)), 
+                                    5f, 
+                                    BLUE
+                                );
+                                
+                                DrawCircleV(quads.TopLeft, 2f, BLUE);
+                                DrawCircleV(quads.TopRight, 2f, BLUE);
+                                DrawCircleV(quads.BottomRight, 2f, BLUE);
+                                DrawCircleV(quads.BottomLeft, 2f, BLUE);
                             }
                             else
                             {
-
-                                Raylib.DrawTexturePro(
-                                    GLOBALS.Textures.GeoBlocks[texture],
-                                    new(0, 0, 20, 20),
-                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                    new(0, 0),
-                                    0,
-                                    new(0, 0, 0, 120));
+                                DrawCircleV(quads.TopLeft, 5f, BLUE);
+                                DrawCircleV(quads.TopRight, 5f, BLUE);
+                                DrawCircleV(quads.BottomRight, 5f, BLUE);
+                                DrawCircleV(quads.BottomLeft, 5f, BLUE);
                             }
                         }
-
-                        for (int s = 1; s < cell.Stackables.Length; s++)
+                        else if (_scalingProps)
                         {
-                            if (cell.Stackables[s])
+                            var center = Utils.QuadsCenter(ref quads);
+                            
+                            switch (_stretchAxes)
                             {
-                                switch (s)
+                                case 1:
+                                    DrawLineEx(
+                                        center with { X = -10 }, 
+                                        center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
+                                        2f, 
+                                        RED
+                                    );
+                                    break;
+                                case 2:
+                                    DrawLineEx(
+                                        center with { Y = -10 },
+                                        center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
+                                        2f,
+                                        GREEN
+                                    );
+                                    break;
+                            }
+                        }
+                        
+                        // Draw Rope Point
+                        if (current.type == InitPropType.Rope)
+                        {
+                            if (_editingPropPoints)
+                            {
+                                foreach (var point in current.prop.Extras.RopePoints)
                                 {
-                                    // dump placement
-                                    case 1:     // ph
-                                    case 2:     // pv
-
-                                        if (z == GLOBALS.Layer)
-                                        {
-
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(0, 0, 0, 255)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(0, 0, 0, 170)
-                                            );
-                                        }
-                                        break;
-                                    case 3:     // bathive
-                                        /*case 5:*/     // shortcut path
-                                        /*case 6:*/     // passage
-                                        /*case 7:*/     // den
-                                        /*case 9:*/     // rock
-                                        /*case 10:*/    // spear
-                                        /*case 12:*/    // forbidflychains
-                                        /*case 13:*/    // garbagewormhole
-                                        /*case 18:*/    // waterfall
-                                        /*case 19:*/    // wac
-                                        /*case 20:*/    // worm
-                                        /*case 21:*/    // scav
-
-                                        if (z == GLOBALS.Layer)
-                                        {
-
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 255)
-                                            ); // TODO: remove opacity from entrances
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-                                        break;
-
-                                    // directional placement
-                                    /*case 4:     // entrance
-                                        var index = Utils.GetStackableTextureIndex(s, CommonUtils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z));
-
-                                        if (index is 22 or 23 or 24 or 25)
-                                        {
-                                            GLOBALS.Level.GeoMatrix[y, x, 0].Geo = 7;
-                                        }
-
-                                        if (z == GLOBALS.Layer) {
-
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[index], 
-                                                new(0, 0, 20, 20),
-                                                new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0, 
-                                                new(255, 255, 255, 255)
-                                            );
-                                        }
-                                        else {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[index], 
-                                                new(0, 0, 20, 20),
-                                                new(x*previewScale, y*previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0, 
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-
-                                        break;*/
-                                    case 11:    // crack
-                                        if (z == GLOBALS.Layer)
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 255)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-                                        break;
+                                    DrawCircleV(point, 3f, RED);
+                                }
+                            }
+                            else
+                            {
+                                foreach (var point in current.prop.Extras.RopePoints)
+                                {
+                                    DrawCircleV(point, 2f, ORANGE);
                                 }
                             }
                         }
-
                     }
                 }
+            }
+            #endregion
+
+            #region TileEditorLayer2
+            if (_showTileLayer2)
+            {
+                if (GLOBALS.Layer != 2) DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, new(90, 90, 90, 120));
+
+                Printers.DrawGeoLayer(
+                    1, 
+                    GLOBALS.PreviewScale, 
+                    false, 
+                    GLOBALS.Layer == 1 
+                        ? BLACK 
+                        : new(0, 0, 0, 120), 
+                    _layerStackableFilter
+                );
 
                 // Draw layer 2 tiles
 
                 if (_showLayer2Tiles)
                 {
-                    for (int y = 0; y < GLOBALS.Level.Height; y++)
-                    {
-                        for (int x = 0; x < GLOBALS.Level.Width; x++)
-                        {
-                            const int z = 1;
-
-                            var tileCell = GLOBALS.Level.TileMatrix[y, x, z];
-
-                            if (tileCell.Type == TileType.TileHead)
-                            {
-                                var data = (TileHead)tileCell.Data;
-
-                                var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1 - 5];
-                                var tileTexture = category[data.CategoryPostition.Item2 - 1];
-                                var color = GLOBALS.TileCategories[data.CategoryPostition.Item1 - 5].Item2;
-                                var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
-
-
-                                Printers.DrawTilePreview(ref initTile, ref tileTexture, ref color, (x, y));
-                            }
-                            else if (tileCell.Type == TileType.Material)
-                            {
-                                // var materialName = ((TileMaterial)tileCell.Data).Name;
-                                var origin = new Vector2(x * previewScale + 5, y * previewScale + 5);
-                                var color = GLOBALS.Level.MaterialColors[y, x, 0];
-
-                                if (z != GLOBALS.Layer) color.a = 120;
-
-                                if (color.r != 0 || color.g != 0 || color.b != 0)
-                                {
-
-                                    switch (GLOBALS.Level.GeoMatrix[y, x, 1].Geo)
-                                    {
-                                        case 1:
-                                            DrawRectangle(
-                                                x * previewScale + 5,
-                                                y * previewScale + 5,
-                                                6,
-                                                6,
-                                                color
-                                            );
-                                            break;
-
-
-                                        case 2:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X, origin.Y + previewScale - 10),
-                                                new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
-                                                color
-                                            );
-                                            break;
-
-
-                                        case 3:
-                                            DrawTriangle(
-                                                new(origin.X + previewScale - 10, origin.Y),
-                                                new(origin.X, origin.Y + previewScale - 10),
-                                                new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
-                                                color
-                                            );
-                                            break;
-
-                                        case 4:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X, origin.Y + previewScale - 10),
-                                                new(origin.X + previewScale - 10, origin.Y),
-                                                color
-                                            );
-                                            break;
-
-                                        case 5:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
-                                                new(origin.X + previewScale - 10, origin.Y),
-                                                color
-                                            );
-                                            break;
-
-                                        case 6:
-                                            DrawRectangleV(
-                                                origin,
-                                                new(previewScale - 10, (previewScale - 10) / 2),
-                                                color
-                                            );
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Printers.DrawTileLayer(
+                        1, 
+                        GLOBALS.PreviewScale, 
+                        false, 
+                        !GLOBALS.Settings.TileEditor.UseTextures,
+                        GLOBALS.Settings.TileEditor.TintedTiles
+                    );
                 }
                 
                 // then draw the props
@@ -1285,323 +1130,130 @@ internal class PropsEditorPage : IPage
                     // origin must be the center
                     // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
-                    Printers.DrawProp(category, index, current.prop);
+                    Printers.DrawProp(current.type, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
                     
-                    // if (current.prop.IsTile) 
-                    //     Printers.DrawTileAsProp(
-                    //         ref GLOBALS.Textures.Tiles[category][index],
-                    //         ref GLOBALS.Tiles[category][index],
-                    //         (tr, tl, bl, br)
-                    //     );
-                    // else 
-                    //     Printers.DrawProp(
-                    //         GLOBALS.Props[category][index], 
-                    //         ref GLOBALS.Textures.Props[category][index],
-                    //         ref origin,
-                    //         [
-                    //             new(tr.X - origin.X, tr.Y - origin.Y),
-                    //             new(tl.X - origin.X, tl.Y - origin.Y),
-                    //             new(bl.X - origin.X, bl.Y - origin.Y),
-                    //             new(br.X - origin.X, br.Y - origin.Y),
-                    //             new(tr.X - origin.X, tr.Y - origin.Y),
-                    //         ]
-                    //     );
+                    // Draw Rope Point
+                    if (current.type == InitPropType.Rope)
+                    {
+                        foreach (var point in current.prop.Extras.RopePoints)
+                        {
+                            DrawCircleV(point, 3f, WHITE);
+                        }
+                    }
                     
                     if (_selected[p])
                     {
-                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1f, BLUE);
+                        // Side Lines
+                        
+                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, BLUE);
                         
                         // Quad Points
 
                         if (_stretchingProp)
                         {
-                            DrawCircleV(quads.TopLeft, 5f, BLUE);
-                            DrawCircleV(quads.TopRight, 5f, BLUE);
-                            DrawCircleV(quads.BottomRight, 5f, BLUE);
-                            DrawCircleV(quads.BottomLeft, 5f, BLUE);
+                            if (current.type == InitPropType.Rope)
+                            {
+                                DrawCircleV(
+                                    RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
+                                        new(2f, 2f)), 
+                                    5f, 
+                                    BLUE
+                                );
+                                
+                                DrawCircleV(
+                                    RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopRight, quads.BottomRight), 
+                                        new(2f, 2f)), 
+                                    5f, 
+                                    BLUE
+                                );
+                                
+                                DrawCircleV(quads.TopLeft, 2f, BLUE);
+                                DrawCircleV(quads.TopRight, 2f, BLUE);
+                                DrawCircleV(quads.BottomRight, 2f, BLUE);
+                                DrawCircleV(quads.BottomLeft, 2f, BLUE);
+                            }
+                            else
+                            {
+                                DrawCircleV(quads.TopLeft, 5f, BLUE);
+                                DrawCircleV(quads.TopRight, 5f, BLUE);
+                                DrawCircleV(quads.BottomRight, 5f, BLUE);
+                                DrawCircleV(quads.BottomLeft, 5f, BLUE);
+                            }
+                        }
+                        else if (_scalingProps)
+                        {
+                            var center = Utils.QuadsCenter(ref quads);
+                            
+                            switch (_stretchAxes)
+                            {
+                                case 1:
+                                    DrawLineEx(
+                                        center with { X = -10 }, 
+                                        center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
+                                        2f, 
+                                        RED
+                                    );
+                                    break;
+                                case 2:
+                                    DrawLineEx(
+                                        center with { Y = -10 },
+                                        center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
+                                        2f,
+                                        GREEN
+                                    );
+                                    break;
+                            }
+                        }
+                        
+                        // Draw Rope Point
+                        if (current.type == InitPropType.Rope)
+                        {
+                            if (_editingPropPoints)
+                            {
+                                foreach (var point in current.prop.Extras.RopePoints)
+                                {
+                                    DrawCircleV(point, 3f, RED);
+                                }
+                            }
+                            else
+                            {
+                                foreach (var point in current.prop.Extras.RopePoints)
+                                {
+                                    DrawCircleV(point, 2f, ORANGE);
+                                }
+                            }
                         }
                     }
                 }
                 
-                #endregion
             }
+            #endregion
 
+            #region TileEditorLayer1
             if (_showTileLayer1)
             {
-                #region TileEditorLayer1
                 if (GLOBALS.Layer != 1 && GLOBALS.Layer != 2) DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, new(100, 100, 100, 100));
 
-                for (int y = 0; y < GLOBALS.Level.Height; y++)
-                {
-                    for (int x = 0; x < GLOBALS.Level.Width; x++)
-                    {
-                        const int z = 0;
-
-                        var cell = GLOBALS.Level.GeoMatrix[y, x, z];
-
-                        var texture = Utils.GetBlockIndex(cell.Geo);
-
-                        if (texture >= 0)
-                        {
-                            if (z == GLOBALS.Layer)
-                            {
-
-                                DrawTexturePro(
-                                    GLOBALS.Textures.GeoBlocks[texture],
-                                    new(0, 0, 20, 20),
-                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                    new(0, 0),
-                                    0,
-                                    new(0, 0, 0, 255));
-                            }
-                            else
-                            {
-
-                                DrawTexturePro(
-                                    GLOBALS.Textures.GeoBlocks[texture],
-                                    new(0, 0, 20, 20),
-                                    new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                    new(0, 0),
-                                    0,
-                                    new(0, 0, 0, 120));
-                            }
-                        }
-
-                        for (int s = 1; s < cell.Stackables.Length; s++)
-                        {
-                            if (cell.Stackables[s])
-                            {
-                                switch (s)
-                                {
-                                    // dump placement
-                                    case 1:     // ph
-                                    case 2:     // pv
-
-                                        if (z == GLOBALS.Layer)
-                                        {
-
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(0, 0, 0, 255)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(0, 0, 0, 170)
-                                            );
-                                        }
-                                        break;
-                                    case 3:     // bathive
-                                    case 5:     // entrance
-                                    case 6:     // passage
-                                    case 7:     // den
-                                    case 9:     // rock
-                                    case 10:    // spear
-                                    case 12:    // forbidflychains
-                                    case 13:    // garbagewormhole
-                                    case 18:    // waterfall
-                                    case 19:    // wac
-                                    case 20:    // worm
-                                    case 21:    // scav
-
-                                        if (z == GLOBALS.Layer)
-                                        {
-
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 255)
-                                            ); // TODO: remove opacity from entrances
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-                                        break;
-
-                                    // directional placement
-                                    case 4:     // entrance
-                                        var index = Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z));
-
-                                        if (index is 22 or 23 or 24 or 25)
-                                        {
-                                            GLOBALS.Level.GeoMatrix[y, x, 0].Geo = 7;
-                                        }
-
-                                        if (z == GLOBALS.Layer)
-                                        {
-
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[index],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 255)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[index],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-
-                                        break;
-                                    case 11:    // crack
-                                        if (z == GLOBALS.Layer)
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 255)
-                                            );
-                                        }
-                                        else
-                                        {
-                                            Raylib.DrawTexturePro(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
-                                                new(0, 0, 20, 20),
-                                                new(x * previewScale, y * previewScale, previewScale, previewScale),
-                                                new(0, 0),
-                                                0,
-                                                new(255, 255, 255, 170)
-                                            );
-                                        }
-                                        break;
-                                }
-                            }
-                        }
-
-                    }
-                }
+                Printers.DrawGeoLayer(
+                    0, 
+                    GLOBALS.PreviewScale, 
+                    false, 
+                    GLOBALS.Layer == 0
+                        ? BLACK 
+                        : new(0, 0, 0, 120)
+                );
 
                 // Draw layer 1 tiles
 
                 if (_showLayer1Tiles)
                 {
-                    for (int y = 0; y < GLOBALS.Level.Height; y++)
-                    {
-                        for (int x = 0; x < GLOBALS.Level.Width; x++)
-                        {
-                            const int z = 0;
-
-                            var tileCell = GLOBALS.Level.TileMatrix[y, x, z];
-
-                            if (tileCell.Type == TileType.TileHead)
-                            {
-                                var data = (TileHead)tileCell.Data;
-
-                                /*Console.WriteLine($"Index: {tile.Item1 - 5}; Length: {tilePreviewTextures.Length}; Name = {tile.Item3}");*/
-                                var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1 - 5];
-
-                                var tileTexture = category[data.CategoryPostition.Item2 - 1];
-                                var color = GLOBALS.TileCategories[data.CategoryPostition.Item1 - 5].Item2;
-                                var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
-
-                                Printers.DrawTilePreview(ref initTile, ref tileTexture, ref color, (x, y));
-                            }
-                            else if (tileCell.Type == TileType.Material)
-                            {
-                                // var materialName = ((TileMaterial)tileCell.Data).Name;
-                                var origin = new Vector2(x * previewScale + 5, y * previewScale + 5);
-                                var color = GLOBALS.Level.MaterialColors[y, x, 0];
-
-                                if (z != GLOBALS.Layer) color.a = 120;
-
-                                if (color.r != 0 || color.g != 0 || color.b != 0)
-                                {
-
-                                    switch (GLOBALS.Level.GeoMatrix[y, x, 0].Geo)
-                                    {
-                                        case 1:
-                                            DrawRectangle(
-                                                x * previewScale + 5,
-                                                y * previewScale + 5,
-                                                6,
-                                                6,
-                                                color
-                                            );
-                                            break;
-
-
-                                        case 2:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X, origin.Y + previewScale - 10),
-                                                new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
-                                                color
-                                            );
-                                            break;
-
-
-                                        case 3:
-                                            DrawTriangle(
-                                                new(origin.X + previewScale - 10, origin.Y),
-                                                new(origin.X, origin.Y + previewScale - 10),
-                                                new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
-                                                color
-                                            );
-                                            break;
-
-                                        case 4:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X, origin.Y + previewScale - 10),
-                                                new(origin.X + previewScale - 10, origin.Y),
-                                                color
-                                            );
-                                            break;
-
-                                        case 5:
-                                            DrawTriangle(
-                                                origin,
-                                                new(origin.X + previewScale - 10, origin.Y + previewScale - 10),
-                                                new(origin.X + previewScale - 10, origin.Y),
-                                                color
-                                            );
-                                            break;
-
-                                        case 6:
-                                            DrawRectangleV(
-                                                origin,
-                                                new(previewScale - 10, (previewScale - 10) / 2),
-                                                color
-                                            );
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Printers.DrawTileLayer(
+                        0, 
+                        GLOBALS.PreviewScale, 
+                        false, 
+                        !GLOBALS.Settings.TileEditor.UseTextures,
+                        GLOBALS.Settings.TileEditor.TintedTiles
+                    );
                 }
                 
                 // then draw the props
@@ -1613,7 +1265,7 @@ internal class PropsEditorPage : IPage
                     var current = GLOBALS.Level.Props[p];
                     
                     // Filter based on depth
-                    if (current.prop.Depth < -9 || current.type == InitPropType.Rope) continue;
+                    if (current.prop.Depth < -9) continue;
 
                     var (category, index) = current.position;
                     var quads = current.prop.Quads;
@@ -1621,42 +1273,104 @@ internal class PropsEditorPage : IPage
                     // origin must be the center
                     // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
-                    Printers.DrawProp(category, index, current.prop);
+                    Printers.DrawProp(current.type, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
                     
-                    // if (current.prop.IsTile) 
-                    //     Printers.DrawTileAsProp(
-                    //         ref GLOBALS.Textures.Tiles[category][index],
-                    //         ref GLOBALS.Tiles[category][index],
-                    //         (tr, tl, bl, br)
-                    //     );
-                    // else 
-                    //     Printers.DrawProp(
-                    //         GLOBALS.Props[category][index], 
-                    //         ref GLOBALS.Textures.Props[category][index],
-                    //         (tr, tl, bl, br)
-                    //     );
-
+                    // Draw Rope Point
+                    if (current.type == InitPropType.Rope)
+                    {
+                        foreach (var point in current.prop.Extras.RopePoints)
+                        {
+                            DrawCircleV(point, 3f, WHITE);
+                        }
+                    }
+                    
                     if (_selected[p])
                     {
                         // Side Lines
                         
-                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1f, BLUE);
+                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, BLUE);
                         
                         // Quad Points
 
                         if (_stretchingProp)
                         {
-                            DrawCircleV(quads.TopLeft, 5f, BLUE);
-                            DrawCircleV(quads.TopRight, 5f, BLUE);
-                            DrawCircleV(quads.BottomRight, 5f, BLUE);
-                            DrawCircleV(quads.BottomLeft, 5f, BLUE);
+                            if (current.type == InitPropType.Rope)
+                            {
+                                DrawCircleV(
+                                    RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
+                                        new(2f, 2f)), 
+                                    5f, 
+                                    BLUE
+                                );
+                                
+                                DrawCircleV(
+                                    RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopRight, quads.BottomRight), 
+                                        new(2f, 2f)), 
+                                    5f, 
+                                    BLUE
+                                );
+                                
+                                DrawCircleV(quads.TopLeft, 2f, BLUE);
+                                DrawCircleV(quads.TopRight, 2f, BLUE);
+                                DrawCircleV(quads.BottomRight, 2f, BLUE);
+                                DrawCircleV(quads.BottomLeft, 2f, BLUE);
+                            }
+                            else
+                            {
+                                DrawCircleV(quads.TopLeft, 5f, BLUE);
+                                DrawCircleV(quads.TopRight, 5f, BLUE);
+                                DrawCircleV(quads.BottomRight, 5f, BLUE);
+                                DrawCircleV(quads.BottomLeft, 5f, BLUE);
+                            }
+                        }
+                        else if (_scalingProps)
+                        {
+                            var center = Utils.QuadsCenter(ref quads);
+                            
+                            switch (_stretchAxes)
+                            {
+                                case 1:
+                                    DrawLineEx(
+                                        center with { X = -10 }, 
+                                        center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
+                                        2f, 
+                                        RED
+                                    );
+                                    break;
+                                case 2:
+                                    DrawLineEx(
+                                        center with { Y = -10 },
+                                        center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
+                                        2f,
+                                        GREEN
+                                    );
+                                    break;
+                            }
                         }
                         
+                        // Draw Rope Point
+                        if (current.type == InitPropType.Rope)
+                        {
+                            if (_editingPropPoints)
+                            {
+                                foreach (var point in current.prop.Extras.RopePoints)
+                                {
+                                    DrawCircleV(point, 3f, RED);
+                                }
+                            }
+                            else
+                            {
+                                foreach (var point in current.prop.Extras.RopePoints)
+                                {
+                                    DrawCircleV(point, 2f, ORANGE);
+                                }
+                            }
+                        }
                     }
                 }
                 
-                #endregion
             }
+            #endregion
             
             // Draw the enclosing rectangle for selected props
             // DEBUG: DrawRectangleLinesEx(_selectedPropsEncloser, 3f, WHITE);
@@ -1695,8 +1409,11 @@ internal class PropsEditorPage : IPage
                 
                 case 1: // TODO: Current Rope
                     break;
+                
+                case 2: // TODO: Current Long Prop
+                    break;
 
-                case 2: // Current Prop
+                case 3: // Current Prop
                 {
                     var prop = _propsOnly[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
                     var texture = GLOBALS.Textures.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
@@ -1802,21 +1519,50 @@ internal class PropsEditorPage : IPage
                     );
                 }
             }
-
+            
             // Panel
             switch (_mode)
             {
                 case 1: // Place Mode
                 {
-                    DrawTexture(GLOBALS.Textures.PropMenuCategories[0], (int)menuPanelRect.x + 30, 40, BLACK);
-            DrawTexture(GLOBALS.Textures.PropMenuCategories[1], (int)menuPanelRect.x + 30 + 100, 40, BLACK);
-            DrawTexture(GLOBALS.Textures.PropMenuCategories[2], (int)menuPanelRect.x + 30 + 200, 40, BLACK);
+                    DrawRectangleRec(new(menuPanelRect.x + 30 + (_menuRootCategoryIndex * 40), 40, 40, 40), BLUE);
 
-            DrawRectangleLines((int)(menuPanelRect.x + 28), 38, 296, 44, GRAY);
+                    DrawTexture(
+                        GLOBALS.Textures.PropMenuCategories[0], 
+                        (int)menuPanelRect.x + 30, 
+                        40, 
+                        _menuRootCategoryIndex == 0 ? WHITE : BLACK
+                    );
 
-            DrawRectangleLinesEx(new(menuPanelRect.x + 28 + (_menuRootCategoryIndex * 104), 38, 100, 44), 4f, BLUE);
-
+                    DrawTexture(
+                        GLOBALS.Textures.PropMenuCategories[1], 
+                        (int)menuPanelRect.x + 30 + 40, 
+                        40, 
+                        _menuRootCategoryIndex == 1 ? WHITE : BLACK
+                    );
             
+                    DrawTexture(
+                        GLOBALS.Textures.PropMenuCategories[2], 
+                        (int)menuPanelRect.x + 30 + 80, 
+                        40, 
+                        _menuRootCategoryIndex == 2 ? WHITE : BLACK
+                    );
+                    
+                    DrawTexture(
+                        GLOBALS.Textures.PropMenuCategories[3], 
+                        (int)menuPanelRect.x + 30 + 120, 
+                        40, 
+                        _menuRootCategoryIndex == 3 ? WHITE : BLACK
+                    );
+                    
+                    DrawText(
+                        _menuCategoryNames[_menuRootCategoryIndex], 
+                        (int)menuPanelRect.x + 30 + 190,
+                        50,
+                        20,
+                        BLACK
+                    );
+
             Rectangle categoryRect = new((int)(menuPanelRect.x + 5), 90, 145, (int)(menuPanelRect.height - 300));
             Rectangle listRect = new((int)(menuPanelRect.x + 155), 90, menuPanelRect.width - 160, (int)(menuPanelRect.height - 300));
             
@@ -1864,8 +1610,11 @@ internal class PropsEditorPage : IPage
                 
                 case 1: // TODO: Ropes
                     break;
+                
+                case 2: // TODO: Long Props
+                    break;
 
-                case 2: // Props
+                case 3: // Props
                 {
                     int newCategoryIndex;
 
@@ -1931,7 +1680,7 @@ internal class PropsEditorPage : IPage
                         (int)(menuPanelRect.height - 400)
                     );
                     
-                    DrawRectangleLinesEx(listRect, 1f, GRAY);
+                    DrawRectangleLinesEx(listRect, 1.2f, GRAY);
 
                     var pageSize = (int) listRect.height / 24;
                     
@@ -2004,41 +1753,53 @@ internal class PropsEditorPage : IPage
                         // Depth indicator
                         var (c, i) = fetchedSelected[0].prop.prop.Position;
 
-                        if (fetchedSelected[0].prop.type == InitPropType.Tile)
+                        switch (fetchedSelected[0].prop.type)
                         {
-                            var init = GLOBALS.Tiles[c][i];
-                            var depth = init.Repeat.Sum() * 10;
-                            var offset = indicatorOffset - fetchedSelected[0].prop.prop.Depth * 10;
-                            var overflow = offset + depth - (indicatorOffset + 290);
+                            case InitPropType.Tile:
+                            {
+                                var init = GLOBALS.Tiles[c][i];
+                                var depth = init.Repeat.Sum() * 10;
+                                var offset = indicatorOffset - fetchedSelected[0].prop.prop.Depth * 10;
+                                var overflow = offset + depth - (indicatorOffset + 290);
                             
-                            DrawRectangleRec(
-                                new Rectangle(
-                                    offset, 
-                                    listRect.y + listRect.height + 10, 
-                                    depth - (overflow > 0 ? overflow : 0), 
-                                    30
-                                ),
-                                new Color(100, 100, 180, 255)
-                            );
-                        }
-                        else
-                        {
-                            var init = GLOBALS.Props[c][i];
+                                DrawRectangleRec(
+                                    new Rectangle(
+                                        offset, 
+                                        listRect.y + listRect.height + 10, 
+                                        depth - (overflow > 0 ? overflow : 0), 
+                                        30
+                                    ),
+                                    new Color(100, 100, 180, 255)
+                                );
+                            }
+                                break;
                             
-                            DrawRectangleRec(
-                                new Rectangle(
-                                    indicatorOffset - fetchedSelected[0].prop.prop.Depth * 10, 
-                                    listRect.y + listRect.height + 10, 
-                                    init switch
-                                    {
-                                        InitVariedStandardProp v => v.Repeat.Length, 
-                                        InitStandardProp s => s.Repeat.Length, 
-                                        _ => init.Depth
-                                    } * 10, 
-                                    30
-                                ),
-                                new Color(100, 100, 180, 255)
-                            );
+                            case InitPropType.Long:
+                                break;
+                            
+                            case InitPropType.Rope:
+                                break;
+
+                            default:
+                            {
+                                var init = GLOBALS.Props[c][i];
+                            
+                                DrawRectangleRec(
+                                    new Rectangle(
+                                        indicatorOffset - fetchedSelected[0].prop.prop.Depth * 10, 
+                                        listRect.y + listRect.height + 10, 
+                                        init switch
+                                        {
+                                            InitVariedStandardProp v => v.Repeat.Length, 
+                                            InitStandardProp s => s.Repeat.Length, 
+                                            _ => init.Depth
+                                        } * 10, 
+                                        30
+                                    ),
+                                    new Color(100, 100, 180, 255)
+                                );
+                            }
+                                break;
                         }
                         
                         DrawRectangleLinesEx(

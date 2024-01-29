@@ -450,6 +450,11 @@ public class Experimental(bool newGeometryEditor = false)
     public bool NewGeometryEditor { get; set; } = newGeometryEditor;
 }
 
+public class PropEditor(bool tintedTextures = false)
+{
+    public bool TintedTextures { get; set; } = tintedTextures;
+}
+
 public class Settings(
     bool developerMode,
     Shortcuts shortcuts,
@@ -457,6 +462,7 @@ public class Settings(
     GeoEditor geometryEditor,
     TileEditor tileEditor,
     LightEditor lightEditor,
+    PropEditor propEditor,
     Experimental experimental
 )
 {
@@ -466,6 +472,7 @@ public class Settings(
     public GeoEditor GeometryEditor { get; set; } = geometryEditor;
     public TileEditor TileEditor { get; set; } = tileEditor;
     public LightEditor LightEditor { get; set; } = lightEditor;
+    public PropEditor PropEditor { get; set; } = propEditor;
     public Experimental Experimental { get; set; } = experimental;
 }
 

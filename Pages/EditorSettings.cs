@@ -38,23 +38,10 @@ public class SettingsPage : IPage
 
     private readonly Texture[] _previewTileTextures;
 
-    public SettingsPage(Serilog.Core.Logger logger)
+    public SettingsPage(Serilog.Core.Logger logger, Texture[] previewTextures)
     {
         _logger = logger;
-        _previewTileTextures =
-        [
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Bigger Head.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Crossbox B.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "mega chimney A.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Ball.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Stone Marked.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Fan.png"))
-        ];
-    }
-
-    ~SettingsPage()
-    {
-        foreach (var texture in _previewTileTextures) UnloadTexture(texture);
+        _previewTileTextures = previewTextures;
     }
     
     public void Draw()

@@ -8,7 +8,7 @@ namespace Leditor;
 /// <summary>
 /// General Reversible Action Manager
 /// </summary>
-public class GeoGram
+public class GeoGram(int limit)
 {
     public interface IAction { Coords Position { get; } }
 
@@ -20,7 +20,7 @@ public class GeoGram
     {
         public Coords Position => CellActions[0].Position;
     }
-    
+
     private LinkedList<IAction> Actions { get; init; } = [];
 
     private LinkedListNode<IAction>? _currentNode;
@@ -38,6 +38,10 @@ public class GeoGram
 
         Actions.AddLast(new CellAction(position, previous, current));
         _currentNode = Actions.Last;
+        
+        //
+        
+        if (Actions.Count == limit) Actions.RemoveFirst();
     }
     
     public void Proceed(Coords position, RunCell[,] previous, RunCell[,] current)
@@ -51,6 +55,10 @@ public class GeoGram
         
         Actions.AddLast(new RectAction(position, previous, current));
         _currentNode = Actions.Last;
+        
+        //
+        
+        if (Actions.Count == limit) Actions.RemoveFirst();
     }
 
     public void Proceed(CellAction[] groupedActions)
@@ -64,6 +72,10 @@ public class GeoGram
 
         Actions.AddLast(new GroupAction(groupedActions));
         _currentNode = Actions.Last;
+        
+        //
+        
+        if (Actions.Count == limit) Actions.RemoveFirst();
     }
     
     public void Redo()

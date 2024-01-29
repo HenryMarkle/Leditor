@@ -57,7 +57,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
 
     RunCell[,] savedChunk = new RunCell[0, 0];
 
-    private readonly GeoGram _gram = new();
+    private readonly GeoGram _gram = new(40);
 
     // This is used to display geo names in the geo editor.
     // Do not alter the indices
@@ -869,14 +869,17 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
 
                 if (showLayer1) Printers.DrawGeoLayer(
                     0,
+                    GLOBALS.Scale,
                     !gridContrast,
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer1,
                     true,
                     false
                 );
-                
-                if (showLayer2) Printers.DrawGeoLayer(
-                    1, 
+
+                if (showLayer2)
+                    Printers.DrawGeoLayer(
+                    1,
+                    GLOBALS.Scale,
                     !gridContrast && !showLayer1 && GLOBALS.Layer == 2, 
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer2,
                     _layerStackableFilter
@@ -884,6 +887,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                 
                 if (showLayer3) Printers.DrawGeoLayer(
                     2, 
+                    GLOBALS.Scale,
                     !gridContrast && !showLayer1 && GLOBALS.Layer == 1, 
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer3,
                     _layerStackableFilter
@@ -893,6 +897,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                 
                 if (showLayer1) Printers.DrawGeoLayer(
                     0,
+                    GLOBALS.Scale,
                     !gridContrast,
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer1,
                     false,

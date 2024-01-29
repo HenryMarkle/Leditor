@@ -105,9 +105,13 @@ public class LoadProjectPage : IPage
             
             try
             {
-                _ = prop.type == InitPropType.Tile 
-                    ? GLOBALS.Textures.Tiles[prop.position.category][prop.position.index] 
-                    : GLOBALS.Textures.Props[prop.position.category][prop.position.index];
+                _ = prop.type switch
+                {
+                    InitPropType.Long => GLOBALS.Textures.LongProps[prop.position.index],
+                    InitPropType.Rope => GLOBALS.Textures.RopeProps[prop.position.index],
+                    InitPropType.Tile => GLOBALS.Textures.Tiles[prop.position.category][prop.position.index],
+                    _ => GLOBALS.Textures.Props[prop.position.category][prop.position.index]
+                };
 
                 // No IndexOutOfRangeException exception was thrown - Success
             }
@@ -151,7 +155,7 @@ public class LoadProjectPage : IPage
             var buffers = Lingo.Tools.GetBufferTiles(obj2);
             var effects = Lingo.Tools.GetEffects(effObj, givenWidth, givenHeight);
             var cams = Lingo.Tools.GetCameras(camsObj);
-            var props = Lingo.Tools.GetProps(propsObj, GLOBALS.Props, GLOBALS.Tiles);
+            var props = Lingo.Tools.GetProps(propsObj);
 
             // map material colors
 

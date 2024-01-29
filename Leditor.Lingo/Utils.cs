@@ -302,7 +302,7 @@ public static class Tools {
     /// <returns>a list of (type, position, prop) tuples, where 'position' points to the definition index in the appropriate definitions array depending on the type (prop/tile)</returns>
     /// <exception cref="PropNotFoundException">prop not not found in neither the prop definitions nor the tile definitions</exception>
     /// <exception cref="MissingInitPropertyException">retrieved prop is missing a setting</exception>
-    public static List<(InitPropType type, (int category, int index) position, Prop prop)>GetProps(AstNode.Base @base, InitPropBase[][] init, InitTile[][] tileInit)
+    public static List<(InitPropType type, (int category, int index) position, Prop prop)>GetProps(AstNode.Base @base)
     {
 #nullable enable
         var list = (AstNode.List)((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "props").Value;
@@ -320,6 +320,7 @@ public static class Tools {
 
             var indexGlobalCall = (AstNode.GlobalCall)casted[2];
 
+            // TODO: Outdated
             var category = NumberToInteger(indexGlobalCall.Arguments[0]) - 1;
             var index = NumberToInteger(indexGlobalCall.Arguments[1]) - 1;
 
@@ -336,11 +337,11 @@ public static class Tools {
             
             // check if it's a prop
 
-            for (var c = 0; c < init.Length; c++)
+            for (var c = 0; c < GLOBALS.Props.Length; c++)
             {
-                for (var p = 0; p < init[c].Length; p++)
+                for (var p = 0; p < GLOBALS.Props[c].Length; p++)
                 {
-                    var initProp = init[c][p];
+                    var initProp = GLOBALS.Props[c][p];
                     
                     if (initProp.Name == name)
                     {
@@ -352,13 +353,43 @@ public static class Tools {
                 }
             }
             
+            // check if it's a long prop
+            
+            for (var c = 0; c < GLOBALS.LongProps.Length; c++)
+            {
+                var initProp = GLOBALS.LongProps[c];
+                    
+                if (initProp.Name == name)
+                {
+                    type = initProp.Type;
+                    position = (-1, c);
+                        
+                    goto end_check;
+                }
+            }
+            
+            // check if it's a rope prop
+            
+            for (var c = 0; c < GLOBALS.RopeProps.Length; c++)
+            {
+                var initProp = GLOBALS.RopeProps[c];
+                    
+                if (initProp.Name == name)
+                {
+                    type = initProp.Type;
+                    position = (-1, c);
+                        
+                    goto end_check;
+                }
+            }
+            
             // if not found, then check if it's a tile
 
-            for (var c = 0; c < tileInit.Length; c++)
+            for (var c = 0; c < GLOBALS.Tiles.Length; c++)
             {
-                for (var t = 0; t < tileInit[c].Length; t++)
+                for (var t = 0; t < GLOBALS.Tiles[c].Length; t++)
                 {
-                    var tile = tileInit[c][t];
+                    var tile = GLOBALS.Tiles[c][t];
 
                     if (tile.Name == name)
                     {
@@ -413,7 +444,7 @@ public static class Tools {
                     RopePoints = ropePoints?.Values.Select(p =>
                     {
                         var args = ((AstNode.GlobalCall)p).Arguments;
-                        return new Vector2(NumberToInteger(args[0]), NumberToInteger(args[1]));
+                        return new Vector2(NumberToInteger(args[0])/1.25f, NumberToInteger(args[1])/1.25f);
                     }).ToArray() ?? [],
                     Settings = settings
                 },

@@ -111,10 +111,10 @@ class Program
     ];
 
     // Used to load light/shadow brush images as textures.
-    static Texture[] LoadLightTextures() => Directory
+    private static Texture[] LoadLightTextures() => Directory
         .GetFileSystemEntries(Path.Combine(GLOBALS.Paths.AssetsDirectory, "light"))
         .Where(e => e.EndsWith(".png"))
-        .Select(f => LoadTexture(f))
+        .Select(LoadTexture)
         .ToArray();
 
     // Embedded tiles and their categories.
@@ -232,6 +232,15 @@ class Program
             new InitTile("Dune Sand", (1, 1), [1], [], InitTileType.VoxelStructSandtype, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
         ]
     ];
+
+    private static Texture[][] LoadPropTextures()
+    {
+        return GLOBALS.Props.Select(category =>
+            category.Select(prop =>
+                LoadTexture(Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, prop.Name + ".png"))
+            ).ToArray()
+        ).ToArray();
+    }
 
     private static ((string, Color)[], InitTile[][]) LoadTileInit()
     {
@@ -513,18 +522,31 @@ class Program
         bool texturesLoaded = false;
 
         //
+        try
+        {
+            logger.Debug("loading UI textures");
+            GLOBALS.Textures.GeoMenu = LoadUITextures();
+            logger.Debug("loading geo textures");
+            GLOBALS.Textures.GeoBlocks = LoadGeoTextures();
+            GLOBALS.Textures.GeoStackables = LoadStackableTextures();
+            logger.Debug("loading prop textures");
+            GLOBALS.Textures.Props = LoadPropTextures();
+            logger.Debug("loading embedded long prop textures");
+            GLOBALS.Textures.LongProps = GLOBALS.LongProps
+                .Select(l => LoadTexture(Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, l.Name + ".png"))).ToArray();
+            
+            logger.Debug("loading embedded rope prop textures");
+            GLOBALS.Textures.RopeProps = GLOBALS.RopeProps
+                .Select(r => LoadTexture(Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, r.Name + ".png"))).ToArray();
 
-        GLOBALS.Textures.GeoMenu = LoadUITextures();
-        GLOBALS.Textures.GeoBlocks = LoadGeoTextures();
-        GLOBALS.Textures.GeoStackables = LoadStackableTextures();
-        GLOBALS.Textures.Props = GLOBALS.Props.Select( category =>
-            category.Select( prop =>
-                LoadTexture(Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, prop.Name+".png"))
-            ).ToArray()
-        ).ToArray();
-
-        // Light textures need to be loaded on a separate thread, just like tile textures
-        GLOBALS.Textures.LightBrushes = LoadLightTextures();
+            logger.Debug("loading light brush textures");
+            // Light textures need to be loaded on a separate thread, just like tile textures
+            GLOBALS.Textures.LightBrushes = LoadLightTextures();
+        }
+        catch (Exception e)
+        {
+            logger.Fatal($"{e}");
+        }
 
         // These two are going to be populated with textures later
         GLOBALS.Textures.Tiles = [];
@@ -532,6 +554,7 @@ class Program
         GLOBALS.Textures.PropMenuCategories = [
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "prop category tiles.png")),
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "prop category ropes.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "prop category longs.png")),
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "prop category other.png")),
         ];
 
@@ -539,6 +562,16 @@ class Program
         [
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "props select mode.png")),
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "props place mode.png")),
+        ];
+
+        Texture[] settingsPreviewTextures =
+        [
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Bigger Head.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Crossbox B.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "mega chimney A.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Ball.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Stone Marked.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Fan.png"))
         ];
 
         //
@@ -615,7 +648,7 @@ class Program
         MissingPropTexturesPage missingPropTexturesPage = new(logger);
         MissingInitFilePage missingInitFilePage = new(logger);
         ExperimentalGeometryPage experimentalGeometryPage = new(logger);
-        SettingsPage settingsPage = new(logger);
+        SettingsPage settingsPage = new(logger, settingsPreviewTextures);
 
         //
 
@@ -941,6 +974,10 @@ class Program
         foreach (var category in GLOBALS.Textures.Tiles) { foreach (var texture in category) UnloadTexture(texture); }
         foreach (var texture in GLOBALS.Textures.PropMenuCategories) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.PropModes) UnloadTexture(texture);
+        foreach (var category in GLOBALS.Textures.Props) { foreach (var texture in category) UnloadTexture(texture); }
+        foreach (var texture in GLOBALS.Textures.LongProps) UnloadTexture(texture);
+        foreach (var texture in GLOBALS.Textures.RopeProps) UnloadTexture(texture);
+        foreach (var texture in settingsPreviewTextures) UnloadTexture(texture);
 
         UnloadRenderTexture(GLOBALS.Textures.LightMap);
 

@@ -24,6 +24,8 @@ internal static class GLOBALS
         public Texture[] LightBrushes { get; set; } = [];
         public Texture[][] Tiles { get; set; } = [];
         public Texture[][] Props { get; set; } = [];
+        public Texture[] LongProps { get; set; } = [];
+        public Texture[] RopeProps { get; set; } = [];
         public Texture[] PropMenuCategories { get; set; } = [];
         public Texture[] PropModes { get; set; } = [];
 
@@ -640,7 +642,7 @@ internal static class GLOBALS
     internal static InitTile[][] Tiles { get; set; } = [];
 
     /// Embedded rope prop definitions
-    private static InitRopeProp[] RopeProps { get; } =
+    internal static InitRopeProp[] RopeProps { get; } =
     [
         new(name: "Wire", type: InitPropType.Rope, depth: 0, segmentLength: 3, collisionDepth: 0, segmentRadius: 1f, gravity: 0.5f, friction: 0.5f, airFriction: 0.9f, stiff: false, previewColor: new(255, 0, 0, 255), previewEvery: 4, edgeDirection: 0, rigid: 0, selfPush: 0, sourcePush: 0),
         new("Tube", InitPropType.Rope, 4, 10, 2, 4.5f, 0.5f, 0.5f, 0.9f, true, new(0, 0, 255, 255), 2, 5, 1.6f, 0, 0),
@@ -660,11 +662,10 @@ internal static class GLOBALS
         new("Ring Chain", InitPropType.Rope, 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, new(100, 200, 0, 255), 1, 0.1f, 0.2f, 10, 0.1f),
         new("Christmas Wire", InitPropType.Rope, 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, new(200, 0, 200, 255), 1, 0, 0, 0, 0),
         new("Ornate Wire", InitPropType.Rope, 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, new(0, 200, 200, 255), 1, 0, 0, 0, 0),
-        
     ];
 
     /// Embedded long prop definitions
-    private static InitLongProp[] LongProps { get; } = 
+    internal static InitLongProp[] LongProps { get; } = 
     [
         new("Cabinet Clamp", InitPropType.Long, 0),
         new("Drill Suspender", InitPropType.Long, 5),
@@ -678,7 +679,7 @@ internal static class GLOBALS
     ];
     
     /// Prop definitions
-    internal static InitPropBase[][] Props { get; set; } = [ [..RopeProps], [..LongProps] ];
+    internal static InitPropBase[][] Props { get; set; } = [  ];
     
     internal static string[] MaterialCategories => [
         "Materials",
@@ -818,6 +819,7 @@ internal static class GLOBALS
             ),
             new(true),
             new(background: new(66, 108, 245, 255)),
+            new(),
             new()
     );
     
@@ -1698,6 +1700,17 @@ internal static class Utils
         return new Rectangle(nearestX, nearestY, furthestX - nearestX, furthestY - nearestY);
     }
     
+    internal static Rectangle EncloseQuads(ref PropQuads quads)
+    {
+        var nearestX = Math.Min(Math.Min(quads.TopLeft.X, quads.TopRight.X), Math.Min(quads.BottomLeft.X, quads.BottomRight.X));
+        var nearestY = Math.Min(Math.Min(quads.TopLeft.Y, quads.TopRight.Y), Math.Min(quads.BottomLeft.Y, quads.BottomRight.Y));
+
+        var furthestX = Math.Max(Math.Max(quads.TopLeft.X, quads.TopRight.X), Math.Max(quads.BottomLeft.X, quads.BottomRight.X));
+        var furthestY = Math.Max(Math.Max(quads.TopLeft.Y, quads.TopRight.Y), Math.Max(quads.BottomLeft.Y, quads.BottomRight.Y));
+       
+        return new Rectangle(nearestX, nearestY, furthestX - nearestX, furthestY - nearestY);
+    }
+    
     internal static Rectangle EncloseProps(IEnumerable<PropQuads> quadsList)
     {
         float 
@@ -1879,6 +1892,152 @@ internal static class Utils
         
         return new(newTopLeft, newTopRight, newBottomRight, newBottomLeft);
     }
+    
+    internal static void RotatePoints(float angle, Vector2 center, Vector2[] points) {
+        // Convert angle to radians
+
+        var radian = float.DegreesToRadians(angle);
+        
+        var sinRotation = (float)Math.Sin(radian);
+        var cosRotation = (float)Math.Cos(radian);
+        
+        for (var p = 0; p < points.Length; p++)
+        {
+            ref var point = ref points[p];
+
+            var dx = point.X - center.X;
+            var dy = point.Y - center.Y;
+
+            point.X = center.X + dx * cosRotation - dy * sinRotation;
+            point.Y = center.Y + dx * sinRotation + dy * cosRotation;
+        }
+    }
+
+    internal static Vector2 QuadsCenter(ref PropQuads quads)
+    {
+        var rect = EncloseQuads(quads);
+        return new(rect.X + rect.width/2, rect.y + rect.height/2);
+    }
+
+    internal static Vector2 RectangleCenter(ref Rectangle rectangle) => new(rectangle.X + rectangle.width / 2, rectangle.Y + rectangle.height / 2);
+
+    internal static void ScaleQuads(ref PropQuads quads, float factor)
+    {
+        var enclose = EncloseQuads(quads);
+        var center = RectangleCenter(ref enclose);
+        
+        quads.TopLeft = RayMath.Vector2Add(
+            RayMath.Vector2Scale(
+                RayMath.Vector2Subtract(quads.TopLeft, center), 
+                factor
+            ), 
+            center
+        );
+                        
+        quads.TopRight = RayMath.Vector2Add(
+            RayMath.Vector2Scale(
+                RayMath.Vector2Subtract(quads.TopRight, center), 
+                factor
+            ), 
+            center
+        );
+                        
+        quads.BottomLeft = RayMath.Vector2Add(
+            RayMath.Vector2Scale(
+                RayMath.Vector2Subtract(quads.BottomLeft, center), 
+                factor
+            ), 
+            center
+        ); 
+                        
+        quads.BottomRight = RayMath.Vector2Add(
+            RayMath.Vector2Scale(
+                RayMath.Vector2Subtract(quads.BottomRight, center), 
+                factor
+            ), 
+            center
+        );
+    }
+    
+    internal static void ScaleQuads(ref PropQuads quads, Vector2 center, float factor)
+    {
+        quads.TopLeft = RayMath.Vector2Add(
+            RayMath.Vector2Scale(
+                RayMath.Vector2Subtract(quads.TopLeft, center), 
+                factor
+            ), 
+            center
+        );
+                        
+        quads.TopRight = RayMath.Vector2Add(
+            RayMath.Vector2Scale(
+                RayMath.Vector2Subtract(quads.TopRight, center), 
+                factor
+            ), 
+            center
+        );
+                        
+        quads.BottomLeft = RayMath.Vector2Add(
+            RayMath.Vector2Scale(
+                RayMath.Vector2Subtract(quads.BottomLeft, center), 
+                factor
+            ), 
+            center
+        ); 
+                        
+        quads.BottomRight = RayMath.Vector2Add(
+            RayMath.Vector2Scale(
+                RayMath.Vector2Subtract(quads.BottomRight, center), 
+                factor
+            ), 
+            center
+        );
+    }
+
+    internal static void ScaleQuadsX(ref PropQuads quads, Vector2 center, float factor)
+    {
+        quads.TopLeft = quads.TopLeft with { X = (quads.TopLeft.X - center.X) * factor + center.X };
+        quads.BottomLeft = quads.BottomLeft with { X = (quads.BottomLeft.X - center.X) * factor + center.X };
+        quads.TopRight = quads.TopRight with { X = (quads.TopRight.X - center.X) * factor + center.X };
+        quads.BottomRight = quads.BottomRight with { X = (quads.BottomRight.X - center.X) * factor + center.X };
+    }
+
+    internal static void ScaleQuadsY(ref PropQuads quads, Vector2 center, float factor)
+    {
+        quads.TopLeft = quads.TopLeft with { Y = (quads.TopLeft.Y - center.Y) * factor + center.Y };
+        quads.BottomLeft = quads.BottomLeft with { Y = (quads.BottomLeft.Y - center.Y) * factor + center.Y };
+        quads.TopRight = quads.TopRight with { Y = (quads.TopRight.Y - center.Y) * factor + center.Y };
+        quads.BottomRight = quads.BottomRight with { Y = (quads.BottomRight.Y - center.Y) * factor + center.Y };
+    }
+
+    internal static Vector2[] Casteljau(int steps, Vector2[] points) {
+        Vector2 GetCasteljauPoint(int r, int i, double t) { 
+            if(r == 0) return points[i];
+
+            var p1 = GetCasteljauPoint(r - 1, i, t);
+            var p2 = GetCasteljauPoint(r - 1, i + 1, t);
+
+            return new Vector2((int) ((1 - t) * p1.X + t * p2.X), (int) ((1 - t) * p1.Y + t * p2.Y));
+        }
+        
+        List<Vector2> tmp = [];
+        
+        for (double t = 0, i = 0; i < steps; i++, t = 1f/steps*i) { 
+            tmp.Add(GetCasteljauPoint(points.Length-1, 0, t));
+        }
+
+        return [.. tmp];
+    }
+    
+    internal static void RopeBezier(int steps)
+    {
+        
+        
+        for (float t = 0, i = 0; i <= steps; i++, t = 1 / steps * i)
+        {
+            
+        }
+    }
 }
 
 /// <summary>
@@ -1886,7 +2045,7 @@ internal static class Utils
 /// </summary>
 internal static class Printers
 {
-    internal static void DrawGeoLayer(int layer, bool grid, Color color)
+    internal static void DrawGeoLayer(int layer, int scale, bool grid, Color color)
     {
         for (var y = 0; y < GLOBALS.Level.Height; y++)
         {
@@ -1898,16 +2057,20 @@ internal static class Printers
 
                 if (texture >= 0)
                 {
-                    DrawTexture(
-                        GLOBALS.Textures.GeoBlocks[texture], 
-                        x * GLOBALS.Scale, 
-                        y * GLOBALS.Scale, 
+                    var fetchedTexture = GLOBALS.Textures.GeoBlocks[texture];
+
+                    DrawTexturePro(
+                        GLOBALS.Textures.GeoBlocks[texture],
+                        new(0, 0, fetchedTexture.width, fetchedTexture.height),
+                        new Rectangle(x * scale, y * scale, scale, scale),
+                        new(0, 0),
+                        0,
                         color
                     );
                 }
 
                 if (grid) DrawRectangleLinesEx(
-                    new(x * GLOBALS.Scale, y * GLOBALS.Scale, GLOBALS.Scale, GLOBALS.Scale),
+                    new(x * scale, y * scale, scale, scale),
                     0.5f,
                     new(255, 255, 255, 100)
                 );
@@ -1921,7 +2084,16 @@ internal static class Printers
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, color);
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+
+                                DrawTexturePro(
+                                    stackableTexture, 
+                                    new(0, 0, stackableTexture.width, stackableTexture.height),
+                                    new(x * scale, y * scale, scale, scale), 
+                                    new(0, 0), 
+                                    0, 
+                                    color
+                                );
                                 break;
                             case 3:     // bathive
                                 case 5:     // entrance
@@ -1935,7 +2107,16 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                Raylib.DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE); // TODO: remove opacity from entrances
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+
+                                    DrawTexturePro(
+                                        stackableTexture2,
+                                        new(0, 0, stackableTexture2.width, stackableTexture2.height),
+                                        new(x * scale, y*scale, scale, scale), 
+                                        new(0, 0),
+                                        0, 
+                                        WHITE
+                                    ); // TODO: remove opacity from entrances
                                 break;
 
                             // directional placement
@@ -1947,13 +2128,30 @@ internal static class Printers
                                     GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
                                 }
 
-                                DrawTexture(GLOBALS.Textures.GeoStackables[index], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE);
+                                var t = GLOBALS.Textures.GeoStackables[index];
+                                DrawTexturePro(
+                                    t,
+                                    new(0, 0, t.width, t.height),
+                                    new(x*scale, y*scale, scale, scale), 
+                                    new(0, 0),
+                                    0, 
+                                    WHITE
+                                );
                                 break;
                             case 11:    // crack
-                                DrawTexture(
-                                    GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, layer))],
-                                    x * GLOBALS.Scale,
-                                    y * GLOBALS.Scale,
+                                var crackTexture = GLOBALS.Textures.GeoStackables[
+                                    Utils.GetStackableTextureIndex(s,
+                                        Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width,
+                                            GLOBALS.Level.Height, x, y, layer))];
+                                DrawTexturePro(
+                                    crackTexture,
+                                    new(0, 0, crackTexture.width, crackTexture.height),
+                                    new(
+                                    x * scale,
+                                    y * scale,scale, scale
+                                    ),
+                                    new(0, 0),
+                                    0,
                                     WHITE
                                 );
                                 break;
@@ -1963,7 +2161,7 @@ internal static class Printers
             }
         }
     }
-    internal static void DrawGeoLayer(int layer, bool grid, Color color, bool[] stackableFilter)
+    internal static void DrawGeoLayer(int layer, int scale, bool grid, Color color, bool[] stackableFilter)
     {
         for (var y = 0; y < GLOBALS.Level.Height; y++)
         {
@@ -1975,16 +2173,20 @@ internal static class Printers
 
                 if (texture >= 0)
                 {
-                    DrawTexture(
-                        GLOBALS.Textures.GeoBlocks[texture], 
-                        x * GLOBALS.Scale, 
-                        y * GLOBALS.Scale, 
+                    var fetchedTexture = GLOBALS.Textures.GeoBlocks[texture];
+
+                    DrawTexturePro(
+                        GLOBALS.Textures.GeoBlocks[texture],
+                        new(0, 0, fetchedTexture.width, fetchedTexture.height),
+                        new Rectangle(x * scale, y * scale, scale, scale),
+                        new(0, 0),
+                        0,
                         color
                     );
                 }
 
                 if (grid) DrawRectangleLinesEx(
-                    new(x * GLOBALS.Scale, y * GLOBALS.Scale, GLOBALS.Scale, GLOBALS.Scale),
+                    new(x * scale, y * scale, scale, scale),
                     0.5f,
                     new(255, 255, 255, 100)
                 );
@@ -1998,7 +2200,16 @@ internal static class Printers
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, color);
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+
+                                DrawTexturePro(
+                                    stackableTexture, 
+                                    new(0, 0, stackableTexture.width, stackableTexture.height),
+                                    new(x * scale, y * scale, scale, scale), 
+                                    new(0, 0), 
+                                    0, 
+                                    color
+                                );
                                 break;
                             case 3:     // bathive
                                 case 5:     // entrance
@@ -2012,7 +2223,16 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE); // TODO: remove opacity from entrances
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+
+                                    DrawTexturePro(
+                                        stackableTexture2,
+                                        new(0, 0, stackableTexture2.width, stackableTexture2.height),
+                                        new(x * scale, y*scale, scale, scale), 
+                                        new(0, 0),
+                                        0, 
+                                        WHITE
+                                    ); // TODO: remove opacity from entrances
                                 break;
 
                             // directional placement
@@ -2024,13 +2244,30 @@ internal static class Printers
                                     GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
                                 }
 
-                                DrawTexture(GLOBALS.Textures.GeoStackables[index], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE);
+                                var t = GLOBALS.Textures.GeoStackables[index];
+                                DrawTexturePro(
+                                    t,
+                                    new(0, 0, t.width, t.height),
+                                    new(x*scale, y*scale, scale, scale), 
+                                    new(0, 0),
+                                    0, 
+                                    WHITE
+                                );
                                 break;
                             case 11:    // crack
-                                DrawTexture(
-                                    GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, layer))],
-                                    x * GLOBALS.Scale,
-                                    y * GLOBALS.Scale,
+                                var crackTexture = GLOBALS.Textures.GeoStackables[
+                                    Utils.GetStackableTextureIndex(s,
+                                        Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width,
+                                            GLOBALS.Level.Height, x, y, layer))];
+                                DrawTexturePro(
+                                    crackTexture,
+                                    new(0, 0, crackTexture.width, crackTexture.height),
+                                    new(
+                                    x * scale,
+                                    y * scale,scale, scale
+                                    ),
+                                    new(0, 0),
+                                    0,
                                     WHITE
                                 );
                                 break;
@@ -2040,8 +2277,7 @@ internal static class Printers
             }
         }
     }
-    
-    internal static void DrawGeoLayer(int layer, bool grid, Color color, bool geos, bool stackables)
+    internal static void DrawGeoLayer(int layer, int scale, bool grid, Color color, bool geos, bool stackables)
     {
         for (var y = 0; y < GLOBALS.Level.Height; y++)
         {
@@ -2057,14 +2293,14 @@ internal static class Printers
                 {
                     DrawTexture(
                         GLOBALS.Textures.GeoBlocks[texture], 
-                        x * GLOBALS.Scale, 
-                        y * GLOBALS.Scale, 
+                        x * scale, 
+                        y * scale, 
                         color
                     );
                 }
 
                 if (grid) DrawRectangleLinesEx(
-                    new(x * GLOBALS.Scale, y * GLOBALS.Scale, GLOBALS.Scale, GLOBALS.Scale),
+                    new(x * scale, y * scale, scale, scale),
                     0.5f,
                     new(255, 255, 255, 100)
                 );
@@ -2082,7 +2318,16 @@ internal static class Printers
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, color);
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+
+                                DrawTexturePro(
+                                    stackableTexture, 
+                                    new(0, 0, stackableTexture.width, stackableTexture.height),
+                                    new(x * scale, y * scale, scale, scale), 
+                                    new(0, 0), 
+                                    0, 
+                                    color
+                                );
                                 break;
                             case 3:     // bathive
                                 case 5:     // entrance
@@ -2096,7 +2341,16 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE); // TODO: remove opacity from entrances
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+
+                                    DrawTexturePro(
+                                        stackableTexture2,
+                                        new(0, 0, stackableTexture2.width, stackableTexture2.height),
+                                        new(x * scale, y*scale, scale, scale), 
+                                        new(0, 0),
+                                        0, 
+                                        WHITE
+                                    ); // TODO: remove opacity from entrances
                                 break;
 
                             // directional placement
@@ -2108,13 +2362,30 @@ internal static class Printers
                                     GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
                                 }
 
-                                DrawTexture(GLOBALS.Textures.GeoStackables[index], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE);
+                                var t = GLOBALS.Textures.GeoStackables[index];
+                                DrawTexturePro(
+                                    t,
+                                    new(0, 0, t.width, t.height),
+                                    new(x*scale, y*scale, scale, scale), 
+                                    new(0, 0),
+                                    0, 
+                                    WHITE
+                                );
                                 break;
                             case 11:    // crack
-                                DrawTexture(
-                                    GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, layer))],
-                                    x * GLOBALS.Scale,
-                                    y * GLOBALS.Scale,
+                                var crackTexture = GLOBALS.Textures.GeoStackables[
+                                    Utils.GetStackableTextureIndex(s,
+                                        Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width,
+                                            GLOBALS.Level.Height, x, y, layer))];
+                                DrawTexturePro(
+                                    crackTexture,
+                                    new(0, 0, crackTexture.width, crackTexture.height),
+                                    new(
+                                    x * scale,
+                                    y * scale,scale, scale
+                                    ),
+                                    new(0, 0),
+                                    0,
                                     WHITE
                                 );
                                 break;
@@ -2125,7 +2396,146 @@ internal static class Printers
         }
     }
 
-internal static void DrawTextureQuads(
+    internal static void DrawTileLayer(int layer, int scale, bool grid, bool preview, bool tinted)
+    {
+        for (var y = 0; y < GLOBALS.Level.Height; y++)
+        {
+            for (var x = 0; x < GLOBALS.Level.Width; x++)
+            {
+                var tileCell = GLOBALS.Level.TileMatrix[y, x, layer];
+
+                if (tileCell.Type == TileType.TileHead)
+                {
+                    var data = (TileHead)tileCell.Data;
+
+                    /*Console.WriteLine($"Index: {tile.Item1 - 5}; Length: {tilePreviewTextures.Length}; Name = {tile.Item3}");*/
+                    var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1 - 5];
+
+                    var tileTexture = category[data.CategoryPostition.Item2 - 1];
+                    var color = GLOBALS.TileCategories[data.CategoryPostition.Item1 - 5].Item2;
+                    var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
+                    
+                    var center = new Vector2(
+                        initTile.Size.Item1 % 2 == 0 ? x * scale + scale : x * scale + scale/2f, 
+                        initTile.Size.Item2 % 2 == 0 ? y * scale + scale : y * scale + scale/2f);
+
+                    var width = 0.4f * (initTile.Type == InitTileType.Box ? initTile.Size.Item1 : initTile.Size.Item1 + initTile.BufferTiles * 2) * GLOBALS.Scale;
+                    var height = 0.4f * (initTile.Size.Item2 + initTile.BufferTiles*2) * GLOBALS.Scale;
+                    
+                    if (GLOBALS.Settings.TileEditor.UseTextures)
+                    {
+                        if (GLOBALS.Settings.TileEditor.TintedTiles)
+                        {
+                            DrawTileAsPropColored(
+                                ref tileTexture,
+                                ref initTile,
+                                ref center,
+                                [
+                                    new(width, -height),
+                                    new(-width, -height),
+                                    new(-width, height),
+                                    new(width, height),
+                                    new(width, -height)
+                                ],
+                                new Color(color.r, color.g, color.b, 255 - GLOBALS.Layer*100),
+                                0
+                            );
+                        }
+                        else
+                        {
+                            DrawTileAsProp(
+                                ref tileTexture,
+                                ref initTile,
+                                ref center,
+                                [
+                                    new(width, -height),
+                                    new(-width, -height),
+                                    new(-width, height),
+                                    new(width, height),
+                                    new(width, -height)
+                                ],
+                                255 - GLOBALS.Layer*100
+                            );
+                        }
+                    }
+                    else Printers.DrawTilePreview(ref initTile, ref tileTexture, ref color, (x, y));
+                }
+                else if (tileCell.Type == TileType.Material)
+                {
+                    // var materialName = ((TileMaterial)tileCell.Data).Name;
+                    var origin = new Vector2(x * scale + 5, y * scale + 5);
+                    var color = GLOBALS.Level.MaterialColors[y, x, layer];
+
+                    if (layer != GLOBALS.Layer) color.a = 120;
+
+                    if (color.r != 0 || color.g != 0 || color.b != 0)
+                    {
+
+                        switch (GLOBALS.Level.GeoMatrix[y, x, layer].Geo)
+                        {
+                            case 1:
+                                DrawRectangle(
+                                    x * scale + 5,
+                                    y * scale + 5,
+                                    6,
+                                    6,
+                                    color
+                                );
+                                break;
+
+
+                            case 2:
+                                DrawTriangle(
+                                    origin,
+                                    new(origin.X, origin.Y + scale - 10),
+                                    new(origin.X + scale - 10, origin.Y + scale - 10),
+                                    color
+                                );
+                                break;
+
+
+                            case 3:
+                                DrawTriangle(
+                                    new(origin.X + scale - 10, origin.Y),
+                                    new(origin.X, origin.Y + scale - 10),
+                                    new(origin.X + scale - 10, origin.Y + scale - 10),
+                                    color
+                                );
+                                break;
+
+                            case 4:
+                                DrawTriangle(
+                                    origin,
+                                    new(origin.X, origin.Y + scale - 10),
+                                    new(origin.X + scale - 10, origin.Y),
+                                    color
+                                );
+                                break;
+
+                            case 5:
+                                DrawTriangle(
+                                    origin,
+                                    new(origin.X + scale - 10, origin.Y + scale - 10),
+                                    new(origin.X + scale - 10, origin.Y),
+                                    color
+                                );
+                                break;
+
+                            case 6:
+                                DrawRectangleV(
+                                    origin,
+                                    new(scale - 10, (scale - 10) / 2),
+                                    color
+                                );
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    internal static void DrawTextureQuads(
         Texture texture, 
         PropQuads quads
     )
@@ -2454,7 +2864,8 @@ internal static void DrawTextureQuads(
         ref Texture texture,
         ref InitTile init,
         PropQuads quads,
-        int depth
+        int depth = 0,
+        int alpha = 255
     )
     {
         var scale = GLOBALS.Scale;
@@ -2469,6 +2880,7 @@ internal static void DrawTextureQuads(
         var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerHeight");
         var layerWidthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerWidth");
         var depthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "depth");
+        var alphaLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "alpha");
 
         BeginShaderMode(GLOBALS.Shaders.Prop);
 
@@ -2477,6 +2889,7 @@ internal static void DrawTextureQuads(
         SetShaderValue(GLOBALS.Shaders.Prop, layerHeightLoc, calLayerHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
         SetShaderValue(GLOBALS.Shaders.Prop, layerWidthLoc, calTextureCutWidth, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
         SetShaderValue(GLOBALS.Shaders.Prop, depthLoc, depth, ShaderUniformDataType.SHADER_UNIFORM_INT);
+        SetShaderValue(GLOBALS.Shaders.Prop, alphaLoc, alpha/255f, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
         
         DrawTextureQuads(texture, quads);
         
@@ -2697,53 +3110,64 @@ internal static void DrawTextureQuads(
         }
     }
 
-    internal static void DrawProp(int category, int index, Prop prop, bool tintedTiles = true)
+    internal static void DrawProp(InitPropType type, int category, int index, Prop prop, bool tintedTiles = true)
     {
         var depth = -prop.Depth - GLOBALS.Layer*10;
-        
-        if (prop.IsTile)
-        {
-            var texture = GLOBALS.Textures.Tiles[category][index];
-            var init = GLOBALS.Tiles[category][index];
-            var color = GLOBALS.TileCategories[category].Item2;
-            
-            if (tintedTiles)
-                DrawTileAsPropColored(ref texture, ref init, prop.Quads, color, depth);
-            else
-                DrawTileAsProp(ref texture, ref init, prop.Quads, depth);
-        }
-        else
-        {
-            var texture = GLOBALS.Textures.Props[category][index];
-            var init = GLOBALS.Props[category][index];
 
-            switch (init)
+        switch (type)
+        {
+            case InitPropType.Tile:
             {
-                case InitVariedStandardProp variedStandard:
-                    DrawVariedStandardProp(variedStandard, ref texture, prop.Quads, ((PropVariedSettings)prop.Extras.Settings).Variation, depth);
-                    break;
-
-                case InitStandardProp standard:
-                    DrawStandardProp(standard, ref texture, prop.Quads, depth);
-                    break;
-
-                case InitVariedSoftProp variedSoft:
-                    DrawVariedSoftProp(variedSoft, ref texture, prop.Quads,  ((PropVariedSoftSettings)prop.Extras.Settings).Variation, depth);
-                    break;
-
-                case InitSoftProp:
-                    DrawSoftProp(ref texture, prop.Quads, depth);
-                    break;
-
-                case InitVariedDecalProp variedDecal:
-                    DrawVariedDecalProp(variedDecal, ref texture, prop.Quads, ((PropVariedDecalSettings)prop.Extras.Settings).Variation, depth);
-                    break;
-
-                case InitSimpleDecalProp:
-                    DrawSimpleDecalProp(ref texture, prop.Quads, depth);
-                    break;
+                var texture = GLOBALS.Textures.Tiles[category][index];
+                var init = GLOBALS.Tiles[category][index];
+                var color = GLOBALS.TileCategories[category].Item2;
+            
+                if (tintedTiles)
+                    DrawTileAsPropColored(ref texture, ref init, prop.Quads, color, depth);
+                else
+                    DrawTileAsProp(ref texture, ref init, prop.Quads, depth);
             }
+                break;
+            
+            case InitPropType.Long:
+                break;
+            
+            case InitPropType.Rope:
+                break;
 
+            default:
+            {
+                var texture = GLOBALS.Textures.Props[category][index];
+                var init = GLOBALS.Props[category][index];
+
+                switch (init)
+                {
+                    case InitVariedStandardProp variedStandard:
+                        DrawVariedStandardProp(variedStandard, ref texture, prop.Quads, ((PropVariedSettings)prop.Extras.Settings).Variation, depth);
+                        break;
+
+                    case InitStandardProp standard:
+                        DrawStandardProp(standard, ref texture, prop.Quads, depth);
+                        break;
+
+                    case InitVariedSoftProp variedSoft:
+                        DrawVariedSoftProp(variedSoft, ref texture, prop.Quads,  ((PropVariedSoftSettings)prop.Extras.Settings).Variation, depth);
+                        break;
+
+                    case InitSoftProp:
+                        DrawSoftProp(ref texture, prop.Quads, depth);
+                        break;
+
+                    case InitVariedDecalProp variedDecal:
+                        DrawVariedDecalProp(variedDecal, ref texture, prop.Quads, ((PropVariedDecalSettings)prop.Extras.Settings).Variation, depth);
+                        break;
+
+                    case InitSimpleDecalProp:
+                        DrawSimpleDecalProp(ref texture, prop.Quads, depth);
+                        break;
+                }
+            }
+                break;
         }
     }
     
