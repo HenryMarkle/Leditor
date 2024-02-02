@@ -41,8 +41,11 @@ internal class PropsEditorPage : IPage
 
     private int _quadLock;
     private int _pointLock = -1;
+    private int _bezierHandleLock = -1;
 
     private bool _clickTracker;
+
+    private bool _showRopePanel;
 
     private int _mode;
 
@@ -51,8 +54,12 @@ internal class PropsEditorPage : IPage
     private bool _scalingProps;
     private bool _stretchingProp;
     private bool _editingPropPoints;
+    private bool _ropeMode;
 
     private byte _stretchAxes;
+
+    private int _ropeSimulationFrameCut = 1;
+    private int _ropeSimulationFrame;
     
     private Vector2 _selection1 = new(-100, -100);
     private Rectangle _selection;
@@ -61,7 +68,6 @@ internal class PropsEditorPage : IPage
 
     private bool[] _selected = [];
     private bool[] _hidden = [];
-    private float[] _ropeRadius = [];
 
     private readonly (string name, Color color)[] _propCategoriesOnly = GLOBALS.PropCategories[..^2]; // a risky move..
     private readonly InitPropBase[][] _propsOnly = GLOBALS.Props[..^2]; // a risky move..
@@ -99,6 +105,9 @@ internal class PropsEditorPage : IPage
     private readonly string[] _menuCategoryNames = [ "Tiles", "Ropes", "Long Props", "Other" ];
 
     private readonly byte[] _menuPanelBytes = "Menu"u8.ToArray();
+    private readonly byte[] _ropePanelBytes = "Rope Settings"u8.ToArray();
+    
+    private (int index, bool simSwitch, RopeModel model, Vector2[] bezierHandles)[] _models;
 
     internal PropsEditorPage(Serilog.Core.Logger logger)
     {
@@ -120,7 +129,60 @@ internal class PropsEditorPage : IPage
                 _tilesAsPropsCategoryIndices = [.. _tilesAsPropsCategoryIndices, (c, GLOBALS.TileCategories[c].Item1)];
                 _tilesAsPropsIndices = [.. _tilesAsPropsIndices, [.. tiles]];
             }
+            
+            // init rope models
         }
+    }
+
+    #nullable enable
+    internal void OnProjectLoaded(object? sender, EventArgs e)
+    {
+        ImportRopeModels();
+    }
+
+    internal void OnProjectCreated(object? sender, EventArgs e)
+    {
+        ImportRopeModels();
+    }
+    #nullable disable
+
+    private void ImportRopeModels()
+    {
+        List<(int, bool, RopeModel, Vector2[])> models = [];
+        
+        for (var r = 0; r < GLOBALS.Level.Props.Length; r++)
+        {
+            var current = GLOBALS.Level.Props[r];
+            
+            if (current.type != InitPropType.Rope) continue;
+            
+            var newModel = new RopeModel(current.prop, GLOBALS.RopeProps[current.position.index], 36);
+            models.Add((r, false, newModel, []));
+        }
+
+        _models = [..models];
+    }
+
+    private void UpdateRopeModelSegments()
+    {
+        List<(int, bool, RopeModel, Vector2[])> models = [];
+        
+        for (var r = 0; r < _models.Length; r++)
+        {
+            var current = _models[r];
+            
+            models.Add((
+                current.index, 
+                current.simSwitch, 
+                new RopeModel(
+                    GLOBALS.Level.Props[current.index].prop, 
+                    GLOBALS.RopeProps[GLOBALS.Level.Props[current.index].position.index], 
+                    GLOBALS.Level.Props[current.index].prop.Extras.RopePoints.Length), 
+                current.bezierHandles
+            ));
+        }
+
+        _models = [..models];
     }
 
     private void DecrementMenuIndex()
@@ -211,11 +273,6 @@ internal class PropsEditorPage : IPage
             _hidden = new bool[GLOBALS.Level.Props.Length];
         }
 
-        if (_ropeRadius.Length != GLOBALS.Level.Props.Length)
-        {
-            
-        }
-
         GLOBALS.PreviousPage = 8;
         var scale = GLOBALS.Scale;
         var previewScale = GLOBALS.PreviewScale;
@@ -227,14 +284,17 @@ internal class PropsEditorPage : IPage
         var tileMouseWorld = GetScreenToWorld2D(tileMouse, _camera);
 
         Rectangle menuPanelRect = new(sWidth - 360, 0, 360, sHeight);
+        Rectangle ropePanelRect = new(0, 0, 250, 280);
+
 
         //                        v this was done to avoid rounding errors
-        int tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / previewScale;
-        int tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / previewScale;
+        var tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / previewScale;
+        var tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / previewScale;
 
-        bool canDrawTile = !CheckCollisionPointRec(tileMouse, menuPanelRect);
+        var canDrawTile = !CheckCollisionPointRec(tileMouse, menuPanelRect) &&
+                           (!CheckCollisionPointRec(tileMouse, ropePanelRect) || !_showRopePanel);
 
-        bool inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
+        var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
 
         var currentTileAsPropCategory = _tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex];
 
@@ -371,11 +431,7 @@ internal class PropsEditorPage : IPage
                                         )
                                     )
                                     {
-                                        Extras = new()
-                                        {
-                                            Settings = new BasicPropSettings(),
-                                            RopePoints = []
-                                        }
+                                        Extras = new(new BasicPropSettings(), [])
                                     }
                                 )
                             ];
@@ -420,11 +476,7 @@ internal class PropsEditorPage : IPage
                                         new(tileMouseWorld.X - width, tileMouseWorld.Y + height))
                                     )
                                     {
-                                        Extras = new PropExtras
-                                        {
-                                            Settings = settings,
-                                            RopePoints = []
-                                        }
+                                        Extras = new PropExtras(settings, [])
                                     }
                                 )
                             ];
@@ -532,6 +584,8 @@ internal class PropsEditorPage : IPage
                         _selectedPropsEncloser.y + 
                         _selectedPropsEncloser.height/2
                     );
+
+                    
                 }
                 else
                 {
@@ -550,6 +604,7 @@ internal class PropsEditorPage : IPage
                     _rotatingProps = false;
                     _stretchingProp = false;
                     _editingPropPoints = false;
+                    // _ropeMode = false;
                 }
                 // Rotate
                 else if (IsKeyPressed(KeyboardKey.KEY_R) && anySelected)
@@ -559,6 +614,7 @@ internal class PropsEditorPage : IPage
                     _rotatingProps = true;
                     _stretchingProp = false;
                     _editingPropPoints = false;
+                    // _ropeMode = false;
                 }
                 // Scale
                 else if (IsKeyPressed(KeyboardKey.KEY_S) && anySelected)
@@ -569,8 +625,9 @@ internal class PropsEditorPage : IPage
                     _editingPropPoints = false;
                     _scalingProps = !_scalingProps;
                     _stretchAxes = 0;
+                    // _ropeMode = false;
                     
-                    SetMouseCursor(_scalingProps ? MouseCursor.MOUSE_CURSOR_RESIZE_NESW : MouseCursor.MOUSE_CURSOR_DEFAULT);
+                    SetMouseCursor(MouseCursor.MOUSE_CURSOR_RESIZE_NESW);
                 }
                 // Hide
                 else if (IsKeyPressed(KeyboardKey.KEY_H) && anySelected)
@@ -588,6 +645,7 @@ internal class PropsEditorPage : IPage
                     _rotatingProps = false;
                     _stretchingProp = !_stretchingProp;
                     _editingPropPoints = false;
+                    // _ropeMode = false;
                 }
                 // Delete
                 else if (IsKeyPressed(KeyboardKey.KEY_D) && anySelected)
@@ -597,29 +655,88 @@ internal class PropsEditorPage : IPage
                     _rotatingProps = false;
                     _stretchingProp = false;
                     _editingPropPoints = false;
+                    // _ropeMode = false;
                     
                     GLOBALS.Level.Props = _selected
                         .Select((s, i) => (s, i))
                         .Where(v => !v.Item1)
                         .Select(v => GLOBALS.Level.Props[v.Item2])
                         .ToArray();
+                    
+                    ImportRopeModels(); // don't forget to update the list when props list is modified
                 }
-                // Edit Rope Points
+                // Rope-only actions
                 else if (
                     fetchedSelected.Length == 1 &&
-                    fetchedSelected[0].prop.type == InitPropType.Rope &&
-                    IsKeyPressed(KeyboardKey.KEY_P)
+                    fetchedSelected[0].prop.type == InitPropType.Rope
                 )
                 {
-                    _scalingProps = false;
-                    _movingProps = false;
-                    _rotatingProps = false;
-                    _stretchingProp = false;
-                    _editingPropPoints = !_editingPropPoints;
+                    // Edit Rope Points
+                    if (IsKeyPressed(KeyboardKey.KEY_P))
+                    {
+                        _scalingProps = false;
+                        _movingProps = false;
+                        _rotatingProps = false;
+                        _stretchingProp = false;
+                        _editingPropPoints = !_editingPropPoints;
+                        _ropeMode = false;
+                    }
+                    // Rope mode
+                    else if (IsKeyPressed(KeyboardKey.KEY_B))
+                    {
+                        // _scalingProps = false;
+                        // _movingProps = false;
+                        // _rotatingProps = false;
+                        // _stretchingProp = false;
+                        // _editingPropPoints = false;
+                        _ropeMode = !_ropeMode;
+                    }
+                }
+                else SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+
+                if (_ropeMode && fetchedSelected.Length == 1)
+                {
+                    var foundRope = _models
+                        .Single(rope => rope.index == fetchedSelected[0].index);
+
+                    if (foundRope.simSwitch) // simulate
+                    {
+                        if (++_ropeSimulationFrame % _ropeSimulationFrameCut == 0)
+                        {
+                            foundRope.model.Update(
+                            fetchedSelected[0].prop.prop.Quads, 
+                            fetchedSelected[0].prop.prop.Depth switch
+                            {
+                                < -19 => 2,
+                                < -9 => 1,
+                                _ => 0
+                            });
+                        }
+                    }
+                    else // bezier
+                    {
+                        var ends = Utils.RopeEnds(fetchedSelected[0].prop.prop.Quads);
+                        
+                        fetchedSelected[0].prop.prop.Extras.RopePoints = Utils.Casteljau(fetchedSelected[0].prop.prop.Extras.RopePoints.Length, [ ends.pA, ..foundRope.bezierHandles, ends.pB ]);
+
+                        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                        {
+                            for (var b = 0; b < foundRope.bezierHandles.Length; b++)
+                            {
+                                if (_bezierHandleLock == -1 && CheckCollisionPointCircle(tileMouseWorld, foundRope.bezierHandles[b], 3f))
+                                    _bezierHandleLock = b;
+
+                                if (_bezierHandleLock == b) foundRope.bezierHandles[b] = tileMouseWorld;
+                            }
+                        }
+
+                        if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _bezierHandleLock != -1)
+                            _bezierHandleLock = -1;
+                    }
                 }
                 
-                // TODO: Use enums instead
-                if (_movingProps)
+                // TODO: switch on enums instead
+                if (_movingProps && anySelected)
                 {
                     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _movingProps = false;
                     var delta = GetMouseDelta(); // TODO: Scale to world2D
@@ -644,14 +761,28 @@ internal class PropsEditorPage : IPage
 
                         if (GLOBALS.Level.Props[s].type == InitPropType.Rope)
                         {
-                            for (var p = 0; p < GLOBALS.Level.Props[s].prop.Extras.RopePoints.Length; p++)
+                            if (!_ropeMode)
                             {
-                                GLOBALS.Level.Props[s].prop.Extras.RopePoints[p] = RayMath.Vector2Add(GLOBALS.Level.Props[s].prop.Extras.RopePoints[p], delta);
+                                for (var p = 0; p < GLOBALS.Level.Props[s].prop.Extras.RopePoints.Length; p++)
+                                {
+                                    GLOBALS.Level.Props[s].prop.Extras.RopePoints[p] = RayMath.Vector2Add(GLOBALS.Level.Props[s].prop.Extras.RopePoints[p], delta);
+                                }
+                            }
+
+                            for (var r = 0; r < _models.Length; r++)
+                            {
+                                if (_models[r].index == s)
+                                {
+                                    for (var h = 0; h < _models[r].bezierHandles.Length; h++)
+                                    {
+                                        _models[r].bezierHandles[h] += delta;
+                                    }
+                                }
                             }
                         }
                     }
                 }
-                else if (_rotatingProps)
+                else if (_rotatingProps && anySelected)
                 {
                     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _rotatingProps = false;
 
@@ -673,7 +804,7 @@ internal class PropsEditorPage : IPage
                         }
                     }
                 }
-                else if (_scalingProps)
+                else if (_scalingProps && anySelected)
                 {
                     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
                     {
@@ -740,9 +871,9 @@ internal class PropsEditorPage : IPage
                             break;
                     }
                 }
-                else if (_stretchingProp)
+                else if (_stretchingProp && anySelected)
                 {
-                    var currentQuads = fetchedSelected[0].prop.prop.Quads;
+                    var currentQuads = fetchedSelected[0].prop.prop.Quads; 
 
                     if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
                     {
@@ -867,7 +998,7 @@ internal class PropsEditorPage : IPage
                     }
                     else if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _quadLock != 0) _quadLock = 0;
                 }
-                else if (_editingPropPoints)
+                else if (_editingPropPoints && fetchedSelected.Length == 1)
                 {
                     var points = fetchedSelected[0].prop.prop.Extras.RopePoints;
                     
@@ -877,7 +1008,15 @@ internal class PropsEditorPage : IPage
 
                         for (var p = 0; p < points.Length; p++)
                         {
-                            if (CheckCollisionPointCircle(tileMouseWorld, points[p], 3f) || _pointLock == p)
+                            if (CheckCollisionPointCircle(
+                                    tileMouseWorld, 
+                                    new Vector2(
+                                        points[p].X/1.25f, 
+                                        points[p].Y/1.25f
+                                        ), 
+                                    3f) || 
+                                _pointLock == p
+                            )
                             {
                                 _pointLock = p;
                                 points[p] = tileMouseWorld;
@@ -886,7 +1025,7 @@ internal class PropsEditorPage : IPage
                     }
                     else if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _pointLock != -1) _pointLock = -1;
                 }
-                else
+                else if (!_ropeMode)
                 {
                     if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT) && !_clickTracker && canDrawTile)
                     {
@@ -897,7 +1036,7 @@ internal class PropsEditorPage : IPage
                     if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _clickTracker)
                     {
                         _clickTracker = false;
-                        
+                    
                         // Selection rectangle should be now updated
 
                         // If selection rectangle is too small, it's treated
@@ -1079,6 +1218,18 @@ internal class PropsEditorPage : IPage
                                     DrawCircleV(point, 2f, ORANGE);
                                 }
                             }
+                            
+                            if (_ropeMode)
+                            {
+                                // p is copied as suggested by the code editor..
+                                var p1 = p;
+                                var model = _models.Single(r => r.index == p1);
+
+                                if (!model.simSwitch)
+                                {
+                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, GREEN);
+                                }
+                            }
                         }
                     }
                 }
@@ -1220,6 +1371,18 @@ internal class PropsEditorPage : IPage
                                 foreach (var point in current.prop.Extras.RopePoints)
                                 {
                                     DrawCircleV(point, 2f, ORANGE);
+                                }
+                            }
+                            
+                            if (_ropeMode)
+                            {
+                                // p is copied as suggested by the code editor..
+                                var p1 = p;
+                                var model = _models.Single(r => r.index == p1);
+
+                                if (!model.simSwitch)
+                                {
+                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, GREEN);
                                 }
                             }
                         }
@@ -1365,6 +1528,18 @@ internal class PropsEditorPage : IPage
                                     DrawCircleV(point, 2f, ORANGE);
                                 }
                             }
+
+                            if (_ropeMode)
+                            {
+                                // p is copied as suggested by the code editor..
+                                var p1 = p;
+                                var model = _models.Single(r => r.index == p1);
+
+                                if (!model.simSwitch)
+                                {
+                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, GREEN);
+                                }
+                            }
                         }
                     }
                 }
@@ -1382,6 +1557,21 @@ internal class PropsEditorPage : IPage
             {
                 case 0: // Current Tile-As-Prop
                     {
+                        #if DEBUG
+                        if (_propsMenuTilesCategoryIndex >= _tilesAsPropsIndices.Length)
+                        {
+                            _logger.Fatal($"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices.Length}]: {nameof(_propsMenuTilesCategoryIndex)} ({_propsMenuTilesCategoryIndex} was out of bounds)");
+                            throw new IndexOutOfRangeException(message: $"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices.Length}]: {nameof(_propsMenuTilesCategoryIndex)} ({_propsMenuTilesCategoryIndex} was out of bounds)");
+                        }
+
+                        if (_propsMenuTilesIndex >=
+                            _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length)
+                        {
+                            _logger.Fatal($"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length}]: {nameof(_propsMenuTilesIndex)} ({_propsMenuTilesIndex} was out of bounds)");
+                            throw new IndexOutOfRangeException(message: $"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length}]: {nameof(_propsMenuTilesIndex)} ({_propsMenuTilesIndex} was out of bounds)");
+                        }
+                        #endif
+
                         var currentTileAsProp = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
                         var currentTileAsPropTexture = GLOBALS.Textures.Tiles[currentTileAsPropCategory.index][currentTileAsProp.index];
                         
@@ -1672,6 +1862,141 @@ internal class PropsEditorPage : IPage
                         .Where(p => _selected[p.index])
                         .Select(p => p)
                         .ToArray();
+
+                    
+                    // Rope Panel
+                    if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.type == InitPropType.Rope)
+                    {
+                        _showRopePanel = true;
+
+                        var modelIndex = -1;
+
+                        for (var i = 0; i < _models.Length; i++)
+                        {
+                            if (_models[i].index == fetchedSelected[0].index) modelIndex = i;
+                        }
+
+                        if (modelIndex == -1)
+                        {
+#if DEBUG
+                            _logger.Fatal(
+                                $"failed to fetch selected rope from {nameof(_models)}: no element with index [{fetchedSelected[0].index}] was found");
+                            throw new Exception(
+                                message:
+                                $"failed to fetch selected rope from {nameof(_models)}: no element with index [{fetchedSelected[0].index}] was found");
+#else
+                            goto ropeNotFound;
+#endif
+                        }
+
+                        ref var currentModel = ref _models[modelIndex];
+
+                        unsafe
+                        {
+                            fixed (byte* pt = _ropePanelBytes)
+                            {
+                                RayGui.GuiPanel(ropePanelRect, (sbyte*)pt);
+                            }
+                        }
+
+                        var simButton = new Rectangle(ropePanelRect.X + 10, ropePanelRect.Y + 40,
+                            ropePanelRect.width - 20, 40);
+
+                        if (
+                            RayGui.GuiButton(
+                                simButton,
+                                currentModel.simSwitch ? "Simulation" : "Bezier Path"
+                            )
+                        ) currentModel.simSwitch = !currentModel.simSwitch;
+
+                        var oldSegmentCount = GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints.Length;
+                        var segmentCount = oldSegmentCount;
+
+                        unsafe
+                        {
+                            RayGui.GuiSpinner(
+                                simButton with { Y = 100, X = ropePanelRect.X + 90, width = ropePanelRect.width - 100 },
+                                "segments",
+                                &segmentCount,
+                                3,
+                                100,
+                                false
+                            );
+                        }
+
+                        // Update segment count if needed
+
+
+                        if (segmentCount > oldSegmentCount)
+                        {
+                            GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
+                            [
+                                ..GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints, new Vector2()
+                            ];
+                        }
+                        else if (segmentCount < oldSegmentCount)
+                        {
+                            GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
+                                GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints[..^1];
+                        }
+
+                        if (segmentCount != oldSegmentCount) UpdateRopeModelSegments();
+
+                        //
+
+                        _ropeMode = RayGui.GuiCheckBox(
+                            simButton with { Y = 150, X = ropePanelRect.X + 10, width = 20, height = 20 },
+                            "Toggle Editing",
+                            _ropeMode
+                        );
+
+                        if (currentModel.simSwitch) // Simulation mode
+                        {
+                            if (RayGui.GuiButton(simButton with
+                                {
+                                    Y = ropePanelRect.Y + ropePanelRect.height - 50
+                                },
+                                $"{60 / _ropeSimulationFrameCut} FPS")) _ropeSimulationFrameCut = ++_ropeSimulationFrameCut % 3 + 1;
+                        }
+                        else // Bezier mode
+                        {
+                            var oldHandlePointNumber = currentModel.bezierHandles.Length;
+                            var handlePointNumber = oldHandlePointNumber;
+
+                            unsafe
+                            {
+                                RayGui.GuiSpinner(
+                                    simButton with
+                                    {
+                                        Y = 180, X = ropePanelRect.X + 90, width = ropePanelRect.width - 100
+                                    },
+                                    "Control Points",
+                                    &handlePointNumber,
+                                    1,
+                                    4,
+                                    false
+                                );
+                            }
+
+                            var quads = GLOBALS.Level.Props[currentModel.index].prop.Quads;
+                            var center = Utils.QuadsCenter(ref quads);
+
+                            if (handlePointNumber > oldHandlePointNumber)
+                            {
+                                currentModel.bezierHandles = [..currentModel.bezierHandles, center];
+                            }
+                            else if (handlePointNumber < oldHandlePointNumber)
+                            {
+                                currentModel.bezierHandles = currentModel.bezierHandles[..^1];
+                            }
+                        }
+
+                        ropeNotFound:
+                        {
+                        }
+                    }
+                    else _showRopePanel = false;
+                    //
                     
                     var listRect = new Rectangle(
                         (int)(menuPanelRect.x + 5), 
@@ -1736,8 +2061,8 @@ internal class PropsEditorPage : IPage
                     {
                         GLOBALS.Level.Props = _selected
                             .Select((s, i) => (s, i))
-                            .Where(v => !v.Item1)
-                            .Select(v => GLOBALS.Level.Props[v.Item2])
+                            .Where(v => !v.s)
+                            .Select(v => GLOBALS.Level.Props[v.i])
                             .ToArray();
                     }
                     
@@ -1751,13 +2076,32 @@ internal class PropsEditorPage : IPage
                     if (fetchedSelected.Length == 1)
                     {
                         // Depth indicator
+                        
                         var (c, i) = fetchedSelected[0].prop.prop.Position;
 
                         switch (fetchedSelected[0].prop.type)
                         {
                             case InitPropType.Tile:
                             {
-                                var init = GLOBALS.Tiles[c][i];
+                                InitTile init;
+                                
+                                #if DEBUG
+                                try
+                                {
+                                    init = GLOBALS.Tiles[c][i];
+                                }
+                                catch (IndexOutOfRangeException e)
+                                {
+                                    _logger.Fatal($"failed to fetch tile init from {nameof(GLOBALS.Tiles)}[{GLOBALS.Tiles.Length}]: c or i ({c}, {i}) were out of bounds");
+                                    throw new IndexOutOfRangeException(
+                                        message:
+                                        $"failed to fetch tile init from {nameof(GLOBALS.Tiles)}[{GLOBALS.Tiles.Length}]: c or i ({c}, {i}) were out of bounds",
+                                        innerException: e);
+                                }
+                                #else
+                                init = GLOBALS.Tiles[c][i];
+                                #endif
+                                
                                 var depth = init.Repeat.Sum() * 10;
                                 var offset = indicatorOffset - fetchedSelected[0].prop.prop.Depth * 10;
                                 var overflow = offset + depth - (indicatorOffset + 290);
@@ -1782,8 +2126,15 @@ internal class PropsEditorPage : IPage
 
                             default:
                             {
-                                var init = GLOBALS.Props[c][i];
-                            
+                                InitPropBase init;
+                                #if DEBUG
+                                try { init = GLOBALS.Props[c][i]; }
+                                catch (IndexOutOfRangeException e)
+                                {
+                                    _logger.Fatal($"failed to fetch prop init from {nameof(GLOBALS.Props)}[{GLOBALS.Props.Length}]: c, or i ({c}, {i}) were out of bounds");
+                                    throw new IndexOutOfRangeException(message: $"failed to fetch prop init from {nameof(GLOBALS.Props)}[{GLOBALS.Props.Length}]: c, or i ({c}, {i}) were out of bounds", innerException: e);
+                                }
+                                
                                 DrawRectangleRec(
                                     new Rectangle(
                                         indicatorOffset - fetchedSelected[0].prop.prop.Depth * 10, 
@@ -1798,6 +2149,22 @@ internal class PropsEditorPage : IPage
                                     ),
                                     new Color(100, 100, 180, 255)
                                 );
+                                #else
+                                DrawRectangleRec(
+                                    new Rectangle(
+                                        indicatorOffset - fetchedSelected[0].prop.prop.Depth * 10, 
+                                        listRect.y + listRect.height + 10, 
+                                        init switch
+                                        {
+                                            InitVariedStandardProp v => v.Repeat.Length, 
+                                            InitStandardProp s => s.Repeat.Length, 
+                                            _ => init.Depth
+                                        } * 10, 
+                                        30
+                                    ),
+                                    new Color(100, 100, 180, 255)
+                                );
+                                #endif
                             }
                                 break;
                         }
@@ -1824,7 +2191,21 @@ internal class PropsEditorPage : IPage
                         
                         unsafe
                         {
-                            var depth = -fetchedSelected[0].prop.prop.Depth;
+                            int depth;
+                            
+                            #if DEBUG
+                            try
+                            {
+                                depth = -fetchedSelected[0].prop.prop.Depth;
+                            }
+                            catch (IndexOutOfRangeException e)
+                            {
+                                _logger.Fatal($"failed to fetch the depth of the selected prop: {nameof(fetchedSelected)} was empty when expected to hold exactly one element");
+                                throw new IndexOutOfRangeException($"failed to fetch the depth of the selected prop: {nameof(fetchedSelected)} was empty when expected to hold exactly one element", innerException: e);
+                            }
+                            #else
+                            depth = -fetchedSelected[0].prop.prop.Depth;
+                            #endif
 
                             if (RayGui.GuiSpinner(
                                 new Rectangle(indicatorOffset, listRect.y + listRect.height + 50, 290, 40),
@@ -1835,12 +2216,56 @@ internal class PropsEditorPage : IPage
                                 _spinnerLock == 1
                             )) _spinnerLock = 1;
                             
+                            #if DEBUG
+                            try
+                            {
+                                fetchedSelected[0].prop.prop.Depth = -depth;
+                            }
+                            catch (IndexOutOfRangeException e)
+                            {
+                                _logger.Fatal($"failed to update depth: {nameof(fetchedSelected)} was empty when it was supposed to hold exactly one element");
+                                throw new IndexOutOfRangeException(
+                                    message: $"failed to update depth: {nameof(fetchedSelected)} was empty when it was supposed to hold exactly one element", 
+                                    innerException: e);
+                            }
+
+                            try
+                            {
+                                GLOBALS.Level.Props[fetchedSelected[0].index].prop.Depth = -depth;
+                            }
+                            catch (IndexOutOfRangeException e)
+                            {
+                                _logger.Fatal($"failed to update prop in {nameof(GLOBALS.Level.Props)}: fetchedSelected[0].index = {fetchedSelected[0].index} held an out-of-bounds index");
+                                throw new IndexOutOfRangeException(
+                                    message:
+                                    $"failed to update prop in {nameof(GLOBALS.Level.Props)}: fetchedSelected[0].index = {fetchedSelected[0].index} held an out-of-bounds index",
+                                    innerException: e);
+                            }
+                            #else
                             fetchedSelected[0].prop.prop.Depth = -depth;
                             GLOBALS.Level.Props[fetchedSelected[0].index].prop.Depth = -depth;
+                            #endif
+                            
                             
                             // Variation Selector
 
-                            if (fetchedSelected[0].prop.prop.Extras.Settings is IVariable variable)
+                            BasicPropSettings propSettings;
+                            
+                            #if DEBUG
+                            try
+                            {
+                                propSettings = fetchedSelected[0].prop.prop.Extras.Settings;
+                            }
+                            catch (IndexOutOfRangeException e)
+                            {
+                                _logger.Fatal($"failed to fetch prop settings: {nameof(fetchedSelected)} was empty when expected to hold exactly one item");
+                                throw new IndexOutOfRangeException(message: $"failed to fetch prop settings: {nameof(fetchedSelected)} was empty when expected to hold exactly one item", innerException: e);
+                            }
+                            #else
+                            propSettings = fetchedSelected[0].prop.prop.Extras.Settings;
+                            #endif
+
+                            if (propSettings is IVariable variable)
                             {
                                 var init = GLOBALS.Props[c][i];
                                 var variations = ((IVariableInit)init).Variations + 1;
@@ -1859,7 +2284,8 @@ internal class PropsEditorPage : IPage
                         }
                     }
                     
-                    //
+                    // Menu
+                    // TODO: Add pagination
                     
                     for (var i = 0; i < pageSize; i++)
                     {

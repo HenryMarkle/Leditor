@@ -6,6 +6,8 @@ namespace Leditor;
 
 internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
 {
+    internal event EventHandler ProjectCreated;
+    
     readonly Serilog.Core.Logger logger = logger;
     readonly byte[] panelBytes = Encoding.ASCII.GetBytes("New Level");
 
@@ -303,6 +305,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                     }
 
                     GLOBALS.NewFlag = false;
+                    ProjectCreated?.Invoke(this, EventArgs.Empty);
                 }
                 else if (GLOBALS.ResizeFlag)
                 {

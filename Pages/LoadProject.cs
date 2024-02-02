@@ -6,6 +6,8 @@ namespace Leditor;
 
 public class LoadProjectPage : IPage
 {
+    internal event EventHandler ProjectLoaded;
+    
     private readonly Serilog.Core.Logger _logger;
     
     private int _explorerPage;
@@ -326,6 +328,7 @@ public class LoadProjectPage : IPage
                 GLOBALS.Page = 1;
 
                 GLOBALS.TileCheck = null;
+                ProjectLoaded.Invoke(this, EventArgs.Empty);
                 RayGui.GuiUnlock();
             }
             else // choosing a project

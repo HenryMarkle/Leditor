@@ -790,7 +790,7 @@ public struct PropQuads(
     public Vector2 BottomLeft { get; set; } = bottomLeft;
 }
 
-public struct Prop(int depth, string name, bool isTile, (int, int) position, PropQuads quads)
+public class Prop(int depth, string name, bool isTile, (int, int) position, PropQuads quads)
 {
     public int Depth { get; set; } = depth;
     public string Name { get; set; } = name;
@@ -801,7 +801,7 @@ public struct Prop(int depth, string name, bool isTile, (int, int) position, Pro
     public PropExtras Extras { get; set; }
 }
 
-public struct PropExtras(BasicPropSettings settings, Vector2[] ropePoints)
+public class PropExtras(BasicPropSettings settings, Vector2[] ropePoints)
 {
     public BasicPropSettings Settings { get; set; } = settings;
     public Vector2[] RopePoints { get; set; } = ropePoints;

@@ -439,15 +439,14 @@ public static class Tools {
             var parsedProp = new Prop(depth, name, type == InitPropType.Tile, (category, index),
                 new(quads[0], quads[1], quads[2], quads[3]))
             {
-                Extras = new()
-                {
-                    RopePoints = ropePoints?.Values.Select(p =>
+                Extras = new PropExtras(
+                    settings: settings, 
+                    ropePoints: (ropePoints?.Values.Select(p =>
                     {
                         var args = ((AstNode.GlobalCall)p).Arguments;
                         return new Vector2(NumberToInteger(args[0])/1.25f, NumberToInteger(args[1])/1.25f);
-                    }).ToArray() ?? [],
-                    Settings = settings
-                },
+                    }).ToArray() ?? [])
+                ),
                 IsTile = type == InitPropType.Tile
             };
 

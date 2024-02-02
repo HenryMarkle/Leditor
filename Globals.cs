@@ -2010,6 +2010,22 @@ internal static class Utils
         quads.BottomRight = quads.BottomRight with { Y = (quads.BottomRight.Y - center.Y) * factor + center.Y };
     }
 
+    internal static (Vector2 pA, Vector2 pB) RopeEnds(ref PropQuads quads)
+    {
+        return (
+            RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopLeft, quads.BottomLeft), new(2f, 2f)), 
+            RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopRight, quads.BottomRight), new(2f, 2f))
+        );
+    }
+    
+    internal static (Vector2 pA, Vector2 pB) RopeEnds(PropQuads quads)
+    {
+        return (
+            RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopLeft, quads.BottomLeft), new(2f, 2f)), 
+            RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopRight, quads.BottomRight), new(2f, 2f))
+        );
+    }
+
     internal static Vector2[] Casteljau(int steps, Vector2[] points) {
         Vector2 GetCasteljauPoint(int r, int i, double t) { 
             if(r == 0) return points[i];

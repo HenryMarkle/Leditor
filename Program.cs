@@ -111,10 +111,13 @@ class Program
     ];
 
     // Used to load light/shadow brush images as textures.
-    private static Texture[] LoadLightTextures() => Directory
-        .GetFileSystemEntries(Path.Combine(GLOBALS.Paths.AssetsDirectory, "light"))
+    private static Texture[] LoadLightTextures(Serilog.Core.Logger logger) => Directory
+        .GetFileSystemEntries(GLOBALS.Paths.LightAssetsDirectory)
         .Where(e => e.EndsWith(".png"))
-        .Select(LoadTexture)
+        .Select((e) =>
+        {
+            logger.Debug($"loading light texture \"{e}\""); 
+            return LoadTexture(e); })
         .ToArray();
 
     // Embedded tiles and their categories.
@@ -541,7 +544,7 @@ class Program
 
             logger.Debug("loading light brush textures");
             // Light textures need to be loaded on a separate thread, just like tile textures
-            GLOBALS.Textures.LightBrushes = LoadLightTextures();
+            GLOBALS.Textures.LightBrushes = LoadLightTextures(logger);
         }
         catch (Exception e)
         {
@@ -649,7 +652,10 @@ class Program
         MissingInitFilePage missingInitFilePage = new(logger);
         ExperimentalGeometryPage experimentalGeometryPage = new(logger);
         SettingsPage settingsPage = new(logger, settingsPreviewTextures);
-
+        
+        // Page event handlers
+        loadPage.ProjectLoaded += propsPage.OnProjectLoaded;
+        dimensionsPage.ProjectCreated += propsPage.OnProjectCreated;
         //
 
         while (!WindowShouldClose())
