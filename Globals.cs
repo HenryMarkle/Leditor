@@ -51,6 +51,7 @@ internal static class GLOBALS
         internal Shader VariedSoftProp { get; set; }
         internal Shader SimpleDecalProp { get; set; }
         internal Shader VariedDecalProp { get; set; }
+        internal Shader LongProp { get; set; }
     }
 
     /// <summary>
@@ -2010,7 +2011,7 @@ internal static class Utils
         quads.BottomRight = quads.BottomRight with { Y = (quads.BottomRight.Y - center.Y) * factor + center.Y };
     }
 
-    internal static (Vector2 pA, Vector2 pB) RopeEnds(ref PropQuads quads)
+    internal static (Vector2 pA, Vector2 pB) RopeEnds(in PropQuads quads)
     {
         return (
             RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopLeft, quads.BottomLeft), new(2f, 2f)), 
@@ -2024,6 +2025,29 @@ internal static class Utils
             RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopLeft, quads.BottomLeft), new(2f, 2f)), 
             RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopRight, quads.BottomRight), new(2f, 2f))
         );
+    }
+
+    internal static (Vector2 left, Vector2 top, Vector2 right, Vector2 bottom) LongSides(in PropQuads quad)
+    {
+        var (left, right) = RopeEnds(quad);
+
+        var top = new Vector2((quad.TopLeft.X + quad.TopRight.X)/2f, (quad.TopLeft.Y + quad.TopRight.Y)/2f);
+        var bottom = new Vector2((quad.BottomLeft.X + quad.BottomRight.X)/2f, (quad.BottomLeft.Y + quad.BottomRight.Y)/2f);
+        
+        return (left, top, right, bottom);
+    }
+    
+    internal static Vector2[] GenerateRopePoints(in Vector2 pointA, in Vector2 pointB, int count = 3)
+    {
+        var distance = RayMath.Vector2Distance(pointA, pointB);
+
+        var delta = distance / count;
+
+        List<Vector2> points = [];
+        
+        for (var step = 0; step < count; step++) points.Add(RayMath.Vector2MoveTowards(pointA, pointB, delta * step));
+
+        return [..points];
     }
 
     internal static Vector2[] Casteljau(int steps, Vector2[] points) {
@@ -2045,15 +2069,6 @@ internal static class Utils
         return [.. tmp];
     }
     
-    internal static void RopeBezier(int steps)
-    {
-        
-        
-        for (float t = 0, i = 0; i <= steps; i++, t = 1 / steps * i)
-        {
-            
-        }
-    }
 }
 
 /// <summary>
@@ -2552,8 +2567,8 @@ internal static class Printers
     }
 
     internal static void DrawTextureQuads(
-        Texture texture, 
-        PropQuads quads
+        in Texture texture, 
+        in PropQuads quads
     )
     {
         RlGl.rlSetTexture(texture.id);
@@ -2581,8 +2596,8 @@ internal static class Printers
     }
     
     internal static void DrawTextureQuads(
-        Texture texture, 
-        PropQuads quads,
+        in Texture texture, 
+        in PropQuads quads,
         bool flipX,
         bool flipY
     )
@@ -3144,10 +3159,14 @@ internal static class Printers
                     DrawTileAsProp(ref texture, ref init, prop.Quads, depth);
             }
                 break;
-            
+
             case InitPropType.Long:
+            {
+                var texture = GLOBALS.Textures.LongProps[index];
+                DrawLongProp(texture, prop.Quads, depth);
+            }
                 break;
-            
+
             case InitPropType.Rope:
                 break;
 
@@ -3159,27 +3178,27 @@ internal static class Printers
                 switch (init)
                 {
                     case InitVariedStandardProp variedStandard:
-                        DrawVariedStandardProp(variedStandard, ref texture, prop.Quads, ((PropVariedSettings)prop.Extras.Settings).Variation, depth);
+                        DrawVariedStandardProp(variedStandard, texture, prop.Quads, ((PropVariedSettings)prop.Extras.Settings).Variation, depth);
                         break;
 
                     case InitStandardProp standard:
-                        DrawStandardProp(standard, ref texture, prop.Quads, depth);
+                        DrawStandardProp(standard, texture, prop.Quads, depth);
                         break;
 
                     case InitVariedSoftProp variedSoft:
-                        DrawVariedSoftProp(variedSoft, ref texture, prop.Quads,  ((PropVariedSoftSettings)prop.Extras.Settings).Variation, depth);
+                        DrawVariedSoftProp(variedSoft, texture, prop.Quads,  ((PropVariedSoftSettings)prop.Extras.Settings).Variation, depth);
                         break;
 
                     case InitSoftProp:
-                        DrawSoftProp(ref texture, prop.Quads, depth);
+                        DrawSoftProp(texture, prop.Quads, depth);
                         break;
 
                     case InitVariedDecalProp variedDecal:
-                        DrawVariedDecalProp(variedDecal, ref texture, prop.Quads, ((PropVariedDecalSettings)prop.Extras.Settings).Variation, depth);
+                        DrawVariedDecalProp(variedDecal, texture, prop.Quads, ((PropVariedDecalSettings)prop.Extras.Settings).Variation, depth);
                         break;
 
                     case InitSimpleDecalProp:
-                        DrawSimpleDecalProp(ref texture, prop.Quads, depth);
+                        DrawSimpleDecalProp(texture, prop.Quads, depth);
                         break;
                 }
             }
@@ -3190,36 +3209,57 @@ internal static class Printers
     internal static void DrawProp(
         BasicPropSettings settings, 
         InitPropBase init, 
-        ref Texture texture, 
-        PropQuads quads,
+        in Texture texture, 
+        in PropQuads quads,
         int depth)
     {
         switch (init)
         {
             case InitVariedStandardProp variedStandard:
-                DrawVariedStandardProp(variedStandard, ref texture, quads, ((PropVariedSettings)settings).Variation, depth);
+                DrawVariedStandardProp(variedStandard, texture, quads, ((PropVariedSettings)settings).Variation, depth);
                 break;
 
             case InitStandardProp standard:
-                DrawStandardProp(standard, ref texture, quads, depth);
+                DrawStandardProp(standard, texture, quads, depth);
                 break;
 
             case InitVariedSoftProp variedSoft:
-                DrawVariedSoftProp(variedSoft, ref texture, quads,  ((PropVariedSoftSettings)settings).Variation, depth);
+                DrawVariedSoftProp(variedSoft, texture, quads,  ((PropVariedSoftSettings)settings).Variation, depth);
                 break;
 
             case InitSoftProp:
-                DrawSoftProp(ref texture, quads, depth);
+                DrawSoftProp(texture, quads, depth);
                 break;
 
             case InitVariedDecalProp variedDecal:
-                DrawVariedDecalProp(variedDecal, ref texture, quads, ((PropVariedDecalSettings)settings).Variation, depth);
+                DrawVariedDecalProp(variedDecal, texture, quads, ((PropVariedDecalSettings)settings).Variation, depth);
                 break;
 
             case InitSimpleDecalProp:
-                DrawSimpleDecalProp(ref texture, quads, depth);
+                DrawSimpleDecalProp(texture, quads, depth);
+                break;
+            
+            case InitLongProp:
+                DrawLongProp(texture, quads, depth);
                 break;
         }
+    }
+
+    internal static void DrawLongProp(in Texture texture, in PropQuads quads, int depth = 0)
+    {
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+        
+        var textureLoc = GetShaderLocation(GLOBALS.Shaders.LongProp, "inputTexture");
+        var depthLoc = GetShaderLocation(GLOBALS.Shaders.LongProp, "depth");
+
+        BeginShaderMode(GLOBALS.Shaders.LongProp);
+
+        SetShaderValueTexture(GLOBALS.Shaders.LongProp, textureLoc, texture);
+        SetShaderValue(GLOBALS.Shaders.LongProp, depthLoc, depth, ShaderUniformDataType.SHADER_UNIFORM_INT);
+        
+        DrawTextureQuads(texture, quads, flippedX, flippedY);
+        EndShaderMode();
     }
     
     internal static void DrawStandardProp(
@@ -3260,7 +3300,7 @@ internal static class Printers
     
     internal static void DrawStandardProp(
         InitStandardProp init, 
-        ref Texture texture, 
+        in Texture texture, 
         PropQuads quads,
         int depth
     )
@@ -3336,7 +3376,7 @@ internal static class Printers
     
     internal static void DrawVariedStandardProp(
         InitVariedStandardProp init, 
-        ref Texture texture, 
+        in Texture texture, 
         PropQuads quads,
         int variation,
         int depth
@@ -3397,7 +3437,7 @@ internal static class Printers
         EndShaderMode();
     }
     
-    internal static void DrawSoftProp(ref Texture texture, PropQuads quads, int depth)
+    internal static void DrawSoftProp(in Texture texture, in PropQuads quads, int depth)
     {
         var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
         var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
@@ -3467,7 +3507,7 @@ internal static class Printers
     
     internal static void DrawVariedSoftProp(
         InitVariedSoftProp init, 
-        ref Texture texture, 
+        in Texture texture, 
         PropQuads quads,
         int variation,
         int depth
@@ -3523,7 +3563,7 @@ internal static class Printers
         EndShaderMode();
     }
     
-    internal static void DrawSimpleDecalProp(ref Texture texture, PropQuads quads, int depth = 0)
+    internal static void DrawSimpleDecalProp(in Texture texture, in PropQuads quads, int depth = 0)
     {
         var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
         var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
@@ -3585,8 +3625,8 @@ internal static class Printers
     
     internal static void DrawVariedDecalProp(
         InitVariedDecalProp init, 
-        ref Texture texture, 
-        PropQuads quads,
+        in Texture texture, 
+        in PropQuads quads,
         int variation,
         int depth
     )

@@ -616,7 +616,9 @@ class Program
         
         GLOBALS.Shaders.ColoredBoxTileProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_colored_box_type.frag"));
-        
+
+        GLOBALS.Shaders.LongProp =
+            LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_long.frag"));
         //
 
         SetTargetFPS(GLOBALS.Settings.Misc.FPS);
@@ -1001,6 +1003,7 @@ class Program
         UnloadShader(GLOBALS.Shaders.VariedDecalProp);
         UnloadShader(GLOBALS.Shaders.ColoredTileProp);
         UnloadShader(GLOBALS.Shaders.ColoredBoxTileProp);
+        UnloadShader(GLOBALS.Shaders.LongProp);
 
         unloadTileImages?.Wait();
 

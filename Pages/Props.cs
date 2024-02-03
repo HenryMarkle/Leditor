@@ -28,6 +28,12 @@ internal class PropsEditorPage : IPage
     private int _propsMenuTilesScrollIndex;
     private int _propsMenuTilesIndex;
 
+    private int _propsMenuRopesScrollIndex;
+    private int _propsMenuRopesIndex;
+
+    private int _propsMenuLongsScrollIndex;
+    private int _propsMenuLongsIndex;
+
     private int _propsMenuOthersCategoryScrollIndex;
     private int _propsMenuOthersScrollIndex;
     private int _propsMenuOthersCategoryIndex;
@@ -106,6 +112,9 @@ internal class PropsEditorPage : IPage
 
     private readonly byte[] _menuPanelBytes = "Menu"u8.ToArray();
     private readonly byte[] _ropePanelBytes = "Rope Settings"u8.ToArray();
+
+    private readonly string _propsMenuRopesListString = string.Join(";", GLOBALS.RopeProps.Select(p => p.Name));
+    private readonly string _propsMenuLongsListString = string.Join(";", GLOBALS.LongProps.Select(l => l.Name));
     
     private (int index, bool simSwitch, RopeModel model, Vector2[] bezierHandles)[] _models;
 
@@ -156,7 +165,7 @@ internal class PropsEditorPage : IPage
             
             if (current.type != InitPropType.Rope) continue;
             
-            var newModel = new RopeModel(current.prop, GLOBALS.RopeProps[current.position.index], 36);
+            var newModel = new RopeModel(current.prop, GLOBALS.RopeProps[current.position.index], current.prop.Extras.RopePoints.Length);
             models.Add((r, false, newModel, []));
         }
 
@@ -203,10 +212,17 @@ internal class PropsEditorPage : IPage
                 }
                 break;
                     
-            case 1: // TODO: ropes 
+            case 1: // Ropes
+                _propsMenuRopesIndex--;
+                if (_propsMenuRopesIndex < 0) _propsMenuRopesIndex = GLOBALS.RopeProps.Length - 1;
+                break;
+            
+            case 2: // Longs 
+                _propsMenuLongsIndex--;
+                if (_propsMenuLongsIndex < 0) _propsMenuLongsIndex = GLOBALS.LongProps.Length - 1;
                 break;
                     
-            case 2: // props
+            case 3: // props
                 if (_propCategoryFocus)
                 {
                     _propsMenuOthersCategoryIndex--;
@@ -226,7 +242,7 @@ internal class PropsEditorPage : IPage
     {
         switch (_menuRootCategoryIndex)
         {
-            case 0:
+            case 0: // Tiles as props
                 if (_propCategoryFocus)
                 {
                     _propsMenuTilesCategoryIndex = ++_propsMenuTilesCategoryIndex % _tilesAsPropsCategoryIndices.Length;
@@ -243,9 +259,15 @@ internal class PropsEditorPage : IPage
                 }
                 break;
             
-            case 1: break;
+            case 1: // Ropes
+                _propsMenuRopesIndex = ++_propsMenuRopesIndex % GLOBALS.RopeProps.Length;
+                break;
             
-            case 2:
+            case 2: // Longs 
+                _propsMenuLongsIndex = ++_propsMenuLongsIndex % GLOBALS.LongProps.Length;
+                break;
+            
+            case 3: // Props
                 if (_propCategoryFocus)
                 {
                     _propsMenuOthersCategoryIndex++;
@@ -437,11 +459,77 @@ internal class PropsEditorPage : IPage
                             ];
                         }
                             break;
-                        
+
                         case 1: // Ropes
+                        {
+                            var current = GLOBALS.RopeProps[_propsMenuRopesIndex];
+                            var newQuads = new PropQuads
+                            {
+                                TopLeft = new(tileMouseWorld.X - 100, tileMouseWorld.Y - 30),
+                                BottomLeft = new(tileMouseWorld.X - 100, tileMouseWorld.Y + 30),
+                                TopRight = new(tileMouseWorld.X + 100, tileMouseWorld.Y - 30),
+                                BottomRight = new(tileMouseWorld.X + 100, tileMouseWorld.Y + 30)
+                            };
+
+                            var ropeEnds = Utils.RopeEnds(newQuads);
+                                
+                            GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
+                                (
+                                    InitPropType.Rope, 
+                                    (-1, _propsMenuRopesIndex), 
+                                    new Prop(
+                                        -GLOBALS.Layer*10, 
+                                        current.Name, 
+                                        false, 
+                                        (-1, _propsMenuRopesIndex), 
+                                        newQuads
+                                    )
+                                    {
+                                        Extras = new PropExtras(
+                                            new PropRopeSettings(), 
+                                            Utils.GenerateRopePoints(ropeEnds.pA, ropeEnds.pB, 30)
+                                        )
+                                    }
+                                ) 
+                            ];
+
+                            _selected = new bool[GLOBALS.Level.Props.Length];
+                            ImportRopeModels();
+                        }
                             break;
-                        
+
                         case 2: // Long Props
+                        {
+                            var current = GLOBALS.LongProps[_propsMenuLongsIndex];
+                            ref var texture = ref GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
+                            var height = texture.height / 2f;
+                            var newQuads = new PropQuads
+                            {
+                                TopLeft = new(tileMouseWorld.X - 100, tileMouseWorld.Y - height),
+                                BottomLeft = new(tileMouseWorld.X - 100, tileMouseWorld.Y + height),
+                                TopRight = new(tileMouseWorld.X + 100, tileMouseWorld.Y - height),
+                                BottomRight = new(tileMouseWorld.X + 100, tileMouseWorld.Y + height)
+                            };
+                            
+                            GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
+                                (
+                                    InitPropType.Long, 
+                                    (-1, _propsMenuLongsIndex), 
+                                    new Prop(
+                                        -GLOBALS.Layer*10, 
+                                        current.Name, 
+                                        false, 
+                                        (-1, _propsMenuLongsIndex), 
+                                        newQuads
+                                    )
+                                    {
+                                        Extras = new PropExtras(new PropLongSettings(), [])
+                                    }
+                                ) 
+                            ];
+
+                            _selected = new bool[GLOBALS.Level.Props.Length];
+                        }
                             break;
 
                         case 3: // Others
@@ -519,10 +607,12 @@ internal class PropsEditorPage : IPage
                     if (IsKeyPressed(KeyboardKey.KEY_S))
                     {
                         IncrementMenuIndex();
+                        currentTileAsPropCategory = _tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex];
                     }
                     else if (IsKeyPressed(KeyboardKey.KEY_W))
                     {
                         DecrementMenuIndex();
+                        currentTileAsPropCategory = _tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex];
                     }
                     
                     // Pickup Prop
@@ -662,6 +752,8 @@ internal class PropsEditorPage : IPage
                         .Where(v => !v.Item1)
                         .Select(v => GLOBALS.Level.Props[v.Item2])
                         .ToArray();
+                    
+                    _selected = new bool[GLOBALS.Level.Props.Length]; // Update selected
                     
                     ImportRopeModels(); // don't forget to update the list when props list is modified
                 }
@@ -900,22 +992,22 @@ internal class PropsEditorPage : IPage
                                 ) || _quadLock == 1)
                             {
                                 _quadLock = 1;
-                                currentQuads.TopLeft = RayMath.Vector2Add(
+                                currentQuads.BottomLeft = RayMath.Vector2Add(
                                     tileMouseWorld, 
                                     new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                     );
                                 
-                                currentQuads.BottomLeft = RayMath.Vector2Add(
+                                currentQuads.TopLeft = RayMath.Vector2Add(
                                     tileMouseWorld, 
                                     new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                     );
                                 
-                                currentQuads.TopRight = RayMath.Vector2Add(
+                                currentQuads.BottomRight = RayMath.Vector2Add(
                                     middleRight, 
                                     new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                 );
                                 
-                                currentQuads.BottomRight = RayMath.Vector2Add(
+                                currentQuads.TopRight = RayMath.Vector2Add(
                                     middleRight, 
                                     new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                 );
@@ -929,25 +1021,103 @@ internal class PropsEditorPage : IPage
                             {
                                 _quadLock = 2;
                                 
-                                currentQuads.TopLeft = RayMath.Vector2Add(
-                                    middleLeft, 
-                                    new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
-                                );
-                                
                                 currentQuads.BottomLeft = RayMath.Vector2Add(
                                     middleLeft, 
-                                    new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
+                                    new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                 );
                                 
-                                currentQuads.TopRight = RayMath.Vector2Add(
-                                    tileMouseWorld, 
-                                    new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
+                                currentQuads.TopLeft = RayMath.Vector2Add(
+                                    middleLeft, 
+                                    new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                 );
                                 
                                 currentQuads.BottomRight = RayMath.Vector2Add(
                                     tileMouseWorld, 
+                                    new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
+                                );
+                                
+                                currentQuads.TopRight = RayMath.Vector2Add(
+                                    tileMouseWorld, 
                                     new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                 );
+                            }
+                        }
+                        else if (fetchedSelected[0].prop.type == InitPropType.Long)
+                        {
+                            var (left, top, right, bottom) = Utils.LongSides(fetchedSelected[0].prop.prop.Quads);
+                            
+                            var beta = RayMath.Vector2Angle(RayMath.Vector2Subtract(left, right), new(1.0f, 0.0f));
+                            
+                            var r = RayMath.Vector2Length(RayMath.Vector2Subtract(currentQuads.TopLeft, left));
+
+                            if (CheckCollisionPointCircle(tileMouseWorld, left, 5f) && _quadLock == 0)
+                            {
+                                _quadLock = 1;
+                            }
+                            else if (CheckCollisionPointCircle(tileMouseWorld, right, 5f) && _quadLock == 0)
+                            {
+                                _quadLock = 2;
+                            }
+                            else if (CheckCollisionPointCircle(tileMouseWorld, top, 5f) && _quadLock == 0)
+                            {
+                                _quadLock = 3;
+                            }
+                            else if (CheckCollisionPointCircle(tileMouseWorld, bottom, 5f) && _quadLock == 0)
+                            {
+                                _quadLock = 4;
+                            }
+
+                            switch (_quadLock)
+                            {
+                                case 1: // left
+                                    currentQuads.BottomLeft = RayMath.Vector2Add(
+                                        tileMouseWorld, 
+                                        new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
+                                    );
+                                
+                                    currentQuads.TopLeft = RayMath.Vector2Add(
+                                        tileMouseWorld, 
+                                        new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
+                                    );
+                                
+                                    currentQuads.BottomRight = RayMath.Vector2Add(
+                                        right, 
+                                        new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
+                                    );
+                                
+                                    currentQuads.TopRight = RayMath.Vector2Add(
+                                        right, 
+                                        new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
+                                    );
+                                    break;
+                                
+                                case 2: // right
+                                    currentQuads.BottomLeft = RayMath.Vector2Add(
+                                        left, 
+                                        new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
+                                    );
+                                
+                                    currentQuads.TopLeft = RayMath.Vector2Add(
+                                        left, 
+                                        new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
+                                    );
+                                
+                                    currentQuads.BottomRight = RayMath.Vector2Add(
+                                        tileMouseWorld, 
+                                        new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
+                                    );
+                                
+                                    currentQuads.TopRight = RayMath.Vector2Add(
+                                        tileMouseWorld, 
+                                        new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
+                                    );
+                                    break;
+                                
+                                case 3: // TODO: top
+                                    break;
+                                
+                                case 4: // TODO: bottom
+                                    break;
                             }
                         }
                         else
@@ -1070,7 +1240,6 @@ internal class PropsEditorPage : IPage
                 
                 break;
         }
-
 
         #region TileEditorDrawing
         BeginDrawing();
@@ -1473,10 +1642,19 @@ internal class PropsEditorPage : IPage
                                     BLUE
                                 );
                                 
-                                DrawCircleV(quads.TopLeft, 2f, BLUE);
+                                /*DrawCircleV(quads.TopLeft, 2f, BLUE);
                                 DrawCircleV(quads.TopRight, 2f, BLUE);
                                 DrawCircleV(quads.BottomRight, 2f, BLUE);
-                                DrawCircleV(quads.BottomLeft, 2f, BLUE);
+                                DrawCircleV(quads.BottomLeft, 2f, BLUE);*/
+                            }
+                            else if (current.type == InitPropType.Long)
+                            {
+                                var sides = Utils.LongSides(current.prop.Quads);
+                                
+                                DrawCircleV(sides.left, 5f, BLUE);
+                                DrawCircleV(sides.top, 5f, BLUE);
+                                DrawCircleV(sides.right, 5f, BLUE);
+                                DrawCircleV(sides.bottom, 5f, BLUE);
                             }
                             else
                             {
@@ -1554,86 +1732,125 @@ internal class PropsEditorPage : IPage
             {
                 case 1: // Place Mode
                     switch (_menuRootCategoryIndex)
-            {
-                case 0: // Current Tile-As-Prop
                     {
-                        #if DEBUG
-                        if (_propsMenuTilesCategoryIndex >= _tilesAsPropsIndices.Length)
-                        {
-                            _logger.Fatal($"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices.Length}]: {nameof(_propsMenuTilesCategoryIndex)} ({_propsMenuTilesCategoryIndex} was out of bounds)");
-                            throw new IndexOutOfRangeException(message: $"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices.Length}]: {nameof(_propsMenuTilesCategoryIndex)} ({_propsMenuTilesCategoryIndex} was out of bounds)");
-                        }
+                        case 0: // Current Tile-As-Prop
+                            {
+                                #if DEBUG
+                                if (_propsMenuTilesCategoryIndex >= _tilesAsPropsIndices.Length)
+                                {
+                                    _logger.Fatal($"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices.Length}]: {nameof(_propsMenuTilesCategoryIndex)} ({_propsMenuTilesCategoryIndex} was out of bounds)");
+                                    throw new IndexOutOfRangeException(message: $"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices.Length}]: {nameof(_propsMenuTilesCategoryIndex)} ({_propsMenuTilesCategoryIndex} was out of bounds)");
+                                }
 
-                        if (_propsMenuTilesIndex >=
-                            _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length)
-                        {
-                            _logger.Fatal($"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length}]: {nameof(_propsMenuTilesIndex)} ({_propsMenuTilesIndex} was out of bounds)");
-                            throw new IndexOutOfRangeException(message: $"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length}]: {nameof(_propsMenuTilesIndex)} ({_propsMenuTilesIndex} was out of bounds)");
-                        }
-                        #endif
+                                if (_propsMenuTilesIndex >=
+                                    _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length)
+                                {
+                                    _logger.Fatal($"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length}]: {nameof(_propsMenuTilesIndex)} ({_propsMenuTilesIndex} was out of bounds)");
+                                    throw new IndexOutOfRangeException(message: $"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length}]: {nameof(_propsMenuTilesIndex)} ({_propsMenuTilesIndex} was out of bounds)");
+                                }
 
-                        var currentTileAsProp = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
-                        var currentTileAsPropTexture = GLOBALS.Textures.Tiles[currentTileAsPropCategory.index][currentTileAsProp.index];
-                        
-                        var layerHeight = (currentTileAsProp.init.Size.Item2 + (currentTileAsProp.init.BufferTiles * 2)) * scale;
-                        var textureCutWidth = (currentTileAsProp.init.Size.Item1 + (currentTileAsProp.init.BufferTiles * 2)) * scale;
-                        const float scaleConst = 0.4f;
+                                {
+                                    if (currentTileAsPropCategory.index >= GLOBALS.Textures.Tiles.Length)
+                                    {
+                                        _logger.Fatal($"failed to fetch tile-as-prop texture from {nameof(GLOBALS.Textures.Tiles)}[{GLOBALS.Textures.Tiles.Length}]: {nameof(currentTileAsPropCategory)}.length ({currentTileAsPropCategory.index}) was outside the bounds of the array.");
+                                        throw new IndexOutOfRangeException($"failed to fetch tile-as-prop texture from {nameof(GLOBALS.Textures.Tiles)}[{GLOBALS.Textures.Tiles.Length}]: {nameof(currentTileAsPropCategory)}.length ({currentTileAsPropCategory.index}) was outside the bounds of the array.");
+                                    }
+                                    
+                                    var ind = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
 
-                        var width = scaleConst * textureCutWidth;
-                        var height = scaleConst * layerHeight;
+                                    if (ind.index >= GLOBALS.Textures.Tiles[currentTileAsPropCategory.index].Length)
+                                    {
+                                        _logger.Fatal($"failed to fetch tile-as-prop texture from {nameof(GLOBALS.Textures.Tiles)}[{nameof(currentTileAsPropCategory)}][Length: {GLOBALS.Textures.Tiles[currentTileAsPropCategory.index].Length}]: {nameof(_tilesAsPropsIndices)}][{_propsMenuTilesCategoryIndex}][{_propsMenuTilesIndex}] ({ind.index}) was outside of the bounds of the array.");
+                                        throw new IndexOutOfRangeException(
+                                            $"failed to fetch tile-as-prop texture from {nameof(GLOBALS.Textures.Tiles)}[{nameof(currentTileAsPropCategory)}][{GLOBALS.Textures.Tiles[currentTileAsPropCategory.index].Length}]: {nameof(_tilesAsPropsIndices)}][{_propsMenuTilesCategoryIndex}][{_propsMenuTilesIndex}] ({ind.index}) was outside of the bounds of the array.");
+                                    }
+                                }
+                                #endif
 
-                        Printers.DrawTileAsProp(
-                            ref currentTileAsPropTexture,
-                            ref currentTileAsProp.init,
-                            ref tileMouseWorld,
-                            [
-                                new(width, -height),
-                                new(-width, -height),
-                                new(-width, height),
-                                new(width, height),
-                                new(width, -height)
-                            ]
-                        );
-                    }
-                    break;
-                
-                case 1: // TODO: Current Rope
-                    break;
-                
-                case 2: // TODO: Current Long Prop
-                    break;
-
-                case 3: // Current Prop
-                {
-                    var prop = _propsOnly[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
-                    var texture = GLOBALS.Textures.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
-                    
-                    var (width, height, settings) = prop switch
-                    {
-                        InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings()),
-                        InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
-                        InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings()),
-                        InitSoftProp => (texture.width  / 2f, texture.height  / 2f, new PropSoftSettings()),
-                        InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings()),
-                        InitSimpleDecalProp => (texture.width / 2f, texture.height / 2f, new PropSimpleDecalSettings()), 
-                        InitSoftEffectProp => (texture.width / 2f, texture.height / 2f, new PropSoftEffectSettings()), 
-                        InitAntimatterProp => (texture.width / 2f, texture.height / 2f, new PropAntimatterSettings()),
-                        InitLongProp => (texture.width / 2f, texture.height / 2f, new PropLongSettings()), 
-                        InitRopeProp => (texture.width / 2f, texture.height / 2f, new PropRopeSettings()),
+                                var currentTileAsProp = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
+                                var currentTileAsPropTexture = GLOBALS.Textures.Tiles[currentTileAsPropCategory.index][currentTileAsProp.index];
                                 
-                        _ => (texture.width / 2f, texture.height / 2f, new BasicPropSettings())
-                    };
-                    
-                    Printers.DrawProp(settings, prop, ref texture, new PropQuads(
-                        new Vector2(tileMouseWorld.X - width, tileMouseWorld.Y - height), 
-                        new Vector2(tileMouseWorld.X + width, tileMouseWorld.Y - height), 
-                        new Vector2(tileMouseWorld.X + width, tileMouseWorld.Y + height), 
-                        new Vector2(tileMouseWorld.X - width, tileMouseWorld.Y + height)),
-                        0
-                    );
-                }
-                    break;
-            }
+                                var layerHeight = (currentTileAsProp.init.Size.Item2 + (currentTileAsProp.init.BufferTiles * 2)) * scale;
+                                var textureCutWidth = (currentTileAsProp.init.Size.Item1 + (currentTileAsProp.init.BufferTiles * 2)) * scale;
+                                const float scaleConst = 0.4f;
+
+                                var width = scaleConst * textureCutWidth;
+                                var height = scaleConst * layerHeight;
+
+                                Printers.DrawTileAsProp(
+                                    ref currentTileAsPropTexture,
+                                    ref currentTileAsProp.init,
+                                    ref tileMouseWorld,
+                                    [
+                                        new(width, -height),
+                                        new(-width, -height),
+                                        new(-width, height),
+                                        new(width, height),
+                                        new(width, -height)
+                                    ]
+                                );
+                            }
+                            break;
+                        
+                        case 1: // Current Rope
+                            DrawCircleV(tileMouseWorld, 3f, BLUE);
+                            break;
+
+                        case 2: // Current Long Prop
+                        {
+                            var prop = GLOBALS.LongProps[_propsMenuLongsIndex];
+                            var texture = GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
+                            var height = texture.height / 2f;
+                            
+                            Printers.DrawProp(
+                                new PropLongSettings(), 
+                                prop, 
+                                texture, 
+                                new PropQuads
+                                {
+                                    TopLeft = new(tileMouseWorld.X - 100, tileMouseWorld.Y - height),
+                                    BottomLeft = new(tileMouseWorld.X - 100, tileMouseWorld.Y + height),
+                                    TopRight = new(tileMouseWorld.X + 100, tileMouseWorld.Y - height),
+                                    BottomRight = new(tileMouseWorld.X + 100, tileMouseWorld.Y + height)
+                                }, 
+                                0
+                            );
+                        }
+                            break;
+
+                        case 3: // Current Prop
+                        {
+                            // Since I've already seperated regular props from everything else, this can be
+                            // considered outdated
+                            var prop = _propsOnly[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
+                            var texture = GLOBALS.Textures.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
+                            
+                            var (width, height, settings) = prop switch
+                            {
+                                InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings()),
+                                InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
+                                InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings()),
+                                InitSoftProp => (texture.width  / 2f, texture.height  / 2f, new PropSoftSettings()),
+                                InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings()),
+                                InitSimpleDecalProp => (texture.width / 2f, texture.height / 2f, new PropSimpleDecalSettings()), 
+                                InitSoftEffectProp => (texture.width / 2f, texture.height / 2f, new PropSoftEffectSettings()), 
+                                InitAntimatterProp => (texture.width / 2f, texture.height / 2f, new PropAntimatterSettings()),
+                                InitLongProp => (texture.width / 2f, texture.height / 2f, new PropLongSettings()), 
+                                InitRopeProp => (texture.width / 2f, texture.height / 2f, new PropRopeSettings()),
+                                        
+                                _ => (texture.width / 2f, texture.height / 2f, new BasicPropSettings())
+                            };
+                            
+                            Printers.DrawProp(settings, prop, ref texture, new PropQuads(
+                                new Vector2(tileMouseWorld.X - width, tileMouseWorld.Y - height), 
+                                new Vector2(tileMouseWorld.X + width, tileMouseWorld.Y - height), 
+                                new Vector2(tileMouseWorld.X + width, tileMouseWorld.Y + height), 
+                                new Vector2(tileMouseWorld.X - width, tileMouseWorld.Y + height)),
+                                0
+                            );
+                        }
+                            break;
+                    }
                     break;
                 
                 case 0: // Select Mode
@@ -1753,105 +1970,149 @@ internal class PropsEditorPage : IPage
                         BLACK
                     );
 
-            Rectangle categoryRect = new((int)(menuPanelRect.x + 5), 90, 145, (int)(menuPanelRect.height - 300));
-            Rectangle listRect = new((int)(menuPanelRect.x + 155), 90, menuPanelRect.width - 160, (int)(menuPanelRect.height - 300));
-            
-            switch (_menuRootCategoryIndex)
-            {
-                case 0: // Tiles as props
-                    {
-                        int newCategoryIndex;
+                    Rectangle categoryRect = new((int)(menuPanelRect.x + 5), 90, 145, (int)(menuPanelRect.height - 300));
+                    Rectangle listRect = new((int)(menuPanelRect.x + 155), 90, menuPanelRect.width - 160, (int)(menuPanelRect.height - 300));
 
-                        unsafe
+                    switch (_menuRootCategoryIndex)
+                    {
+                        case 0: // Tiles as props
                         {
-                            fixed (int* scrollIndex = &_propsMenuTilesCategoryScrollIndex)
+                            int newCategoryIndex;
+
+                            unsafe
                             {
-                                // draw the category list first
-                                newCategoryIndex = RayGui.GuiListView(
-                                    categoryRect,
-                                    string.Join(";", from c in _tilesAsPropsCategoryIndices select c.category),
-                                    scrollIndex,
-                                    _propsMenuTilesCategoryIndex);
+                                fixed (int* scrollIndex = &_propsMenuTilesCategoryScrollIndex)
+                                {
+                                    // draw the category list first
+                                    newCategoryIndex = RayGui.GuiListView(
+                                        categoryRect,
+                                        string.Join(";", from c in _tilesAsPropsCategoryIndices select c.category),
+                                        scrollIndex,
+                                        _propsMenuTilesCategoryIndex);
+                                }
+                            }
+
+                            if (newCategoryIndex != _propsMenuTilesCategoryIndex)
+                            {
+                                _propsMenuTilesIndex = 0;
+                                _propsMenuTilesCategoryIndex = newCategoryIndex;
+                            }
+
+                            unsafe
+                            {
+                                fixed (int* scrollIndex = &_propsMenuTilesScrollIndex)
+                                {
+                                    // draw the list
+
+                                    _propsMenuTilesIndex = RayGui.GuiListView(
+                                        listRect,
+                                        string.Join(";",
+                                            from t in _tilesAsPropsIndices[_propsMenuTilesCategoryIndex]
+                                            select t.init.Name),
+                                        scrollIndex,
+                                        _propsMenuTilesIndex
+                                    );
+                                }
                             }
                         }
+                            break;
 
-                        if (newCategoryIndex != _propsMenuTilesCategoryIndex)
+                        case 1: // Ropes
                         {
-                            _propsMenuTilesIndex = 0;
-                            _propsMenuTilesCategoryIndex = newCategoryIndex;
-                        }
-
-                        unsafe
-                        {
-                            fixed (int* scrollIndex = &_propsMenuTilesScrollIndex)
+                            unsafe
                             {
-                                // draw the list
+                                int newIndex;
 
-                                _propsMenuTilesIndex = RayGui.GuiListView(
-                                    listRect,
-                                    string.Join(";", from t in _tilesAsPropsIndices[_propsMenuTilesCategoryIndex] select t.init.Name),
-                                    scrollIndex,
-                                    _propsMenuTilesIndex
-                                );
+                                fixed (int* scrollIndex = &_propsMenuRopesScrollIndex)
+                                {
+                                    newIndex = RayGui.GuiListView(
+                                        categoryRect with { width = menuPanelRect.width - 10 },
+                                        _propsMenuRopesListString,
+                                        scrollIndex,
+                                        _propsMenuRopesIndex
+                                    );
+                                }
+
+                                _propsMenuRopesIndex = newIndex;
                             }
                         }
-                    }
-                    break;
-                
-                case 1: // TODO: Ropes
-                    break;
-                
-                case 2: // TODO: Long Props
-                    break;
+                            break;
 
-                case 3: // Props
-                {
-                    int newCategoryIndex;
-
-                    unsafe
-                    {
-                        fixed (int* scrollIndex = &_propsMenuOthersCategoryScrollIndex)
+                        case 2: // Long Props
                         {
-                            // draw the category list first
-                            newCategoryIndex = RayGui.GuiListView(
-                                categoryRect,
-                                string.Join(";", from c in _propCategoriesOnly select c.name),
-                                scrollIndex,
-                                _propsMenuOthersCategoryIndex);
-                        }
-                    }
-                    
-                    // reset selection index when changing categories
-                    if (newCategoryIndex != _propsMenuOthersCategoryIndex)
-                    {
-                        _propsMenuOthersIndex = 0;
-                        _propsMenuOthersCategoryIndex = newCategoryIndex;
-                    }
-                    
-                    unsafe
-                    {
-                        fixed (int* scrollIndex = &_propsMenuOthersScrollIndex)
-                        {
-                            // draw the list
+                            int newIndex;
+                            
+                            unsafe
+                            {
+                                fixed (int* scrollIndex = &_propsMenuLongsScrollIndex)
+                                {
+                                    newIndex = RayGui.GuiListView(
+                                        categoryRect with { width = menuPanelRect.width - 10 },
+                                        _propsMenuLongsListString,
+                                        scrollIndex,
+                                        _propsMenuLongsIndex
+                                    );
+                                }
+                            }
 
-                            _propsMenuOthersIndex = RayGui.GuiListView(
-                                listRect,
-                                string.Join(";", from t in _propsOnly[_propsMenuOthersCategoryIndex] select t.Name),
-                                scrollIndex,
-                                _propsMenuOthersIndex
-                            );
+                            _propsMenuLongsIndex = newIndex;
                         }
-                    }
-                }
+
                     break;
-            }
 
-            // Focus indicator
-            DrawRectangleLinesEx(
-                _propCategoryFocus ? categoryRect : listRect,
-                4f,
-                BLUE
-            );
+                        case 3: // Props
+                        {
+                            int newCategoryIndex;
+
+                            unsafe
+                            {
+                                fixed (int* scrollIndex = &_propsMenuOthersCategoryScrollIndex)
+                                {
+                                    // draw the category list first
+                                    newCategoryIndex = RayGui.GuiListView(
+                                        categoryRect,
+                                        string.Join(";", from c in _propCategoriesOnly select c.name),
+                                        scrollIndex,
+                                        _propsMenuOthersCategoryIndex);
+                                }
+                            }
+                            
+                            // reset selection index when changing categories
+                            if (newCategoryIndex != _propsMenuOthersCategoryIndex)
+                            {
+                                _propsMenuOthersIndex = 0;
+                                _propsMenuOthersCategoryIndex = newCategoryIndex;
+                            }
+                            
+                            unsafe
+                            {
+                                fixed (int* scrollIndex = &_propsMenuOthersScrollIndex)
+                                {
+                                    // draw the list
+
+                                    _propsMenuOthersIndex = RayGui.GuiListView(
+                                        listRect,
+                                        string.Join(";", from t in _propsOnly[_propsMenuOthersCategoryIndex] select t.Name),
+                                        scrollIndex,
+                                        _propsMenuOthersIndex
+                                    );
+                                }
+                            }
+                        }
+                            break;
+                    }
+
+                    // Focus indicator
+                    if (_menuRootCategoryIndex is 0 or 3)
+                    {
+                        
+                        DrawRectangleLinesEx(
+                            _propCategoryFocus ? categoryRect : listRect,
+                            4f,
+                            BLUE
+                        );
+                    }
+                
                 }
                     break;
 
