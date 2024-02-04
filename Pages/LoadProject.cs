@@ -149,15 +149,17 @@ public class LoadProjectPage : IPage
             var tilesObj = Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[1]);
             var obj2 = Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[5]);
             var effObj = Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[2]);
+            var lightObj = Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[3]);
             var camsObj = Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[6]);
             var propsObj = Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[8]);
 
             var mtx = Lingo.Tools.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
-            var tlMtx = Lingo.Tools.GetTileMatrix(tilesObj, out int tlHeight, out int tlWidth);
+            var tlMtx = Lingo.Tools.GetTileMatrix(tilesObj, out _, out _);
             var buffers = Lingo.Tools.GetBufferTiles(obj2);
             var effects = Lingo.Tools.GetEffects(effObj, givenWidth, givenHeight);
             var cams = Lingo.Tools.GetCameras(camsObj);
             var props = Lingo.Tools.GetProps(propsObj);
+            var lightSettings = Lingo.Tools.GetLightSettings(lightObj);
 
             // map material colors
 
@@ -195,6 +197,7 @@ public class LoadProjectPage : IPage
                 LightMapImage = lightMap,
                 Cameras = cams,
                 PropsArray = props.ToArray(),
+                LightSettings = lightSettings,
                 Name = Path.GetFileNameWithoutExtension(filePath)
             };
         }
@@ -298,7 +301,8 @@ public class LoadProjectPage : IPage
                     res.MaterialColorMatrix!,
                     res.Effects.Select(effect => (effect.Item1, Effects.GetEffectOptions(effect.Item1), effect.Item2)).ToArray(),
                     res.Cameras,
-                    res.PropsArray!
+                    res.PropsArray!,
+                    res.LightSettings
                 );
 
                 var lightMapTexture = LoadTextureFromImage(res.LightMapImage);

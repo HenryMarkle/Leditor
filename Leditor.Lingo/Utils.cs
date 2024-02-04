@@ -245,6 +245,30 @@ public static class Tools {
         return init;
     }
 
+    public static (int angle, int flatness) GetLightSettings(AstNode.Base @base)
+    {
+        var propList = (AstNode.PropertyList)@base;
+
+        var angleBase = propList.Values.Single(p => ((AstNode.Symbol)p.Key).Value == "lightangle").Value;
+        var flatnessBase = propList.Values.Single(p => ((AstNode.Symbol)p.Key).Value == "flatness").Value;
+
+        var angle = angleBase switch
+        {
+            AstNode.Number n => n.Value.IntValue,
+            AstNode.UnaryOperator u => ((AstNode.Number)u.Expression).Value.IntValue * -1,
+            _ => throw new Exception($"Invalid light angle value: {StringifyBase(angleBase)}")
+        };
+        
+        var flatness = flatnessBase switch
+        {
+            AstNode.Number n => n.Value.IntValue,
+            AstNode.UnaryOperator u => ((AstNode.Number)u.Expression).Value.IntValue * -1,
+            _ => throw new Exception($"Invalid flatness value: {StringifyBase(flatnessBase)}")
+        };
+
+        return (angle, flatness);
+    }
+
     public static ((string category, Color color)[] categories, InitPropBase[][] init) GetPropsInit(string text)
     {
         var lines = text.ReplaceLineEndings().Split(Environment.NewLine);

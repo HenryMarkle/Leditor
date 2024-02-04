@@ -119,6 +119,8 @@ internal static class GLOBALS
         internal Rectangle Border { get; private set; }
         internal int WaterLevel { get; set; } = -1;
         internal bool WaterAtFront { get; set; } = false;
+        internal int LightAngle { get; set; } = 90; // 90 - 180
+        internal int LightFlatness { get; set; } = 1; // 1 - 10
 
         internal List<RenderCamera> Cameras { get; set; } = [];
 
@@ -142,7 +144,8 @@ internal static class GLOBALS
             Color[,,] materialColorMatrix,
             (string, EffectOptions, double[,])[] effects,
             List<RenderCamera> cameras,
-            (InitPropType type, (int category, int index) position, Prop prop)[] props
+            (InitPropType type, (int category, int index) position, Prop prop)[] props,
+            (int angle, int flatness) lightSettings
         )
         {
             Width = width;
@@ -152,6 +155,9 @@ internal static class GLOBALS
             TileMatrix = tileMatrix;
             MaterialColors = materialColorMatrix;
             Effects = effects;
+
+            LightAngle = lightSettings.angle;
+            LightFlatness = lightSettings.flatness;
 
             Cameras = cameras;
             Props = props;

@@ -37,6 +37,8 @@ public class LoadFileResult
     public (InitPropType type, (int category, int index) position, Prop prop)[]? PropsArray { get; init; } = null;
 
     public Image LightMapImage { get; init; }
+    
+    public (int angle, int flatness) LightSettings { get; init; }
 
     public List<RenderCamera> Cameras { get; set; } = [];
 

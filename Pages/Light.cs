@@ -9,8 +9,6 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
     readonly Serilog.Core.Logger logger = logger;
 
     Camera2D camera = new() { zoom = 0.5f, target = new(-500, -200) };
-    int flatness = 0;
-    double lightAngle = 0;
     float lightAngleVariable = 90;
     int lightBrushTextureIndex = 0;
     float lightBrushWidth = 200;
@@ -68,8 +66,8 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
 
 
 
-        if (Raylib.IsKeyDown(KeyboardKey.KEY_I) && flatness < 10) flatness++;
-        if (Raylib.IsKeyDown(KeyboardKey.KEY_K) && flatness > 0) flatness--;
+        if (IsKeyDown(KeyboardKey.KEY_I) && GLOBALS.Level.LightFlatness < 10) GLOBALS.Level.LightFlatness++;
+        if (IsKeyDown(KeyboardKey.KEY_K) && GLOBALS.Level.LightFlatness > 1) GLOBALS.Level.LightFlatness--;
 
         const int textureSize = 130;
 
@@ -79,13 +77,13 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
 
         if (Raylib.IsKeyDown(KeyboardKey.KEY_L))
         {
-            lightAngleVariable += 0.001f;
-            lightAngle = 180 * Math.Sin(lightAngleVariable) + 90;
+            // lightAngleVariable += 0.01f;
+            GLOBALS.Level.LightAngle--;/* = (int)(180 * Math.Sin(lightAngleVariable) + 90);*/
         }
         if (Raylib.IsKeyDown(KeyboardKey.KEY_J))
         {
-            lightAngleVariable -= 0.001f;
-            lightAngle = 180 * Math.Sin(lightAngleVariable) + 90;
+            // lightAngleVariable -= 0.01f;
+            GLOBALS.Level.LightAngle++;/* = (int)(180 * Math.Sin(lightAngleVariable) + 90);*/
         }
 
         // handle mouse drag
@@ -511,14 +509,14 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
             Raylib.DrawCircleLines(
                 Raylib.GetScreenWidth() - 100,
                 Raylib.GetScreenHeight() - 100,
-                15 + (flatness * 7),
+                15 + (GLOBALS.Level.LightFlatness * 7),
                 new(255, 0, 0, 255)
             );
 
 
             Raylib.DrawCircleV(new Vector2(
-                (Raylib.GetScreenWidth() - 100) + (float)((15 + flatness * 7) * Math.Cos(lightAngle)),
-                (Raylib.GetScreenHeight() - 100) + (float)((15 + flatness * 7) * Math.Sin(lightAngle))
+                (GetScreenWidth() - 100) + (float)((15 + GLOBALS.Level.LightFlatness * 7) * -Math.Cos(float.DegreesToRadians(GLOBALS.Level.LightAngle - 180))),
+                (GetScreenHeight() - 100) + (float)((15 + GLOBALS.Level.LightFlatness * 7) * Math.Sin(float.DegreesToRadians(GLOBALS.Level.LightAngle - 180)))
                 ),
                 10.0f,
                 new(255, 0, 0, 255)
