@@ -567,6 +567,13 @@ class Program
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "props place mode.png")),
         ];
 
+        GLOBALS.Textures.ExplorerIcons =
+        [
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "folder icon.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "file icon.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "up icon.png"))
+        ];
+
         Texture[] settingsPreviewTextures =
         [
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Bigger Head.png")),
@@ -986,6 +993,7 @@ class Program
         foreach (var texture in GLOBALS.Textures.LongProps) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.RopeProps) UnloadTexture(texture);
         foreach (var texture in settingsPreviewTextures) UnloadTexture(texture);
+        foreach (var texture in GLOBALS.Textures.ExplorerIcons) UnloadTexture(texture);
 
         UnloadRenderTexture(GLOBALS.Textures.LightMap);
 

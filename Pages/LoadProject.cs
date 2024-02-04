@@ -1,4 +1,5 @@
 using static Raylib_CsLo.Raylib;
+using System.Numerics;
 using Pidgin;
 namespace Leditor;
 
@@ -6,7 +7,7 @@ namespace Leditor;
 
 public class LoadProjectPage : IPage
 {
-    internal event EventHandler ProjectLoaded;
+    internal event EventHandler? ProjectLoaded;
     
     private readonly Serilog.Core.Logger _logger;
     
@@ -16,15 +17,36 @@ public class LoadProjectPage : IPage
     
     private readonly byte[] _explorerPanelBytes = "Load Project"u8.ToArray();
 
-    private readonly string[] _projectFiles;
+    private (string name, bool isDirectory)[] _projectFiles;
+
+    private void Explore()
+    {
+        _projectFiles = Directory
+            .EnumerateFileSystemEntries(GLOBALS.ProjectPath)
+            .Where(path =>
+            {
+                var attr = File.GetAttributes(path);
+
+                return (attr & FileAttributes.Directory) == FileAttributes.Directory || path.EndsWith(".txt");
+            })
+            .Select(path =>
+            {
+                var attr = File.GetAttributes(path);
+
+                return (path, (attr & FileAttributes.Directory) == FileAttributes.Directory);
+            })
+            .ToArray();
+    }
 
     public LoadProjectPage(Serilog.Core.Logger logger)
     {
         _logger = logger;
+
+        GLOBALS.ProjectPath = GLOBALS.Paths.ProjectsDirectory;
         
         try
         {
-            _projectFiles = Directory.EnumerateFiles(GLOBALS.Paths.ProjectsDirectory).ToArray();
+            Explore();
         }
         catch (Exception e)
         {
@@ -207,19 +229,22 @@ public class LoadProjectPage : IPage
             return new();
         }
     }
-    
+
+    private static Rectangle GetButton(Vector2 origin) => new(origin.X, origin.Y, 400, 40);
+    private static Rectangle GetButton(int x, int y) => new(x, y, 400, 40);
     public void Draw()
      {
         if (IsKeyPressed(KeyboardKey.KEY_ZERO)) GLOBALS.Page = 0;
 
         const int buttonHeight = 40;
-        var maxCount = (GetScreenHeight() - 400) / buttonHeight;
-        var buttonOffsetX = 120;
-        var buttonWidth = GetScreenWidth() - 240;
+        var maxCount = (GetScreenHeight() - 500) / buttonHeight;
+        const int buttonOffsetX = 120;
+        const int buttonWidth = 400;
 
         if (IsKeyPressed(KeyboardKey.KEY_W) && _explorerPage > 0) _explorerPage--;
         if (IsKeyPressed(KeyboardKey.KEY_S) && _explorerPage < (_projectFiles.Length / maxCount)) _explorerPage++;
 
+        var mouse = GetMousePosition();
 
         BeginDrawing();
         {
@@ -354,19 +379,55 @@ public class LoadProjectPage : IPage
                         RayGui.GuiPanel(panelRect, (sbyte*)pt);
                     }
                 }
+                
+                // Go up a level button
+                
+                var upTexture = GLOBALS.Textures.ExplorerIcons[2];
+                var upRect = new Rectangle(buttonOffsetX, buttonHeight + 210, 40, 40);
+
+                var upHover = CheckCollisionPointRec(mouse, upRect);
+                    
+                if (upHover) DrawRectangle((int)upRect.X, (int)upRect.Y, 40, 40, BLUE);
+                    
+                DrawTexturePro(
+                    upTexture, 
+                    new(0, 0, upTexture.width, upTexture.height),
+                    upRect,
+                    new(0, 0),
+                    0,
+                    upHover ? WHITE : BLACK
+                );
+
+                if (upHover && IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    var parent = Directory.GetParent(GLOBALS.ProjectPath)?.FullName;
+                    
+                    GLOBALS.ProjectPath = parent ?? GLOBALS.ProjectPath;
+                    
+                    Explore();
+                }
+                    
+                DrawRectangleLines(buttonOffsetX, buttonHeight + 210, 40, 40, GRAY);
+                
+                // TODO: Refresh button
+                
+                
 
                 //no projects
                 if (_projectFiles.Length == 0)
                 {
-                    Raylib.DrawText(
+                    DrawText(
                         "You have no projects yet",
-                        GetScreenWidth() / 2 - 200,
-                        GetScreenHeight() / 2 - 50,
-                        30,
+                        200,
+                        buttonHeight + 310,
+                        20,
                         new(0, 0, 0, 255)
                     );
 
-                    if (RayGui.GuiButton(new(GetScreenWidth() / 2 - 100, GetScreenHeight() / 2 + 50, 200, 50), "Create New Project"))
+                    if (RayGui.GuiButton(
+                            new(buttonOffsetX + 100, buttonHeight + 380, 200, 40), 
+                            "Create New Project")
+                        )
                     {
                         GLOBALS.NewFlag = true;
                         GLOBALS.Page = 6;
@@ -376,37 +437,68 @@ public class LoadProjectPage : IPage
                 else
                 {
                     DrawText("[W] - Page Up  [S] - Page Down", GetScreenWidth() / 2 - 220, 150, 30, new(0, 0, 0, 255));
-
+                    
                     if (maxCount > _projectFiles.Length)
                     {
-                        for (int f = 0; f < _projectFiles.Length; f++)
+                        for (var f = 0; f < _projectFiles.Length; f++)
                         {
-                            if (!_projectFiles[f].EndsWith(".txt")) continue;
-
-                            RayGui.GuiButton(
-                                new Rectangle(buttonOffsetX, f * buttonHeight + 210, buttonWidth, buttonHeight - 1),
-                                Path.GetFileNameWithoutExtension(_projectFiles[f])
-                            );
+                            DrawRectangleLines(buttonOffsetX, f*buttonHeight + 310, buttonWidth, buttonHeight, GRAY);
                         }
                     }
                     else
                     {
-                        var currentPage = _projectFiles.Where(f => f.EndsWith(".txt")).Skip(maxCount * _explorerPage).Take(maxCount);
+                        var currentPage = _projectFiles.Skip(maxCount * _explorerPage).Take(maxCount);
                         var counter = 0;
 
-                        foreach (var f in currentPage)
+                        foreach (var (path, isDir) in currentPage)
                         {
-                            var isPressed = RayGui.GuiButton(
-                                new Rectangle(buttonOffsetX, counter * buttonHeight + 210, buttonWidth, buttonHeight - 1),
-                                Path.GetFileNameWithoutExtension(f)
+                            var button = GetButton(buttonOffsetX, counter * buttonHeight + 310);
+                            var hover = CheckCollisionPointRec(mouse,
+                                button with { Y = button.Y + 1, height = button.height - 2 });
+                            
+                            DrawRectangleLines(
+                                buttonOffsetX, counter * buttonHeight + 310, buttonWidth, buttonHeight + 1,
+                                GRAY
                             );
+                            
+                            if (hover) DrawRectangleRec(button, BLUE);
 
-                            if (isPressed)
+                            var texture = isDir
+                                ? GLOBALS.Textures.ExplorerIcons[0]
+                                : GLOBALS.Textures.ExplorerIcons[1];
+                            
+                            DrawTexturePro(
+                                texture,
+                                new(0, 0, texture.width, texture.height),
+                                button with { height = 40, width = 40 }, 
+                                new(0, 0), 
+                                0, 
+                                hover ? WHITE : BLACK
+                            );
+                            
+                            // TODO: optimize
+                            DrawText(
+                                Path.GetFileNameWithoutExtension(path), 
+                                buttonOffsetX + 46, 
+                                counter * buttonHeight + 319, 
+                                20, 
+                                hover ? WHITE : BLACK
+                                );
+
+                            if (hover && IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
                             {
-                                RayGui.GuiLock();
+                                if (isDir)
+                                {
+                                    GLOBALS.ProjectPath = path;
+                                    Explore();
+                                }
+                                else
+                                {
+                                    RayGui.GuiLock();
 
-                                // LOAD PROJECT FILE
-                                _loadFileTask = Task.Factory.StartNew(() => LoadProject(f));
+                                    // LOAD PROJECT FILE
+                                    _loadFileTask = Task.Factory.StartNew(() => LoadProject(path));
+                                }
                             }
 
                             counter++;
@@ -414,7 +506,7 @@ public class LoadProjectPage : IPage
                     }
 
                     DrawText(
-                        $"Page {_explorerPage}/{maxCount}",
+                        $"Page {_explorerPage}/{_projectFiles.Length / maxCount}",
                         GetScreenWidth() / 2 - 90,
                         GetScreenHeight() - 160,
                         30,

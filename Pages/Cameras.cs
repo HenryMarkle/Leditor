@@ -241,10 +241,10 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
                     if (index == draggedCamera)
                     {
                         var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-                        Printers.DrawCameraSprite(new(pos.X - (72 * GLOBALS.Scale - 40) / 2, pos.Y - (43 * GLOBALS.Scale - 60) / 2), cam.Quad, camera, index + 1);
+                        Printers.DrawCameraSprite(new(pos.X - (72 * GLOBALS.Scale - 40) / 2, pos.Y - (43 * GLOBALS.Scale - 60) / 2), cam.Quad, camera, index);
                         continue;
                     }
-                    var (clicked, hovered) = Printers.DrawCameraSprite(cam.Coords, cam.Quad, camera, index + 1);
+                    var (clicked, hovered) = Printers.DrawCameraSprite(cam.Coords, cam.Quad, camera, index);
 
                     if (clicked && !clickTracker)
                     {

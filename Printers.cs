@@ -628,10 +628,17 @@ internal static class Printers
         Vector2 origin,
         CameraQuad quad,
         Camera2D camera,
-        int index = -1)
+        int index = 0)
     {
+        ref var quadLock = ref GLOBALS.CamQuadLocks[index];
+        
         var mouse = GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-        var hover = CheckCollisionPointCircle(mouse, new(origin.X + GLOBALS.EditorCameraWidth / 2f, origin.Y + GLOBALS.EditorCameraHeight / 2f), 50) && GLOBALS.CamQuadLock == 0;
+
+        GLOBALS.CamLock = CheckCollisionPointRec(mouse, new(origin.X - 200, origin.Y - 200, GLOBALS.EditorCameraWidth + 200, GLOBALS.EditorCameraHeight + 200)) 
+            ? index 
+            : 0;
+        
+        var hover = CheckCollisionPointCircle(mouse, new(origin.X + GLOBALS.EditorCameraWidth / 2f, origin.Y + GLOBALS.EditorCameraHeight / 2f), 50) && quadLock == 0 && GLOBALS.CamLock == index;
         var biggerHover = CheckCollisionPointRec(mouse, new(origin.X, origin.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight));
 
         Vector2 pointOrigin1 = new(origin.X, origin.Y),
@@ -679,7 +686,7 @@ internal static class Printers
             new(0, 0, 0, 255)
         );
 
-        Raylib.DrawCircleLines(
+        DrawCircleLines(
             (int)(origin.X + GLOBALS.EditorCameraWidth / 2),
             (int)(origin.Y + GLOBALS.EditorCameraHeight / 2),
             50,
@@ -723,20 +730,24 @@ internal static class Printers
         var bottomRightV = new Vector2(pointOrigin3.X + (float)(quad.BottomRight.radius*100 * Math.Cos(float.DegreesToRadians(quad.BottomRight.angle - 90))), pointOrigin3.Y + (float)(quad.BottomRight.radius*100 * Math.Sin(float.DegreesToRadians(quad.BottomRight.angle - 90))));
         var bottomLeftV = new Vector2(pointOrigin4.X +(float)(quad.BottomLeft.radius*100 * Math.Cos(float.DegreesToRadians(quad.BottomLeft.angle - 90))), pointOrigin4.Y + (float)(quad.BottomLeft.radius*100 * Math.Sin(float.DegreesToRadians(quad.BottomLeft.angle - 90))));
         
-        if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT)) GLOBALS.CamQuadLock = 0;
+        if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT)) quadLock = 0;
 
         if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
         {
-            if (GLOBALS.CamQuadLock == 0)
+            if (GLOBALS.CamQuadLocks[index] == 0)
             {
-                if (CheckCollisionPointCircle(mouse, topLeftV, 10)) GLOBALS.CamQuadLock = 1;
-                if (CheckCollisionPointCircle(mouse, topRightV, 10)) GLOBALS.CamQuadLock = 2;
-                if (CheckCollisionPointCircle(mouse, bottomRightV, 10)) GLOBALS.CamQuadLock = 3;
-                if (CheckCollisionPointCircle(mouse, bottomLeftV, 10)) GLOBALS.CamQuadLock = 4;
+                if (CheckCollisionPointCircle(mouse, topLeftV, 10))
+                {
+                    quadLock = 1;
+                    GLOBALS.CamLock = index;
+                }
+                if (CheckCollisionPointCircle(mouse, topRightV, 10)) quadLock = 2;
+                if (CheckCollisionPointCircle(mouse, bottomRightV, 10)) quadLock = 3;
+                if (CheckCollisionPointCircle(mouse, bottomLeftV, 10)) quadLock = 4;
             }
-            else
+            else 
             {
-                switch (GLOBALS.CamQuadLock)
+                switch (quadLock)
                 {
                     case 1:
                     {
@@ -820,30 +831,34 @@ internal static class Printers
                 }
             } 
         }
-        
-        if (CheckCollisionPointRec(mouse, quarter1) || GLOBALS.CamQuadLock != 0)
+
+        if (GLOBALS.CamLock == index)
         {
-            DrawCircleLines((int)pointOrigin1.X, (int)pointOrigin1.Y, quad.TopLeft.radius*100, GREEN);
-            DrawCircleV(topLeftV, 10, new(0, 255, 0, 255));
+            if (CheckCollisionPointRec(mouse, quarter1) || quadLock != 0)
+            {
+                DrawCircleLines((int)pointOrigin1.X, (int)pointOrigin1.Y, quad.TopLeft.radius*100, GREEN);
+                DrawCircleV(topLeftV, 10, new(0, 255, 0, 255));
+            }
+            
+            if (CheckCollisionPointRec(mouse, quarter2) || quadLock != 0)
+            {
+                DrawCircleLines((int)pointOrigin2.X, (int)pointOrigin2.Y, quad.TopRight.radius*100, GREEN);
+                DrawCircleV(topRightV, 10, new(0, 255, 0, 255));
+            }
+            
+            if (CheckCollisionPointRec(mouse, quarter3) || quadLock != 0)
+            {
+                DrawCircleLines((int)pointOrigin3.X, (int)pointOrigin3.Y, quad.BottomRight.radius*100, GREEN);
+                DrawCircleV(bottomRightV, 10, new(0, 255, 0, 255));
+            }
+            
+            if (CheckCollisionPointRec(mouse, quarter4) || quadLock != 0)
+            {
+                DrawCircleLines((int)pointOrigin4.X, (int)pointOrigin4.Y, quad.BottomLeft.radius*100, GREEN);
+                DrawCircleV(bottomLeftV, 10, new(0, 255, 0, 255));
+            }
         }
         
-        if (CheckCollisionPointRec(mouse, quarter2) || GLOBALS.CamQuadLock != 0)
-        {
-            DrawCircleLines((int)pointOrigin2.X, (int)pointOrigin2.Y, quad.TopRight.radius*100, GREEN);
-            DrawCircleV(topRightV, 10, new(0, 255, 0, 255));
-        }
-        
-        if (CheckCollisionPointRec(mouse, quarter3) || GLOBALS.CamQuadLock != 0)
-        {
-            DrawCircleLines((int)pointOrigin3.X, (int)pointOrigin3.Y, quad.BottomRight.radius*100, GREEN);
-            DrawCircleV(bottomRightV, 10, new(0, 255, 0, 255));
-        }
-        
-        if (CheckCollisionPointRec(mouse, quarter4) || GLOBALS.CamQuadLock != 0)
-        {
-            DrawCircleLines((int)pointOrigin4.X, (int)pointOrigin4.Y, quad.BottomLeft.radius*100, GREEN);
-            DrawCircleV(bottomLeftV, 10, new(0, 255, 0, 255));
-        }
         
         DrawLineV(topLeftV, topRightV, GREEN);
         DrawLineV(topRightV, bottomRightV, GREEN);

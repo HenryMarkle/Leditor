@@ -28,7 +28,8 @@ internal static class GLOBALS
         public Texture[] RopeProps { get; set; } = [];
         public Texture[] PropMenuCategories { get; set; } = [];
         public Texture[] PropModes { get; set; } = [];
-
+        public Texture[] ExplorerIcons { get; set; } = [];
+        
         public RenderTexture LightMap { get; set; }
     }
 
@@ -678,7 +679,8 @@ internal static class GLOBALS
 
     internal static float ZoomIncrement => 0.125f;
 
-    internal static int CamQuadLock { get; set; }
+    internal static int[] CamQuadLocks { get; set; } = [0, 0];
+    internal static int CamLock { get; set; }
 
     internal static int InitialMatrixWidth => 72;
     internal static int InitialMatrixHeight => 43;
@@ -694,6 +696,8 @@ internal static class GLOBALS
 
     /// Current working layer
     internal static int Layer { get; set; } = 0;
+    
+    internal static string ProjectPath { get; set; }
 
     /// The current loaded level
     internal static LevelState Level { get; set; } = new(InitialMatrixWidth, InitialMatrixHeight, (6, 3, 6, 5));
