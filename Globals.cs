@@ -678,7 +678,7 @@ internal static class GLOBALS
 
     internal static float ZoomIncrement => 0.125f;
 
-    internal static bool CamScaleMode { get; set; } = false;
+    internal static int CamQuadLock { get; set; }
 
     internal static int InitialMatrixWidth => 72;
     internal static int InitialMatrixHeight => 43;

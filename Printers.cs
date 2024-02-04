@@ -631,7 +631,7 @@ internal static class Printers
         int index = -1)
     {
         var mouse = GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-        var hover = CheckCollisionPointCircle(mouse, new(origin.X + GLOBALS.EditorCameraWidth / 2f, origin.Y + GLOBALS.EditorCameraHeight / 2f), 50);
+        var hover = CheckCollisionPointCircle(mouse, new(origin.X + GLOBALS.EditorCameraWidth / 2f, origin.Y + GLOBALS.EditorCameraHeight / 2f), 50) && GLOBALS.CamQuadLock == 0;
         var biggerHover = CheckCollisionPointRec(mouse, new(origin.X, origin.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight));
 
         Vector2 pointOrigin1 = new(origin.X, origin.Y),
@@ -723,76 +723,132 @@ internal static class Printers
         var bottomRightV = new Vector2(pointOrigin3.X + (float)(quad.BottomRight.radius*100 * Math.Cos(float.DegreesToRadians(quad.BottomRight.angle - 90))), pointOrigin3.Y + (float)(quad.BottomRight.radius*100 * Math.Sin(float.DegreesToRadians(quad.BottomRight.angle - 90))));
         var bottomLeftV = new Vector2(pointOrigin4.X +(float)(quad.BottomLeft.radius*100 * Math.Cos(float.DegreesToRadians(quad.BottomLeft.angle - 90))), pointOrigin4.Y + (float)(quad.BottomLeft.radius*100 * Math.Sin(float.DegreesToRadians(quad.BottomLeft.angle - 90))));
         
-        if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT)) GLOBALS.CamScaleMode = false;
+        if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT)) GLOBALS.CamQuadLock = 0;
 
-        if (CheckCollisionPointRec(mouse, quarter1))
+        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
         {
-            if ((CheckCollisionPointCircle(mouse, topLeftV, 10) || GLOBALS.CamScaleMode) &&
-                IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            if (GLOBALS.CamQuadLock == 0)
             {
-                GLOBALS.CamScaleMode = true;
-
-                var radius = RayMath.Vector2Distance(mouse, pointOrigin1);
-
-                if (radius > 100)
-                {
-                    radius = 100;
-                }
-                else
-                {
-                    topLeftV = mouse;
-                }
-
-                DrawLineV(pointOrigin1 with { Y = pointOrigin1.Y - 10 }, pointOrigin1, BLUE);
-                
-                var angle = (int)float.RadiansToDegrees(RayMath.Vector2Angle(pointOrigin1 with { Y = pointOrigin1.Y - 1 } - pointOrigin1,
-                    mouse));
-                
-                Console.WriteLine(angle);
-                
-                quad.TopLeft = (angle, radius / 100f);
+                if (CheckCollisionPointCircle(mouse, topLeftV, 10)) GLOBALS.CamQuadLock = 1;
+                if (CheckCollisionPointCircle(mouse, topRightV, 10)) GLOBALS.CamQuadLock = 2;
+                if (CheckCollisionPointCircle(mouse, bottomRightV, 10)) GLOBALS.CamQuadLock = 3;
+                if (CheckCollisionPointCircle(mouse, bottomLeftV, 10)) GLOBALS.CamQuadLock = 4;
             }
-            
+            else
+            {
+                switch (GLOBALS.CamQuadLock)
+                {
+                    case 1:
+                    {
+                        var radius = RayMath.Vector2Distance(mouse, pointOrigin1);
+
+                        if (radius > 100)
+                        {
+                            radius = 100;
+                        }
+                        else
+                        {
+                            topLeftV = mouse;
+                        }
+
+                        var angle = (int)float.RadiansToDegrees(RayMath.Vector2Angle(pointOrigin1 with { Y = pointOrigin1.Y - 1 } - pointOrigin1,
+                            mouse - pointOrigin1));
+                
+                        quad.TopLeft = (angle, radius / 100f);
+                    }
+                        break;
+
+                    case 2:
+                    {
+                        var radius = RayMath.Vector2Distance(mouse, pointOrigin2);
+
+                        if (radius > 100)
+                        {
+                            radius = 100;
+                        }
+                        else
+                        {
+                            topRightV = mouse;
+                        }
+
+                        var angle = (int)float.RadiansToDegrees(RayMath.Vector2Angle(pointOrigin2 with { Y = pointOrigin2.Y - 1 } - pointOrigin2,
+                            mouse - pointOrigin2));
+                
+                        quad.TopRight = (angle, radius / 100f);
+                    }
+                        break;
+
+                    case 3:
+                    {
+                        var radius = RayMath.Vector2Distance(mouse, pointOrigin3);
+
+                        if (radius > 100)
+                        {
+                            radius = 100;
+                        }
+                        else
+                        {
+                            bottomRightV = mouse;
+                        }
+
+                        var angle = (int)float.RadiansToDegrees(RayMath.Vector2Angle(pointOrigin3 with { Y = pointOrigin3.Y - 1 } - pointOrigin3,
+                            mouse - pointOrigin3));
+                
+                        quad.BottomRight = (angle, radius / 100f);
+                    }
+                        break;
+
+                    case 4:
+                    {
+                        var radius = RayMath.Vector2Distance(mouse, pointOrigin4);
+
+                        if (radius > 100)
+                        {
+                            radius = 100;
+                        }
+                        else
+                        {
+                            topLeftV = mouse;
+                        }
+
+                        var angle = (int)float.RadiansToDegrees(RayMath.Vector2Angle(pointOrigin4 with { Y = pointOrigin4.Y - 1 } - pointOrigin4,
+                            mouse - pointOrigin4));
+                
+                        quad.BottomLeft = (angle, radius / 100f);
+                    }
+                        break;
+                }
+            } 
+        }
+        
+        if (CheckCollisionPointRec(mouse, quarter1) || GLOBALS.CamQuadLock != 0)
+        {
             DrawCircleLines((int)pointOrigin1.X, (int)pointOrigin1.Y, quad.TopLeft.radius*100, GREEN);
             DrawCircleV(topLeftV, 10, new(0, 255, 0, 255));
         }
-
-
-        if (CheckCollisionPointRec(mouse, quarter2))
+        
+        if (CheckCollisionPointRec(mouse, quarter2) || GLOBALS.CamQuadLock != 0)
         {
-            if ((CheckCollisionPointCircle(mouse, topRightV, 10) || GLOBALS.CamScaleMode) &&
-                IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
-            {
-                GLOBALS.CamScaleMode = true;
-            }
-
             DrawCircleLines((int)pointOrigin2.X, (int)pointOrigin2.Y, quad.TopRight.radius*100, GREEN);
             DrawCircleV(topRightV, 10, new(0, 255, 0, 255));
         }
-
-        if (CheckCollisionPointRec(mouse, quarter3))
+        
+        if (CheckCollisionPointRec(mouse, quarter3) || GLOBALS.CamQuadLock != 0)
         {
-            if ((CheckCollisionPointCircle(mouse, bottomRightV, 10) || GLOBALS.CamScaleMode) &&
-                IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
-            {
-                GLOBALS.CamScaleMode = true;
-            }
-
             DrawCircleLines((int)pointOrigin3.X, (int)pointOrigin3.Y, quad.BottomRight.radius*100, GREEN);
             DrawCircleV(bottomRightV, 10, new(0, 255, 0, 255));
         }
-
-        if (CheckCollisionPointRec(mouse, quarter4))
+        
+        if (CheckCollisionPointRec(mouse, quarter4) || GLOBALS.CamQuadLock != 0)
         {
-            if ((CheckCollisionPointCircle(mouse, bottomLeftV, 10) || GLOBALS.CamScaleMode) &&
-                IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
-            {
-                GLOBALS.CamScaleMode = true;
-            }
-
             DrawCircleLines((int)pointOrigin4.X, (int)pointOrigin4.Y, quad.BottomLeft.radius*100, GREEN);
             DrawCircleV(bottomLeftV, 10, new(0, 255, 0, 255));
         }
+        
+        DrawLineV(topLeftV, topRightV, GREEN);
+        DrawLineV(topRightV, bottomRightV, GREEN);
+        DrawLineV(bottomRightV, bottomLeftV, GREEN);
+        DrawLineV(bottomLeftV, topLeftV, GREEN);
 
         return (hover && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT), biggerHover);
     }
