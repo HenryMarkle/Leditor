@@ -867,16 +867,16 @@ public class PropAntimatterSettings(int renderOrder = 0, int seed = 0, int rende
 
 public readonly record struct BufferTiles(int Left, int Right, int Top, int Bottom);
 
-public class CameraQuads(
-    Vector2 topLeft, 
-    Vector2 topRight, 
-    Vector2 bottomRight, 
-    Vector2 bottomLeft
+public class CameraQuad(
+    (int angle, float radius) topLeft, 
+    (int angle, float radius) topRight, 
+    (int angle, float radius) bottomRight, 
+    (int angle, float radius) bottomLeft
 ) {
-    public Vector2 TopLeft { get; set; } = topLeft; 
-    public Vector2 TopRight { get; set; } = topRight;
-    public Vector2 BottomRight { get; set; } = bottomRight; 
-    public Vector2 BottomLeft { get; set; } = bottomLeft;
+    public (int angle, float radius) TopLeft { get; set; } = topLeft; 
+    public (int angle, float radius) TopRight { get; set; } = topRight;
+    public (int angle, float radius) BottomRight { get; set; } = bottomRight; 
+    public (int angle, float radius) BottomLeft { get; set; } = bottomLeft;
 };
 
 public record CameraQuadsRecord(
@@ -888,6 +888,6 @@ public record CameraQuadsRecord(
 
 public class RenderCamera {
     public Vector2 Coords { get; set; }
-    public CameraQuads Quads { get; set; }
+    public CameraQuad Quad { get; set; }
 }
 

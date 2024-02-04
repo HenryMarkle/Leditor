@@ -87,7 +87,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
         if (Raylib.IsKeyPressed(KeyboardKey.KEY_N) && draggedCamera == -1)
         {
             var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-            GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = new Vector2(0, 0), Quads = new(new(), new(), new(), new()) }];
+            GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = new Vector2(0, 0), Quad = new(new(), new(), new(), new()) }];
             draggedCamera = GLOBALS.Level.Cameras.Count - 1;
         }
 
@@ -102,7 +102,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
             if (draggedCamera == -1)
             {
                 var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-                GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = new Vector2(0, 0), Quads = new(new(), new(), new(), new()) }];
+                GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = new Vector2(0, 0), Quad = new(new(), new(), new(), new()) }];
                 draggedCamera = GLOBALS.Level.Cameras.Count - 1;
             }
             else
@@ -241,10 +241,10 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
                     if (index == draggedCamera)
                     {
                         var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-                        Printers.DrawCameraSprite(new(pos.X - (72 * GLOBALS.Scale - 40) / 2, pos.Y - (43 * GLOBALS.Scale - 60) / 2), cam.Quads, camera, index + 1);
+                        Printers.DrawCameraSprite(new(pos.X - (72 * GLOBALS.Scale - 40) / 2, pos.Y - (43 * GLOBALS.Scale - 60) / 2), cam.Quad, camera, index + 1);
                         continue;
                     }
-                    var (clicked, hovered) = Printers.DrawCameraSprite(cam.Coords, cam.Quads, camera, index + 1);
+                    var (clicked, hovered) = Printers.DrawCameraSprite(cam.Coords, cam.Quad, camera, index + 1);
 
                     if (clicked && !clickTracker)
                     {
@@ -253,7 +253,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
                     }
                 }
 
-                Raylib.DrawRectangleLinesEx(
+                DrawRectangleLinesEx(
                     GLOBALS.Level.Border,
                     4f,
                     new(200, 66, 245, 255)

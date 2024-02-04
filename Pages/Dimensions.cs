@@ -299,7 +299,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                             {
                                 if (i == 0 && j == 0) continue;
 
-                                GLOBALS.Level.Cameras.Add(new RenderCamera() { Coords = new Vector2(20f + j*(GLOBALS.EditorCameraWidth - 380), 30f + i*(GLOBALS.EditorCameraHeight - 40)), Quads = new(new(), new(), new(), new()) });
+                                GLOBALS.Level.Cameras.Add(new RenderCamera() { Coords = new Vector2(20f + j*(GLOBALS.EditorCameraWidth - 380), 30f + i*(GLOBALS.EditorCameraHeight - 40)), Quad = new(new(), new(), new(), new()) });
                             }
                         }
                     }
