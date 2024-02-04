@@ -423,7 +423,7 @@ internal static class GLOBALS
             return true;
         }
         internal void ForcePlaceTileWithGeo(
-            ref InitTile init,
+            in InitTile init,
             int tileCategoryIndex,
             int tileIndex,
             (int x, int y, int z) matrixPosition
@@ -435,13 +435,83 @@ internal static class GLOBALS
             var specs2 = init.Specs2;
 
             // get the "middle" point of the tile
-            var head = Utils.GetTileHeadOrigin(ref init);
+            var head = Utils.GetTileHeadOrigin(init);
 
             // the top-left of the tile
             var start = RayMath.Vector2Subtract(new(mx, my), head);
 
             // first: place the head of the tile at matrixPosition
             TileMatrix[my, mx, mz] = new TileCell()
+            {
+                Type = TileType.TileHead,
+                Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
+            };
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    var matrixX = x + (int)start.X;
+                    var matrixY = y + (int)start.Y;
+
+                    // This function depends on the rest of the program to guarantee that all level matrices have the same x and y dimensions
+                    if (
+                        matrixX >= 0 &&
+                        matrixX < GeoMatrix.GetLength(1) &&
+                        matrixY >= 0 &&
+                        matrixY < GeoMatrix.GetLength(0)
+                    )
+                    {
+                        var specsIndex = (x * height) + y;
+
+                        var spec = specs[specsIndex];
+                        var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
+
+                        if (spec != -1) GeoMatrix[matrixY, matrixX, mz].Geo = spec;
+                        if (spec2 != -1 && mz != 2) GeoMatrix[matrixY, matrixX, mz + 1].Geo = spec2;
+                        
+                        // leave the newly placed tile head
+                        if (x == (int)head.X && y == (int)head.Y) continue;
+
+                        TileMatrix[matrixY, matrixX, mz] = new TileCell
+                        {
+                            Type = TileType.TileBody,
+                            Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                        };
+
+                        if (specs2.Length > 0 && mz != 2)
+                        {
+                            TileMatrix[matrixY, matrixX, mz + 1] = new TileCell
+                            {
+                                Type = TileType.TileBody,
+                                Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        
+        internal void ForcePlaceTileWithoutGeo(
+            in InitTile init,
+            int tileCategoryIndex,
+            int tileIndex,
+            (int x, int y, int z) matrixPosition
+        )
+        {
+            var (mx, my, mz) = matrixPosition;
+            var (width, height) = init.Size;
+            var specs = init.Specs;
+            var specs2 = init.Specs2;
+
+            // get the "middle" point of the tile
+            var head = Utils.GetTileHeadOrigin(init);
+
+            // the top-left of the tile
+            var start = RayMath.Vector2Subtract(new(mx, my), head);
+
+            // first: place the head of the tile at matrixPosition
+            TileMatrix[my, mx, mz] = new TileCell
             {
                 Type = TileType.TileHead,
                 Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
@@ -465,14 +535,6 @@ internal static class GLOBALS
                         matrixY < GeoMatrix.GetLength(0)
                     )
                     {
-                        var specsIndex = (x * height) + y;
-
-                        var spec = specs[specsIndex];
-                        var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
-
-                        if (spec != -1) GeoMatrix[matrixY, matrixX, mz].Geo = spec;
-                        if (spec2 != -1 && mz != 2) GeoMatrix[matrixY, matrixX, mz + 1].Geo = spec2;
-
                         TileMatrix[matrixY, matrixX, mz] = new TileCell
                         {
                             Type = TileType.TileBody,
@@ -577,6 +639,7 @@ internal static class GLOBALS
             TileMatrix[y, x, z] = cell;
             MaterialColors[y, x, z] = material.color;
         }
+        
         internal void RemoveMaterial(int x, int y, int z)
         {
             var cell = TileMatrix[y, x, z];
@@ -854,7 +917,7 @@ internal static class Utils
     /// Determines the "middle" of a tile, which where the tile head is positioned.
     /// </summary>
     /// <param name="init">a reference to the tile definition</param>
-    internal static System.Numerics.Vector2 GetTileHeadOrigin(ref InitTile init)
+    internal static System.Numerics.Vector2 GetTileHeadOrigin(in InitTile init)
     {
         var (width, height) = init.Size;
         return new System.Numerics.Vector2(GetMiddle(width), GetMiddle(height));
