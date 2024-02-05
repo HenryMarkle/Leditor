@@ -6,7 +6,7 @@ using Leditor.Leditor.Lingo;
 namespace Leditor.Lingo;
 
 public static class Tools {
-    // Meaningless name; this function turns a sequel of stackable IDs to an array that can be used at leditor runtime
+    /// Meaningless name; this function turns a sequel of stackable IDs to an array that can be used at leditor runtime
     private static bool[] DecomposeStackables(IEnumerable<int> seq)
     {
         bool[] bools = new bool[22];
@@ -31,7 +31,7 @@ public static class Tools {
             case AstNode.GlobalCall call:
                 sb.Append($"{call.Name}(");
                 
-                var stringArgs = sb.AppendJoin(", ", call.Arguments.Select(StringifyBase));
+                sb.AppendJoin(", ", call.Arguments.Select(StringifyBase));
 
                 sb.Append(')');
                 break;
@@ -39,7 +39,7 @@ public static class Tools {
             case AstNode.List list:
                 sb.Append('[');
 
-                var items = sb.AppendJoin(", ", list.Values.Select(StringifyBase));
+                sb.AppendJoin(", ", list.Values.Select(StringifyBase));
 
                 sb.Append(']');
                 break;
@@ -52,7 +52,7 @@ public static class Tools {
             case AstNode.PropertyList dict:
                 sb.Append('[');
 
-                var props = sb.AppendJoin(", ", dict.Values.Select(p => $"{StringifyBase(p.Key)}: {StringifyBase(p.Value)}"));
+                sb.AppendJoin(", ", dict.Values.Select(p => $"{StringifyBase(p.Key)}: {StringifyBase(p.Value)}"));
 
                 sb.Append(']');
                 break;
@@ -450,9 +450,12 @@ public static class Tools {
                     AstNode.Number n => n,
                     AstNode.UnaryOperator u => (AstNode.Number)u.Expression,
                     _ => null
-                }) switch { 1 => PropRopeRelease.Right, -1 => PropRopeRelease.Left, _ => PropRopeRelease.None }, name is "Wire" or "Zero-G Wire" ? thickness is null ? 2 : NumberToFloat(thickness) : null),
+                }) switch { 1 => PropRopeRelease.Right, -1 => PropRopeRelease.Left, _ => PropRopeRelease.None }, 
+                    name is "Wire" or "Zero-G Wire" ? thickness is null ? 2 : NumberToFloat(thickness) : null, 
+                    name == "Zero-G Tube" ? getIntProperty(applyColor) : null),
                 InitPropType.VariedDecal => new PropVariedDecalSettings(depth, rng.Next(1000), 0, getIntProperty(variation) - 1, getIntProperty(customDepth)),
-                InitPropType.VariedSoft => new PropVariedSoftSettings(depth, rng.Next(1000), 0, getIntProperty(variation) - 1, getIntProperty(customDepth), getIntProperty(applyColor) != 0),
+                InitPropType.VariedSoft => new PropVariedSoftSettings(depth, rng.Next(1000), 0, getIntProperty(variation) - 1, getIntProperty(customDepth),
+                    ((InitVariedSoftProp)GLOBALS.Props[position.category][position.index]).Colorize == 0 ? 1 : null),
                 InitPropType.SimpleDecal => new PropSimpleDecalSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
                 InitPropType.Soft => new PropSoftSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
                 InitPropType.SoftEffect => new PropSoftEffectSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
@@ -542,7 +545,8 @@ public static class Tools {
         return result.ToList();
     }
 
-    public static (string Name, double[,] Matrix)[] GetEffects(AstNode.Base @base, int width, int height) {
+    public static (string Name, EffectOptions[] options, double[,] Matrix)[] GetEffects(AstNode.Base @base, int width, int height) {
+        #nullable enable
         var matrixProp = ((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "effects").Value;
 
         var effectList = ((AstNode.List)matrixProp).Values.Select(e => {
@@ -552,9 +556,32 @@ public static class Tools {
             
             var mtxWidth = ((AstNode.List) props.Single(p => ((AstNode.Symbol)p.Key).Value == "mtrx").Value).Values.Cast<AstNode.List>().ToArray();
 
+            var optionsList =
+                ((AstNode.List?)props.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "options").Value)?.Values;
+
+            var options = optionsList
+                ?.Cast<AstNode.List>()
+                .Select(o =>
+                {
+                    var optionName = ((AstNode.String)o.Values[0]).Value;
+                    var options = ((AstNode.List)o.Values[1]).Values.Cast<AstNode.String>().Select(s => s.Value).ToArray();
+                    dynamic choice = o.Values[2] switch
+                    {
+                        AstNode.String s => s.Value,
+                        AstNode.Number n => n.Value,
+                        AstNode.UnaryOperator u => u.Type == AstNode.UnaryOperatorType.Negate
+                            ? ((AstNode.Number)u.Expression).Value.IntValue * -1
+                            : ((AstNode.Number)u.Expression).Value,
+                        
+                        var b => throw new Exception($"Invalid effect option choice: {StringifyBase(b)}")
+                    };
+
+                    return new EffectOptions(optionName, options, choice);
+                }).ToArray() ?? throw new NullReferenceException($"No options found for effect \"{name}\"");
+            
             var matrix = new double[height, width];
 
-            for (int x = 0; x < mtxWidth.Length; x++) {
+            for (var x = 0; x < mtxWidth.Length; x++) {
                 var mtxHeight = mtxWidth[x].Values.Cast<AstNode.Number>().Select(n => n.Value.DecimalValue).ToArray();
 
                 for (int y = 0; y < mtxHeight.Length; y++) {
@@ -563,8 +590,10 @@ public static class Tools {
             }
 
 
-            return (name, matrix);
+            return (name, options, matrix);
         }).ToArray();
+        
+        #nullable disable
 
         return effectList;
     }
@@ -863,4 +892,6 @@ public static class Tools {
 
         return matrix;
     }
+    
+    
 }

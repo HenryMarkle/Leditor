@@ -8,6 +8,22 @@ namespace Leditor.Leditor.Lingo;
 
 public abstract class ParseException(string message) : Exception(message);
 
+public class EffectParseException(string message, string effect) : Exception(message)
+{
+    public string Effect { get; set; } = effect;
+}
+
+public class MissingEffectOptionException(string effect, string option) : EffectParseException("Missing effect option", effect)
+{
+    public string Option { get; set; } = option;
+}
+
+public class InvalidEffectOptionValueException(string effect, string option, string value)
+    : MissingEffectOptionException(effect, option)
+{
+    public string Value { get; set; } = value;
+}
+
 public class PropParseException(string message) : ParseException(message);
 
 public class PropNotFoundException(string message, string name) : PropParseException(message)

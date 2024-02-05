@@ -5,6 +5,265 @@ namespace Leditor;
 /// A collection of helper functions used across pages
 internal static class Utils
 {
+    public static int GetBrushStrength(string effect) => effect switch
+    {
+        "BlackGoo" or "Fungi Flowers" or "Lighthouse Flowers" or
+            "Fern" or "Giant Mushroom" or "Sprawlbush" or
+            "featherFern" or "Fungus Tree" or "Restore As Scaffolding" or "Restore As Pipes" => 100,
+
+        _ => 10
+    };
+
+    public static EffectOptions[] NewEffectOptions(string name)
+    {
+        EffectOptions[] options = name switch
+        {
+            "Slime" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("3D", ["Off", "On"], "Off"),
+                new("Affect Gradients and Decals", ["Yes", "No"], "Yes")
+            ],
+            
+            "LSime" => [new("3D", ["Off", "On"], "Off")],
+            
+            "Fat Slime" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("3D", ["Off", "On"], "Off"),
+                new("Affect Gradients and Decals", ["Yes", "No"], "Yes")
+            ],
+            
+            "Scales" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
+            ],
+            
+            "SlimeX3" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("3D", ["Off", "On"], "Off"),
+                new("Affect Gradients and Decals", ["Yes", "No"], "Yes")
+            ],
+            
+            "DecalsOnlySlime" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
+            ],
+            
+            "Melt" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Affect Gradients and Decals", ["Yes", "No"], "No")
+            ],
+            
+            "Rust" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("3D", ["Off", "On"], "Off"),
+                new("Affect Gradients and Decals", ["Yes", "No"], "No")
+            ],
+            
+            "Barnacles" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("3D", ["Off", "On"], "Off"),
+                new("Affect Gradients and Decals", ["Yes", "No"], "No")
+            ],
+            
+            "Colored Barnacles" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("3D", ["Off", "On"], "Off"),
+                new("Effect Color", ["EffectColor1", "EffectColor2", "None"], "EffectColor2")
+            ],
+            
+            "Clovers" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("3D", ["Off", "On"], "Off"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2")
+            ],
+            
+            "Ivy" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2"),
+                new("Color Intensity", ["High", "Medium", "Low", "None", "Random"], "Medium"),
+                new("Fruit Density", ["High", "Medium", "Low", "None"], "None"),
+                new("Leaf Density", [], new Random().Next(100))
+            ],
+            
+            "Little Flowers" => [
+                new("Color", ["Color1", "Color2", "Dead"], "Color2"),
+                new("Detail Color", ["Color1", "Color2", "Dead"], "Color2"),
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Rotate", ["Off", "On"], "Off")
+            ],
+            
+            "Erode" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
+            ],
+            
+            "Sand" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Effect Color", ["EffectColor1", "EffectColor2", "None"], "None")
+            ],
+            
+            "Super Erode" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+            ],
+            
+            "Ultra Super Erode" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
+            ],
+            
+            "Roughen" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
+            ],
+            
+            "Impacts" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
+            ],
+            
+            "Super Melt" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("3D", ["Off", "On"], "Off"),
+                new("Affect Gradients and Decals", ["Yes", "No"], "No")
+            ],
+            
+            "Destructive Melt" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("3D", ["Off", "On"], "Off"),
+                new("Affect Gradients and Decals", ["Yes", "No"], "No")
+            ],
+            
+            "Rubble" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
+            ],
+            
+            "Colored Rubble" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Effect Color", ["EffectColor1", "EffectColor2", "None"], "EffectColor2")
+            ],
+            
+            "Fungi Flowers" or "Lighthouse Flowers" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "1")
+            ],
+            
+            "Colored Fungi Flowers" or "Colored Lighthouse Flowers" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "1"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2")
+            ],
+            
+            "Foliage" or "High Grass" or "High Fern" or "Mistletoe" or "Reeds" or "Lavenders" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2")
+            ],
+            
+            "Ring Chains" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Effect Color", ["EffectColor1", "EffectColor2", "None"], "None")
+            ],
+            
+            "Assorted Trash" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Effect Color", ["EffectColor1", "EffectColor2", "None"], "None")
+            ],
+            
+            "Fern" or "Giant Mushroom" or "Sprawlbush" or "featherFern" or "Fungus Tree" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "1"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2")
+            ],
+            
+            "Root Grass" or "Growers" or "Cacti" or "Rain Moss" or "Dense Mold" or 
+                "Seed Pods" or "Grass" or "Arm Growers" or "Horse Tails" or "Circuit Plants" or 
+                "Feather Plants" or "Mini Growers" or "Left Facing Kelp" or "Right Facing Kelp" or 
+                "Club Moss" or "Moss Wall" or "Mixed Facing Kelp" or "Bubble Grower" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2")
+            ],
+            
+            "Rollers" or "Thorn Growers" or "Garbage Spirals" or "Spinets" or "Small Springs" or "Fuzzy Growers" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2")
+            ],
+            
+            "Wires" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Fatness", ["1px", "2px", "3px", "random"], "2px")
+            ],
+            
+            "Chains" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Size", ["Small", "FAT"], "Small")
+            ],
+            
+            "Colored Wires" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Fatness", ["1px", "2px", "3px", "random"], "2px"),
+                new("Effect Color", ["EffectColor1", "EffectColor2", "None"], "EffectColor2")
+            ],
+            
+            "Colored Chains" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Size", ["Small", "FAT"], "Small"),
+                new("Effect Color", ["EffectColor1", "EffectColor2", "None"], "EffectColor2")
+            ],
+            
+            "DarkSlime" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+            ],
+            
+            "Hang Roots" or "Thick Roots" or "Shadow Plants" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
+            ],
+            
+            "Colored Hang Roots" or "Colored Thick Roots" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2")
+            ],
+            
+            "Colored Shadow Plants" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2")
+            ],
+            
+            "Root Plants" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2")
+            ],
+            
+            "Restore As Scaffolding" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
+            ],
+            
+            "Restore As Pipes" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
+            ],
+            
+            "Ceramic Chaos" => [
+                new("Ceramic Color", ["None", "Colored"], "Colored"),
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
+            ],
+            
+            "DaddyCorruption" => [
+                new("Color", ["Color1", "Color2", "Dead"], "Color2"),
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
+            ],
+            
+            "Wastewater Mold" => [
+                new("Color", ["Color1", "Color2", "Dead"], "Color2"),
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
+            ],
+            
+            "Corruption No Eye" or "Slag" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
+            ],
+            
+            "Stained Glass Properties" => [
+                new("Variation", ["1", "2", "3"], "1"),
+                new("Color 1", ["EffectColor1", "EffectColor2", "None"], "EffectColor1"),
+                new("Color 2", ["EffectColor1", "EffectColor2", "None"], "EffectColor2")
+            ]
+        };
+
+        return [
+            new("Delete/Move", ["Delete", "Move Back", "Move Forth"], ""),
+            new("Seed", [], new Random().Next(1000)),
+            ..options
+        ];
+    }
+    
     private static int GetMiddle(int number)
     {
         if (number < 3) return 0;

@@ -8,7 +8,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 {
     readonly Serilog.Core.Logger logger = logger;
 
-    Camera2D camera = new() { zoom = 0.8f };
+    Camera2D camera = new() { zoom = 1.0f };
 
     bool addNewEffectMode = false;
     bool newEffectFocus = false;
@@ -30,6 +30,8 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
     bool clickTracker = false;
     bool brushEraseMode = false;
     bool showEffectOptions = true;
+
+    private int _optionsIndex = 1;
 
     readonly byte[] addNewEffectPanelBytes = Encoding.ASCII.GetBytes("New Effect");
     readonly byte[] appliedEffectsPanelBytes = Encoding.ASCII.GetBytes("Applied Effects");
@@ -87,7 +89,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                 if (newEffectFocus)
                 {
                     newEffectSelectedValue = --newEffectSelectedValue;
-                    if (newEffectSelectedValue < 0) newEffectSelectedValue = Effects.Names[newEffectCategorySelectedValue].Length - 1;
+                    if (newEffectSelectedValue < 0) newEffectSelectedValue = GLOBALS.Effects[newEffectCategorySelectedValue].Length - 1;
                 }
                 else
                 {
@@ -95,7 +97,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
                     newEffectCategorySelectedValue = --newEffectCategorySelectedValue;
 
-                    if (newEffectCategorySelectedValue < 0) newEffectCategorySelectedValue = Effects.Categories.Length - 1;
+                    if (newEffectCategorySelectedValue < 0) newEffectCategorySelectedValue = GLOBALS.EffectCategories.Length - 1;
                 }
             }
 
@@ -103,12 +105,12 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
             {
                 if (newEffectFocus)
                 {
-                    newEffectSelectedValue = ++newEffectSelectedValue % Effects.Names[newEffectCategorySelectedValue].Length;
+                    newEffectSelectedValue = ++newEffectSelectedValue % GLOBALS.Effects[newEffectCategorySelectedValue].Length;
                 }
                 else
                 {
                     newEffectSelectedValue = 0;
-                    newEffectCategorySelectedValue = ++newEffectCategorySelectedValue % Effects.Categories.Length;
+                    newEffectCategorySelectedValue = ++newEffectCategorySelectedValue % GLOBALS.EffectCategories.Length;
                 }
             }
 
@@ -122,13 +124,13 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                 newEffectFocus = false;
             }
 
-            if (Raylib.IsKeyPressed(KeyboardKey.KEY_ENTER))
+            if (IsKeyPressed(KeyboardKey.KEY_ENTER))
             {
                 GLOBALS.Level.Effects = [
                     .. GLOBALS.Level.Effects,
                     (
-                        Effects.Names[newEffectCategorySelectedValue][newEffectSelectedValue],
-                        Effects.GetEffectOptions(Effects.Names[newEffectCategorySelectedValue][newEffectSelectedValue]),
+                        GLOBALS.Effects[newEffectCategorySelectedValue][newEffectSelectedValue],
+                        Utils.NewEffectOptions(GLOBALS.Effects[newEffectCategorySelectedValue][newEffectSelectedValue]),
                         new double[GLOBALS.Level.Height, GLOBALS.Level.Width]
                     )
                 ];
@@ -180,7 +182,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                                 150,
                                 540
                             ),
-                            string.Join(";", Effects.Categories),
+                            string.Join(";", GLOBALS.EffectCategories),
                             scrollIndex,
                             newEffectCategorySelectedValue
                         );
@@ -210,7 +212,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                                 620,
                                 540
                             ),
-                            string.Join(";", Effects.Names[newEffectCategorySelectedValue]),
+                            string.Join(";", GLOBALS.Effects[newEffectCategorySelectedValue]),
                             scrollIndex,
                             newEffectSelectedValue
                         );
@@ -237,8 +239,8 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
             Vector2 effectsMouse = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
 
             //                        v this was done to avoid rounding errors
-            int effectsMatrixY = effectsMouse.Y < 0 ? -1 : (int)effectsMouse.Y / GLOBALS.Scale;
-            int effectsMatrixX = effectsMouse.X < 0 ? -1 : (int)effectsMouse.X / GLOBALS.Scale;
+            int effectsMatrixY = effectsMouse.Y < 0 ? -1 : (int)effectsMouse.Y / GLOBALS.PreviewScale;
+            int effectsMatrixX = effectsMouse.X < 0 ? -1 : (int)effectsMouse.X / GLOBALS.PreviewScale;
 
 
             var appliedEffectsPanelHeight = Raylib.GetScreenHeight() - 200;
@@ -287,7 +289,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
             // Use brush
 
-            if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
             {
                 if (
                         effectsMatrixX >= 0 &&
@@ -311,7 +313,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                             (GLOBALS.Level.Width, GLOBALS.Level.Height),
                             (effectsMatrixX, effectsMatrixY),
                             brushRadius,
-                            -Effects.GetBrushStrength(GLOBALS.Level.Effects[currentAppliedEffect].Item1)
+                            -Utils.GetBrushStrength(GLOBALS.Level.Effects[currentAppliedEffect].Item1)
                         );
                     }
                     else
@@ -323,7 +325,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                             (GLOBALS.Level.Width, GLOBALS.Level.Height),
                             (effectsMatrixX, effectsMatrixY),
                             brushRadius,
-                            Effects.GetBrushStrength(GLOBALS.Level.Effects[currentAppliedEffect].Item1)
+                            Utils.GetBrushStrength(GLOBALS.Level.Effects[currentAppliedEffect].Item1)
                             );
 
                         //if (mtx[effectsMatrixY, effectsMatrixX] > 100) mtx[effectsMatrixY, effectsMatrixX] = 100;
@@ -336,18 +338,18 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                 clickTracker = true;
             }
 
-            if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
             {
                 clickTracker = false;
             }
 
             //
 
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+            if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
             {
                 var index = currentAppliedEffect;
 
-                if (Raylib.IsKeyPressed(KeyboardKey.KEY_W))
+                if (IsKeyPressed(KeyboardKey.KEY_W))
                 {
                     if (index > 0)
                     {
@@ -355,7 +357,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                         currentAppliedEffect--;
                     }
                 }
-                else if (Raylib.IsKeyPressed(KeyboardKey.KEY_S))
+                else if (IsKeyPressed(KeyboardKey.KEY_S))
                 {
                     if (index < GLOBALS.Level.Effects.Length - 1)
                     {
@@ -364,27 +366,60 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                     }
                 }
             }
+            // Cycle options
+            else if (IsKeyDown(KeyboardKey.KEY_LEFT_ALT))
+            {
+                if (IsKeyPressed(KeyboardKey.KEY_W))
+                {
+                    _optionsIndex--;
+                    if (_optionsIndex < 2) _optionsIndex = GLOBALS.Level.Effects[currentAppliedEffect].Item2.Length - 1;
+                }
+                else if (IsKeyPressed(KeyboardKey.KEY_S))
+                {
+                    _optionsIndex = ++_optionsIndex % GLOBALS.Level.Effects[currentAppliedEffect].Item2.Length;
+                    if (_optionsIndex == 0) _optionsIndex = 1;
+                }
+                else if (IsKeyPressed(KeyboardKey.KEY_D))
+                {
+                    var option = GLOBALS.Level.Effects[currentAppliedEffect].Item2[_optionsIndex];
+                    var choiceIndex = Array.FindIndex(option.Options, op => op == option.Choice);
+                    choiceIndex = ++choiceIndex % option.Options.Length;
+                    option.Choice = option.Options[choiceIndex];
+                }
+                else if (IsKeyPressed(KeyboardKey.KEY_A))
+                {
+                    var option = GLOBALS.Level.Effects[currentAppliedEffect].Item2[_optionsIndex];
+                    var choiceIndex = Array.FindIndex(option.Options, op => op == option.Choice);
+                    choiceIndex--;
+                    if (choiceIndex < 0) choiceIndex = option.Options.Length - 1;
+                    option.Choice = option.Options[choiceIndex];
+                }
+            }
             else
             {
-                if (Raylib.IsKeyPressed(KeyboardKey.KEY_W))
+                if (IsKeyPressed(KeyboardKey.KEY_W))
                 {
                     currentAppliedEffect--;
 
                     if (currentAppliedEffect < 0) currentAppliedEffect = GLOBALS.Level.Effects.Length - 1;
 
                     currentAppliedEffectPage = currentAppliedEffect / appliedEffectPageSize;
+
+                    _optionsIndex = 1;
                 }
 
-                if (Raylib.IsKeyPressed(KeyboardKey.KEY_S))
+                if (IsKeyPressed(KeyboardKey.KEY_S))
                 {
                     currentAppliedEffect = ++currentAppliedEffect % GLOBALS.Level.Effects.Length;
 
                     currentAppliedEffectPage = currentAppliedEffect / appliedEffectPageSize;
+                    
+                    _optionsIndex = 1;
                 }
             }
 
-            if (Raylib.IsKeyPressed(KeyboardKey.KEY_O)) showEffectOptions = !showEffectOptions;
-            if (Raylib.IsKeyPressed(KeyboardKey.KEY_Q)) brushEraseMode = !brushEraseMode;
+            if (IsKeyPressed(KeyboardKey.KEY_O)) showEffectOptions = !showEffectOptions;
+            if (IsKeyPressed(KeyboardKey.KEY_Q)) brushEraseMode = !brushEraseMode;
 
 
             // Delete effect
@@ -402,120 +437,28 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
                 Raylib.BeginMode2D(camera);
                 {
-                    Raylib.DrawRectangleLinesEx(
+                    // Outer level border
+                    DrawRectangleLinesEx(
                         new Rectangle(
                             -2, -2,
-                            (GLOBALS.Level.Width * GLOBALS.Scale) + 4,
-                            (GLOBALS.Level.Height * GLOBALS.Scale) + 4
+                            (GLOBALS.Level.Width * GLOBALS.PreviewScale) + 4,
+                            (GLOBALS.Level.Height * GLOBALS.PreviewScale) + 4
                         ),
                         2f,
                         new(255, 255, 255, 255)
                     );
-                    Raylib.DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, new(255, 255, 255, 255));
+                    
+                    DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.PreviewScale, GLOBALS.Level.Height * GLOBALS.PreviewScale, new(255, 255, 255, 255));
 
-                    for (int y = 0; y < GLOBALS.Level.Height; y++)
-                    {
-                        for (int x = 0; x < GLOBALS.Level.Width; x++)
-                        {
-                            for (int z = 1; z < 3; z++)
-                            {
-                                var cell = GLOBALS.Level.GeoMatrix[y, x, z];
-
-                                var texture = Utils.GetBlockIndex(cell.Geo);
-
-                                if (texture >= 0)
-                                {
-                                    Raylib.DrawTexture(GLOBALS.Textures.GeoBlocks[texture], x * GLOBALS.Scale, y * GLOBALS.Scale, new(0, 0, 0, 170));
-                                }
-                            }
-                        }
-                    }
-
-                    if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
-                    {
-                        Raylib.DrawRectangle(
-                            (-1) * GLOBALS.Scale,
-                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
-                            (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                            GLOBALS.Level.WaterLevel * GLOBALS.Scale,
-                            new(0, 0, 255, 255)
-                        );
-                    }
-
-                    for (int y = 0; y < GLOBALS.Level.Height; y++)
-                    {
-                        for (int x = 0; x < GLOBALS.Level.Width; x++)
-                        {
-                            var cell = GLOBALS.Level.GeoMatrix[y, x, 0];
-
-                            var texture = Utils.GetBlockIndex(cell.Geo);
-
-                            if (texture >= 0)
-                            {
-                                Raylib.DrawTexture(GLOBALS.Textures.GeoBlocks[texture], x * GLOBALS.Scale, y * GLOBALS.Scale, new(0, 0, 0, 225));
-                            }
-
-                            for (int s = 1; s < cell.Stackables.Length; s++)
-                            {
-                                if (cell.Stackables[s])
-                                {
-                                    switch (s)
-                                    {
-                                        // dump placement
-                                        case 1:     // ph
-                                        case 2:     // pv
-                                            Raylib.DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, BLACK);
-                                            break;
-                                        case 3:     // bathive
-                                        case 5:     // entrance
-                                        case 6:     // passage
-                                        case 7:     // den
-                                        case 9:     // rock
-                                        case 10:    // spear
-                                        case 12:    // forbidflychains
-                                        case 13:    // garbagewormhole
-                                        case 18:    // waterfall
-                                        case 19:    // wac
-                                        case 20:    // worm
-                                        case 21:    // scav
-                                            Raylib.DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE);
-                                            break;
-
-                                        // directional placement
-                                        case 4:     // entrance
-                                            var index = Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, 0));
-
-                                            if (index is 22 or 23 or 24 or 25)
-                                            {
-                                                GLOBALS.Level.GeoMatrix[y, x, 0].Geo = 7;
-                                            }
-
-                                            DrawTexture(GLOBALS.Textures.GeoStackables[index], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE);
-                                            break;
-                                        case 11:    // crack
-                                            DrawTexture(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, 0))],
-                                                x * GLOBALS.Scale,
-                                                y * GLOBALS.Scale,
-                                                BLACK
-                                            );
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
-                    {
-                        Raylib.DrawRectangle(
-                            (-1) * GLOBALS.Scale,
-                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
-                            (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                            GLOBALS.Level.WaterLevel * GLOBALS.Scale,
-                            new(0, 0, 255, 110)
-                        );
-                    }
+                    Printers.DrawGeoLayer(2, GLOBALS.PreviewScale, false, BLACK with { a = 100 }, GLOBALS.LayerStackableFilter);
+                    Printers.DrawTileLayer(2, GLOBALS.PreviewScale, false, true, true);
+                    
+                    Printers.DrawGeoLayer(1, GLOBALS.PreviewScale, false, BLACK with { a = 200 }, GLOBALS.LayerStackableFilter);
+                    Printers.DrawTileLayer(1, GLOBALS.PreviewScale, false, true, true);
+                    
+                    Printers.DrawGeoLayer(0, GLOBALS.PreviewScale, false, BLACK with { a = 255 });
+                    Printers.DrawTileLayer(0, GLOBALS.PreviewScale, false, true, true);
+                    
 
                     // Effect matrix
 
@@ -524,13 +467,13 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                         currentAppliedEffect < GLOBALS.Level.Effects.Length)
                     {
 
-                        Raylib.DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, new(215, 66, 245, 100));
+                        DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.PreviewScale, GLOBALS.Level.Height * GLOBALS.PreviewScale, new(215, 66, 245, 100));
 
                         for (int y = 0; y < GLOBALS.Level.Height; y++)
                         {
                             for (int x = 0; x < GLOBALS.Level.Width; x++)
                             {
-                                Raylib.DrawRectangle(x * GLOBALS.Scale, y * GLOBALS.Scale, GLOBALS.Scale, GLOBALS.Scale, new(0, 255, 0, (int)GLOBALS.Level.Effects[currentAppliedEffect].Item3[y, x] * 255 / 100));
+                                DrawRectangle(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale, new(0, 255, 0, (int)GLOBALS.Level.Effects[currentAppliedEffect].Item3[y, x] * 255 / 100));
                             }
                         }
                     }
@@ -547,10 +490,10 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                                 {
                                     Raylib.DrawRectangleLinesEx(
                                         new Rectangle(
-                                            x * GLOBALS.Scale,
-                                            y * GLOBALS.Scale,
-                                            GLOBALS.Scale,
-                                            GLOBALS.Scale
+                                            x * GLOBALS.PreviewScale,
+                                            y * GLOBALS.PreviewScale,
+                                            GLOBALS.PreviewScale,
+                                            GLOBALS.PreviewScale
                                         ),
                                         2.0f,
                                         new(255, 0, 0, 255)
@@ -558,30 +501,30 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
 
                                     Raylib.DrawRectangleLines(
-                                        (effectsMatrixX - brushRadius) * GLOBALS.Scale,
-                                        (effectsMatrixY - brushRadius) * GLOBALS.Scale,
-                                        (brushRadius * 2 + 1) * GLOBALS.Scale,
-                                        (brushRadius * 2 + 1) * GLOBALS.Scale,
+                                        (effectsMatrixX - brushRadius) * GLOBALS.PreviewScale,
+                                        (effectsMatrixY - brushRadius) * GLOBALS.PreviewScale,
+                                        (brushRadius * 2 + 1) * GLOBALS.PreviewScale,
+                                        (brushRadius * 2 + 1) * GLOBALS.PreviewScale,
                                         new(255, 0, 0, 255));
                                 }
                                 else
                                 {
                                     Raylib.DrawRectangleLinesEx(
                                         new Rectangle(
-                                            x * GLOBALS.Scale,
-                                            y * GLOBALS.Scale,
-                                            GLOBALS.Scale,
-                                            GLOBALS.Scale
+                                            x * GLOBALS.PreviewScale,
+                                            y * GLOBALS.PreviewScale,
+                                            GLOBALS.PreviewScale,
+                                            GLOBALS.PreviewScale
                                         ),
                                         2.0f,
                                         new(255, 255, 255, 255)
                                     );
 
                                     Raylib.DrawRectangleLines(
-                                        (effectsMatrixX - brushRadius) * GLOBALS.Scale,
-                                        (effectsMatrixY - brushRadius) * GLOBALS.Scale,
-                                        (brushRadius * 2 + 1) * GLOBALS.Scale,
-                                        (brushRadius * 2 + 1) * GLOBALS.Scale,
+                                        (effectsMatrixX - brushRadius) * GLOBALS.PreviewScale,
+                                        (effectsMatrixY - brushRadius) * GLOBALS.PreviewScale,
+                                        (brushRadius * 2 + 1) * GLOBALS.PreviewScale,
+                                        (brushRadius * 2 + 1) * GLOBALS.PreviewScale,
                                         new(255, 255, 255, 255));
                                 }
                             }
@@ -751,7 +694,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                             RayGui.GuiPanel(
                                 new(
                                     20,
-                                    Raylib.GetScreenHeight() - 220,
+                                    GetScreenHeight() - 220,
                                     600,
                                     200
                                 ),
@@ -760,126 +703,42 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                         }
                     }
 
-                    var options = GLOBALS.Level.Effects.Length > 0 ? GLOBALS.Level.Effects[currentAppliedEffect].Item2 : new();
+                    var options = GLOBALS.Level.Effects.Length > 0 
+                        ? GLOBALS.Level.Effects[currentAppliedEffect].Item2 
+                        : [];
 
-                    if (options.Layers is not null || options.Layers2 is not null)
+                    ref var currentOption = ref options[_optionsIndex];
+                    
+                    DrawText(currentOption.Name, 30, GetScreenHeight() - 190, 20, BLACK);
+
+                    var commulativeWidth = 30;
+                    
+                    foreach (var choice in currentOption.Options)
                     {
-                        Raylib_CsLo.RayGui.GuiLine(
-                            new(
-                                30,
-                                Raylib.GetScreenHeight() - 190,
-                                100,
-                                10
-                            ),
-                            "Layers"
-                        );
-
-                        if (options.Layers is not null)
+                        var length = MeasureText(choice, 20);
+                        
+                        var chosen = currentOption.Choice == choice;
+                        
+                        if (chosen)
                         {
-                            var group = (int)options.Layers;
-
-                            if (Raylib_CsLo.RayGui.GuiCheckBox(new(30, Raylib.GetScreenHeight() - 175, 19, 19), "All", group == 0)) group = 0;
-                            if (Raylib_CsLo.RayGui.GuiCheckBox(new(30, Raylib.GetScreenHeight() - 155, 19, 19), "1", group == 1)) group = 1;
-                            if (Raylib_CsLo.RayGui.GuiCheckBox(new(30, Raylib.GetScreenHeight() - 135, 19, 19), "2", group == 2)) group = 2;
-                            if (Raylib_CsLo.RayGui.GuiCheckBox(new(30, Raylib.GetScreenHeight() - 115, 19, 19), "3", group == 3)) group = 3;
-                            if (Raylib_CsLo.RayGui.GuiCheckBox(new(30, Raylib.GetScreenHeight() - 95, 19, 19), "1st and 2nd", group == 4)) group = 4;
-                            if (Raylib_CsLo.RayGui.GuiCheckBox(new(30, Raylib.GetScreenHeight() - 75, 19, 19), "2nd and 3rd", group == 5)) group = 5;
-
-                            options.Layers = (EffectLayer1)group;
+                            DrawRectangle(
+                                commulativeWidth - 10, 
+                                GetScreenHeight() - 150, 
+                                length + 20, 
+                                20, 
+                                BLUE
+                            );
                         }
-                        else
-                        {
-                            var group = (int)options.Layers2;
-
-                            if (Raylib_CsLo.RayGui.GuiCheckBox(new(30, Raylib.GetScreenHeight() - 175, 19, 19), "1", group == 0)) group = 0;
-                            if (Raylib_CsLo.RayGui.GuiCheckBox(new(30, Raylib.GetScreenHeight() - 155, 19, 19), "2", group == 1)) group = 1;
-                            if (Raylib_CsLo.RayGui.GuiCheckBox(new(30, Raylib.GetScreenHeight() - 135, 19, 19), "3", group == 2)) group = 2;
-
-                            options.Layers2 = (EffectLayer2)group;
-                        }
-                    }
-
-                    if (options.Color is not null)
-                    {
-                        Raylib_CsLo.RayGui.GuiLine(
-                            new(
-                                140,
-                                Raylib.GetScreenHeight() - 190,
-                                100,
-                                10
-                            ),
-                            "Color"
+                        
+                        DrawText(
+                            choice, 
+                            commulativeWidth, 
+                            GetScreenHeight() - 150, 
+                            20, 
+                            chosen ? WHITE : BLACK
                         );
 
-                        var group = (int)options.Color;
-
-                        if (Raylib_CsLo.RayGui.GuiCheckBox(new(140, Raylib.GetScreenHeight() - 175, 19, 19), "Color 1", group == 0)) group = 0;
-                        if (Raylib_CsLo.RayGui.GuiCheckBox(new(140, Raylib.GetScreenHeight() - 155, 19, 19), "Color 2", group == 1)) group = 1;
-                        if (Raylib_CsLo.RayGui.GuiCheckBox(new(140, Raylib.GetScreenHeight() - 135, 19, 19), "Dead", group == 2)) group = 2;
-
-                        options.Color = (EffectColor)group;
-                    }
-
-                    if (options.Fatness is not null)
-                    {
-                        Raylib_CsLo.RayGui.GuiLine(
-                            new(
-                                250,
-                                Raylib.GetScreenHeight() - 190,
-                                100,
-                                10
-                            ),
-                            "Fatness"
-                        );
-
-                        var group = (int)options.Fatness;
-
-                        if (Raylib_CsLo.RayGui.GuiCheckBox(new(250, Raylib.GetScreenHeight() - 175, 19, 19), "1px", group == 0)) group = 0;
-                        if (Raylib_CsLo.RayGui.GuiCheckBox(new(250, Raylib.GetScreenHeight() - 155, 19, 19), "2px", group == 1)) group = 1;
-                        if (Raylib_CsLo.RayGui.GuiCheckBox(new(250, Raylib.GetScreenHeight() - 135, 19, 19), "3px", group == 2)) group = 2;
-                        if (Raylib_CsLo.RayGui.GuiCheckBox(new(250, Raylib.GetScreenHeight() - 115, 19, 19), "Random", group == 3)) group = 3;
-
-                        options.Fatness = (EffectFatness)group;
-                    }
-
-                    if (options.Size is not null)
-                    {
-                        Raylib_CsLo.RayGui.GuiLine(
-                            new(
-                                360,
-                                Raylib.GetScreenHeight() - 190,
-                                100,
-                                10
-                            ),
-                            "Size"
-                        );
-
-                        var group = (int)options.Size;
-
-                        if (Raylib_CsLo.RayGui.GuiCheckBox(new(360, Raylib.GetScreenHeight() - 175, 19, 19), "Small", group == 0)) group = 0;
-                        if (Raylib_CsLo.RayGui.GuiCheckBox(new(360, Raylib.GetScreenHeight() - 155, 19, 19), "Fat", group == 1)) group = 1;
-
-                        options.Size = (EffectSize)group;
-                    }
-
-                    if (options.Colored is not null)
-                    {
-                        Raylib_CsLo.RayGui.GuiLine(
-                            new(
-                                470,
-                                Raylib.GetScreenHeight() - 190,
-                                100,
-                                10
-                            ),
-                            "Colored"
-                        );
-
-                        var group = (int)options.Colored;
-
-                        if (Raylib_CsLo.RayGui.GuiCheckBox(new(470, Raylib.GetScreenHeight() - 175, 19, 19), "White", group == 0)) group = 0;
-                        if (Raylib_CsLo.RayGui.GuiCheckBox(new(470, Raylib.GetScreenHeight() - 155, 19, 19), "None", group == 1)) group = 1;
-
-                        options.Colored = (EffectColored)group;
+                        commulativeWidth += length + 30;
                     }
                 }
 

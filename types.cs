@@ -29,7 +29,7 @@ public class LoadFileResult
     public int Height { get; init; } = 0;
 
     public BufferTiles BufferTiles { get; init; } = new();
-    public (string, double[,])[] Effects { get; init; } = [];
+    public (string, EffectOptions[], double[,])[] Effects { get; init; } = [];
 
     public RunCell[,,]? GeoMatrix { get; init; } = null;
     public TileCell[,,]? TileMatrix { get; init; } = null;
@@ -91,160 +91,11 @@ public enum EffectColored
     None
 }
 
-public class EffectOptions(
-    bool? threeD = null,
-    EffectLayer1? layers = null,
-    EffectLayer2? layers2 = null,
-    EffectColor? color = null,
-    EffectFatness? fatness = null,
-    EffectSize? size = null,
-    EffectColored? colored = null,
-    bool? affectGradientsAndDecals = null
-)
+public class EffectOptions(string name, IEnumerable<string> options, dynamic choice)
 {
-    public bool? ThreeD { get; set; } = threeD;
-    public EffectLayer1? Layers { get; set; } = layers;
-    public EffectLayer2? Layers2 { get; set; } = layers2;
-    public EffectColor? Color { get; set; } = color;
-    public EffectFatness? Fatness { get; set; } = fatness;
-    public EffectSize? Size { get; set; } = size;
-    public EffectColored? Colored { get; set; } = colored;
-    public int Seed { get; set; } = new Random().Next();
-    public bool? AffectGradientsAndDecals { get; set; } = affectGradientsAndDecals;
-}
-
-// TODO: move this to GLOBALS
-public static class Effects
-{
-    public static string[][] Names { get; } = [
-        ["Slime", "Melt", "Rust", "Barnacles", "Rubble", "DecalsOnlySlime"],
-        ["Roughen", "SlimeX3", "Super Melt", "Destructive Melt", "Erode", "Super Erode", "DaddyCorruption"],
-        ["Wires", "Chains"],
-        ["Root Grass", "Seed Pods", "Growers", "Cacti", "Rain Moss", "Hang Roots", "Grass"],
-        ["Arm Growers", "Horse Tails", "Circuit Plants", "Feather Plants", "Thorn Growers", "Rollers", "Garbage Spirals"],
-        ["Thick Roots", "Shadow Plants"],
-        ["Fungi Flowers", "Lighthouse Flowers", "Fern", "Giant Mushroom", "Sprawlbush", "featherFern", "Fungus Tree"],
-        ["BlackGoo", "DarkSlime"],
-        ["Restore As Scaffolding", "Ceramic Chaos"],
-        ["Colored Hang Roots", "Colored Thick Roots", "Colored Shadow Plants", "Colored Lighthouse Flowers", "Colored Fungi Flowers", "Root Plants"],
-        ["Foliage", "Mistletoe", "High Fern", "High Grass", "Little Flowers", "Wastewater Mold"],
-        ["Spinets", "Small Springs", "Mini Growers", "Clovers", "Reeds", "Lavenders", "Dense Mold"],
-        ["Ultra Super Erode", "Impacts"],
-        ["Super BlackGoo", "Stained Glass Properties"],
-        ["Colored Barnacles", "Colored Rubble", "Fat Slime"],
-        ["Assorted Trash", "Colored Wires", "Colored Chains", "Ring Chains"],
-        ["Left Facing Kelp", "Right Facing Kelp", "Mixed Facing Kelp", "Bubble Grower", "Moss Wall", "Club Moss"],
-        ["Ivy"],
-        ["Fuzzy Growers"]
-    ];
-
-    public static string[] Categories { get; } = [
-        "Natural",
-        "Erosion",
-        "Artificial",
-        "Plants",
-        "Plants2",
-        "Plants3",
-        "Plants (Individual)",
-        "Paint Effects",
-        "Restoration",
-        "Drought Plants",
-        "Drought Plants 2",
-        "Drought Plants 3",
-        "Drought Erosion",
-        "Drought Paint Effects",
-        "Drought Natural",
-        "Drought Artificial",
-        "Dakras Plants",
-        "Leo Plants",
-        "Nautillo Plants"
-    ];
-
-    public static int GetBrushStrength(string effect) => effect switch
-    {
-        "BlackGoo" or "Fungi Flowers" or "Lighthouse Flowers" or
-        "Fern" or "Giant Mushroom" or "Sprawlbush" or
-        "featherFern" or "Fungus Tree" or "Restore As Scaffolding" or "Restore As Pipes" => 100,
-
-        _ => 10
-    };
-
-    // Used in the effects editor
-    public static EffectOptions GetEffectOptions(string effect) => effect switch
-    {
-        "Slime" => new(threeD: false),
-        "SlimeX3" => new(threeD: false),
-        "Rust" => new(threeD: false),
-        "Barnacles" => new(threeD: false),
-        "Super Melt" => new(threeD: false),
-        "Destructive Melt" => new(threeD: false),
-        "Rubble" => new(layers: EffectLayer1.All),
-
-        "Fungi Flowers"
-        or
-        "Lighthouse Flowers" => new(layers2: EffectLayer2.First),
-
-
-        "Fern"
-        or
-        "Giant Mushroom"
-        or
-        "sprawlBush"
-        or
-        "featherFern"
-        or
-        "Fungus Tree" => new(layers2: EffectLayer2.First, color: EffectColor.Color2),
-
-
-        "Root Grass"
-        or
-        "Growers"
-        or
-        "Cacti"
-        or
-        "Rain Moss"
-        or
-        "Seed Pods"
-        or
-        "Grass"
-        or
-        "Arm Growers"
-        or
-        "Horse Tails"
-        or
-        "Circuit Plants"
-        or
-        "Feather Plants" => new(layers: EffectLayer1.All, color: EffectColor.Color2),
-
-
-        "Rollers"
-        or
-        "Thorn Growers"
-        or
-        "Garbage Spirals" => new(layers: EffectLayer1.All, color: EffectColor.Color2),
-
-
-        "Wires" => new(layers: EffectLayer1.All, fatness: EffectFatness.TwoPixels),
-
-        "Chains" => new(layers: EffectLayer1.All, size: EffectSize.Small),
-
-
-        "Hang Roots"
-        or
-        "Thick Roots"
-        or
-        "Shadow Plants" => new(layers: EffectLayer1.All),
-
-
-        "Restore As Scaffolding" => new(layers: EffectLayer1.All),
-
-        "Restore As Pipes" => new(layers: EffectLayer1.All),
-
-        "Ceramic Chaos" => new(colored: EffectColored.White),
-
-
-        _ => new()
-    };
+    public string Name { get; set; } = name;
+    public string[] Options { get; set; } = [.. options];
+    public dynamic Choice { get; set; } = choice;
 }
 
 public class GeoShortcuts
@@ -827,10 +678,11 @@ public class PropVariedSettings(int renderOrder = 0, int seed = 200, int renderT
 
 public enum PropRopeRelease { Left, Right, None }
 
-public class PropRopeSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, PropRopeRelease release = PropRopeRelease.None, float? thickness = null) : BasicPropSettings(renderOrder, seed, renderTime)
+public class PropRopeSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, PropRopeRelease release = PropRopeRelease.None, float? thickness = null, int? applyColor = null) : BasicPropSettings(renderOrder, seed, renderTime)
 {
     public PropRopeRelease Release { get; set; } = release;
     public float? Thickness { get; set; } = thickness;
+    public int? ApplyColor { get; set; } = applyColor;
 }
 
 public class PropVariedDecalSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime), IVariable
@@ -838,11 +690,11 @@ public class PropVariedDecalSettings(int renderOrder = 0, int seed = 0, int rend
     public int Variation { get; set; } = variation;
     public int CustomDepth { get; set; } = customDepth;
 }
-public class PropVariedSoftSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0, bool applyColor = false) : BasicPropSettings(renderOrder, seed, renderTime), IVariable
+public class PropVariedSoftSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0, int? applyColor = null) : BasicPropSettings(renderOrder, seed, renderTime), IVariable
 {
     public int Variation { get; set; } = variation;
     public int CustomDepth { get; set; } = customDepth;
-    public bool ApplyColor { get; set; } = applyColor;
+    public int? ApplyColor { get; set; } = applyColor;
 }
 
 public class PropSimpleDecalSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime)

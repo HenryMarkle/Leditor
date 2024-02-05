@@ -128,8 +128,10 @@ internal static class GLOBALS
         internal RunCell[,,] GeoMatrix { get; private set; } = new RunCell[0, 0, 0];
         internal TileCell[,,] TileMatrix { get; private set; } = new TileCell[0, 0, 0];
         internal Color[,,] MaterialColors { get; private set; } = new Color[0, 0, 0];
-        internal (string, EffectOptions, double[,])[] Effects { get; set; } = [];
+        internal (string, EffectOptions[], double[,])[] Effects { get; set; } = [];
         internal (InitPropType type, (int category, int index) position, Prop prop)[] Props { get; set; } = [];
+
+        internal string DefaultMaterial { get; set; } = "Concrete";
 
         internal LevelState(int width, int height, (int left, int top, int right, int bottom) padding)
         {
@@ -143,10 +145,11 @@ internal static class GLOBALS
             RunCell[,,] geoMatrix,
             TileCell[,,] tileMatrix,
             Color[,,] materialColorMatrix,
-            (string, EffectOptions, double[,])[] effects,
+            (string, EffectOptions[], double[,])[] effects,
             List<RenderCamera> cameras,
             (InitPropType type, (int category, int index) position, Prop prop)[] props,
-            (int angle, int flatness) lightSettings
+            (int angle, int flatness) lightSettings,
+            string defaultMaterial = "Concrete"
         )
         {
             Width = width;
@@ -156,6 +159,7 @@ internal static class GLOBALS
             TileMatrix = tileMatrix;
             MaterialColors = materialColorMatrix;
             Effects = effects;
+            DefaultMaterial = defaultMaterial;
 
             LightAngle = lightSettings.angle;
             LightFlatness = lightSettings.flatness;
@@ -873,6 +877,100 @@ internal static class GLOBALS
         ["MassiveBulkMetal"] = new(255, 19, 19, 255),
         ["Dune Sand"] = new(255, 255, 100, 255)
     };
+    
+    public static string[][] Effects { get; } = [
+        ["Slime", "Melt", "Rust", "Barnacles", "Rubble", "DecalsOnlySlime"], // 6
+        ["Roughen", "SlimeX3", "Super Melt", "Destructive Melt", "Erode", "Super Erode", "DaddyCorruption"], // 7
+        ["Wires", "Chains"], // 2
+        ["Root Grass", "Seed Pods", "Growers", "Cacti", "Rain Moss", "Hang Roots", "Grass"], // 7
+        ["Arm Growers", "Horse Tails", "Circuit Plants", "Feather Plants", "Thorn Growers", "Rollers", "Garbage Spirals"], // 7
+        ["Thick Roots", "Shadow Plants"], // 2
+        ["Fungi Flowers", "Lighthouse Flowers", "Fern", "Giant Mushroom", "Sprawlbush", "featherFern", "Fungus Tree"], // 7
+        ["BlackGoo", "DarkSlime"], // 2
+        ["Restore As Scaffolding", "Ceramic Chaos"], // 2
+        ["Colored Hang Roots", "Colored Thick Roots", "Colored Shadow Plants", "Colored Lighthouse Flowers", "Colored Fungi Flowers", "Root Plants"], // 6
+        ["Foliage", "Mistletoe", "High Fern", "High Grass", "Little Flowers", "Wastewater Mold"], // 6
+        ["Spinets", "Small Springs", "Mini Growers", "Clovers", "Reeds", "Lavenders", "Dense Mold"], // 7
+        ["Ultra Super Erode", "Impacts"], // 2
+        ["Super BlackGoo", "Stained Glass Properties"], // 2
+        ["Colored Barnacles", "Colored Rubble", "Fat Slime"], // 3
+        ["Assorted Trash", "Colored Wires", "Colored Chains", "Ring Chains"], // 4
+        ["Left Facing Kelp", "Right Facing Kelp", "Mixed Facing Kelp", "Bubble Grower", "Moss Wall", "Club Moss"], // 6
+        ["Ivy"], // 1
+        ["Fuzzy Growers"] // 1
+    ];
+
+    public static string EffectType(string name) => name switch
+    {
+        "Slime" or "LSlime" or "Fat Slime" or "Scales" or "SlimeX3" or 
+            "DecalsOnlySlime" or "Melt" or "Rust" or "Barnacles" or "Colored Barnacles" or 
+            "Clovers" or "Erode" or "Sand" or "Super Erode" or "Ultra Super Erode" or 
+            "Roughen" or "Impacts" or "Super Melt" or "Destructive Melt" => "standardErosion",
+        
+        _ => "nn"
+    };
+
+    public static bool IsEffectCrossScreen(string name) => name switch
+    {
+        "Ivy" or "Rollers" or "Thorn Growers" or "Garbage Spirals" or "Spinets" or 
+            "Small Springs" or "Fuzzy Growers" or "Wires" or "Chains" or "Colored Wires" or 
+            "Colored Chains" or "Hang Roots" or "Thick Roots" or "Shadow Plants" or 
+            "Colored Hang Roots" or "Colored Thick Roots" or "Colored Shadow Plants" or
+            "Root Plants" or "Arm Growers" or "Growers" or "Mini Growers" or
+            "Left Facing Kelp" or "Right Facing Kelp" or "Mixed Facing Kelp" or 
+            "Bubble Grower" => true,
+        
+        _ => false
+    };
+
+    public static string[] EffectCategories { get; } = [
+        "Natural",                  // 0
+        "Erosion",                  // 1
+        "Artificial",               // 2
+        "Plants",                   // 3
+        "Plants2",                  // 4
+        "Plants3",                  // 5
+        "Plants (Individual)",      // 6
+        "Paint Effects",            // 7
+        "Restoration",              // 8
+        "Drought Plants",           // 9
+        "Drought Plants 2",         // 10
+        "Drought Plants 3",         // 11
+        "Drought Erosion",          // 12
+        "Drought Paint Effects",    // 13
+        "Drought Natural",          // 14
+        "Drought Artificial",       // 15
+        "Dakras Plants",            // 16
+        "Leo Plants",               // 17
+        "Nautillo Plants"           // 18
+    ];
+    
+    // Layers 2 and 3 do not show geo features like shortcuts and entrances 
+    internal static readonly bool[] LayerStackableFilter =
+    [
+        false, 
+        true, 
+        true, 
+        true, 
+        false, // 5
+        false, // 6
+        false, // 7
+        true, 
+        false, // 9
+        false, // 10
+        true, 
+        false, // 12
+        false, // 13
+        true, 
+        true, 
+        true, 
+        true, 
+        false, // 18
+        false, // 19
+        false, // 20
+        false, // 21
+        true
+    ];
     
     internal static Settings Settings { get; set; } = new(
             false,

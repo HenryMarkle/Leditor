@@ -388,8 +388,8 @@ internal static class Printers
                         initTile.Size.Item1 % 2 == 0 ? x * scale + scale : x * scale + scale/2f, 
                         initTile.Size.Item2 % 2 == 0 ? y * scale + scale : y * scale + scale/2f);
 
-                    var width = 0.4f * (initTile.Type == InitTileType.Box ? initTile.Size.Item1 : initTile.Size.Item1 + initTile.BufferTiles * 2) * GLOBALS.Scale;
-                    var height = 0.4f * (initTile.Size.Item2 + initTile.BufferTiles*2) * GLOBALS.Scale;
+                    var width = 0.4f * (initTile.Type == InitTileType.Box ? initTile.Size.Item1 : initTile.Size.Item1 + initTile.BufferTiles * 2) * 20;
+                    var height = 0.4f * (initTile.Size.Item2 + initTile.BufferTiles*2) * 20;
                     
                     if (!preview)
                     {
@@ -427,7 +427,7 @@ internal static class Printers
                             );
                         }
                     }
-                    else Printers.DrawTilePreview(ref initTile, ref tileTexture, ref color, (x, y));
+                    else DrawTilePreview(initTile, tileTexture, color, (x, y), scale);
                 }
                 else if (tileCell.Type == TileType.Material)
                 {
@@ -612,6 +612,43 @@ internal static class Printers
             RayMath.Vector2Scale(Utils.GetTileHeadOrigin(ref init), GLOBALS.PreviewScale),
             0,
             new(255, 255, 255, 255)
+        );
+        EndShaderMode();
+    }
+    
+    internal static void DrawTilePreview(
+        in InitTile init, 
+        in Texture texture, 
+        in Color color, 
+        in (int x, int y) position,
+        in int scale
+    )
+    {
+        var uniformLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "inputTexture");
+        var colorLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "highlightColor");
+        var heightStartLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "heightStart");
+        var heightLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "height");
+        var widthLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "width");
+
+        var startingTextureHeight = Utils.GetTilePreviewStartingHeight(init);
+        float calcStartingTextureHeight = (float)startingTextureHeight / (float)texture.height;
+        float calcTextureHeight = (float)(init.Size.Item2 * scale) / (float)texture.height;
+        float calcTextureWidth = (float)(init.Size.Item1 * scale) / (float)texture.width;
+
+        BeginShaderMode(GLOBALS.Shaders.TilePreview);
+        SetShaderValueTexture(GLOBALS.Shaders.TilePreview, uniformLoc, texture);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, colorLoc, new Vector4(color.r, color.g, color.b, color.a/255f), ShaderUniformDataType.SHADER_UNIFORM_VEC4);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, heightStartLoc, calcStartingTextureHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, heightLoc, calcTextureHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, widthLoc, calcTextureWidth, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+
+        DrawTexturePro(
+            texture,
+            new(0, 0, texture.width, texture.height),
+            new(position.x * scale, position.y * scale, init.Size.Item1 * scale, init.Size.Item2 * scale),
+            RayMath.Vector2Scale(Utils.GetTileHeadOrigin(init), scale),
+            0,
+            WHITE
         );
         EndShaderMode();
     }

@@ -1,5 +1,7 @@
 using static Raylib_CsLo.Raylib;
 using System.Numerics;
+using Leditor.Leditor.Lingo;
+using Leditor.Lingo;
 using Pidgin;
 namespace Leditor;
 
@@ -324,7 +326,7 @@ public class LoadProjectPage : IPage
                     res.GeoMatrix!,
                     res.TileMatrix!,
                     res.MaterialColorMatrix!,
-                    res.Effects.Select(effect => (effect.Item1, Effects.GetEffectOptions(effect.Item1), effect.Item2)).ToArray(),
+                    res.Effects,
                     res.Cameras,
                     res.PropsArray!,
                     res.LightSettings

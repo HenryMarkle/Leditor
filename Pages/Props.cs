@@ -2213,11 +2213,25 @@ internal class PropsEditorPage : IPage
 
                         if (currentModel.simSwitch) // Simulation mode
                         {
-                            if (RayGui.GuiButton(simButton with
-                                {
-                                    Y = ropePanelRect.Y + ropePanelRect.height - 50
-                                },
+                            if (RayGui.GuiButton(simButton with { Y = 180 },
                                 $"{60 / _ropeSimulationFrameCut} FPS")) _ropeSimulationFrameCut = ++_ropeSimulationFrameCut % 3 + 1;
+                            
+                            var release = (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings).Release;
+
+                            var releaseClicked = RayGui.GuiButton(simButton with { Y = 230 }, release switch
+                            {
+                                PropRopeRelease.Left => "Release Left",
+                                PropRopeRelease.None => "Release None",
+                                PropRopeRelease.Right => "Release Right"
+                            });
+
+                            if (releaseClicked)
+                            {
+                                release = (PropRopeRelease)((int)release + 1);
+                                if ((int)release > 2) release = (PropRopeRelease)0;
+
+                                (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings).Release = release;
+                            }
                         }
                         else // Bezier mode
                         {
@@ -2251,6 +2265,8 @@ internal class PropsEditorPage : IPage
                                 currentModel.bezierHandles = currentModel.bezierHandles[..^1];
                             }
                         }
+
+                        
 
                         ropeNotFound:
                         {

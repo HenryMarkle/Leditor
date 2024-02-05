@@ -537,7 +537,6 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                 }
             }
 
-
             // detect resize attempt
 
             if (tileMouse.X <= leftPanelSideStart.X + 5 && tileMouse.X >= leftPanelSideStart.X - 5 && tileMouse.Y >= leftPanelSideStart.Y && tileMouse.Y <= leftPanelSideEnd.Y)
@@ -663,7 +662,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                 }
             }
 
-            // focus indictor rectangles
+            // focus indicator rectangles
 
             if (_tileCategoryFocus)
             {
@@ -701,7 +700,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
             }
 
 
-            // tile specs panel
+            // Tile specs panel
 
             if (_materialTileSwitch)
             {
@@ -803,8 +802,17 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                     }
                 }
             }
+            
+            // Default material
 
-            // layer visibility
+            var setDefault = RayGui.GuiCheckBox(new(tilePanelRect.X + 10, tilePanelRect.height - 60, 20, 20), "Default Material", currentMaterialInit.Item1 == GLOBALS.Level.DefaultMaterial);
+
+            if (setDefault)
+            {
+                GLOBALS.Level.DefaultMaterial = currentMaterialInit.Item1;
+            }
+            
+            // Layer visibility
 
             {
                 _showTileLayer1 = RayGui.GuiCheckBox(new(tilePanelRect.X + 10, tilePanelRect.height - 30, 20, 20), "Layer 1", _showTileLayer1);
