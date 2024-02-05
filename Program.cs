@@ -290,7 +290,7 @@ class Program
 
         using var logger = new LoggerConfiguration().WriteTo.File(
             Path.Combine(GLOBALS.Paths.ExecutableDirectory, "logs/logs.txt"),
-            fileSizeLimitBytes: 10000000,
+            fileSizeLimitBytes: 50000000,
             rollOnFileSizeLimit: true
             ).CreateLogger();
 
