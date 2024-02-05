@@ -198,7 +198,7 @@ internal class MainPage(Serilog.Core.Logger logger) : IPage
                     );
 
                     DrawText(
-                        GLOBALS.ProjectName,
+                        GLOBALS.Level.ProjectName,
                         GetScreenWidth() - 350,
                         100,
                         30,
@@ -218,7 +218,7 @@ internal class MainPage(Serilog.Core.Logger logger) : IPage
 
                     Raylib.DrawText("Seed", Raylib.GetScreenWidth() - 380, 205, 11, new(0, 0, 0, 255));
 
-                    GLOBALS.Seed = (int)Math.Round(Raylib_CsLo.RayGui.GuiSlider(
+                    GLOBALS.Level.Seed = (int)Math.Round(Raylib_CsLo.RayGui.GuiSlider(
                         new(
                             Raylib.GetScreenWidth() - 290,
                             200,
@@ -227,28 +227,28 @@ internal class MainPage(Serilog.Core.Logger logger) : IPage
                         ),
                         "0",
                         "400",
-                        GLOBALS.Seed,
+                        GLOBALS.Level.Seed,
                         0,
                         400
                     ));
 
-                    GLOBALS.LightMode = RayGui.GuiCheckBox(new(
+                    GLOBALS.Level.LightMode = RayGui.GuiCheckBox(new(
                         Raylib.GetScreenWidth() - 380,
                         250,
                         20,
                         20
                     ),
                     "Light Mode",
-                    GLOBALS.LightMode);
+                    GLOBALS.Level.LightMode);
 
-                    GLOBALS.DefaultTerrian = RayGui.GuiCheckBox(new(
+                    GLOBALS.Level.DefaultTerrain = RayGui.GuiCheckBox(new(
                         GetScreenWidth() - 380,
                         290,
                         20,
                         20
                     ),
                     "Default Medium",
-                    GLOBALS.DefaultTerrian);
+                    GLOBALS.Level.DefaultTerrain);
 
                     Raylib.DrawText("Water Level",
                         Raylib.GetScreenWidth() - 380,

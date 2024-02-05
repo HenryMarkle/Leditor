@@ -14,7 +14,7 @@ public static class Exporters
         return [..list];
     }
     
-    public static string Export(RunCell[,,] matrix)
+    private static string Export(RunCell[,,] matrix)
     {
         System.Text.StringBuilder builder = new();
 
@@ -52,7 +52,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    public static string Export(TileCell[,,] matrix, string defaultMaterial)
+    private static string Export(TileCell[,,] matrix, string defaultMaterial)
     {
         System.Text.StringBuilder builder = new();
 
@@ -108,7 +108,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    public static string Export((string name, EffectOptions[] options, double[,] matrix)[] effects)
+    private static string Export((string name, EffectOptions[] options, double[,] matrix)[] effects)
     {
         System.Text.StringBuilder builder = new();
 
@@ -161,7 +161,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    public static string Export(int angle, int flatness)
+    private static string Export(int angle, int flatness)
     {
         System.Text.StringBuilder builder = new();
 
@@ -170,7 +170,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    public static string Export(bool terrainMedium, bool light, (int width, int height) size, (int left, int top, int right, int bottom) bufferTiles)
+    private static string Export(bool terrainMedium, bool light, (int width, int height) size, (int left, int top, int right, int bottom) bufferTiles)
     {
         System.Text.StringBuilder builder = new();
 
@@ -181,7 +181,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    public static string Export(List<RenderCamera> cameras)
+    private static string Export(List<RenderCamera> cameras)
     {
         System.Text.StringBuilder builder = new();
 
@@ -194,7 +194,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    public static string Export(int waterLevel, bool waterInFront)
+    private static string Export(int waterLevel, bool waterInFront)
     {
         System.Text.StringBuilder builder = new();
 
@@ -203,7 +203,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    public static string Export((InitPropType type, (int category, int index) position, Prop prop)[] props)
+    private static string Export((InitPropType type, (int category, int index) position, Prop prop)[] props)
     {
         System.Text.StringBuilder builder = new();
 
@@ -246,6 +246,51 @@ public static class Exporters
         }
         
         builder.Append("], #lastKeys: [#w: 0, #a: 0, #s: 0, #d: 0, #L: 0, #n: 0, #m1: 0, #m2: 0, #c: 0, #z: 0], #Keys: [#w: 0, #a: 0, #s: 0, #d: 0, #L: 0, #n: 0, #m1: 0, #m2: 0, #c: 0, #z: 0], #workLayer: 3, #lstMsPs: point(0, 0), #pmPos: point(21, 10), #pmSavPosL: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 12, 7, 14, 10, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], #propRotation: 0, #propStretchX: 1, #propStretchY: 1, #propFlipX: 1, #propFlipY: 1, #depth: 0, #color: 0]");
+        
+        return builder.ToString();
+    }
+
+    internal static async Task<string> ExportAsync(GLOBALS.LevelState level, char newLine = '\r')
+    {
+        var geoTask = Task.Factory.StartNew(() => Export(level.GeoMatrix));
+        var tileTask = Task.Factory.StartNew(() => Export(level.TileMatrix, level.DefaultMaterial));
+        var effTask = Task.Factory.StartNew(() => Export(level.Effects));
+        var lightTask = Task.Factory.StartNew(() => Export(level.LightAngle, level.LightFlatness));
+        var generalTask = Task.Factory.StartNew(() => Export(level.DefaultTerrain, level.LightMode, (level.Width, level.Height), level.Padding));
+        var camsTask = Task.Factory.StartNew(() => Export(level.Cameras));
+        var envTask = Task.Factory.StartNew(() => Export(level.WaterLevel, level.WaterAtFront));
+        var propsTask = Task.Factory.StartNew(() => Export(level.Props));
+
+        var allTasks = Task.WhenAll([
+            geoTask, 
+            tileTask, 
+            effTask, 
+            lightTask, 
+            generalTask, 
+            camsTask, 
+            envTask, 
+            propsTask
+        ]);
+
+        await allTasks;
+
+        System.Text.StringBuilder builder = new();
+
+        builder.Append(await geoTask);
+        builder.Append(newLine);
+        builder.Append(await tileTask);
+        builder.Append(newLine);
+        builder.Append(await effTask);
+        builder.Append(newLine);
+        builder.Append(await lightTask);
+        builder.Append(newLine);
+        builder.Append(await generalTask);
+        builder.Append(newLine);
+        builder.Append(await camsTask);
+        builder.Append(newLine);
+        builder.Append(await envTask);
+        builder.Append(newLine);
+        builder.Append(await propsTask);
         
         return builder.ToString();
     }

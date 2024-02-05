@@ -329,7 +329,8 @@ public class LoadProjectPage : IPage
                     res.Effects,
                     res.Cameras,
                     res.PropsArray!,
-                    res.LightSettings
+                    res.LightSettings,
+                    projectName: res.Name
                 );
 
                 var lightMapTexture = LoadTextureFromImage(res.LightMapImage);
@@ -355,11 +356,11 @@ public class LoadProjectPage : IPage
 
                 UnloadTexture(lightMapTexture);
 
-                GLOBALS.ProjectName = res.Name;
+                GLOBALS.Level.ProjectName = res.Name;
                 GLOBALS.Page = 1;
 
                 GLOBALS.TileCheck = null;
-                ProjectLoaded.Invoke(this, EventArgs.Empty);
+                ProjectLoaded?.Invoke(this, EventArgs.Empty);
                 RayGui.GuiUnlock();
             }
             else // choosing a project
@@ -444,7 +445,29 @@ public class LoadProjectPage : IPage
                     {
                         for (var f = 0; f < _projectFiles.Length; f++)
                         {
+                            var (path, isDir) = _projectFiles[f];
+                            
                             DrawRectangleLines(buttonOffsetX, f*buttonHeight + 310, buttonWidth, buttonHeight, GRAY);
+                            
+                            var button = GetButton(buttonOffsetX, f * buttonHeight + 310);
+                            var hover = CheckCollisionPointRec(mouse,
+                                button with { Y = button.Y + 1, height = button.height - 2 });
+                            
+                            if (hover && IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                            {
+                                if (isDir)
+                                {
+                                    GLOBALS.ProjectPath = path;
+                                    Explore();
+                                }
+                                else
+                                {
+                                    RayGui.GuiLock();
+
+                                    // LOAD PROJECT FILE
+                                    _loadFileTask = Task.Factory.StartNew(() => LoadProject(path));
+                                }
+                            }
                         }
                     }
                     else

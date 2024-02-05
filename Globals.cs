@@ -122,6 +122,9 @@ internal static class GLOBALS
         internal bool WaterAtFront { get; set; } = false;
         internal int LightAngle { get; set; } = 90; // 90 - 180
         internal int LightFlatness { get; set; } = 1; // 1 - 10
+        
+        internal bool LightMode { get; set; } = true;
+        internal bool DefaultTerrain { get; set; } = true;
 
         internal List<RenderCamera> Cameras { get; set; } = [];
 
@@ -132,7 +135,11 @@ internal static class GLOBALS
         internal (InitPropType type, (int category, int index) position, Prop prop)[] Props { get; set; } = [];
 
         internal string DefaultMaterial { get; set; } = "Concrete";
-
+        
+        internal string ProjectName { get; set; } = "New Project";
+        
+        internal int Seed { get; set; } = new Random().Next(1000);
+        
         internal LevelState(int width, int height, (int left, int top, int right, int bottom) padding)
         {
             New(width, height, padding, [1, 1, 0]);
@@ -149,7 +156,8 @@ internal static class GLOBALS
             List<RenderCamera> cameras,
             (InitPropType type, (int category, int index) position, Prop prop)[] props,
             (int angle, int flatness) lightSettings,
-            string defaultMaterial = "Concrete"
+            string defaultMaterial = "Concrete",
+            string projectName = "New Project"
         )
         {
             Width = width;
@@ -160,6 +168,7 @@ internal static class GLOBALS
             MaterialColors = materialColorMatrix;
             Effects = effects;
             DefaultMaterial = defaultMaterial;
+            ProjectName = projectName;
 
             LightAngle = lightSettings.angle;
             LightFlatness = lightSettings.flatness;
@@ -361,7 +370,7 @@ internal static class GLOBALS
 
             return null;
         }
-        internal bool IsTileLegal(ref InitTile init, System.Numerics.Vector2 point)
+        internal bool IsTileLegal(ref InitTile init, Vector2 point)
         {
             var (width, height) = init.Size;
             var specs = init.Specs;
@@ -657,13 +666,8 @@ internal static class GLOBALS
             TileMatrix[y, x, z] = cell;
         }
     }
-
-    internal static string ProjectName { get; set; } = "New Project";
     
-    // TODO: decide whether to move to LevelState
-    internal static int Seed { get; set; } = new Random().Next(1000);
-    internal static bool LightMode { get; set; } = true;
-    internal static bool DefaultTerrian { get; set; } = true;
+    internal static string ProjectPath { get; set; }
 
     internal static int MinScreenWidth => 1280;
     internal static int MinScreenHeight => 800;
@@ -701,7 +705,6 @@ internal static class GLOBALS
     /// Current working layer
     internal static int Layer { get; set; } = 0;
     
-    internal static string ProjectPath { get; set; }
 
     /// The current loaded level
     internal static LevelState Level { get; set; } = new(InitialMatrixWidth, InitialMatrixHeight, (6, 3, 6, 5));

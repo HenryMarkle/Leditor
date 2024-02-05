@@ -664,6 +664,7 @@ class Program
         
         // Page event handlers
         loadPage.ProjectLoaded += propsPage.OnProjectLoaded;
+        loadPage.ProjectLoaded += savePage.OnProjectLoaded;
         dimensionsPage.ProjectCreated += propsPage.OnProjectCreated;
         //
 
