@@ -33,9 +33,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
     private bool _showTileLayer2 = true;
     private bool _showTileLayer3 = true;
 
-    private readonly byte[] _tilesPanelBytes = Encoding.ASCII.GetBytes("Tiles");
-    private readonly byte[] _materialsPanelBytes = Encoding.ASCII.GetBytes("Materials");
-    private readonly byte[] _tileSpecsPanelBytes = Encoding.ASCII.GetBytes("Tile Specs");
+    private readonly byte[] _tilesPanelBytes = "Tiles"u8.ToArray();
+    private readonly byte[] _materialsPanelBytes = "Materials"u8.ToArray();
+    private readonly byte[] _tileSpecsPanelBytes = "Tile Specs"u8.ToArray();
 
     public void Draw()
     {
@@ -51,7 +51,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
         var leftPanelSideEnd = new Vector2(teWidth - (_tilePanelWidth + 10), teHeight - 50);
         var specsRect = _showTileSpecs
             ? new Rectangle(0, GetScreenHeight() - 300, 300, 300)
-            : new(-276, GetScreenHeight() - 300, 300, 300);
+            : new Rectangle(-276, GetScreenHeight() - 300, 300, 300);
 
         //                        v this was done to avoid rounding errors
         int tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / GLOBALS.PreviewScale;
@@ -75,22 +75,71 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
         var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
         var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
         
-        if (_gShortcuts.ToMainPage.Check(ctrl, shift)) GLOBALS.Page = 1;
-        if (_gShortcuts.ToGeometryEditor.Check(ctrl, shift)) GLOBALS.Page = 2;
+        if (_gShortcuts.ToMainPage.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 1");
+            #endif
+            GLOBALS.Page = 1;
+        }
+        if (_gShortcuts.ToGeometryEditor.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 2");
+            #endif
+            GLOBALS.Page = 2;
+        }
         // if (_gShortcuts.ToTileEditor.Check(ctrl, shift)) GLOBALS.Page = 3;
-        if (_gShortcuts.ToCameraEditor.Check(ctrl, shift)) GLOBALS.Page = 4;
-        if (_gShortcuts.ToLightEditor.Check(ctrl, shift)) GLOBALS.Page = 5;
-        if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift)) { GLOBALS.ResizeFlag = true; GLOBALS.Page = 6; }
-        if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift)) GLOBALS.Page = 7;
-        if (_gShortcuts.ToPropsEditor.Check(ctrl, shift)) GLOBALS.Page = 8;
-        if (_gShortcuts.ToSettingsPage.Check(ctrl, shift)) GLOBALS.Page = 9;
+        if (_gShortcuts.ToCameraEditor.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 4");
+            #endif
+            GLOBALS.Page = 4;
+        }
+        if (_gShortcuts.ToLightEditor.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 5");
+            #endif
+            GLOBALS.Page = 5;
+        }
+
+        if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 6");
+            #endif
+            GLOBALS.ResizeFlag = true; GLOBALS.Page = 6;
+        }
+        if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 7");
+            #endif
+            GLOBALS.Page = 7;
+        }
+        if (_gShortcuts.ToPropsEditor.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 8");
+            #endif
+            GLOBALS.Page = 8;
+        }
+        if (_gShortcuts.ToSettingsPage.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 9");
+            #endif
+            GLOBALS.Page = 9;
+        }
 
 
         if (IsKeyPressed(KeyboardKey.KEY_Q) && canDrawTile && inMatrixBounds)
         {
             if (_materialTileSwitch)
             {
-                (_tileCategoryIndex, _tileIndex) = GLOBALS.Level.PickupTile(tileMatrixX, tileMatrixY, GLOBALS.Layer) ?? (tileCategoryIndex: _tileCategoryIndex, tileIndex: _tileIndex);
+                (_tileCategoryIndex, _tileIndex) = GLOBALS.Level.PickupTile(tileMatrixX, tileMatrixY, GLOBALS.Layer) ?? (_tileCategoryIndex, _tileIndex);
             }
             else
             {
@@ -98,8 +147,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 
                 if (result is not null)
                 {
-                    _materialCategoryIndex = result.Value.category;
-                    _materialIndex = result.Value.index;
+                    _materialCategoryIndex = result!.Value.category;
+                    _materialIndex = result!.Value.index;
                 }
             }
         }
@@ -238,7 +287,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 
         // change tile category
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_S))
+        if (IsKeyPressed(KeyboardKey.KEY_S))
         {
             if (_materialTileSwitch)
             {
@@ -297,7 +346,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
             }
         }
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_W))
+        if (IsKeyPressed(KeyboardKey.KEY_W))
         {
             if (_materialTileSwitch)
             {
@@ -492,7 +541,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                 );
             }
 
-            // Coordiantes
+            // Coordinates
 
             if (GLOBALS.Settings.TileEditor.HoveredTileInfo && canDrawTile)
             {
@@ -601,9 +650,25 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                 {
                     fixed (int* scrollIndex = &_tileScrollIndex)
                     {
+                        InitTile[] category;
+                        
+                        #if DEBUG
+                        try
+                        {
+                            category = GLOBALS.Tiles[_tileCategoryIndex];
+                        }
+                        catch (IndexOutOfRangeException ie)
+                        {
+                            _logger.Fatal($"Failed to fetch tile category from {nameof(GLOBALS.Tiles)} (L:{GLOBALS.Tiles.Length}): {nameof(_tileCategoryIndex)} ({_tileCategoryIndex}) was out of bounds");
+                            throw new IndexOutOfRangeException(message: $"Failed to fetch tile category from {nameof(GLOBALS.Tiles)} (L:{GLOBALS.Tiles.Length}): {nameof(_tileCategoryIndex)} ({_tileCategoryIndex}) was out of bounds", innerException: ie);
+                        }
+                        #else
+                        category = GLOBALS.Tiles[_tileCategoryIndex];
+                        #endif
+                        
                         _tileIndex = RayGui.GuiListView(
                             new(teWidth - (_tilePanelWidth + 10) + 15 + (_tilePanelWidth * 0.3f), 90, _tilePanelWidth * 0.7f - 25, teHeight - 200),
-                            string.Join(";", GLOBALS.Tiles[_tileCategoryIndex].Select(i => i.Name)),
+                            string.Join(";", category.Select(i => i.Name)),
                             scrollIndex,
                             _tileIndex
                         );
@@ -634,8 +699,21 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                     _materialIndex = 0;
                 }
 
-                var currentMaterialsList = GLOBALS.Materials[_materialCategoryIndex];
+                (string, Color)[] currentMaterialsList;
 
+                #if DEBUG
+                try
+                {
+                    currentMaterialsList = GLOBALS.Materials[_materialCategoryIndex];
+                }
+                catch (IndexOutOfRangeException ie)
+                {
+                    _logger.Fatal($"Failed to fetch current material from {nameof(GLOBALS.Materials)} (L:{GLOBALS.Materials.Length}): {nameof(_materialCategoryIndex)} ({_materialCategoryIndex} was out of bounds");
+                    throw new IndexOutOfRangeException(innerException: ie, message: $"Failed to fetch current material from {nameof(GLOBALS.Materials)} (L:{GLOBALS.Materials.Length}): {nameof(_materialCategoryIndex)} ({_materialCategoryIndex} was out of bounds");
+                }
+                #else
+                currentMaterialsList = GLOBALS.Materials[_materialCategoryIndex];
+                #endif
                 unsafe
                 {
                     fixed (int* scrollIndex = &_materialScrollIndex)
@@ -737,8 +815,26 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                     var newWholeScale = Math.Min(300 / tileWidth * 20, 200 / tileHeight * 20);
                     var newCellScale = newWholeScale / 20;
 
-                    var specs = GLOBALS.Tiles[_tileCategoryIndex][_tileIndex].Specs;
-                    var specs2 = GLOBALS.Tiles[_tileCategoryIndex][_tileIndex].Specs2;
+                    int[] specs;
+                    int[] specs2;
+                    
+                    #if DEBUG
+                    try
+                    {
+                        specs = GLOBALS.Tiles[_tileCategoryIndex][_tileIndex].Specs;
+                        specs2 = GLOBALS.Tiles[_tileCategoryIndex][_tileIndex].Specs2;
+                    }
+                    catch (IndexOutOfRangeException ie)
+                    {
+                        _logger.Fatal($"Failed to fetch tile specs(2) from {nameof(GLOBALS.Tiles)} (L:{GLOBALS.Tiles.Length}): {nameof(_tileCategoryIndex)} or {_tileIndex} were out of bounds");
+                        throw new IndexOutOfRangeException(innerException: ie,
+                            message:
+                            $"Failed to fetch tile specs(2) from {nameof(GLOBALS.Tiles)} (L:{GLOBALS.Tiles.Length}): {nameof(_tileCategoryIndex)} or {_tileIndex} were out of bounds");
+                    }
+                    #else
+                    specs = GLOBALS.Tiles[_tileCategoryIndex][_tileIndex].Specs;
+                    specs2 = GLOBALS.Tiles[_tileCategoryIndex][_tileIndex].Specs2;
+                    #endif
 
                     var textLength = MeasureText($"{tileWidth} x {tileHeight}", 20);
 
@@ -746,18 +842,18 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                     {
                         DrawText(
                             $"{tileWidth} x {tileHeight}",
-                            (specsRect.X + specsRect.width) / 2 - textLength / 2,
+                            (specsRect.X + specsRect.width) / 2 - textLength / 2f,
                             specsRect.Y + 50, 20, new(0, 0, 0, 255)
                         );
 
-                        for (int x = 0; x < tileWidth; x++)
+                        for (var x = 0; x < tileWidth; x++)
                         {
-                            for (int y = 0; y < tileHeight; y++)
+                            for (var y = 0; y < tileHeight; y++)
                             {
                                 var specsIndex = (x * tileHeight) + y;
                                 var spec = specs[specsIndex];
                                 var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
-                                var specOrigin = new Vector2((300 - newCellScale * tileWidth) / 2 + x * newCellScale, (int)specsRect.Y + 100 + y * newCellScale);
+                                var specOrigin = new Vector2((300 - newCellScale * tileWidth) / 2f + x * newCellScale, (int)specsRect.Y + 100 + y * newCellScale);
 
                                 if (spec is >= 0 and < 9 and not 8)
                                 {
@@ -784,7 +880,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                             {
                                 DrawRectangleLinesEx(
                                     new(
-                                        (300 - newCellScale * tileWidth) / 2 + x * newCellScale,
+                                        (300 - newCellScale * tileWidth) / 2f + x * newCellScale,
                                         (int)specsRect.Y + 100 + y * newCellScale,
                                         newCellScale,
                                         newCellScale

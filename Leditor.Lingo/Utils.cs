@@ -321,8 +321,6 @@ public static class Tools {
     /// Retrieves the props from an object parsed from line (9) of the project file
     /// </summary>
     /// <param name="base">parsed <see cref="AstNode.Base"/> object</param>
-    /// <param name="init">prop definitions</param>
-    /// <param name="tileInit">tile definitions</param>
     /// <returns>a list of (type, position, prop) tuples, where 'position' points to the definition index in the appropriate definitions array depending on the type (prop/tile)</returns>
     /// <exception cref="PropNotFoundException">prop not not found in neither the prop definitions nor the tile definitions</exception>
     /// <exception cref="MissingInitPropertyException">retrieved prop is missing a setting</exception>
@@ -343,10 +341,6 @@ public static class Tools {
             var name = ((AstNode.String)casted[1]).Value;
 
             var indexGlobalCall = (AstNode.GlobalCall)casted[2];
-
-            // TODO: Outdated
-            var category = NumberToInteger(indexGlobalCall.Arguments[0]) - 1;
-            var index = NumberToInteger(indexGlobalCall.Arguments[1]) - 1;
 
             var quads = ((AstNode.List)casted[3]).Values.Select(q =>
             {
@@ -413,16 +407,13 @@ public static class Tools {
             {
                 for (var t = 0; t < GLOBALS.Tiles[c].Length; t++)
                 {
-                    var tile = GLOBALS.Tiles[c][t];
-
-                    if (tile.Name == name)
-                    {
-                        position = (c, t);
-                        goto end_check;
-                    }
+                    if (GLOBALS.Tiles[c][t].Name != name) continue;
+                    
+                    position = (c, t);
+                    goto end_check;
                 }
             }
-
+            
             throw new PropNotFoundException($"prop not found: {name}", name);
 
         end_check:
@@ -463,7 +454,7 @@ public static class Tools {
                 _ => new BasicPropSettings(seed: rng.Next(1000))
             };
 
-            var parsedProp = new Prop(depth, name, type == InitPropType.Tile, (category, index),
+            var parsedProp = new Prop(depth, name, type == InitPropType.Tile,
                 new(quads[0], quads[1], quads[2], quads[3]))
             {
                 Extras = new PropExtras(

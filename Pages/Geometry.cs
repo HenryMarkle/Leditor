@@ -152,15 +152,64 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
         var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
         var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
         
-        if (_gShortcuts.ToMainPage.Check(ctrl, shift)) GLOBALS.Page = 1;
+        if (_gShortcuts.ToMainPage.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 1");
+            #endif
+            GLOBALS.Page = 1;
+        }
         // if (_gShortcuts.ToGeometryEditor.Check(ctrl, shift)) GLOBALS.Page = 2;
-        if (_gShortcuts.ToTileEditor.Check(ctrl, shift)) GLOBALS.Page = 3;
-        if (_gShortcuts.ToCameraEditor.Check(ctrl, shift)) GLOBALS.Page = 4;
-        if (_gShortcuts.ToLightEditor.Check(ctrl, shift)) GLOBALS.Page = 5;
-        if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift)) { GLOBALS.ResizeFlag = true; GLOBALS.Page = 6; }
-        if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift)) GLOBALS.Page = 7;
-        if (_gShortcuts.ToPropsEditor.Check(ctrl, shift)) GLOBALS.Page = 8;
-        if (_gShortcuts.ToSettingsPage.Check(ctrl, shift)) GLOBALS.Page = 9;
+        if (_gShortcuts.ToTileEditor.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 3");
+            #endif
+            GLOBALS.Page = 3;
+        }
+        if (_gShortcuts.ToCameraEditor.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 4");
+            #endif
+            GLOBALS.Page = 4;
+        }
+        if (_gShortcuts.ToLightEditor.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 5");
+            #endif
+            GLOBALS.Page = 5;
+        }
+
+        if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 6");
+            #endif
+            GLOBALS.ResizeFlag = true; GLOBALS.Page = 6;
+        }
+        if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 7");
+            #endif
+            GLOBALS.Page = 7;
+        }
+        if (_gShortcuts.ToPropsEditor.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 8");
+            #endif
+            GLOBALS.Page = 8;
+        }
+        if (_gShortcuts.ToSettingsPage.Check(ctrl, shift))
+        {
+            #if DEBUG
+            _logger.Debug($"Going to page 9");
+            #endif
+            GLOBALS.Page = 9;
+        }
 
         if (_shortcuts.CycleLayer.Check(ctrl, shift)) GLOBALS.Layer = ++GLOBALS.Layer % 3;
         if (_shortcuts.ToggleGrid.Check(ctrl, shift)) gridContrast = !gridContrast;
@@ -265,18 +314,18 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
         // handle mouse drag
         if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
         {
-            Vector2 delta = Raylib.GetMouseDelta();
+            var delta = GetMouseDelta();
             delta = RayMath.Vector2Scale(delta, -1.0f / camera.zoom);
             camera.target = RayMath.Vector2Add(camera.target, delta);
         }
 
 
         // handle zoom
-        var wheel = Raylib.GetMouseWheelMove();
+        var wheel = GetMouseWheelMove();
         if (wheel != 0)
         {
-            Vector2 mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-            camera.offset = Raylib.GetMousePosition();
+            var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), camera);
+            camera.offset = GetMousePosition();
             camera.target = mouseWorldPosition;
             camera.zoom += wheel * GLOBALS.ZoomIncrement;
             if (camera.zoom < GLOBALS.ZoomIncrement) camera.zoom = GLOBALS.ZoomIncrement;
@@ -794,76 +843,12 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                     true
                 );
 
-                // if (showLayer1)
-                // {
-                //     for (int y = 0; y < GLOBALS.Level.Height; y++)
-                //     {
-                //         for (int x = 0; x < GLOBALS.Level.Width; x++)
-                //         {
-                //             const int z = 0;
-                //
-                //             var cell = GLOBALS.Level.GeoMatrix[y, x, z];
-                //
-                //             for (int s = 1; s < cell.Stackables.Length; s++)
-                //             {
-                //                 if (cell.Stackables[s])
-                //                 {
-                //                     switch (s)
-                //                     {
-                //                         // dump placement
-                //                         // TODO: move ph and pv to the back of drawing order
-                //                         case 1:     // ph
-                //                         case 2:     // pv
-                //                             Raylib.DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * scale, y * scale, GLOBALS.Settings.GeometryEditor.LayerColors.Layer1);
-                //                             break;
-                //                         case 3:     // bathive
-                //                         case 5:     // entrance
-                //                         case 6:     // passage
-                //                         case 7:     // den
-                //                         case 9:     // rock
-                //                         case 10:    // spear
-                //                         case 12:    // forbidflychains
-                //                         case 13:    // garbagewormhole
-                //                         case 18:    // waterfall
-                //                         case 19:    // wac
-                //                         case 20:    // worm
-                //                         case 21:    // scav
-                //                             Raylib.DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * scale, y * scale, new(255, 255, 255, 255)); // TODO: remove opacity from entrances
-                //                             break;
-                //
-                //                         // directional placement
-                //                         case 4:     // entrance
-                //                             var index = Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z));
-                //
-                //                             if (index is 22 or 23 or 24 or 25)
-                //                             {
-                //                                 GLOBALS.Level.GeoMatrix[y, x, 0].Geo = 7;
-                //                             }
-                //
-                //                             Raylib.DrawTexture(GLOBALS.Textures.GeoStackables[index], x * scale, y * scale, new(255, 255, 255, 255));
-                //                             break;
-                //                         case 11:    // crack
-                //                             Raylib.DrawTexture(
-                //                                 GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
-                //                                 x * scale,
-                //                                 y * scale,
-                //                                 new(255, 255, 255, 255)
-                //                             );
-                //                             break;
-                //                     }
-                //                 }
-                //             }
-                //         }
-                //     }
-                // }
-
-
                 // load from memory preview
                 if (geoIndex == 13)
                 {
-                    for (int x = 0; x < savedChunk.GetLength(1); x++)
+                    for (var x = 0; x < savedChunk.GetLength(1); x++)
                     {
-                        for (int y = 0; y < savedChunk.GetLength(0); y++)
+                        for (var y = 0; y < savedChunk.GetLength(0); y++)
                         {
                             var cell = savedChunk[y, x];
 
@@ -875,7 +860,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                             }
 
 
-                            for (int s = 1; s < cell.Stackables.Length; s++)
+                            for (var s = 1; s < cell.Stackables.Length; s++)
                             {
                                 if (cell.Stackables[s])
                                 {

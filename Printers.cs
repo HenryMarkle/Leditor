@@ -767,6 +767,11 @@ internal static class Printers
         var bottomRightV = new Vector2(pointOrigin3.X + (float)(quad.BottomRight.radius*100 * Math.Cos(float.DegreesToRadians(quad.BottomRight.angle - 90))), pointOrigin3.Y + (float)(quad.BottomRight.radius*100 * Math.Sin(float.DegreesToRadians(quad.BottomRight.angle - 90))));
         var bottomLeftV = new Vector2(pointOrigin4.X +(float)(quad.BottomLeft.radius*100 * Math.Cos(float.DegreesToRadians(quad.BottomLeft.angle - 90))), pointOrigin4.Y + (float)(quad.BottomLeft.radius*100 * Math.Sin(float.DegreesToRadians(quad.BottomLeft.angle - 90))));
         
+        DrawLineV(topLeftV, topRightV, GREEN);
+        DrawLineV(topRightV, bottomRightV, GREEN);
+        DrawLineV(bottomRightV, bottomLeftV, GREEN);
+        DrawLineV(bottomLeftV, topLeftV, GREEN);
+        
         if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT)) quadLock = 0;
 
         if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
@@ -896,11 +901,6 @@ internal static class Printers
             }
         }
         
-        
-        DrawLineV(topLeftV, topRightV, GREEN);
-        DrawLineV(topRightV, bottomRightV, GREEN);
-        DrawLineV(bottomRightV, bottomLeftV, GREEN);
-        DrawLineV(bottomLeftV, topLeftV, GREEN);
 
         return (hover && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT), biggerHover);
     }

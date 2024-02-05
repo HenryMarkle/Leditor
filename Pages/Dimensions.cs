@@ -302,7 +302,9 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                                 GLOBALS.Level.Cameras.Add(new RenderCamera() { Coords = new Vector2(20f + j*(GLOBALS.EditorCameraWidth - 380), 30f + i*(GLOBALS.EditorCameraHeight - 40)), Quad = new(new(), new(), new(), new()) });
                             }
                         }
+                        GLOBALS.CamQuadLocks = new int[rows*columns];
                     }
+                    else GLOBALS.CamQuadLocks = new int[1];
 
                     GLOBALS.NewFlag = false;
                     ProjectCreated?.Invoke(this, EventArgs.Empty);

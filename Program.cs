@@ -469,9 +469,9 @@ class Program
 
         //
 
-        logger.Information("initializing window");
+        logger.Information("Initializing window");
 
-        Image icon = LoadImage("icon.png");
+        var icon = LoadImage("icon.png");
 
         SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE);
         
@@ -630,14 +630,13 @@ class Program
 
         SetTargetFPS(GLOBALS.Settings.Misc.FPS);
 
-        logger.Information("begin main loop");
 
         float initialFrames = 0;
 
         Texture? screenshotTexture = null;
 
-        var shortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
-
+        logger.Information("Initializing pages");
+        
         // Initialize pages
 
         GeoEditorPage geoPage = new(logger);
@@ -662,11 +661,15 @@ class Program
         ExperimentalGeometryPage experimentalGeometryPage = new(logger);
         SettingsPage settingsPage = new(logger, settingsPreviewTextures);
         
+        logger.Information("Initializing events");
+        
         // Page event handlers
         loadPage.ProjectLoaded += propsPage.OnProjectLoaded;
         loadPage.ProjectLoaded += savePage.OnProjectLoaded;
         dimensionsPage.ProjectCreated += propsPage.OnProjectCreated;
         //
+        
+        logger.Information("Begin main loop");
 
         while (!WindowShouldClose())
         {
@@ -980,8 +983,10 @@ class Program
             }
         }
 
-        logger.Debug("close program detected; exiting main loop");
+        logger.Debug("Exiting main loop");
         logger.Information("unloading textures");
+        
+        UnloadImage(icon);
 
         foreach (var texture in GLOBALS.Textures.GeoMenu) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.GeoBlocks) UnloadTexture(texture);
@@ -995,8 +1000,12 @@ class Program
         foreach (var texture in GLOBALS.Textures.RopeProps) UnloadTexture(texture);
         foreach (var texture in settingsPreviewTextures) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.ExplorerIcons) UnloadTexture(texture);
+        
+        logger.Debug("Unloading light map");
 
         UnloadRenderTexture(GLOBALS.Textures.LightMap);
+        
+        logger.Debug("Unloading shaders");
 
         UnloadShader(GLOBALS.Shaders.TilePreview);
         UnloadShader(GLOBALS.Shaders.ShadowBrush);

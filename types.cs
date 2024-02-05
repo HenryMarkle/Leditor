@@ -643,12 +643,11 @@ public struct PropQuads(
     public Vector2 BottomLeft { get; set; } = bottomLeft;
 }
 
-public class Prop(int depth, string name, bool isTile, (int, int) position, PropQuads quads)
+public class Prop(int depth, string name, bool isTile, PropQuads quads)
 {
     public int Depth { get; set; } = depth;
     public string Name { get; set; } = name;
     public bool IsTile { get; set; } = isTile;
-    public (int category, int index) Position { get; set; } = position;
     public PropQuads Quads { get; set; } = quads;
     
     public PropExtras Extras { get; set; }

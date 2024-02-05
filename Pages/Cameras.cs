@@ -88,12 +88,14 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
         {
             var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
             GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = new Vector2(0, 0), Quad = new(new(), new(), new(), new()) }];
+            GLOBALS.CamQuadLocks = [..GLOBALS.CamQuadLocks, 0];
             draggedCamera = GLOBALS.Level.Cameras.Count - 1;
         }
 
         if (Raylib.IsKeyPressed(KeyboardKey.KEY_D) && draggedCamera != -1)
         {
             GLOBALS.Level.Cameras.RemoveAt(draggedCamera);
+            GLOBALS.CamQuadLocks = GLOBALS.CamQuadLocks[..^1];
             draggedCamera = -1;
         }
 
@@ -103,11 +105,13 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
             {
                 var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
                 GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = new Vector2(0, 0), Quad = new(new(), new(), new(), new()) }];
+                GLOBALS.CamQuadLocks = [..GLOBALS.CamQuadLocks, 0];
                 draggedCamera = GLOBALS.Level.Cameras.Count - 1;
             }
             else
             {
                 GLOBALS.Level.Cameras.RemoveAt(draggedCamera);
+                GLOBALS.CamQuadLocks = GLOBALS.CamQuadLocks[..^1];
                 draggedCamera = -1;
             }
         }

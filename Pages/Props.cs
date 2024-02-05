@@ -147,11 +147,13 @@ internal class PropsEditorPage : IPage
     internal void OnProjectLoaded(object? sender, EventArgs e)
     {
         ImportRopeModels();
+        _selected = new bool[GLOBALS.Level.Props.Length];
     }
 
     internal void OnProjectCreated(object? sender, EventArgs e)
     {
         ImportRopeModels();
+        _selected = new bool[GLOBALS.Level.Props.Length];
     }
     #nullable disable
 
@@ -320,8 +322,6 @@ internal class PropsEditorPage : IPage
 
         var currentTileAsPropCategory = _tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex];
 
-        int menuPageSize = (int)menuPanelRect.height / 30;
-
         if (_spinnerLock == 0)
         {
             if (IsKeyPressed(KeyboardKey.KEY_ONE))
@@ -444,7 +444,6 @@ internal class PropsEditorPage : IPage
                                         GLOBALS.Layer * -10, 
                                         currentTileAsProp.init.Name, 
                                         true, 
-                                        (currentTileAsPropCategory.index, currentTileAsProp.index), 
                                         new PropQuads(
                                         new(tileMouseWorld.X - width, tileMouseWorld.Y - height), 
                                         new(tileMouseWorld.X + width, tileMouseWorld.Y - height), 
@@ -481,7 +480,6 @@ internal class PropsEditorPage : IPage
                                         -GLOBALS.Layer*10, 
                                         current.Name, 
                                         false, 
-                                        (-1, _propsMenuRopesIndex), 
                                         newQuads
                                     )
                                     {
@@ -519,7 +517,6 @@ internal class PropsEditorPage : IPage
                                         -GLOBALS.Layer*10, 
                                         current.Name, 
                                         false, 
-                                        (-1, _propsMenuLongsIndex), 
                                         newQuads
                                     )
                                     {
@@ -557,7 +554,11 @@ internal class PropsEditorPage : IPage
                                 (
                                     init.Type, 
                                     (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex),
-                                    new Prop(GLOBALS.Layer * -10, init.Name, false, (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex), new PropQuads(
+                                    new Prop(
+                                        GLOBALS.Layer * -10, 
+                                        init.Name, 
+                                        false, 
+                                        new PropQuads(
                                         new(tileMouseWorld.X - width, tileMouseWorld.Y - height), 
                                         new(tileMouseWorld.X + width, tileMouseWorld.Y - height), 
                                         new(tileMouseWorld.X + width, tileMouseWorld.Y + height), 
@@ -2279,7 +2280,7 @@ internal class PropsEditorPage : IPage
                         (int)(menuPanelRect.x + 5), 
                         90, 
                         menuPanelRect.width - 10, 
-                        (int)(menuPanelRect.height - 400)
+                        (int)(menuPanelRect.height - 450)
                     );
                     
                     DrawRectangleLinesEx(listRect, 1.2f, GRAY);
@@ -2354,7 +2355,7 @@ internal class PropsEditorPage : IPage
                     {
                         // Depth indicator
                         
-                        var (c, i) = fetchedSelected[0].prop.prop.Position;
+                        var (c, i) = fetchedSelected[0].prop.position;
 
                         switch (fetchedSelected[0].prop.type)
                         {
@@ -2386,7 +2387,7 @@ internal class PropsEditorPage : IPage
                                 DrawRectangleRec(
                                     new Rectangle(
                                         offset, 
-                                        listRect.y + listRect.height + 10, 
+                                        listRect.y + listRect.height + 40, 
                                         depth - (overflow > 0 ? overflow : 0), 
                                         30
                                     ),
@@ -2415,7 +2416,7 @@ internal class PropsEditorPage : IPage
                                 DrawRectangleRec(
                                     new Rectangle(
                                         indicatorOffset - fetchedSelected[0].prop.prop.Depth * 10, 
-                                        listRect.y + listRect.height + 10, 
+                                        listRect.y + listRect.height + 40, 
                                         init switch
                                         {
                                             InitVariedStandardProp v => v.Repeat.Length, 
@@ -2430,7 +2431,7 @@ internal class PropsEditorPage : IPage
                                 DrawRectangleRec(
                                     new Rectangle(
                                         indicatorOffset - fetchedSelected[0].prop.prop.Depth * 10, 
-                                        listRect.y + listRect.height + 10, 
+                                        listRect.y + listRect.height + 40, 
                                         init switch
                                         {
                                             InitVariedStandardProp v => v.Repeat.Length, 
@@ -2447,21 +2448,21 @@ internal class PropsEditorPage : IPage
                         }
                         
                         DrawRectangleLinesEx(
-                            new Rectangle(indicatorOffset, listRect.y + listRect.height + 10, 290, 30),
+                            new Rectangle(indicatorOffset, listRect.y + listRect.height + 40, 290, 30),
                             2f,
                             BLACK
                         );
                     
                         DrawLineEx(
-                            new Vector2(indicatorOffset + 90, listRect.y + listRect.height + 10),
-                            new Vector2(indicatorOffset + 90, listRect.y + listRect.height + 15),
+                            new Vector2(indicatorOffset + 90, listRect.y + listRect.height + 40),
+                            new Vector2(indicatorOffset + 90, listRect.y + listRect.height + 45),
                             2f,
                             BLACK
                         );
                     
                         DrawLineEx(
-                            new Vector2(indicatorOffset + 180, listRect.y + listRect.height + 10),
-                            new Vector2(indicatorOffset + 180, listRect.y + listRect.height + 15),
+                            new Vector2(indicatorOffset + 180, listRect.y + listRect.height + 40),
+                            new Vector2(indicatorOffset + 180, listRect.y + listRect.height + 45),
                             2f,
                             BLACK
                         );
@@ -2485,7 +2486,7 @@ internal class PropsEditorPage : IPage
                             #endif
 
                             if (RayGui.GuiSpinner(
-                                new Rectangle(indicatorOffset, listRect.y + listRect.height + 50, 290, 40),
+                                new Rectangle(indicatorOffset, listRect.y + listRect.height + 90, 290, 40),
                                 "",
                                 &depth,
                                 0,
@@ -2548,7 +2549,13 @@ internal class PropsEditorPage : IPage
                                 var variations = ((IVariableInit)init).Variations + 1;
                                 var variation = variable.Variation + 1;
 
-                                RayGui.GuiSpinner(new Rectangle(indicatorOffset, listRect.y + listRect.height + 100, 290, 40), 
+                                RayGui.GuiSpinner(
+                                    new Rectangle(
+                                        indicatorOffset, 
+                                        listRect.y + listRect.height + 140, 
+                                        290, 
+                                        40
+                                    ), 
                                     "", 
                                     &variation, 
                                     1, 
@@ -2590,6 +2597,32 @@ internal class PropsEditorPage : IPage
                             "",
                             _hidden[listIndex]
                         );
+                    }
+                    
+                    // Page buttons
+                    if (GLOBALS.Level.Props.Length > pageSize * (_selectedListPage + 1))
+                    {
+                        var downClicked = RayGui.GuiButton(
+                            listRect with
+                            {
+                                Y = listRect.Y + listRect.height, width = listRect.width / 2f, height = 30
+                            },
+                            "Down");
+
+                        if (downClicked) _selectedListPage++;
+                    }
+                    
+                    if (_selectedListPage != 0)
+                    {
+                        var upClicked = RayGui.GuiButton(
+                            listRect with
+                            {
+                                Y = listRect.Y + listRect.height, width = listRect.width / 2f, height = 30,
+                                X = listRect.X + listRect.width / 2f
+                            },
+                            "Up");
+
+                        if (upClicked) _selectedListPage--;
                     }
                 }
                     break;

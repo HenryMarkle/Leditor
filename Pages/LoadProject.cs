@@ -155,11 +155,11 @@ public class LoadProjectPage : IPage
         return PropCheckResult.Ok;
     }
     
-    private static LoadFileResult LoadProject(string filePath)
+    private static async Task<LoadFileResult> LoadProjectAsync(string filePath)
     {
         try
         {
-            var text = File.ReadAllText(filePath).ReplaceLineEndings().Split(Environment.NewLine);
+            var text = (await File.ReadAllTextAsync(filePath)).ReplaceLineEndings().Split(Environment.NewLine);
 
             var lightMapFileName = Path.Combine(Path.GetDirectoryName(filePath), Path.GetFileNameWithoutExtension(filePath) + ".png");
 
@@ -169,19 +169,31 @@ public class LoadProjectPage : IPage
 
             if (text.Length < 7) return new LoadFileResult();
 
-            var obj = Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[0]);
-            var tilesObj = Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[1]);
-            var obj2 = Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[5]);
-            var effObj = Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[2]);
-            var lightObj = Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[3]);
-            var camsObj = Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[6]);
-            var propsObj = Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[8]);
+            var objTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[0]));
+            var tilesObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[1]));
+            var obj2Task = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[5]));
+            var effObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[2]));
+            var lightObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[3]));
+            var camsObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[6]));
+            var propsObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[8]));
+
+            await Task.WhenAll([objTask, tilesObjTask, obj2Task, effObjTask, lightObjTask, camsObjTask, propsObjTask]);
+            
+            var obj = await objTask;
+            var tilesObj = await tilesObjTask;
+            var obj2 = await obj2Task;
+            var effObj = await effObjTask;
+            var lightObj = await lightObjTask;
+            var camsObj = await camsObjTask;
+            var propsObj = await propsObjTask;
 
             var mtx = Lingo.Tools.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
             var tlMtx = Lingo.Tools.GetTileMatrix(tilesObj, out _, out _);
             var buffers = Lingo.Tools.GetBufferTiles(obj2);
             var effects = Lingo.Tools.GetEffects(effObj, givenWidth, givenHeight);
             var cams = Lingo.Tools.GetCameras(camsObj);
+            
+            // TODO: catch PropNotFoundException
             var props = Lingo.Tools.GetProps(propsObj);
             var lightSettings = Lingo.Tools.GetLightSettings(lightObj);
 
@@ -319,6 +331,8 @@ public class LoadProjectPage : IPage
 
                 // TODO: reset camera targets
                 
+                _logger.Debug("Globals.Level.Import()");
+                
                 GLOBALS.Level.Import(
                     res.Width, 
                     res.Height,
@@ -332,7 +346,17 @@ public class LoadProjectPage : IPage
                     res.LightSettings,
                     projectName: res.Name
                 );
+                
+                #if DEBUG
+                _logger.Debug($"Adjusting {nameof(GLOBALS.CamQuadLocks)}");
+                #endif
 
+                GLOBALS.CamQuadLocks = new int[res.Cameras.Count];
+
+                #if DEBUG
+                _logger.Debug($"Importing lightmap texture");
+                #endif
+                
                 var lightMapTexture = LoadTextureFromImage(res.LightMapImage);
 
                 UnloadRenderTexture(GLOBALS.Textures.LightMap);
@@ -355,11 +379,20 @@ public class LoadProjectPage : IPage
                 UnloadImage(res.LightMapImage);
 
                 UnloadTexture(lightMapTexture);
+                
+                #if DEBUG
+                _logger.Debug($"Updating project name");
+                #endif
 
                 GLOBALS.Level.ProjectName = res.Name;
                 GLOBALS.Page = 1;
 
                 GLOBALS.TileCheck = null;
+                
+                #if DEBUG
+                _logger.Debug($"Invoking {nameof(ProjectLoaded)} event");
+                #endif
+                
                 ProjectLoaded?.Invoke(this, EventArgs.Empty);
                 RayGui.GuiUnlock();
             }
@@ -432,6 +465,10 @@ public class LoadProjectPage : IPage
                             "Create New Project")
                         )
                     {
+                        #if DEBUG
+                        _logger.Debug($"Create new Project button clicked");
+                        #endif
+                        
                         GLOBALS.NewFlag = true;
                         GLOBALS.Page = 6;
                     }
@@ -464,8 +501,12 @@ public class LoadProjectPage : IPage
                                 {
                                     RayGui.GuiLock();
 
+                                    #if DEBUG
+                                    _logger.Debug($"Loading project \"{path}\"");
+                                    #endif
+                                    
                                     // LOAD PROJECT FILE
-                                    _loadFileTask = Task.Factory.StartNew(() => LoadProject(path));
+                                    _loadFileTask = LoadProjectAsync(path);
                                 }
                             }
                         }
@@ -520,9 +561,13 @@ public class LoadProjectPage : IPage
                                 else
                                 {
                                     RayGui.GuiLock();
+                                    
+                                    #if DEBUG
+                                    _logger.Debug($"Loading project \"{path}\"");
+                                    #endif
 
                                     // LOAD PROJECT FILE
-                                    _loadFileTask = Task.Factory.StartNew(() => LoadProject(path));
+                                    _loadFileTask = LoadProjectAsync(path);
                                 }
                             }
 
@@ -541,7 +586,7 @@ public class LoadProjectPage : IPage
 
             }
         }
-        Raylib.EndDrawing();
+        EndDrawing();
      }
 }
 
