@@ -1,7 +1,5 @@
 using static Raylib_CsLo.Raylib;
 using System.Numerics;
-using Leditor.Leditor.Lingo;
-using Leditor.Lingo;
 using Pidgin;
 namespace Leditor;
 
