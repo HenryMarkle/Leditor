@@ -8,6 +8,8 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 {
     readonly Serilog.Core.Logger logger = logger;
 
+    private readonly EffectsShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.EffectsEditor;
+
     Camera2D camera = new() { zoom = 1.0f };
 
     bool addNewEffectMode = false;
@@ -58,73 +60,70 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
     public void Draw()
     {
+        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
+        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+        
         GLOBALS.PreviousPage = 7;
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_ONE)) GLOBALS.Page = 1;
-        if (Raylib.IsKeyReleased(KeyboardKey.KEY_TWO)) GLOBALS.Page = 2;
-        if (Raylib.IsKeyReleased(KeyboardKey.KEY_THREE)) GLOBALS.Page = 3;
-        if (Raylib.IsKeyReleased(KeyboardKey.KEY_FOUR)) GLOBALS.Page = 4;
-        if (Raylib.IsKeyReleased(KeyboardKey.KEY_FIVE)) GLOBALS.Page = 5;
-        if (Raylib.IsKeyReleased(KeyboardKey.KEY_SIX))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 2;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 3;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 4;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 5;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.ResizeFlag = true;
             GLOBALS.Page = 6;
             logger.Debug("go from GLOBALS.Page 7 to GLOBALS.Page 6");
         }
         // if (Raylib.IsKeyReleased(KeyboardKey.KEY_SEVEN)) GLOBALS.Page = 7;
-        if (Raylib.IsKeyReleased(KeyboardKey.KEY_EIGHT)) GLOBALS.Page = 8;
-        if (Raylib.IsKeyReleased(KeyboardKey.KEY_NINE)) GLOBALS.Page = 9;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
 
         // Display menu
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_N)) addNewEffectMode = !addNewEffectMode;
+        if (_shortcuts.NewEffect.Check(ctrl, shift, alt)) addNewEffectMode = !addNewEffectMode;
 
         //
 
 
         if (addNewEffectMode)
         {
-            if (Raylib.IsKeyPressed(KeyboardKey.KEY_UP))
+            if (_shortcuts.MoveUpInNewEffectMenu.Check(ctrl, shift, alt))
             {
-                if (newEffectFocus)
-                {
-                    newEffectSelectedValue = --newEffectSelectedValue;
-                    if (newEffectSelectedValue < 0) newEffectSelectedValue = GLOBALS.Effects[newEffectCategorySelectedValue].Length - 1;
-                }
-                else
-                {
-                    newEffectSelectedValue = 0;
+                newEffectSelectedValue = --newEffectSelectedValue;
+                if (newEffectSelectedValue < 0) newEffectSelectedValue = GLOBALS.Effects[newEffectCategorySelectedValue].Length - 1;
+            }
+            else if (_shortcuts.MoveDownInNewEffectMenu.Check(ctrl, shift, alt))
+            {
+                newEffectSelectedValue = ++newEffectSelectedValue % GLOBALS.Effects[newEffectCategorySelectedValue].Length;
+            }
+            else if (_shortcuts.MoveUpInNewEffectCategoryMenu.Check(ctrl, shift, alt))
+            {
+                newEffectSelectedValue = 0;
 
-                    newEffectCategorySelectedValue = --newEffectCategorySelectedValue;
+                newEffectCategorySelectedValue = --newEffectCategorySelectedValue;
 
-                    if (newEffectCategorySelectedValue < 0) newEffectCategorySelectedValue = GLOBALS.EffectCategories.Length - 1;
-                }
+                if (newEffectCategorySelectedValue < 0) newEffectCategorySelectedValue = GLOBALS.EffectCategories.Length - 1;
+            }
+            else if (_shortcuts.MoveDownInNewEffectCategoryMenu.Check(ctrl, shift, alt))
+            {
+                newEffectSelectedValue = 0;
+                newEffectCategorySelectedValue = ++newEffectCategorySelectedValue % GLOBALS.EffectCategories.Length;
             }
 
-            if (Raylib.IsKeyPressed(KeyboardKey.KEY_DOWN))
-            {
-                if (newEffectFocus)
-                {
-                    newEffectSelectedValue = ++newEffectSelectedValue % GLOBALS.Effects[newEffectCategorySelectedValue].Length;
-                }
-                else
-                {
-                    newEffectSelectedValue = 0;
-                    newEffectCategorySelectedValue = ++newEffectCategorySelectedValue % GLOBALS.EffectCategories.Length;
-                }
-            }
-
-            if (Raylib.IsKeyPressed(KeyboardKey.KEY_RIGHT))
+            /*if (Raylib.IsKeyPressed(KeyboardKey.KEY_D))
             {
                 newEffectFocus = true;
             }
 
-            if (Raylib.IsKeyPressed(KeyboardKey.KEY_LEFT))
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_A))
             {
                 newEffectFocus = false;
-            }
+            }*/
 
-            if (IsKeyPressed(KeyboardKey.KEY_ENTER))
+            if ((_shortcuts.AcceptNewEffect.Check(ctrl, shift, alt) || _shortcuts.AcceptNewEffectAlt.Check(ctrl, shift, alt)) && newEffectSelectedValue > 0)
             {
                 GLOBALS.Level.Effects = [
                     .. GLOBALS.Level.Effects,
@@ -138,9 +137,9 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                 addNewEffectMode = false;
             }
 
-            Raylib.BeginDrawing();
+            BeginDrawing();
             {
-                Raylib.DrawRectangle(
+                DrawRectangle(
                     0,
                     0,
                     Raylib.GetScreenWidth(),
@@ -175,7 +174,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
                     fixed (int* scrollIndex = &newEffectCategoryScrollIndex)
                     {
-                        newEffectCategorySelectedValue = RayGui.GuiListView(
+                        var newNewEffectCategorySelectedValue = RayGui.GuiListView(
                             new(
                                 Raylib.GetScreenWidth() / 2 - 390,
                                 Raylib.GetScreenHeight() / 2 - 250,
@@ -186,6 +185,15 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                             scrollIndex,
                             newEffectCategorySelectedValue
                         );
+
+                        if (newNewEffectCategorySelectedValue != newEffectCategorySelectedValue &&
+                            newNewEffectCategorySelectedValue != -1)
+                        {
+                            #if DEBUG
+                            logger.Debug($"New new effect category index: {newNewEffectCategorySelectedValue}");
+                            #endif
+                            newEffectCategorySelectedValue = newNewEffectCategorySelectedValue;
+                        }
                     }
                 }
 
@@ -236,11 +244,11 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
         else
         {
 
-            Vector2 effectsMouse = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
+            var effectsMouse = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
 
             //                        v this was done to avoid rounding errors
-            int effectsMatrixY = effectsMouse.Y < 0 ? -1 : (int)effectsMouse.Y / GLOBALS.PreviewScale;
-            int effectsMatrixX = effectsMouse.X < 0 ? -1 : (int)effectsMouse.X / GLOBALS.PreviewScale;
+            var effectsMatrixY = effectsMouse.Y < 0 ? -1 : (int)effectsMouse.Y / GLOBALS.PreviewScale;
+            var effectsMatrixX = effectsMouse.X < 0 ? -1 : (int)effectsMouse.X / GLOBALS.PreviewScale;
 
 
             var appliedEffectsPanelHeight = Raylib.GetScreenHeight() - 200;
@@ -248,7 +256,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
             var appliedEffectPageSize = appliedEffectsPanelHeight / (appliedEffectRecHeight + 20);
 
             // Prevent using the brush when mouse over the effects list
-            bool canUseBrush = !Raylib.CheckCollisionPointRec(
+            bool canUseBrush = !CheckCollisionPointRec(
                 effectsMouse,
                 new(
                     Raylib.GetScreenWidth() - 300,
@@ -264,11 +272,11 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                     600,
                     200
                 )
-            );
+            ) && GLOBALS.Level.Effects.Length > 0;
 
             // Movement
 
-            if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+            if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.DragLevelAlt.Check(ctrl, shift, alt, true))
             {
                 Vector2 delta = Raylib.GetMouseDelta();
                 delta = RayMath.Vector2Scale(delta, -1.0f / camera.zoom);
@@ -277,7 +285,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
             // Brush size
 
-            var effectslMouseWheel = Raylib.GetMouseWheelMove();
+            var effectslMouseWheel = GetMouseWheelMove();
 
             if (effectslMouseWheel != 0)
             {
@@ -289,7 +297,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
             // Use brush
 
-            if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            if ((_shortcuts.Paint.Check(ctrl, shift, alt, true) || _shortcuts.PaintAlt.Check(ctrl, shift, alt, true)) && canUseBrush)
             {
                 if (
                         effectsMatrixX >= 0 &&
@@ -300,8 +308,21 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                             effectsMatrixX != prevMatrixX || effectsMatrixY != prevMatrixY || !clickTracker
                         ))
                 {
-                    var mtx = GLOBALS.Level.Effects[currentAppliedEffect].Item3;
+                    double[,] mtx;
 
+                    #if DEBUG
+                    try
+                    {
+                        mtx = GLOBALS.Level.Effects[currentAppliedEffect].Item3;
+                    }
+                    catch (IndexOutOfRangeException e)
+                    {
+                        throw new IndexOutOfRangeException(innerException: e, message: $"Failed to fetch current applied effect from {nameof(GLOBALS.Level.Effects)} (L:{GLOBALS.Level.Effects.Length}): {nameof(currentAppliedEffect)} ({currentAppliedEffect}) was out of bounds");
+                    }
+                    #else
+                    mtx = GLOBALS.Level.Effects[currentAppliedEffect].Item3;
+                    #endif
+                    
                     if (brushEraseMode)
                     {
                         //mtx[effectsMatrixY, effectsMatrixX] -= Effects.GetBrushStrength(GLOBALS.Level.Effects[currentAppliedEffect].Item1);
@@ -338,18 +359,18 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                 clickTracker = true;
             }
 
-            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+            if (IsMouseButtonReleased(_shortcuts.Paint.Button) || IsKeyReleased(_shortcuts.PaintAlt.Key))
             {
                 clickTracker = false;
             }
 
             //
 
-            if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+            if (GLOBALS.Level.Effects.Length > 0)
             {
                 var index = currentAppliedEffect;
-
-                if (IsKeyPressed(KeyboardKey.KEY_W))
+                
+                if (_shortcuts.ShiftAppliedEffectUp.Check(ctrl, shift, alt))
                 {
                     if (index > 0)
                     {
@@ -357,7 +378,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                         currentAppliedEffect--;
                     }
                 }
-                else if (IsKeyPressed(KeyboardKey.KEY_S))
+                else if (_shortcuts.ShiftAppliedEffectDown.Check(ctrl, shift, alt))
                 {
                     if (index < GLOBALS.Level.Effects.Length - 1)
                     {
@@ -365,28 +386,27 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                         currentAppliedEffect++;
                     }
                 }
-            }
-            // Cycle options
-            else if (IsKeyDown(KeyboardKey.KEY_LEFT_ALT))
-            {
-                if (IsKeyPressed(KeyboardKey.KEY_W))
+                
+                // Cycle options
+
+                if (_shortcuts.CycleEffectOptionsUp.Check(ctrl, shift, alt))
                 {
                     _optionsIndex--;
                     if (_optionsIndex < 2) _optionsIndex = GLOBALS.Level.Effects[currentAppliedEffect].Item2.Length - 1;
                 }
-                else if (IsKeyPressed(KeyboardKey.KEY_S))
+                else if (_shortcuts.CycleEffectOptionsDown.Check(ctrl, shift, alt))
                 {
                     _optionsIndex = ++_optionsIndex % GLOBALS.Level.Effects[currentAppliedEffect].Item2.Length;
                     if (_optionsIndex == 0) _optionsIndex = 1;
                 }
-                else if (IsKeyPressed(KeyboardKey.KEY_D))
+                else if (_shortcuts.CycleEffectOptionChoicesRight.Check(ctrl, shift, alt))
                 {
                     var option = GLOBALS.Level.Effects[currentAppliedEffect].Item2[_optionsIndex];
                     var choiceIndex = Array.FindIndex(option.Options, op => op == option.Choice);
                     choiceIndex = ++choiceIndex % option.Options.Length;
                     option.Choice = option.Options[choiceIndex];
                 }
-                else if (IsKeyPressed(KeyboardKey.KEY_A))
+                else if (_shortcuts.CycleEffectOptionChoicesLeft.Check(ctrl, shift, alt))
                 {
                     var option = GLOBALS.Level.Effects[currentAppliedEffect].Item2[_optionsIndex];
                     var choiceIndex = Array.FindIndex(option.Options, op => op == option.Choice);
@@ -394,10 +414,10 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                     if (choiceIndex < 0) choiceIndex = option.Options.Length - 1;
                     option.Choice = option.Options[choiceIndex];
                 }
-            }
-            else
-            {
-                if (IsKeyPressed(KeyboardKey.KEY_W))
+                
+                // Cycle applied effects
+
+                if (_shortcuts.CycleAppliedEffectUp.Check(ctrl, shift, alt))
                 {
                     currentAppliedEffect--;
 
@@ -407,8 +427,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
                     _optionsIndex = 1;
                 }
-
-                if (IsKeyPressed(KeyboardKey.KEY_S))
+                else if (_shortcuts.CycleAppliedEffectDown.Check(ctrl, shift, alt))
                 {
                     currentAppliedEffect = ++currentAppliedEffect % GLOBALS.Level.Effects.Length;
 
@@ -416,21 +435,21 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                     
                     _optionsIndex = 1;
                 }
+
+                if (_shortcuts.ToggleOptionsVisibility.Check(ctrl, shift, alt)) showEffectOptions = !showEffectOptions;
+                if (_shortcuts.ToggleBrushEraseMode.Check(ctrl, shift, alt)) brushEraseMode = !brushEraseMode;
+
+
+                // Delete effect
+                if (_shortcuts.DeleteAppliedEffect.Check(ctrl, shift, alt))
+                {
+                    GLOBALS.Level.Effects = GLOBALS.Level.Effects.Where((e, i) => i != currentAppliedEffect).ToArray();
+                    currentAppliedEffect--;
+                    if (currentAppliedEffect < 0) currentAppliedEffect = GLOBALS.Level.Effects.Length - 1;
+                }
             }
 
-            if (IsKeyPressed(KeyboardKey.KEY_O)) showEffectOptions = !showEffectOptions;
-            if (IsKeyPressed(KeyboardKey.KEY_Q)) brushEraseMode = !brushEraseMode;
-
-
-            // Delete effect
-            if (Raylib.IsKeyPressed(KeyboardKey.KEY_X))
-            {
-                GLOBALS.Level.Effects = GLOBALS.Level.Effects.Where((e, i) => i != currentAppliedEffect).ToArray();
-                currentAppliedEffect--;
-                if (currentAppliedEffect < 0) currentAppliedEffect = GLOBALS.Level.Effects.Length - 1;
-            }
-
-            Raylib.BeginDrawing();
+            BeginDrawing();
             {
 
                 Raylib.ClearBackground(new(0, 0, 0, 255));
@@ -707,44 +726,47 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                         ? GLOBALS.Level.Effects[currentAppliedEffect].Item2 
                         : [];
 
-                    ref var currentOption = ref options[_optionsIndex];
-                    
-                    DrawText(currentOption.Name, 30, GetScreenHeight() - 190, 20, BLACK);
-
-                    var commulativeWidth = 30;
-                    
-                    foreach (var choice in currentOption.Options)
+                    if (options.Length > 0)
                     {
-                        var length = MeasureText(choice, 20);
-                        
-                        var chosen = currentOption.Choice == choice;
-                        
-                        if (chosen)
-                        {
-                            DrawRectangle(
-                                commulativeWidth - 10, 
-                                GetScreenHeight() - 150, 
-                                length + 20, 
-                                20, 
-                                BLUE
-                            );
-                        }
-                        
-                        DrawText(
-                            choice, 
-                            commulativeWidth, 
-                            GetScreenHeight() - 150, 
-                            20, 
-                            chosen ? WHITE : BLACK
-                        );
+                        ref var currentOption = ref options[_optionsIndex];
 
-                        commulativeWidth += length + 30;
+                        DrawText(currentOption.Name, 30, GetScreenHeight() - 190, 20, BLACK);
+
+                        var commulativeWidth = 30;
+
+                        foreach (var choice in currentOption.Options)
+                        {
+                            var length = MeasureText(choice, 20);
+
+                            var chosen = currentOption.Choice == choice;
+
+                            if (chosen)
+                            {
+                                DrawRectangle(
+                                    commulativeWidth - 10,
+                                    GetScreenHeight() - 150,
+                                    length + 20,
+                                    20,
+                                    BLUE
+                                );
+                            }
+
+                            DrawText(
+                                choice,
+                                commulativeWidth,
+                                GetScreenHeight() - 150,
+                                20,
+                                chosen ? WHITE : BLACK
+                            );
+
+                            commulativeWidth += length + 30;
+                        }
                     }
                 }
 
 
             }
-            Raylib.EndDrawing();
+            EndDrawing();
         }
     }
 }

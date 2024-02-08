@@ -20,6 +20,7 @@ public class SaveProjectPage(Serilog.Core.Logger logger) : IPage
     
     private record struct SaveProjectResult(bool Success, Exception? Exception = null);
 
+    private Task<string>? _saveFileDialog;
     private Task<SaveProjectResult>? _saveResult;
     
     private async Task<SaveProjectResult> SaveProjectAsync()
@@ -38,14 +39,51 @@ public class SaveProjectPage(Serilog.Core.Logger logger) : IPage
                 ImageFlipVertical(&image);
             }
 
-
             ExportImage(image, Path.Combine(GLOBALS.ProjectPath, $"{GLOBALS.Level.ProjectName}.png"));
             
             UnloadImage(image);
 
             var str = await strTask;
             
-            await File.WriteAllTextAsync(GLOBALS.ProjectPath, str);
+            _logger.Debug($"Saving to {GLOBALS.ProjectPath}");
+            await File.WriteAllTextAsync(Path.Combine(GLOBALS.ProjectPath, GLOBALS.Level.ProjectName+".txt"), str);
+
+            result = new(true);
+        }
+        catch (Exception e)
+        {
+            result = new(false, e);
+        }
+
+        return result;
+    }
+    private async Task<SaveProjectResult> SaveProjectAsync(string path)
+    {
+        SaveProjectResult result;
+        
+        try
+        {
+            var strTask = Exporters.ExportAsync(GLOBALS.Level);
+
+            // export light map
+            var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
+
+            unsafe
+            {
+                ImageFlipVertical(&image);
+            }
+            
+            var parent = Directory.GetParent(_saveFileDialog!.Result)?.FullName ?? GLOBALS.ProjectPath;
+            var name = Path.GetFileNameWithoutExtension(path);
+                    
+            ExportImage(image, Path.Combine(parent, name+".png"));
+            
+            UnloadImage(image);
+
+            var str = await strTask;
+            
+            _logger.Debug($"Saving to {GLOBALS.ProjectPath}");
+            await File.WriteAllTextAsync(path, str);
 
             result = new(true);
         }
@@ -76,10 +114,65 @@ public class SaveProjectPage(Serilog.Core.Logger logger) : IPage
                     WHITE
                 );
 
-                if (_saveResult?.IsCompleted is true)
+                if (_saveFileDialog is null)
                 {
-                    GLOBALS.Page = 1;
+                    if (_saveResult!.IsCompleted)
+                    {
+                        GLOBALS.Page = 1;
+                        RayGui.GuiUnlock();
+                    }
+                }
+                else
+                {
+                    if (!_saveFileDialog.IsCompleted)
+                    {
+                        EndDrawing();
+                        return;
+                    }
+                    if (string.IsNullOrEmpty(_saveFileDialog.Result))
+                    {
+                        RayGui.GuiUnlock();
+                        EndDrawing();
+                        return;
+                    }
+
+                    var path = _saveFileDialog.Result;
+
+                    if (_saveResult is null)
+                    {
+                        _saveResult = SaveProjectAsync(path);
+                        EndDrawing();
+                        return;
+                    }
+                    if (!_saveResult.IsCompleted)
+                    {
+                        EndDrawing();
+                        return;
+                    }
+
+                    var result = _saveResult.Result;
+
+                    if (!result.Success)
+                    {
+                        RayGui.GuiUnlock();
+                        EndDrawing();
+                        #if DEBUG
+                        if (result.Exception is not null) _logger.Error($"Failed to save project: {result.Exception}");
+                        #endif
+                        _saveResult = null;
+                        _saveFileDialog = null;
+                        return;
+                    }
+                    
+                    var parent = Directory.GetParent(_saveFileDialog.Result)?.FullName;
+                    
+                    GLOBALS.ProjectPath = parent ?? GLOBALS.ProjectPath;
+                    GLOBALS.Level.ProjectName = Path.GetFileNameWithoutExtension(_saveFileDialog.Result);
+
+                    _saveFileDialog = null;
+                    _saveResult = null;
                     RayGui.GuiUnlock();
+                    EndDrawing();
                 }
             }
             else
@@ -133,10 +226,24 @@ public class SaveProjectPage(Serilog.Core.Logger logger) : IPage
                     RayGui.GuiLock();
                 }
 
-                var cancelSavePressed = RayGui.GuiButton(
+                var saveAsPressed = RayGui.GuiButton(
                     new(
                         width / 2f - 150,
                         height / 2f + 50,
+                        300,
+                        40),
+                    "Save As");
+                
+                if (saveAsPressed)
+                {
+                    _saveFileDialog = Utils.SetFilePathAsync();
+                    RayGui.GuiLock();
+                }
+
+                var cancelSavePressed = RayGui.GuiButton(
+                    new(
+                        width / 2f - 150,
+                        height / 2f + 100,
                         300,
                         40
                     ),

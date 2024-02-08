@@ -151,8 +151,9 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
         
         var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
         var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
         
-        if (_gShortcuts.ToMainPage.Check(ctrl, shift))
+        if (_gShortcuts.ToMainPage.Check(ctrl, shift, alt))
         {
             #if DEBUG
             _logger.Debug($"Going to page 1");
@@ -160,21 +161,21 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
             GLOBALS.Page = 1;
         }
         // if (_gShortcuts.ToGeometryEditor.Check(ctrl, shift)) GLOBALS.Page = 2;
-        if (_gShortcuts.ToTileEditor.Check(ctrl, shift))
+        if (_gShortcuts.ToTileEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
             _logger.Debug($"Going to page 3");
             #endif
             GLOBALS.Page = 3;
         }
-        if (_gShortcuts.ToCameraEditor.Check(ctrl, shift))
+        if (_gShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
             _logger.Debug($"Going to page 4");
             #endif
             GLOBALS.Page = 4;
         }
-        if (_gShortcuts.ToLightEditor.Check(ctrl, shift))
+        if (_gShortcuts.ToLightEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
             _logger.Debug($"Going to page 5");
@@ -182,28 +183,28 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
             GLOBALS.Page = 5;
         }
 
-        if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift))
+        if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
             _logger.Debug($"Going to page 6");
             #endif
             GLOBALS.ResizeFlag = true; GLOBALS.Page = 6;
         }
-        if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift))
+        if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
             _logger.Debug($"Going to page 7");
             #endif
             GLOBALS.Page = 7;
         }
-        if (_gShortcuts.ToPropsEditor.Check(ctrl, shift))
+        if (_gShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
             _logger.Debug($"Going to page 8");
             #endif
             GLOBALS.Page = 8;
         }
-        if (_gShortcuts.ToSettingsPage.Check(ctrl, shift))
+        if (_gShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
         {
             #if DEBUG
             _logger.Debug($"Going to page 9");
@@ -211,12 +212,12 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
             GLOBALS.Page = 9;
         }
 
-        if (_shortcuts.CycleLayer.Check(ctrl, shift)) GLOBALS.Layer = ++GLOBALS.Layer % 3;
-        if (_shortcuts.ToggleGrid.Check(ctrl, shift)) gridContrast = !gridContrast;
-        if (_shortcuts.ShowCameras.Check(ctrl, shift)) GLOBALS.Settings.GeometryEditor.ShowCameras = !GLOBALS.Settings.GeometryEditor.ShowCameras;
+        if (_shortcuts.CycleLayer.Check(ctrl, shift, alt)) GLOBALS.Layer = ++GLOBALS.Layer % 3;
+        if (_shortcuts.ToggleGrid.Check(ctrl, shift, alt)) gridContrast = !gridContrast;
+        if (_shortcuts.ShowCameras.Check(ctrl, shift, alt)) GLOBALS.Settings.GeometryEditor.ShowCameras = !GLOBALS.Settings.GeometryEditor.ShowCameras;
 
         // Menu Navigation
-        if (_shortcuts.ToLeftGeo.Check(ctrl, shift))
+        if (_shortcuts.ToLeftGeo.Check(ctrl, shift, alt))
         {
             geoSelectionX = --geoSelectionX % 4;
 
@@ -224,7 +225,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
             prevCoordsX = -1;
             prevCoordsY = -1;
         }
-        else if (_shortcuts.ToTopGeo.Check(ctrl, shift))
+        else if (_shortcuts.ToTopGeo.Check(ctrl, shift, alt))
         {
             geoSelectionY = (--geoSelectionY) % 8;
 
@@ -232,7 +233,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
             prevCoordsX = -1;
             prevCoordsY = -1;
         }
-        else if (_shortcuts.ToRightGeo.Check(ctrl, shift))
+        else if (_shortcuts.ToRightGeo.Check(ctrl, shift, alt))
         {
             geoSelectionX = ++geoSelectionX % 4;
 
@@ -240,7 +241,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
             prevCoordsX = -1;
             prevCoordsY = -1;
         }
-        else if (_shortcuts.ToBottomGeo.Check(ctrl, shift))
+        else if (_shortcuts.ToBottomGeo.Check(ctrl, shift, alt))
         {
             geoSelectionY = (++geoSelectionY) % 8;
 
@@ -250,7 +251,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
         }
 
         // Undo/Redo
-        if (_shortcuts.Undo.Check(ctrl, shift))
+        if (_shortcuts.Undo.Check(ctrl, shift, alt))
         {
             var action = _gram.Current;
             switch (action)
@@ -279,7 +280,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                 
             _gram.Undo();
         }
-        if (_shortcuts.Redo.Check(ctrl, shift))
+        if (_shortcuts.Redo.Check(ctrl, shift, alt))
         {
             _gram.Redo();
 
@@ -312,7 +313,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
         #endregion
         
         // handle mouse drag
-        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+        if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true))
         {
             var delta = GetMouseDelta();
             delta = RayMath.Vector2Scale(delta, -1.0f / camera.zoom);
@@ -333,7 +334,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
 
         // handle placing geo
 
-        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+        if (_shortcuts.Draw.Check(ctrl, shift, alt, true))
         {
             if (canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width)
             {
@@ -535,14 +536,14 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
             clickTracker = true;
         }
 
-        if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+        if (IsMouseButtonReleased(_shortcuts.Draw.Button))
         {
             clickTracker = false;
             if (_groupedActions.Count != 0) _gram.Proceed([.._groupedActions]);
             _groupedActions.Clear();
         }
 
-        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+        if (IsMouseButtonPressed(_shortcuts.Draw.Button))
         {
             if (canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width)
             {

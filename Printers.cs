@@ -371,18 +371,30 @@ internal static class Printers
                     new(255, 255, 255, 100)
                 );
                 
-                var tileCell = GLOBALS.Level.TileMatrix[y, x, layer];
+                TileCell tileCell;
 
+                #if DEBUG
+                try
+                {
+                    tileCell = GLOBALS.Level.TileMatrix[y, x, layer];
+                }
+                catch (IndexOutOfRangeException ie)
+                {
+                    throw new IndexOutOfRangeException(innerException: ie, message: $"Failed to fetch tile cell from {nameof(GLOBALS.Level.TileMatrix)}[{GLOBALS.Level.TileMatrix.GetLength(0)}, {GLOBALS.Level.TileMatrix.GetLength(1)}, {GLOBALS.Level.TileMatrix.GetLength(2)}]: x, y, or z ({x}, {y}, {layer}) was out of bounds");
+                }
+                #else
+                tileCell = GLOBALS.Level.TileMatrix[y, x, layer];
+                #endif
+                
                 if (tileCell.Type == TileType.TileHead)
                 {
                     var data = (TileHead)tileCell.Data;
 
-                    /*Console.WriteLine($"Index: {tile.Item1 - 5}; Length: {tilePreviewTextures.Length}; Name = {tile.Item3}");*/
-                    var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1 - 5];
+                    var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1];
 
-                    var tileTexture = category[data.CategoryPostition.Item2 - 1];
-                    var color = GLOBALS.TileCategories[data.CategoryPostition.Item1 - 5].Item2;
-                    var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
+                    var tileTexture = category[data.CategoryPostition.Item2];
+                    var color = GLOBALS.TileCategories[data.CategoryPostition.Item1].Item2;
+                    var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1][data.CategoryPostition.Item2];
                     
                     var center = new Vector2(
                         initTile.Size.Item1 % 2 == 0 ? x * scale + scale : x * scale + scale/2f, 

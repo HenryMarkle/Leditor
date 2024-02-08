@@ -10,6 +10,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
     Camera2D _camera = new() { zoom = 1.0f };
 
     private readonly GlobalShortcuts _gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
+    private readonly TileShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.TileEditor;
     
     private int _tilePanelWidth = 390;
     private bool _materialTileSwitch;
@@ -74,6 +75,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
         
         var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
         var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
         
         if (_gShortcuts.ToMainPage.Check(ctrl, shift))
         {
@@ -135,9 +137,29 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
         }
 
 
-        if (IsKeyPressed(KeyboardKey.KEY_Q) && canDrawTile && inMatrixBounds)
+        if (_shortcuts.PickupItem.Check(ctrl, shift, alt) && canDrawTile && inMatrixBounds)
         {
-            if (_materialTileSwitch)
+            switch (GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer].Data)
+            {
+                case TileMaterial:
+                    var result = GLOBALS.Level.PickupMaterial(tileMatrixX, tileMatrixY, GLOBALS.Layer);
+
+                    if (result is not null)
+                    {
+                        _materialCategoryIndex = result!.Value.category;
+                        _materialIndex = result!.Value.index;
+                    }
+
+                    _materialTileSwitch = false;
+                    break;
+                
+                case TileHead:
+                case TileBody:
+                    (_tileCategoryIndex, _tileIndex) = GLOBALS.Level.PickupTile(tileMatrixX, tileMatrixY, GLOBALS.Layer) ?? (_tileCategoryIndex, _tileIndex);
+                    _materialTileSwitch = true;
+                    break;
+            }
+            /*if (_materialTileSwitch)
             {
                 (_tileCategoryIndex, _tileIndex) = GLOBALS.Level.PickupTile(tileMatrixX, tileMatrixY, GLOBALS.Layer) ?? (_tileCategoryIndex, _tileIndex);
             }
@@ -150,33 +172,34 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                     _materialCategoryIndex = result!.Value.category;
                     _materialIndex = result!.Value.index;
                 }
-            }
+            }*/
         }
 
         var isTileLegel = GLOBALS.Level.IsTileLegal(ref currentTileInit, new(tileMatrixX, tileMatrixY));
 
         // handle placing tiles
 
-        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT) && canDrawTile && inMatrixBounds)
+        if (_shortcuts.Draw.Check(ctrl, shift, alt, true) && canDrawTile && inMatrixBounds)
         {
             if (_materialTileSwitch)
             {
-                if (IsKeyDown(KeyboardKey.KEY_G))
+                if (_shortcuts.ForcePlaceTileWithGeo.Check(ctrl, shift, alt))
                 {
                     GLOBALS.Level.ForcePlaceTileWithGeo(
                         currentTileInit, 
-                        _tileCategoryIndex + 5, 
-                        _tileIndex + 1, 
+                        _tileCategoryIndex, 
+                        _tileIndex, 
                         (tileMatrixX, tileMatrixY, 
                             GLOBALS.Layer
                         )
                     );
-                } else if (IsKeyDown(KeyboardKey.KEY_F))
+                } 
+                else if (_shortcuts.ForcePlaceTileWithoutGeo.Check(ctrl, shift, alt))
                 {
                     GLOBALS.Level.ForcePlaceTileWithoutGeo(
                         currentTileInit, 
-                        _tileCategoryIndex + 5, 
-                        _tileIndex + 1, 
+                        _tileCategoryIndex, 
+                        _tileIndex, 
                         (tileMatrixX, tileMatrixY, 
                             GLOBALS.Layer
                         )
@@ -187,8 +210,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                     if (isTileLegel) 
                         GLOBALS.Level.ForcePlaceTileWithGeo(
                             currentTileInit, 
-                            _tileCategoryIndex + 5, 
-                            _tileIndex + 1, 
+                            _tileCategoryIndex, 
+                            _tileIndex, 
                             (tileMatrixX, tileMatrixY, 
                                 GLOBALS.Layer
                                 )
@@ -203,34 +226,28 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 
         if (canDrawTile || _clickTracker)
         {
-            if (!IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+            // handle mouse drag
+            if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true))
             {
-                // handle mouse drag
-                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
-                {
-                    _clickTracker = true;
-                    Vector2 delta = GetMouseDelta();
-                    delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
-                    _camera.target = RayMath.Vector2Add(_camera.target, delta);
-                }
-
-                if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_RIGHT)) _clickTracker = false;
+                _clickTracker = true;
+                var delta = GetMouseDelta();
+                delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
+                _camera.target = RayMath.Vector2Add(_camera.target, delta);
             }
-            else
-            {
-                // handle removing tiles
-                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT) && canDrawTile && inMatrixBounds)
-                {
-                    if (_materialTileSwitch)
-                    {
-                        GLOBALS.Level.RemoveTile(tileMatrixX, tileMatrixY, GLOBALS.Layer);
-                    }
-                    else
-                    {
-                        GLOBALS.Level.RemoveMaterial(tileMatrixX, tileMatrixY, GLOBALS.Layer);
-                    }
-                }
 
+            if (IsMouseButtonReleased(_shortcuts.DragLevel.Button)) _clickTracker = false;
+            
+            // handle removing tiles
+            if (_shortcuts.Erase.Check(ctrl, shift, alt, true) && canDrawTile && inMatrixBounds)
+            {
+                if (_materialTileSwitch)
+                {
+                    GLOBALS.Level.RemoveTile(tileMatrixX, tileMatrixY, GLOBALS.Layer);
+                }
+                else
+                {
+                    GLOBALS.Level.RemoveMaterial(tileMatrixX, tileMatrixY, GLOBALS.Layer);
+                }
             }
 
             // handle zoom
@@ -246,7 +263,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
         }
 
 
-        if (IsKeyPressed(KeyboardKey.KEY_L))
+        if (_shortcuts.CycleLayer.Check(ctrl, shift, alt))
         {
             GLOBALS.Layer++;
 
@@ -254,7 +271,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
         }
 
         // handle resizing tile panel
-
+        // TODO: remove this feature
         if (((tileMouse.X <= leftPanelSideStart.X + 5 && tileMouse.X >= leftPanelSideStart.X - 5 && tileMouse.Y >= leftPanelSideStart.Y && tileMouse.Y <= leftPanelSideEnd.Y) || _clickTracker) &&
         IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
         {
@@ -275,19 +292,19 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 
         // change focus
 
-        if (IsKeyPressed(KeyboardKey.KEY_D))
+        if (_shortcuts.FocusOnTileMenu.Check(ctrl, shift, alt))
         {
             _tileCategoryFocus = false;
         }
 
-        if (IsKeyPressed(KeyboardKey.KEY_A))
+        if (_shortcuts.FocusOnTileCategoryMenu.Check(ctrl, shift, alt))
         {
             _tileCategoryFocus = true;
         }
 
         // change tile category
 
-        if (IsKeyPressed(KeyboardKey.KEY_S))
+        if (_shortcuts.MoveDown.Check(ctrl, shift, alt))
         {
             if (_materialTileSwitch)
             {
@@ -346,7 +363,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
             }
         }
 
-        if (IsKeyPressed(KeyboardKey.KEY_W))
+        if (_shortcuts.MoveUp.Check(ctrl, shift, alt))
         {
             if (_materialTileSwitch)
             {
@@ -400,24 +417,17 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
             }
         }
 
-        if (IsKeyPressed(KeyboardKey.KEY_T)) _showTileSpecs = !_showTileSpecs;
-        if (IsKeyPressed(KeyboardKey.KEY_M)) _materialTileSwitch = !_materialTileSwitch;
+        if (_shortcuts.ToggleTileSpecs.Check(ctrl, shift, alt)) _showTileSpecs = !_showTileSpecs;
+        if (_shortcuts.TileMaterialSwitch.Check(ctrl, shift, alt)) _materialTileSwitch = !_materialTileSwitch;
 
-        if (IsKeyPressed(KeyboardKey.KEY_P)) GLOBALS.Settings.TileEditor.HoveredTileInfo = !GLOBALS.Settings.TileEditor.HoveredTileInfo;
+        if (_shortcuts.HoveredItemInfo.Check(ctrl, shift, alt)) GLOBALS.Settings.TileEditor.HoveredTileInfo = !GLOBALS.Settings.TileEditor.HoveredTileInfo;
 
-        if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
-        {
-            if (IsKeyPressed(KeyboardKey.KEY_Z)) _showLayer1Tiles = !_showLayer1Tiles;
-            if (IsKeyPressed(KeyboardKey.KEY_X)) _showLayer2Tiles = !_showLayer2Tiles;
-            if (IsKeyPressed(KeyboardKey.KEY_C)) _showLayer3Tiles = !_showLayer3Tiles;
-        }
-        else
-        {
-            if (IsKeyPressed(KeyboardKey.KEY_Z)) _showTileLayer1 = !_showTileLayer1;
-            if (IsKeyPressed(KeyboardKey.KEY_X)) _showTileLayer2 = !_showTileLayer2;
-            if (IsKeyPressed(KeyboardKey.KEY_C)) _showTileLayer3 = !_showTileLayer3;
-        }
-
+        if (_shortcuts.ToggleLayer1Tiles.Check(ctrl, shift, alt)) _showLayer1Tiles = !_showLayer1Tiles;
+        if (_shortcuts.ToggleLayer2Tiles.Check(ctrl, shift, alt)) _showLayer2Tiles = !_showLayer2Tiles;
+        if (_shortcuts.ToggleLayer3Tiles.Check(ctrl, shift, alt)) _showLayer3Tiles = !_showLayer3Tiles;
+        if (_shortcuts.ToggleLayer1.Check(ctrl, shift, alt)) _showTileLayer1 = !_showTileLayer1;
+        if (_shortcuts.ToggleLayer2.Check(ctrl, shift, alt)) _showTileLayer2 = !_showTileLayer2;
+        if (_shortcuts.ToggleLayer3.Check(ctrl, shift, alt)) _showTileLayer3 = !_showTileLayer3;
 
         var currentTilePreviewColor = GLOBALS.TileCategories[_tileCategoryIndex].Item2;
         var currentTileTexture = GLOBALS.Textures.Tiles[_tileCategoryIndex][_tileIndex];
@@ -527,7 +537,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
             // currently held tile
             if (_materialTileSwitch)
             {
-                Color color = isTileLegel ? currentTilePreviewColor : new(255, 0, 0, 255);
+                var color = isTileLegel ? currentTilePreviewColor : new(255, 0, 0, 255);
                 Printers.DrawTilePreview(ref currentTileInit, ref currentTileTexture, ref color, (tileMatrixX, tileMatrixY));
 
                 EndShaderMode();
@@ -590,9 +600,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 
             if (tileMouse.X <= leftPanelSideStart.X + 5 && tileMouse.X >= leftPanelSideStart.X - 5 && tileMouse.Y >= leftPanelSideStart.Y && tileMouse.Y <= leftPanelSideEnd.Y)
             {
-                Raylib.SetMouseCursor(MouseCursor.MOUSE_CURSOR_RESIZE_EW);
+                SetMouseCursor(MouseCursor.MOUSE_CURSOR_RESIZE_EW);
 
-                Raylib.DrawLineEx(
+                DrawLineEx(
                     leftPanelSideStart,
                     leftPanelSideEnd,
                     4,
@@ -601,8 +611,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
             }
             else
             {
-                Raylib.SetMouseCursor(MouseCursor.MOUSE_CURSOR_ARROW);
-                Raylib.DrawLineEx(
+                SetMouseCursor(MouseCursor.MOUSE_CURSOR_ARROW);
+                DrawLineEx(
                     leftPanelSideStart,
                     leftPanelSideEnd,
                     4,
@@ -638,8 +648,11 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                 }
 
 
-                if (newCategoryIndex != _tileCategoryIndex)
+                if (newCategoryIndex != _tileCategoryIndex && newCategoryIndex != -1)
                 {
+                    #if DEBUG
+                    _logger.Debug($"New tile category index: {newCategoryIndex}");
+                    #endif
                     _tileCategoryIndex = newCategoryIndex;
                     _tileIndex = 0;
                 }
@@ -666,12 +679,21 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                         category = GLOBALS.Tiles[_tileCategoryIndex];
                         #endif
                         
-                        _tileIndex = RayGui.GuiListView(
+                        var newTileIndex = RayGui.GuiListView(
                             new(teWidth - (_tilePanelWidth + 10) + 15 + (_tilePanelWidth * 0.3f), 90, _tilePanelWidth * 0.7f - 25, teHeight - 200),
                             string.Join(";", category.Select(i => i.Name)),
                             scrollIndex,
                             _tileIndex
                         );
+
+                        if (newTileIndex != _tileIndex && newTileIndex != -1)
+                        {
+                            #if DEBUG
+                            _logger.Debug($"New tile index: {newTileIndex}");
+                            #endif
+
+                            _tileIndex = newTileIndex;
+                        }
                     }
                 }
             }
@@ -693,8 +715,12 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                     }
                 }
 
-                if (newCategoryIndex != _materialCategoryIndex)
+                if (newCategoryIndex != _materialCategoryIndex && newCategoryIndex != -1)
                 {
+                    #if DEBUG
+                    _logger.Debug($"New material category index : {newCategoryIndex}");
+                    #endif
+                    
                     _materialCategoryIndex = newCategoryIndex;
                     _materialIndex = 0;
                 }
@@ -718,12 +744,21 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                 {
                     fixed (int* scrollIndex = &_materialScrollIndex)
                     {
-                        _materialIndex = RayGui.GuiListView(
+                        var newMaterialIndex = RayGui.GuiListView(
                             new(teWidth - (_tilePanelWidth + 10) + 15 + (_tilePanelWidth * 0.3f), 90, _tilePanelWidth * 0.7f - 25, teHeight - 200),
                             string.Join(";", currentMaterialsList.Select(i => i.Item1)),
                             scrollIndex,
                             _materialIndex
                         );
+
+                        if (newMaterialIndex != _materialIndex && newMaterialIndex != -1)
+                        {
+                            #if DEBUG
+                            _logger.Debug($"New material index: {newMaterialIndex}");
+                            #endif
+
+                            _materialIndex = newMaterialIndex;
+                        } 
                     }
                 }
 

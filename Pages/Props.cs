@@ -8,6 +8,8 @@ internal class PropsEditorPage : IPage
     private readonly Serilog.Core.Logger _logger;
 
     private Camera2D _camera = new () { zoom = 0.8f };
+
+    private readonly PropsShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.PropsEditor;
     
     private const float SelectionMargin = 3f;
 
@@ -287,6 +289,10 @@ internal class PropsEditorPage : IPage
 
     public void Draw()
     {
+        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
+        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+            
         if (_selected.Length != GLOBALS.Level.Props.Length)
         {
             _selected = new bool[GLOBALS.Level.Props.Length];
@@ -324,53 +330,28 @@ internal class PropsEditorPage : IPage
 
         if (_spinnerLock == 0)
         {
-            if (IsKeyPressed(KeyboardKey.KEY_ONE))
-            {
-                GLOBALS.Page = 1;
-            }
-            if (IsKeyPressed(KeyboardKey.KEY_TWO))
-            {
-                GLOBALS.Page = 2;
-            }
-
-            if (IsKeyPressed(KeyboardKey.KEY_THREE))
-            {
-                GLOBALS.Page = 3;
-            }
-
-            if (IsKeyPressed(KeyboardKey.KEY_FOUR))
-            {
-                GLOBALS.Page = 4;
-            }
-            if (IsKeyPressed(KeyboardKey.KEY_FIVE))
-            {
-                GLOBALS.Page = 5;
-            }
-            if (IsKeyPressed(KeyboardKey.KEY_SIX))
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 2;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 3;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 4;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 5;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
             {
                 GLOBALS.ResizeFlag = true;
                 GLOBALS.Page = 6;
+                _logger.Debug("go from GLOBALS.Page 8 to GLOBALS.Page 6");
             }
-            if (IsKeyPressed(KeyboardKey.KEY_SEVEN))
-            {
-                GLOBALS.Page = 7;
-            }
-            /*if (IsKeyPressed(KeyboardKey.KEY_EIGHT))
-            {
-                GLOBALS.Page = 8;
-            }*/
-            if (IsKeyPressed(KeyboardKey.KEY_NINE))
-            {
-                GLOBALS.Page = 9;
-            }
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 7;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
         }
         else
         {
-            if (IsKeyPressed(KeyboardKey.KEY_ESCAPE)) _spinnerLock = 0;
+            if (_shortcuts.EscapeSpinnerControl.Check(ctrl, shift, alt)) _spinnerLock = 0;
         }
 
         // handle mouse drag
-        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+        if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.DraLevelAlt.Check(ctrl, shift, alt, true))
         {
             var delta = GetMouseDelta();
             delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
@@ -389,36 +370,31 @@ internal class PropsEditorPage : IPage
         }
         
         // Cycle layer
-        if (IsKeyPressed(KeyboardKey.KEY_L))
+        if (_shortcuts.CycleLayers.Check(ctrl, shift, alt))
         {
             GLOBALS.Layer++;
 
             if (GLOBALS.Layer > 2) GLOBALS.Layer = 0;
         }
 
-        if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+        if (_shortcuts.ToggleLayer1Tiles.Check(ctrl, shift, alt)) _showLayer1Tiles = !_showLayer1Tiles;
+        if (_shortcuts.ToggleLayer2Tiles.Check(ctrl, shift, alt)) _showLayer2Tiles = !_showLayer2Tiles;
+        if (_shortcuts.ToggleLayer3Tiles.Check(ctrl, shift, alt)) _showLayer3Tiles = !_showLayer3Tiles;
+        
+        // Cycle Mode
+        if (_shortcuts.CycleModeRight.Check(ctrl, shift, alt))
         {
-            if (IsKeyPressed(KeyboardKey.KEY_Z)) _showLayer1Tiles = !_showLayer1Tiles;
-            if (IsKeyPressed(KeyboardKey.KEY_X)) _showLayer2Tiles = !_showLayer2Tiles;
-            if (IsKeyPressed(KeyboardKey.KEY_C)) _showLayer3Tiles = !_showLayer3Tiles;
-
-            // Cycle Mode
-            if (IsKeyPressed(KeyboardKey.KEY_E))
-            {
-                _mode = ++_mode % 2;
-            }
-            else if (IsKeyPressed(KeyboardKey.KEY_Q))
-            {
-                _mode--;
-                if (_mode < 0) _mode = 1;
-            }
+            _mode = ++_mode % 2;
         }
-        else
+        else if (_shortcuts.CycleModeLeft.Check(ctrl, shift, alt))
         {
-            if (IsKeyPressed(KeyboardKey.KEY_Z) && !_scalingProps) _showTileLayer1 = !_showTileLayer1;
-            if (IsKeyPressed(KeyboardKey.KEY_X) && !_scalingProps) _showTileLayer2 = !_showTileLayer2;
-            if (IsKeyPressed(KeyboardKey.KEY_C) && !_scalingProps) _showTileLayer3 = !_showTileLayer3;
+            _mode--;
+            if (_mode < 0) _mode = 1;
         }
+        
+        if (_shortcuts.ToggleLayer1.Check(ctrl, shift, alt) && !_scalingProps) _showTileLayer1 = !_showTileLayer1;
+        if (_shortcuts.ToggleLayer2.Check(ctrl, shift, alt) && !_scalingProps) _showTileLayer2 = !_showTileLayer2;
+        if (_shortcuts.ToggleLayer3.Check(ctrl, shift, alt) && !_scalingProps) _showTileLayer3 = !_showTileLayer3;
 
         // Mode-based hotkeys
         switch (_mode)
@@ -426,7 +402,7 @@ internal class PropsEditorPage : IPage
             case 1: // Place Mode
 
                 // Place Prop
-                if (canDrawTile && IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                if (canDrawTile && (_shortcuts.PlaceProp.Check(ctrl, shift, alt) || _shortcuts.PlacePropAlt.Check(ctrl, shift, alt)))
                 {
                     switch (_menuRootCategoryIndex)
                     {
@@ -579,83 +555,77 @@ internal class PropsEditorPage : IPage
                     _hidden = [.._hidden, false];
                 }
                 
-                if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+                // Cycle categories
+                if (_shortcuts.CycleCategoriesRight.Check(ctrl, shift, alt))
                 {
-                    // Cycle categories
-                    if (IsKeyPressed(KeyboardKey.KEY_D))
-                    {
-                        _menuRootCategoryIndex++;
-                        if (_menuRootCategoryIndex > 3) _menuRootCategoryIndex = 0;
-                    }
-                    else if (IsKeyPressed(KeyboardKey.KEY_A))
-                    {
-                        _menuRootCategoryIndex--;
-                        if (_menuRootCategoryIndex < 0) _menuRootCategoryIndex = 3;
-                    }
+                    _menuRootCategoryIndex++;
+                    if (_menuRootCategoryIndex > 3) _menuRootCategoryIndex = 0;
                 }
-                else
+                else if (_shortcuts.CycleCategoriesLeft.Check(ctrl, shift, alt))
                 {
-                    // Navigate menu
-                    if (IsKeyPressed(KeyboardKey.KEY_D))
+                    _menuRootCategoryIndex--;
+                    if (_menuRootCategoryIndex < 0) _menuRootCategoryIndex = 3;
+                }
+                
+                // Navigate menu
+                if (_shortcuts.InnerCategoryFocusRight.Check(ctrl, shift, alt))
+                {
+                    _propCategoryFocus = false;
+                }
+                else if (_shortcuts.InnerCategoryFocusLeft.Check(ctrl, shift, alt))
+                {
+                    _propCategoryFocus = true;
+                }
+                
+                if (_shortcuts.NavigateMenuDown.Check(ctrl, shift, alt))
+                {
+                    IncrementMenuIndex();
+                    currentTileAsPropCategory = _tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex];
+                }
+                else if (_shortcuts.NavigateMenuUp.Check(ctrl, shift, alt))
+                {
+                    DecrementMenuIndex();
+                    currentTileAsPropCategory = _tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex];
+                }
+                
+                // Pickup Prop
+                if (_shortcuts.PickupProp.Check(ctrl, shift, alt))
+                {
+                    for (var i = 0; i < GLOBALS.Level.Props.Length; i++)
                     {
-                        _propCategoryFocus = false;
-                    }
-                    else if (IsKeyPressed(KeyboardKey.KEY_A))
-                    {
-                        _propCategoryFocus = true;
-                    }
+                        var current = GLOBALS.Level.Props[i];
+    
+                        if (!CheckCollisionPointRec(tileMouseWorld, Utils.EncloseQuads(current.prop.Quads)) || 
+                            current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || 
+                            current.prop.Depth > GLOBALS.Layer * -10) 
+                            continue;
 
-                    if (IsKeyPressed(KeyboardKey.KEY_S))
-                    {
-                        IncrementMenuIndex();
-                        currentTileAsPropCategory = _tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex];
-                    }
-                    else if (IsKeyPressed(KeyboardKey.KEY_W))
-                    {
-                        DecrementMenuIndex();
-                        currentTileAsPropCategory = _tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex];
-                    }
-                    
-                    // Pickup Prop
-                    if (IsKeyPressed(KeyboardKey.KEY_Q))
-                    {
-                        for (var i = 0; i < GLOBALS.Level.Props.Length; i++)
+                        if (current.type == InitPropType.Tile)
                         {
-                            var current = GLOBALS.Level.Props[i];
-        
-                            if (!CheckCollisionPointRec(tileMouseWorld, Utils.EncloseQuads(current.prop.Quads)) || 
-                                current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || 
-                                current.prop.Depth > GLOBALS.Layer * -10) 
-                                continue;
-
-                            if (current.type == InitPropType.Tile)
+                            for (var c = 0; c < _tilesAsPropsIndices.Length; c++)
                             {
-                                for (var c = 0; c < _tilesAsPropsIndices.Length; c++)
+                                for (var p = 0; p < _tilesAsPropsIndices[c].Length; p++)
                                 {
-                                    for (var p = 0; p < _tilesAsPropsIndices[c].Length; p++)
-                                    {
-                                        var currentTileAsProp = _tilesAsPropsIndices[c][p];
+                                    var currentTileAsProp = _tilesAsPropsIndices[c][p];
 
-                                        if (currentTileAsProp.init.Name != current.prop.Name) continue;
+                                    if (currentTileAsProp.init.Name != current.prop.Name) continue;
 
-                                        currentTileAsPropCategory = _tilesAsPropsCategoryIndices[c];
-                                        _propsMenuTilesCategoryIndex = c;
-                                        _propsMenuTilesIndex = p;
-                                    }
+                                    currentTileAsPropCategory = _tilesAsPropsCategoryIndices[c];
+                                    _propsMenuTilesCategoryIndex = c;
+                                    _propsMenuTilesIndex = p;
                                 }
                             }
-                            else if (current.type == InitPropType.Rope)
-                            {
-                                
-                            }
-                            else
-                            {
-                                (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex) = current.position;
-                            }
+                        }
+                        else if (current.type == InitPropType.Rope)
+                        {
+                            
+                        }
+                        else
+                        {
+                            (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex) = current.position;
                         }
                     }
                 }
-                
                 break;
             
             case 0: // Select Mode
@@ -675,8 +645,6 @@ internal class PropsEditorPage : IPage
                         _selectedPropsEncloser.y + 
                         _selectedPropsEncloser.height/2
                     );
-
-                    
                 }
                 else
                 {
@@ -688,27 +656,27 @@ internal class PropsEditorPage : IPage
                 }
                 
                 // Move
-                if (IsKeyPressed(KeyboardKey.KEY_F) && anySelected)
+                if (_shortcuts.ToggleMovingPropsMode.Check(ctrl, shift, alt) && anySelected)
                 {
                     _scalingProps = false;
-                    _movingProps = true;
+                    _movingProps = !_movingProps;
                     _rotatingProps = false;
                     _stretchingProp = false;
                     _editingPropPoints = false;
                     // _ropeMode = false;
                 }
                 // Rotate
-                else if (IsKeyPressed(KeyboardKey.KEY_R) && anySelected)
+                else if (_shortcuts.ToggleRotatingPropsMode.Check(ctrl, shift, alt) && anySelected)
                 {
                     _scalingProps = false;
                     _movingProps = false;
-                    _rotatingProps = true;
+                    _rotatingProps = !_rotatingProps;
                     _stretchingProp = false;
                     _editingPropPoints = false;
                     // _ropeMode = false;
                 }
                 // Scale
-                else if (IsKeyPressed(KeyboardKey.KEY_S) && anySelected)
+                else if (_shortcuts.ToggleScalingPropsMode.Check(ctrl, shift, alt) && anySelected)
                 {
                     _movingProps = false;
                     _rotatingProps = false;
@@ -721,7 +689,7 @@ internal class PropsEditorPage : IPage
                     SetMouseCursor(MouseCursor.MOUSE_CURSOR_RESIZE_NESW);
                 }
                 // Hide
-                else if (IsKeyPressed(KeyboardKey.KEY_H) && anySelected)
+                else if (_shortcuts.TogglePropsVisibility.Check(ctrl, shift, alt) && anySelected)
                 {
                     for (var i = 0; i < GLOBALS.Level.Props.Length; i++)
                     {
@@ -729,7 +697,7 @@ internal class PropsEditorPage : IPage
                     }
                 }
                 // Edit Quads
-                else if (IsKeyPressed(KeyboardKey.KEY_Q) && fetchedSelected.Length == 1)
+                else if (_shortcuts.ToggleEditingPropQuadsMode.Check(ctrl, shift, alt) && fetchedSelected.Length == 1)
                 {
                     _scalingProps = false;
                     _movingProps = false;
@@ -739,7 +707,7 @@ internal class PropsEditorPage : IPage
                     // _ropeMode = false;
                 }
                 // Delete
-                else if (IsKeyPressed(KeyboardKey.KEY_D) && anySelected)
+                else if (_shortcuts.DeleteSelectedProps.Check(ctrl, shift, alt) && anySelected)
                 {
                     _scalingProps = false;
                     _movingProps = false;
@@ -765,7 +733,7 @@ internal class PropsEditorPage : IPage
                 )
                 {
                     // Edit Rope Points
-                    if (IsKeyPressed(KeyboardKey.KEY_P))
+                    if (_shortcuts.ToggleRopePointsEditingMode.Check(ctrl, shift, alt))
                     {
                         _scalingProps = false;
                         _movingProps = false;
@@ -775,7 +743,7 @@ internal class PropsEditorPage : IPage
                         _ropeMode = false;
                     }
                     // Rope mode
-                    else if (IsKeyPressed(KeyboardKey.KEY_B))
+                    else if (_shortcuts.ToggleRopeEditingMode.Check(ctrl, shift, alt))
                     {
                         // _scalingProps = false;
                         // _movingProps = false;
@@ -1198,13 +1166,13 @@ internal class PropsEditorPage : IPage
                 }
                 else if (!_ropeMode)
                 {
-                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT) && !_clickTracker && canDrawTile)
+                    if ((_shortcuts.SelectProps.Check(ctrl, shift, alt, true) || _shortcuts.SelectPropsAlt.Check(ctrl, shift, alt, true)) && !_clickTracker && canDrawTile)
                     {
                         _selection1 = GetScreenToWorld2D(GetMousePosition(), _camera);
                         _clickTracker = true;
                     }
 
-                    if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _clickTracker)
+                    if ((IsMouseButtonReleased(_shortcuts.SelectProps.Button) || IsKeyReleased(_shortcuts.SelectPropsAlt.Key)) && _clickTracker)
                     {
                         _clickTracker = false;
                     
@@ -1217,7 +1185,7 @@ internal class PropsEditorPage : IPage
                         {
                             var current = GLOBALS.Level.Props[i];
                             var propSelectRect = Utils.EncloseQuads(current.prop.Quads);
-                            if (IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL))
+                            if (_shortcuts.PropSelectionModifier.Check(ctrl, shift, alt, true))
                             {
                                 if (CheckCollisionRecs(propSelectRect, _selection) && !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10))
                                 {
@@ -1993,8 +1961,12 @@ internal class PropsEditorPage : IPage
                                 }
                             }
 
-                            if (newCategoryIndex != _propsMenuTilesCategoryIndex)
+                            if (newCategoryIndex != _propsMenuTilesCategoryIndex && newCategoryIndex != -1)
                             {
+                                #if DEBUG
+                                _logger.Debug($"New tiles category index: {newCategoryIndex}");
+                                #endif
+                                
                                 _propsMenuTilesIndex = 0;
                                 _propsMenuTilesCategoryIndex = newCategoryIndex;
                             }
@@ -2005,7 +1977,7 @@ internal class PropsEditorPage : IPage
                                 {
                                     // draw the list
 
-                                    _propsMenuTilesIndex = RayGui.GuiListView(
+                                    var newPropsMenuTilesIndex = RayGui.GuiListView(
                                         listRect,
                                         string.Join(";",
                                             from t in _tilesAsPropsIndices[_propsMenuTilesCategoryIndex]
@@ -2013,6 +1985,15 @@ internal class PropsEditorPage : IPage
                                         scrollIndex,
                                         _propsMenuTilesIndex
                                     );
+
+                                    if (newPropsMenuTilesIndex != _propsMenuTilesIndex && newPropsMenuTilesIndex != -1)
+                                    {
+                                        #if DEBUG
+                                        _logger.Debug($"New tiles index: {newPropsMenuTilesIndex}");
+                                        #endif
+                                        
+                                        _propsMenuTilesIndex = newPropsMenuTilesIndex;
+                                    }
                                 }
                             }
                         }
@@ -2034,7 +2015,14 @@ internal class PropsEditorPage : IPage
                                     );
                                 }
 
-                                _propsMenuRopesIndex = newIndex;
+                                if (newIndex != _propsMenuRopesIndex && newIndex != -1)
+                                {
+                                    #if DEBUG
+                                    _logger.Debug($"New props Index: {newIndex}");
+                                    #endif
+                                    
+                                    _propsMenuRopesIndex = newIndex;
+                                }
                             }
                         }
                             break;
@@ -2056,7 +2044,14 @@ internal class PropsEditorPage : IPage
                                 }
                             }
 
-                            _propsMenuLongsIndex = newIndex;
+                            if (newIndex != _propsMenuLongsIndex && newIndex != -1)
+                            {
+                                #if DEBUG
+                                _logger.Debug($"New longs index: {newIndex}");
+                                #endif
+                                
+                                _propsMenuLongsIndex = newIndex;
+                            }
                         }
 
                     break;
@@ -2079,8 +2074,12 @@ internal class PropsEditorPage : IPage
                             }
                             
                             // reset selection index when changing categories
-                            if (newCategoryIndex != _propsMenuOthersCategoryIndex)
+                            if (newCategoryIndex != _propsMenuOthersCategoryIndex && newCategoryIndex != -1)
                             {
+                                #if DEBUG
+                                _logger.Debug($"New others category index: {_propsMenuOthersCategoryIndex}");
+                                #endif
+                                
                                 _propsMenuOthersIndex = 0;
                                 _propsMenuOthersCategoryIndex = newCategoryIndex;
                             }
@@ -2091,12 +2090,22 @@ internal class PropsEditorPage : IPage
                                 {
                                     // draw the list
 
-                                    _propsMenuOthersIndex = RayGui.GuiListView(
+                                    var  newPropsMenuOthersIndex = RayGui.GuiListView(
                                         listRect,
                                         string.Join(";", from t in _propsOnly[_propsMenuOthersCategoryIndex] select t.Name),
                                         scrollIndex,
                                         _propsMenuOthersIndex
                                     );
+
+                                    if (newPropsMenuOthersIndex != _propsMenuOthersIndex &&
+                                        newPropsMenuOthersIndex != -1)
+                                    {
+                                        #if DEBUG
+                                        _logger.Debug($"New other prop index: {newPropsMenuOthersIndex}");
+                                        #endif
+                                        
+                                        _propsMenuOthersIndex = newPropsMenuOthersIndex;
+                                    }
                                 }
                             }
                         }

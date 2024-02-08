@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Microsoft.Toolkit.HighPerformance;
 using static Raylib_CsLo.Raylib;
 
 namespace Leditor;
@@ -10,6 +11,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
     Camera2D camera = new() { zoom = 0.8f, target = new(-100, -100) };
     bool clickTracker = false;
     int draggedCamera = -1;
+    private readonly CameraShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.CameraEditor;
 
     public void Draw()
     {
@@ -17,43 +19,47 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
 
         #region CamerasInputHandlers
 
-        if (IsKeyPressed(KeyboardKey.KEY_ONE))
+        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
+        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt))
         {
             GLOBALS.Page = 1;
         }
-        if (IsKeyReleased(KeyboardKey.KEY_TWO))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.Page = 2;
         }
-        if (IsKeyReleased(KeyboardKey.KEY_THREE))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.Page = 3;
         }
         //if (Raylib.IsKeyReleased(KeyboardKey.KEY_FOUR)) page = 4;
-        if (IsKeyReleased(KeyboardKey.KEY_FIVE))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.Page = 5;
         }
-        if (IsKeyReleased(KeyboardKey.KEY_SIX))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.ResizeFlag = true;
             GLOBALS.Page = 6;
         }
-        if (IsKeyReleased(KeyboardKey.KEY_SEVEN))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.Page = 7;
         }
-        if (IsKeyReleased(KeyboardKey.KEY_EIGHT))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.Page = 8;
         }
-        if (IsKeyReleased(KeyboardKey.KEY_NINE))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
         {
             GLOBALS.Page = 9;
         }
 
         // handle mouse drag
-        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+        if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true))
         {
             Vector2 delta = Raylib.GetMouseDelta();
             delta = RayMath.Vector2Scale(delta, -1.0f / camera.zoom);
@@ -64,19 +70,19 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
         var cameraWheel = Raylib.GetMouseWheelMove();
         if (cameraWheel != 0)
         {
-            Vector2 mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
+            var mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
             camera.offset = Raylib.GetMousePosition();
             camera.target = mouseWorldPosition;
             camera.zoom += cameraWheel * GLOBALS.ZoomIncrement;
             if (camera.zoom < GLOBALS.ZoomIncrement) camera.zoom = GLOBALS.ZoomIncrement;
         }
 
-        if (Raylib.IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && clickTracker)
+        if (IsMouseButtonReleased(_shortcuts.DragLevel.Button) || IsMouseButtonReleased(_shortcuts.ManipulateCamera.Button) && clickTracker)
         {
             clickTracker = false;
         }
 
-        if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT) && !clickTracker && draggedCamera != -1)
+        if (_shortcuts.ManipulateCamera.Check(ctrl, shift, alt, true) && !clickTracker && draggedCamera != -1)
         {
             var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
             GLOBALS.Level.Cameras[draggedCamera].Coords = new Vector2(pos.X - (72 * GLOBALS.Scale - 40) / 2f, pos.Y - (43 * GLOBALS.Scale - 60) / 2f);
@@ -84,7 +90,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
             clickTracker = true;
         }
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_N) && draggedCamera == -1)
+        if (_shortcuts.CreateCamera.Check(ctrl, shift, alt) && draggedCamera == -1)
         {
             var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
             GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = new Vector2(0, 0), Quad = new(new(), new(), new(), new()) }];
@@ -92,14 +98,14 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
             draggedCamera = GLOBALS.Level.Cameras.Count - 1;
         }
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_D) && draggedCamera != -1)
+        if (_shortcuts.DeleteCamera.Check(ctrl, shift, alt) && draggedCamera != -1)
         {
             GLOBALS.Level.Cameras.RemoveAt(draggedCamera);
             GLOBALS.CamQuadLocks = GLOBALS.CamQuadLocks[..^1];
             draggedCamera = -1;
         }
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_SPACE))
+        if (_shortcuts.CreateAndDeleteCamera.Check(ctrl, shift, alt))
         {
             if (draggedCamera == -1)
             {

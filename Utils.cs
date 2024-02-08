@@ -1,10 +1,65 @@
 using System.Numerics;
+using System.Windows.Forms;
+using System.Threading;
 
 namespace Leditor;
 
 /// A collection of helper functions used across pages
 internal static class Utils
 {
+    internal static async Task<string> GetFilePathAsync()
+    {
+        var path = string.Empty;
+        
+        var thread = new Thread(() =>
+        {
+            var dialog = new OpenFileDialog
+            {
+                InitialDirectory = GLOBALS.Paths.ProjectsDirectory,
+                Filter = "txt files (*.txt)|*.txt",
+                Multiselect = false,
+                CheckFileExists = true
+            };
+
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                path = dialog.FileName;
+            }
+        });
+            
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+
+        return path;
+    }
+
+    internal static async Task<string> SetFilePathAsync()
+    {
+        var path = string.Empty;
+        
+        var thread = new Thread(() =>
+        {
+            var dialog = new SaveFileDialog
+            {
+                InitialDirectory = GLOBALS.Paths.ProjectsDirectory,
+                Filter = "txt files (*.txt)|*.txt",
+                FileName = GLOBALS.Level.ProjectName
+            };
+
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                path = dialog.FileName;
+            }
+        });
+            
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+
+        return path;
+    }
+    
     public static int GetBrushStrength(string effect) => effect switch
     {
         "BlackGoo" or "Fungi Flowers" or "Lighthouse Flowers" or

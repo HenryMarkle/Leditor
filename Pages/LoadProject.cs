@@ -1,6 +1,8 @@
 using static Raylib_CsLo.Raylib;
 using System.Numerics;
+using System.Threading;
 using Pidgin;
+using System.Windows.Forms;
 namespace Leditor;
 
 #nullable enable
@@ -77,7 +79,7 @@ public class LoadProjectPage : IPage
                             {
                                 if (GLOBALS.Tiles[c][i].Name == name)
                                 {
-                                    res.TileMatrix![y, x, z].Data.CategoryPostition = (c + 5, i + 1, name);
+                                    res.TileMatrix![y, x, z].Data.CategoryPostition = (c, i, name);
 
                                     try
                                     {
@@ -153,7 +155,7 @@ public class LoadProjectPage : IPage
         return PropCheckResult.Ok;
     }
     
-    private static async Task<LoadFileResult> LoadProjectAsync(string filePath)
+    private async Task<LoadFileResult> LoadProjectAsync(string filePath)
     {
         try
         {

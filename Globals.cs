@@ -331,7 +331,7 @@ internal static class GLOBALS
             if (cell.Type == TileType.TileHead)
             {
                 var (category, index, _) = ((TileHead)cell.Data).CategoryPostition;
-                return (category - 5, index - 1);
+                return (category, index);
             }
             else if (cell.Type == TileType.TileBody)
             {
@@ -345,7 +345,7 @@ internal static class GLOBALS
                 if (supposedHead.Type != TileType.TileHead) return null;
 
                 var headTile = (TileHead)supposedHead.Data;
-                return (headTile.CategoryPostition.Item1 - 5, headTile.CategoryPostition.Item2 - 1);
+                return (headTile.CategoryPostition.Item1, headTile.CategoryPostition.Item2);
             }
 
 
@@ -977,25 +977,27 @@ internal static class GLOBALS
     
     internal static Settings Settings { get; set; } = new(
             false,
-            new(
-                new(),
-                new(),
-                new(),
-                new(),
-                new()
+            new Shortcuts(
+                new GlobalShortcuts(),
+                new GeoShortcuts(),
+                new TileShortcuts(),
+                new CameraShortcuts(),
+                new LightShortcuts(),
+                new EffectsShortcuts(),
+                new PropsShortcuts()
             ),
-            new(),
-            new(
-                new(
-                    layer1: new(0, 0, 0, 255),
-                    layer2: new(0, 255, 0, 50),
-                    layer3: new(255, 0, 0, 50)
+            new Misc(),
+            new GeoEditor(
+                new LayerColors(
+                    layer1: new ConColor(0, 0, 0, 255),
+                    layer2: new ConColor(0, 255, 0, 50),
+                    layer3: new ConColor(255, 0, 0, 50)
                 )
             ),
-            new(true),
-            new(background: new(66, 108, 245, 255)),
-            new(),
-            new()
+            new TileEditor(true),
+            new LightEditor(background: new ConColor(66, 108, 245, 255)),
+            new PropEditor(),
+            new Experimental()
     );
     
     #nullable enable

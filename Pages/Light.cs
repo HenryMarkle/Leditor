@@ -29,45 +29,49 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
 
     readonly byte[] lightBrushMenuPanelBytes = Encoding.ASCII.GetBytes("Brushes");
 
+    private readonly LightShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.LightEditor;
+
     public void Draw()
     {
-
+        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
+        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
 
         GLOBALS.PreviousPage = 5;
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_ONE))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt))
         {
             GLOBALS.Page = 1;
         }
-        if (Raylib.IsKeyReleased(KeyboardKey.KEY_TWO))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.Page = 2;
         }
-        if (Raylib.IsKeyReleased(KeyboardKey.KEY_THREE))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.Page = 3;
         }
-        if (Raylib.IsKeyReleased(KeyboardKey.KEY_FOUR))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.Page = 4;
         }
         // if (Raylib.IsKeyReleased(KeyboardKey.KEY_FIVE)) GLOBALS.Page = 5;
-        if (Raylib.IsKeyReleased(KeyboardKey.KEY_SIX))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.ResizeFlag = true;
             GLOBALS.Page = 6;
         }
-        if (Raylib.IsKeyReleased(KeyboardKey.KEY_SEVEN))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.Page = 7;
         }
-        if (Raylib.IsKeyReleased(KeyboardKey.KEY_EIGHT)) GLOBALS.Page = 8;
-        if (Raylib.IsKeyReleased(KeyboardKey.KEY_NINE)) GLOBALS.Page = 9;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
 
 
 
-        if (IsKeyDown(KeyboardKey.KEY_I) && GLOBALS.Level.LightFlatness < 10) GLOBALS.Level.LightFlatness++;
-        if (IsKeyDown(KeyboardKey.KEY_K) && GLOBALS.Level.LightFlatness > 1) GLOBALS.Level.LightFlatness--;
+        if (_shortcuts.IncreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness < 10) GLOBALS.Level.LightFlatness++;
+        if (_shortcuts.DecreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness > 1) GLOBALS.Level.LightFlatness--;
 
         const int textureSize = 130;
 
@@ -75,32 +79,31 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
 
         var pageSize = panelHeight / textureSize;
 
-        if (Raylib.IsKeyDown(KeyboardKey.KEY_L))
+        if (_shortcuts.IncreaseAngle.Check(ctrl, shift, alt, true))
         {
             // lightAngleVariable += 0.01f;
             GLOBALS.Level.LightAngle--;/* = (int)(180 * Math.Sin(lightAngleVariable) + 90);*/
         }
-        if (Raylib.IsKeyDown(KeyboardKey.KEY_J))
+        if (_shortcuts.DecreaseAngle.Check(ctrl, shift, alt, true))
         {
             // lightAngleVariable -= 0.01f;
             GLOBALS.Level.LightAngle++;/* = (int)(180 * Math.Sin(lightAngleVariable) + 90);*/
         }
 
         // handle mouse drag
-        if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+        if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.DragLevelAlt.Check(ctrl, shift, alt, true))
         {
-            Vector2 delta = Raylib.GetMouseDelta();
+            var delta = GetMouseDelta();
             delta = RayMath.Vector2Scale(delta, -1.0f / camera.zoom);
             camera.target = RayMath.Vector2Add(camera.target, delta);
         }
 
-
         // handle zoom
-        var wheel2 = Raylib.GetMouseWheelMove();
+        var wheel2 = GetMouseWheelMove();
         if (wheel2 != 0)
         {
-            Vector2 mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-            camera.offset = Raylib.GetMousePosition();
+            var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), camera);
+            camera.offset = GetMousePosition();
             camera.target = mouseWorldPosition;
             camera.zoom += wheel2 * GLOBALS.ZoomIncrement;
             if (camera.zoom < GLOBALS.ZoomIncrement) camera.zoom = GLOBALS.ZoomIncrement;
@@ -110,20 +113,20 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
 
         {
             var texture = GLOBALS.Textures.LightBrushes[lightBrushTextureIndex];
-            var lightMouse = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
+            var lightMouse = GetScreenToWorld2D(GetMousePosition(), camera);
 
             lightBrushSource = new(0, 0, texture.width, texture.height);
             lightBrushDest = new(lightMouse.X, lightMouse.Y, lightBrushWidth, lightBrushHeight);
             lightBrushOrigin = new(lightBrushWidth / 2, lightBrushHeight / 2);
         }
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_F))
+        if (_shortcuts.NextBrush.Check(ctrl, shift, alt))
         {
             lightBrushTextureIndex = ++lightBrushTextureIndex % GLOBALS.Textures.LightBrushes.Length;
 
             lightBrushTexturePage = lightBrushTextureIndex / pageSize;
         }
-        else if (Raylib.IsKeyPressed(KeyboardKey.KEY_R))
+        else if (_shortcuts.PreviousBrush.Check(ctrl, shift, alt))
         {
             lightBrushTextureIndex--;
 
@@ -132,86 +135,67 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
             lightBrushTexturePage = lightBrushTextureIndex / pageSize;
         }
 
-        if (Raylib.IsKeyDown(KeyboardKey.KEY_Q))
+        if (_shortcuts.RotateBrushCounterClockwise.Check(ctrl, shift, alt, true))
         {
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
-            {
-                lightBrushRotation -= 1;
-            }
-            else
-            {
-                lightBrushRotation -= 0.2f;
-            }
+            lightBrushRotation -= 0.2f;
+        } else if (_shortcuts.FastRotateBrushCounterClockwise.Check(ctrl, shift, alt, true))
+        {
+            lightBrushRotation -= 1;
         }
 
-        if (Raylib.IsKeyDown(KeyboardKey.KEY_E))
+        if (_shortcuts.RotateBrushClockwise.Check(ctrl, shift, alt, true))
         {
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
-            {
-                lightBrushRotation += 1;
-            }
-            else
-            {
-                lightBrushRotation += 0.2f;
-            }
+            
+            lightBrushRotation += 0.2f;
+        }
+        else if (_shortcuts.FastRotateBrushClockwise.Check(ctrl, shift, alt, true))
+        {
+            lightBrushRotation += 1;
         }
 
-        if (Raylib.IsKeyDown(KeyboardKey.KEY_W))
+        if (_shortcuts.StretchBrushVertically.Check(ctrl, shift, alt, true))
         {
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
-            {
-                lightBrushHeight += 5;
-            }
-            else
-            {
-                lightBrushHeight += 2;
-            }
+            lightBrushHeight += 2;
         }
-        else if (Raylib.IsKeyDown(KeyboardKey.KEY_S))
+        else if (_shortcuts.FastStretchBrushVertically.Check(ctrl, shift, alt, true))
         {
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
-            {
-                lightBrushHeight -= 5;
-            }
-            else
-            {
-                lightBrushHeight -= 2;
-            }
+            lightBrushHeight += 5;
+        }
+        else if (_shortcuts.SqueezeBrushVertically.Check(ctrl, shift, alt, true))
+        {
+            lightBrushHeight -= 2;
+        }
+        else if (_shortcuts.FastSqueezeBrushVertically.Check(ctrl, shift, alt, true))
+        {
+            lightBrushHeight -= 5;
         }
 
-        if (Raylib.IsKeyDown(KeyboardKey.KEY_D))
+        if (_shortcuts.StretchBrushHorizontally.Check(ctrl, shift, alt, true))
         {
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
-            {
-                lightBrushWidth += 5;
-            }
-            else
-            {
-                lightBrushWidth += 2;
-            }
+            lightBrushWidth += 2;
         }
-        else if (Raylib.IsKeyDown(KeyboardKey.KEY_A))
+        else if (_shortcuts.FastStretchBrushHorizontally.Check(ctrl, shift, alt, true))
         {
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
-            {
-                lightBrushWidth -= 5;
-            }
-            else
-            {
-                lightBrushWidth -= 2;
-            }
+            lightBrushWidth += 5;
+        }
+        else if (_shortcuts.SqueezeBrushHorizontally.Check(ctrl, shift, alt, true))
+        {
+            
+            lightBrushWidth -= 2;
+        }
+        else if (_shortcuts.FastSqueezeBrushHorizontally.Check(ctrl, shift, alt, true))
+        {
+            lightBrushWidth -= 5;
         }
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_C))
+        if (_shortcuts.ToggleShadow.Check(ctrl, shift, alt))
         {
             eraseShadow = !eraseShadow;
         }
 
         //
 
-        var lightMousePos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-
-        if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+        if (_shortcuts.Paint.Check(ctrl, shift, alt, true) || _shortcuts.PaintAlt.Check(ctrl, shift, alt, true))
         {
             BeginTextureMode(GLOBALS.Textures.LightMap);
             {
@@ -219,13 +203,13 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
                 {
                     BeginShaderMode(GLOBALS.Shaders.ApplyLightBrush);
                     SetShaderValueTexture(GLOBALS.Shaders.ApplyLightBrush, GetShaderLocation(GLOBALS.Shaders.ApplyLightBrush, "inputTexture"), GLOBALS.Textures.LightBrushes[lightBrushTextureIndex]);
-                    Raylib.DrawTexturePro(
+                    DrawTexturePro(
                         GLOBALS.Textures.LightBrushes[lightBrushTextureIndex],
                         lightBrushSource,
                         lightBrushDest,
                         lightBrushOrigin,
                         lightBrushRotation,
-                        new(255, 255, 255, 255)
+                        new Color(255, 255, 255, 255)
                         );
                     EndShaderMode();
                 }
@@ -233,7 +217,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
                 {
                     BeginShaderMode(GLOBALS.Shaders.ApplyShadowBrush);
                     SetShaderValueTexture(GLOBALS.Shaders.ApplyShadowBrush, GetShaderLocation(GLOBALS.Shaders.ApplyShadowBrush, "inputTexture"), GLOBALS.Textures.LightBrushes[lightBrushTextureIndex]);
-                    Raylib.DrawTexturePro(
+                    DrawTexturePro(
                         GLOBALS.Textures.LightBrushes[lightBrushTextureIndex],
                         lightBrushSource,
                         lightBrushDest,
@@ -247,10 +231,10 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
             Raylib.EndTextureMode();
         }
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_SPACE)) slowGrowth = !slowGrowth;
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_R)) shading = !shading;
+        if (_shortcuts.SlowWarpSpeed.Check(ctrl, shift, alt)) slowGrowth = !slowGrowth;
+        if (IsKeyPressed(KeyboardKey.KEY_R)) shading = !shading;
 
-        if (slowGrowth)
+        /*if (slowGrowth)
         {
             if (Raylib.IsKeyDown(KeyboardKey.KEY_W))
             {
@@ -287,7 +271,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
             if (Raylib.IsKeyDown(KeyboardKey.KEY_S)) lightRecSize = RayMath.Vector2Add(lightRecSize, new(0, -3));
             if (Raylib.IsKeyDown(KeyboardKey.KEY_D)) lightRecSize = RayMath.Vector2Add(lightRecSize, new(3, 0));
             if (Raylib.IsKeyDown(KeyboardKey.KEY_A)) lightRecSize = RayMath.Vector2Add(lightRecSize, new(-3, 0));
-        }
+        }*/
 
 
         Raylib.BeginDrawing();

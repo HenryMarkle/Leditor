@@ -316,7 +316,7 @@ internal class MainPage(Serilog.Core.Logger logger) : IPage
                         "New Project"
                     );
 
-                    if (loadPressed) GLOBALS.Page = 11;
+                    if (loadPressed) GLOBALS.Page = 0;
                     if (newPressed)
                     {
                         GLOBALS.NewFlag = true;

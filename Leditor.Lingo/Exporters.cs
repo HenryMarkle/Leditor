@@ -83,7 +83,7 @@ public static class Exporters
                     var data = cell.Data switch
                     {
                         TileDefault => "0",
-                        TileMaterial m => m.Name,
+                        TileMaterial m => $"\"{m.Name}\"",
                         TileHead h => $"[point({h.CategoryPostition.Item1}, {h.CategoryPostition.Item2}), \"{h.CategoryPostition.Item3}\"]",
                         TileBody b => $"[point({b.HeadPosition.x}, {b.HeadPosition.y}), {b.HeadPosition.z}]",
                         
@@ -101,9 +101,10 @@ public static class Exporters
             }
 
             builder.Append(']');
+            if (x != matrix.GetLength(1) - 1) builder.Append(", ");
         }
         
-        builder.Append($"#defaultMaterial: \"{defaultMaterial}\", #toolType: \"material\", #toolData: \"BigMetal\", #tmPos: point(1, 5), #tmSavPosL: [5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], #specialEdit: 0]");
+        builder.Append($"], #defaultMaterial: \"{defaultMaterial}\", #toolType: \"material\", #toolData: \"BigMetal\", #tmPos: point(1, 5), #tmSavPosL: [5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], #specialEdit: 0]");
         
         return builder.ToString();
     }
@@ -114,6 +115,7 @@ public static class Exporters
 
         builder.Append("[#lastKeys: [#n: 0, #m1: 0, #m2: 0, #w: 0, #a: 0, #s: 0, #d: 0, #e: 0, #r: 0, #f: 0], #Keys: [#n: 0, #m1: 0, #m2: 0, #w: 0, #a: 0, #s: 0, #d: 0, #e: 0, #r: 0, #f: 0], #lstMsPs: point(44, 27), #effects: [");
 
+        
         for (var e = 0; e < effects.Length; e++)
         {
             var (name, options, mtx) = effects[e];
@@ -154,7 +156,7 @@ public static class Exporters
         }
 
         builder.Append(
-            "#emPos: point(3, 1), #editEffect: 10, #selectEditEffect: 10, #mode: \"editEffect\", #brushSize: 3");
+            "], #emPos: point(3, 1), #editEffect: 10, #selectEditEffect: 10, #mode: \"editEffect\", #brushSize: 3");
         
         builder.Append(']');
         

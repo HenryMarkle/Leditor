@@ -685,7 +685,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
             {
                 fixed (int* scrollIndex = &_geoMenuScrollIndex)
                 {
-                    _geoMenuIndex = RayGui.GuiListView(
+                    var newGeoMenuIndex = RayGui.GuiListView(
                         new(panelRect.X + 10, 150, 270, 200),
                         _geoMenuCategory switch
                         {
@@ -698,6 +698,15 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                         scrollIndex,
                         _geoMenuIndex
                     );
+
+                    if (newGeoMenuIndex != _geoMenuIndex && newGeoMenuIndex != -1)
+                    {
+                        #if DEBUG
+                        _logger.Debug($"New geo menu index: {newGeoMenuIndex}");
+                        #endif
+                        
+                        _geoMenuCategory = newGeoMenuIndex;
+                    }
                 }
             }
             

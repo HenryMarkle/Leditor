@@ -3,10 +3,10 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsPublishable>False</IsPublishable>
-    <!-- <UseWindowsForms>true</UseWindowsForms> -->
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,5 +16,14 @@
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System"/> 
+    <Using Include="System.IO"/> 
+    <Using Include="System.Linq"/> 
+    <Using Include="System.Collections.Generic"/> 
+    <Using Include="System.Threading.Tasks"/> 
+  </ItemGroup>
+
 
 </Project>
