@@ -117,6 +117,30 @@ public class GeoShortcuts
     public KeyboardShortcut Redo { get; set; } = new(Ctrl:true, Shift:true, Key:KeyboardKey.KEY_Z);
 }
 
+public class ExperimentalGeoShortcuts
+{
+    public KeyboardShortcut ToRightGeo { get; set; } = new(KeyboardKey.KEY_D);
+    public KeyboardShortcut ToLeftGeo { get; set; } = new(KeyboardKey.KEY_A);
+    public KeyboardShortcut ToTopGeo { get; set; } = new(KeyboardKey.KEY_W);
+    public KeyboardShortcut ToBottomGeo { get; set; } = new(KeyboardKey.KEY_S);
+    public KeyboardShortcut CycleLayer { get; set; } = new(KeyboardKey.KEY_L);
+    public KeyboardShortcut ToggleGrid { get; set; } = new(KeyboardKey.KEY_M);
+    public KeyboardShortcut ShowCameras { get; set; } = new(KeyboardKey.KEY_C);
+    public KeyboardShortcut EraseEverything { get; set; } = new(KeyboardKey.KEY_X);
+
+    public MouseShortcut Draw { get; set; } = new(MouseButton.MOUSE_BUTTON_LEFT);
+    public MouseShortcut Erase { get; set; } = new(MouseButton.MOUSE_BUTTON_RIGHT);
+    
+    public MouseShortcut DragLevel { get; set; } = new(MouseButton.MOUSE_BUTTON_MIDDLE);
+
+    public KeyboardShortcut DrawAlt { get; set; } = new(KeyboardKey.KEY_Z);
+    public KeyboardShortcut EraseAlt { get; set; } = new(KeyboardKey.KEY_F);
+    public KeyboardShortcut DragLevelAlt { get; set; } = new(KeyboardKey.KEY_V);
+    
+    public KeyboardShortcut Undo { get; set; } = new(Ctrl:true, Key:KeyboardKey.KEY_Z);
+    public KeyboardShortcut Redo { get; set; } = new(Ctrl:true, Shift:true, Key:KeyboardKey.KEY_Z);
+}
+
 public record TileShortcuts
 {
     public KeyboardShortcut FocusOnTileMenu { get; set; } = new(KeyboardKey.KEY_D);
@@ -140,8 +164,8 @@ public record TileShortcuts
     public KeyboardShortcut ToggleLayer3Tiles { get; set; } = new(KeyboardKey.KEY_C, Shift:true);
 
     public MouseShortcut Draw { get; set; } = new(MouseButton.MOUSE_BUTTON_LEFT);
-    public MouseShortcut Erase { get; set; } = new(MouseButton.MOUSE_BUTTON_RIGHT, Shift:true);
-    public MouseShortcut DragLevel { get; set; } = new(MouseButton.MOUSE_BUTTON_RIGHT);
+    public MouseShortcut Erase { get; set; } = new(MouseButton.MOUSE_BUTTON_RIGHT);
+    public MouseShortcut DragLevel { get; set; } = new(MouseButton.MOUSE_BUTTON_MIDDLE);
 }
 
 public class CameraShortcuts
@@ -199,10 +223,8 @@ public class LightShortcuts
 public class EffectsShortcuts
 {
     public KeyboardShortcut NewEffect { get; set; } = KeyboardKey.KEY_N;
-    
-    public KeyboardShortcut MoveDownInNewEffectCategoryMenu { get; set; } = KeyboardKey.KEY_S;
-    public KeyboardShortcut MoveUpInNewEffectCategoryMenu { get; set; } = KeyboardKey.KEY_W;
-    
+
+    public KeyboardShortcut NewEffectMenuCategoryNavigation { get; set; } = new(KeyboardKey.KEY_LEFT_SHIFT, Shift: true);    
     public KeyboardShortcut MoveDownInNewEffectMenu { get; set; } = KeyboardKey.KEY_S;
     public KeyboardShortcut MoveUpInNewEffectMenu { get; set; } = KeyboardKey.KEY_W;
 
@@ -301,6 +323,7 @@ public class GlobalShortcuts
 public class Shortcuts(
     GlobalShortcuts globalShortcuts,
     GeoShortcuts geoEditor,
+    ExperimentalGeoShortcuts experimentalGeoShortcuts,
     TileShortcuts tileEditor,
     CameraShortcuts cameraEditor,
     LightShortcuts lightEditor,
@@ -310,6 +333,8 @@ public class Shortcuts(
 {
     public GlobalShortcuts GlobalShortcuts { get; set; } = globalShortcuts;
     public GeoShortcuts GeoEditor { get; set; } = geoEditor;
+    
+    public ExperimentalGeoShortcuts ExperimentalGeoShortcuts { get; set; } = experimentalGeoShortcuts;
     public TileShortcuts TileEditor { get; set; } = tileEditor;
     public CameraShortcuts CameraEditor { get; set; } = cameraEditor;
     public LightShortcuts LightEditor { get; set; } = lightEditor;
@@ -393,17 +418,17 @@ public class LightEditor(ConColor background)
 #region ShortcutSystem
 
 public interface IShortcut { 
-    bool Ctrl { get; } 
-    bool Shift { get; }
-    bool Alt { get; }
+    bool? Ctrl { get; } 
+    bool? Shift { get; }
+    bool? Alt { get; }
     bool Check(bool ctrl = false, bool shift = false, bool alt = false, bool hold = false);
 }
 
 public record KeyboardShortcut(
     KeyboardKey Key, 
-    bool Ctrl = false, 
-    bool Shift = false,
-    bool Alt = false
+    bool? Ctrl = null, 
+    bool? Shift = null,
+    bool? Alt = null
 ) : IShortcut
 {
     public static implicit operator KeyboardKey(KeyboardShortcut k) => k.Key;
@@ -411,20 +436,18 @@ public record KeyboardShortcut(
     
     public bool Check(bool ctrl = false, bool shift = false, bool alt = false, bool hold = false)
     {
-        return Ctrl == ctrl && Shift == shift && Alt == alt && (hold ? Raylib.IsKeyDown(Key) : Raylib.IsKeyPressed(Key));
+        return (Ctrl is null || Ctrl == ctrl) && (Shift is null || Shift == shift) && (Alt is null || Alt == alt) && (hold ? Raylib.IsKeyDown(Key) : Raylib.IsKeyPressed(Key));
     }
 }
 
-public record MouseShortcut(MouseButton Button, bool Ctrl = false, bool Shift = false, bool Alt = false) : IShortcut
+public record MouseShortcut(MouseButton Button, bool? Ctrl = null, bool? Shift = null, bool? Alt = null) : IShortcut
 {
     public static implicit operator MouseButton(MouseShortcut b) => b.Button;
     public static implicit operator MouseShortcut(MouseButton m) => new(m);
     
     public bool Check(bool ctrl = false, bool shift = false, bool alt = false, bool hold = false)
     {
-        return Ctrl == ctrl && 
-               Shift == shift && 
-               Alt == alt &&
+        return (Ctrl is null || Ctrl == ctrl) && (Shift is null || Shift == shift) && (Alt is null || Alt == alt) &&
                (hold ? Raylib.IsMouseButtonDown(Button) : Raylib.IsMouseButtonPressed(Button));
     }
 }

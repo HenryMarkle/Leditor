@@ -8,6 +8,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 {
     private readonly Serilog.Core.Logger _logger = logger;
 
+    private readonly ExperimentalGeoShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts;
+
     private Camera2D _camera = new() { zoom = 1.0f };
     
     private bool _multiselect;
@@ -20,7 +22,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
     private bool _eraseMode;
     private bool _eraseAllMode;
-    private bool _allowMultiSelect;
+    private bool _allowMultiSelect = true;
     
     private int _prevCoordsX = -1;
     private int _prevCoordsY = -1;
@@ -39,47 +41,31 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
     
     public void Draw()
     {
+        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
+        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+        
         GLOBALS.PreviousPage = 2;
         var scale = GLOBALS.Scale;
         var settings = GLOBALS.Settings;
         Span<Color> layerColors = [settings.GeometryEditor.LayerColors.Layer1, settings.GeometryEditor.LayerColors.Layer2, settings.GeometryEditor.LayerColors.Layer3];
 
-        if (IsKeyPressed(KeyboardKey.KEY_ONE))
-        {
-            GLOBALS.Page = 1;
-        }
-        // if (IsKeyReleased(KeyboardKey.KEY_TWO)) page = 2;
-        if (IsKeyReleased(KeyboardKey.KEY_THREE))
-        {
-            GLOBALS.Page = 3;
-        }
-        if (IsKeyReleased(KeyboardKey.KEY_FOUR))
-        {
-            GLOBALS.Page = 4;
-        }
-        if (IsKeyReleased(KeyboardKey.KEY_FIVE))
-        {
-            GLOBALS.Page = 5;
-        }
-        if (IsKeyReleased(KeyboardKey.KEY_SIX))
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
+        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 2;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 3;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 4;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 5;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.ResizeFlag = true;
             GLOBALS.Page = 6;
+            _logger.Debug("go from GLOBALS.Page 2 to GLOBALS.Page 6");
         }
-        if (IsKeyReleased(KeyboardKey.KEY_SEVEN))
-        {
-            GLOBALS.Page = 7;
-        }
-        if (IsKeyReleased(KeyboardKey.KEY_EIGHT))
-        {
-            GLOBALS.Page = 8;
-        }
-        if (IsKeyReleased(KeyboardKey.KEY_NINE))
-        {
-            GLOBALS.Page = 9;
-        }
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 7;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
+        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
 
-        Vector2 mouse = GetScreenToWorld2D(GetMousePosition(), _camera);
+        var mouse = GetScreenToWorld2D(GetMousePosition(), _camera);
 
         //                        v this was done to avoid rounding errors
         int matrixY = mouse.Y < 0 ? -1 : (int)mouse.Y / scale;
@@ -94,63 +80,61 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
         // handle geo selection
 
-        if (IsKeyPressed(KeyboardKey.KEY_A))
+        if (_shortcuts.ToLeftGeo.Check(ctrl, shift, alt))
         {
             _geoMenuCategory--;
             if (_geoMenuCategory < 0) _geoMenuCategory = 3;
             _geoMenuIndex = 0;
         }
 
-        if (IsKeyPressed(KeyboardKey.KEY_D))
+        if (_shortcuts.ToRightGeo.Check(ctrl, shift, alt))
         {
             _geoMenuCategory = ++_geoMenuCategory % 4;
             _geoMenuIndex = 0;
         }
 
-        if (IsKeyPressed(KeyboardKey.KEY_W))
+        if (_shortcuts.ToTopGeo.Check(ctrl, shift, alt))
         {
             _geoMenuIndex--;
             if (_geoMenuIndex < 0) _geoMenuIndex = GeoMenuIndexMaxCount[_geoMenuCategory] - 1;
         }
 
-        if (IsKeyPressed(KeyboardKey.KEY_S))
+        if (_shortcuts.ToBottomGeo.Check(ctrl, shift, alt))
         {
             _geoMenuIndex = ++_geoMenuIndex % GeoMenuIndexMaxCount[_geoMenuCategory];
         }
 
-        if (IsKeyPressed(KeyboardKey.KEY_E)) _eraseMode = !_eraseMode;
-
         if (IsKeyPressed(KeyboardKey.KEY_Q)) _allowMultiSelect = !_allowMultiSelect;
 
-        if (IsKeyPressed(KeyboardKey.KEY_R)) _eraseAllMode = !_eraseAllMode;
+        _eraseAllMode = _shortcuts.EraseEverything.Check(ctrl, shift, alt, true);
 
         // handle changing layers
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_L))
+        if (_shortcuts.CycleLayer.Check(ctrl, shift, alt))
         {
             GLOBALS.Layer = ++GLOBALS.Layer % 3;
         }
 
-        if (Raylib.IsKeyPressed(KeyboardKey.KEY_M))
+        if (_shortcuts.ToggleGrid.Check(ctrl, shift, alt))
         {
             _hideGrid = !_hideGrid;
         }
 
         // handle mouse drag
-        if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+        if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.DragLevelAlt.Check(ctrl, shift, alt, true))
         {
-            Vector2 delta = Raylib.GetMouseDelta();
+            var delta = GetMouseDelta();
             delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
             _camera.target = RayMath.Vector2Add(_camera.target, delta);
         }
 
 
         // handle zoom
-        var wheel = Raylib.GetMouseWheelMove();
+        var wheel = GetMouseWheelMove();
         if (wheel != 0)
         {
-            Vector2 mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), _camera);
-            _camera.offset = Raylib.GetMousePosition();
+            var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
+            _camera.offset = GetMousePosition();
             _camera.target = mouseWorldPosition;
             _camera.zoom += wheel * GLOBALS.ZoomIncrement;
             if (_camera.zoom < GLOBALS.ZoomIncrement) _camera.zoom = GLOBALS.ZoomIncrement;
@@ -162,7 +146,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
         if (_allowMultiSelect)
         {
-            if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT) && !_clickTracker)
+            if ((_shortcuts.Draw.Check(ctrl, shift, alt, true) || _shortcuts.DrawAlt.Check(ctrl, shift, alt, true)) && !_clickTracker)
             {
                 if (canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width)
                 {
@@ -171,10 +155,25 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
                     _prevCoordsX = matrixX;
                     _prevCoordsY = matrixY;
+
+                    _eraseMode = false;
+                }
+            }
+            else if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.EraseAlt.Check(ctrl, shift, alt, true)) && !_clickTracker)
+            {
+                if (canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width)
+                {
+                    _clickTracker = true;
+                    _multiselect = true;
+
+                    _prevCoordsX = matrixX;
+                    _prevCoordsY = matrixY;
+
+                    _eraseMode = true;
                 }
             }
 
-            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+            if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.DrawAlt.Key)) && !_eraseMode)
             {
                 _clickTracker = false;
 
@@ -284,24 +283,132 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
                 _multiselect = false;
             }
+            if (IsMouseButtonReleased(_shortcuts.Erase.Button) || IsKeyReleased(_shortcuts.EraseAlt.Key) && _eraseMode)
+            {
+                _clickTracker = false;
+
+                int startX, startY, endX, endY;
+
+                if (matrixX > _prevCoordsX)
+                {
+                    startX = _prevCoordsX;
+                    endX = matrixX;
+                }
+                else
+                {
+                    startX = matrixX;
+                    endX = _prevCoordsX;
+                }
+
+                if (matrixY > _prevCoordsY)
+                {
+                    startY = _prevCoordsY;
+                    endY = matrixY;
+                }
+                else
+                {
+                    startY = matrixY;
+                    endY = _prevCoordsY;
+                }
+
+                for (var y = startY; y <= endY; y++)
+                {
+                    for (var x = startX; x <= endX; x++)
+                    {
+                        if (x < 0 || x >= GLOBALS.Level.Width || y < 0 || y >= GLOBALS.Level.Height) continue;
+
+                        if (_eraseAllMode)
+                        {
+                            var cell = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer];
+
+                            cell.Geo = 0;
+                            Array.Fill(cell.Stackables, false);
+
+                            GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer] = cell;
+                        }
+                        else
+                        {
+                            switch (_geoMenuCategory)
+                            {
+                                case 0:
+                                    {
+
+                                        var id = GeoMenuIndexToBlockId[_geoMenuIndex];
+
+                                        // slope
+                                        if (id == 2)
+                                        {
+                                            var slope = Utils.GetCorrectSlopeID(Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, GLOBALS.Layer));
+                                            if (slope == -1) break;
+                                            GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Geo = 0;
+                                        }
+                                        // solid, platform, glass
+                                        else
+                                        {
+                                            GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Geo = 0;
+                                        }
+                                    }
+                                    break;
+
+                                case 1:
+                                    {
+                                        var id = GeoMenuCategory2ToStackableId[_geoMenuIndex];
+                                        GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Stackables[id] = false;
+                                    }
+                                    break;
+
+                                case 2:
+                                    {
+                                        if (
+                                            x * scale < GLOBALS.Level.Border.X ||
+                                            x * scale >= GLOBALS.Level.Border.width + GLOBALS.Level.Border.X ||
+                                            y * scale < GLOBALS.Level.Border.Y ||
+                                            y * scale >= GLOBALS.Level.Border.height + GLOBALS.Level.Border.Y) break;
+
+                                        if (_geoMenuIndex == 0 && GLOBALS.Layer != 0) break;
+
+                                        var id = GeoMenuCategory3ToStackableId[_geoMenuIndex];
+                                        GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Stackables[id] = false;
+                                    }
+                                    break;
+
+                                case 3:
+                                    {
+                                        if (
+                                            x * scale < GLOBALS.Level.Border.X ||
+                                            x * scale >= GLOBALS.Level.Border.width + GLOBALS.Level.Border.X ||
+                                            y * scale < GLOBALS.Level.Border.Y ||
+                                            y * scale >= GLOBALS.Level.Border.height + GLOBALS.Level.Border.Y) break;
+
+                                        if (GLOBALS.Layer != 0) break;
+
+                                        var id = GeoMenuCategory4ToStackableId[_geoMenuIndex];
+                                        GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Stackables[id] = false;
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                }
+
+                _multiselect = false;
+            }
         }
         // handle placing geo
         else
         {
-            if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT) && canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width)
+            if ((_shortcuts.Erase.Check(ctrl, shift, alt) || _shortcuts.EraseAlt.Check(ctrl, shift, alt)) && canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width)
             {
-                if (_eraseAllMode)
-                {
-                    var cell = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+                var cell = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
 
-                    cell.Geo = 0;
-                    Array.Fill(cell.Stackables, false);
+                cell.Geo = 0;
+                Array.Fill(cell.Stackables, false);
 
-                    GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = cell;
-                }
-                else
-                {
-                    switch (_geoMenuCategory)
+                GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = cell;
+            }
+            if ((_shortcuts.Draw.Check(ctrl, shift, alt) || _shortcuts.DrawAlt.Check(ctrl, shift, alt)) && canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width)
+            {
+                switch (_geoMenuCategory)
                     {
                         case 0:
                             {
@@ -360,7 +467,6 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                             }
                             break;
                     }
-                }
             }
         }
 

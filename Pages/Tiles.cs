@@ -183,7 +183,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
         {
             if (_materialTileSwitch)
             {
-                if (_shortcuts.ForcePlaceTileWithGeo.Check(ctrl, shift, alt))
+                if (_shortcuts.ForcePlaceTileWithGeo.Check(ctrl, shift, alt, true))
                 {
                     GLOBALS.Level.ForcePlaceTileWithGeo(
                         currentTileInit, 
@@ -194,7 +194,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                         )
                     );
                 } 
-                else if (_shortcuts.ForcePlaceTileWithoutGeo.Check(ctrl, shift, alt))
+                else if (_shortcuts.ForcePlaceTileWithoutGeo.Check(ctrl, shift, alt, true))
                 {
                     GLOBALS.Level.ForcePlaceTileWithoutGeo(
                         currentTileInit, 

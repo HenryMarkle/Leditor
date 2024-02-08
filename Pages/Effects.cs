@@ -90,40 +90,40 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
         if (addNewEffectMode)
         {
-            if (_shortcuts.MoveUpInNewEffectMenu.Check(ctrl, shift, alt))
+            if (_shortcuts.NewEffectMenuCategoryNavigation.Check(ctrl, shift, alt, true))
             {
-                newEffectSelectedValue = --newEffectSelectedValue;
-                if (newEffectSelectedValue < 0) newEffectSelectedValue = GLOBALS.Effects[newEffectCategorySelectedValue].Length - 1;
-            }
-            else if (_shortcuts.MoveDownInNewEffectMenu.Check(ctrl, shift, alt))
-            {
-                newEffectSelectedValue = ++newEffectSelectedValue % GLOBALS.Effects[newEffectCategorySelectedValue].Length;
-            }
-            else if (_shortcuts.MoveUpInNewEffectCategoryMenu.Check(ctrl, shift, alt))
-            {
-                newEffectSelectedValue = 0;
+                if (IsKeyPressed(_shortcuts.MoveUpInNewEffectMenu.Key))
+                {
+                    newEffectSelectedValue = 0;
 
-                newEffectCategorySelectedValue = --newEffectCategorySelectedValue;
+                    newEffectCategorySelectedValue = --newEffectCategorySelectedValue;
 
-                if (newEffectCategorySelectedValue < 0) newEffectCategorySelectedValue = GLOBALS.EffectCategories.Length - 1;
+                    if (newEffectCategorySelectedValue < 0) newEffectCategorySelectedValue = GLOBALS.EffectCategories.Length - 1;
+                }
+                else if (IsKeyPressed(_shortcuts.MoveDownInNewEffectMenu.Key))
+                {
+                    newEffectSelectedValue = 0;
+                    newEffectCategorySelectedValue = ++newEffectCategorySelectedValue % GLOBALS.EffectCategories.Length;
+                }
             }
-            else if (_shortcuts.MoveDownInNewEffectCategoryMenu.Check(ctrl, shift, alt))
+            else
             {
-                newEffectSelectedValue = 0;
-                newEffectCategorySelectedValue = ++newEffectCategorySelectedValue % GLOBALS.EffectCategories.Length;
+                if (_shortcuts.MoveUpInNewEffectMenu.Check(ctrl, shift, alt))
+                {
+                    newEffectSelectedValue = --newEffectSelectedValue;
+                    if (newEffectSelectedValue < 0) newEffectSelectedValue = GLOBALS.Effects[newEffectCategorySelectedValue].Length - 1;
+                }
+                else if (_shortcuts.MoveDownInNewEffectMenu.Check(ctrl, shift, alt))
+                {
+                    newEffectSelectedValue = ++newEffectSelectedValue % GLOBALS.Effects[newEffectCategorySelectedValue].Length;
+                }
+                
             }
+            
+            
 
-            /*if (Raylib.IsKeyPressed(KeyboardKey.KEY_D))
-            {
-                newEffectFocus = true;
-            }
-
-            if (Raylib.IsKeyPressed(KeyboardKey.KEY_A))
-            {
-                newEffectFocus = false;
-            }*/
-
-            if ((_shortcuts.AcceptNewEffect.Check(ctrl, shift, alt) || _shortcuts.AcceptNewEffectAlt.Check(ctrl, shift, alt)) && newEffectSelectedValue > 0)
+            if ((_shortcuts.AcceptNewEffect.Check(ctrl, shift, alt) || _shortcuts.AcceptNewEffectAlt.Check(ctrl, shift, alt)) && 
+                newEffectSelectedValue > -1)
             {
                 GLOBALS.Level.Effects = [
                     .. GLOBALS.Level.Effects,
@@ -135,6 +135,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                 ];
 
                 addNewEffectMode = false;
+                if (currentAppliedEffect == -1) currentAppliedEffect = 0;
             }
 
             BeginDrawing();
@@ -149,8 +150,8 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
                 RayGui.GuiLine(
                     new(
-                        Raylib.GetScreenWidth() / 2 - 390,
-                        Raylib.GetScreenHeight() / 2 - 265,
+                        Raylib.GetScreenWidth() / 2f - 390,
+                        Raylib.GetScreenHeight() / 2f - 265,
                         150,
                         10
                     ),
@@ -161,10 +162,10 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                 {
                     fixed (byte* pt = addNewEffectPanelBytes)
                     {
-                        Raylib_CsLo.RayGui.GuiPanel(
+                        RayGui.GuiPanel(
                             new(
-                                Raylib.GetScreenWidth() / 2 - 400,
-                                Raylib.GetScreenHeight() / 2 - 300,
+                                Raylib.GetScreenWidth() / 2f - 400,
+                                Raylib.GetScreenHeight() / 2f - 300,
                                 800,
                                 600
                             ),
@@ -176,8 +177,8 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                     {
                         var newNewEffectCategorySelectedValue = RayGui.GuiListView(
                             new(
-                                Raylib.GetScreenWidth() / 2 - 390,
-                                Raylib.GetScreenHeight() / 2 - 250,
+                                Raylib.GetScreenWidth() / 2f - 390,
+                                Raylib.GetScreenHeight() / 2f - 250,
                                 150,
                                 540
                             ),
@@ -200,8 +201,8 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
                 if (!newEffectFocus) DrawRectangleLinesEx(
                     new(
-                        GetScreenWidth() / 2 - 390,
-                        GetScreenHeight() / 2 - 250,
+                        GetScreenWidth() / 2f - 390,
+                        GetScreenHeight() / 2f - 250,
                         150,
                         540
                     ),
@@ -215,8 +216,8 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                     {
                         newEffectSelectedValue = RayGui.GuiListView(
                             new(
-                                GetScreenWidth() / 2 - 230,
-                                GetScreenHeight() / 2 - 250,
+                                GetScreenWidth() / 2f - 230,
+                                GetScreenHeight() / 2f - 250,
                                 620,
                                 540
                             ),
@@ -228,10 +229,10 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                 }
 
 
-                if (newEffectFocus) Raylib.DrawRectangleLinesEx(
+                if (newEffectFocus) DrawRectangleLinesEx(
                     new(
-                        Raylib.GetScreenWidth() / 2 - 230,
-                        Raylib.GetScreenHeight() / 2 - 250,
+                        GetScreenWidth() / 2f - 230,
+                        GetScreenHeight() / 2f - 250,
                         620,
                         540
                     ),
@@ -239,7 +240,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                     new(0, 0, 255, 255)
                 );
             }
-            Raylib.EndDrawing();
+            EndDrawing();
         }
         else
         {
@@ -559,7 +560,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                 {
                     fixed (byte* pt = appliedEffectsPanelBytes)
                     {
-                        Raylib_CsLo.RayGui.GuiPanel(
+                        RayGui.GuiPanel(
                             new(
                                 Raylib.GetScreenWidth() - 300,
                                 100,
@@ -620,7 +621,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                 // i is index relative to the GLOBALS.Page; oi is index relative to the whole list
                 foreach (var (i, (oi, e)) in GLOBALS.Level.Effects.Select((value, i) => (i, value)).Skip(appliedEffectPageSize * currentAppliedEffectPage).Take(appliedEffectPageSize).Select((value, i) => (i, value)))
                 {
-                    Raylib.DrawRectangleLines(
+                    DrawRectangleLines(
                         Raylib.GetScreenWidth() - 290,
                         130 + (35 * i),
                         260,
@@ -628,7 +629,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                         new(0, 0, 0, 255)
                     );
 
-                    if (oi == currentAppliedEffect) Raylib.DrawRectangleLinesEx(
+                    if (oi == currentAppliedEffect) DrawRectangleLinesEx(
                         new(
                             Raylib.GetScreenWidth() - 290,
                             130 + (35 * i),
@@ -722,7 +723,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                         }
                     }
 
-                    var options = GLOBALS.Level.Effects.Length > 0 
+                    var options = GLOBALS.Level.Effects.Length > 0 && currentAppliedEffect != -1
                         ? GLOBALS.Level.Effects[currentAppliedEffect].Item2 
                         : [];
 

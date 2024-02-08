@@ -330,10 +330,10 @@ internal static class Utils
     /// Determines the "middle" of a tile, which where the tile head is positioned.
     /// </summary>
     /// <param name="init">a reference to the tile definition</param>
-    internal static System.Numerics.Vector2 GetTileHeadOrigin(in InitTile init)
+    internal static Vector2 GetTileHeadOrigin(in InitTile init)
     {
         var (width, height) = init.Size;
-        return new System.Numerics.Vector2(GetMiddle(width), GetMiddle(height));
+        return new Vector2(GetMiddle(width), GetMiddle(height));
     }
 
     /// Maps a geo block id to a block texture index

@@ -576,7 +576,7 @@ internal static class GLOBALS
             {
                 //Console.WriteLine($"Deleting tile head at ({mx},{my},{mz})");
                 var data = (TileHead)cell.Data;
-                var tileInit = Tiles[data.CategoryPostition.Item1 - 5][data.CategoryPostition.Item2 - 1];
+                var tileInit = Tiles[data.CategoryPostition.Item1][data.CategoryPostition.Item2];
                 var (width, height) = tileInit.Size;
 
                 bool isThick = tileInit.Specs2.Length > 0;
@@ -615,23 +615,23 @@ internal static class GLOBALS
                 }
 
                 var headTile = (TileHead)supposedHead.Data;
-                var tileInit = Tiles[headTile.CategoryPostition.Item1 - 5][headTile.CategoryPostition.Item2 - 1];
+                var tileInit = Tiles[headTile.CategoryPostition.Item1][headTile.CategoryPostition.Item2];
                 var (width, height) = tileInit.Size;
 
                 bool isThick = tileInit.Specs2.Length > 0;
 
                 // get the "middle" point of the tile
-                var head = Utils.GetTileHeadOrigin(ref tileInit);
+                var head = Utils.GetTileHeadOrigin(tileInit);
 
                 // the top-left of the tile
                 var start = RayMath.Vector2Subtract(new(headX, headY), RayMath.Vector2AddValue(head, 1));
 
-                for (int y = 0; y < height; y++)
+                for (var y = 0; y < height; y++)
                 {
-                    for (int x = 0; x < width; x++)
+                    for (var x = 0; x < width; x++)
                     {
-                        int matrixX = x + (int)start.X;
-                        int matrixY = y + (int)start.Y;
+                        var matrixX = x + (int)start.X;
+                        var matrixY = y + (int)start.Y;
 
                         TileMatrix[matrixY, matrixX, mz] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
                         if (isThick && mz != 2) TileMatrix[matrixY, matrixX, mz + 1] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
@@ -980,6 +980,7 @@ internal static class GLOBALS
             new Shortcuts(
                 new GlobalShortcuts(),
                 new GeoShortcuts(),
+                new ExperimentalGeoShortcuts(),
                 new TileShortcuts(),
                 new CameraShortcuts(),
                 new LightShortcuts(),
