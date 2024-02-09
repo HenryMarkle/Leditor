@@ -400,8 +400,8 @@ internal static class Printers
                         initTile.Size.Item1 % 2 == 0 ? x * scale + scale : x * scale + scale/2f, 
                         initTile.Size.Item2 % 2 == 0 ? y * scale + scale : y * scale + scale/2f);
 
-                    var width = 0.4f * (initTile.Type == InitTileType.Box ? initTile.Size.Item1 : initTile.Size.Item1 + initTile.BufferTiles * 2) * 20;
-                    var height = 0.4f * (initTile.Size.Item2 + initTile.BufferTiles*2) * 20;
+                    var width = (scale / 20f)/2 * (initTile.Type == InitTileType.Box ? initTile.Size.Item1 : initTile.Size.Item1 + initTile.BufferTiles * 2) * 20;
+                    var height = (scale / 20f)/2 * (initTile.Size.Item2 + initTile.BufferTiles*2) * 20;
                     
                     if (!preview)
                     {
@@ -439,7 +439,7 @@ internal static class Printers
                             );
                         }
                     }
-                    else DrawTilePreview(initTile, tileTexture, color, (x, y), scale);
+                    else DrawTilePreview(initTile, tileTexture, color, new Vector2(x, y), scale);
                 }
                 else if (tileCell.Type == TileType.Material)
                 {
@@ -643,9 +643,9 @@ internal static class Printers
         var widthLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "width");
 
         var startingTextureHeight = Utils.GetTilePreviewStartingHeight(init);
-        float calcStartingTextureHeight = (float)startingTextureHeight / (float)texture.height;
-        float calcTextureHeight = (float)(init.Size.Item2 * scale) / (float)texture.height;
-        float calcTextureWidth = (float)(init.Size.Item1 * scale) / (float)texture.width;
+        var calcStartingTextureHeight = (float)startingTextureHeight / (float)texture.height;
+        var calcTextureHeight = (float)(init.Size.Item2 * 16) / (float)texture.height;
+        var calcTextureWidth = (float)(init.Size.Item1 * 16) / (float)texture.width;
 
         BeginShaderMode(GLOBALS.Shaders.TilePreview);
         SetShaderValueTexture(GLOBALS.Shaders.TilePreview, uniformLoc, texture);
@@ -662,6 +662,49 @@ internal static class Printers
             0,
             WHITE
         );
+        
+        EndShaderMode();
+    }
+    
+    internal static void DrawTilePreview(
+        in InitTile init, 
+        in Texture texture, 
+        in Color color, 
+        in Vector2 position,
+        in int scale
+    )
+    {
+        var uniformLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "inputTexture");
+        var colorLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "highlightColor");
+        var heightStartLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "heightStart");
+        var heightLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "height");
+        var widthLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "width");
+
+        var startingTextureHeight = Utils.GetTilePreviewStartingHeight(init);
+        var calcStartingTextureHeight = (float)startingTextureHeight / (float)texture.height;
+        var calcTextureHeight = (float)(init.Size.Item2 * 16) / (float)texture.height;
+        var calcTextureWidth = (float)(init.Size.Item1 * 16) / (float)texture.width;
+
+        BeginShaderMode(GLOBALS.Shaders.TilePreview);
+        SetShaderValueTexture(GLOBALS.Shaders.TilePreview, uniformLoc, texture);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, colorLoc, new Vector4(color.r, color.g, color.b, color.a/255f), ShaderUniformDataType.SHADER_UNIFORM_VEC4);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, heightStartLoc, calcStartingTextureHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, heightLoc, calcTextureHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, widthLoc, calcTextureWidth, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+
+        var quads = new PropQuads
+        {
+            TopLeft = (position - Utils.GetTileHeadOrigin(init)) * scale,
+            TopRight = (position + new Vector2(init.Size.Item1, 0) - Utils.GetTileHeadOrigin(init)) * scale,
+            BottomRight = (position + new Vector2(init.Size.Item1, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale,
+            BottomLeft = (position + new Vector2(0, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale
+        };
+        
+        DrawTextureQuads(
+            texture, 
+            quads
+        );
+        
         EndShaderMode();
     }
     
@@ -933,12 +976,10 @@ internal static class Printers
         int alpha = 255
     )
     {
-        var scale = GLOBALS.Scale;
-
-        var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * scale;
-        float calLayerHeight = (float)layerHeight / (float)texture.height;
-        var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * scale;
-        float calTextureCutWidth = (float)textureCutWidth / (float)texture.width;
+        var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * 20;
+        var calLayerHeight = (float)layerHeight / (float)texture.height;
+        var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * 20;
+        var calTextureCutWidth = (float)textureCutWidth / (float)texture.width;
 
         var textureLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "inputTexture");
         var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerNum");
@@ -962,6 +1003,54 @@ internal static class Printers
             5,
             WHITE
         );
+        
+        EndShaderMode();
+    }
+    
+    /// <summary>
+    /// Draws the texture of the tile, layer by layer, from the bottom up.
+    /// </summary>
+    /// <param name="texture">a reference to the tile texture</param>
+    /// <param name="init">a reference to the tile definition</param>
+    /// <param name="center">the center origin of the target position to draw on</param>
+    /// <param name="quads">target placement quads</param>
+    /// <param name="alpha">opacity, from 0 to 255</param>
+    internal static void DrawTileAsProp(
+        in Texture texture,
+        in InitTile init,
+        in Vector2 center,
+        int alpha = 255,
+        int scale = 20
+    )
+    {
+        var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * 20;
+        var calLayerHeight = (float)layerHeight / (float)texture.height;
+        var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * 20;
+        var calTextureCutWidth = (float)textureCutWidth / (float)texture.width;
+
+        var textureLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "inputTexture");
+        var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerNum");
+        var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerHeight");
+        var layerWidthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerWidth");
+        var alphaLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "alpha");
+
+        BeginShaderMode(GLOBALS.Shaders.Prop);
+
+        SetShaderValueTexture(GLOBALS.Shaders.Prop, textureLoc, texture);
+        SetShaderValue(GLOBALS.Shaders.Prop, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.SHADER_UNIFORM_INT);
+        SetShaderValue(GLOBALS.Shaders.Prop, layerHeightLoc, calLayerHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+        SetShaderValue(GLOBALS.Shaders.Prop, layerWidthLoc, calTextureCutWidth, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+        SetShaderValue(GLOBALS.Shaders.Prop, alphaLoc, alpha / 255f, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+        
+        var scaledQuads = new PropQuads
+        {
+            TopLeft = (center - Utils.GetTileHeadOrigin(init)) * scale,
+            TopRight = (center + new Vector2(init.Size.Item1, 0) - Utils.GetTileHeadOrigin(init)) * scale,
+            BottomRight = (center + new Vector2(init.Size.Item1, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale,
+            BottomLeft = (center + new Vector2(0, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale
+        };
+        
+        DrawTextureQuads(texture, scaledQuads);
         
         EndShaderMode();
     }
@@ -1004,6 +1093,55 @@ internal static class Printers
         SetShaderValue(GLOBALS.Shaders.Prop, alphaLoc, alpha/255f, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
         
         DrawTextureQuads(texture, quads);
+        
+        EndShaderMode();
+    }
+    
+    /// <summary>
+    /// Draws the texture of the tile, layer by layer, from the bottom up.
+    /// </summary>
+    /// <param name="texture">a reference to the tile texture</param>
+    /// <param name="init">a reference to the tile definition</param>
+    /// <param name="quads">target placement quads</param>
+    internal static void DrawTileAsProp(
+        ref Texture texture,
+        ref InitTile init,
+        Vector2 position,
+        int depth = 0,
+        int alpha = 255,
+        int scale = 20
+    )
+    {
+        var scaledQuads = new PropQuads
+        {
+            TopLeft = (position - Utils.GetTileHeadOrigin(init)) * scale,
+            TopRight = (position + new Vector2(init.Size.Item1, 0) - Utils.GetTileHeadOrigin(init)) * scale,
+            BottomRight = (position + new Vector2(init.Size.Item1, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale,
+            BottomLeft = (position + new Vector2(0, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale
+        };
+        
+        var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * 20;
+        var calLayerHeight = (float)layerHeight / (float)texture.height;
+        var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * 20;
+        var calTextureCutWidth = (float)textureCutWidth / (float)texture.width;
+
+        var textureLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "inputTexture");
+        var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerNum");
+        var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerHeight");
+        var layerWidthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerWidth");
+        var depthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "depth");
+        var alphaLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "alpha");
+
+        BeginShaderMode(GLOBALS.Shaders.Prop);
+
+        SetShaderValueTexture(GLOBALS.Shaders.Prop, textureLoc, texture);
+        SetShaderValue(GLOBALS.Shaders.Prop, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.SHADER_UNIFORM_INT);
+        SetShaderValue(GLOBALS.Shaders.Prop, layerHeightLoc, calLayerHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+        SetShaderValue(GLOBALS.Shaders.Prop, layerWidthLoc, calTextureCutWidth, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+        SetShaderValue(GLOBALS.Shaders.Prop, depthLoc, depth, ShaderUniformDataType.SHADER_UNIFORM_INT);
+        SetShaderValue(GLOBALS.Shaders.Prop, alphaLoc, alpha/255f, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+        
+        DrawTextureQuads(texture, scaledQuads);
         
         EndShaderMode();
     }
@@ -1183,6 +1321,95 @@ internal static class Printers
             SetShaderValue(GLOBALS.Shaders.ColoredTileProp, depthLoc, depth, ShaderUniformDataType.SHADER_UNIFORM_INT);
 
             DrawTextureQuads(texture, quads);
+            EndShaderMode();
+        }
+    }
+    
+    /// Same as DrawTileAsProp() except it applies a tint to the base texture
+    internal static void DrawTileAsPropColored(
+        ref Texture texture, 
+        ref InitTile init, 
+        Vector2 position,
+        Color tint,
+        int depth,
+        int scale
+    )
+    {
+        var scaledQuads = new PropQuads
+        {
+            TopLeft = (position - Utils.GetTileHeadOrigin(init)) * scale,
+            TopRight = (position + new Vector2(init.Size.Item1, 0) - Utils.GetTileHeadOrigin(init)) * scale,
+            BottomRight = (position + new Vector2(init.Size.Item1, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale,
+            BottomLeft = (position + new Vector2(0, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale
+        };
+        
+        if (init.Type == InitTileType.Box)
+        {
+            var height = (init.Size.Item2 + init.BufferTiles*2) * 20;
+            var offset = new Vector2(init.Size.Item2 > 1 ? 20 : 0, 20 * init.Size.Item1 * init.Size.Item2);
+            
+            var calcHeight = (float)height / (float)texture.height;
+            var calcOffset = RayMath.Vector2Divide(offset, new(texture.width, texture.height));
+            var calcWidth = (float)init.Size.Item1 * GLOBALS.Scale / texture.width;
+            
+            var textureLoc = GetShaderLocation(GLOBALS.Shaders.ColoredBoxTileProp, "inputTexture");
+
+            var widthLoc = GetShaderLocation(GLOBALS.Shaders.ColoredBoxTileProp, "width");
+            var heightLoc = GetShaderLocation(GLOBALS.Shaders.ColoredBoxTileProp, "height");
+            var offsetLoc = GetShaderLocation(GLOBALS.Shaders.ColoredBoxTileProp, "offset");
+            var colorLoc = GetShaderLocation(GLOBALS.Shaders.ColoredBoxTileProp, "tint");
+            var depthLoc = GetShaderLocation(GLOBALS.Shaders.ColoredBoxTileProp, "depth");
+
+            BeginShaderMode(GLOBALS.Shaders.ColoredBoxTileProp);
+
+            SetShaderValueTexture(GLOBALS.Shaders.ColoredBoxTileProp, textureLoc, texture);
+            
+            SetShaderValue(GLOBALS.Shaders.ColoredBoxTileProp, widthLoc, calcWidth, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+            
+            SetShaderValue(GLOBALS.Shaders.ColoredBoxTileProp, heightLoc, calcHeight,
+                ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+            
+            SetShaderValue(GLOBALS.Shaders.ColoredBoxTileProp, offsetLoc, calcOffset,
+                ShaderUniformDataType.SHADER_UNIFORM_VEC2);
+            
+            SetShaderValue(GLOBALS.Shaders.ColoredBoxTileProp, colorLoc,
+                new Vector4(tint.r / 255f, tint.g / 255f, tint.b / 255f, 1.0f),
+                ShaderUniformDataType.SHADER_UNIFORM_VEC4);
+            
+            SetShaderValue(GLOBALS.Shaders.ColoredBoxTileProp, depthLoc, depth, ShaderUniformDataType.SHADER_UNIFORM_INT);
+            
+            DrawTextureQuads(texture, scaledQuads);
+            EndShaderMode();
+        }
+        else
+        {
+            var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * 20;
+            var calLayerHeight = (float)layerHeight / (float)texture.height;
+            var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * 20;
+            var calTextureCutWidth = (float)textureCutWidth / (float)texture.width;
+
+            var textureLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "inputTexture");
+            var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "layerNum");
+            var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "layerHeight");
+            var layerWidthLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "layerWidth");
+            var colorLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "tint");
+            var depthLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "depth");
+
+            BeginShaderMode(GLOBALS.Shaders.ColoredTileProp);
+
+            SetShaderValueTexture(GLOBALS.Shaders.ColoredTileProp, textureLoc, texture);
+            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, layerNumLoc, init.Type == InitTileType.VoxelStructRockType ? 1 : init.Repeat.Length,
+                ShaderUniformDataType.SHADER_UNIFORM_INT);
+            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, layerHeightLoc, calLayerHeight,
+                ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, layerWidthLoc, calTextureCutWidth,
+                ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, colorLoc,
+                new Vector4(tint.r / 255f, tint.g / 255f, tint.b / 255f, 1.0f),
+                ShaderUniformDataType.SHADER_UNIFORM_VEC4);
+            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, depthLoc, depth, ShaderUniformDataType.SHADER_UNIFORM_INT);
+
+            DrawTextureQuads(texture, scaledQuads);
             EndShaderMode();
         }
     }

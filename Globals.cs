@@ -587,12 +587,14 @@ internal static class GLOBALS
                 // the top-left of the tile
                 var start = RayMath.Vector2Subtract(new(mx, my), head);
 
-                for (int y = 0; y < height; y++)
+                for (var y = 0; y < height; y++)
                 {
-                    for (int x = 0; x < width; x++)
+                    for (var x = 0; x < width; x++)
                     {
-                        int matrixX = x + (int)start.X;
-                        int matrixY = y + (int)start.Y;
+                        var matrixX = x + (int)start.X;
+                        var matrixY = y + (int)start.Y;
+
+                        if (matrixX < 0 || matrixX >= Width || matrixY < 0 || matrixY >= Height) continue;
 
                         TileMatrix[matrixY, matrixX, mz] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
                         if (isThick && mz != 2) TileMatrix[matrixY, matrixX, mz + 1] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
@@ -618,7 +620,7 @@ internal static class GLOBALS
                 var tileInit = Tiles[headTile.CategoryPostition.Item1][headTile.CategoryPostition.Item2];
                 var (width, height) = tileInit.Size;
 
-                bool isThick = tileInit.Specs2.Length > 0;
+                var isThick = tileInit.Specs2.Length > 0;
 
                 // get the "middle" point of the tile
                 var head = Utils.GetTileHeadOrigin(tileInit);
@@ -632,6 +634,8 @@ internal static class GLOBALS
                     {
                         var matrixX = x + (int)start.X;
                         var matrixY = y + (int)start.Y;
+                        
+                        if (matrixX < 0 || matrixX >= Width || matrixY < 0 || matrixY >= Height) continue;
 
                         TileMatrix[matrixY, matrixX, mz] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
                         if (isThick && mz != 2) TileMatrix[matrixY, matrixX, mz + 1] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
@@ -987,7 +991,7 @@ internal static class GLOBALS
                 new EffectsShortcuts(),
                 new PropsShortcuts()
             ),
-            new Misc(),
+            new Misc(splashScreen:false, tileImageScansPerFrame: 100),
             new GeoEditor(
                 new LayerColors(
                     layer1: new ConColor(0, 0, 0, 255),

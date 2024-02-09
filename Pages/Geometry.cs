@@ -78,7 +78,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
         "Copy From Memory",
         "Shortcut entrance",
         "Shortcut",
-        "Drangon's den",
+        "Dragon's den",
         "Passage",
         "Hive",
         "Waterfall",
@@ -94,7 +94,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
         "Place Spear",
         "Glass"
     ];
-    static ReadOnlySpan<int> GeoMenuIndexToUITexture => [
+    private static ReadOnlySpan<int> GeoMenuIndexToUiTexture => [
          0,
         1,
         2,
@@ -227,7 +227,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
         }
         else if (_shortcuts.ToTopGeo.Check(ctrl, shift, alt))
         {
-            geoSelectionY = (--geoSelectionY) % 8;
+            geoSelectionY = --geoSelectionY % 8;
 
             multiselect = false;
             prevCoordsX = -1;
@@ -615,7 +615,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                             _gram.Proceed((startX, startY, 2), oldCopy3, newCopy);
                         }
                         break;
-                    case 8:
+                    case 8: // back copy
                         multiselect = !multiselect;
 
                         if (multiselect)
@@ -710,7 +710,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                                 endY = prevCoordsY;
                             }
 
-                            int value = geoIndex == 4 ? 1 : 0;
+                            var value = geoIndex == 4 ? 1 : 0;
                             
                             var newCopy = new RunCell[endY - startY + 1, endX - startX + 1];
                             var oldCopy = new RunCell[endY - startY + 1, endX - startX + 1];
@@ -775,14 +775,14 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
 
                             savedChunk = new RunCell[endY - startY + 1, endX - startX + 1];
 
-                            for (int x = 0; x < savedChunk.GetLength(1); x++)
+                            for (var x = 0; x < savedChunk.GetLength(1); x++)
                             {
-                                for (int y = 0; y < savedChunk.GetLength(0); y++)
+                                for (var y = 0; y < savedChunk.GetLength(0); y++)
                                 {
                                     var xx = x + startX;
                                     var yy = y + startY;
 
-                                    RunCell _cell = GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer];
+                                    var _cell = GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer];
                                     var newStackables = new bool[22];
                                     _cell.Stackables.CopyTo(newStackables, 0);
                                     _cell.Stackables = newStackables;
@@ -995,9 +995,9 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                 for (int h = 0; h < 8; h++)
                 {
                     var index = (4 * h) + w;
-                    if (index < GeoMenuIndexToUITexture.Length)
+                    if (index < GeoMenuIndexToUiTexture.Length)
                     {
-                        var textureIndex = GeoMenuIndexToUITexture[index];
+                        var textureIndex = GeoMenuIndexToUiTexture[index];
 
                         // A really bad and lazy solution
 
@@ -1034,16 +1034,16 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
             switch (GLOBALS.Layer)
             {
                 case 0:
-                    Raylib.DrawRectangle(sWidth - 190, 8 * GLOBALS.UiScale + 140, 40, 40, GLOBALS.Settings.GeometryEditor.LayerColors.Layer1);
-                    Raylib.DrawText("L1", sWidth - 182, 8 * GLOBALS.UiScale + 148, 26, new(255, 255, 255, 255));
+                    DrawRectangle(sWidth - 190, 8 * GLOBALS.UiScale + 140, 40, 40, GLOBALS.Settings.GeometryEditor.LayerColors.Layer1);
+                    DrawText("L1", sWidth - 182, 8 * GLOBALS.UiScale + 148, 26, new(255, 255, 255, 255));
                     break;
                 case 1:
-                    Raylib.DrawRectangle(sWidth - 190, 8 * GLOBALS.UiScale + 140, 40, 40, GLOBALS.Settings.GeometryEditor.LayerColors.Layer2);
-                    Raylib.DrawText("L2", sWidth - 182, 8 * GLOBALS.UiScale + 148, 26, new(255, 255, 255, 255));
+                    DrawRectangle(sWidth - 190, 8 * GLOBALS.UiScale + 140, 40, 40, GLOBALS.Settings.GeometryEditor.LayerColors.Layer2);
+                    DrawText("L2", sWidth - 182, 8 * GLOBALS.UiScale + 148, 26, new(255, 255, 255, 255));
                     break;
                 case 2:
-                    Raylib.DrawRectangle(sWidth - 190, 8 * GLOBALS.UiScale + 140, 40, 40, GLOBALS.Settings.GeometryEditor.LayerColors.Layer3);
-                    Raylib.DrawText("L3", sWidth - 182, 8 * GLOBALS.UiScale + 148, 26, new(255, 255, 255, 255));
+                    DrawRectangle(sWidth - 190, 8 * GLOBALS.UiScale + 140, 40, 40, GLOBALS.Settings.GeometryEditor.LayerColors.Layer3);
+                    DrawText("L3", sWidth - 182, 8 * GLOBALS.UiScale + 148, 26, new(255, 255, 255, 255));
                     break;
             }
 

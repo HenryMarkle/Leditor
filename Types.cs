@@ -125,19 +125,26 @@ public class ExperimentalGeoShortcuts
     public KeyboardShortcut ToBottomGeo { get; set; } = new(KeyboardKey.KEY_S);
     public KeyboardShortcut CycleLayer { get; set; } = new(KeyboardKey.KEY_L);
     public KeyboardShortcut ToggleGrid { get; set; } = new(KeyboardKey.KEY_M);
-    public KeyboardShortcut ShowCameras { get; set; } = new(KeyboardKey.KEY_C);
+    public KeyboardShortcut ShowCameras { get; set; } = new(KeyboardKey.KEY_K);
+    public KeyboardShortcut ToggleMultiSelect { get; set; } = new(KeyboardKey.KEY_E);
     public KeyboardShortcut EraseEverything { get; set; } = new(KeyboardKey.KEY_X);
-
+    
+    public KeyboardShortcut ToggleTileVisibility { get; set; } = new(KeyboardKey.KEY_T);
+    
+    
+    public KeyboardShortcut ToggleMemoryLoadMode { get; set; } = new(KeyboardKey.KEY_C, Ctrl:true);
+    public KeyboardShortcut ToggleMemoryDumbMode { get; set; } = new(KeyboardKey.KEY_V, Ctrl:true);
+    
     public MouseShortcut Draw { get; set; } = new(MouseButton.MOUSE_BUTTON_LEFT);
     public MouseShortcut Erase { get; set; } = new(MouseButton.MOUSE_BUTTON_RIGHT);
     
     public MouseShortcut DragLevel { get; set; } = new(MouseButton.MOUSE_BUTTON_MIDDLE);
 
-    public KeyboardShortcut DrawAlt { get; set; } = new(KeyboardKey.KEY_Z);
+    public KeyboardShortcut DrawAlt { get; set; } = new(KeyboardKey.KEY_NULL);
     public KeyboardShortcut EraseAlt { get; set; } = new(KeyboardKey.KEY_F);
-    public KeyboardShortcut DragLevelAlt { get; set; } = new(KeyboardKey.KEY_V);
+    public KeyboardShortcut DragLevelAlt { get; set; } = new(KeyboardKey.KEY_G);
     
-    public KeyboardShortcut Undo { get; set; } = new(Ctrl:true, Key:KeyboardKey.KEY_Z);
+    public KeyboardShortcut Undo { get; set; } = new(Ctrl:true, Shift:false, Key:KeyboardKey.KEY_Z);
     public KeyboardShortcut Redo { get; set; } = new(Ctrl:true, Shift:true, Key:KeyboardKey.KEY_Z);
 }
 
@@ -387,7 +394,7 @@ public class GeoEditor(
     bool legacyGeoTools = false,
     bool allowOutboundsPlacement = false,
     bool showCameras = false,
-    bool showTiles = false
+    bool showTiles = true
 )
 {
     public LayerColors LayerColors { get; set; } = layerColors;

@@ -1751,11 +1751,11 @@ internal class PropsEditorPage : IPage
                                     ref currentTileAsProp.init,
                                     ref tileMouseWorld,
                                     [
-                                        new(width, -height),
-                                        new(-width, -height),
-                                        new(-width, height),
-                                        new(width, height),
-                                        new(width, -height)
+                                        new Vector2(width, -height),
+                                        new Vector2(-width, -height),
+                                        new Vector2(-width, height),
+                                        new Vector2(width, height),
+                                        new Vector2(width, -height)
                                     ]
                                 );
                             }
@@ -2351,6 +2351,14 @@ internal class PropsEditorPage : IPage
                             .Where(v => !v.s)
                             .Select(v => GLOBALS.Level.Props[v.i])
                             .ToArray();
+
+                        _selected = new bool [GLOBALS.Level.Props.Length];
+                        
+                        ImportRopeModels();
+                        
+                        /*_stretchingProp = false;
+                        _movingProps = false;
+                        _rotatingProps = false;*/
                     }
                     
                     DrawLineEx(new(menuPanelRect.x + 11, listRect.y - 32), new(menuPanelRect.x + 29, listRect.y - 11), 2f, WHITE);

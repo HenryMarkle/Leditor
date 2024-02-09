@@ -27,10 +27,10 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
     private int _prevCoordsX = -1;
     private int _prevCoordsY = -1;
 
-    private int _geoMenuScrollIndex = 0;
+    private int _geoMenuScrollIndex;
     private int _geoMenuCategory;
     private int _geoMenuIndex;
-    
+
     private readonly byte[] _geoMenuPanelBytes = "Menu"u8.ToArray();
     
     private static readonly int[] GeoMenuIndexMaxCount = [4, 3, 6, 7];
@@ -38,6 +38,40 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
     private static readonly int[] GeoMenuCategory2ToStackableId = [2, 1, 11];
     private static readonly int[] GeoMenuCategory3ToStackableId = [3, 12, 18, 20, 9, 10];
     private static readonly int[] GeoMenuCategory4ToStackableId = [4, 5, 6, 7, 19, 21, 13];
+    
+    // Layers 2 and 3 do not show geo features like shortcuts and entrances 
+    private readonly bool[] _layerStackableFilter =
+    [
+        false, 
+        true, 
+        true, 
+        true, 
+        false, // 5
+        false, // 6
+        false, // 7
+        true, 
+        false, // 9
+        false, // 10
+        true, 
+        false, // 12
+        false, // 13
+        true, 
+        true, 
+        true, 
+        true, 
+        false, // 18
+        false, // 19
+        false, // 20
+        false, // 21
+        true
+    ];
+    
+    private RunCell[,] _savedChunk = new RunCell[0, 0];
+    
+    private bool _memDumbMode;
+    private bool _memLoadMode;
+
+    private readonly GeoGram _gram = new(40);
     
     public void Draw()
     {
@@ -68,13 +102,13 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
         var mouse = GetScreenToWorld2D(GetMousePosition(), _camera);
 
         //                        v this was done to avoid rounding errors
-        int matrixY = mouse.Y < 0 ? -1 : (int)mouse.Y / scale;
-        int matrixX = mouse.X < 0 ? -1 : (int)mouse.X / scale;
+        var matrixY = mouse.Y < 0 ? -1 : (int)mouse.Y / scale;
+        var matrixX = mouse.X < 0 ? -1 : (int)mouse.X / scale;
 
         var sWidth = GetScreenWidth();
         var sHeight = GetScreenHeight();
 
-        Rectangle panelRect = new(sWidth - 300, 50, 288, 400);
+        Rectangle panelRect = new(sWidth - 200, 50, 188, 400);
 
         var canDrawGeo = !CheckCollisionPointRec(GetMousePosition(), panelRect);
 
@@ -104,7 +138,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
             _geoMenuIndex = ++_geoMenuIndex % GeoMenuIndexMaxCount[_geoMenuCategory];
         }
 
-        if (IsKeyPressed(KeyboardKey.KEY_Q)) _allowMultiSelect = !_allowMultiSelect;
+        if (_shortcuts.ToggleMultiSelect.Check(ctrl, shift, alt)) _allowMultiSelect = !_allowMultiSelect;
 
         _eraseAllMode = _shortcuts.EraseEverything.Check(ctrl, shift, alt, true);
 
@@ -127,8 +161,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
             delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
             _camera.target = RayMath.Vector2Add(_camera.target, delta);
         }
-
-
+        
         // handle zoom
         var wheel = GetMouseWheelMove();
         if (wheel != 0)
@@ -139,8 +172,80 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
             _camera.zoom += wheel * GLOBALS.ZoomIncrement;
             if (_camera.zoom < GLOBALS.ZoomIncrement) _camera.zoom = GLOBALS.ZoomIncrement;
         }
+        
+        // Undo/Redo
 
+        if (_shortcuts.Undo.Check(ctrl, shift, alt))
+        {
+            var action = _gram.Current;
+            switch (action)
+            {
+                case GeoGram.CellAction c:
+                    GLOBALS.Level.GeoMatrix[c.Position.Y, c.Position.X, c.Position.Z] = c.Previous;
+                    break;
+                case GeoGram.RectAction r:
+                    for (var y = 0; y < r.Previous.GetLength(0); y++)
+                    {
+                        for (var x = 0; x < r.Previous.GetLength(1); x++)
+                        {
+                            var prevCell = r.Previous[y, x];
+                            GLOBALS.Level.GeoMatrix[y + r.Position.Y, x + r.Position.X, r.Position.Z] = prevCell;
+                        }
+                    }
+                    break;
 
+                case GeoGram.GroupAction g:
+                    foreach (var cellAction in g.CellActions)
+                    {
+                        GLOBALS.Level.GeoMatrix[cellAction.Position.Y, cellAction.Position.X, cellAction.Position.Z] = cellAction.Previous;
+                    }
+                    break;
+            }
+                
+            _gram.Undo();
+        }
+        if (_shortcuts.Redo.Check(ctrl, shift, alt))
+        {
+            _gram.Redo();
+
+            switch (_gram.Current)
+            {
+                case GeoGram.CellAction c:
+                    GLOBALS.Level.GeoMatrix[c.Position.Y, c.Position.X, c.Position.Z] = c.Next;
+                    break;
+                        
+                case GeoGram.RectAction r:
+                    for (var y = 0; y < r.Previous.GetLength(0); y++)
+                    {
+                        for (var x = 0; x < r.Previous.GetLength(1); x++)
+                        {
+                            var nextCell = r.Next[y, x];
+                            GLOBALS.Level.GeoMatrix[y + r.Position.Y, x + r.Position.X, r.Position.Z] = nextCell;
+                        }
+                    }
+                    break;
+                
+                case GeoGram.GroupAction g:
+                    foreach (var cellAction in g.CellActions)
+                    {
+                        GLOBALS.Level.GeoMatrix[cellAction.Position.Y, cellAction.Position.X, cellAction.Position.Z] = cellAction.Next;
+                    }
+                    break;
+            }
+        }
+        
+        // Show/Hide Cameras
+
+        if (_shortcuts.ShowCameras.Check(ctrl, shift, alt))
+            GLOBALS.Settings.GeometryEditor.ShowCameras = !GLOBALS.Settings.GeometryEditor.ShowCameras;
+
+        _memLoadMode = _shortcuts.ToggleMemoryLoadMode.Check(ctrl, shift, alt, true);
+        if (_shortcuts.ToggleMemoryDumbMode.Check(ctrl, shift, alt)) _memDumbMode = !_memDumbMode;
+        
+        // Show/Hide tiles
+
+        if (_shortcuts.ToggleTileVisibility.Check(ctrl, shift, alt))
+            GLOBALS.Settings.GeometryEditor.ShowTiles = !GLOBALS.Settings.GeometryEditor.ShowTiles;
 
         // multi-place/erase geos
 
@@ -173,7 +278,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 }
             }
 
-            if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.DrawAlt.Key)) && !_eraseMode)
+            if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.DrawAlt.Key)))
             {
                 _clickTracker = false;
 
@@ -201,90 +306,161 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                     endY = _prevCoordsY;
                 }
 
-                for (int y = startY; y <= endY; y++)
+                if (_memLoadMode)
                 {
-                    for (int x = startX; x <= endX; x++)
+                    _savedChunk = new RunCell[endY - startY + 1, endX - startX + 1];
+
+                    for (var x = 0; x < _savedChunk.GetLength(1); x++)
                     {
-                        if (x < 0 || x >= GLOBALS.Level.Width || y < 0 || y >= GLOBALS.Level.Height) continue;
-
-                        if (_eraseAllMode)
+                        for (var y = 0; y < _savedChunk.GetLength(0); y++)
                         {
-                            var cell = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer];
+                            var xx = x + startX;
+                            var yy = y + startY;
 
-                            cell.Geo = 0;
-                            Array.Fill(cell.Stackables, false);
+                            var cell = GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer];
+                            
+                            var newStackables = new bool[22];
+                            cell.Stackables.CopyTo(newStackables, 0);
+                            cell.Stackables = newStackables;
 
-                            GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer] = cell;
+                            _savedChunk[y, x] = cell;
                         }
-                        else
+                    }
+                    
+                    _memLoadMode = false;
+                }
+                else if (_memDumbMode)
+                {
+                    var newCopy = new RunCell[_savedChunk.GetLength(0), _savedChunk.GetLength(1)];
+                    var oldCopy = new RunCell[_savedChunk.GetLength(0), _savedChunk.GetLength(1)];
+                        
+                    for (var x = 0; x < _savedChunk.GetLength(1); x++)
+                    {
+                        for (var y = 0; y < _savedChunk.GetLength(0); y++)
                         {
-                            switch (_geoMenuCategory)
+                            var yy = matrixY + y;
+                            var xx = matrixX + x;
+
+                            if (xx >= 0 && xx < GLOBALS.Level.Width &&
+                                yy >= 0 && yy < GLOBALS.Level.Height)
                             {
-                                case 0:
-                                    {
+                                var cell = _savedChunk[y, x];
+                                var oldCell = GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer];
+                                    
+                                // Copy memory to new state
+                                newCopy[y, x] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                // Copy level to old state
+                                oldCopy[y, x] = new RunCell { Geo = oldCell.Geo, Stackables = [..oldCell.Stackables] };
+                                    
+                                bool[] newStackables = [..cell.Stackables];
+                                cell.Stackables = newStackables;
 
-                                        var id = GeoMenuIndexToBlockId[_geoMenuIndex];
-
-                                        // slope
-                                        if (id == 2)
-                                        {
-                                            var slope = Utils.GetCorrectSlopeID(Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, GLOBALS.Layer));
-                                            if (slope == -1) break;
-                                            GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Geo = _eraseMode ? 0 : slope;
-                                        }
-                                        // solid, platform, glass
-                                        else
-                                        {
-                                            GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Geo = _eraseMode ? 0 : id;
-                                        }
-                                    }
-                                    break;
-
-                                case 1:
-                                    {
-                                        var id = GeoMenuCategory2ToStackableId[_geoMenuIndex];
-                                        GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Stackables[id] = !_eraseMode;
-                                    }
-                                    break;
-
-                                case 2:
-                                    {
-                                        if (
-                                            x * scale < GLOBALS.Level.Border.X ||
-                                            x * scale >= GLOBALS.Level.Border.width + GLOBALS.Level.Border.X ||
-                                            y * scale < GLOBALS.Level.Border.Y ||
-                                            y * scale >= GLOBALS.Level.Border.height + GLOBALS.Level.Border.Y) break;
-
-                                        if (_geoMenuIndex == 0 && GLOBALS.Layer != 0) break;
-
-                                        var id = GeoMenuCategory3ToStackableId[_geoMenuIndex];
-                                        GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Stackables[id] = !_eraseMode;
-                                    }
-                                    break;
-
-                                case 3:
-                                    {
-                                        if (
-                                            x * scale < GLOBALS.Level.Border.X ||
-                                            x * scale >= GLOBALS.Level.Border.width + GLOBALS.Level.Border.X ||
-                                            y * scale < GLOBALS.Level.Border.Y ||
-                                            y * scale >= GLOBALS.Level.Border.height + GLOBALS.Level.Border.Y) break;
-
-                                        if (GLOBALS.Layer != 0) break;
-
-                                        var id = GeoMenuCategory4ToStackableId[_geoMenuIndex];
-                                        GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Stackables[id] = !_eraseMode;
-                                    }
-                                    break;
+                                if (cell.Geo != 0) GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer].Geo = cell.Geo;
+                                GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer].Stackables = cell.Stackables;
                             }
                         }
                     }
+                    _gram.Proceed((matrixX, matrixY, GLOBALS.Layer), oldCopy, newCopy);
                 }
+                else
+                {
+                    var newCopy = new RunCell[endY - startY + 1, endX - startX + 1];
+                    var oldCopy = new RunCell[endY - startY + 1, endX - startX + 1];
+
+                    for (var y = startY; y <= endY; y++)
+                    {
+                        for (var x = startX; x <= endX; x++)
+                        {
+                            if (x < 0 || x >= GLOBALS.Level.Width || y < 0 || y >= GLOBALS.Level.Height) continue;
+
+                            if (_eraseAllMode)
+                            {
+                                var cell = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer];
+                                var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+
+                                cell.Geo = 0;
+                                Array.Fill(cell.Stackables, false);
+                                
+                                oldCopy[y - startY, x - startX] = oldCell;
+                                newCopy[y - startY, x - startX] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+
+                                GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer] = cell;
+                            }
+                            else
+                            {
+                                ref var cell = ref GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer];
+                                oldCopy[y - startY, x - startX] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables]};
+                                
+                                switch (_geoMenuCategory)
+                                {
+                                    case 0:
+                                        {
+
+                                            var id = GeoMenuIndexToBlockId[_geoMenuIndex];
+
+                                            // slope
+                                            if (id == 2)
+                                            {
+                                                var slope = Utils.GetCorrectSlopeID(Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, GLOBALS.Layer));
+                                                if (slope == -1) break;
+                                            }
+                                            // solid, platform, glass
+                                            cell.Geo = id;
+                                        }
+                                        break;
+
+                                    case 1:
+                                        {
+                                            var id = GeoMenuCategory2ToStackableId[_geoMenuIndex];
+                                            cell.Stackables[id] = !_eraseMode;
+                                        }
+                                        break;
+
+                                    case 2:
+                                        {
+                                            if (
+                                                x * scale < GLOBALS.Level.Border.X ||
+                                                x * scale >= GLOBALS.Level.Border.width + GLOBALS.Level.Border.X ||
+                                                y * scale < GLOBALS.Level.Border.Y ||
+                                                y * scale >= GLOBALS.Level.Border.height + GLOBALS.Level.Border.Y) break;
+
+                                            if (_geoMenuIndex == 0 && GLOBALS.Layer != 0) break;
+
+                                            var id = GeoMenuCategory3ToStackableId[_geoMenuIndex];
+                                            cell.Stackables[id] = true;
+                                        }
+                                        break;
+
+                                    case 3:
+                                        {
+                                            if (
+                                                x * scale < GLOBALS.Level.Border.X ||
+                                                x * scale >= GLOBALS.Level.Border.width + GLOBALS.Level.Border.X ||
+                                                y * scale < GLOBALS.Level.Border.Y ||
+                                                y * scale >= GLOBALS.Level.Border.height + GLOBALS.Level.Border.Y) break;
+
+                                            if (GLOBALS.Layer != 0) break;
+
+                                            var id = GeoMenuCategory4ToStackableId[_geoMenuIndex];
+                                            cell.Stackables[id] = true;
+                                        }
+                                        break;
+                                }
+                                
+                                newCopy[y - startY, x - startX] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                            }
+                        }
+                    }
+                    
+                    _gram.Proceed((startX, startY, GLOBALS.Layer), oldCopy, newCopy);
+                }
+                
 
                 _multiselect = false;
             }
-            if (IsMouseButtonReleased(_shortcuts.Erase.Button) || IsKeyReleased(_shortcuts.EraseAlt.Key) && _eraseMode)
+            else if (IsMouseButtonReleased(_shortcuts.Erase.Button) || IsKeyReleased(_shortcuts.EraseAlt.Key))
             {
+                _eraseMode = false;
                 _clickTracker = false;
 
                 int startX, startY, endX, endY;
@@ -310,6 +486,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                     startY = matrixY;
                     endY = _prevCoordsY;
                 }
+                
+                var newCopy = new RunCell[endY - startY + 1, endX - startX + 1];
+                var oldCopy = new RunCell[endY - startY + 1, endX - startX + 1];
 
                 for (var y = startY; y <= endY; y++)
                 {
@@ -320,19 +499,24 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                         if (_eraseAllMode)
                         {
                             var cell = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer];
+                            var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
 
                             cell.Geo = 0;
                             Array.Fill(cell.Stackables, false);
 
+                            oldCopy[y - startY, x - startX] = oldCell;
+                            newCopy[y - startY, x - startX] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                             GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer] = cell;
                         }
                         else
                         {
+                            ref var cell = ref GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer];
+                            oldCopy[y - startY, x - startX] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables]};
+                            
                             switch (_geoMenuCategory)
                             {
                                 case 0:
                                     {
-
                                         var id = GeoMenuIndexToBlockId[_geoMenuIndex];
 
                                         // slope
@@ -340,20 +524,16 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                                         {
                                             var slope = Utils.GetCorrectSlopeID(Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, GLOBALS.Layer));
                                             if (slope == -1) break;
-                                            GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Geo = 0;
                                         }
                                         // solid, platform, glass
-                                        else
-                                        {
-                                            GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Geo = 0;
-                                        }
+                                        cell.Geo = 0;
                                     }
                                     break;
 
                                 case 1:
                                     {
                                         var id = GeoMenuCategory2ToStackableId[_geoMenuIndex];
-                                        GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Stackables[id] = false;
+                                        cell.Stackables[id] = false;
                                     }
                                     break;
 
@@ -368,7 +548,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                                         if (_geoMenuIndex == 0 && GLOBALS.Layer != 0) break;
 
                                         var id = GeoMenuCategory3ToStackableId[_geoMenuIndex];
-                                        GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Stackables[id] = false;
+                                        cell.Stackables[id] = false;
                                     }
                                     break;
 
@@ -383,13 +563,17 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                                         if (GLOBALS.Layer != 0) break;
 
                                         var id = GeoMenuCategory4ToStackableId[_geoMenuIndex];
-                                        GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Stackables[id] = false;
+                                        cell.Stackables[id] = false;
                                     }
                                     break;
                             }
+                            
+                            newCopy[y - startY, x - startX] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                         }
                     }
                 }
+                
+                _gram.Proceed((startX, startY, GLOBALS.Layer), oldCopy, newCopy);
 
                 _multiselect = false;
             }
@@ -482,129 +666,85 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
                 // first layer without stackables
 
-                if (_showLayer1)
-                {
-                    for (int y = 0; y < GLOBALS.Level.Height; y++)
-                    {
-                        for (int x = 0; x < GLOBALS.Level.Width; x++)
-                        {
-                            const int z = 0;
+                if (_showLayer1) Printers.DrawGeoLayer(
+                    0,
+                    GLOBALS.Scale,
+                    !_hideGrid,
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer1,
+                    true,
+                    false
+                );
+                
+                if (GLOBALS.Settings.GeometryEditor.ShowTiles && _showLayer3) Printers.DrawTileLayer(
+                    2, 
+                    GLOBALS.Scale, 
+                    false, 
+                    !GLOBALS.Settings.TileEditor.UseTextures,
+                    GLOBALS.Settings.TileEditor.TintedTiles
+                );
 
-                            var cell = GLOBALS.Level.GeoMatrix[y, x, z];
-
-                            var texture = Utils.GetBlockIndex(cell.Geo);
-
-                            if (texture >= 0)
-                            {
-                                DrawTexture(GLOBALS.Textures.GeoBlocks[texture], x * scale, y * scale, layerColors[z]);
-                            }
-
-                            if (!_hideGrid) DrawRectangleLinesEx(
-                                new(x * scale, y * scale, scale, scale),
-                                0.5f,
-                                new(255, 255, 255, 100)
-                            );
-                        }
-                    }
-                }
-
-                // the rest of the layers
-
-                for (int y = 0; y < GLOBALS.Level.Height; y++)
-                {
-                    for (int x = 0; x < GLOBALS.Level.Width; x++)
-                    {
-                        for (int z = 1; z < 3; z++)
-                        {
-                            if (z == 1 && !_showLayer2) continue;
-                            if (z == 2 && !_showLayer3) continue;
-
-                            var cell = GLOBALS.Level.GeoMatrix[y, x, z];
-
-                            var texture = Utils.GetBlockIndex(cell.Geo);
-
-                            if (texture >= 0)
-                            {
-                                Raylib.DrawTexture(GLOBALS.Textures.GeoBlocks[texture], x * scale, y * scale, layerColors[z]);
-                            }
-
-                            if (!_hideGrid && !_showLayer1 && z == 1) DrawRectangleLinesEx(
-                                new(x * scale, y * scale, scale, scale),
-                                0.5f,
-                                new(255, 255, 255, 100)
-                            );
-
-                            if (!_hideGrid && !_showLayer1 && z == 2) DrawRectangleLinesEx(
-                                new(x * scale, y * scale, scale, scale),
-                                0.5f,
-                                new(255, 255, 255, 100)
-                            );
-
-                            for (int s = 1; s < cell.Stackables.Length; s++)
-                            {
-                                if (cell.Stackables[s])
-                                {
-                                    switch (s)
-                                    {
-                                        // dump placement
-                                        case 1:     // ph
-                                        case 2:     // pv
-                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * scale, y * scale, layerColors[z]);
-                                            break;
-                                        case 3:     // bathive
-                                            /*case 5:     // entrance
-                                            case 6:     // passage
-                                            case 7:     // den
-                                            case 9:     // rock
-                                            case 10:    // spear
-                                            case 12:    // forbidflychains
-                                            case 13:    // garbagewormhole
-                                            case 18:    // waterfall
-                                            case 19:    // wac
-                                            case 20:    // worm
-                                            case 21:    // scav*/
-                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * scale, y * scale, WHITE); // TODO: remove opacity from entrances
-                                            break;
-
-                                        // directional placement
-                                        /*case 4:     // entrance
-                                            var index = GetStackableTextureIndex(s, CommonUtils.GetContext(geoMatrix, matrixWidth, matrixHeight, x, y, z));
-
-                                            if (index is 22 or 23 or 24 or 25)
-                                            {
-                                                geoMatrix[y, x, 0].Geo = 7;
-                                            }
-
-                                            Raylib.DrawTexture(stackableTextures[index], x * scale, y * scale, whiteStackable);
-                                            break;*/
-                                        case 11:    // crack
-                                            Raylib.DrawTexture(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
-                                                x * scale,
-                                                y * scale,
-                                                WHITE
-                                            );
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                if (_showLayer2)
+                    Printers.DrawGeoLayer(
+                    1,
+                    GLOBALS.Scale,
+                    !_hideGrid && !_showLayer1 && GLOBALS.Layer == 2, 
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer2,
+                    _layerStackableFilter
+                );
+                
+                if (GLOBALS.Settings.GeometryEditor.ShowTiles && _showLayer2) Printers.DrawTileLayer(
+                    1, 
+                    GLOBALS.Scale, 
+                    false, 
+                    !GLOBALS.Settings.TileEditor.UseTextures,
+                    GLOBALS.Settings.TileEditor.TintedTiles
+                );
+                
+                if (_showLayer3) Printers.DrawGeoLayer(
+                    2, 
+                    GLOBALS.Scale,
+                    !_hideGrid && !_showLayer1 && GLOBALS.Layer == 1, 
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer3,
+                    _layerStackableFilter
+                );
 
                 // draw stackables
+                
+                if (_showLayer1) Printers.DrawGeoLayer(
+                    0,
+                    GLOBALS.Scale,
+                    !_hideGrid,
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer1,
+                    false,
+                    true
+                );
+                
+                if (GLOBALS.Settings.GeometryEditor.ShowTiles && _showLayer1) Printers.DrawTileLayer(
+                    0, 
+                    GLOBALS.Scale, 
+                    false, 
+                    !GLOBALS.Settings.TileEditor.UseTextures,
+                    GLOBALS.Settings.TileEditor.TintedTiles
+                );
 
-                if (_showLayer1)
+                // load from memory preview
+                if (_memDumbMode)
                 {
-                    for (int y = 0; y < GLOBALS.Level.Height; y++)
+                    for (var x = 0; x < _savedChunk.GetLength(1); x++)
                     {
-                        for (int x = 0; x < GLOBALS.Level.Width; x++)
+                        for (var y = 0; y < _savedChunk.GetLength(0); y++)
                         {
-                            const int z = 0;
+                            var cell = _savedChunk[y, x];
 
-                            var cell = GLOBALS.Level.GeoMatrix[y, x, z];
+                            var texture = Utils.GetBlockIndex(cell.Geo);
 
-                            for (int s = 1; s < cell.Stackables.Length; s++)
+                            if (texture >= 0)
+                            {
+                                DrawTexture(GLOBALS.Textures.GeoBlocks[texture], (matrixX + x) * scale, (matrixY + y) * scale, new(89, 7, 222, 200));
+                            }
+
+
+                            for (var s = 1; s < cell.Stackables.Length; s++)
                             {
                                 if (cell.Stackables[s])
                                 {
@@ -613,7 +753,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                                         // dump placement
                                         case 1:     // ph
                                         case 2:     // pv
-                                            Raylib.DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * scale, y * scale, layerColors[z]);
+                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], (matrixX + x) * scale, (matrixY + y) * scale, new(89, 7, 222, 200));
                                             break;
                                         case 3:     // bathive
                                         case 5:     // entrance
@@ -627,26 +767,16 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                                         case 19:    // wac
                                         case 20:    // worm
                                         case 21:    // scav
-                                            Raylib.DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * scale, y * scale, new(255, 255, 255, 255)); // TODO: remove opacity from entrances
+                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], (matrixX + x) * scale, (matrixY + y) * scale, WHITE); // TODO: remove opacity from entrances
                                             break;
 
-                                        // directional placement
-                                        case 4:     // entrance
-                                            var index = Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z));
-
-                                            if (index is 22 or 23 or 24 or 25)
-                                            {
-                                                GLOBALS.Level.GeoMatrix[y, x, 0].Geo = 7;
-                                            }
-
-                                            Raylib.DrawTexture(GLOBALS.Textures.GeoStackables[index], x * scale, y * scale, new(255, 255, 255, 255));
-                                            break;
+                                        
                                         case 11:    // crack
-                                            Raylib.DrawTexture(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, z))],
+                                            DrawTexture(
+                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(_savedChunk, x, y))],
                                                 x * scale,
                                                 y * scale,
-                                                new(255, 255, 255, 255)
+                                                WHITE
                                             );
                                             break;
                                     }
@@ -656,14 +786,27 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                     }
                 }
 
+                // the outbound border
+                DrawRectangleLinesEx(new(0, 0, GLOBALS.Level.Width * scale, GLOBALS.Level.Height * scale), 2, new(0, 0, 0, 255));
+
+                // the border
+                DrawRectangleLinesEx(GLOBALS.Level.Border, _camera.zoom < GLOBALS.ZoomIncrement ? 5 : 2, new(255, 255, 255, 255));
+                
+                // a lazy way to hide the rest of the grid
+                DrawRectangle(GLOBALS.Level.Width * -scale, -3, GLOBALS.Level.Width * scale, GLOBALS.Level.Height * 2 * scale, new(120, 120, 120, 255));
+                DrawRectangle(0, GLOBALS.Level.Height * scale, GLOBALS.Level.Width * scale + 2, GLOBALS.Level.Height * scale, new(120, 120, 120, 255));
 
                 // the selection rectangle
 
-                for (int y = 0; y < GLOBALS.Level.Height; y++)
+                for (var y = 0; y < GLOBALS.Level.Height; y++)
                 {
-                    for (int x = 0; x < GLOBALS.Level.Width; x++)
+                    for (var x = 0; x < GLOBALS.Level.Width; x++)
                     {
-                        if (_multiselect)
+                        if (_memDumbMode)
+                        {
+                            DrawRectangleLinesEx(new Rectangle(matrixX * GLOBALS.Scale, matrixY * GLOBALS.Scale, _savedChunk.GetLength(1)*GLOBALS.Scale, _savedChunk.GetLength(0)*GLOBALS.Scale), 4f, WHITE);
+                        }
+                        else if (_multiselect)
                         {
                             var XS = matrixX - _prevCoordsX;
                             var YS = matrixY - _prevCoordsY;
@@ -721,6 +864,20 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 // the border
                 DrawRectangleLinesEx(GLOBALS.Level.Border, _camera.zoom < GLOBALS.ZoomIncrement ? 5 : 2, new(255, 255, 255, 255));
 
+                // Draw Cameras
+
+                if (GLOBALS.Settings.GeometryEditor.ShowCameras)
+                {
+                    foreach (var cam in GLOBALS.Level.Cameras)
+                    {
+                        DrawRectangleLinesEx(
+                            new(cam.Coords.X, cam.Coords.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
+                            4f,
+                            PINK
+                        );
+                    }
+                }
+                
                 /*// a lazy way to hide the rest of the grid
                 DrawRectangle(matrixWidth * -scale, -3, matrixWidth * scale, matrixHeight * 2 * scale, new(120, 120, 120, 255));
                 DrawRectangle(0, matrixHeight * scale, matrixWidth * scale + 2, matrixHeight * scale, new(120, 120, 120, 255));*/
@@ -740,29 +897,29 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
             // Categories
 
-            DrawRectangleLinesEx(new((_geoMenuCategory * 67) + panelRect.X + 10, 80, 67, 67), 4.0f, BLUE);
+            DrawRectangleLinesEx(new((_geoMenuCategory * 42) + panelRect.X + 10, 80, 42, 42), 4.0f, BLUE);
 
-            DrawRectangleLinesEx(new(panelRect.X + 10, 80, 67, 67), 1.0f, BLACK);
-            DrawRectangleLinesEx(new(67 + panelRect.X + 10, 80, 67, 67), 1.0f, BLACK);
-            DrawRectangleLinesEx(new(134 + panelRect.X + 10, 80, 67, 67), 1.0f, BLACK);
-            DrawRectangleLinesEx(new(201 + panelRect.X + 10, 80, 67, 67), 1.0f, BLACK);
+            DrawRectangleLinesEx(new(panelRect.X + 10, 80, 42, 42), 1.0f, BLACK);
+            DrawRectangleLinesEx(new(42 + panelRect.X + 10, 80, 42, 42), 1.0f, BLACK);
+            DrawRectangleLinesEx(new(84 + panelRect.X + 10, 80, 42, 42), 1.0f, BLACK);
+            DrawRectangleLinesEx(new(126 + panelRect.X + 10, 80, 42, 42), 1.0f, BLACK);
 
             DrawTriangle(
                 new(panelRect.X + 20, 90),
-                new(panelRect.X + 20, 137),
-                new(panelRect.X + 67, 137),
+                new(panelRect.X + 20, 112),
+                new(panelRect.X + 42, 112),
                 BLACK
             );
 
             DrawRectangleV(
-                new(panelRect.X + 107, 90),
-                new(10, 47),
+                new(panelRect.X + 70, 85),
+                new(5, 32),
                 BLACK
             );
 
             DrawRectangleV(
-                new(panelRect.X + 87, 108),
-                new(47, 10),
+                new(panelRect.X + 57, 100),
+                new(32, 5),
                 BLACK
             );
 
@@ -772,7 +929,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
             DrawTexturePro(
                 placeSpearTexture,
                 new(0, 0, placeSpearTexture.width, placeSpearTexture.height),
-                new(panelRect.X + 154, 90, 47, 47),
+                new(panelRect.X + 99, 85, 32, 32),
                 new(0, 0),
                 0,
                 BLACK
@@ -781,7 +938,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
             DrawTexturePro(
                 entryTexture,
                 new(0, 0, entryTexture.width, entryTexture.height),
-                new(panelRect.X + 221, 90, 47, 47),
+                new(panelRect.X + 141, 85, 32, 32),
                 new(0, 0),
                 0,
                 BLACK
@@ -792,7 +949,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 fixed (int* scrollIndex = &_geoMenuScrollIndex)
                 {
                     var newGeoMenuIndex = RayGui.GuiListView(
-                        new(panelRect.X + 10, 150, 270, 200),
+                        new(panelRect.X + 10, 150, 170, 200),
                         _geoMenuCategory switch
                         {
                             0 => "Solid;Slope;Platform;Glass",
@@ -818,12 +975,12 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
             
 
             _allowMultiSelect = RayGui.GuiCheckBox(new(panelRect.X + 10, 360, 15, 15), "Multi-Select", _allowMultiSelect);
-            _eraseMode = RayGui.GuiCheckBox(new(panelRect.X + 10, 380, 15, 15), "Erase Mode", _eraseMode);
-            _eraseAllMode = RayGui.GuiCheckBox(new(panelRect.X + 10, 400, 15, 15), "Erase Everything", _eraseAllMode);
+            _eraseAllMode = RayGui.GuiCheckBox(new(panelRect.X + 10, 380, 15, 15), "Erase Everything", _eraseAllMode);
+            GLOBALS.Settings.GeometryEditor.ShowCameras = RayGui.GuiCheckBox(new(panelRect.X + 10, 400, 15, 15), "Show Cameras", GLOBALS.Settings.GeometryEditor.ShowCameras);
 
-            _showLayer1 = RayGui.GuiCheckBox(new(panelRect.X + 145, 360, 15, 15), "Layer 1", _showLayer1);
-            _showLayer2 = RayGui.GuiCheckBox(new(panelRect.X + 145, 380, 15, 15), "Layer 2", _showLayer2);
-            _showLayer3 = RayGui.GuiCheckBox(new(panelRect.X + 145, 400, 15, 15), "Layer 3", _showLayer3);
+            _showLayer1 = RayGui.GuiCheckBox(new(panelRect.X + 145, 360, 15, 15), "L 1", _showLayer1);
+            _showLayer2 = RayGui.GuiCheckBox(new(panelRect.X + 145, 380, 15, 15), "L 2", _showLayer2);
+            _showLayer3 = RayGui.GuiCheckBox(new(panelRect.X + 145, 400, 15, 15), "L 3", _showLayer3);
 
             // Current layer indicator
 

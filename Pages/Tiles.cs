@@ -58,12 +58,13 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
         int tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / GLOBALS.PreviewScale;
         int tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / GLOBALS.PreviewScale;
 
-        bool canDrawTile = _materialTileSwitch
+
+        var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
+
+        var canDrawTile = _materialTileSwitch
             ? !CheckCollisionPointRec(tileMouse, tilePanelRect) && !CheckCollisionPointRec(tileMouse, specsRect)
             : !CheckCollisionPointRec(tileMouse, tilePanelRect);
-
-        bool inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
-
+        
         var categoriesPageSize = (int)tilePanelRect.height / 30;
 
         // TODO: fetch init only when menu indices change
@@ -175,7 +176,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
             }*/
         }
 
-        var isTileLegel = GLOBALS.Level.IsTileLegal(ref currentTileInit, new(tileMatrixX, tileMatrixY));
+        var isTileLegal = GLOBALS.Level.IsTileLegal(ref currentTileInit, new(tileMatrixX, tileMatrixY));
 
         // handle placing tiles
 
@@ -207,7 +208,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                 }
                 else
                 {
-                    if (isTileLegel) 
+                    if (isTileLegal) 
                         GLOBALS.Level.ForcePlaceTileWithGeo(
                             currentTileInit, 
                             _tileCategoryIndex, 
@@ -240,13 +241,18 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
             // handle removing tiles
             if (_shortcuts.Erase.Check(ctrl, shift, alt, true) && canDrawTile && inMatrixBounds)
             {
-                if (_materialTileSwitch)
+                var cell = GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer];
+
+                switch (cell.Data)
                 {
-                    GLOBALS.Level.RemoveTile(tileMatrixX, tileMatrixY, GLOBALS.Layer);
-                }
-                else
-                {
-                    GLOBALS.Level.RemoveMaterial(tileMatrixX, tileMatrixY, GLOBALS.Layer);
+                    case TileHead:
+                    case TileBody:
+                        GLOBALS.Level.RemoveTile(tileMatrixX, tileMatrixY, GLOBALS.Layer);
+                        break;
+                    
+                    case TileMaterial:
+                        GLOBALS.Level.RemoveMaterial(tileMatrixX, tileMatrixY, GLOBALS.Layer);
+                        break;
                 }
             }
 
@@ -537,7 +543,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
             // currently held tile
             if (_materialTileSwitch)
             {
-                var color = isTileLegel ? currentTilePreviewColor : new(255, 0, 0, 255);
+                var color = isTileLegal ? currentTilePreviewColor : new(255, 0, 0, 255);
                 Printers.DrawTilePreview(ref currentTileInit, ref currentTileTexture, ref color, (tileMatrixX, tileMatrixY));
 
                 EndShaderMode();
@@ -811,6 +817,67 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                 DrawRectangleV(new(teWidth - 60, tilePanelRect.height - 30), new(40, 40), GLOBALS.Settings.GeometryEditor.LayerColors.Layer1);
                 DrawText("L1", teWidth - 47, (int)tilePanelRect.height - 20, 20, new(255, 255, 255, 255));
             }
+            
+            // Hovered tile info text
+
+            if (inMatrixBounds && canDrawTile)
+            {
+                #if DEBUG
+
+                TileCell hoveredTile;
+
+                try
+                {
+                    hoveredTile = GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer];
+                }
+                catch (IndexOutOfRangeException ie)
+                {
+                    throw new IndexOutOfRangeException(innerException: ie,
+                        message:
+                        $"Failed to fetch hovered tile from {nameof(GLOBALS.Level.TileMatrix)} (LX: {GLOBALS.Level.TileMatrix.GetLength(1)}, LY: {GLOBALS.Level.TileMatrix.GetLength(0)}): x, y, or z ({tileMatrixX}, {tileMatrixY}, {GLOBALS.Layer}) were out of bounds");
+                }
+
+                try
+                {
+                    DrawText(hoveredTile.Data switch
+                        {
+                            TileHead h => h.CategoryPostition.Item3,
+                            TileBody b => (GLOBALS.Level.TileMatrix[b.HeadPosition.y - 1, b.HeadPosition.x - 1,
+                                b.HeadPosition.z - 1].Data is TileHead h)
+                                ? h.CategoryPostition.Item3
+                                : "Stray Tile Fragment",
+                            TileMaterial m => m.Name,
+                            TileDefault => GLOBALS.Level.DefaultMaterial,
+                            _ => throw new Exception("Invalid tile data")
+                        },
+                        (_materialTileSwitch) ? (_showTileSpecs ? specsRect.X + specsRect.width : 25) : 0,
+                        specsRect.Y + specsRect.height - 20,
+                        20,
+                        WHITE);
+                }
+                catch (IndexOutOfRangeException c)
+                {
+                    throw new IndexOutOfRangeException(innerException: c,
+                        message:
+                        $"Failed to fetch a tile head pointed by a tile body: A tile body fragment pointed to a tile head with an out of bounds index");
+                }
+                #else
+                DrawText(GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer].Data switch
+                {
+                    TileHead h => h.CategoryPostition.Item3,
+                    TileBody b => (GLOBALS.Level.TileMatrix[b.HeadPosition.y - 1, b.HeadPosition.x - 1,
+                        b.HeadPosition.z - 1].Data as TileHead).CategoryPostition.Item3,
+                    TileMaterial m => m.Name,
+                    TileDefault => GLOBALS.Level.DefaultMaterial,
+                    _ => throw new Exception("Invalid tile data")
+                },
+                    specsRect.X + specsRect.width,
+                    specsRect.Y + specsRect.height - 20,
+                    20,
+                    WHITE);
+                #endif
+            }
+
 
 
             // Tile specs panel
