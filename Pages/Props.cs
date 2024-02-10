@@ -45,6 +45,8 @@ internal class PropsEditorPage : IPage
     
     private const float PropScale = 0.4f;
 
+    private int _snapMode = 1;
+
     private int _selectedListPage;
 
     private int _quadLock;
@@ -404,6 +406,13 @@ internal class PropsEditorPage : IPage
                 // Place Prop
                 if (canDrawTile && (_shortcuts.PlaceProp.Check(ctrl, shift, alt) || _shortcuts.PlacePropAlt.Check(ctrl, shift, alt)))
                 {
+                    var posV = _snapMode switch
+                    {
+                        1 => new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale,
+                        2 => new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f,
+                        _ => tileMouseWorld
+                    };
+                    
                     switch (_menuRootCategoryIndex)
                     {
                         case 0: // Tiles as props
@@ -411,6 +420,7 @@ internal class PropsEditorPage : IPage
                             var currentTileAsProp = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
                             var width = (float)(currentTileAsProp.init.Size.Item1 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
                             var height = (float)(currentTileAsProp.init.Size.Item2 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
+
                             
                             GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
                                 (
@@ -421,10 +431,10 @@ internal class PropsEditorPage : IPage
                                         currentTileAsProp.init.Name, 
                                         true, 
                                         new PropQuads(
-                                        new(tileMouseWorld.X - width, tileMouseWorld.Y - height), 
-                                        new(tileMouseWorld.X + width, tileMouseWorld.Y - height), 
-                                        new(tileMouseWorld.X + width, tileMouseWorld.Y + height), 
-                                        new(tileMouseWorld.X - width, tileMouseWorld.Y + height)
+                                        new(posV.X - width, posV.Y - height), 
+                                        new(posV.X + width, posV.Y - height), 
+                                        new(posV.X + width, posV.Y + height), 
+                                        new(posV.X - width, posV.Y + height)
                                         )
                                     )
                                     {
@@ -440,10 +450,10 @@ internal class PropsEditorPage : IPage
                             var current = GLOBALS.RopeProps[_propsMenuRopesIndex];
                             var newQuads = new PropQuads
                             {
-                                TopLeft = new(tileMouseWorld.X - 100, tileMouseWorld.Y - 30),
-                                BottomLeft = new(tileMouseWorld.X - 100, tileMouseWorld.Y + 30),
-                                TopRight = new(tileMouseWorld.X + 100, tileMouseWorld.Y - 30),
-                                BottomRight = new(tileMouseWorld.X + 100, tileMouseWorld.Y + 30)
+                                TopLeft = new(posV.X - 100, posV.Y - 30),
+                                BottomLeft = new(posV.X - 100, posV.Y + 30),
+                                TopRight = new(posV.X + 100, tileMouseWorld.Y - 30),
+                                BottomRight = new(posV.X + 100, posV.Y + 30)
                             };
 
                             var ropeEnds = Utils.RopeEnds(newQuads);
@@ -479,10 +489,10 @@ internal class PropsEditorPage : IPage
                             var height = texture.height / 2f;
                             var newQuads = new PropQuads
                             {
-                                TopLeft = new(tileMouseWorld.X - 100, tileMouseWorld.Y - height),
-                                BottomLeft = new(tileMouseWorld.X - 100, tileMouseWorld.Y + height),
-                                TopRight = new(tileMouseWorld.X + 100, tileMouseWorld.Y - height),
-                                BottomRight = new(tileMouseWorld.X + 100, tileMouseWorld.Y + height)
+                                TopLeft = new(posV.X - 100, posV.Y - height),
+                                BottomLeft = new(posV.X - 100, posV.Y + height),
+                                TopRight = new(posV.X + 100, posV.Y - height),
+                                BottomRight = new(posV.X + 100, posV.Y + height)
                             };
                             
                             GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
@@ -535,10 +545,10 @@ internal class PropsEditorPage : IPage
                                         init.Name, 
                                         false, 
                                         new PropQuads(
-                                        new(tileMouseWorld.X - width, tileMouseWorld.Y - height), 
-                                        new(tileMouseWorld.X + width, tileMouseWorld.Y - height), 
-                                        new(tileMouseWorld.X + width, tileMouseWorld.Y + height), 
-                                        new(tileMouseWorld.X - width, tileMouseWorld.Y + height))
+                                        new(posV.X - width, posV.Y - height), 
+                                        new(posV.X + width, posV.Y - height), 
+                                        new(posV.X + width, posV.Y + height), 
+                                        new(posV.X - width, posV.Y + height))
                                     )
                                     {
                                         Extras = new PropExtras(settings, [])
@@ -935,6 +945,13 @@ internal class PropsEditorPage : IPage
                 else if (_stretchingProp && anySelected)
                 {
                     var currentQuads = fetchedSelected[0].prop.prop.Quads; 
+                    
+                    var posV = _snapMode switch
+                    {
+                        1 => new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale,
+                        2 => new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f,
+                        _ => tileMouseWorld
+                    };
 
                     if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
                     {
@@ -956,18 +973,18 @@ internal class PropsEditorPage : IPage
                             
                             if (
                                 CheckCollisionPointCircle(
-                                    tileMouseWorld, middleLeft,
+                                    posV, middleLeft,
                                     5f
                                 ) || _quadLock == 1)
                             {
                                 _quadLock = 1;
                                 currentQuads.BottomLeft = RayMath.Vector2Add(
-                                    tileMouseWorld, 
+                                    posV, 
                                     new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                     );
                                 
                                 currentQuads.TopLeft = RayMath.Vector2Add(
-                                    tileMouseWorld, 
+                                    posV, 
                                     new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                     );
                                 
@@ -1001,12 +1018,12 @@ internal class PropsEditorPage : IPage
                                 );
                                 
                                 currentQuads.BottomRight = RayMath.Vector2Add(
-                                    tileMouseWorld, 
+                                    posV, 
                                     new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                 );
                                 
                                 currentQuads.TopRight = RayMath.Vector2Add(
-                                    tileMouseWorld, 
+                                    posV, 
                                     new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                 );
                             }
@@ -1040,12 +1057,12 @@ internal class PropsEditorPage : IPage
                             {
                                 case 1: // left
                                     currentQuads.BottomLeft = RayMath.Vector2Add(
-                                        tileMouseWorld, 
+                                        posV, 
                                         new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                     );
                                 
                                     currentQuads.TopLeft = RayMath.Vector2Add(
-                                        tileMouseWorld, 
+                                        posV, 
                                         new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                     );
                                 
@@ -1072,12 +1089,12 @@ internal class PropsEditorPage : IPage
                                     );
                                 
                                     currentQuads.BottomRight = RayMath.Vector2Add(
-                                        tileMouseWorld, 
+                                        posV, 
                                         new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                     );
                                 
                                     currentQuads.TopRight = RayMath.Vector2Add(
-                                        tileMouseWorld, 
+                                        posV, 
                                         new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                     );
                                     break;
@@ -1114,22 +1131,22 @@ internal class PropsEditorPage : IPage
                             // Check Top-Left
                             if (_quadLock == 1)
                             {
-                                currentQuads.TopLeft = tileMouseWorld;
+                                currentQuads.TopLeft = posV;
                             }
                             // Check Top-Right
                             else if (_quadLock == 2)
                             {
-                                currentQuads.TopRight = tileMouseWorld;
+                                currentQuads.TopRight = posV;
                             }
                             // Check Bottom-Right 
                             else if (_quadLock == 3)
                             {
-                                currentQuads.BottomRight = tileMouseWorld;
+                                currentQuads.BottomRight = posV;
                             }
                             // Check Bottom-Left
                             else if (_quadLock == 4)
                             {
-                                currentQuads.BottomLeft = tileMouseWorld;
+                                currentQuads.BottomLeft = posV;
                             }
                         }
                         
@@ -1746,18 +1763,61 @@ internal class PropsEditorPage : IPage
                                 var width = scaleConst * textureCutWidth;
                                 var height = scaleConst * layerHeight;
 
-                                Printers.DrawTileAsProp(
-                                    ref currentTileAsPropTexture,
-                                    ref currentTileAsProp.init,
-                                    ref tileMouseWorld,
-                                    [
-                                        new Vector2(width, -height),
-                                        new Vector2(-width, -height),
-                                        new Vector2(-width, height),
-                                        new Vector2(width, height),
-                                        new Vector2(width, -height)
-                                    ]
-                                );
+                                switch (_snapMode)
+                                {
+                                    case 0: // free
+                                        Printers.DrawTileAsProp(
+                                            ref currentTileAsPropTexture,
+                                            ref currentTileAsProp.init,
+                                            ref tileMouseWorld,
+                                            [
+                                                new Vector2(width, -height),
+                                                new Vector2(-width, -height),
+                                                new Vector2(-width, height),
+                                                new Vector2(width, height),
+                                                new Vector2(width, -height)
+                                            ]
+                                        );
+                                        break;
+
+                                    case 1: // grid snap
+                                    {
+                                        var posV = new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale;
+                                        
+                                        Printers.DrawTileAsProp(
+                                            ref currentTileAsPropTexture,
+                                            ref currentTileAsProp.init,
+                                            ref posV,
+                                            [
+                                                new Vector2(width, -height),
+                                                new Vector2(-width, -height),
+                                                new Vector2(-width, height),
+                                                new Vector2(width, height),
+                                                new Vector2(width, -height)
+                                            ]
+                                        );
+                                    }
+                                        break;
+                                    
+                                    case 2: // precise grid snap
+                                    {
+                                        var posV = new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f;
+                                        
+                                        Printers.DrawTileAsProp(
+                                            ref currentTileAsPropTexture,
+                                            ref currentTileAsProp.init,
+                                            ref posV,
+                                            [
+                                                new Vector2(width, -height),
+                                                new Vector2(-width, -height),
+                                                new Vector2(-width, height),
+                                                new Vector2(width, height),
+                                                new Vector2(width, -height)
+                                            ]
+                                        );
+                                    }
+                                        break;
+                                }
                             }
                             break;
                         
@@ -1770,6 +1830,13 @@ internal class PropsEditorPage : IPage
                             var prop = GLOBALS.LongProps[_propsMenuLongsIndex];
                             var texture = GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
                             var height = texture.height / 2f;
+
+                            var posV = _snapMode switch
+                            {
+                                1 => new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale,
+                                2 => new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f,
+                                _ => tileMouseWorld,
+                            };
                             
                             Printers.DrawProp(
                                 new PropLongSettings(), 
@@ -1777,10 +1844,10 @@ internal class PropsEditorPage : IPage
                                 texture, 
                                 new PropQuads
                                 {
-                                    TopLeft = new(tileMouseWorld.X - 100, tileMouseWorld.Y - height),
-                                    BottomLeft = new(tileMouseWorld.X - 100, tileMouseWorld.Y + height),
-                                    TopRight = new(tileMouseWorld.X + 100, tileMouseWorld.Y - height),
-                                    BottomRight = new(tileMouseWorld.X + 100, tileMouseWorld.Y + height)
+                                    TopLeft = new(posV.X - 100, posV.Y - height),
+                                    BottomLeft = new(posV.X - 100, posV.Y + height),
+                                    TopRight = new(posV.X + 100, posV.Y - height),
+                                    BottomRight = new(posV.X + 100, posV.Y + height)
                                 }, 
                                 0
                             );
@@ -1810,11 +1877,18 @@ internal class PropsEditorPage : IPage
                                 _ => (texture.width / 2f, texture.height / 2f, new BasicPropSettings())
                             };
                             
-                            Printers.DrawProp(settings, prop, ref texture, new PropQuads(
-                                new Vector2(tileMouseWorld.X - width, tileMouseWorld.Y - height), 
-                                new Vector2(tileMouseWorld.X + width, tileMouseWorld.Y - height), 
-                                new Vector2(tileMouseWorld.X + width, tileMouseWorld.Y + height), 
-                                new Vector2(tileMouseWorld.X - width, tileMouseWorld.Y + height)),
+                            var posV = _snapMode switch
+                            {
+                                1 => new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale,
+                                2 => new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f,
+                                _ => tileMouseWorld,
+                            };
+                            
+                            Printers.DrawProp(settings, prop, texture, new PropQuads(
+                                new Vector2(posV.X - width, posV.Y - height), 
+                                new Vector2(posV.X + width, posV.Y - height), 
+                                new Vector2(posV.X + width, posV.Y + height), 
+                                new Vector2(posV.X - width, posV.Y + height)),
                                 0
                             );
                         }
@@ -2674,7 +2748,25 @@ internal class PropsEditorPage : IPage
             );
             
             
+            // Snap mode
 
+            var snapButtonRect = new Rectangle(menuPanelRect.X + menuPanelRect.width - 45, sHeight - 45, 40, 40);
+            
+            DrawRectangleRec(snapButtonRect, BLUE);
+
+            DrawText(
+                _snapMode switch { 1 => "1.0", 2 => "0.5", _ => "0.0" }, 
+                snapButtonRect.X + 10, 
+                snapButtonRect.Y + 10, 
+                20, 
+                WHITE
+            );
+
+            if (CheckCollisionPointRec(tileMouse, snapButtonRect) &&
+                IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+            {
+                _snapMode = ++_snapMode % 3;
+            }
 
             // layer indicator
 
