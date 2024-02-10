@@ -298,7 +298,7 @@ public class PropsShortcuts
     public KeyboardShortcut ToggleRotatingPropsMode { get; set; } = KeyboardKey.KEY_R;
     public KeyboardShortcut ToggleScalingPropsMode { get; set; } = KeyboardKey.KEY_S;
     public KeyboardShortcut TogglePropsVisibility { get; set; } = KeyboardKey.KEY_H;
-    public KeyboardShortcut ToggleEditingPropQuadsMode { get; set; } = KeyboardKey.KEY_Q;
+    public KeyboardShortcut ToggleEditingPropQuadsMode { get; set; } = new(KeyboardKey.KEY_Q, Shift:false);
     public KeyboardShortcut DeleteSelectedProps { get; set; } = KeyboardKey.KEY_D;
     public KeyboardShortcut ToggleRopePointsEditingMode { get; set; } = KeyboardKey.KEY_P;
     public KeyboardShortcut ToggleRopeEditingMode { get; set; } = KeyboardKey.KEY_B;
