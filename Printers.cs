@@ -172,6 +172,128 @@ internal static class Printers
             }
         }
     }
+    internal static void DrawGeoLayer(int layer, int scale, bool grid, Color color, Vector2 offsetPixels)
+    {
+        for (var y = 0; y < GLOBALS.Level.Height; y++)
+        {
+            for (var x = 0; x < GLOBALS.Level.Width; x++)
+            {
+                var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
+
+                var texture = Utils.GetBlockIndex(cell.Geo);
+
+                if (texture >= 0)
+                {
+                    var fetchedTexture = GLOBALS.Textures.GeoBlocks[texture];
+
+                    DrawTexturePro(
+                        GLOBALS.Textures.GeoBlocks[texture],
+                        new(0, 0, fetchedTexture.width, fetchedTexture.height),
+                        new Rectangle(offsetPixels.X + x * scale, offsetPixels.Y + y * scale, scale, scale),
+                        new(0, 0),
+                        0,
+                        color
+                    );
+                }
+
+                if (grid) DrawRectangleLinesEx(
+                    new(offsetPixels.X + x * scale, offsetPixels.Y + y * scale, scale, scale),
+                    0.4f,
+                    new(255, 255, 255, 50)
+                );
+                
+                if (grid && x % 2 == 0 && y % 2 == 0) DrawRectangleLinesEx(
+                    new(offsetPixels.X + x * scale, offsetPixels.Y + y * scale, scale*2, scale*2),
+                    0.6f,
+                    new(255, 255, 255, 55)
+                );
+
+                for (var s = 1; s < cell.Stackables.Length; s++)
+                {
+                    if (cell.Stackables[s])
+                    {
+                        switch (s)
+                        {
+                            // dump placement
+                            case 1:     // ph
+                            case 2:     // pv
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+
+                                DrawTexturePro(
+                                    stackableTexture, 
+                                    new(0, 0, stackableTexture.width, stackableTexture.height),
+                                    new(offsetPixels.X + x * scale, offsetPixels.Y + y * scale, scale, scale), 
+                                    new(0, 0), 
+                                    0, 
+                                    color
+                                );
+                                break;
+                            case 3:     // bathive
+                                case 5:     // entrance
+                                case 6:     // passage
+                                case 7:     // den
+                                case 9:     // rock
+                                case 10:    // spear
+                                case 12:    // forbidflychains
+                                case 13:    // garbagewormhole
+                                case 18:    // waterfall
+                                case 19:    // wac
+                                case 20:    // worm
+                                case 21:    // scav
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+
+                                    DrawTexturePro(
+                                        stackableTexture2,
+                                        new(0, 0, stackableTexture2.width, stackableTexture2.height),
+                                        new(offsetPixels.X + x * scale,offsetPixels.Y + y*scale, scale, scale), 
+                                        new(0, 0),
+                                        0, 
+                                        WHITE
+                                    ); // TODO: remove opacity from entrances
+                                break;
+
+                            // directional placement
+                            case 4:     // entrance
+                                var index = Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, layer));
+
+                                if (index is 22 or 23 or 24 or 25)
+                                {
+                                    GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
+                                }
+
+                                var t = GLOBALS.Textures.GeoStackables[index];
+                                DrawTexturePro(
+                                    t,
+                                    new(0, 0, t.width, t.height),
+                                    new(offsetPixels.X + x*scale, offsetPixels.Y + y*scale, scale, scale), 
+                                    new(0, 0),
+                                    0, 
+                                    WHITE
+                                );
+                                break;
+                            case 11:    // crack
+                                var crackTexture = GLOBALS.Textures.GeoStackables[
+                                    Utils.GetStackableTextureIndex(s,
+                                        Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width,
+                                            GLOBALS.Level.Height, x, y, layer))];
+                                DrawTexturePro(
+                                    crackTexture,
+                                    new(0, 0, crackTexture.width, crackTexture.height),
+                                    new(
+                                        offsetPixels.X + x * scale,
+                                        offsetPixels.Y + y * scale,scale, scale
+                                    ),
+                                    new(0, 0),
+                                    0,
+                                    WHITE
+                                );
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+    }
     internal static void DrawGeoLayer(int layer, int scale, bool grid, Color color, bool[] stackableFilter)
     {
         for (var y = 0; y < GLOBALS.Level.Height; y++)
@@ -566,6 +688,164 @@ internal static class Printers
                                 DrawRectangleV(
                                     origin,
                                     new(scale - 10, (scale - 10) / 2),
+                                    color
+                                );
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    internal static void DrawTileLayer(int layer, int scale, bool grid, bool preview, bool tinted, Vector2 offsetPixels)
+    {
+        for (var y = 0; y < GLOBALS.Level.Height; y++)
+        {
+            for (var x = 0; x < GLOBALS.Level.Width; x++)
+            {
+                if (grid) DrawRectangleLinesEx(
+                    new(offsetPixels.X + x * scale, offsetPixels.Y + y * scale, scale, scale),
+                    0.5f,
+                    new(255, 255, 255, 100)
+                );
+                
+                TileCell tileCell;
+
+                #if DEBUG
+                try
+                {
+                    tileCell = GLOBALS.Level.TileMatrix[y, x, layer];
+                }
+                catch (IndexOutOfRangeException ie)
+                {
+                    throw new IndexOutOfRangeException(innerException: ie, message: $"Failed to fetch tile cell from {nameof(GLOBALS.Level.TileMatrix)}[{GLOBALS.Level.TileMatrix.GetLength(0)}, {GLOBALS.Level.TileMatrix.GetLength(1)}, {GLOBALS.Level.TileMatrix.GetLength(2)}]: x, y, or z ({x}, {y}, {layer}) was out of bounds");
+                }
+                #else
+                tileCell = GLOBALS.Level.TileMatrix[y, x, layer];
+                #endif
+                
+                if (tileCell.Type == TileType.TileHead)
+                {
+                    var data = (TileHead)tileCell.Data;
+
+                    var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1];
+
+                    var tileTexture = category[data.CategoryPostition.Item2];
+                    var color = GLOBALS.TileCategories[data.CategoryPostition.Item1].Item2;
+                    var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1][data.CategoryPostition.Item2];
+                    
+                    var center = new Vector2(
+                        initTile.Size.Item1 % 2 == 0 ? x * scale + scale : x * scale + scale/2f, 
+                        initTile.Size.Item2 % 2 == 0 ? y * scale + scale : y * scale + scale/2f);
+
+                    center += offsetPixels;
+
+                    var width = (scale / 20f)/2 * (initTile.Type == InitTileType.Box ? initTile.Size.Item1 : initTile.Size.Item1 + initTile.BufferTiles * 2) * 20;
+                    var height = (scale / 20f)/2 * (initTile.Size.Item2 + initTile.BufferTiles*2) * 20;
+                    
+                    if (!preview)
+                    {
+                        if (tinted)
+                        {
+                            DrawTileAsPropColored(
+                                ref tileTexture,
+                                ref initTile,
+                                ref center,
+                                [
+                                    new(width, -height),
+                                    new(-width, -height),
+                                    new(-width, height),
+                                    new(width, height),
+                                    new(width, -height)
+                                ],
+                                new Color(color.r, color.g, color.b, 255 - GLOBALS.Layer*100),
+                                0
+                            );
+                        }
+                        else
+                        {
+                            DrawTileAsProp(
+                                ref tileTexture,
+                                ref initTile,
+                                ref center,
+                                [
+                                    new(width, -height),
+                                    new(-width, -height),
+                                    new(-width, height),
+                                    new(width, height),
+                                    new(width, -height)
+                                ],
+                                255 - GLOBALS.Layer*100
+                            );
+                        }
+                    }
+                    else DrawTilePreview(initTile, tileTexture, color, new Vector2(x, y)+offsetPixels/scale, scale);
+                }
+                else if (tileCell.Type == TileType.Material)
+                {
+                    // var materialName = ((TileMaterial)tileCell.Data).Name;
+                    var origin = new Vector2(x * scale + 5, y * scale + 5);
+                    var color = GLOBALS.Level.MaterialColors[y, x, layer];
+
+                    if (layer != GLOBALS.Layer) color.a = 120;
+
+                    if (color.r != 0 || color.g != 0 || color.b != 0)
+                    {
+
+                        switch (GLOBALS.Level.GeoMatrix[y, x, layer].Geo)
+                        {
+                            case 1:
+                                DrawRectangle(
+                                    (int)offsetPixels.X + x * scale + 5,
+                                    (int)offsetPixels.Y + y * scale + 5,
+                                    6,
+                                    6,
+                                    color
+                                );
+                                break;
+
+
+                            case 2:
+                                DrawTriangle(
+                                    origin + offsetPixels,
+                                    new Vector2(origin.X, origin.Y + scale - 10) + offsetPixels,
+                                    new Vector2(origin.X + scale - 10, origin.Y + scale - 10) + offsetPixels,
+                                    color
+                                );
+                                break;
+
+
+                            case 3:
+                                DrawTriangle(
+                                    new Vector2(origin.X + scale - 10, origin.Y) + offsetPixels,
+                                    new Vector2(origin.X, origin.Y + scale - 10) + offsetPixels,
+                                    new Vector2(origin.X + scale - 10, origin.Y + scale - 10) + offsetPixels,
+                                    color
+                                );
+                                break;
+
+                            case 4:
+                                DrawTriangle(
+                                    origin + offsetPixels,
+                                    new Vector2(origin.X, origin.Y + scale - 10) + offsetPixels,
+                                    new Vector2(origin.X + scale - 10, origin.Y) + offsetPixels,
+                                    color
+                                );
+                                break;
+
+                            case 5:
+                                DrawTriangle(
+                                    origin + offsetPixels,
+                                    new Vector2(origin.X + scale - 10, origin.Y + scale - 10) + offsetPixels,
+                                    new Vector2(origin.X + scale - 10, origin.Y) + offsetPixels,
+                                    color
+                                );
+                                break;
+
+                            case 6:
+                                DrawRectangleV(
+                                    origin + offsetPixels,
+                                    new(scale - 10, (scale - 10) / 2f),
                                     color
                                 );
                                 break;

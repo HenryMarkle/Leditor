@@ -1,38 +1,63 @@
 ﻿using System.Numerics;
-using System.Text;
 using static Raylib_CsLo.Raylib;
 
 namespace Leditor;
 
 internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
 {
-    readonly Serilog.Core.Logger logger = logger;
+    readonly Serilog.Core.Logger _logger = logger;
 
-    Camera2D camera = new() { zoom = 0.5f, target = new(-500, -200) };
-    float lightAngleVariable = 90;
-    int lightBrushTextureIndex = 0;
-    float lightBrushWidth = 200;
-    float lightBrushHeight = 200;
-    int lightBrushTexturePage = 0;
-    float lightBrushRotation = 0;
-    bool eraseShadow = false;
-    bool slowGrowth = true;
-    bool shading = true;
+    private Camera2D _camera = new() { zoom = 0.5f, target = new(-500, -200) };
+    private int _lightBrushTextureIndex;
+    private float _lightBrushWidth = 200;
+    private float _lightBrushHeight = 200;
+    private int _lightBrushTexturePage;
+    private float _lightBrushRotation;
+    private bool _eraseShadow;
+    private bool _slowGrowth = true;
+    private bool _shading = true;
+    private bool _showTiles;
+    private bool _tilePreview = true;
+    private bool _tintedTileTextures = true;
 
-    const float initialGrowthFactor = 0.01f;
-    float growthFactor = initialGrowthFactor;
+    private bool _isDraggingIndicator;
+
+    private const float initialGrowthFactor = 0.01f;
+    private float _growthFactor = initialGrowthFactor;
     
-    Rectangle lightBrushSource = new();
-    Rectangle lightBrushDest = new();
-    Vector2 lightBrushOrigin = new();
-    Vector2 lightRecSize = new(100, 100);
+    private Rectangle _lightBrushSource;
+    private Rectangle _lightBrushDest;
+    private Vector2 _lightBrushOrigin;
 
-    readonly byte[] lightBrushMenuPanelBytes = Encoding.ASCII.GetBytes("Brushes");
+    readonly byte[] _lightBrushMenuPanelBytes = "Brushes"u8.ToArray();
 
     private readonly LightShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.LightEditor;
 
     public void Draw()
     {
+        var mouse = GetMousePosition();
+        
+        var indicatorOrigin = new Vector2(GetScreenWidth() - 100, GetScreenHeight() - 100);
+
+        var indicatorPoint = new Vector2(
+            indicatorOrigin.X + (float)((15 + GLOBALS.Level.LightFlatness * 7) *
+                                        -Math.Cos(float.DegreesToRadians(GLOBALS.Level.LightAngle - 180))),
+            indicatorOrigin.Y + (float)((15 + GLOBALS.Level.LightFlatness * 7) *
+                                        Math.Sin(float.DegreesToRadians(GLOBALS.Level.LightAngle - 180)))
+        );
+        
+        var indHovered = CheckCollisionPointCircle(mouse, indicatorPoint, 10f);
+
+        if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isDraggingIndicator)
+            _isDraggingIndicator = false;
+
+        if (indHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isDraggingIndicator = true;
+
+        var panelHeight = GetScreenHeight() - 100;
+        var brushPanel = new Rectangle(10, 50, 120, panelHeight);
+
+        var canPaint = !CheckCollisionPointRec(mouse, brushPanel) && !indHovered && !_isDraggingIndicator;
+        
         var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
         var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
         var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
@@ -73,18 +98,17 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
         if (_shortcuts.IncreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness < 10) GLOBALS.Level.LightFlatness++;
         if (_shortcuts.DecreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness > 1) GLOBALS.Level.LightFlatness--;
 
-        const int textureSize = 130;
+        const int textureSize = 100;
 
-        var panelHeight = Raylib.GetScreenHeight() - 100;
 
-        var pageSize = panelHeight / textureSize;
+        var pageSize = (panelHeight - 100) / textureSize;
 
-        if (_shortcuts.IncreaseAngle.Check(ctrl, shift, alt, true))
+        if (_shortcuts.DecreaseAngle.Check(ctrl, shift, alt, true))
         {
             // lightAngleVariable += 0.01f;
             GLOBALS.Level.LightAngle--;/* = (int)(180 * Math.Sin(lightAngleVariable) + 90);*/
         }
-        if (_shortcuts.DecreaseAngle.Check(ctrl, shift, alt, true))
+        if (_shortcuts.IncreaseAngle.Check(ctrl, shift, alt, true))
         {
             // lightAngleVariable -= 0.01f;
             GLOBALS.Level.LightAngle++;/* = (int)(180 * Math.Sin(lightAngleVariable) + 90);*/
@@ -94,220 +118,183 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
         if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.DragLevelAlt.Check(ctrl, shift, alt, true))
         {
             var delta = GetMouseDelta();
-            delta = RayMath.Vector2Scale(delta, -1.0f / camera.zoom);
-            camera.target = RayMath.Vector2Add(camera.target, delta);
+            delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
+            _camera.target = RayMath.Vector2Add(_camera.target, delta);
         }
 
         // handle zoom
         var wheel2 = GetMouseWheelMove();
         if (wheel2 != 0)
         {
-            var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), camera);
-            camera.offset = GetMousePosition();
-            camera.target = mouseWorldPosition;
-            camera.zoom += wheel2 * GLOBALS.ZoomIncrement;
-            if (camera.zoom < GLOBALS.ZoomIncrement) camera.zoom = GLOBALS.ZoomIncrement;
+            var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
+            _camera.offset = GetMousePosition();
+            _camera.target = mouseWorldPosition;
+            _camera.zoom += wheel2 * GLOBALS.ZoomIncrement;
+            if (_camera.zoom < GLOBALS.ZoomIncrement) _camera.zoom = GLOBALS.ZoomIncrement;
         }
 
         // update light brush
 
         {
-            var texture = GLOBALS.Textures.LightBrushes[lightBrushTextureIndex];
-            var lightMouse = GetScreenToWorld2D(GetMousePosition(), camera);
+            var texture = GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex];
+            var lightMouse = GetScreenToWorld2D(GetMousePosition(), _camera);
 
-            lightBrushSource = new(0, 0, texture.width, texture.height);
-            lightBrushDest = new(lightMouse.X, lightMouse.Y, lightBrushWidth, lightBrushHeight);
-            lightBrushOrigin = new(lightBrushWidth / 2, lightBrushHeight / 2);
+            _lightBrushSource = new(0, 0, texture.width, texture.height);
+            _lightBrushDest = new(lightMouse.X, lightMouse.Y, _lightBrushWidth, _lightBrushHeight);
+            _lightBrushOrigin = new(_lightBrushWidth / 2, _lightBrushHeight / 2);
         }
 
         if (_shortcuts.NextBrush.Check(ctrl, shift, alt))
         {
-            lightBrushTextureIndex = ++lightBrushTextureIndex % GLOBALS.Textures.LightBrushes.Length;
+            _lightBrushTextureIndex = ++_lightBrushTextureIndex % GLOBALS.Textures.LightBrushes.Length;
 
-            lightBrushTexturePage = lightBrushTextureIndex / pageSize;
+            _lightBrushTexturePage = _lightBrushTextureIndex / pageSize;
         }
         else if (_shortcuts.PreviousBrush.Check(ctrl, shift, alt))
         {
-            lightBrushTextureIndex--;
+            _lightBrushTextureIndex--;
 
-            if (lightBrushTextureIndex < 0) lightBrushTextureIndex = GLOBALS.Textures.LightBrushes.Length - 1;
+            if (_lightBrushTextureIndex < 0) _lightBrushTextureIndex = GLOBALS.Textures.LightBrushes.Length - 1;
 
-            lightBrushTexturePage = lightBrushTextureIndex / pageSize;
+            _lightBrushTexturePage = _lightBrushTextureIndex / pageSize;
         }
 
         if (_shortcuts.RotateBrushCounterClockwise.Check(ctrl, shift, alt, true))
         {
-            lightBrushRotation -= 0.2f;
+            _lightBrushRotation -= 0.2f;
         } else if (_shortcuts.FastRotateBrushCounterClockwise.Check(ctrl, shift, alt, true))
         {
-            lightBrushRotation -= 1;
+            _lightBrushRotation -= 1;
         }
 
         if (_shortcuts.RotateBrushClockwise.Check(ctrl, shift, alt, true))
         {
             
-            lightBrushRotation += 0.2f;
+            _lightBrushRotation += 0.2f;
         }
         else if (_shortcuts.FastRotateBrushClockwise.Check(ctrl, shift, alt, true))
         {
-            lightBrushRotation += 1;
+            _lightBrushRotation += 1;
         }
 
         if (_shortcuts.StretchBrushVertically.Check(ctrl, shift, alt, true))
         {
-            lightBrushHeight += 2;
+            _lightBrushHeight += 2;
         }
         else if (_shortcuts.FastStretchBrushVertically.Check(ctrl, shift, alt, true))
         {
-            lightBrushHeight += 5;
+            _lightBrushHeight += 5;
         }
         else if (_shortcuts.SqueezeBrushVertically.Check(ctrl, shift, alt, true))
         {
-            lightBrushHeight -= 2;
+            _lightBrushHeight -= 2;
         }
         else if (_shortcuts.FastSqueezeBrushVertically.Check(ctrl, shift, alt, true))
         {
-            lightBrushHeight -= 5;
+            _lightBrushHeight -= 5;
         }
 
         if (_shortcuts.StretchBrushHorizontally.Check(ctrl, shift, alt, true))
         {
-            lightBrushWidth += 2;
+            _lightBrushWidth += 2;
         }
         else if (_shortcuts.FastStretchBrushHorizontally.Check(ctrl, shift, alt, true))
         {
-            lightBrushWidth += 5;
+            _lightBrushWidth += 5;
         }
         else if (_shortcuts.SqueezeBrushHorizontally.Check(ctrl, shift, alt, true))
         {
             
-            lightBrushWidth -= 2;
+            _lightBrushWidth -= 2;
         }
         else if (_shortcuts.FastSqueezeBrushHorizontally.Check(ctrl, shift, alt, true))
         {
-            lightBrushWidth -= 5;
+            _lightBrushWidth -= 5;
         }
 
         if (_shortcuts.ToggleShadow.Check(ctrl, shift, alt))
         {
-            eraseShadow = !eraseShadow;
+            _eraseShadow = !_eraseShadow;
         }
+
+        if (_shortcuts.ToggleTileVisibility.Check(ctrl, shift, alt)) _showTiles = !_showTiles;
+        if (_shortcuts.ToggleTilePreview.Check(ctrl, shift, alt)) _tilePreview = !_tilePreview;
+        if (_shortcuts.ToggleTintedTileTextures.Check(ctrl, shift, alt)) _tintedTileTextures = !_tintedTileTextures;
 
         //
 
-        if (_shortcuts.Paint.Check(ctrl, shift, alt, true) || _shortcuts.PaintAlt.Check(ctrl, shift, alt, true))
+        if (canPaint && (_shortcuts.Paint.Check(ctrl, shift, alt, true) || _shortcuts.PaintAlt.Check(ctrl, shift, alt, true)))
         {
             BeginTextureMode(GLOBALS.Textures.LightMap);
             {
-                if (eraseShadow)
-                {
-                    BeginShaderMode(GLOBALS.Shaders.ApplyLightBrush);
-                    SetShaderValueTexture(GLOBALS.Shaders.ApplyLightBrush, GetShaderLocation(GLOBALS.Shaders.ApplyLightBrush, "inputTexture"), GLOBALS.Textures.LightBrushes[lightBrushTextureIndex]);
-                    DrawTexturePro(
-                        GLOBALS.Textures.LightBrushes[lightBrushTextureIndex],
-                        lightBrushSource,
-                        lightBrushDest,
-                        lightBrushOrigin,
-                        lightBrushRotation,
-                        new Color(255, 255, 255, 255)
-                        );
-                    EndShaderMode();
-                }
-                else
-                {
-                    BeginShaderMode(GLOBALS.Shaders.ApplyShadowBrush);
-                    SetShaderValueTexture(GLOBALS.Shaders.ApplyShadowBrush, GetShaderLocation(GLOBALS.Shaders.ApplyShadowBrush, "inputTexture"), GLOBALS.Textures.LightBrushes[lightBrushTextureIndex]);
-                    DrawTexturePro(
-                        GLOBALS.Textures.LightBrushes[lightBrushTextureIndex],
-                        lightBrushSource,
-                        lightBrushDest,
-                        lightBrushOrigin,
-                        lightBrushRotation,
-                        new(0, 0, 0, 255)
-                        );
-                    EndShaderMode();
-                }
+                BeginShaderMode(GLOBALS.Shaders.ApplyShadowBrush);
+                SetShaderValueTexture(GLOBALS.Shaders.ApplyShadowBrush, GetShaderLocation(GLOBALS.Shaders.ApplyShadowBrush, "inputTexture"), GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex]);
+                DrawTexturePro(
+                    GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex],
+                    _lightBrushSource,
+                    _lightBrushDest,
+                    _lightBrushOrigin,
+                    _lightBrushRotation,
+                    new(0, 0, 0, 255)
+                );
+                EndShaderMode();
             }
             Raylib.EndTextureMode();
         }
 
-        if (_shortcuts.SlowWarpSpeed.Check(ctrl, shift, alt)) slowGrowth = !slowGrowth;
-        if (IsKeyPressed(KeyboardKey.KEY_R)) shading = !shading;
-
-        /*if (slowGrowth)
+        if (canPaint && (_shortcuts.Erase.Check(ctrl, shift, alt, true) ||
+                         _shortcuts.EraseAlt.Check(ctrl, shift, alt, true)))
         {
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_W))
-            {
-                lightRecSize = RayMath.Vector2Add(lightRecSize, new(0, growthFactor));
-                growthFactor += 0.03f;
-            }
+            _eraseShadow = true;
 
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_S))
+            BeginTextureMode(GLOBALS.Textures.LightMap);
             {
-                lightRecSize = RayMath.Vector2Add(lightRecSize, new(0, -growthFactor));
-                growthFactor += 0.03f;
+                BeginShaderMode(GLOBALS.Shaders.ApplyLightBrush);
+                SetShaderValueTexture(GLOBALS.Shaders.ApplyLightBrush,
+                    GetShaderLocation(GLOBALS.Shaders.ApplyLightBrush, "inputTexture"),
+                    GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex]);
+                DrawTexturePro(
+                    GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex],
+                    _lightBrushSource,
+                    _lightBrushDest,
+                    _lightBrushOrigin,
+                    _lightBrushRotation,
+                    new Color(255, 255, 255, 255)
+                );
+                EndShaderMode();
             }
-
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_D))
-            {
-                lightRecSize = RayMath.Vector2Add(lightRecSize, new(growthFactor, 0));
-                growthFactor += 0.03f;
-            }
-
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_A))
-            {
-                lightRecSize = RayMath.Vector2Add(lightRecSize, new(-growthFactor, 0));
-                growthFactor += 0.03f;
-            }
-
-            if (Raylib.IsKeyReleased(KeyboardKey.KEY_W) ||
-                Raylib.IsKeyReleased(KeyboardKey.KEY_S) ||
-                Raylib.IsKeyReleased(KeyboardKey.KEY_D) ||
-                Raylib.IsKeyReleased(KeyboardKey.KEY_A)) growthFactor = initialGrowthFactor;
+            EndTextureMode();
         }
-        else
+        else _eraseShadow = false;
+
+        if (_shortcuts.SlowWarpSpeed.Check(ctrl, shift, alt)) _slowGrowth = !_slowGrowth;
+        
+        if (IsKeyPressed(KeyboardKey.KEY_R)) _shading = !_shading;
+
+        BeginDrawing();
         {
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_W)) lightRecSize = RayMath.Vector2Add(lightRecSize, new(0, 3));
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_S)) lightRecSize = RayMath.Vector2Add(lightRecSize, new(0, -3));
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_D)) lightRecSize = RayMath.Vector2Add(lightRecSize, new(3, 0));
-            if (Raylib.IsKeyDown(KeyboardKey.KEY_A)) lightRecSize = RayMath.Vector2Add(lightRecSize, new(-3, 0));
-        }*/
+            ClearBackground(GLOBALS.Settings.LightEditor.Background);
 
-
-        Raylib.BeginDrawing();
-        {
-            Raylib.ClearBackground(GLOBALS.Settings.LightEditor.Background);
-
-            Raylib.BeginMode2D(camera);
+            BeginMode2D(_camera);
             {
-                Raylib.DrawRectangle(
+                DrawRectangle(
                     0, 0,
                     GLOBALS.Level.Width * GLOBALS.Scale + 300,
                     GLOBALS.Level.Height * GLOBALS.Scale + 300,
                     new(255, 255, 255, 255)
                 );
 
-                for (int y = 0; y < GLOBALS.Level.Height; y++)
-                {
-                    for (int x = 0; x < GLOBALS.Level.Width; x++)
-                    {
-                        for (int z = 1; z < 3; z++)
-                        {
-                            var cell = GLOBALS.Level.GeoMatrix[y, x, z];
-
-                            var texture = Utils.GetBlockIndex(cell.Geo);
-
-                            if (texture >= 0)
-                            {
-                                DrawTexture(GLOBALS.Textures.GeoBlocks[texture], x * GLOBALS.Scale + 300, y * GLOBALS.Scale + 300, new(0, 0, 0, 150));
-                            }
-                        }
-                    }
-                }
+                Printers.DrawGeoLayer(2, GLOBALS.Scale, false, BLACK with { a = 150 }, new Vector2(300, 300));
+                
+                if (_showTiles) Printers.DrawTileLayer(2, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new(300, 300));
+                
+                Printers.DrawGeoLayer(1, GLOBALS.Scale, false, BLACK with { a = 150 }, new Vector2(300, 300));
+                
+                if (_showTiles) Printers.DrawTileLayer(1, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new(300, 300));
 
                 if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                 {
-                    Raylib.DrawRectangle(
+                    DrawRectangle(
                         (-1) * GLOBALS.Scale + 300,
                         (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale + 300,
                         (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
@@ -316,73 +303,12 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
                     );
                 }
 
-                for (int y = 0; y < GLOBALS.Level.Height; y++)
-                {
-                    for (int x = 0; x < GLOBALS.Level.Width; x++)
-                    {
-                        var cell = GLOBALS.Level.GeoMatrix[y, x, 0];
-
-                        var texture = Utils.GetBlockIndex(cell.Geo);
-
-                        if (texture >= 0)
-                        {
-                            Raylib.DrawTexture(GLOBALS.Textures.GeoBlocks[texture], x * GLOBALS.Scale + 300, y * GLOBALS.Scale + 300, new(0, 0, 0, 225));
-                        }
-
-                        for (int s = 1; s < cell.Stackables.Length; s++)
-                        {
-                            if (cell.Stackables[s])
-                            {
-                                switch (s)
-                                {
-                                    // dump placement
-                                    case 1:     // ph
-                                    case 2:     // pv
-                                        Raylib.DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale + 300, y * GLOBALS.Scale + 300, BLACK);
-                                        break;
-                                    case 3:     // bathive
-                                    case 5:     // entrance
-                                    case 6:     // passage
-                                    case 7:     // den
-                                    case 9:     // rock
-                                    case 10:    // spear
-                                    case 12:    // forbidflychains
-                                    case 13:    // garbagewormhole
-                                    case 18:    // waterfall
-                                    case 19:    // wac
-                                    case 20:    // worm
-                                    case 21:    // scav
-                                        DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale + 300, y * GLOBALS.Scale + 300, WHITE);
-                                        break;
-
-                                    // directional placement
-                                    case 4:     // entrance
-                                        var index = Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, 0));
-
-                                        if (index is 22 or 23 or 24 or 25)
-                                        {
-                                            GLOBALS.Level.GeoMatrix[y, x, 0].Geo = 7;
-                                        }
-
-                                        Raylib.DrawTexture(GLOBALS.Textures.GeoStackables[index], x * GLOBALS.Scale + 300, y * GLOBALS.Scale + 300, WHITE);
-                                        break;
-                                    case 11:    // crack
-                                        Raylib.DrawTexture(
-                                            GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, 0))],
-                                            x * GLOBALS.Scale + 300,
-                                            y * GLOBALS.Scale + 300,
-                                            BLACK
-                                        );
-                                        break;
-                                }
-                            }
-                        }
-                    }
-                }
+                Printers.DrawGeoLayer(0, GLOBALS.Scale, false, BLACK, new Vector2(300, 300));
+                if (_showTiles) Printers.DrawTileLayer(0, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new(300, 300));
 
                 if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                 {
-                    Raylib.DrawRectangle(
+                    DrawRectangle(
                         (-1) * GLOBALS.Scale,
                         (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale + 300,
                         (GLOBALS.Level.Width + 2) * GLOBALS.Scale + 300,
@@ -390,8 +316,10 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
                         new(0, 0, 255, 110)
                     );
                 }
+                
+                // Lightmap
 
-                Raylib.DrawTextureRec(
+                DrawTextureRec(
                     GLOBALS.Textures.LightMap.texture,
                     new Rectangle(0, 0, GLOBALS.Textures.LightMap.texture.width, -GLOBALS.Textures.LightMap.texture.height),
                     new(0, 0),
@@ -400,54 +328,62 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
 
                 // The brush
 
-                if (eraseShadow)
+                if (!indHovered && !_isDraggingIndicator)
                 {
-                    BeginShaderMode(GLOBALS.Shaders.LightBrush);
-                    SetShaderValueTexture(GLOBALS.Shaders.LightBrush, GetShaderLocation(GLOBALS.Shaders.LightBrush, "inputTexture"), GLOBALS.Textures.LightBrushes[lightBrushTextureIndex]);
+                    if (_eraseShadow)
+                    {
+                        BeginShaderMode(GLOBALS.Shaders.LightBrush);
+                        SetShaderValueTexture(GLOBALS.Shaders.LightBrush,
+                            GetShaderLocation(GLOBALS.Shaders.LightBrush, "inputTexture"),
+                            GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex]);
 
-                    Raylib.DrawTexturePro(
-                        GLOBALS.Textures.LightBrushes[lightBrushTextureIndex],
-                        lightBrushSource,
-                        lightBrushDest,
-                        lightBrushOrigin,
-                        lightBrushRotation,
-                        WHITE
+                        DrawTexturePro(
+                            GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex],
+                            _lightBrushSource,
+                            _lightBrushDest,
+                            _lightBrushOrigin,
+                            _lightBrushRotation,
+                            WHITE
                         );
-                    EndShaderMode();
-                }
-                else
-                {
-                    BeginShaderMode(GLOBALS.Shaders.ShadowBrush);
-                    SetShaderValueTexture(GLOBALS.Shaders.ShadowBrush, GetShaderLocation(GLOBALS.Shaders.ShadowBrush, "inputTexture"), GLOBALS.Textures.LightBrushes[lightBrushTextureIndex]);
+                        EndShaderMode();
+                    }
+                    else
+                    {
+                        BeginShaderMode(GLOBALS.Shaders.ShadowBrush);
+                        SetShaderValueTexture(GLOBALS.Shaders.ShadowBrush,
+                            GetShaderLocation(GLOBALS.Shaders.ShadowBrush, "inputTexture"),
+                            GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex]);
 
-                    DrawTexturePro(
-                        GLOBALS.Textures.LightBrushes[lightBrushTextureIndex],
-                        lightBrushSource,
-                        lightBrushDest,
-                        lightBrushOrigin,
-                        lightBrushRotation,
-                        WHITE
+                        DrawTexturePro(
+                            GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex],
+                            _lightBrushSource,
+                            _lightBrushDest,
+                            _lightBrushOrigin,
+                            _lightBrushRotation,
+                            WHITE
                         );
-                    EndShaderMode();
+                        EndShaderMode();
+                    }
                 }
-
             }
-            Raylib.EndMode2D();
+            EndMode2D();
 
-            // brush menu
+            #region Menu
 
             {
                 unsafe
                 {
-                    fixed (byte* pt = lightBrushMenuPanelBytes)
+                    fixed (byte* pt = _lightBrushMenuPanelBytes)
                     {
-                        RayGui.GuiPanel(new(10, 50, 150, panelHeight), (sbyte*)pt);
+                        RayGui.GuiPanel(brushPanel, (sbyte*)pt);
                     }
                 }
 
+                var totalPages = GLOBALS.Textures.LightBrushes.Length / pageSize;
+
                 var currentPage = GLOBALS.Textures.LightBrushes
                     .Select((texture, index) => (index, texture))
-                    .Skip(lightBrushTexturePage * pageSize)
+                    .Skip(_lightBrushTexturePage * pageSize)
                     .Take(pageSize)
                     .Select((value, index) => (index, value));
 
@@ -455,63 +391,134 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
 
                 foreach (var (pageIndex, (index, texture)) in currentPage)
                 {
+                    var textureRect = new Rectangle(25, (textureSize + 1) * pageIndex + 80 + 5, textureSize - 10,
+                        textureSize - 10);
+
+                    var textureHovered = CheckCollisionPointRec(mouse, textureRect);
+                    
                     BeginShaderMode(GLOBALS.Shaders.ApplyShadowBrush);
                     SetShaderValueTexture(GLOBALS.Shaders.ApplyShadowBrush, GetShaderLocation(GLOBALS.Shaders.ApplyShadowBrush, "inputTexture"), texture);
-                    Raylib.DrawTexturePro(
+                    DrawTexturePro(
                         texture,
                         new(0, 0, texture.width, texture.height),
-                        new(25, (textureSize + 1) * pageIndex + 80 + 5, textureSize - 10, textureSize - 10),
+                        textureRect,
                         new(0, 0),
                         0,
-                        new(0, 0, 0, 255)
+                        BLACK
                         );
                     EndShaderMode();
 
-                    if (index == lightBrushTextureIndex) Raylib.DrawRectangleLinesEx(
-                        new(
+                    if (index == _lightBrushTextureIndex) DrawRectangleLinesEx(
+                        new Rectangle(
                             20,
                             (textureSize + 1) * pageIndex + 80,
                             textureSize,
                             textureSize
                         ),
                         4.0f,
-                        new(0, 0, 255, 255)
+                        BLUE
+                    );
+
+                    if (textureHovered)
+                    {
+                        DrawRectangleLinesEx(
+                            new Rectangle(
+                                20,
+                                (textureSize + 1) * pageIndex + 80,
+                                textureSize,
+                                textureSize
+                            ),
+                            4.0f,
+                            BLUE with { a = 100 }
                         );
+
+                        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _lightBrushTextureIndex = index;
+                    }
                 }
+                
+                if (_lightBrushTexturePage < GLOBALS.Textures.LightBrushes.Length / pageSize)
+                {
+                    var downClicked = RayGui.GuiButton(
+                        new Rectangle(brushPanel.X + 5, brushPanel.Y + panelHeight - 60, 50, 30), 
+                        "Down"
+                    );
+
+                    if (downClicked)
+                    {
+                        _lightBrushTextureIndex = (_lightBrushTextureIndex + pageSize);
+
+                        if (_lightBrushTextureIndex >= GLOBALS.Textures.LightBrushes.Length)
+                            _lightBrushTextureIndex = GLOBALS.Textures.LightBrushes.Length - 1;
+                            
+                        _lightBrushTexturePage = _lightBrushTextureIndex / pageSize;
+                    }
+                }
+
+                if (_lightBrushTexturePage > 0)
+                {
+                    var upClicked = RayGui.GuiButton(
+                        new Rectangle(brushPanel.X + 59, brushPanel.Y + panelHeight - 60, 49, 30), 
+                        "Up"
+                    );
+                        
+                    if (upClicked)
+                    {
+                        _lightBrushTextureIndex -= pageSize;
+                        if (_lightBrushTextureIndex < 0) _lightBrushTextureIndex = 0;
+                            
+                        _lightBrushTexturePage = _lightBrushTextureIndex / pageSize;
+                    }
+                }
+
+                var indexText = $"{_lightBrushTexturePage + 1}/{totalPages}";
+                
+                DrawText(
+                    indexText,
+                    (brushPanel.X + brushPanel.width - MeasureText(indexText, 20))/2f, 
+                    brushPanel.Y + panelHeight - 23, 
+                    20, 
+                    BLACK
+                );
             }
+            
+            #endregion
 
+            #region Indicator
 
-            // angle & flatness indicator
-
-            Raylib.DrawCircleLines(
-                Raylib.GetScreenWidth() - 100,
-                Raylib.GetScreenHeight() - 100,
+            DrawCircleLines(
+                GetScreenWidth() - 100,
+                GetScreenHeight() - 100,
                 50.0f,
                 new(255, 0, 0, 255)
             );
 
-            Raylib.DrawCircleLines(
-                Raylib.GetScreenWidth() - 100,
-                Raylib.GetScreenHeight() - 100,
+            DrawCircleLines(
+                GetScreenWidth() - 100,
+                GetScreenHeight() - 100,
                 15 + (GLOBALS.Level.LightFlatness * 7),
                 new(255, 0, 0, 255)
             );
 
+            if (_isDraggingIndicator)
+            {
+                var radius = (int) RayMath.Vector2Distance(mouse, indicatorOrigin);
 
-            Raylib.DrawCircleV(new Vector2(
-                (GetScreenWidth() - 100) + (float)((15 + GLOBALS.Level.LightFlatness * 7) * -Math.Cos(float.DegreesToRadians(GLOBALS.Level.LightAngle - 180))),
-                (GetScreenHeight() - 100) + (float)((15 + GLOBALS.Level.LightFlatness * 7) * Math.Sin(float.DegreesToRadians(GLOBALS.Level.LightAngle - 180)))
-                ),
+                GLOBALS.Level.LightAngle = -(int)float.RadiansToDegrees(RayMath.Vector2Angle(indicatorOrigin with { X = indicatorOrigin.X + 1 } - indicatorOrigin,
+                    mouse - indicatorOrigin));
+
+                if (radius > 85) radius = 85;
+                if (radius < 1) radius = 1;
+
+                GLOBALS.Level.LightFlatness = (radius - 15) / 7;
+            }
+
+            DrawCircleV(indicatorPoint,
                 10.0f,
-                new(255, 0, 0, 255)
+                RED
             );
-
-
+            
+            #endregion
         }
-        Raylib.EndDrawing();
-
-
-
-
+        EndDrawing();
     }
 }

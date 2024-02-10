@@ -192,8 +192,8 @@ public class LightShortcuts
 {
     public KeyboardShortcut IncreaseFlatness { get; set; } = KeyboardKey.KEY_I;
     public KeyboardShortcut DecreaseFlatness { get; set; } = KeyboardKey.KEY_K;
-    public KeyboardShortcut IncreaseAngle { get; set; } = KeyboardKey.KEY_L;
-    public KeyboardShortcut DecreaseAngle { get; set; } = KeyboardKey.KEY_J;
+    public KeyboardShortcut IncreaseAngle { get; set; } = KeyboardKey.KEY_J;
+    public KeyboardShortcut DecreaseAngle { get; set; } = KeyboardKey.KEY_I;
 
     public KeyboardShortcut NextBrush { get; set; } = KeyboardKey.KEY_F;
     public KeyboardShortcut PreviousBrush { get; set; } = KeyboardKey.KEY_R;
@@ -216,15 +216,21 @@ public class LightShortcuts
     public KeyboardShortcut SqueezeBrushHorizontally { get; set; } = KeyboardKey.KEY_A;
     public KeyboardShortcut FastSqueezeBrushHorizontally { get; set; } = new(KeyboardKey.KEY_A, Shift:true);
     
+    public KeyboardShortcut ToggleTileVisibility { get; set; } = KeyboardKey.KEY_T;
+
+    public KeyboardShortcut ToggleTilePreview { get; set; } = KeyboardKey.KEY_P;
+    public KeyboardShortcut ToggleTintedTileTextures { get; set; } = KeyboardKey.KEY_Y;
 
     public KeyboardShortcut SlowWarpSpeed { get; set; } = KeyboardKey.KEY_SPACE;
 
     public KeyboardShortcut ToggleShadow { get; set; } = KeyboardKey.KEY_C;
 
     public KeyboardShortcut DragLevelAlt { get; set; } = KeyboardKey.KEY_G;
-    public KeyboardShortcut PaintAlt { get; set; } = KeyboardKey.KEY_P;
-    public MouseShortcut DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_RIGHT;
+    public KeyboardShortcut PaintAlt { get; set; } = KeyboardKey.KEY_V;
+    public KeyboardShortcut EraseAlt { get; set; } = KeyboardKey.KEY_NULL;
+    public MouseShortcut DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_MIDDLE;
     public MouseShortcut Paint { get; set; } = MouseButton.MOUSE_BUTTON_LEFT;
+    public MouseShortcut Erase { get; set; } = MouseButton.MOUSE_BUTTON_RIGHT;
 }
 
 public class EffectsShortcuts
