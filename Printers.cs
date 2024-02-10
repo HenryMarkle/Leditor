@@ -8,6 +8,48 @@ namespace Leditor;
 /// </summary>
 internal static class Printers
 {
+    internal static void DrawGrid(int scale)
+    {
+        for (var x = 0; x < GLOBALS.Level.Width; x++)
+        {
+            for (var y = 0; y < GLOBALS.Level.Height; y++)
+            {
+                DrawRectangleLinesEx(
+                    new(x * scale, y * scale, scale, scale),
+                    0.4f,
+                    new(255, 255, 255, 50)
+                );
+                        
+                if (x % 2 == 0 && y % 2 == 0) DrawRectangleLinesEx(
+                    new(x * scale, y * scale, scale*2, scale*2),
+                    0.5f,
+                    new(255, 255, 255, 51)
+                );
+            }
+        }
+    }
+    
+    internal static void DrawGrid(int scale, bool nested)
+    {
+        for (var x = 0; x < GLOBALS.Level.Width; x++)
+        {
+            for (var y = 0; y < GLOBALS.Level.Height; y++)
+            {
+                DrawRectangleLinesEx(
+                    new(x * scale, y * scale, scale, scale),
+                    0.4f,
+                    new(255, 255, 255, 50)
+                );
+                        
+                if (nested && x % 2 == 0 && y % 2 == 0) DrawRectangleLinesEx(
+                    new(x * scale, y * scale, scale*2, scale*2),
+                    0.5f,
+                    new(255, 255, 255, 51)
+                );
+            }
+        }
+    }
+    
     internal static void DrawGeoLayer(int layer, int scale, bool grid, Color color)
     {
         for (var y = 0; y < GLOBALS.Level.Height; y++)
@@ -34,8 +76,14 @@ internal static class Printers
 
                 if (grid) DrawRectangleLinesEx(
                     new(x * scale, y * scale, scale, scale),
-                    0.5f,
-                    new(255, 255, 255, 100)
+                    0.4f,
+                    new(255, 255, 255, 50)
+                );
+                
+                if (grid && x % 2 == 0 && y % 2 == 0) DrawRectangleLinesEx(
+                    new(x * scale, y * scale, scale*2, scale*2),
+                    0.6f,
+                    new(255, 255, 255, 55)
                 );
 
                 for (var s = 1; s < cell.Stackables.Length; s++)
@@ -150,8 +198,14 @@ internal static class Printers
 
                 if (grid) DrawRectangleLinesEx(
                     new(x * scale, y * scale, scale, scale),
-                    0.5f,
-                    new(255, 255, 255, 100)
+                    0.4f,
+                    new(255, 255, 255, 50)
+                );
+                
+                if (grid && x % 2 == 0 && y % 2 == 0) DrawRectangleLinesEx(
+                    new(x * scale, y * scale, scale*2, scale*2),
+                    0.6f,
+                    new(255, 255, 255, 55)
                 );
 
                 for (var s = 1; s < cell.Stackables.Length; s++)
@@ -264,8 +318,14 @@ internal static class Printers
 
                 if (grid) DrawRectangleLinesEx(
                     new(x * scale, y * scale, scale, scale),
-                    0.5f,
-                    new(255, 255, 255, 100)
+                    0.4f,
+                    new(255, 255, 255, 50)
+                );
+                
+                if (grid && x % 2 == 0 && y % 2 == 0) DrawRectangleLinesEx(
+                    new(x * scale, y * scale, scale*2, scale*2),
+                    0.6f,
+                    new(255, 255, 255, 55)
                 );
                 
                 skipGeos:

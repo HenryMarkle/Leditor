@@ -11,11 +11,24 @@ public class GeoGram(int limit)
 {
     public interface IAction { Coords Position { get; } }
 
-    public record struct Coords(int X, int Y, int Z)
+    public readonly record struct Coords(int X, int Y, int Z)
     {
         public static implicit operator Coords((int x, int y, int z) tuple) => new(tuple.x, tuple.y, tuple.z);
+
+        public void Deconstruct(out int x, out int y, out int z)
+        {
+            x = X;
+            y = Y;
+            z = Z;
+        }
+        
+        public void Deconstruct(out int x, out int y)
+        {
+            x = X;
+            y = Y;
+        }
     }
-    
+
     public record CellAction(Coords Position, RunCell Previous, RunCell Next) : IAction;
 
     public record RectAction(Coords Position, RunCell[,] Previous, RunCell[,] Next) : IAction;

@@ -184,6 +184,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
             switch (action)
             {
                 case GeoGram.CellAction c:
+                    if (c.Position.X < 0 || c.Position.X >= GLOBALS.Level.Width ||
+                        c.Position.Y < 0 || c.Position.Y >= GLOBALS.Level.Height) break;
+                    
                     GLOBALS.Level.GeoMatrix[c.Position.Y, c.Position.X, c.Position.Z] = c.Previous;
                     break;
                 case GeoGram.RectAction r:
@@ -191,6 +194,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                     {
                         for (var x = 0; x < r.Previous.GetLength(1); x++)
                         {
+                            if (x + r.Position.X < 0 || x + r.Position.X >= GLOBALS.Level.Width ||
+                                y + r.Position.Y < 0 || y + r.Position.Y >= GLOBALS.Level.Height) continue;
+                            
                             var prevCell = r.Previous[y, x];
                             GLOBALS.Level.GeoMatrix[y + r.Position.Y, x + r.Position.X, r.Position.Z] = prevCell;
                         }
@@ -200,6 +206,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 case GeoGram.GroupAction g:
                     foreach (var cellAction in g.CellActions)
                     {
+                        if (cellAction.Position.X < 0 || cellAction.Position.X >= GLOBALS.Level.Width ||
+                            cellAction.Position.Y < 0 || cellAction.Position.Y >= GLOBALS.Level.Height) continue;
+                        
                         GLOBALS.Level.GeoMatrix[cellAction.Position.Y, cellAction.Position.X, cellAction.Position.Z] = cellAction.Previous;
                     }
                     break;
@@ -222,6 +231,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                     {
                         for (var x = 0; x < r.Previous.GetLength(1); x++)
                         {
+                            if (x + r.Position.X < 0 || x + r.Position.X >= GLOBALS.Level.Width ||
+                                y + r.Position.Y < 0 || y + r.Position.Y >= GLOBALS.Level.Height) continue;
+                            
                             var nextCell = r.Next[y, x];
                             GLOBALS.Level.GeoMatrix[y + r.Position.Y, x + r.Position.X, r.Position.Z] = nextCell;
                         }
@@ -231,6 +243,10 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 case GeoGram.GroupAction g:
                     foreach (var cellAction in g.CellActions)
                     {
+                        var (x, y) = cellAction.Position;
+
+                        if (x < 0 || x >= GLOBALS.Level.Width || y < 0 || y >= GLOBALS.Level.Height) continue;
+                        
                         GLOBALS.Level.GeoMatrix[cellAction.Position.Y, cellAction.Position.X, cellAction.Position.Z] = cellAction.Next;
                     }
                     break;
@@ -267,7 +283,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                     _eraseMode = false;
                 }
             }
-            else if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.EraseAlt.Check(ctrl, shift, alt, true)) && !_clickTracker)
+            else if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.EraseAlt.Check(ctrl, shift, alt, true)) && canDrawGeo && !_clickTracker)
             {
                 if (canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width)
                 {
@@ -284,6 +300,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
             if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.DrawAlt.Key)) && _prevCoordsX != -1)
             {
                 _clickTracker = false;
+                _eraseMode = false;
 
                 int startX, startY, endX, endY;
 
@@ -348,22 +365,25 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                                 yy >= 0 && yy < GLOBALS.Level.Height)
                             {
                                 var cell = _savedChunk[y, x];
-                                var oldCell = GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer];
+
+                                ref var mtxCell = ref GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer];
+                                
+                                var oldCell = new RunCell { Geo = mtxCell.Geo, Stackables = [..mtxCell.Stackables]};
                                     
                                 // Copy memory to new state
-                                newCopy[y, x] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                newCopy[y, x] = new RunCell { Geo = cell.Geo == 0 ? mtxCell.Geo : cell.Geo, Stackables = [..cell.Stackables] };
                                 // Copy level to old state
                                 oldCopy[y, x] = new RunCell { Geo = oldCell.Geo, Stackables = [..oldCell.Stackables] };
                                     
                                 bool[] newStackables = [..cell.Stackables];
                                 cell.Stackables = newStackables;
 
-                                if (cell.Geo != 0) GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer].Geo = cell.Geo;
-                                GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer].Stackables = cell.Stackables;
+                                if (cell.Geo != 0) mtxCell.Geo = cell.Geo;
+                                mtxCell.Stackables = cell.Stackables;
                             }
                         }
                     }
-                    _gram.Proceed((matrixX, matrixY, GLOBALS.Layer), oldCopy, newCopy);
+                    _gram.Proceed((matrixX - Utils.GetMiddle(_savedChunk.GetLength(1)), matrixY  - Utils.GetMiddle(_savedChunk.GetLength(0)), GLOBALS.Layer), oldCopy, newCopy);
                 }
                 else
                 {
@@ -466,7 +486,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 
                 _multiselect = false;
             }
-            else if (IsMouseButtonReleased(_shortcuts.Erase.Button) || IsKeyReleased(_shortcuts.EraseAlt.Key) && _prevCoordsX != -1)
+            else if ((IsMouseButtonReleased(_shortcuts.Erase.Button) || IsKeyReleased(_shortcuts.EraseAlt.Key)) && _prevCoordsX != -1)
             {
                 _eraseMode = false;
                 _clickTracker = false;
@@ -725,7 +745,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 if (_showLayer1) Printers.DrawGeoLayer(
                     0,
                     GLOBALS.Scale,
-                    !_hideGrid,
+                    false,
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer1,
                     true,
                     false
@@ -743,7 +763,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                     Printers.DrawGeoLayer(
                     1,
                     GLOBALS.Scale,
-                    !_hideGrid && !_showLayer1 && GLOBALS.Layer == 2, 
+                    false, 
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer2,
                     _layerStackableFilter
                 );
@@ -759,7 +779,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 if (_showLayer3) Printers.DrawGeoLayer(
                     2, 
                     GLOBALS.Scale,
-                    !_hideGrid && !_showLayer1 && GLOBALS.Layer == 1, 
+                    false, 
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer3,
                     _layerStackableFilter
                 );
@@ -769,7 +789,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 if (_showLayer1) Printers.DrawGeoLayer(
                     0,
                     GLOBALS.Scale,
-                    !_hideGrid,
+                    false,
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer1,
                     false,
                     true
@@ -782,6 +802,10 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                     !GLOBALS.Settings.TileEditor.UseTextures,
                     GLOBALS.Settings.TileEditor.TintedTiles
                 );
+                
+                // Grid
+
+                Printers.DrawGrid(GLOBALS.Scale);
                 
                 #endregion
 
