@@ -71,6 +71,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
     private bool _memDumbMode;
     private bool _memLoadMode;
 
+    private readonly List<GeoGram.CellAction> _groupedActions = [];
     private readonly GeoGram _gram = new(40);
     
     public void Draw()
@@ -111,6 +112,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
         Rectangle panelRect = new(sWidth - 200, 50, 188, 400);
 
         var canDrawGeo = !CheckCollisionPointRec(GetMousePosition(), panelRect);
+        var inMatrixBounds = matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 &&
+                             matrixX < GLOBALS.Level.Width;
 
         // handle geo selection
 
@@ -239,7 +242,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
         if (_shortcuts.ShowCameras.Check(ctrl, shift, alt))
             GLOBALS.Settings.GeometryEditor.ShowCameras = !GLOBALS.Settings.GeometryEditor.ShowCameras;
 
-        _memLoadMode = _shortcuts.ToggleMemoryLoadMode.Check(ctrl, shift, alt, true);
+        if (_shortcuts.ToggleMemoryLoadMode.Check(ctrl, shift, alt)) _memLoadMode = !_memLoadMode;
         if (_shortcuts.ToggleMemoryDumbMode.Check(ctrl, shift, alt)) _memDumbMode = !_memDumbMode;
         
         // Show/Hide tiles
@@ -278,7 +281,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 }
             }
 
-            if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.DrawAlt.Key)))
+            if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.DrawAlt.Key)) && _prevCoordsX != -1)
             {
                 _clickTracker = false;
 
@@ -338,8 +341,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                     {
                         for (var y = 0; y < _savedChunk.GetLength(0); y++)
                         {
-                            var yy = matrixY + y;
-                            var xx = matrixX + x;
+                            var yy = matrixY + y - Utils.GetMiddle(_savedChunk.GetLength(0));
+                            var xx = matrixX + x - Utils.GetMiddle(_savedChunk.GetLength(1));
 
                             if (xx >= 0 && xx < GLOBALS.Level.Width &&
                                 yy >= 0 && yy < GLOBALS.Level.Height)
@@ -402,10 +405,13 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                                             if (id == 2)
                                             {
                                                 var slope = Utils.GetCorrectSlopeID(Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, GLOBALS.Layer));
-                                                if (slope == -1) break;
+                                                if (slope != -1) cell.Geo = slope;
                                             }
-                                            // solid, platform, glass
-                                            cell.Geo = id;
+                                            else
+                                            {
+                                                // solid, platform, glass
+                                                cell.Geo = id;
+                                            }
                                         }
                                         break;
 
@@ -454,11 +460,13 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                     
                     _gram.Proceed((startX, startY, GLOBALS.Layer), oldCopy, newCopy);
                 }
-                
 
+                _prevCoordsX = -1;
+                _prevCoordsY = -1;
+                
                 _multiselect = false;
             }
-            else if (IsMouseButtonReleased(_shortcuts.Erase.Button) || IsKeyReleased(_shortcuts.EraseAlt.Key))
+            else if (IsMouseButtonReleased(_shortcuts.Erase.Button) || IsKeyReleased(_shortcuts.EraseAlt.Key) && _prevCoordsX != -1)
             {
                 _eraseMode = false;
                 _clickTracker = false;
@@ -522,11 +530,12 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                                         // slope
                                         if (id == 2)
                                         {
-                                            var slope = Utils.GetCorrectSlopeID(Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, GLOBALS.Layer));
-                                            if (slope == -1) break;
+                                            if (cell.Geo is 2 or 3 or 4 or 5) cell.Geo = 0;
                                         }
-                                        // solid, platform, glass
-                                        cell.Geo = 0;
+                                        else
+                                        {
+                                            cell.Geo = 0;
+                                        }
                                     }
                                     break;
 
@@ -575,23 +584,45 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 
                 _gram.Proceed((startX, startY, GLOBALS.Layer), oldCopy, newCopy);
 
+                _prevCoordsX = -1;
+                _prevCoordsY = -1;
+                
                 _multiselect = false;
             }
         }
         // handle placing geo
         else
         {
-            if ((_shortcuts.Erase.Check(ctrl, shift, alt) || _shortcuts.EraseAlt.Check(ctrl, shift, alt)) && canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width)
+            if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.EraseAlt.Check(ctrl, shift, alt, true)) && canDrawGeo && inMatrixBounds)
             {
+                _clickTracker = true;
                 var cell = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+                
+                var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
 
                 cell.Geo = 0;
                 Array.Fill(cell.Stackables, false);
+                
+                var newAction = new GeoGram.CellAction((matrixX, matrixY, GLOBALS.Layer), oldCell, cell);
 
+                var equalActions = _groupedActions.Count != 0 
+                                   && oldCell.Geo == cell.Geo
+                                   && Utils.GeoStackEq(oldCell.Stackables, cell.Stackables);
+                
+                if (_groupedActions.Count == 0 || !equalActions) _groupedActions.Add(newAction);
+
+                // _groupedActions.Add(new((matrixX, matrixY, GLOBALS.Layer), oldCell, cell));
+                
                 GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = cell;
             }
-            if ((_shortcuts.Draw.Check(ctrl, shift, alt) || _shortcuts.DrawAlt.Check(ctrl, shift, alt)) && canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width)
+            else if ((_shortcuts.Draw.Check(ctrl, shift, alt, true) || _shortcuts.DrawAlt.Check(ctrl, shift, alt, true)) && canDrawGeo && inMatrixBounds)
             {
+                _clickTracker = true;
+                
+                ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+                
+                var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                
                 switch (_geoMenuCategory)
                     {
                         case 0:
@@ -651,6 +682,29 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                             }
                             break;
                     }
+
+                var newAction = new GeoGram.CellAction((matrixX, matrixY, GLOBALS.Layer), oldCell, cell);
+
+                var equalActions = _groupedActions.Count != 0 
+                                   && oldCell.Geo == cell.Geo
+                                   && Utils.GeoStackEq(oldCell.Stackables, cell.Stackables);
+                
+                if (_groupedActions.Count == 0 || !equalActions) _groupedActions.Add(newAction);
+            }
+
+            if ((IsMouseButtonReleased(_shortcuts.Erase.Button) || IsKeyReleased(_shortcuts.EraseAlt.Key)) &&
+                _clickTracker)
+            {
+                _clickTracker = false;
+                _gram.Proceed([.._groupedActions]);
+                _groupedActions.Clear();
+            }
+            else if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.DrawAlt.Key)) &&
+                     _clickTracker)
+            {
+                _clickTracker = false;
+                _gram.Proceed([.._groupedActions]);
+                _groupedActions.Clear();
             }
         }
 
@@ -665,6 +719,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 // geo matrix
 
                 // first layer without stackables
+
+                #region DrawingMatrix
 
                 if (_showLayer1) Printers.DrawGeoLayer(
                     0,
@@ -726,6 +782,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                     !GLOBALS.Settings.TileEditor.UseTextures,
                     GLOBALS.Settings.TileEditor.TintedTiles
                 );
+                
+                #endregion
 
                 // load from memory preview
                 if (_memDumbMode)
@@ -740,7 +798,12 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
                             if (texture >= 0)
                             {
-                                DrawTexture(GLOBALS.Textures.GeoBlocks[texture], (matrixX + x) * scale, (matrixY + y) * scale, new(89, 7, 222, 200));
+                                DrawTexture(
+                                    GLOBALS.Textures.GeoBlocks[texture], 
+                                    (matrixX + x - Utils.GetMiddle(_savedChunk.GetLength(1))) * scale, 
+                                    (matrixY + y - Utils.GetMiddle(_savedChunk.GetLength(0))) * scale, 
+                                    new(89, 7, 222, 200)
+                                );
                             }
 
 
@@ -753,7 +816,12 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                                         // dump placement
                                         case 1:     // ph
                                         case 2:     // pv
-                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], (matrixX + x) * scale, (matrixY + y) * scale, new(89, 7, 222, 200));
+                                            DrawTexture(
+                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], 
+                                                (matrixX + x - Utils.GetMiddle(_savedChunk.GetLength(1))) * scale, 
+                                                (matrixY + y - Utils.GetMiddle(_savedChunk.GetLength(0))) * scale, 
+                                                new(89, 7, 222, 200)
+                                            );
                                             break;
                                         case 3:     // bathive
                                         case 5:     // entrance
@@ -767,15 +835,20 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                                         case 19:    // wac
                                         case 20:    // worm
                                         case 21:    // scav
-                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], (matrixX + x) * scale, (matrixY + y) * scale, WHITE); // TODO: remove opacity from entrances
+                                            DrawTexture(
+                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], 
+                                                (matrixX + x - Utils.GetMiddle(_savedChunk.GetLength(1))) * scale, 
+                                                (matrixY + y - Utils.GetMiddle(_savedChunk.GetLength(0))) * scale, 
+                                                WHITE
+                                            ); // TODO: remove opacity from entrances
                                             break;
 
                                         
                                         case 11:    // crack
                                             DrawTexture(
                                                 GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(_savedChunk, x, y))],
-                                                x * scale,
-                                                y * scale,
+                                                (matrixX + x - Utils.GetMiddle(_savedChunk.GetLength(1))) * scale,
+                                                (matrixY + y - Utils.GetMiddle(_savedChunk.GetLength(0))) * scale,
                                                 WHITE
                                             );
                                             break;
@@ -804,7 +877,15 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                     {
                         if (_memDumbMode)
                         {
-                            DrawRectangleLinesEx(new Rectangle(matrixX * GLOBALS.Scale, matrixY * GLOBALS.Scale, _savedChunk.GetLength(1)*GLOBALS.Scale, _savedChunk.GetLength(0)*GLOBALS.Scale), 4f, WHITE);
+                            DrawRectangleLinesEx(
+                                new Rectangle(
+                                    (matrixX - Utils.GetMiddle(_savedChunk.GetLength(1))) * GLOBALS.Scale,
+                                    (matrixY - Utils.GetMiddle(_savedChunk.GetLength(0))) * GLOBALS.Scale, 
+                                    _savedChunk.GetLength(1)*GLOBALS.Scale, 
+                                    _savedChunk.GetLength(0)*GLOBALS.Scale), 
+                                4f, 
+                                WHITE
+                            );
                         }
                         else if (_multiselect)
                         {
@@ -828,21 +909,38 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                                 (false, false) => new(matrixX * scale, matrixY * scale, width, height)
                             };
 
-                            Raylib.DrawRectangleLinesEx(rec, 2, _eraseMode ? new(255, 0, 0, 255) : new(255, 255, 255, 255));
+                            DrawRectangleLinesEx(
+                                rec, 
+                                2, 
+                                _eraseMode 
+                                    ? new Color(255, 0, 0, 255) 
+                                    : (_memLoadMode 
+                                        ? new Color(89, 7, 222, 255) 
+                                        : WHITE
+                                    )
+                            );
 
-                            Raylib.DrawText(
+                            DrawText(
                                 $"{width / scale:0}x{height / scale:0}",
                                 (int)mouse.X + 10,
                                 (int)mouse.Y,
                                 4,
-                                new(255, 255, 255, 255)
+                                new Color(255, 255, 255, 255)
                                 );
                         }
                         else
                         {
                             if (matrixX == x && matrixY == y)
                             {
-                                DrawRectangleLinesEx(new(x * scale, y * scale, scale, scale), 2, _eraseMode ? new(255, 0, 0, 255) : new(255, 255, 255, 255));
+                                DrawRectangleLinesEx(
+                                    new Rectangle(x * scale, y * scale, scale, scale), 
+                                    2, 
+                                    _eraseMode 
+                                        ? new(255, 0, 0, 255) 
+                                        : (_memLoadMode 
+                                            ? new Color(89, 7, 222, 255) 
+                                            : WHITE
+                                        ));
 
                                 // Coordinates
 

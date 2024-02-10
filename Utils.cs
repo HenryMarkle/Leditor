@@ -319,7 +319,7 @@ internal static class Utils
         ];
     }
     
-    private static int GetMiddle(int number)
+    public static int GetMiddle(int number)
     {
         if (number < 3) return 0;
         if (number % 2 == 0) return number / 2 - 1;
@@ -664,10 +664,10 @@ internal static class Utils
     /// <returns>the ID of the slope representing the proper direction</returns>
     public static int GetCorrectSlopeID(RunCell[][] context)
     {
-        return (
-            false, context[0][1].Geo == 1, false,
-            context[1][0].Geo == 1, false, context[1][2].Geo == 1,
-            false, context[2][1].Geo == 1, false
+        var fi = (
+            false, context[0][1].Geo is 1, false,
+            context[1][0].Geo is 1, false, context[1][2].Geo is 1,
+            false, context[2][1].Geo is 1, false
         ) switch
         {
             (
@@ -694,6 +694,17 @@ internal static class Utils
             _ => -1
 
         };
+
+        if (fi == -1) return -1;
+
+        var ssi = context[0][1].Geo is 2 or 3 or 4 or 5 || 
+                  context[1][0].Geo is 2 or 3 or 4 or 5 || 
+                  context[1][2].Geo is 2 or 3 or 4 or 5 ||
+                  context[2][1].Geo is 2 or 3 or 4 or 5;
+
+        if (ssi) return -1;
+
+        return fi;
     }
 
     internal static RunCell[,,] Resize(RunCell[,,] array, int width, int height, int newWidth, int newHeight, RunCell[] layersFill)
@@ -1550,5 +1561,16 @@ internal static class Utils
 
         return [.. tmp];
     }
-    
+
+    public static bool GeoStackEq(bool[] stc1, bool[] stc2)
+    {
+        if (stc1.Length != stc2.Length) return false;
+
+        for (var i = 0; i < stc1.Length; i++)
+        {
+            if (stc1[i] != stc2[i]) return false;
+        }
+
+        return true;
+    }
 }

@@ -497,6 +497,22 @@ public struct RunCell {
     public int Geo { get; set; } = 0;
     public bool[] Stackables { get; set; } = new bool[22];
 
+    public static bool operator ==(RunCell c1, RunCell c2)
+    {
+        if (c1.Geo != c2.Geo) return false;
+
+        if (c1.Stackables.Length != c2.Stackables.Length) return false;
+
+        for (var i = 0; i < 22; i++)
+        {
+            if (c1.Stackables[i] != c2.Stackables[i]) return false;
+        }
+
+        return true;
+    }
+
+    public static bool operator !=(RunCell c1, RunCell c2) => !(c1 == c2);
+
     public RunCell() {
         Geo = 0;
         Stackables = new bool[22];
