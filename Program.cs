@@ -408,7 +408,7 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.10";
+        const string version = "Henry's Leditor v0.9.11";
         const string raylibVersion = "Raylib v4.2.0.9";
 
         logger.Information("indexing tiles and props");
@@ -584,6 +584,14 @@ class Program
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Fan.png"))
         ];
 
+        Texture[] effectsPageTextures =
+        [
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "plus icon.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "arrow up icon.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "arrow down icon.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "cross icon.png"))
+        ];
+
         //
 
         logger.Information("loading shaders");
@@ -645,7 +653,7 @@ class Program
         LightEditorPage lightPage = new(logger);
         DimensionsEditorPage dimensionsPage = new(logger);
         DeathScreen deathScreen = new(logger, null, null);
-        EffectsEditorPage effectsPage = new(logger);
+        EffectsEditorPage effectsPage = new(logger, effectsPageTextures);
         PropsEditorPage propsPage = new(logger);
         MainPage mainPage = new(logger);
         StartPage startPage = new(logger);
@@ -1004,6 +1012,7 @@ class Program
         foreach (var texture in GLOBALS.Textures.RopeProps) UnloadTexture(texture);
         foreach (var texture in settingsPreviewTextures) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.ExplorerIcons) UnloadTexture(texture);
+        foreach (var texture in effectsPageTextures) UnloadTexture(texture);
         
         logger.Debug("Unloading light map");
 

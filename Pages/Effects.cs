@@ -4,9 +4,10 @@ using static Raylib_CsLo.Raylib;
 
 namespace Leditor;
 
-internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
+internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures) : IPage
 {
     readonly Serilog.Core.Logger logger = logger;
+    private readonly Texture[] _textures = textures;
 
     private readonly EffectsShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.EffectsEditor;
 
@@ -32,6 +33,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
     bool clickTracker = false;
     bool brushEraseMode = false;
     bool showEffectOptions = true;
+    private bool _newEffectModeExitLock;
 
     private int _optionsIndex = 1;
 
@@ -42,7 +44,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
     // Paints an effect in the effects editor
     static void PaintEffect(double[,] matrix, (int x, int y) matrixSize, (int x, int y) center, int brushSize, double strength)
     {
-        for (int y = center.y - brushSize; y < center.y + brushSize + 1; y++)
+        for (var y = center.y - brushSize; y < center.y + brushSize + 1; y++)
         {
             if (y < 0 || y >= matrixSize.y) continue;
 
@@ -54,6 +56,38 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
                 if (matrix[y, x] > 100) matrix[y, x] = 100;
                 if (matrix[y, x] < 0) matrix[y, x] = 0;
+            }
+        }
+    }
+    
+    // Paints an effect in the effects editor
+    static void PaintEffectCircular(double[,] matrix, (int x, int y) center, int radius, double strength)
+    {
+        if (radius == 0 && center.y >= 0 && center.y < matrix.GetLength(0) && center.x >= 0 && center.x < matrix.GetLength(1))
+        {
+            matrix[center.y, center.x] += strength;
+
+            if (matrix[center.y, center.x] > 100) matrix[center.y, center.x] = 100;
+            if (matrix[center.y, center.x] < 0) matrix[center.y, center.x] = 0;
+                    
+            return;
+        }
+        
+        for (var y = 0; y < matrix.GetLength(0); y++)
+        {
+            for (var x = 0; x < matrix.GetLength(1); x++)
+            {
+                if (CheckCollisionCircleRec(new Vector2(center.x+0.5f, center.y+0.5f) * GLOBALS.PreviewScale,
+                        (radius-0.5f) * GLOBALS.PreviewScale,
+                        new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale,
+                            GLOBALS.PreviewScale)))
+                {
+                    matrix[y, x] += strength;
+
+                    if (matrix[y, x] > 100) matrix[y, x] = 100;
+                    if (matrix[y, x] < 0) matrix[y, x] = 0;
+                }
+                
             }
         }
     }
@@ -83,7 +117,11 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
         // Display menu
 
-        if (_shortcuts.NewEffect.Check(ctrl, shift, alt)) addNewEffectMode = !addNewEffectMode;
+        if (_shortcuts.NewEffect.Check(ctrl, shift, alt))
+        {
+            addNewEffectMode = !addNewEffectMode;
+            _newEffectModeExitLock = true;
+        }
 
         //
 
@@ -214,7 +252,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                 {
                     fixed (int* scrollIndex = &newEffectScrollIndex)
                     {
-                        newEffectSelectedValue = RayGui.GuiListView(
+                        var newNewEffectSelectedValue = RayGui.GuiListView(
                             new(
                                 GetScreenWidth() / 2f - 230,
                                 GetScreenHeight() / 2f - 250,
@@ -225,6 +263,24 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                             scrollIndex,
                             newEffectSelectedValue
                         );
+
+                        if (newNewEffectSelectedValue == -1) {
+                            GLOBALS.Level.Effects = [
+                                .. GLOBALS.Level.Effects,
+                                (
+                                    GLOBALS.Effects[newEffectCategorySelectedValue][newEffectSelectedValue],
+                                    Utils.NewEffectOptions(GLOBALS.Effects[newEffectCategorySelectedValue][newEffectSelectedValue]),
+                                    new double[GLOBALS.Level.Height, GLOBALS.Level.Width]
+                                )
+                            ];
+
+                            addNewEffectMode = false;
+                            if (currentAppliedEffect == -1) currentAppliedEffect = 0;
+                        }
+                        else
+                        {
+                            newEffectSelectedValue = newNewEffectSelectedValue;
+                        }
                     }
                 }
 
@@ -252,12 +308,12 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
             var effectsMatrixX = effectsMouse.X < 0 ? -1 : (int)effectsMouse.X / GLOBALS.PreviewScale;
 
 
-            var appliedEffectsPanelHeight = Raylib.GetScreenHeight() - 200;
+            var appliedEffectsPanelHeight = GetScreenHeight() - 200;
             const int appliedEffectRecHeight = 30;
-            var appliedEffectPageSize = appliedEffectsPanelHeight / (appliedEffectRecHeight + 20);
+            var appliedEffectPageSize = (appliedEffectsPanelHeight / (appliedEffectRecHeight + 30));
 
             // Prevent using the brush when mouse over the effects list
-            bool canUseBrush = !CheckCollisionPointRec(
+            bool canUseBrush = !_newEffectModeExitLock && !addNewEffectMode && !CheckCollisionPointRec(
                 effectsMouse,
                 new(
                     Raylib.GetScreenWidth() - 300,
@@ -298,7 +354,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
             // Use brush
 
-            if ((_shortcuts.Paint.Check(ctrl, shift, alt, true) || _shortcuts.PaintAlt.Check(ctrl, shift, alt, true)) && canUseBrush)
+            if ((_shortcuts.Paint.Check(ctrl, shift, alt, true) || _shortcuts.PaintAlt.Check(ctrl, shift, alt, true)) && !_newEffectModeExitLock && canUseBrush)
             {
                 if (
                         effectsMatrixX >= 0 &&
@@ -309,49 +365,27 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                             effectsMatrixX != prevMatrixX || effectsMatrixY != prevMatrixY || !clickTracker
                         ))
                 {
-                    double[,] mtx;
+                    (string, EffectOptions[], double[,]) mtx;
 
                     #if DEBUG
                     try
                     {
-                        mtx = GLOBALS.Level.Effects[currentAppliedEffect].Item3;
+                        mtx = GLOBALS.Level.Effects[currentAppliedEffect];
                     }
                     catch (IndexOutOfRangeException e)
                     {
                         throw new IndexOutOfRangeException(innerException: e, message: $"Failed to fetch current applied effect from {nameof(GLOBALS.Level.Effects)} (L:{GLOBALS.Level.Effects.Length}): {nameof(currentAppliedEffect)} ({currentAppliedEffect}) was out of bounds");
                     }
                     #else
-                    mtx = GLOBALS.Level.Effects[currentAppliedEffect].Item3;
+                    mtx = GLOBALS.Level.Effects[currentAppliedEffect];
                     #endif
                     
-                    if (brushEraseMode)
-                    {
-                        //mtx[effectsMatrixY, effectsMatrixX] -= Effects.GetBrushStrength(GLOBALS.Level.Effects[currentAppliedEffect].Item1);
-
-                        //if (mtx[effectsMatrixY, effectsMatrixX] < 0) mtx[effectsMatrixY, effectsMatrixX] = 0;
-
-                        PaintEffect(
-                            GLOBALS.Level.Effects[currentAppliedEffect].Item3,
-                            (GLOBALS.Level.Width, GLOBALS.Level.Height),
-                            (effectsMatrixX, effectsMatrixY),
-                            brushRadius,
-                            -Utils.GetBrushStrength(GLOBALS.Level.Effects[currentAppliedEffect].Item1)
-                        );
-                    }
-                    else
-                    {
-                        //mtx[effectsMatrixY, effectsMatrixX] += Effects.GetBrushStrength(GLOBALS.Level.Effects[currentAppliedEffect].Item1);
-
-                        PaintEffect(
-                            GLOBALS.Level.Effects[currentAppliedEffect].Item3,
-                            (GLOBALS.Level.Width, GLOBALS.Level.Height),
-                            (effectsMatrixX, effectsMatrixY),
-                            brushRadius,
-                            Utils.GetBrushStrength(GLOBALS.Level.Effects[currentAppliedEffect].Item1)
-                            );
-
-                        //if (mtx[effectsMatrixY, effectsMatrixX] > 100) mtx[effectsMatrixY, effectsMatrixX] = 100;
-                    }
+                    PaintEffectCircular(
+                        mtx.Item3,
+                        (effectsMatrixX, effectsMatrixY),
+                        brushRadius,
+                        Utils.GetBrushStrength(mtx.Item1)
+                    );
 
                     prevMatrixX = effectsMatrixX;
                     prevMatrixY = effectsMatrixY;
@@ -359,10 +393,53 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
                 clickTracker = true;
             }
+            if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.EraseAlt.Check(ctrl, shift, alt, true)) && !_newEffectModeExitLock && canUseBrush)
+            {
+                brushEraseMode = true;
+                
+                if (
+                        effectsMatrixX >= 0 &&
+                        effectsMatrixX < GLOBALS.Level.Width &&
+                        effectsMatrixY >= 0 &&
+                        effectsMatrixY < GLOBALS.Level.Height &&
+                        (
+                            effectsMatrixX != prevMatrixX || effectsMatrixY != prevMatrixY || !clickTracker
+                        ))
+                {
+                    (string, EffectOptions[], double[,]) mtx;
 
+                    #if DEBUG
+                    try
+                    {
+                        mtx = GLOBALS.Level.Effects[currentAppliedEffect];
+                    }
+                    catch (IndexOutOfRangeException e)
+                    {
+                        throw new IndexOutOfRangeException(innerException: e, message: $"Failed to fetch current applied effect from {nameof(GLOBALS.Level.Effects)} (L:{GLOBALS.Level.Effects.Length}): {nameof(currentAppliedEffect)} ({currentAppliedEffect}) was out of bounds");
+                    }
+                    #else
+                    mtx = GLOBALS.Level.Effects[currentAppliedEffect];
+                    #endif
+                    
+                    PaintEffectCircular(
+                        mtx.Item3,
+                        (effectsMatrixX, effectsMatrixY),
+                        brushRadius,
+                        -Utils.GetBrushStrength(mtx.Item1)
+                    );
+
+                    prevMatrixX = effectsMatrixX;
+                    prevMatrixY = effectsMatrixY;
+                }
+
+                clickTracker = true;
+            }
+            else brushEraseMode = false;
+            
             if (IsMouseButtonReleased(_shortcuts.Paint.Button) || IsKeyReleased(_shortcuts.PaintAlt.Key))
             {
                 clickTracker = false;
+                _newEffectModeExitLock = false;
             }
 
             //
@@ -453,9 +530,9 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
             BeginDrawing();
             {
 
-                Raylib.ClearBackground(new(0, 0, 0, 255));
+                ClearBackground(new(0, 0, 0, 255));
 
-                Raylib.BeginMode2D(camera);
+                BeginMode2D(camera);
                 {
                     // Outer level border
                     DrawRectangleLinesEx(
@@ -500,15 +577,26 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
                     // Brush
 
-                    for (int y = 0; y < GLOBALS.Level.Height; y++)
+                    for (var y = 0; y < GLOBALS.Level.Height; y++)
                     {
-                        for (int x = 0; x < GLOBALS.Level.Width; x++)
+                        for (var x = 0; x < GLOBALS.Level.Width; x++)
                         {
+                            var effAreaRect = new Rectangle(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale,
+                                GLOBALS.PreviewScale, GLOBALS.PreviewScale);
+                            if (brushRadius > 0 && CheckCollisionCircleRec(
+                                    new Vector2(effectsMatrixX+0.5f, effectsMatrixY+0.5f) * GLOBALS.PreviewScale,
+                                    (brushRadius-0.5f)*GLOBALS.PreviewScale, effAreaRect
+                                    )
+                                )
+                            {
+                                DrawRectangleRec(effAreaRect, WHITE with { a = 100 });
+                            }
+                            
                             if (effectsMatrixX == x && effectsMatrixY == y)
                             {
                                 if (brushEraseMode)
                                 {
-                                    Raylib.DrawRectangleLinesEx(
+                                    DrawRectangleLinesEx(
                                         new Rectangle(
                                             x * GLOBALS.PreviewScale,
                                             y * GLOBALS.PreviewScale,
@@ -520,7 +608,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                                     );
 
 
-                                    Raylib.DrawRectangleLines(
+                                    DrawRectangleLines(
                                         (effectsMatrixX - brushRadius) * GLOBALS.PreviewScale,
                                         (effectsMatrixY - brushRadius) * GLOBALS.PreviewScale,
                                         (brushRadius * 2 + 1) * GLOBALS.PreviewScale,
@@ -529,7 +617,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                                 }
                                 else
                                 {
-                                    Raylib.DrawRectangleLinesEx(
+                                    DrawRectangleLinesEx(
                                         new Rectangle(
                                             x * GLOBALS.PreviewScale,
                                             y * GLOBALS.PreviewScale,
@@ -540,7 +628,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                                         new(255, 255, 255, 255)
                                     );
 
-                                    Raylib.DrawRectangleLines(
+                                    DrawRectangleLines(
                                         (effectsMatrixX - brushRadius) * GLOBALS.PreviewScale,
                                         (effectsMatrixY - brushRadius) * GLOBALS.PreviewScale,
                                         (brushRadius * 2 + 1) * GLOBALS.PreviewScale,
@@ -618,21 +706,45 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
 
                 // Applied effects
 
+                var addEffectRect = new Rectangle(GetScreenWidth() - 290, 130, 35, 35);
+
+                if (CheckCollisionPointRec(GetMousePosition(), addEffectRect) &&
+                    IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    addNewEffectMode = true;
+                }
+                
+                DrawTexturePro(
+                    _textures[0], 
+                    new Rectangle(0, 0, _textures[0].width, _textures[0].height), 
+                    addEffectRect,
+                    new Vector2(0, 0),
+                    0,
+                    BLACK
+                );
+
                 // i is index relative to the GLOBALS.Page; oi is index relative to the whole list
-                foreach (var (i, (oi, e)) in GLOBALS.Level.Effects.Select((value, i) => (i, value)).Skip(appliedEffectPageSize * currentAppliedEffectPage).Take(appliedEffectPageSize).Select((value, i) => (i, value)))
+                foreach (var (i, (oi, e)) in GLOBALS.Level.Effects
+                             .Select((value, i) => (i, value))
+                             .Skip(appliedEffectPageSize * currentAppliedEffectPage)
+                             .Take(appliedEffectPageSize)
+                             .Select((value, i) => (i, value)))
                 {
                     DrawRectangleLines(
-                        Raylib.GetScreenWidth() - 290,
-                        130 + (35 * i),
+                        GetScreenWidth() - 290,
+                        130 + (35 * i) + 50,
                         260,
                         appliedEffectRecHeight,
                         new(0, 0, 0, 255)
                     );
 
+                    var deleteRect = new Rectangle(
+                        GetScreenWidth() - 67, 132 + (35 * i) + 50, 26, 26);
+
                     if (oi == currentAppliedEffect) DrawRectangleLinesEx(
                         new(
-                            Raylib.GetScreenWidth() - 290,
-                            130 + (35 * i),
+                            GetScreenWidth() - 290,
+                            130 + (35 * i) + 50,
                             260,
                             appliedEffectRecHeight
                         ),
@@ -640,18 +752,35 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                         new(0, 0, 255, 255)
                     );
 
-                    Raylib.DrawText(
+                    DrawText(
                         e.Item1,
-                        Raylib.GetScreenWidth() - 280,
-                        138 + (35 * i),
+                        GetScreenWidth() - 280,
+                        138 + (35 * i) + 50,
                         14,
                         new(0, 0, 0, 255)
                     );
+                    
+                    DrawTexturePro(
+                        _textures[3],
+                        new Rectangle(0, 0, _textures[3].width, _textures[3].height),
+                        deleteRect,
+                        new(0, 0),
+                        0,
+                        BLACK
+                    );
 
-                    var deletePressed = Raylib_CsLo.RayGui.GuiButton(
+                    if (CheckCollisionPointRec(GetMousePosition(), deleteRect) &&
+                        IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                    {
+                        GLOBALS.Level.Effects = GLOBALS.Level.Effects.Where((e, i) => i != oi).ToArray();
+                        currentAppliedEffect--;
+                        if (currentAppliedEffect < 0) currentAppliedEffect = GLOBALS.Level.Effects.Length - 1;
+                    }
+
+                    /*var deletePressed = RayGui.GuiButton(
                         new(
-                            Raylib.GetScreenWidth() - 67,
-                            132 + (35 * i),
+                            GetScreenWidth() - 67,
+                            132 + (35 * i) + 50,
                             37,
                             26
                         ),
@@ -663,14 +792,36 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                         GLOBALS.Level.Effects = GLOBALS.Level.Effects.Where((e, i) => i != oi).ToArray();
                         currentAppliedEffect--;
                         if (currentAppliedEffect < 0) currentAppliedEffect = GLOBALS.Level.Effects.Length - 1;
-                    }
+                    }*/
 
                     if (oi > 0)
                     {
-                        var moveUpPressed = Raylib_CsLo.RayGui.GuiButton(
+                        var shiftUpRect = new Rectangle(
+                            GetScreenWidth() - 105,
+                            132 + (35 * i) + 50,
+                            26,
+                            26
+                        );
+                        
+                        DrawTexturePro(
+                            _textures[1],
+                            new(0, 0, _textures[1].width, _textures[1].height),
+                            shiftUpRect,
+                            new(0, 0),
+                            0,
+                            BLACK
+                        );
+
+                        if (CheckCollisionPointRec(GetMousePosition(), shiftUpRect) &&
+                            IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                        {
+                            (GLOBALS.Level.Effects[oi], GLOBALS.Level.Effects[oi - 1]) = (GLOBALS.Level.Effects[oi - 1], GLOBALS.Level.Effects[oi]);
+                        }
+                        
+                        /*var moveUpPressed = RayGui.GuiButton(
                             new(
-                                Raylib.GetScreenWidth() - 105,
-                                132 + (35 * i),
+                                GetScreenWidth() - 105,
+                                132 + (35 * i) + 50,
                                 37,
                                 26
                             ),
@@ -680,15 +831,36 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                         if (moveUpPressed)
                         {
                             (GLOBALS.Level.Effects[oi], GLOBALS.Level.Effects[oi - 1]) = (GLOBALS.Level.Effects[oi - 1], GLOBALS.Level.Effects[oi]);
-                        }
+                        }*/
                     }
 
                     if (oi < GLOBALS.Level.Effects.Length - 1)
                     {
-                        var moveDownPressed = Raylib_CsLo.RayGui.GuiButton(
+                        var shiftDownRect = new Rectangle(
+                            GetScreenWidth() - 143,
+                            132 + (35 * i) + 50,
+                            37,
+                            26
+                        );
+                        
+                        DrawTexturePro(
+                            _textures[2], 
+                            new Rectangle(0, 0, _textures[2].width, _textures[2].height),
+                            shiftDownRect,
+                            new(0, 0),
+                            0,
+                            BLACK
+                        );
+
+                        if (CheckCollisionPointRec(GetMousePosition(), shiftDownRect) && IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                        {
+                            (GLOBALS.Level.Effects[oi], GLOBALS.Level.Effects[oi + 1]) = (GLOBALS.Level.Effects[oi + 1], GLOBALS.Level.Effects[oi]);
+                        }
+                        
+                        /*var moveDownPressed = RayGui.GuiButton(
                             new(
-                                Raylib.GetScreenWidth() - 143,
-                                132 + (35 * i),
+                                GetScreenWidth() - 143,
+                                132 + (35 * i) + 50,
                                 37,
                                 26
                             ),
@@ -698,7 +870,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger) : IPage
                         if (moveDownPressed)
                         {
                             (GLOBALS.Level.Effects[oi], GLOBALS.Level.Effects[oi + 1]) = (GLOBALS.Level.Effects[oi + 1], GLOBALS.Level.Effects[oi]);
-                        }
+                        }*/
                     }
 
                 }

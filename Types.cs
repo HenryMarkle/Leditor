@@ -263,9 +263,11 @@ public class EffectsShortcuts
 
     public KeyboardShortcut DragLevelAlt { get; set; } = KeyboardKey.KEY_G;
     public KeyboardShortcut PaintAlt { get; set; } = KeyboardKey.KEY_P;
+    public KeyboardShortcut EraseAlt { get; set; } = KeyboardKey.KEY_NULL;
     
-    public MouseShortcut DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_RIGHT;
+    public MouseShortcut DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_MIDDLE;
     public MouseShortcut Paint { get; set; } = MouseButton.MOUSE_BUTTON_LEFT;
+    public MouseShortcut Erase { get; set; } = MouseButton.MOUSE_BUTTON_RIGHT;
 }
 
 public class PropsShortcuts
@@ -450,6 +452,11 @@ public record KeyboardShortcut(
     public bool Check(bool ctrl = false, bool shift = false, bool alt = false, bool hold = false)
     {
         return (Ctrl is null || Ctrl == ctrl) && (Shift is null || Shift == shift) && (Alt is null || Alt == alt) && (hold ? Raylib.IsKeyDown(Key) : Raylib.IsKeyPressed(Key));
+    }
+
+    public override string ToString()
+    {
+        return $"{(Ctrl is not null and not false ? "CTRL + " : "")}{(Shift is not null and not false ? "SHIFT + " : "")}{(Alt is not null and not false ? "ALT + " : "")}{(char)Key}";
     }
 }
 
