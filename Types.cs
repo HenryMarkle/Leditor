@@ -109,11 +109,11 @@ public class GeoShortcuts
     public KeyboardShortcut ShowCameras { get; set; } = new(KeyboardKey.KEY_C);
 
     public MouseShortcut Draw { get; set; } = new(MouseButton.MOUSE_BUTTON_LEFT);
-    public MouseShortcut DragLevel { get; set; } = new(MouseButton.MOUSE_BUTTON_RIGHT);
+    public MouseShortcut DragLevel { get; set; } = new(MouseButton.MOUSE_BUTTON_MIDDLE);
 
-    public KeyboardShortcut AltDraw { get; set; } = new(KeyboardKey.KEY_Z);
-    public KeyboardShortcut AltDrag { get; set; } = new(KeyboardKey.KEY_F);
-    public KeyboardShortcut Undo { get; set; } = new(Ctrl:true, Key:KeyboardKey.KEY_Z);
+    public KeyboardShortcut AltDraw { get; set; } = new(KeyboardKey.KEY_NULL);
+    public KeyboardShortcut AltDrag { get; set; } = new(KeyboardKey.KEY_NULL);
+    public KeyboardShortcut Undo { get; set; } = new(Ctrl:true, Shift:false, Key:KeyboardKey.KEY_Z);
     public KeyboardShortcut Redo { get; set; } = new(Ctrl:true, Shift:true, Key:KeyboardKey.KEY_Z);
 }
 
@@ -177,15 +177,18 @@ public record TileShortcuts
 
 public class CameraShortcuts
 {
-    public MouseShortcut DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_RIGHT;
+    public MouseShortcut DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_MIDDLE;
     public MouseShortcut GrabCamera { get; set; } = MouseButton.MOUSE_BUTTON_LEFT;
+    public MouseShortcut CreateAndDeleteCamera { get; set; } = MouseButton.MOUSE_BUTTON_RIGHT;
     public MouseShortcut ManipulateCamera { get; set; } = MouseButton.MOUSE_BUTTON_LEFT;
+    public KeyboardShortcut ManipulateCameraAlt { get; set; } = KeyboardKey.KEY_NULL;
+    
     
     public KeyboardShortcut DragLevelAlt { get; set; } = KeyboardKey.KEY_G;
     public KeyboardShortcut GrabCameraAlt { get; set; } = KeyboardKey.KEY_P;
     public KeyboardShortcut CreateCamera { get; set; } = KeyboardKey.KEY_N;
     public KeyboardShortcut DeleteCamera { get; set; } = KeyboardKey.KEY_D;
-    public KeyboardShortcut CreateAndDeleteCamera { get; set; } = KeyboardKey.KEY_SPACE;
+    public KeyboardShortcut CreateAndDeleteCameraAlt { get; set; } = KeyboardKey.KEY_SPACE;
 }
 
 public class LightShortcuts
@@ -198,22 +201,22 @@ public class LightShortcuts
     public KeyboardShortcut NextBrush { get; set; } = KeyboardKey.KEY_F;
     public KeyboardShortcut PreviousBrush { get; set; } = KeyboardKey.KEY_R;
 
-    public KeyboardShortcut RotateBrushCounterClockwise { get; set; } = KeyboardKey.KEY_Q;
+    public KeyboardShortcut RotateBrushCounterClockwise { get; set; } = new(KeyboardKey.KEY_Q, Shift:false);
     public KeyboardShortcut FastRotateBrushCounterClockwise { get; set; } = new(KeyboardKey.KEY_Q, Shift:true);
     
-    public KeyboardShortcut RotateBrushClockwise { get; set; } = KeyboardKey.KEY_E;
+    public KeyboardShortcut RotateBrushClockwise { get; set; } = new(KeyboardKey.KEY_E, Shift:false);
     public KeyboardShortcut FastRotateBrushClockwise { get; set; } = new(KeyboardKey.KEY_E, Shift:true);
 
-    public KeyboardShortcut StretchBrushVertically { get; set; } = KeyboardKey.KEY_W;
+    public KeyboardShortcut StretchBrushVertically { get; set; } = new(KeyboardKey.KEY_W, Shift:false);
     public KeyboardShortcut FastStretchBrushVertically { get; set; } = new(KeyboardKey.KEY_W, Shift:true);
     
-    public KeyboardShortcut SqueezeBrushVertically { get; set; } = KeyboardKey.KEY_S;
+    public KeyboardShortcut SqueezeBrushVertically { get; set; } = new(KeyboardKey.KEY_S, Shift:false);
     public KeyboardShortcut FastSqueezeBrushVertically { get; set; } = new(KeyboardKey.KEY_S, Shift:true);
     
-    public KeyboardShortcut StretchBrushHorizontally { get; set; } = KeyboardKey.KEY_D;
+    public KeyboardShortcut StretchBrushHorizontally { get; set; } = new (KeyboardKey.KEY_D, Shift:false);
     public KeyboardShortcut FastStretchBrushHorizontally { get; set; } = new(KeyboardKey.KEY_D, Shift:true);
     
-    public KeyboardShortcut SqueezeBrushHorizontally { get; set; } = KeyboardKey.KEY_A;
+    public KeyboardShortcut SqueezeBrushHorizontally { get; set; } = new (KeyboardKey.KEY_A, Shift:false);
     public KeyboardShortcut FastSqueezeBrushHorizontally { get; set; } = new(KeyboardKey.KEY_A, Shift:true);
     
     public KeyboardShortcut ToggleTileVisibility { get; set; } = KeyboardKey.KEY_T;
@@ -319,7 +322,7 @@ public class PropsShortcuts
 
     public MouseShortcut PlaceProp { get; set; } = MouseButton.MOUSE_BUTTON_LEFT;
     
-    public MouseShortcut DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_RIGHT;
+    public MouseShortcut DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_MIDDLE;
 }
 
 public class GlobalShortcuts
@@ -333,6 +336,8 @@ public class GlobalShortcuts
     public KeyboardShortcut ToEffectsEditor { get; set; } = new(KeyboardKey.KEY_SEVEN);
     public KeyboardShortcut ToPropsEditor { get; set; } = new(KeyboardKey.KEY_EIGHT);
     public KeyboardShortcut ToSettingsPage { get; set; } = new(KeyboardKey.KEY_NINE);
+
+    public KeyboardShortcut QuickSave { get; set; } = new(KeyboardKey.KEY_NULL);
 }
 
 public class Shortcuts(
@@ -425,9 +430,10 @@ public class TileEditor(
     public bool UseTextures { get; set; } = useTextures;
 }
 
-public class LightEditor(ConColor background)
+public class LightEditor(ConColor background, bool accelerateWarpSpeed = false)
 {
     public ConColor Background { get; set; } = background;
+    public bool AccelerateWarpSpeed { get; set; } = accelerateWarpSpeed;
 }
 
 #region ShortcutSystem

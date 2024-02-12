@@ -100,7 +100,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
         if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
         if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
 
-        var mouse = GetScreenToWorld2D(GetMousePosition(), _camera);
+        var uiMouse = GetMousePosition();
+        var mouse = GetScreenToWorld2D(uiMouse, _camera);
 
         //                        v this was done to avoid rounding errors
         var matrixY = mouse.Y < 0 ? -1 : (int)mouse.Y / scale;
@@ -108,10 +109,17 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
         var sWidth = GetScreenWidth();
         var sHeight = GetScreenHeight();
+        
+        var layer3Rect = new Rectangle(10, sHeight - 50, 40, 40);
+        var layer2Rect = new Rectangle(20, sHeight - 60, 40, 40);
+        var layer1Rect = new Rectangle(30, sHeight - 70, 40, 40);
 
         Rectangle panelRect = new(sWidth - 200, 50, 188, 400);
 
-        var canDrawGeo = !CheckCollisionPointRec(GetMousePosition(), panelRect);
+        var canDrawGeo = !CheckCollisionPointRec(GetMousePosition(), panelRect) &&
+                         !CheckCollisionPointRec(uiMouse, layer3Rect) &&
+                         (GLOBALS.Layer != 1 || !CheckCollisionPointRec(uiMouse, layer2Rect)) &&
+                         (GLOBALS.Layer != 0 || !CheckCollisionPointRec(uiMouse, layer1Rect));
         var inMatrixBounds = matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 &&
                              matrixX < GLOBALS.Level.Width;
 
@@ -1106,19 +1114,39 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
             // Current layer indicator
 
-            DrawRectangle(
-                10, sHeight - 50, 40, 40,
+            var newLayer = GLOBALS.Layer;
+
+            var layer3Hovered = GLOBALS.Layer == 2 && CheckCollisionPointRec(uiMouse, layer3Rect);
+
+            if (layer3Hovered)
+            {
+                DrawRectangleRec(layer3Rect, BLUE with { a = 100 });
+
+                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 0;
+            }
+
+            DrawRectangleRec(
+                layer3Rect,
                 WHITE
             );
 
             DrawRectangleLines(10, sHeight - 50, 40, 40, GRAY);
 
             if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, BLACK);
-
+            
             if (GLOBALS.Layer is 1 or 0)
             {
-                DrawRectangle(
-                    20, sHeight - 60, 40, 40,
+                var layer2Hovered = GLOBALS.Layer == 1 && CheckCollisionPointRec(uiMouse, layer2Rect);
+
+                if (layer2Hovered)
+                {
+                    DrawRectangleRec(layer2Rect, BLUE with { a = 100 });
+
+                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 2;
+                }
+                
+                DrawRectangleRec(
+                    layer2Rect,
                     WHITE
                 );
 
@@ -1129,8 +1157,16 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
             if (GLOBALS.Layer == 0)
             {
-                DrawRectangle(
-                    30, sHeight - 70, 40, 40,
+                var layer1Hovered = CheckCollisionPointRec(uiMouse, layer1Rect);
+
+                if (layer1Hovered)
+                {
+                    DrawRectangleRec(layer1Rect, BLUE with { a = 100 });
+                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 1;
+                }
+                
+                DrawRectangleRec(
+                    layer1Rect,
                     WHITE
                 );
 
@@ -1139,6 +1175,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
                 DrawText("1", 48, sHeight - 60, 22, BLACK);
             }
+
+            if (newLayer != GLOBALS.Layer) GLOBALS.Layer = newLayer;
         }
         EndDrawing();
     }

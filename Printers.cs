@@ -1167,9 +1167,15 @@ internal static class Printers
         DrawLineV(bottomRightV, bottomLeftV, GREEN);
         DrawLineV(bottomLeftV, topLeftV, GREEN);
         
-        if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT)) quadLock = 0;
+        if ((IsMouseButtonReleased(GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCamera.Button) || 
+             IsKeyReleased(GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCameraAlt.Key))) quadLock = 0;
+        
+        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
+        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
 
-        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+        if ((GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCamera.Check(ctrl, shift, alt) || 
+             GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCameraAlt.Check(ctrl, shift, alt)))
         {
             if (GLOBALS.CamQuadLocks[index] == 0)
             {
@@ -1297,7 +1303,7 @@ internal static class Printers
         }
         
 
-        return (hover && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT), biggerHover);
+        return (hover && (GLOBALS.Settings.Shortcuts.CameraEditor.GrabCamera.Check(ctrl, shift, alt, true) || GLOBALS.Settings.Shortcuts.CameraEditor.GrabCameraAlt.Check(ctrl, shift, alt, true)), biggerHover);
     }
 
     /// <summary>

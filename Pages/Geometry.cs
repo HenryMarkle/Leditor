@@ -137,16 +137,28 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
 
         var scale = GLOBALS.Scale;
 
-        var mouse = GetScreenToWorld2D(GetMousePosition(), camera);
+        var uiMouse = GetMousePosition();
+        var mouse = GetScreenToWorld2D(uiMouse, camera);
 
         //                        v this was done to avoid rounding errors
         var matrixY = mouse.Y < 0 ? -1 : (int)mouse.Y / GLOBALS.Scale;
         var matrixX = mouse.X < 0 ? -1 : (int)mouse.X / GLOBALS.Scale;
 
-        var canDrawGeo = !CheckCollisionPointRec(GetMousePosition(), new(GetScreenWidth() - 210, 50, 200, Raylib.GetScreenHeight() - 100));
 
         uint geoIndex = 4*geoSelectionY + geoSelectionX;
+        
+        var sWidth = GetScreenWidth();
+        var sHeight = GetScreenHeight();
+        
+        var layer1Rect = new Rectangle(30, sHeight - 70, 40, 40);
+        var layer2Rect = new Rectangle(20, sHeight - 60, 40, 40);
+        var layer3Rect = new Rectangle(10, sHeight - 50, 40, 40);
 
+        var canDrawGeo = !CheckCollisionPointRec(uiMouse, layer3Rect) && 
+                         (GLOBALS.Layer != 1 || !CheckCollisionPointRec(uiMouse, layer2Rect)) &&
+                         (GLOBALS.Layer != 0 || !CheckCollisionPointRec(uiMouse, layer1Rect)) &&
+                         !CheckCollisionPointRec(GetMousePosition(), new(GetScreenWidth() - 210, 50, 200, GetScreenHeight() - 100));
+        
         #region Shortcuts
         
         var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
@@ -810,7 +822,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                 if (showLayer1) Printers.DrawGeoLayer(
                     0,
                     GLOBALS.Scale,
-                    !gridContrast,
+                    false,
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer1,
                     true,
                     false
@@ -820,7 +832,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                     Printers.DrawGeoLayer(
                     1,
                     GLOBALS.Scale,
-                    !gridContrast && !showLayer1 && GLOBALS.Layer == 2, 
+                    false, 
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer2,
                     _layerStackableFilter
                 );
@@ -828,7 +840,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                 if (showLayer3) Printers.DrawGeoLayer(
                     2, 
                     GLOBALS.Scale,
-                    !gridContrast && !showLayer1 && GLOBALS.Layer == 1, 
+                    false, 
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer3,
                     _layerStackableFilter
                 );
@@ -838,7 +850,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                 if (showLayer1) Printers.DrawGeoLayer(
                     0,
                     GLOBALS.Scale,
-                    !gridContrast,
+                    false,
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer1,
                     false,
                     true
@@ -902,6 +914,8 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                         }
                     }
                 }
+                
+                Printers.DrawGrid(GLOBALS.Scale);
 
                 // the outbound border
                 DrawRectangleLinesEx(new(0, 0, GLOBALS.Level.Width * scale, GLOBALS.Level.Height * scale), 2, new(0, 0, 0, 255));
@@ -990,9 +1004,9 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                 }
             }
 
-            for (int w = 0; w < 4; w++)
+            for (var w = 0; w < 4; w++)
             {
-                for (int h = 0; h < 8; h++)
+                for (var h = 0; h < 8; h++)
                 {
                     var index = (4 * h) + w;
                     if (index < GeoMenuIndexToUiTexture.Length)
@@ -1009,12 +1023,32 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                         {
                             if (textureIndex != -1)
                             {
+                                var toolRect = new Rectangle(
+                                    GetScreenWidth() - 195 + w * GLOBALS.UiScale + 5, 
+                                    h * GLOBALS.UiScale + 100, 
+                                    GLOBALS.UiScale, 
+                                    GLOBALS.UiScale
+                                );
+
+                                var toolHovered = CheckCollisionPointRec(GetMousePosition(), toolRect);
+                                
                                 DrawTexture(
                                     GLOBALS.Textures.GeoMenu[textureIndex],
                                     GetScreenWidth() - 195 + w * GLOBALS.UiScale + 5,
                                     h * GLOBALS.UiScale + 100,
                                     new(0, 0, 0, 255)
                                 );
+
+                                if (toolHovered)
+                                {
+                                    DrawRectangleLinesEx(toolRect, 3f, BLUE with { a = 100 });
+
+                                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                                    {
+                                        geoSelectionX = (uint)w;
+                                        geoSelectionY = (uint)h;
+                                    }
+                                }
                             }
                         }
 
@@ -1029,23 +1063,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
 
             if (geoIndex < GLOBALS.Textures.GeoMenu.Length && geoIndex is not 28 or 29 or 30) Raylib.DrawText(GeoNames[geoIndex], Raylib.GetScreenWidth() - 190, 8 * GLOBALS.UiScale + 110, 18, new(0, 0, 0, 255));
 
-            var sWidth = GetScreenWidth();
-
-            switch (GLOBALS.Layer)
-            {
-                case 0:
-                    DrawRectangle(sWidth - 190, 8 * GLOBALS.UiScale + 140, 40, 40, GLOBALS.Settings.GeometryEditor.LayerColors.Layer1);
-                    DrawText("L1", sWidth - 182, 8 * GLOBALS.UiScale + 148, 26, new(255, 255, 255, 255));
-                    break;
-                case 1:
-                    DrawRectangle(sWidth - 190, 8 * GLOBALS.UiScale + 140, 40, 40, GLOBALS.Settings.GeometryEditor.LayerColors.Layer2);
-                    DrawText("L2", sWidth - 182, 8 * GLOBALS.UiScale + 148, 26, new(255, 255, 255, 255));
-                    break;
-                case 2:
-                    DrawRectangle(sWidth - 190, 8 * GLOBALS.UiScale + 140, 40, 40, GLOBALS.Settings.GeometryEditor.LayerColors.Layer3);
-                    DrawText("L3", sWidth - 182, 8 * GLOBALS.UiScale + 148, 26, new(255, 255, 255, 255));
-                    break;
-            }
+            
 
             if (matrixX >= 0 && matrixX < GLOBALS.Level.Width && matrixY >= 0 && matrixY < GLOBALS.Level.Height)
                 Raylib.DrawText(
@@ -1085,6 +1103,73 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                 "Show Cameras",
                 GLOBALS.Settings.GeometryEditor.ShowCameras
             );
+
+            // Layer indicator
+            
+            var newLayer = GLOBALS.Layer;
+
+            
+            var layer3Hovered = GLOBALS.Layer == 2 && CheckCollisionPointRec(GetMousePosition(), layer3Rect);
+
+            if (layer3Hovered)
+            {
+                DrawRectangleRec(layer3Rect, BLUE with { a = 100 });
+
+                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 0;
+            }
+
+            DrawRectangleRec(
+                layer3Rect,
+                WHITE
+            );
+            
+            DrawRectangleLines(10, sHeight - 50, 40, 40, GRAY);
+
+            if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, BLACK);
+            
+            if (GLOBALS.Layer is 1 or 0)
+            {
+                var layer2Hovered = GLOBALS.Layer == 1 && CheckCollisionPointRec(GetMousePosition(), layer2Rect);
+
+                if (layer2Hovered)
+                {
+                    DrawRectangleRec(layer2Rect, BLUE with { a = 100 });
+
+                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 2;
+                }
+                
+                DrawRectangleRec(
+                    layer2Rect,
+                    WHITE
+                );
+
+                DrawRectangleLines(20, sHeight - 60, 40, 40, GRAY);
+
+                if (GLOBALS.Layer == 1) DrawText("2", 35, sHeight - 50, 22, BLACK);
+            }
+
+            if (GLOBALS.Layer == 0)
+            {
+                var layer1Hovered = CheckCollisionPointRec(GetMousePosition(), layer1Rect);
+
+                if (layer1Hovered)
+                {
+                    DrawRectangleRec(layer1Rect, BLUE with { a = 100 });
+                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 1;
+                }
+                
+                DrawRectangleRec(
+                    layer1Rect,
+                    WHITE
+                );
+
+                DrawRectangleLines(
+                    30, sHeight - 70, 40, 40, GRAY);
+
+                DrawText("1", 48, sHeight - 60, 22, BLACK);
+            }
+
+            if (newLayer != GLOBALS.Layer) GLOBALS.Layer = newLayer;
         }
         Raylib.EndDrawing();
 

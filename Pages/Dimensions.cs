@@ -139,13 +139,15 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
 
             if (isBecomingLarger)
             {
-                Raylib_CsLo.RayGui.GuiLine(new(600, 100, 400, 20), "Fill extra space");
-                fillLayer1 = Raylib_CsLo.RayGui.GuiCheckBox(new(600, 130, 28, 28), "Fill Layer 1", fillLayer1);
-                fillLayer2 = Raylib_CsLo.RayGui.GuiCheckBox(new(750, 130, 28, 28), "Fill Layer 2", fillLayer2);
-                fillLayer3 = Raylib_CsLo.RayGui.GuiCheckBox(new(900, 130, 28, 28), "Fill Layer 3", fillLayer3);
+                RayGui.GuiLine(new(600, 100, 400, 20), "Fill extra space");
+                fillLayer1 = RayGui.GuiCheckBox(new(600, 130, 28, 28), "Fill Layer 1", fillLayer1);
+                fillLayer2 = RayGui.GuiCheckBox(new(750, 130, 28, 28), "Fill Layer 2", fillLayer2);
+                fillLayer3 = RayGui.GuiCheckBox(new(900, 130, 28, 28), "Fill Layer 3", fillLayer3);
             }
+            
+            if (GLOBALS.NewFlag) if (RayGui.GuiButton(new(panelRect.x + 20, panelRect.height - 92, 260, 40), "Simple Options")) advanced = false;
 
-            if (Raylib_CsLo.RayGui.GuiButton(new(360, Raylib.GetScreenHeight() - 160, 300, 40), "Ok") || Raylib.IsKeyPressed(KeyboardKey.KEY_ENTER))
+            if (RayGui.GuiButton(new(360, Raylib.GetScreenHeight() - 160, 300, 40), "Ok") || Raylib.IsKeyPressed(KeyboardKey.KEY_ENTER))
             {
                 logger.Debug("page 6: Ok button clicked");
 
@@ -272,6 +274,8 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
             {
                 if (GLOBALS.NewFlag)
                 {
+                    advanced = true;
+                    
                     logger.Debug("new flag detected; creating a new level");
 
                     GLOBALS.Level.New(

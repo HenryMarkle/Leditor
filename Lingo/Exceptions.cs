@@ -8,6 +8,11 @@ namespace Leditor.Leditor.Lingo;
 
 public abstract class ParseException(string message) : Exception(message);
 
+public class MaterialParseException(string message, string init) : ParseException(message)
+{
+    public string Init { get; set; } = init;
+}
+
 public class EffectParseException(string message, string effect) : Exception(message)
 {
     public string Effect { get; set; } = effect;

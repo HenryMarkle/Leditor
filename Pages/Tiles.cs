@@ -26,6 +26,12 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
     private int _materialScrollIndex;
     private bool _showTileSpecs = GLOBALS.Settings.TileEditor.VisibleSpecs;
 
+    private int _tileItemFocus;
+    private int _tileCategoryItemFocus;
+    
+    private int _materialItemFocus;
+    private int _materialCategoryFocus;
+    
     private bool _showLayer1Tiles = true;
     private bool _showLayer2Tiles = true;
     private bool _showLayer3Tiles = true;
@@ -37,6 +43,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
     private readonly byte[] _tilesPanelBytes = "Tiles"u8.ToArray();
     private readonly byte[] _materialsPanelBytes = "Materials"u8.ToArray();
     private readonly byte[] _tileSpecsPanelBytes = "Tile Specs"u8.ToArray();
+
+    private readonly string[] _tileCategoryNames = [..GLOBALS.TileCategories.Select(t => t.Item1)];
+    private readonly string[] _materialCategoryNames = [..GLOBALS.MaterialCategories];
 
     public void Draw()
     {
@@ -584,8 +593,6 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 
         #region TileEditorUI
         {
-
-
             // Menu
 
             unsafe
@@ -629,7 +636,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
             // material/tile switch
 
             if (RayGui.GuiButton(
-                new(tilePanelRect.X + (tilePanelRect.width - 200) / 2, tilePanelRect.Y + 30, 200, 30),
+                new Rectangle(tilePanelRect.X + (tilePanelRect.width - 200) / 2, tilePanelRect.Y + 30, 200, 30),
                 _materialTileSwitch ? "Tiles" : "Materials"
             )) _materialTileSwitch = !_materialTileSwitch;
 
@@ -644,12 +651,17 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                 {
                     fixed (int* scrollIndex = &_tileCategoryScrollIndex)
                     {
-                        newCategoryIndex = RayGui.GuiListView(
-                            new(teWidth - (_tilePanelWidth + 10) + 10, 90, _tilePanelWidth * 0.3f, teHeight - 200),
-                            string.Join(";", GLOBALS.TileCategories.Select(t => t.Item1)),
-                            scrollIndex,
-                            _tileCategoryIndex
-                        );
+                        fixed (int* fc = &_tileCategoryItemFocus)
+                        {
+                            newCategoryIndex = RayGui.GuiListViewEx(
+                                new Rectangle(teWidth - (_tilePanelWidth + 10) + 10, 90, _tilePanelWidth * 0.3f, teHeight - 200),
+                                _tileCategoryNames,
+                                GLOBALS.TileCategories.Length,
+                                fc,
+                                scrollIndex,
+                                _tileCategoryIndex
+                            );
+                        }
                     }
                 }
 
@@ -669,36 +681,43 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                 {
                     fixed (int* scrollIndex = &_tileScrollIndex)
                     {
-                        InitTile[] category;
-                        
-                        #if DEBUG
-                        try
+                        fixed (int* fc = &_tileItemFocus)
                         {
-                            category = GLOBALS.Tiles[_tileCategoryIndex];
-                        }
-                        catch (IndexOutOfRangeException ie)
-                        {
-                            _logger.Fatal($"Failed to fetch tile category from {nameof(GLOBALS.Tiles)} (L:{GLOBALS.Tiles.Length}): {nameof(_tileCategoryIndex)} ({_tileCategoryIndex}) was out of bounds");
-                            throw new IndexOutOfRangeException(message: $"Failed to fetch tile category from {nameof(GLOBALS.Tiles)} (L:{GLOBALS.Tiles.Length}): {nameof(_tileCategoryIndex)} ({_tileCategoryIndex}) was out of bounds", innerException: ie);
-                        }
-                        #else
-                        category = GLOBALS.Tiles[_tileCategoryIndex];
-                        #endif
-                        
-                        var newTileIndex = RayGui.GuiListView(
-                            new(teWidth - (_tilePanelWidth + 10) + 15 + (_tilePanelWidth * 0.3f), 90, _tilePanelWidth * 0.7f - 25, teHeight - 200),
-                            string.Join(";", category.Select(i => i.Name)),
-                            scrollIndex,
-                            _tileIndex
-                        );
-
-                        if (newTileIndex != _tileIndex && newTileIndex != -1)
-                        {
+                            
+                            InitTile[] category;
+                            
                             #if DEBUG
-                            _logger.Debug($"New tile index: {newTileIndex}");
+                            try
+                            {
+                                category = GLOBALS.Tiles[_tileCategoryIndex];
+                            }
+                            catch (IndexOutOfRangeException ie)
+                            {
+                                _logger.Fatal($"Failed to fetch tile category from {nameof(GLOBALS.Tiles)} (L:{GLOBALS.Tiles.Length}): {nameof(_tileCategoryIndex)} ({_tileCategoryIndex}) was out of bounds");
+                                throw new IndexOutOfRangeException(message: $"Failed to fetch tile category from {nameof(GLOBALS.Tiles)} (L:{GLOBALS.Tiles.Length}): {nameof(_tileCategoryIndex)} ({_tileCategoryIndex}) was out of bounds", innerException: ie);
+                            }
+                            #else
+                            category = GLOBALS.Tiles[_tileCategoryIndex];
                             #endif
+                            
+                            // TODO: performance issue
+                            var newTileIndex = RayGui.GuiListViewEx(
+                                new(teWidth - (_tilePanelWidth + 10) + 15 + (_tilePanelWidth * 0.3f), 90, _tilePanelWidth * 0.7f - 25, teHeight - 200),
+                                [..category.Select(i => i.Name)],
+                                category.Length,
+                                fc,
+                                scrollIndex,
+                                _tileIndex
+                            );
 
-                            _tileIndex = newTileIndex;
+                            if (newTileIndex != _tileIndex && newTileIndex != -1)
+                            {
+                                #if DEBUG
+                                _logger.Debug($"New tile index: {newTileIndex}");
+                                #endif
+
+                                _tileIndex = newTileIndex;
+                            }
                         }
                     }
                 }
@@ -712,12 +731,17 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                 {
                     fixed (int* scrollIndex = &_materialCategoryScrollIndex)
                     {
-                        newCategoryIndex = RayGui.GuiListView(
-                            new(teWidth - (_tilePanelWidth + 10) + 10, 90, _tilePanelWidth * 0.3f, teHeight - 200),
-                            string.Join(";", GLOBALS.MaterialCategories),
-                            scrollIndex,
-                            _materialCategoryIndex
-                        );
+                        fixed (int* fc = &_materialCategoryFocus)
+                        {
+                            newCategoryIndex = RayGui.GuiListViewEx(
+                                new(teWidth - (_tilePanelWidth + 10) + 10, 90, _tilePanelWidth * 0.3f, teHeight - 200),
+                                _materialCategoryNames,
+                                GLOBALS.MaterialCategories.Length,
+                                fc,
+                                scrollIndex,
+                                _materialCategoryIndex
+                            );
+                        }
                     }
                 }
 
@@ -750,21 +774,27 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                 {
                     fixed (int* scrollIndex = &_materialScrollIndex)
                     {
-                        var newMaterialIndex = RayGui.GuiListView(
-                            new(teWidth - (_tilePanelWidth + 10) + 15 + (_tilePanelWidth * 0.3f), 90, _tilePanelWidth * 0.7f - 25, teHeight - 200),
-                            string.Join(";", currentMaterialsList.Select(i => i.Item1)),
-                            scrollIndex,
-                            _materialIndex
-                        );
-
-                        if (newMaterialIndex != _materialIndex && newMaterialIndex != -1)
+                        fixed (int* fc = &_materialItemFocus)
                         {
-                            #if DEBUG
-                            _logger.Debug($"New material index: {newMaterialIndex}");
-                            #endif
+                            // TODO: performance issue
+                            var newMaterialIndex = RayGui.GuiListViewEx(
+                                new(teWidth - (_tilePanelWidth + 10) + 15 + (_tilePanelWidth * 0.3f), 90, _tilePanelWidth * 0.7f - 25, teHeight - 200),
+                                [..currentMaterialsList.Select(i => i.Item1)],
+                                currentMaterialsList.Length,
+                                fc,
+                                scrollIndex,
+                                _materialIndex
+                            );
+                            
+                            if (newMaterialIndex != _materialIndex && newMaterialIndex != -1)
+                            {
+                                #if DEBUG
+                                _logger.Debug($"New material index: {newMaterialIndex}");
+                                #endif
 
-                            _materialIndex = newMaterialIndex;
-                        } 
+                                _materialIndex = newMaterialIndex;
+                            } 
+                        }
                     }
                 }
 
@@ -785,7 +815,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 
             if (_tileCategoryFocus)
             {
-                Raylib.DrawRectangleLinesEx(
+                DrawRectangleLinesEx(
                     new(teWidth - (_tilePanelWidth + 10) + 10, 90, _tilePanelWidth * 0.3f, teHeight - 200),
                     4f,
                     new(0, 0, 255, 255)
@@ -793,7 +823,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
             }
             else
             {
-                Raylib.DrawRectangleLinesEx(
+                DrawRectangleLinesEx(
                     new(teWidth - (_tilePanelWidth + 10) + 15 + (_tilePanelWidth * 0.3f), 90, _tilePanelWidth * 0.7f - 25, teHeight - 200),
                     4f,
                     new(0, 0, 255, 255)
@@ -802,21 +832,38 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 
             // layer indicator
 
-            if (GLOBALS.Layer == 2)
+            var layerRect = new Rectangle(teWidth - 60, tilePanelRect.height - 30, 40, 40);
+            var newLayer = GLOBALS.Layer;
+
+            switch (GLOBALS.Layer)
             {
-                DrawRectangleV(new(teWidth - 60, tilePanelRect.height - 30), new(40, 40), GLOBALS.Settings.GeometryEditor.LayerColors.Layer3);
-                DrawText("L3", teWidth - 50, (int)tilePanelRect.height - 20, 20, new(255, 255, 255, 255));
+                case 2:
+                    DrawRectangleRec(layerRect, GLOBALS.Settings.GeometryEditor.LayerColors.Layer3);
+                    DrawText("L3", teWidth - 50, (int)tilePanelRect.height - 20, 20, new(255, 255, 255, 255));
+                    break;
+                
+                case 1:
+                    DrawRectangleRec(layerRect, GLOBALS.Settings.GeometryEditor.LayerColors.Layer2);
+                    DrawText("L2", teWidth - 50, (int)tilePanelRect.height - 20, 20, new(255, 255, 255, 255));
+                    break;
+                
+                case 0:
+                    DrawRectangleRec(layerRect, GLOBALS.Settings.GeometryEditor.LayerColors.Layer1);
+                    DrawText("L1", teWidth - 47, (int)tilePanelRect.height - 20, 20, new(255, 255, 255, 255));
+                    break;
             }
-            if (GLOBALS.Layer == 1)
+
+            if (CheckCollisionPointRec(tileMouse, layerRect))
             {
-                DrawRectangleV(new(teWidth - 60, tilePanelRect.height - 30), new(40, 40), GLOBALS.Settings.GeometryEditor.LayerColors.Layer2);
-                DrawText("L2", teWidth - 50, (int)tilePanelRect.height - 20, 20, new(255, 255, 255, 255));
+                SetMouseCursor(MouseCursor.MOUSE_CURSOR_POINTING_HAND);
+
+                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = ++newLayer % 3;
             }
-            if (GLOBALS.Layer == 0)
-            {
-                DrawRectangleV(new(teWidth - 60, tilePanelRect.height - 30), new(40, 40), GLOBALS.Settings.GeometryEditor.LayerColors.Layer1);
-                DrawText("L1", teWidth - 47, (int)tilePanelRect.height - 20, 20, new(255, 255, 255, 255));
-            }
+            else SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+
+
+            if (GLOBALS.Layer != newLayer) GLOBALS.Layer = newLayer;
+            
             
             // Hovered tile info text
 

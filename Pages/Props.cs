@@ -41,6 +41,15 @@ internal class PropsEditorPage : IPage
     private int _propsMenuOthersCategoryIndex;
     private int _propsMenuOthersIndex;
 
+    private int _propsMenuTilesItemFocus;
+    private int _propsMenuTilesCategoryItemFocus;
+
+    private int _propsMenuRopesItemFocus;
+    private int _propsMenuLongItemFocus;
+    
+    private int _propsMenuOtherItemFocus;
+    private int _propsMenuOtherCategoryItemFocus;
+    
     private int _spinnerLock;
     
     private const float PropScale = 0.4f;
@@ -84,6 +93,19 @@ internal class PropsEditorPage : IPage
 
     private readonly (int index, string category)[] _tilesAsPropsCategoryIndices = [];
     private readonly (int index, InitTile init)[][] _tilesAsPropsIndices = [];
+
+    private readonly string[] _tilesAsPropsCategoryNames;
+    private readonly string[][] _tilesAsPropsNames;
+    private readonly string[] _ropeNames = [..GLOBALS.RopeProps.Select(p => p.Name)];
+    private readonly string[] _longNames = [..GLOBALS.LongProps.Select(l => l.Name)];
+    private readonly string[] _otherCategoryNames;
+    private readonly string[][] _otherNames;
+
+    private BasicPropSettings _copiedPropSettings = new();
+    private Vector2[] _copiedRopePoints = [];
+    private int _copiedDepth;
+    private bool _copiedIsTileAsProp;
+    private bool _newlyCopied; // to signify that the copied properties should be used
     
     // Layers 2 and 3 do not show geo features like shortcuts and entrances 
     private readonly bool[] _layerStackableFilter =
@@ -116,9 +138,6 @@ internal class PropsEditorPage : IPage
 
     private readonly byte[] _menuPanelBytes = "Menu"u8.ToArray();
     private readonly byte[] _ropePanelBytes = "Rope Settings"u8.ToArray();
-
-    private readonly string _propsMenuRopesListString = string.Join(";", GLOBALS.RopeProps.Select(p => p.Name));
-    private readonly string _propsMenuLongsListString = string.Join(";", GLOBALS.LongProps.Select(l => l.Name));
     
     private (int index, bool simSwitch, RopeModel model, Vector2[] bezierHandles)[] _models;
 
@@ -145,6 +164,11 @@ internal class PropsEditorPage : IPage
             
             // init rope models
         }
+
+        _tilesAsPropsCategoryNames = [..from c in _tilesAsPropsCategoryIndices select c.category];
+        _tilesAsPropsNames = _tilesAsPropsIndices.Select(c => c.Select(t => t.init.Name).ToArray()).ToArray();
+        _otherCategoryNames = [..from c in _propCategoriesOnly select c.name];
+        _otherNames = _propsOnly.Select(c => c.Select(p => p.Name).ToArray()).ToArray();
     }
 
     #nullable enable
@@ -311,6 +335,10 @@ internal class PropsEditorPage : IPage
 
         var sWidth = GetScreenWidth();
         var sHeight = GetScreenHeight();
+        
+        var layer3Rect = new Rectangle(10, sHeight - 50, 40, 40);
+        var layer2Rect = new Rectangle(20, sHeight - 60, 40, 40);
+        var layer1Rect = new Rectangle(30, sHeight - 70, 40, 40);
 
         var tileMouse = GetMousePosition();
         var tileMouseWorld = GetScreenToWorld2D(tileMouse, _camera);
@@ -324,6 +352,9 @@ internal class PropsEditorPage : IPage
         var tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / previewScale;
 
         var canDrawTile = !CheckCollisionPointRec(tileMouse, menuPanelRect) &&
+                          !CheckCollisionPointRec(tileMouse, layer3Rect) &&
+                          (GLOBALS.Layer != 1 || !CheckCollisionPointRec(tileMouse, layer2Rect)) &&
+                          (GLOBALS.Layer != 0 || !CheckCollisionPointRec(tileMouse, layer1Rect)) &&
                            (!CheckCollisionPointRec(tileMouse, ropePanelRect) || !_showRopePanel);
 
         var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
@@ -420,25 +451,40 @@ internal class PropsEditorPage : IPage
                             var currentTileAsProp = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
                             var width = (float)(currentTileAsProp.init.Size.Item1 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
                             var height = (float)(currentTileAsProp.init.Size.Item2 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
+                            
+                            BasicPropSettings settings;
+                            int depth;
 
+                            if (_newlyCopied)
+                            {
+                                _newlyCopied = false;
+
+                                settings = _copiedPropSettings;
+                                depth = _copiedDepth;
+                            }
+                            else
+                            {
+                                depth = GLOBALS.Layer * -10;
+                                settings = new();
+                            }
                             
                             GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
                                 (
                                     InitPropType.Tile, 
                                     (currentTileAsPropCategory.index, currentTileAsProp.index),
                                     new Prop(
-                                        GLOBALS.Layer * -10, 
+                                        depth, 
                                         currentTileAsProp.init.Name, 
                                         true, 
                                         new PropQuads(
-                                        new(posV.X - width, posV.Y - height), 
-                                        new(posV.X + width, posV.Y - height), 
-                                        new(posV.X + width, posV.Y + height), 
-                                        new(posV.X - width, posV.Y + height)
+                                        new Vector2(posV.X - width, posV.Y - height), 
+                                        new  Vector2(posV.X + width, posV.Y - height), 
+                                        new Vector2(posV.X + width, posV.Y + height), 
+                                        new Vector2(posV.X - width, posV.Y + height)
                                         )
                                     )
                                     {
-                                        Extras = new(new BasicPropSettings(), [])
+                                        Extras = new(settings, [])
                                     }
                                 )
                             ];
@@ -457,21 +503,42 @@ internal class PropsEditorPage : IPage
                             };
 
                             var ropeEnds = Utils.RopeEnds(newQuads);
+
+                            
+                            PropRopeSettings settings;
+                            Vector2[] ropePoints;
+                            int depth;
+
+                            if (_newlyCopied)
+                            {
+                                _newlyCopied = false;
+
+                                ropePoints = _copiedRopePoints;
+                                settings = (PropRopeSettings)_copiedPropSettings;
+                                depth = _copiedDepth;
+                            }
+                            else
+                            {
+                                ropePoints = Utils.GenerateRopePoints(ropeEnds.pA, ropeEnds.pB, 30);
+                                depth = GLOBALS.Layer * -10;
+                                settings = new();
+                            }
+
                                 
                             GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
                                 (
                                     InitPropType.Rope, 
                                     (-1, _propsMenuRopesIndex), 
                                     new Prop(
-                                        -GLOBALS.Layer*10, 
+                                        depth, 
                                         current.Name, 
                                         false, 
                                         newQuads
                                     )
                                     {
                                         Extras = new PropExtras(
-                                            new PropRopeSettings(), 
-                                            Utils.GenerateRopePoints(ropeEnds.pA, ropeEnds.pB, 30)
+                                            settings, 
+                                            ropePoints
                                         )
                                     }
                                 ) 
@@ -495,18 +562,34 @@ internal class PropsEditorPage : IPage
                                 BottomRight = new(posV.X + 100, posV.Y + height)
                             };
                             
+                            PropLongSettings settings;
+                            int depth;
+
+                            if (_newlyCopied)
+                            {
+                                _newlyCopied = false;
+
+                                settings = (PropLongSettings)_copiedPropSettings;
+                                depth = _copiedDepth;
+                            }
+                            else
+                            {
+                                depth = GLOBALS.Layer * -10;
+                                settings = new();
+                            }
+                            
                             GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
                                 (
                                     InitPropType.Long, 
                                     (-1, _propsMenuLongsIndex), 
                                     new Prop(
-                                        -GLOBALS.Layer*10, 
+                                        depth, 
                                         current.Name, 
                                         false, 
                                         newQuads
                                     )
                                     {
-                                        Extras = new PropExtras(new PropLongSettings(), [])
+                                        Extras = new PropExtras(settings, [])
                                     }
                                 ) 
                             ];
@@ -536,12 +619,26 @@ internal class PropsEditorPage : IPage
                                 _ => (texture.width / 2f, texture.height / 2f, new BasicPropSettings())
                             };
                             
+                            int depth;
+
+                            if (_newlyCopied)
+                            {
+                                _newlyCopied = false;
+
+                                settings = (PropLongSettings)_copiedPropSettings;
+                                depth = _copiedDepth;
+                            }
+                            else
+                            {
+                                depth = GLOBALS.Layer * -10;
+                            }
+                            
                             GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
                                 (
                                     init.Type, 
                                     (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex),
                                     new Prop(
-                                        GLOBALS.Layer * -10, 
+                                        depth, 
                                         init.Name, 
                                         false, 
                                         new PropQuads(
@@ -623,17 +720,31 @@ internal class PropsEditorPage : IPage
                                     currentTileAsPropCategory = _tilesAsPropsCategoryIndices[c];
                                     _propsMenuTilesCategoryIndex = c;
                                     _propsMenuTilesIndex = p;
+
+                                    _copiedPropSettings = current.prop.Extras.Settings;
+                                    _copiedIsTileAsProp = true;
                                 }
                             }
                         }
                         else if (current.type == InitPropType.Rope)
                         {
-                            
+                            _copiedRopePoints = [..current.prop.Extras.RopePoints];
+                            _copiedPropSettings = current.prop.Extras.Settings;
+                            _copiedIsTileAsProp = false;
+                        }
+                        else if (current.type == InitPropType.Long)
+                        {
+                            _copiedPropSettings = current.prop.Extras.Settings;
+                            _copiedIsTileAsProp = false;
                         }
                         else
                         {
                             (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex) = current.position;
+                            _copiedPropSettings = current.prop.Extras.Settings;
+                            _copiedIsTileAsProp = false;
                         }
+
+                        _copiedDepth = current.prop.Depth;
                     }
                 }
                 break;
@@ -1975,8 +2086,39 @@ internal class PropsEditorPage : IPage
             {
                 case 1: // Place Mode
                 {
-                    DrawRectangleRec(new(menuPanelRect.x + 30 + (_menuRootCategoryIndex * 40), 40, 40, 40), BLUE);
+                    DrawRectangleRec(new Rectangle(menuPanelRect.x + 30 + (_menuRootCategoryIndex * 40), 40, 40, 40), BLUE);
 
+                    var tilesAsPropsRect = new Rectangle(menuPanelRect.x + 30, 40, 40, 40);
+                    var ropesRect = new Rectangle(menuPanelRect.x + 30 + (40), 40, 40, 40);
+                    var longsRect = new Rectangle(menuPanelRect.x + 30 + (80), 40, 40, 40);
+                    var othersRect = new Rectangle(menuPanelRect.x + 30 + (120), 40, 40, 40);
+
+                    var tilesAsPropsHovered = CheckCollisionPointRec(tileMouse, tilesAsPropsRect);
+                    var ropesHovered = CheckCollisionPointRec(tileMouse, ropesRect);
+                    var longsHovered = CheckCollisionPointRec(tileMouse, longsRect);
+                    var othersHovered = CheckCollisionPointRec(tileMouse, othersRect);
+                    
+                    if (tilesAsPropsHovered)
+                    {
+                        DrawRectangleRec(tilesAsPropsRect, BLUE with { a = 100 });
+                        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _menuRootCategoryIndex = 0;
+                    }
+                    if (ropesHovered)
+                    {
+                        DrawRectangleRec(ropesRect, BLUE with { a = 100 });
+                        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _menuRootCategoryIndex = 1;
+                    }
+                    if (longsHovered)
+                    {
+                        DrawRectangleRec(longsRect, BLUE with { a = 100 });
+                        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _menuRootCategoryIndex = 2;
+                    }
+                    if (othersHovered)
+                    {
+                        DrawRectangleRec(othersRect, BLUE with { a = 100 });
+                        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _menuRootCategoryIndex = 3;
+                    }
+                    
                     DrawTexture(
                         GLOBALS.Textures.PropMenuCategories[0], 
                         (int)menuPanelRect.x + 30, 
@@ -2026,12 +2168,17 @@ internal class PropsEditorPage : IPage
                             {
                                 fixed (int* scrollIndex = &_propsMenuTilesCategoryScrollIndex)
                                 {
-                                    // draw the category list first
-                                    newCategoryIndex = RayGui.GuiListView(
-                                        categoryRect,
-                                        string.Join(";", from c in _tilesAsPropsCategoryIndices select c.category),
-                                        scrollIndex,
-                                        _propsMenuTilesCategoryIndex);
+                                    fixed (int* fc = &_propsMenuTilesCategoryItemFocus)
+                                    {
+                                        // draw the category list first
+                                        newCategoryIndex = RayGui.GuiListViewEx(
+                                            categoryRect,
+                                            _tilesAsPropsCategoryNames,
+                                            _tilesAsPropsCategoryIndices.Length,
+                                            fc,
+                                            scrollIndex,
+                                            _propsMenuTilesCategoryIndex);
+                                    }
                                 }
                             }
 
@@ -2049,24 +2196,27 @@ internal class PropsEditorPage : IPage
                             {
                                 fixed (int* scrollIndex = &_propsMenuTilesScrollIndex)
                                 {
-                                    // draw the list
-
-                                    var newPropsMenuTilesIndex = RayGui.GuiListView(
-                                        listRect,
-                                        string.Join(";",
-                                            from t in _tilesAsPropsIndices[_propsMenuTilesCategoryIndex]
-                                            select t.init.Name),
-                                        scrollIndex,
-                                        _propsMenuTilesIndex
-                                    );
-
-                                    if (newPropsMenuTilesIndex != _propsMenuTilesIndex && newPropsMenuTilesIndex != -1)
+                                    fixed (int* fc = &_propsMenuTilesItemFocus)
                                     {
-                                        #if DEBUG
-                                        _logger.Debug($"New tiles index: {newPropsMenuTilesIndex}");
-                                        #endif
-                                        
-                                        _propsMenuTilesIndex = newPropsMenuTilesIndex;
+                                        // draw the list
+
+                                        var newPropsMenuTilesIndex = RayGui.GuiListViewEx(
+                                            listRect,
+                                            _tilesAsPropsNames[_propsMenuTilesCategoryIndex],
+                                            _tilesAsPropsNames[_propsMenuTilesCategoryIndex].Length,
+                                            fc,
+                                            scrollIndex,
+                                            _propsMenuTilesIndex
+                                        );
+
+                                        if (newPropsMenuTilesIndex != _propsMenuTilesIndex && newPropsMenuTilesIndex != -1)
+                                        {
+                                            #if DEBUG
+                                            _logger.Debug($"New tiles index: {newPropsMenuTilesIndex}");
+                                            #endif
+                                            
+                                            _propsMenuTilesIndex = newPropsMenuTilesIndex;
+                                        }
                                     }
                                 }
                             }
@@ -2081,12 +2231,17 @@ internal class PropsEditorPage : IPage
 
                                 fixed (int* scrollIndex = &_propsMenuRopesScrollIndex)
                                 {
-                                    newIndex = RayGui.GuiListView(
-                                        categoryRect with { width = menuPanelRect.width - 10 },
-                                        _propsMenuRopesListString,
-                                        scrollIndex,
-                                        _propsMenuRopesIndex
-                                    );
+                                    fixed (int* fc = &_propsMenuRopesItemFocus)
+                                    {
+                                        newIndex = RayGui.GuiListViewEx(
+                                            categoryRect with { width = menuPanelRect.width - 10 },
+                                            _ropeNames,
+                                            _ropeNames.Length,
+                                            fc,
+                                            scrollIndex,
+                                            _propsMenuRopesIndex
+                                        );
+                                    }
                                 }
 
                                 if (newIndex != _propsMenuRopesIndex && newIndex != -1)
@@ -2109,12 +2264,17 @@ internal class PropsEditorPage : IPage
                             {
                                 fixed (int* scrollIndex = &_propsMenuLongsScrollIndex)
                                 {
-                                    newIndex = RayGui.GuiListView(
-                                        categoryRect with { width = menuPanelRect.width - 10 },
-                                        _propsMenuLongsListString,
-                                        scrollIndex,
-                                        _propsMenuLongsIndex
-                                    );
+                                    fixed (int* fc = &_propsMenuLongItemFocus)
+                                    {
+                                        newIndex = RayGui.GuiListViewEx(
+                                            categoryRect with { width = menuPanelRect.width - 10 },
+                                            _longNames,
+                                            _longNames.Length,
+                                            fc,
+                                            scrollIndex,
+                                            _propsMenuLongsIndex
+                                        );
+                                    }
                                 }
                             }
 
@@ -2138,12 +2298,17 @@ internal class PropsEditorPage : IPage
                             {
                                 fixed (int* scrollIndex = &_propsMenuOthersCategoryScrollIndex)
                                 {
-                                    // draw the category list first
-                                    newCategoryIndex = RayGui.GuiListView(
-                                        categoryRect,
-                                        string.Join(";", from c in _propCategoriesOnly select c.name),
-                                        scrollIndex,
-                                        _propsMenuOthersCategoryIndex);
+                                    fixed (int* fc = &_propsMenuOtherCategoryItemFocus)
+                                    {
+                                        // draw the category list first
+                                        newCategoryIndex = RayGui.GuiListViewEx(
+                                            categoryRect,
+                                            _otherCategoryNames,
+                                            _otherCategoryNames.Length,
+                                            fc,
+                                            scrollIndex,
+                                            _propsMenuOthersCategoryIndex);
+                                    }
                                 }
                             }
                             
@@ -2162,23 +2327,28 @@ internal class PropsEditorPage : IPage
                             {
                                 fixed (int* scrollIndex = &_propsMenuOthersScrollIndex)
                                 {
-                                    // draw the list
-
-                                    var  newPropsMenuOthersIndex = RayGui.GuiListView(
-                                        listRect,
-                                        string.Join(";", from t in _propsOnly[_propsMenuOthersCategoryIndex] select t.Name),
-                                        scrollIndex,
-                                        _propsMenuOthersIndex
-                                    );
-
-                                    if (newPropsMenuOthersIndex != _propsMenuOthersIndex &&
-                                        newPropsMenuOthersIndex != -1)
+                                    fixed (int* fc = &_propsMenuOtherItemFocus)
                                     {
-                                        #if DEBUG
-                                        _logger.Debug($"New other prop index: {newPropsMenuOthersIndex}");
-                                        #endif
-                                        
-                                        _propsMenuOthersIndex = newPropsMenuOthersIndex;
+                                        // draw the list
+
+                                        var  newPropsMenuOthersIndex = RayGui.GuiListViewEx(
+                                            listRect,
+                                            _otherNames[_propsMenuOthersCategoryIndex],
+                                            _otherNames[_propsMenuOthersCategoryIndex].Length,
+                                            fc,
+                                            scrollIndex,
+                                            _propsMenuOthersIndex
+                                        );
+
+                                        if (newPropsMenuOthersIndex != _propsMenuOthersIndex &&
+                                            newPropsMenuOthersIndex != -1)
+                                        {
+                                            #if DEBUG
+                                            _logger.Debug($"New other prop index: {newPropsMenuOthersIndex}");
+                                            #endif
+                                            
+                                            _propsMenuOthersIndex = newPropsMenuOthersIndex;
+                                        }
                                     }
                                 }
                             }
@@ -2728,20 +2898,39 @@ internal class PropsEditorPage : IPage
                 new Vector2(menuPanelRect.x + 5 + _mode*40, sHeight - 45), 
                 new Vector2(40, 40), BLUE
             );
+
+            var selectModeRect = new Rectangle(menuPanelRect.x + 5, sHeight - 45, 40, 40);
+            var selectModeHovered = CheckCollisionPointRec(tileMouse, selectModeRect);
+
+            if (selectModeHovered)
+            {
+                DrawRectangleRec(selectModeRect, BLUE with { a = 100 });
+
+                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _mode = 0;
+            }
                 
             DrawTexturePro(
                 selectModeTexture,
                 new Rectangle(0, 0, selectModeTexture.width, selectModeTexture.height),
-                new Rectangle(menuPanelRect.x + 5, sHeight - 45, 40, 40),
+                selectModeRect,
                 new(0, 0),
                 0,
                 _mode == 0 ? WHITE : BLACK
             );
+
+            var placeModeRect = new Rectangle(menuPanelRect.x + 45, sHeight - 45, 40, 40);
+            var placeModeHovered = CheckCollisionPointRec(tileMouse, placeModeRect);
+            if (placeModeHovered)
+            {
+                DrawRectangleRec(placeModeRect, BLUE with { a = 100 });
+
+                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _mode = 1;
+            }
                 
             DrawTexturePro(
                 placeModeTexture,
                 new Rectangle(0, 0, selectModeTexture.width, selectModeTexture.height),
-                new Rectangle(menuPanelRect.x + 45, sHeight - 45, 40, 40),
+                placeModeRect,
                 new(0, 0),
                 0,
                 _mode == 1 ? WHITE : BLACK
@@ -2770,20 +2959,39 @@ internal class PropsEditorPage : IPage
 
             // layer indicator
 
+            var newLayer = GLOBALS.Layer;
 
-            DrawRectangle(
-                10, sHeight - 50, 40, 40,
+            var layer3Hovered = GLOBALS.Layer == 2 && CheckCollisionPointRec(tileMouse, layer3Rect);
+
+            if (layer3Hovered)
+            {
+                DrawRectangleRec(layer3Rect, BLUE with { a = 100 });
+
+                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 0;
+            }
+
+            DrawRectangleRec(
+                layer3Rect,
                 WHITE
             );
 
             DrawRectangleLines(10, sHeight - 50, 40, 40, GRAY);
 
             if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, BLACK);
-
+            
             if (GLOBALS.Layer is 1 or 0)
             {
-                DrawRectangle(
-                    20, sHeight - 60, 40, 40,
+                var layer2Hovered = GLOBALS.Layer == 1 && CheckCollisionPointRec(tileMouse, layer2Rect);
+
+                if (layer2Hovered)
+                {
+                    DrawRectangleRec(layer2Rect, BLUE with { a = 100 });
+
+                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 2;
+                }
+                
+                DrawRectangleRec(
+                    layer2Rect,
                     WHITE
                 );
 
@@ -2794,8 +3002,16 @@ internal class PropsEditorPage : IPage
 
             if (GLOBALS.Layer == 0)
             {
-                DrawRectangle(
-                    30, sHeight - 70, 40, 40,
+                var layer1Hovered = CheckCollisionPointRec(tileMouse, layer1Rect);
+
+                if (layer1Hovered)
+                {
+                    DrawRectangleRec(layer1Rect, BLUE with { a = 100 });
+                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 1;
+                }
+                
+                DrawRectangleRec(
+                    layer1Rect,
                     WHITE
                 );
 
@@ -2804,6 +3020,8 @@ internal class PropsEditorPage : IPage
 
                 DrawText("1", 48, sHeight - 60, 22, BLACK);
             }
+
+            if (newLayer != GLOBALS.Layer) GLOBALS.Layer = newLayer;
         }
         #endregion
 

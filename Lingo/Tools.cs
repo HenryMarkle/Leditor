@@ -91,6 +91,69 @@ public static class Tools {
         }
     }
 
+    public static (string, Color) GetInitMaterial(AstNode.Base @base)
+    {
+        #nullable enable
+        var propertyList = (AstNode.PropertyList)@base;
+
+        var nameBase = (AstNode.Base?) propertyList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "nm").Value;
+        var colorBase = (AstNode.Base?) propertyList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "color").Value;
+
+        if (nameBase is null) throw new MaterialParseException("Missing \"nm\" property", StringifyBase(@base));
+        if (colorBase is null) throw new MaterialParseException("Missing \"color\" property", StringifyBase(@base));
+
+        var colorGlobalCall = ((AstNode.GlobalCall)colorBase);
+
+        if (colorGlobalCall.Name != "color") throw new MaterialParseException("Invalid \"color\" value", StringifyBase(@base));
+
+        var color = new Color(
+            ((AstNode.Number)colorGlobalCall.Arguments[0]).Value.IntValue,
+            ((AstNode.Number)colorGlobalCall.Arguments[1]).Value.IntValue,
+            ((AstNode.Number)colorGlobalCall.Arguments[2]).Value.IntValue, 
+            255
+            );
+#nullable disable
+
+        return (((AstNode.String)nameBase).Value, color);
+    }
+
+    public static (string[] categories, (string, Color)[][]) GetMaterialInit(string text)
+    {
+        #nullable enable
+        var lines = text.ReplaceLineEndings().Split(Environment.NewLine);
+
+        List<string> categories = [];
+        List<(string, Color)[]> materials = [];
+
+        foreach (var line in lines)
+        {
+            if (string.IsNullOrEmpty(line) || line.StartsWith("--")) continue;
+
+            if (line.StartsWith('-'))
+            {
+                categories.Add(line.TrimStart('-'));
+                materials.Add([]);
+            }
+            else
+            {
+                AstNode.Base? @base = null;
+                try
+                {
+                    @base = LingoParser.Expression.ParseOrThrow(line);
+                    var material = GetInitMaterial(@base);
+                    materials[^1] = [..materials[^1], material];
+                }
+                catch
+                {
+                    GLOBALS.Logger?.Error($"Failed to parse custom material: \"{(@base is null ? "<NULL>" : StringifyBase(@base))}\"");
+                }
+            }
+        }
+
+        #nullable disable
+        return ([..categories], [..materials]);
+    }
+    
     public static InitPropBase GetInitProp(AstNode.Base @base)
     {
         var propertList = ((AstNode.PropertyList)@base).Values;

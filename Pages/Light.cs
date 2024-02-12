@@ -22,8 +22,17 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
 
     private bool _isDraggingIndicator;
 
-    private const float initialGrowthFactor = 0.01f;
-    private float _growthFactor = initialGrowthFactor;
+    private const float InitialGrowthFactor = 0.01f;
+    private float _growthFactor = InitialGrowthFactor;
+
+    private void ResetGrowthFactor()
+    {
+        _growthFactor = InitialGrowthFactor;
+    }
+    private void IncreaseGrowthFactor()
+    {
+        _growthFactor += 0.05f;
+    }
     
     private Rectangle _lightBrushSource;
     private Rectangle _lightBrushDest;
@@ -158,59 +167,65 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
 
             _lightBrushTexturePage = _lightBrushTextureIndex / pageSize;
         }
-
+        
         if (_shortcuts.RotateBrushCounterClockwise.Check(ctrl, shift, alt, true))
         {
             _lightBrushRotation -= 0.2f;
-        } else if (_shortcuts.FastRotateBrushCounterClockwise.Check(ctrl, shift, alt, true))
-        {
-            _lightBrushRotation -= 1;
         }
-
         if (_shortcuts.RotateBrushClockwise.Check(ctrl, shift, alt, true))
         {
             
             _lightBrushRotation += 0.2f;
         }
-        else if (_shortcuts.FastRotateBrushClockwise.Check(ctrl, shift, alt, true))
-        {
-            _lightBrushRotation += 1;
-        }
-
         if (_shortcuts.StretchBrushVertically.Check(ctrl, shift, alt, true))
         {
             _lightBrushHeight += 2;
         }
-        else if (_shortcuts.FastStretchBrushVertically.Check(ctrl, shift, alt, true))
-        {
-            _lightBrushHeight += 5;
-        }
-        else if (_shortcuts.SqueezeBrushVertically.Check(ctrl, shift, alt, true))
+        if (_shortcuts.SqueezeBrushVertically.Check(ctrl, shift, alt, true))
         {
             _lightBrushHeight -= 2;
         }
-        else if (_shortcuts.FastSqueezeBrushVertically.Check(ctrl, shift, alt, true))
-        {
-            _lightBrushHeight -= 5;
-        }
-
         if (_shortcuts.StretchBrushHorizontally.Check(ctrl, shift, alt, true))
         {
             _lightBrushWidth += 2;
         }
-        else if (_shortcuts.FastStretchBrushHorizontally.Check(ctrl, shift, alt, true))
-        {
-            _lightBrushWidth += 5;
-        }
-        else if (_shortcuts.SqueezeBrushHorizontally.Check(ctrl, shift, alt, true))
+        if (_shortcuts.SqueezeBrushHorizontally.Check(ctrl, shift, alt, true))
         {
             
             _lightBrushWidth -= 2;
         }
+        
+        if (_shortcuts.FastRotateBrushCounterClockwise.Check(ctrl, shift, alt, true))
+        {
+            _lightBrushRotation -= 1 + _growthFactor;
+            IncreaseGrowthFactor();
+        }
+        else if (_shortcuts.FastRotateBrushClockwise.Check(ctrl, shift, alt, true))
+        {
+            _lightBrushRotation += 1+_growthFactor;
+            IncreaseGrowthFactor();
+        }
+        else if (_shortcuts.FastStretchBrushVertically.Check(ctrl, shift, alt, true))
+        {
+            _lightBrushHeight += 5+_growthFactor;
+            IncreaseGrowthFactor();
+        }
+        else if (_shortcuts.FastSqueezeBrushVertically.Check(ctrl, shift, alt, true))
+        {
+            _lightBrushHeight -= 5+_growthFactor;
+            IncreaseGrowthFactor();
+        }
+        else if (_shortcuts.FastStretchBrushHorizontally.Check(ctrl, shift, alt, true))
+        {
+            _lightBrushWidth += 5+_growthFactor;
+            IncreaseGrowthFactor();
+        }
         else if (_shortcuts.FastSqueezeBrushHorizontally.Check(ctrl, shift, alt, true))
         {
-            _lightBrushWidth -= 5;
+            _lightBrushWidth -= 5+_growthFactor;
+            IncreaseGrowthFactor();
         }
+        else ResetGrowthFactor();
 
         if (_shortcuts.ToggleShadow.Check(ctrl, shift, alt))
         {
@@ -368,7 +383,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
             }
             EndMode2D();
 
-            #region Menu
+            #region BrushMenu
 
             {
                 unsafe
@@ -470,7 +485,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
                     }
                 }
 
-                var indexText = $"{_lightBrushTexturePage + 1}/{totalPages}";
+                var indexText = $"{_lightBrushTexturePage + 1}/{totalPages+1}";
                 
                 DrawText(
                     indexText,

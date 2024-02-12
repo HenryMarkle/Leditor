@@ -670,8 +670,8 @@ internal static class GLOBALS
             TileMatrix[y, x, z] = cell;
         }
     }
-    
-    internal static string ProjectPath { get; set; }
+
+    internal static string ProjectPath { get; set; } = "";
 
     internal static int MinScreenWidth => 1280;
     internal static int MinScreenHeight => 800;
@@ -766,14 +766,14 @@ internal static class GLOBALS
     /// Prop definitions
     internal static InitPropBase[][] Props { get; set; } = [  ];
     
-    internal static string[] MaterialCategories => [
+    internal static string[] MaterialCategories { get; set; } = [
         "Materials",
         "Drought Materials",
         "Community Materials"
     ];
     
     /// Embedded material definitions
-    internal static (string, Color)[][] Materials => [
+    internal static (string, Color)[][] Materials { get; set; } = [
         [
             ("Standard", new(150, 150, 150, 255)),
             ("Concrete", new(150, 255, 255, 255)),
@@ -1012,5 +1012,7 @@ internal static class GLOBALS
     
     /// Used when loading a level
     internal static Task<PropCheckResult>? PropCheck { get; set; } = null;
+    
+    public static Serilog.Core.Logger? Logger { get; set; }
 #nullable disable
 }

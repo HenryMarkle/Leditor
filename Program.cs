@@ -245,6 +245,15 @@ class Program
         ).ToArray();
     }
 
+    private static (string[], (string, Color)[][]) LoadMaterialInit()
+    {
+        var path = GLOBALS.Paths.MaterialsInitPath;
+
+        var text = File.ReadAllText(path);
+
+        return Tools.GetMaterialInit(text);
+    }
+
     private static ((string, Color)[], InitTile[][]) LoadTileInit()
     {
         var path = GLOBALS.Paths.TilesInitPath;
@@ -293,6 +302,8 @@ class Program
             fileSizeLimitBytes: 50000000,
             rollOnFileSizeLimit: true
             ).CreateLogger();
+
+        GLOBALS.Logger = logger;
 
         logger.Information("program has started");
 
@@ -408,12 +419,17 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.11";
+        const string version = "Henry's Leditor v0.9.16";
         const string raylibVersion = "Raylib v4.2.0.9";
 
         logger.Information("indexing tiles and props");
 
         (GLOBALS.TileCategories, GLOBALS.Tiles) = initExists ? LoadTileInit() : ([], []);
+        
+        var materialsInit = LoadMaterialInit();
+
+        GLOBALS.MaterialCategories = [..GLOBALS.MaterialCategories, ..materialsInit.Item1];
+        GLOBALS.Materials = [..GLOBALS.Materials, ..materialsInit.Item2];
 
         try
         {
@@ -444,7 +460,7 @@ class Program
         // check for missing textures
 
         var missingTileImagesTask = from category in GLOBALS.Tiles from tile in category select Task.Factory.StartNew(() => { var path = Path.Combine(GLOBALS.Paths.AssetsDirectory, "tiles", $"{tile.Name}.png"); return (File.Exists(path), path); });
-        var missingEmbeddedTileImagesTask = from category in embeddedTiles from tile in category select Task.Factory.StartNew(() => { var path = Path.Combine(GLOBALS.Paths.AssetsDirectory, "tiles", "embedded", $"{tile.Name}.png"); return (File.Exists(path), path); });
+        var missingEmbeddedTileImagesTask = from category in embeddedTiles from tile in category select Task.Factory.StartNew(() => { var path = Path.Combine(GLOBALS.Paths.AssetsDirectory, "embedded", "tiles", $"{tile.Name}.png"); return (File.Exists(path), path); });
 
         using var missingTileImagesTaskEnum = missingTileImagesTask.GetEnumerator();
         using var missingEmbeddedTileImagesTaskEnum = missingEmbeddedTileImagesTask.GetEnumerator();
@@ -512,7 +528,7 @@ class Program
                 .Select((category, index) =>
                     index < GLOBALS.Tiles.Length - 8
                         ? category.Select(tile => Task.Factory.StartNew(() => LoadImage(Path.Combine(GLOBALS.Paths.AssetsDirectory, "tiles", $"{tile.Name}.png")))).ToArray()
-                        : category.Select(tile => Task.Factory.StartNew(() => LoadImage(Path.Combine(GLOBALS.Paths.AssetsDirectory, "tiles", "embedded", $"{tile.Name}.png")))).ToArray()
+                        : category.Select(tile => Task.Factory.StartNew(() => LoadImage(Path.Combine(GLOBALS.Paths.AssetsDirectory, "embedded", "tiles", $"{tile.Name}.png")))).ToArray()
                 )
                 .ToArray();
 
@@ -680,6 +696,10 @@ class Program
         
         dimensionsPage.ProjectCreated += propsPage.OnProjectCreated;
         //
+        
+        // Quick save task
+
+        Task<(bool success, Exception? exception)>? quickSaveTask = null;
         
         logger.Information("Begin main loop");
 
@@ -946,6 +966,19 @@ class Program
                 // page preprocessing
 
                 if (GLOBALS.Page == 2 && GLOBALS.Settings.Experimental.NewGeometryEditor) GLOBALS.Page = 18;
+                
+                // Globals quick save
+
+                {
+                    var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
+                    var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+                    var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+
+                    if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave.Check(ctrl, shift, alt))
+                    {
+                        // TODO: quick save
+                    }
+                }
 
                 // page switch
 

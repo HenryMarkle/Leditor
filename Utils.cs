@@ -1573,4 +1573,46 @@ internal static class Utils
 
         return true;
     }
+
+    #nullable enable
+    public static async Task<(bool success, Exception? exception)> SaveProjectAsync()
+    {
+        (bool success, Exception? exception) result;
+        var logger = GLOBALS.Logger;
+        var path = Path.Combine(GLOBALS.ProjectPath, GLOBALS.Level.ProjectName + ".txt");
+        
+        try
+        {
+            var strTask = Leditor.Lingo.Exporters.ExportAsync(GLOBALS.Level);
+
+            // export light map
+            var image = Raylib.LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
+
+            unsafe
+            {
+                Raylib.ImageFlipVertical(&image);
+            }
+            
+            var parent = Directory.GetParent(path)?.FullName ?? GLOBALS.ProjectPath;
+            var name = Path.GetFileNameWithoutExtension(path);
+                    
+            Raylib.ExportImage(image, Path.Combine(parent, name+".png"));
+            
+            Raylib.UnloadImage(image);
+
+            var str = await strTask;
+            
+            logger?.Debug($"Saving to {GLOBALS.ProjectPath}");
+            await File.WriteAllTextAsync(path, str);
+
+            result = (true, null);
+        }
+        catch (Exception e)
+        {
+            result =(false, e);
+        }
+        
+        return result;
+    }
+    #nullable disable
 }
