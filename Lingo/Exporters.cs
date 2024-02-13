@@ -84,8 +84,8 @@ public static class Exporters
                     {
                         TileDefault => "0",
                         TileMaterial m => $"\"{m.Name}\"",
-                        TileHead h => $"[point({h.CategoryPostition.Item1}, {h.CategoryPostition.Item2}), \"{h.CategoryPostition.Item3}\"]",
-                        TileBody b => $"[point({b.HeadPosition.x}, {b.HeadPosition.y}), {b.HeadPosition.z}]",
+                        TileHead h => $"[point({h.CategoryPostition.Item1+1}, {h.CategoryPostition.Item2+1}), \"{h.CategoryPostition.Item3}\"]",
+                        TileBody b => $"[point({b.HeadPosition.x+1}, {b.HeadPosition.y+1}), {b.HeadPosition.z+1}]",
                         
                         _ => throw new Exception("Invalid tile data")
                     };
@@ -134,10 +134,10 @@ public static class Exporters
 
                 builder.Append(']');
 
-                builder.Append(", ");
+                if (x != mtx.GetLength(1) - 1) builder.Append(", ");
             }
-
-            builder.Append("#Options: [");
+            
+            builder.Append("], #Options: [");
 
             for (var op = 0; op < options.Length; op++)
             {
@@ -152,13 +152,12 @@ public static class Exporters
 
             builder.Append(']');
 
-            builder.Append(", ");
+            if (e != effects.Length - 1) builder.Append(", ");
         }
 
         builder.Append(
-            "], #emPos: point(3, 1), #editEffect: 10, #selectEditEffect: 10, #mode: \"editEffect\", #brushSize: 3");
+            "], #emPos: point(3, 1), #editEffect: 10, #selectEditEffect: 10, #mode: \"editEffect\", #brushSize: 3]");
         
-        builder.Append(']');
         
         return builder.ToString();
     }
@@ -177,7 +176,7 @@ public static class Exporters
         System.Text.StringBuilder builder = new();
 
         builder.Append($"[#timeLimit: 4800, #defaultTerrain: {(terrainMedium ? 1 : 0)}, #maxFlies: 10, #flySpawnRate: 50, #lizards: [], #ambientSounds: [], #music: \"NONE\", #tags: [], #lightType: \"Static\", #waterDrips: 1, #lightRect: rect(0, 0, 1040, 800), #Matrix: []]");
-        builder.Append('\n');
+        builder.Append('\r');
         builder.Append($"[#mouse: 1, #lastMouse: 1, #mouseClick: 0, #pal: 1, #pals: [[#detCol: color( 255, 0, 0 )]], #eCol1: 1, #eCol2: 2, #totEcols: 5, #tileSeed: 68, #colGlows: [0, 0], #size: point({size.width}, {size.height}), #extraTiles: [{bufferTiles.left}, {bufferTiles.top}, {bufferTiles.right}, {bufferTiles.bottom}], #light: {(light ? 1 : 0)}]");
         
         return builder.ToString();
@@ -213,7 +212,7 @@ public static class Exporters
 
         for (var p = 0; p < props.Length; p++)
         {
-            var (_, (category, index), prop) = props[p];
+            var (type, (category, index), prop) = props[p];
 
             builder.Append('[');
 
@@ -221,7 +220,7 @@ public static class Exporters
             builder.Append(", ");
             builder.Append($"\"{prop.Name}\"");
             builder.Append(", ");
-            builder.Append($"point({category}, {index})");
+            builder.Append($"point({category+1}, {index+1})");
             builder.Append(", ");
             builder.Append($"[point({prop.Quads.TopLeft.X:0.0000}, {prop.Quads.TopLeft.Y:0.0000}), point({prop.Quads.TopRight.X:0.0000}, {prop.Quads.TopRight.Y:0.0000}), point({prop.Quads.BottomRight.X:0.0000}, {prop.Quads.BottomRight.Y:0.0000}), point({prop.Quads.BottomLeft.X:0.0000}, {prop.Quads.BottomLeft.Y:0.0000})]");
             builder.Append(", ");
@@ -241,7 +240,7 @@ public static class Exporters
 
             var pointsString = string.Join(", ", prop.Extras.RopePoints.Select(point => $"point({point.X*1.25f:0.0000}, {point.Y*1.25f:0.0000})"));
             
-            builder.Append($"[#settings: {settingsString}, #points: [{pointsString}]]");
+            builder.Append($"[#settings: {settingsString}{(type == InitPropType.Rope ? $", #points: [{pointsString}]" : "")}]");
             
             builder.Append(']');
             if (p != props.Length - 1) builder.Append(", ");

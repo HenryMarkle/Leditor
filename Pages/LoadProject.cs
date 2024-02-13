@@ -165,16 +165,23 @@ public class LoadProjectPage : IPage
 
             if (!File.Exists(lightMapFileName)) return new();
 
-            var lightMap = Raylib.LoadImage(lightMapFileName);
+            var lightMap = LoadImage(lightMapFileName);
 
             if (text.Length < 7) return new LoadFileResult();
 
+            Console.WriteLine(1);
             var objTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[0]));
+            Console.WriteLine(2);
             var tilesObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[1]));
+            Console.WriteLine(3);
             var obj2Task = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[5]));
+            Console.WriteLine(4);
             var effObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[2]));
+            Console.WriteLine(5);
             var lightObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[3]));
+            Console.WriteLine(6);
             var camsObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[6]));
+            Console.WriteLine(7);
             var propsObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[8]));
 
             await Task.WhenAll([objTask, tilesObjTask, obj2Task, effObjTask, lightObjTask, camsObjTask, propsObjTask]);
