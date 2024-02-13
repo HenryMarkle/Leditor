@@ -1114,7 +1114,7 @@ internal static class Utils
             }
         }
 
-        return array;
+        return newArray;
     }
 
     internal static TileCell[,,] NewTileMatrix(int width, int height)
