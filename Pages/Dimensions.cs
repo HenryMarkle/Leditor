@@ -147,7 +147,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
             
             if (GLOBALS.NewFlag) if (RayGui.GuiButton(new(panelRect.x + 20, panelRect.height - 92, 260, 40), "Simple Options")) advanced = false;
 
-            if (RayGui.GuiButton(new(360, Raylib.GetScreenHeight() - 160, 300, 40), "Ok") || Raylib.IsKeyPressed(KeyboardKey.KEY_ENTER))
+            if (RayGui.GuiButton(new(360, GetScreenHeight() - 160, 300, 40), "Ok") || Raylib.IsKeyPressed(KeyboardKey.KEY_ENTER))
             {
                 logger.Debug("page 6: Ok button clicked");
 
@@ -208,9 +208,8 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                         matrixWidthValue,
                         matrixHeightValue,
                         (leftPadding, topPadding, rightPadding, bottomPadding),
-                        [1, 1, 0]
+                        [fillLayer1 ? 1 : 0, fillLayer2 ? 1 : 0, fillLayer3 ? 1 : 0]
                     );
-
 
                     UnloadRenderTexture(GLOBALS.Textures.LightMap);
                     GLOBALS.Textures.LightMap = LoadRenderTexture((GLOBALS.Level.Width * GLOBALS.Scale) + 300, (GLOBALS.Level.Height * GLOBALS.Scale) + 300);

@@ -1174,8 +1174,8 @@ internal static class Printers
         var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
         var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
 
-        if ((GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCamera.Check(ctrl, shift, alt) || 
-             GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCameraAlt.Check(ctrl, shift, alt)))
+        if ((GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCamera.Check(ctrl, shift, alt, true) || 
+             GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCameraAlt.Check(ctrl, shift, alt, true)))
         {
             if (GLOBALS.CamQuadLocks[index] == 0)
             {

@@ -250,8 +250,8 @@ public class EffectsShortcuts
     public KeyboardShortcut ShiftAppliedEffectUp { get; set; } = new(KeyboardKey.KEY_W, Shift: true);
     public KeyboardShortcut ShiftAppliedEffectDown { get; set; } = new(KeyboardKey.KEY_S, Shift: true);
 
-    public KeyboardShortcut CycleAppliedEffectUp { get; set; } = KeyboardKey.KEY_W;
-    public KeyboardShortcut CycleAppliedEffectDown { get; set; } = KeyboardKey.KEY_S;
+    public KeyboardShortcut CycleAppliedEffectUp { get; set; } = new(KeyboardKey.KEY_W, Alt:false);
+    public KeyboardShortcut CycleAppliedEffectDown { get; set; } = new(KeyboardKey.KEY_S, Alt:false);
 
     public KeyboardShortcut DeleteAppliedEffect { get; set; } = KeyboardKey.KEY_X;
     

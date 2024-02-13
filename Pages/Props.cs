@@ -1278,8 +1278,8 @@ internal class PropsEditorPage : IPage
                             if (CheckCollisionPointCircle(
                                     tileMouseWorld, 
                                     new Vector2(
-                                        points[p].X/1.25f, 
-                                        points[p].Y/1.25f
+                                        points[p].X, 
+                                        points[p].Y
                                         ), 
                                     3f) || 
                                 _pointLock == p

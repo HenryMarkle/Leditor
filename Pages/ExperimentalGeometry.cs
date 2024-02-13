@@ -1029,10 +1029,67 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
             DrawRectangleLinesEx(new((_geoMenuCategory * 42) + panelRect.X + 10, 80, 42, 42), 4.0f, BLUE);
 
-            DrawRectangleLinesEx(new(panelRect.X + 10, 80, 42, 42), 1.0f, BLACK);
-            DrawRectangleLinesEx(new(42 + panelRect.X + 10, 80, 42, 42), 1.0f, BLACK);
-            DrawRectangleLinesEx(new(84 + panelRect.X + 10, 80, 42, 42), 1.0f, BLACK);
-            DrawRectangleLinesEx(new(126 + panelRect.X + 10, 80, 42, 42), 1.0f, BLACK);
+            var category1Rect = new Rectangle(panelRect.X + 10, 80, 42, 42);
+            var category2Rect = new Rectangle(42 + panelRect.X + 10, 80, 42, 42);
+            var category3Rect = new Rectangle(84 + panelRect.X + 10, 80, 42, 42);
+            var category4Rect = new Rectangle(126 + panelRect.X + 10, 80, 42, 42);
+
+            var category1Hovered = CheckCollisionPointRec(uiMouse, category1Rect);
+            var category2Hovered = CheckCollisionPointRec(uiMouse, category2Rect);
+            var category3Hovered = CheckCollisionPointRec(uiMouse, category3Rect);
+            var category4Hovered = CheckCollisionPointRec(uiMouse, category4Rect);
+
+            if (category1Hovered)
+            {
+                DrawRectangleRec(category1Rect, BLUE with { a = 100 });
+
+                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _geoMenuCategory = 0;
+                    _geoMenuIndex = 0;
+                }
+            }
+            
+            if (category2Hovered)
+            {
+                DrawRectangleRec(category2Rect, BLUE with { a = 100 });
+                
+                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _geoMenuCategory = 1;
+                    _geoMenuIndex = 0;
+                }
+            }
+            
+            if (category3Hovered)
+            {
+                DrawRectangleRec(category3Rect, BLUE with { a = 100 });
+                
+                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _geoMenuCategory = 2;
+                    _geoMenuIndex = 0;
+                }
+
+            }
+            
+            if (category4Hovered)
+            {
+                DrawRectangleRec(category4Rect, BLUE with { a = 100 });
+                
+                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _geoMenuCategory = 3;
+                    _geoMenuIndex = 0;
+                }
+            }
+            
+            DrawRectangleLinesEx(category1Rect, 1.0f, BLACK);
+            DrawRectangleLinesEx(category2Rect, 1.0f, BLACK);
+            DrawRectangleLinesEx(category3Rect, 1.0f, BLACK);
+            DrawRectangleLinesEx(category4Rect, 1.0f, BLACK);
+            
+            
 
             DrawTriangle(
                 new(panelRect.X + 20, 90),
@@ -1098,7 +1155,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                         _logger.Debug($"New geo menu index: {newGeoMenuIndex}");
                         #endif
                         
-                        _geoMenuCategory = newGeoMenuIndex;
+                        _geoMenuIndex = newGeoMenuIndex;
                     }
                 }
             }
