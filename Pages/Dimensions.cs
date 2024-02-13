@@ -203,12 +203,12 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                 else if (GLOBALS.NewFlag)
                 {
                     logger.Debug("new flag detected; creating a new level");
-
+                    
                     GLOBALS.Level.New(
                         matrixWidthValue,
                         matrixHeightValue,
                         (leftPadding, topPadding, rightPadding, bottomPadding),
-                        [fillLayer1 ? 1 : 0, fillLayer2 ? 1 : 0, fillLayer3 ? 1 : 0]
+                        [1, 1, 0]
                     );
 
                     UnloadRenderTexture(GLOBALS.Textures.LightMap);
@@ -224,7 +224,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                 GLOBALS.Page = 1;
             }
 
-            if (Raylib_CsLo.RayGui.GuiButton(new(50, Raylib.GetScreenHeight() - 160, 300, 40), "Cancel"))
+            if (RayGui.GuiButton(new(50, Raylib.GetScreenHeight() - 160, 300, 40), "Cancel"))
             {
                 logger.Debug("page 6: Cancel button clicked");
 
@@ -281,10 +281,9 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                         columns * 52 + 20,
                         rows * 40 + 3,
                         (6, 3, 6, 5),
-                        [1, 1, 0]
+                        [simpleFillLayer1 ? 1 : 0, simpleFillLayer2 ? 1 : 0, simpleFillLayer3 ? 1 : 0]
                     );
-
-
+                    
                     UnloadRenderTexture(GLOBALS.Textures.LightMap);
                     GLOBALS.Textures.LightMap = LoadRenderTexture((GLOBALS.Level.Width * GLOBALS.Scale) + 300, (GLOBALS.Level.Height * GLOBALS.Scale) + 300);
 
