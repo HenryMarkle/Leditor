@@ -203,6 +203,8 @@ internal static class GLOBALS
 
             Cameras = [new RenderCamera { Coords = new Vector2(20f, 30f), Quad = new(new(), new(), new(), new()) }];
 
+            Effects = [];
+            
             // Geo Matrix
             {
                 var matrix = new RunCell[height, width, 3];
