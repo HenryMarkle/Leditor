@@ -348,7 +348,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures)
             var appliedEffectPageSize = (appliedEffectsPanelHeight / (appliedEffectRecHeight + 30));
 
             // Prevent using the brush when mouse over the effects list
-            bool canUseBrush = !_newEffectModeExitLock && !_addNewEffectMode && !CheckCollisionPointRec(
+            var canUseBrush = !_newEffectModeExitLock && !_addNewEffectMode && !CheckCollisionPointRec(
                 GetMousePosition(),
                 new(
                     GetScreenWidth() - 300,
@@ -378,18 +378,34 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures)
             // Brush size
 
             var effectsMouseWheel = GetMouseWheelMove();
-            var isBrushSizeConstrained = Utils.IsEffectBruhConstrained(GLOBALS.Level.Effects[_currentAppliedEffect].Item1);
+            var isBrushSizeConstrained = _currentAppliedEffect >= 0 && 
+                                         _currentAppliedEffect < GLOBALS.Level.Effects.Length && 
+                                         Utils.IsEffectBruhConstrained(GLOBALS.Level.Effects[_currentAppliedEffect].Item1);
 
-            if (isBrushSizeConstrained)
+            if (IsKeyDown(_shortcuts.ResizeBrush.Key))
             {
-                _brushRadius = 0;
+                if (isBrushSizeConstrained)
+                {
+                    _brushRadius = 0;
+                }
+                else if (effectsMouseWheel != 0)
+                {
+                    _brushRadius += (int)effectsMouseWheel;
+
+                    if (_brushRadius < 0) _brushRadius = 0;
+                    if (_brushRadius > 10) _brushRadius = 10;
+                }
             }
-            else if (effectsMouseWheel != 0)
+            else
             {
-                _brushRadius += (int)effectsMouseWheel;
-
-                if (_brushRadius < 0) _brushRadius = 0;
-                if (_brushRadius > 10) _brushRadius = 10;
+                if (effectsMouseWheel != 0)
+                {
+                    var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
+                    _camera.offset = GetMousePosition();
+                    _camera.target = mouseWorldPosition;
+                    _camera.zoom += effectsMouseWheel * GLOBALS.ZoomIncrement;
+                    if (_camera.zoom < GLOBALS.ZoomIncrement) _camera.zoom = GLOBALS.ZoomIncrement;
+                }
             }
 
             // Use brush

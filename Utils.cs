@@ -60,6 +60,450 @@ internal static class Utils
         return path;
     }
     
+    public static (int category, int index)? PickupTile(int x, int y, int z)
+    {
+        var cell = GLOBALS.Level.TileMatrix[y, x, z];
+
+        if (cell.Type == TileType.TileHead)
+        {
+            var (category, index, _) = ((TileHead)cell.Data).CategoryPostition;
+            return (category, index);
+        }
+        else if (cell.Type == TileType.TileBody)
+        {
+            // find where the head is
+
+
+            var (headX, headY, headZ) = ((TileBody)cell.Data).HeadPosition;
+            // This is done because Lingo is 1-based index
+            var supposedHead = GLOBALS.Level.TileMatrix[headY - 1, headX - 1, headZ - 1];
+
+            if (supposedHead.Type != TileType.TileHead) return null;
+
+            var headTile = (TileHead)supposedHead.Data;
+            return (headTile.CategoryPostition.Item1, headTile.CategoryPostition.Item2);
+        }
+
+
+        return null;
+    }
+    public static (int category, int index)? PickupMaterial(int x, int y, int z)
+    {
+        var cell = GLOBALS.Level.TileMatrix[y, x, z];
+
+        if (cell.Type == TileType.Material)
+        {
+            for (int c = 0; c < GLOBALS.Materials.Length; c++)
+            {
+                for (int i = 0; i < GLOBALS.Materials[c].Length; i++)
+                {
+                    if (GLOBALS.Materials[c][i].Item1 == ((TileMaterial)cell.Data).Name) return (c, i);
+                }
+            }
+
+            return null;
+        }
+
+        return null;
+    }
+    public static bool IsTileLegal(ref InitTile init, Vector2 point)
+    {
+        var (width, height) = init.Size;
+        var specs = init.Specs;
+        var specs2 = init.Specs2;
+
+        // get the "middle" point of the tile
+        var head = Utils.GetTileHeadOrigin(ref init);
+
+        // the top-left of the tile
+        var start = RayMath.Vector2Subtract(point, head);
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var matrixX = x + (int)start.X;
+                var matrixY = y + (int)start.Y;
+
+                // This function depends on the rest of the program to guarantee that all level matrices have the same x and y dimensions
+                if (
+                    matrixX >= 0 &&
+                    matrixX < GLOBALS.Level.GeoMatrix.GetLength(1) &&
+                    matrixY >= 0 &&
+                    matrixY < GLOBALS.Level.GeoMatrix.GetLength(0)
+                )
+                {
+                    var tileCell = GLOBALS.Level.TileMatrix[matrixY, matrixX, GLOBALS.Layer];
+                    var geoCell = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+                    var specsIndex = (x * height) + y;
+
+
+                    var spec = specs[specsIndex];
+
+                    bool isLegal = false;
+
+                    if (specs2.Length > 0 && GLOBALS.Layer != 2)
+                    {
+                        var tileCellNextLayer = GLOBALS.Level.TileMatrix[matrixY, matrixX, GLOBALS.Layer + 1];
+                        var geoCellNextLayer = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer + 1];
+
+                        var spec2 = specs2[specsIndex];
+
+                        isLegal =
+                            (tileCell.Type == TileType.Default || tileCell.Type == TileType.Material)
+                            &&
+                            (tileCellNextLayer.Type == TileType.Default || tileCellNextLayer.Type == TileType.Material)
+                            &&
+                            (spec == -1 || geoCell.Geo == spec)
+                            &&
+                            (spec2 == -1 || geoCellNextLayer.Geo == spec2);
+                    }
+                    else
+                    {
+                        isLegal = (tileCell.Type == TileType.Default || tileCell.Type == TileType.Material) && (spec == -1 || geoCell.Geo == spec);
+                    }
+
+                    if (!isLegal) return false;
+                }
+                else return false;
+
+            }
+        }
+
+        return true;
+    }
+    public static void ForcePlaceTileWithGeo(
+        in InitTile init,
+        int tileCategoryIndex,
+        int tileIndex,
+        (int x, int y, int z) matrixPosition
+    )
+    {
+        var (mx, my, mz) = matrixPosition;
+        var (width, height) = init.Size;
+        var specs = init.Specs;
+        var specs2 = init.Specs2;
+
+        // get the "middle" point of the tile
+        var head = GetTileHeadOrigin(init);
+
+        // the top-left of the tile
+        var start = RayMath.Vector2Subtract(new(mx, my), head);
+        
+        // First remove tile heads in the way
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var matrixX = x + (int)start.X;
+                var matrixY = y + (int)start.Y;
+
+                if (
+                    !(matrixX >= 0 &&
+                      matrixX < GLOBALS.Level.GeoMatrix.GetLength(1) &&
+                      matrixY >= 0 &&
+                      matrixY < GLOBALS.Level.GeoMatrix.GetLength(0))
+                ) continue;
+
+                ref var cell = ref GLOBALS.Level.TileMatrix[matrixY, matrixX, mz];
+
+                if (cell.Data is TileHead) RemoveTile(matrixX, matrixY, mz);
+            }
+        }
+
+        // first: place the head of the tile at matrixPosition
+        GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell()
+        {
+            Type = TileType.TileHead,
+            Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
+        };
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var matrixX = x + (int)start.X;
+                var matrixY = y + (int)start.Y;
+
+                // This function depends on the rest of the program to guarantee that all level matrices have the same x and y dimensions
+                if (
+                    matrixX >= 0 &&
+                    matrixX < GLOBALS.Level.GeoMatrix.GetLength(1) &&
+                    matrixY >= 0 &&
+                    matrixY < GLOBALS.Level.GeoMatrix.GetLength(0)
+                )
+                {
+                    var specsIndex = (x * height) + y;
+
+                    var spec = specs[specsIndex];
+                    var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
+
+                    if (spec != -1) GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz].Geo = spec;
+                    if (spec2 != -1 && mz != 2) GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz + 1].Geo = spec2;
+                    
+                    // leave the newly placed tile head
+                    if (x == (int)head.X && y == (int)head.Y) continue;
+
+                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = new TileCell
+                    {
+                        Type = TileType.TileBody,
+                        Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                    };
+
+                    if (specs2.Length > 0 && mz != 2)
+                    {
+                        GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = new TileCell
+                        {
+                            Type = TileType.TileBody,
+                            Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                        };
+                    }
+                }
+            }
+        }
+    }
+    
+    public static void ForcePlaceTileWithoutGeo(
+        in InitTile init,
+        int tileCategoryIndex,
+        int tileIndex,
+        (int x, int y, int z) matrixPosition
+    )
+    {
+        var (mx, my, mz) = matrixPosition;
+        var (width, height) = init.Size;
+        var specs = init.Specs;
+        var specs2 = init.Specs2;
+
+        // get the "middle" point of the tile
+        var head = Utils.GetTileHeadOrigin(init);
+
+        // the top-left of the tile
+        var start = RayMath.Vector2Subtract(new(mx, my), head);
+        
+        // First remove tile heads in the way
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var matrixX = x + (int)start.X;
+                var matrixY = y + (int)start.Y;
+
+                if (
+                    !(matrixX >= 0 &&
+                      matrixX < GLOBALS.Level.GeoMatrix.GetLength(1) &&
+                      matrixY >= 0 &&
+                      matrixY < GLOBALS.Level.GeoMatrix.GetLength(0))
+                ) continue;
+
+                ref var cell = ref GLOBALS.Level.TileMatrix[matrixY, matrixX, mz];
+
+                if (cell.Data is TileHead) RemoveTile(matrixX, matrixY, mz);
+            }
+        }
+
+        // first: place the head of the tile at matrixPosition
+        GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell
+        {
+            Type = TileType.TileHead,
+            Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
+        };
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                // leave the newly placed tile head
+                if (x == (int)head.X && y == (int)head.Y) continue;
+
+                int matrixX = x + (int)start.X;
+                int matrixY = y + (int)start.Y;
+
+                // This function depends on the rest of the program to guarantee that all level matrices have the same x and y dimensions
+                if (
+                    matrixX >= 0 &&
+                    matrixX < GLOBALS.Level.GeoMatrix.GetLength(1) &&
+                    matrixY >= 0 &&
+                    matrixY < GLOBALS.Level.GeoMatrix.GetLength(0)
+                )
+                {
+                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = new TileCell
+                    {
+                        Type = TileType.TileBody,
+                        Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                    };
+
+                    if (specs2.Length > 0 && mz != 2)
+                    {
+                        GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = new TileCell
+                        {
+                            Type = TileType.TileBody,
+                            Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                        };
+                    }
+                }
+            }
+        }
+    }
+
+    public static void RemoveTile(int mx, int my, int mz)
+    {
+        var cell = GLOBALS.Level.TileMatrix[my, mx, mz];
+
+        if (cell.Type == TileType.TileHead)
+        {
+            //Console.WriteLine($"Deleting tile head at ({mx},{my},{mz})");
+            var data = (TileHead)cell.Data;
+            var tileInit = GLOBALS.Tiles[data.CategoryPostition.Item1][data.CategoryPostition.Item2];
+            var (width, height) = tileInit.Size;
+
+            bool isThick = tileInit.Specs2.Length > 0;
+
+            // get the "middle" point of the tile
+            var head = Utils.GetTileHeadOrigin(tileInit);
+
+            // the top-left of the tile
+            var start = RayMath.Vector2Subtract(new(mx, my), head);
+
+            for (var y = 0; y < height; y++)
+            {
+                for (var x = 0; x < width; x++)
+                {
+                    var matrixX = x + (int)start.X;
+                    var matrixY = y + (int)start.Y;
+
+                    if (matrixX < 0 || matrixX >= GLOBALS.Level.Width || matrixY < 0 || matrixY >=GLOBALS.Level.Height) continue;
+
+                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                    if (isThick && mz != 2) GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                }
+            }
+        }
+        else if (cell.Type == TileType.TileBody)
+        {
+            var (headX, headY, headZ) = ((TileBody)cell.Data).HeadPosition;
+
+            // This is done because Lingo is 1-based index
+            var supposedHead = GLOBALS.Level.TileMatrix[headY - 1, headX - 1, headZ - 1];
+
+            // if the head was not found, only delete the given tile body
+            if (supposedHead.Type != TileType.TileHead)
+            {
+                //Console.WriteLine($"({mx}, {my}, {mz}) reported that ({headX}, {headY}, {headZ}) is supposed to be a tile head, but was found to be a body");
+                GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell() { Type = TileType.Default, Data = new TileDefault() };
+                return;
+            }
+
+            var headTile = (TileHead)supposedHead.Data;
+            var tileInit = GLOBALS.Tiles[headTile.CategoryPostition.Item1][headTile.CategoryPostition.Item2];
+            var (width, height) = tileInit.Size;
+
+            var isThick = tileInit.Specs2.Length > 0;
+
+            // get the "middle" point of the tile
+            var head = Utils.GetTileHeadOrigin(tileInit);
+
+            // the top-left of the tile
+            var start = RayMath.Vector2Subtract(new(headX, headY), RayMath.Vector2AddValue(head, 1));
+
+            for (var y = 0; y < height; y++)
+            {
+                for (var x = 0; x < width; x++)
+                {
+                    var matrixX = x + (int)start.X;
+                    var matrixY = y + (int)start.Y;
+                    
+                    if (matrixX < 0 || matrixX >= GLOBALS.Level.Width || matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
+
+                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                    if (isThick && mz != 2) GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                }
+            }
+        }
+    }
+
+    public static void PlaceMaterial((string name, Color color) material, (int x, int y, int z) position)
+    {
+        var (x, y, z) = position;
+        var cell = GLOBALS.Level.TileMatrix[y, x, z];
+
+        if (cell.Type != TileType.Default && cell.Type != TileType.Material) return;
+
+        cell.Type = TileType.Material;
+        cell.Data = new TileMaterial(material.name);
+
+        GLOBALS.Level.TileMatrix[y, x, z] = cell;
+        GLOBALS.Level.MaterialColors[y, x, z] = material.color;
+    }
+
+    public static void PlaceMaterial((string name, Color color) material, (int x, int y, int z) position, int radius)
+    {
+        var (x, y, z) = position;
+
+        for (var lx = -radius; lx < radius+1; lx++)
+        {
+            var matrixX = x + lx;
+            
+            if (matrixX < 0 || matrixX >= GLOBALS.Level.Width) continue;
+            
+            for (var ly = -radius; ly < radius+1; ly++)
+            {
+                var matrixY = y + ly;
+                
+                if (matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
+
+                var cell = GLOBALS.Level.TileMatrix[matrixY, matrixX, z];
+                
+                if (cell.Type != TileType.Default && cell.Type != TileType.Material) continue;
+                
+                cell.Type = TileType.Material;
+                cell.Data = new TileMaterial(material.name);
+
+                GLOBALS.Level.TileMatrix[matrixY, matrixX, z] = cell;
+                GLOBALS.Level.MaterialColors[matrixY, matrixX, z] = material.color;
+            }
+        }
+    }
+    
+    public static void RemoveMaterial(int x, int y, int z)
+    {
+        var cell = GLOBALS.Level.TileMatrix[y, x, z];
+
+        if (cell.Type != TileType.Material) return;
+
+        cell.Type = TileType.Default;
+        cell.Data = new TileDefault();
+
+        GLOBALS.Level.TileMatrix[y, x, z] = cell;
+    }
+    public static void RemoveMaterial(int x, int y, int z, int radius)
+    {
+        for (var lx = -radius; lx < radius+1; lx++)
+        {
+            var matrixX = x + lx;
+            
+            if (matrixX < 0 || matrixX >= GLOBALS.Level.Width) continue;
+            
+            for (var ly = -radius; ly < radius+1; ly++)
+            {
+                var matrixY = y + ly;
+                
+                if (matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
+
+                var cell = GLOBALS.Level.TileMatrix[matrixY, matrixX, z];
+                
+                if (cell.Type != TileType.Default && cell.Type != TileType.Material) continue;
+                
+                cell.Type = TileType.Default;
+                cell.Data = new TileDefault();
+
+                GLOBALS.Level.TileMatrix[matrixY, matrixX, z] = cell;
+            }
+        }
+    }
+        
     public static int GetEffectBrushStrength(string effect) => effect switch
     {
         "BlackGoo" or "Fungi Flowers" or "Lighthouse Flowers" or

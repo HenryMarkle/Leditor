@@ -2319,7 +2319,85 @@ internal static class Printers
     /// <param name="origin">the top-left corner to start drawing</param>
     /// <param name="scale">the scale of the drawing</param>
     /// <param name="color">the color of the sprite</param>
-    internal static void DrawTileSpec(int id, System.Numerics.Vector2 origin, int scale, Color color)
+    internal static void DrawTileSpec(int id, Vector2 origin, int scale, Color color)
+    {
+        switch (id)
+        {
+            // air
+            case 0:
+                DrawRectangleLinesEx(
+                    new(origin.X + 10, origin.Y + 10, scale - 20, scale - 20),
+                    2,
+                    color
+                );
+                break;
+
+            // solid
+            case 1:
+                DrawRectangleV(origin, RayMath.Vector2Scale(new(1, 1), scale), color);
+                break;
+
+            // slopes
+            case 2:
+                DrawTriangle(
+                    origin,
+                    new(origin.X, origin.Y + scale),
+                    new(origin.X + scale, origin.Y + scale),
+                    color
+                );
+                break;
+
+            case 3:
+                DrawTriangle(
+                    new(origin.X + scale, origin.Y),
+                    new(origin.X, origin.Y + scale),
+                    new(origin.X + scale, origin.Y + scale),
+                    color
+                );
+                break;
+
+            case 4:
+                DrawTriangle(
+                    origin,
+                    new(origin.X, origin.Y + scale),
+                    new(origin.X + scale, origin.Y),
+                    color
+                );
+                break;
+            case 5:
+                DrawTriangle(
+                    origin,
+                    new(origin.X + scale, origin.Y + scale),
+                    new(origin.X + scale, origin.Y),
+                    color
+                );
+                break;
+
+            // platform
+            case 6:
+                DrawRectangleV(
+                    origin,
+                    new(scale, scale / 2),
+                    color
+                );
+                break;
+
+            // shortcut entrance
+            case 7: break;
+
+            // glass
+            case 9: break;
+        }
+    }
+    
+    /// <summary>
+    /// Draws an individual tile geo-spec based on the ID.
+    /// </summary>
+    /// <param name="id">geo-tile ID</param>
+    /// <param name="origin">the top-left corner to start drawing</param>
+    /// <param name="scale">the scale of the drawing</param>
+    /// <param name="color">the color of the sprite</param>
+    internal static void DrawTileSpec(int id, Vector2 origin, float scale, Color color)
     {
         switch (id)
         {

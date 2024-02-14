@@ -71,7 +71,7 @@ public class LoadProjectPage : IPage
                     {
                         var (category, position, name) = ((TileHead)cell.Data).CategoryPostition;
 
-                        // code readibility could be optimized using System.Linq
+                        // code readability could be optimized using System.Linq
 
                         for (var c = 0; c < GLOBALS.Tiles.Length; c++)
                         {

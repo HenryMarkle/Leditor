@@ -429,6 +429,8 @@ internal class PropsEditorPage : IPage
         if (_shortcuts.ToggleLayer2.Check(ctrl, shift, alt) && !_scalingProps) _showTileLayer2 = !_showTileLayer2;
         if (_shortcuts.ToggleLayer3.Check(ctrl, shift, alt) && !_scalingProps) _showTileLayer3 = !_showTileLayer3;
 
+        if (_shortcuts.CycleSnapMode.Check(ctrl, shift, alt)) _snapMode = ++_snapMode % 3;
+
         // Mode-based hotkeys
         switch (_mode)
         {
@@ -1370,8 +1372,8 @@ internal class PropsEditorPage : IPage
                         2, 
                         GLOBALS.PreviewScale, 
                         false, 
-                        !GLOBALS.Settings.TileEditor.UseTextures,
-                        GLOBALS.Settings.TileEditor.TintedTiles
+                        true,
+                        false
                     );
                 }
                 
@@ -1525,8 +1527,8 @@ internal class PropsEditorPage : IPage
                         1, 
                         GLOBALS.PreviewScale, 
                         false, 
-                        !GLOBALS.Settings.TileEditor.UseTextures,
-                        GLOBALS.Settings.TileEditor.TintedTiles
+                        true,
+                        false
                     );
                 }
                 
@@ -1680,8 +1682,8 @@ internal class PropsEditorPage : IPage
                         0, 
                         GLOBALS.PreviewScale, 
                         false, 
-                        !GLOBALS.Settings.TileEditor.UseTextures,
-                        GLOBALS.Settings.TileEditor.TintedTiles
+                        true,
+                        false
                     );
                 }
                 

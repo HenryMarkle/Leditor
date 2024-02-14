@@ -4,6 +4,11 @@ namespace Leditor;
 
 #nullable enable
 
+public record struct TileInitLoadInfo(
+    (string name, Color color)[] Categories,
+    InitTile[][] Tiles,
+    string LoadDirectory);
+
 /// Used to report the tile check status when loading a project
 public enum TileCheckResult
 {
@@ -158,8 +163,10 @@ public record TileShortcuts
     public KeyboardShortcut ToggleTileSpecs { get; set; } = new(KeyboardKey.KEY_T);
     public KeyboardShortcut PickupItem { get; set; } = new(KeyboardKey.KEY_Q);
     public KeyboardShortcut ForcePlaceTileWithGeo { get; set; } = new(KeyboardKey.KEY_G);
-    public KeyboardShortcut ForcePlaceTileWithoutGeo { get; set; } = new(KeyboardKey.KEY_F);
+    public KeyboardShortcut ForcePlaceTileWithoutGeo { get; set; } = new(KeyboardKey.KEY_F, Shift:false);
     public KeyboardShortcut TileMaterialSwitch { get; set; } = new(KeyboardKey.KEY_M);
+    public KeyboardShortcut ThreeByThreeMaterialBrushSize { get; set; } = new(KeyboardKey.KEY_F, Shift:true);
+    public KeyboardShortcut FiveByFiveMaterialBrushSize { get; set; } = new(KeyboardKey.KEY_V, Shift:true);
     public KeyboardShortcut HoveredItemInfo { get; set; } = new(KeyboardKey.KEY_P);
 
     public KeyboardShortcut ToggleLayer1 { get; set; } = new(KeyboardKey.KEY_Z);
@@ -169,6 +176,8 @@ public record TileShortcuts
     public KeyboardShortcut ToggleLayer1Tiles { get; set; } = new(KeyboardKey.KEY_Z, Shift:true);
     public KeyboardShortcut ToggleLayer2Tiles { get; set; } = new(KeyboardKey.KEY_X, Shift:true);
     public KeyboardShortcut ToggleLayer3Tiles { get; set; } = new(KeyboardKey.KEY_C, Shift:true);
+
+    public KeyboardShortcut ResizeMaterialBrush { get; set; } = KeyboardKey.KEY_LEFT_ALT;
 
     public MouseShortcut Draw { get; set; } = new(MouseButton.MOUSE_BUTTON_LEFT);
     public MouseShortcut Erase { get; set; } = new(MouseButton.MOUSE_BUTTON_RIGHT);
@@ -267,6 +276,8 @@ public class EffectsShortcuts
     public KeyboardShortcut DragLevelAlt { get; set; } = KeyboardKey.KEY_G;
     public KeyboardShortcut PaintAlt { get; set; } = KeyboardKey.KEY_P;
     public KeyboardShortcut EraseAlt { get; set; } = KeyboardKey.KEY_NULL;
+
+    public KeyboardShortcut ResizeBrush { get; set; } = KeyboardKey.KEY_LEFT_ALT;
     
     public MouseShortcut DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_MIDDLE;
     public MouseShortcut Paint { get; set; } = MouseButton.MOUSE_BUTTON_LEFT;
@@ -280,6 +291,8 @@ public class PropsShortcuts
 
     public KeyboardShortcut CycleModeRight { get; set; } = new(KeyboardKey.KEY_E, Shift:true);
     public KeyboardShortcut CycleModeLeft { get; set; } = new(KeyboardKey.KEY_Q, Shift:true);
+
+    public KeyboardShortcut CycleSnapMode { get; set; } = new(KeyboardKey.KEY_NULL);
 
     public KeyboardShortcut ToggleLayer1 { get; set; } = KeyboardKey.KEY_Z;
     public KeyboardShortcut ToggleLayer2 { get; set; } = KeyboardKey.KEY_X;

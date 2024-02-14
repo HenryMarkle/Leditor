@@ -263,6 +263,30 @@ class Program
         return Tools.GetTileInit(text);
     }
 
+    private static async Task<TileInitLoadInfo[]> LoadTileInitPackages()
+    {
+        var packageDirectories = Directory.GetDirectories(GLOBALS.Paths.TilePackagesDirectory);
+        
+        IEnumerable<(string directory, string file)> initPaths = packageDirectories.Select(directory => (directory, Path.Combine(directory, "init.txt")));
+
+        var initLoadTasks = initPaths
+            .Where(p => File.Exists(p.Item2))
+            .Select(p => 
+                Task.Factory.StartNew(() => {
+                        var (categories, tiles) = Tools.GetTileInit(File.ReadAllText(p.file).ReplaceLineEndings());
+
+                        return new TileInitLoadInfo(categories, tiles, p.directory);
+                })
+                )
+            .ToArray();
+
+        List<TileInitLoadInfo> inits = [];
+
+        foreach (var task in initLoadTasks) inits.Add(await task);
+
+        return [..inits];
+    }
+
     private static ((string category, Color color)[] categories, InitPropBase[][] init) LoadPropInit()
     {
         var text = File.ReadAllText(GLOBALS.Paths.PropsInitPath).ReplaceLineEndings();
@@ -419,11 +443,13 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.20";
+        const string version = "Henry's Leditor v0.9.23";
         const string raylibVersion = "Raylib v4.2.0.9";
+        
+        // Load tiles and props
 
         logger.Information("indexing tiles and props");
-
+        
         (GLOBALS.TileCategories, GLOBALS.Tiles) = initExists ? LoadTileInit() : ([], []);
         
         var materialsInit = LoadMaterialInit();
@@ -480,8 +506,40 @@ class Program
 
         // APPEND INTERNAL TILES
 
-        GLOBALS.TileCategories = [.. GLOBALS.TileCategories, .. embeddedCategories];
-        GLOBALS.Tiles = [..GLOBALS.Tiles, ..embeddedTiles];
+        /*GLOBALS.TileCategories = [.. GLOBALS.TileCategories, .. embeddedCategories];
+        GLOBALS.Tiles = [..GLOBALS.Tiles, ..embeddedTiles];*/
+        
+        // Merge tile packages
+
+        // List<string> tileInitLoadDirs = [GLOBALS.Paths.TilesAssetsDirectory];
+        Task<TileInitLoadInfo[]> tilePackagesTask = Task.FromResult<TileInitLoadInfo[]>([]);
+        (string name, Color color)[] loadedPackageTileCategories = [];
+        InitTile[][] loadedPackageTiles = [];
+        
+        if (Directory.Exists(GLOBALS.Paths.TilePackagesDirectory))
+        {
+            try
+            {
+                tilePackagesTask = LoadTileInitPackages();
+                
+                tilePackagesTask.Wait();
+
+                var packages = tilePackagesTask.Result;
+
+                if (packages.Length > 0)
+                {
+                    loadedPackageTileCategories = packages.SelectMany(p => p.Categories).ToArray();
+                    
+                    loadedPackageTiles = packages.SelectMany(p => p.Tiles).ToArray();
+
+                    // tileInitLoadDirs = [..tileInitLoadDirs, ..packages.Select(p => p.LoadDirectory)];
+                }
+            }
+            catch (Exception e)
+            {
+                logger.Error($"Failed to load tile packages: {e}"); 
+            }
+        }
 
         //
 
@@ -524,13 +582,22 @@ class Program
         // Load images to RAM concurrently first, then load them to VRAM in the main thread.
         // Do NOT load textures directly to VRAM on a separate thread.
 
-        Task<Image>[][] tileImagesTasks = GLOBALS.Tiles
+        Task<Image>[][] vanillaTileImagesTasks = GLOBALS.Tiles
                 .Select((category, index) =>
-                    index < GLOBALS.Tiles.Length - 8
-                        ? category.Select(tile => Task.Factory.StartNew(() => LoadImage(Path.Combine(GLOBALS.Paths.AssetsDirectory, "tiles", $"{tile.Name}.png")))).ToArray()
-                        : category.Select(tile => Task.Factory.StartNew(() => LoadImage(Path.Combine(GLOBALS.Paths.AssetsDirectory, "embedded", "tiles", $"{tile.Name}.png")))).ToArray()
+                    category.Select(tile => 
+                        Task.Factory.StartNew(() => 
+                            LoadImage(Path.Combine(GLOBALS.Paths.TilesAssetsDirectory, $"{tile.Name}.png"))))
+                        .ToArray()
                 )
                 .ToArray();
+
+        Task<Image>[][] tileImagesTasks = [..vanillaTileImagesTasks, ..tilePackagesTask.Result
+            .SelectMany(result => result.Tiles
+                .Select(category => category
+                    .Select(tile => Task.Factory.StartNew(() => LoadImage(Path.Combine(result.LoadDirectory, $"{tile.Name}.png"))))
+                    .ToArray())
+                .ToArray()
+            ).ToArray()];
 
         Task<Image[]>[] tileImageCategoriesDone = tileImagesTasks.Select(Task.WhenAll).ToArray();
 
@@ -539,6 +606,11 @@ class Program
 
         bool imagesLoaded = false;
         bool texturesLoaded = false;
+        
+        // MERGE Tiles
+        
+        GLOBALS.TileCategories = [..GLOBALS.TileCategories, ..loadedPackageTileCategories];
+        GLOBALS.Tiles = [..GLOBALS.Tiles, ..loadedPackageTiles];
 
         //
         try

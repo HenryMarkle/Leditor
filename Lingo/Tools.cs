@@ -165,22 +165,22 @@ public static class Tools {
 
 #nullable enable
 
-        AstNode.String? colorTreatment      = (AstNode.String?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "colortreatment").Value;
-        AstNode.Number? bevel               = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "bevel").Value;
-        AstNode.Number? depth               = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "depth").Value;
-        AstNode.GlobalCall? sz              = (AstNode.GlobalCall?) propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "sz").Value;
-        AstNode.GlobalCall? pxlSize         = (AstNode.GlobalCall?) propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "pxlsize").Value;
-        AstNode.List? repeatL               = (AstNode.List?)       propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "repeatl").Value;
-        AstNode.Number? vars                = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "vars").Value;
-        AstNode.Number? round               = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "round").Value;
-        AstNode.Number? selfShade           = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "selfshade").Value;
-        AstNode.Number? highLightBorder     = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "highlightborder").Value;
-        AstNode.Number? depthAffectHilites  = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "depthaffecthilites").Value;
-        AstNode.Number? shadowBorder        = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "shadowborder").Value;
-        AstNode.Number? smoothShading       = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "smoothshading").Value;
-        AstNode.Number? random              = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "random").Value;
-        AstNode.Number? colorize            = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "colorize").Value;
-        AstNode.Number? contourExp          = (AstNode.Number?)     propertList.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "contourexp").Value;
+        AstNode.String? colorTreatment      = (AstNode.String?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "colortreatment").Value;
+        AstNode.Number? bevel               = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "bevel").Value;
+        AstNode.Number? depth               = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "depth").Value;
+        AstNode.GlobalCall? sz              = (AstNode.GlobalCall?) propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "sz").Value;
+        AstNode.GlobalCall? pxlSize         = (AstNode.GlobalCall?) propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "pxlsize").Value;
+        AstNode.List? repeatL               = (AstNode.List?)       propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "repeatl").Value;
+        AstNode.Number? vars                = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "vars").Value;
+        AstNode.Number? round               = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "round").Value;
+        AstNode.Number? selfShade           = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "selfshade").Value;
+        AstNode.Number? highLightBorder     = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "highlightborder").Value;
+        AstNode.Number? depthAffectHilites  = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "depthaffecthilites").Value;
+        AstNode.Number? shadowBorder        = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "shadowborder").Value;
+        AstNode.Number? smoothShading       = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "smoothshading").Value;
+        AstNode.Number? random              = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "random").Value;
+        AstNode.Number? colorize            = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "colorize").Value;
+        AstNode.Number? contourExp          = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "contourexp").Value;
 
         InitPropColorTreatment getColorTreatment() => colorTreatment is null
                     ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(colorTreatment))
@@ -655,14 +655,14 @@ public static class Tools {
     public static InitTile GetInitTile(AstNode.Base @base) {
         var propList = (AstNode.PropertyList)@base;
 
-        string name = ((AstNode.String)propList.Values.Single(p => ((AstNode.Symbol)p.Key).Value == "nm").Value).Value;
+        string name = ((AstNode.String)propList.Values.First(p => ((AstNode.Symbol)p.Key).Value == "nm").Value).Value;
         
         AstNode.Base[] sizeArgs;
 
         sizeArgs = ((AstNode.GlobalCall)propList.Values.First(p => ((AstNode.Symbol)p.Key).Value == "sz").Value).Arguments;
         
         var size = (((AstNode.Number)sizeArgs[0]).Value.IntValue, ((AstNode.Number)sizeArgs[1]).Value.IntValue);
-        int[] specs = ((AstNode.List)propList.Values.Single(p => ((AstNode.Symbol)p.Key).Value == "specs").Value)
+        int[] specs = ((AstNode.List)propList.Values.First(p => ((AstNode.Symbol)p.Key).Value == "specs").Value)
             .Values
             .Select(n => {
                 switch (n) {
@@ -677,7 +677,7 @@ public static class Tools {
                         throw new Exception("Invalid specs value");
                 }
         }).ToArray();
-        var specs2Extracted = propList.Values.Single(p => ((AstNode.Symbol)p.Key).Value == "specs2").Value;
+        var specs2Extracted = propList.Values.First(p => ((AstNode.Symbol)p.Key).Value == "specs2").Value;
 
         int[] specs2;
 
@@ -697,7 +697,7 @@ public static class Tools {
         }).ToArray();
         } else { specs2 = []; }
 
-        string tpString = ((AstNode.String)propList.Values.Single(p => ((AstNode.Symbol)p.Key).Value == "tp").Value).Value;
+        string tpString = ((AstNode.String)propList.Values.First(p => ((AstNode.Symbol)p.Key).Value == "tp").Value).Value;
 
         InitTileType tp = tpString switch {
             "box" => InitTileType.Box,
@@ -705,7 +705,7 @@ public static class Tools {
             "voxelStructRandomDisplaceHorizontal" => InitTileType.VoxelStructRandomDisplaceHorizontal,
             "voxelStructRandomDisplaceVertical" => InitTileType.VoxelStructRandomDisplaceVertical,
             "voxelStructRockType" => InitTileType.VoxelStructRockType,
-            "voxrlStructSandType" => InitTileType.VoxelStructSandtype,
+            "voxelStructSandType" => InitTileType.VoxelStructSandtype,
 
             _ => throw new Exception("Invalid tile init tag: "+ tpString)
         };
@@ -715,7 +715,7 @@ public static class Tools {
         int[] repeatL;
 
         if (repeatLOptional) {
-            repeatL = ((AstNode.List) propList.Values.Single(p => ((AstNode.Symbol)p.Key).Value == "repeatl").Value).Values.Select(n => {
+            repeatL = ((AstNode.List) propList.Values.First(p => ((AstNode.Symbol)p.Key).Value == "repeatl").Value).Values.Select(n => {
                 switch (n) {
                     case AstNode.Number number: return number.Value.IntValue;
                     
