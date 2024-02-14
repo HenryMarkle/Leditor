@@ -884,44 +884,86 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                         $"Failed to fetch hovered tile from {nameof(GLOBALS.Level.TileMatrix)} (LX: {GLOBALS.Level.TileMatrix.GetLength(1)}, LY: {GLOBALS.Level.TileMatrix.GetLength(0)}): x, y, or z ({tileMatrixX}, {tileMatrixY}, {GLOBALS.Layer}) were out of bounds");
                 }
 
-                try
+                if (hoveredTile.Data is TileBody tileBody)
                 {
-                    DrawText(hoveredTile.Data switch
-                        {
-                            TileHead h => h.CategoryPostition.Item3,
-                            TileBody b => (GLOBALS.Level.TileMatrix[b.HeadPosition.y - 1, b.HeadPosition.x - 1,
-                                b.HeadPosition.z - 1].Data is TileHead h)
-                                ? h.CategoryPostition.Item3
-                                : "Stray Tile Fragment",
-                            TileMaterial m => m.Name,
-                            TileDefault => GLOBALS.Level.DefaultMaterial,
-                            _ => throw new Exception("Invalid tile data")
-                        },
-                        (_materialTileSwitch) ? (_showTileSpecs ? specsRect.X + specsRect.width : 25) : 0,
-                        specsRect.Y + specsRect.height - 20,
-                        20,
-                        WHITE);
-                }
-                catch (IndexOutOfRangeException c)
-                {
-                    throw new IndexOutOfRangeException(innerException: c,
-                        message:
-                        $"Failed to fetch a tile head pointed by a tile body: A tile body fragment pointed to a tile head with an out of bounds index");
+                    var (hx, hy, hz) = tileBody.HeadPosition;
+                    
+                    try
+                    {
+                        var supposedHead = GLOBALS.Level.TileMatrix[hy, hx, hz];
+                        
+                        DrawText(hoveredTile.Data switch
+                            {
+                                TileHead h => h.CategoryPostition.Item3,
+                                TileBody => supposedHead.Data is TileHead h
+                                    ? h.CategoryPostition.Item3
+                                    : "Stray Tile Fragment",
+                                TileMaterial m => m.Name,
+                                TileDefault => GLOBALS.Level.DefaultMaterial,
+                                _ => throw new Exception("Invalid tile data")
+                            },
+                            (_materialTileSwitch) ? (_showTileSpecs ? specsRect.X + specsRect.width : 25) : 0,
+                            specsRect.Y + specsRect.height - 20,
+                            20,
+                            WHITE);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        DrawText("Stray Tile Fragment", 
+                            (_materialTileSwitch) ? (_showTileSpecs ? specsRect.X + specsRect.width : 25) : 0,
+                            specsRect.Y + specsRect.height - 20,
+                            20,
+                            WHITE);
+                    }
                 }
                 #else
-                DrawText(GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer].Data switch
+                TileCell hoveredTile;
+
+                try
                 {
-                    TileHead h => h.CategoryPostition.Item3,
-                    TileBody b => (GLOBALS.Level.TileMatrix[b.HeadPosition.y - 1, b.HeadPosition.x - 1,
-                        b.HeadPosition.z - 1].Data as TileHead).CategoryPostition.Item3,
-                    TileMaterial m => m.Name,
-                    TileDefault => GLOBALS.Level.DefaultMaterial,
-                    _ => throw new Exception("Invalid tile data")
-                },
-                    specsRect.X + specsRect.width,
-                    specsRect.Y + specsRect.height - 20,
-                    20,
-                    WHITE);
+                    hoveredTile = GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer];
+                }
+                catch (IndexOutOfRangeException ie)
+                {
+                    throw new IndexOutOfRangeException(innerException: ie,
+                        message:
+                        $"Failed to fetch hovered tile from {nameof(GLOBALS.Level.TileMatrix)} (LX: {GLOBALS.Level.TileMatrix.GetLength(1)}, LY: {GLOBALS.Level.TileMatrix.GetLength(0)}): x, y, or z ({tileMatrixX}, {tileMatrixY}, {GLOBALS.Layer}) were out of bounds");
+                }
+
+                if (hoveredTile.Data is TileBody tileBody)
+                {
+                    var (hx, hy, hz) = tileBody.HeadPosition;
+                    
+                    TileCell supposedHead;
+
+                    try
+                    {
+                        supposedHead = GLOBALS.Level.TileMatrix[hy, hx, hz];
+                        
+                        DrawText(hoveredTile.Data switch
+                            {
+                                TileHead h => h.CategoryPostition.Item3,
+                                TileBody => supposedHead.Data is TileHead h
+                                    ? h.CategoryPostition.Item3
+                                    : "Stray Tile Fragment",
+                                TileMaterial m => m.Name,
+                                TileDefault => GLOBALS.Level.DefaultMaterial,
+                                _ => throw new Exception("Invalid tile data")
+                            },
+                            (_materialTileSwitch) ? (_showTileSpecs ? specsRect.X + specsRect.width : 25) : 0,
+                            specsRect.Y + specsRect.height - 20,
+                            20,
+                            WHITE);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        DrawText("Stray Tile Fragment", 
+                            (_materialTileSwitch) ? (_showTileSpecs ? specsRect.X + specsRect.width : 25) : 0,
+                            specsRect.Y + specsRect.height - 20,
+                            20,
+                            WHITE);
+                    }
+                }
                 #endif
             }
 

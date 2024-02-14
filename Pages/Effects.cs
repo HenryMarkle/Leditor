@@ -87,11 +87,23 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures)
                 ref var cell = ref matrix[y, x];
                 
                 var squareV = new Vector2(x + 0.5f, y + 0.5f) * GLOBALS.PreviewScale;
+
                 
                 if (CheckCollisionCircleRec(centerV, (radius-0.5f) * GLOBALS.PreviewScale,
                         new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale,
                             GLOBALS.PreviewScale)))
                 {
+                    if (strength >= 99f)
+                    {
+                        cell = 100;
+                        continue;
+                    }
+                    if (strength <= -99f)
+                    {
+                        cell = 0;
+                        continue;
+                    }
+                    
                     var distance = RayMath.Vector2Distance(squareV, centerV) / GLOBALS.PreviewScale;
 
                     if (distance < 1) distance = 1;
@@ -358,18 +370,23 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures)
 
             if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.DragLevelAlt.Check(ctrl, shift, alt, true))
             {
-                Vector2 delta = Raylib.GetMouseDelta();
+                var delta = GetMouseDelta();
                 delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
                 _camera.target = RayMath.Vector2Add(_camera.target, delta);
             }
 
             // Brush size
 
-            var effectslMouseWheel = GetMouseWheelMove();
+            var effectsMouseWheel = GetMouseWheelMove();
+            var isBrushSizeConstrained = Utils.IsEffectBruhConstrained(GLOBALS.Level.Effects[_currentAppliedEffect].Item1);
 
-            if (effectslMouseWheel != 0)
+            if (isBrushSizeConstrained)
             {
-                _brushRadius += (int)effectslMouseWheel;
+                _brushRadius = 0;
+            }
+            else if (effectsMouseWheel != 0)
+            {
+                _brushRadius += (int)effectsMouseWheel;
 
                 if (_brushRadius < 0) _brushRadius = 0;
                 if (_brushRadius > 10) _brushRadius = 10;
@@ -407,7 +424,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures)
                         mtx.Item3,
                         (effectsMatrixX, effectsMatrixY),
                         _brushRadius,
-                        Utils.GetBrushStrength(mtx.Item1)
+                        Utils.GetEffectBrushStrength(mtx.Item1)
                     );
 
                     _prevMatrixX = effectsMatrixX;
@@ -448,7 +465,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures)
                         mtx.Item3,
                         (effectsMatrixX, effectsMatrixY),
                         _brushRadius,
-                        -Utils.GetBrushStrength(mtx.Item1)
+                        -Utils.GetEffectBrushStrength(mtx.Item1)
                     );
 
                     _prevMatrixX = effectsMatrixX;
@@ -802,6 +819,8 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures)
                         {
                             GLOBALS.Level.Effects = GLOBALS.Level.Effects.Where((_, ei) => ei != oi).ToArray();
                             if (_currentAppliedEffect < 0) _currentAppliedEffect = 0;
+                            else if (_currentAppliedEffect >= GLOBALS.Level.Effects.Length - 1)
+                                _currentAppliedEffect = GLOBALS.Level.Effects.Length - 1;
                         }
                     }
                     

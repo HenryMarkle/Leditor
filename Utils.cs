@@ -60,13 +60,20 @@ internal static class Utils
         return path;
     }
     
-    public static int GetBrushStrength(string effect) => effect switch
+    public static int GetEffectBrushStrength(string effect) => effect switch
     {
         "BlackGoo" or "Fungi Flowers" or "Lighthouse Flowers" or
             "Fern" or "Giant Mushroom" or "Sprawlbush" or
             "featherFern" or "Fungus Tree" or "Restore As Scaffolding" or "Restore As Pipes" => 100,
 
         _ => 10
+    };
+
+    public static bool IsEffectBruhConstrained(string effect) => effect switch
+    {
+        "Fungi Flowers" or "Lighthouse Flowers" or "Fern" or "Giant Mushroom" or 
+            "Sprawlbush" or "featherFern" or "Fungus Tree" => true,
+        _ => false
     };
 
     public static EffectOptions[] NewEffectOptions(string name)
@@ -309,7 +316,9 @@ internal static class Utils
                 new("Variation", ["1", "2", "3"], "1"),
                 new("Color 1", ["EffectColor1", "EffectColor2", "None"], "EffectColor1"),
                 new("Color 2", ["EffectColor1", "EffectColor2", "None"], "EffectColor2")
-            ]
+            ],
+            
+            _ => []
         };
 
         return [
