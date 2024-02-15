@@ -4,6 +4,7 @@
 /target
 /logs
 settings.json
-/assets/test
+/assets
+/index
 .vs
 .vscode
