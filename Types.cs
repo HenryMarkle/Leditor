@@ -327,6 +327,8 @@ public class PropsShortcuts
     public KeyboardShortcut ToggleRopePointsEditingMode { get; set; } = KeyboardKey.KEY_P;
     public KeyboardShortcut ToggleRopeEditingMode { get; set; } = KeyboardKey.KEY_B;
 
+    public KeyboardShortcut ToggleNoCollisionPropPlacement { get; set; } = KeyboardKey.KEY_NULL;
+
     public KeyboardShortcut PropSelectionModifier { get; set; } = new(KeyboardKey.KEY_LEFT_CONTROL, Ctrl: true);
     
     public KeyboardShortcut SelectPropsAlt { get; set; } = KeyboardKey.KEY_NULL;

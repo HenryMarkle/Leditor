@@ -28,7 +28,8 @@ internal static class GLOBALS
         public Texture[] RopeProps { get; set; } = [];
         public Texture[] PropMenuCategories { get; set; } = [];
         public Texture[] PropModes { get; set; } = [];
-        public Texture[] ExplorerIcons { get; set; } = [];
+        public Texture[] PropEditModes { get; set; } = [];
+        public Texture[] PropGenerals { get; set; } = [];
         
         public RenderTexture LightMap { get; set; }
     }

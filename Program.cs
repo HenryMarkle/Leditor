@@ -443,7 +443,7 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.23";
+        const string version = "Henry's Leditor v0.9.24";
         const string raylibVersion = "Raylib v4.2.0.9";
         
         // Load tiles and props
@@ -486,10 +486,8 @@ class Program
         // check for missing textures
 
         var missingTileImagesTask = from category in GLOBALS.Tiles from tile in category select Task.Factory.StartNew(() => { var path = Path.Combine(GLOBALS.Paths.AssetsDirectory, "tiles", $"{tile.Name}.png"); return (File.Exists(path), path); });
-        var missingEmbeddedTileImagesTask = from category in embeddedTiles from tile in category select Task.Factory.StartNew(() => { var path = Path.Combine(GLOBALS.Paths.AssetsDirectory, "embedded", "tiles", $"{tile.Name}.png"); return (File.Exists(path), path); });
 
         using var missingTileImagesTaskEnum = missingTileImagesTask.GetEnumerator();
-        using var missingEmbeddedTileImagesTaskEnum = missingEmbeddedTileImagesTask.GetEnumerator();
 
         var missingTextureFound = false;
 
@@ -502,7 +500,6 @@ class Program
         // if the enumerators are empty, there are missing textures.
 
         if (!missingTileImagesTaskEnum.MoveNext()) missingTextureFound = true;
-        if (!missingEmbeddedTileImagesTaskEnum.MoveNext()) missingTextureFound = true;
 
         // APPEND INTERNAL TILES
 
@@ -594,7 +591,16 @@ class Program
         Task<Image>[][] tileImagesTasks = [..vanillaTileImagesTasks, ..tilePackagesTask.Result
             .SelectMany(result => result.Tiles
                 .Select(category => category
-                    .Select(tile => Task.Factory.StartNew(() => LoadImage(Path.Combine(result.LoadDirectory, $"{tile.Name}.png"))))
+                    .Select(tile =>
+                    {
+                        var path = Path.Combine(result.LoadDirectory, $"{tile.Name}.png");
+                        var task = Task.Factory.StartNew(() =>
+                            LoadImage(path));
+                        
+                        if (!File.Exists(path)) logger.Error($"Missing tile texture: \"{path}\"");
+
+                        return task;
+                    })
                     .ToArray())
                 .ToArray()
             ).ToArray()];
@@ -655,11 +661,18 @@ class Program
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "props place mode.png")),
         ];
 
-        GLOBALS.Textures.ExplorerIcons =
+        GLOBALS.Textures.PropEditModes =
         [
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "folder icon.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "file icon.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "up icon.png"))
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "move icon.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "rotate icon.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "scale icon.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "warp icon.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "edit point icon.png")),
+        ];
+
+        GLOBALS.Textures.PropGenerals =
+        [
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "no collision icon.png"))
         ];
 
         Texture[] settingsPreviewTextures =
@@ -746,7 +759,6 @@ class Program
         MainPage mainPage = new(logger);
         StartPage startPage = new(logger);
         HelpPage helpPage = new(logger);
-        LoadProjectPage loadPage = new(logger);
         SaveProjectPage savePage = new(logger);
         FailedTileCheckOnLoadPage failedTileCheckOnLoadPage = new(logger);
         AssetsNukedPage assetsNukedPage = new(logger);
@@ -760,9 +772,6 @@ class Program
         logger.Information("Initializing events");
         
         // Page event handlers
-        loadPage.ProjectLoaded += propsPage.OnProjectLoaded;
-        loadPage.ProjectLoaded += savePage.OnProjectLoaded;
-        
         startPage.ProjectLoaded += propsPage.OnProjectLoaded;
         startPage.ProjectLoaded += savePage.OnProjectLoaded;
         
@@ -900,67 +909,6 @@ class Program
 
                     continue;
                 }
-                else if (!checkMissingEmbeddedTextureDone)
-                {
-                    int r = 0;
-
-                    do
-                    {
-                        var currentEmbeddedTileTask = missingEmbeddedTileImagesTaskEnum.Current;
-
-                        if (!currentEmbeddedTileTask.IsCompleted) goto skip2;
-
-                        var currentEmbeddedTile = currentEmbeddedTileTask.Result;
-
-                        if (!currentEmbeddedTile.Item1)
-                        {
-                            missingTextureFound = true;
-                            logger.Fatal($"missing texture: \"{currentEmbeddedTile.Item2}\"");
-                        }
-
-                        checkMissingEmbeddedTextureProgress++;
-
-                        if (!missingEmbeddedTileImagesTaskEnum.MoveNext())
-                        {
-                            checkMissingEmbeddedTextureDone = true;
-                            goto out2_;
-                        }
-
-                        r++;
-
-                    skip2:
-                        { }
-                    } while (r < GLOBALS.Settings.Misc.TileImageScansPerFrame);
-
-                out2_:
-
-
-                    var width = GetScreenWidth();
-                    var height = GetScreenHeight();
-
-                    BeginDrawing();
-                    ClearBackground(new(0, 0, 0, 255));
-
-                    DrawTexturePro(
-                        GLOBALS.Textures.SplashScreen,
-                        new(0, 0, GLOBALS.Textures.SplashScreen.width, GLOBALS.Textures.SplashScreen.height),
-                        new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
-                        new(0, 0),
-                        0,
-                        new(255, 255, 255, 255)
-                    );
-
-                    if (missingTextureFound) DrawText("missing textures found", 700, 300, 16, new(252, 38, 38, 255));
-                    if (GLOBALS.Settings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
-
-                    DrawText(version, 700, 50, 15, WHITE);
-                    DrawText(raylibVersion, 700, 70, 15, WHITE);
-
-                    RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", checkMissingEmbeddedTextureProgress, 0, embeddedTileNumber);
-                    EndDrawing();
-
-                    continue;
-                }
                 else if (missingTextureFound)
                 {
                     GLOBALS.Page = 16;
@@ -1067,7 +1015,7 @@ class Program
                     case 7: effectsPage.Draw(); break;
                     case 8: propsPage.Draw(); break;
                     case 9: settingsPage.Draw(); break;
-                    case 11: loadPage.Draw(); break;
+                    // case 11: loadPage.Draw(); break;
                     case 12: savePage.Draw(); break;
                     case 13: failedTileCheckOnLoadPage.Draw(); break;
                     case 14: assetsNukedPage.Draw(); break;
@@ -1115,8 +1063,9 @@ class Program
         foreach (var category in GLOBALS.Textures.Props) { foreach (var texture in category) UnloadTexture(texture); }
         foreach (var texture in GLOBALS.Textures.LongProps) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.RopeProps) UnloadTexture(texture);
+        foreach (var texture in GLOBALS.Textures.PropEditModes) UnloadTexture(texture);
+        foreach (var texture in GLOBALS.Textures.PropGenerals) UnloadTexture(texture);
         foreach (var texture in settingsPreviewTextures) UnloadTexture(texture);
-        foreach (var texture in GLOBALS.Textures.ExplorerIcons) UnloadTexture(texture);
         foreach (var texture in effectsPageTextures) UnloadTexture(texture);
         
         logger.Debug("Unloading light map");

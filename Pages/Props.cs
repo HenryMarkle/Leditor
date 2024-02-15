@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Reflection.Metadata.Ecma335;
 using static Raylib_CsLo.Raylib;
 
 namespace Leditor;
@@ -75,6 +76,8 @@ internal class PropsEditorPage : IPage
     private bool _editingPropPoints;
     private bool _ropeMode;
 
+    private bool _noCollisionPropPlacement = true;
+
     private byte _stretchAxes;
 
     private int _ropeSimulationFrameCut = 1;
@@ -106,6 +109,13 @@ internal class PropsEditorPage : IPage
     private int _copiedDepth;
     private bool _copiedIsTileAsProp;
     private bool _newlyCopied; // to signify that the copied properties should be used
+
+    private int _defaultDepth;
+
+    private void UpdateDefaultDepth()
+    {
+        _defaultDepth = -GLOBALS.Layer * 10;
+    }
     
     // Layers 2 and 3 do not show geo features like shortcuts and entrances 
     private readonly bool[] _layerStackableFilter =
@@ -408,6 +418,8 @@ internal class PropsEditorPage : IPage
             GLOBALS.Layer++;
 
             if (GLOBALS.Layer > 2) GLOBALS.Layer = 0;
+
+            UpdateDefaultDepth();
         }
 
         if (_shortcuts.ToggleLayer1Tiles.Check(ctrl, shift, alt)) _showLayer1Tiles = !_showLayer1Tiles;
@@ -437,231 +449,454 @@ internal class PropsEditorPage : IPage
             case 1: // Place Mode
 
                 // Place Prop
-                if (canDrawTile && (_shortcuts.PlaceProp.Check(ctrl, shift, alt) || _shortcuts.PlacePropAlt.Check(ctrl, shift, alt)))
+                if (_noCollisionPropPlacement)
                 {
-                    var posV = _snapMode switch
+                    if (canDrawTile && (_shortcuts.PlaceProp.Check(ctrl, shift, alt, true) ||
+                                        _shortcuts.PlacePropAlt.Check(ctrl, shift, alt, true)))
                     {
-                        1 => new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale,
-                        2 => new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f,
-                        _ => tileMouseWorld
-                    };
-                    
-                    switch (_menuRootCategoryIndex)
-                    {
-                        case 0: // Tiles as props
+                        var posV = _snapMode switch
                         {
-                            var currentTileAsProp = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
-                            var width = (float)(currentTileAsProp.init.Size.Item1 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
-                            var height = (float)(currentTileAsProp.init.Size.Item2 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
-                            
-                            BasicPropSettings settings;
-                            int depth;
+                            1 => new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale,
+                            2 => new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f,
+                            _ => tileMouseWorld
+                        };
 
-                            if (_newlyCopied)
+                        switch (_menuRootCategoryIndex)
+                        {
+                            case 0: // Tiles as props
                             {
-                                _newlyCopied = false;
+                                var currentTileAsProp = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
+                                var width = (float)(currentTileAsProp.init.Size.Item1 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
+                                var height = (float)(currentTileAsProp.init.Size.Item2 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
+                                
+                                BasicPropSettings settings;
 
-                                settings = _copiedPropSettings;
-                                depth = _copiedDepth;
-                            }
-                            else
-                            {
-                                depth = GLOBALS.Layer * -10;
-                                settings = new();
-                            }
-                            
-                            GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
-                                (
-                                    InitPropType.Tile, 
-                                    (currentTileAsPropCategory.index, currentTileAsProp.index),
-                                    new Prop(
-                                        depth, 
-                                        currentTileAsProp.init.Name, 
-                                        true, 
-                                        new PropQuads(
-                                        new Vector2(posV.X - width, posV.Y - height), 
-                                        new  Vector2(posV.X + width, posV.Y - height), 
-                                        new Vector2(posV.X + width, posV.Y + height), 
-                                        new Vector2(posV.X - width, posV.Y + height)
+                                if (_newlyCopied)
+                                {
+                                    _newlyCopied = false;
+
+                                    settings = _copiedPropSettings;
+                                    _defaultDepth = _copiedDepth;
+                                }
+                                else
+                                {
+                                    settings = new();
+                                }
+
+                                var placementQuad = new PropQuads(
+                                    new Vector2(posV.X - width, posV.Y - height),
+                                    new Vector2(posV.X + width, posV.Y - height),
+                                    new Vector2(posV.X + width, posV.Y + height),
+                                    new Vector2(posV.X - width, posV.Y + height)
+                                );
+
+                                foreach (var prop in GLOBALS.Level.Props)
+                                {
+                                    var propRec = Utils.EncloseQuads(prop.prop.Quads);
+                                    var newPropRec = Utils.EncloseQuads(placementQuad);
+                                    
+                                    if (prop.prop.Depth == _defaultDepth && CheckCollisionRecs(newPropRec, propRec)) goto skipPlacement;
+                                }
+                                
+                                GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
+                                    (
+                                        InitPropType.Tile, 
+                                        (currentTileAsPropCategory.index, currentTileAsProp.index),
+                                        new Prop(
+                                            _defaultDepth, 
+                                            currentTileAsProp.init.Name, 
+                                            true, 
+                                            placementQuad
                                         )
+                                        {
+                                            Extras = new(settings, [])
+                                        }
                                     )
-                                    {
-                                        Extras = new(settings, [])
-                                    }
-                                )
-                            ];
-                        }
-                            break;
-
-                        case 1: // Ropes
-                        {
-                            var current = GLOBALS.RopeProps[_propsMenuRopesIndex];
-                            var newQuads = new PropQuads
-                            {
-                                TopLeft = new(posV.X - 100, posV.Y - 30),
-                                BottomLeft = new(posV.X - 100, posV.Y + 30),
-                                TopRight = new(posV.X + 100, tileMouseWorld.Y - 30),
-                                BottomRight = new(posV.X + 100, posV.Y + 30)
-                            };
-
-                            var ropeEnds = Utils.RopeEnds(newQuads);
-
-                            
-                            PropRopeSettings settings;
-                            Vector2[] ropePoints;
-                            int depth;
-
-                            if (_newlyCopied)
-                            {
-                                _newlyCopied = false;
-
-                                ropePoints = _copiedRopePoints;
-                                settings = (PropRopeSettings)_copiedPropSettings;
-                                depth = _copiedDepth;
+                                ];
                             }
-                            else
+                                break;
+
+                            case 1: // Ropes
                             {
-                                ropePoints = Utils.GenerateRopePoints(ropeEnds.pA, ropeEnds.pB, 30);
-                                depth = GLOBALS.Layer * -10;
-                                settings = new();
-                            }
+                                var current = GLOBALS.RopeProps[_propsMenuRopesIndex];
+                                var newQuads = new PropQuads
+                                {
+                                    TopLeft = new(posV.X - 100, posV.Y - 30),
+                                    BottomLeft = new(posV.X - 100, posV.Y + 30),
+                                    TopRight = new(posV.X + 100, tileMouseWorld.Y - 30),
+                                    BottomRight = new(posV.X + 100, posV.Y + 30)
+                                };
+
+                                var ropeEnds = Utils.RopeEnds(newQuads);
 
                                 
-                            GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
-                                (
-                                    InitPropType.Rope, 
-                                    (-1, _propsMenuRopesIndex), 
-                                    new Prop(
-                                        depth, 
-                                        current.Name, 
-                                        false, 
-                                        newQuads
-                                    )
-                                    {
-                                        Extras = new PropExtras(
-                                            settings, 
-                                            ropePoints
+                                PropRopeSettings settings;
+                                Vector2[] ropePoints;
+
+                                if (_newlyCopied)
+                                {
+                                    _newlyCopied = false;
+
+                                    ropePoints = _copiedRopePoints;
+                                    settings = (PropRopeSettings)_copiedPropSettings;
+                                    _defaultDepth = _copiedDepth;
+                                }
+                                else
+                                {
+                                    ropePoints = Utils.GenerateRopePoints(ropeEnds.pA, ropeEnds.pB, 30);
+                                    settings = new();
+                                }
+
+                                    
+                                GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
+                                    (
+                                        InitPropType.Rope, 
+                                        (-1, _propsMenuRopesIndex), 
+                                        new Prop(
+                                            _defaultDepth, 
+                                            current.Name, 
+                                            false, 
+                                            newQuads
                                         )
-                                    }
-                                ) 
-                            ];
+                                        {
+                                            Extras = new PropExtras(
+                                                settings, 
+                                                ropePoints
+                                            )
+                                        }
+                                    ) 
+                                ];
 
-                            _selected = new bool[GLOBALS.Level.Props.Length];
-                            ImportRopeModels();
-                        }
-                            break;
-
-                        case 2: // Long Props
-                        {
-                            var current = GLOBALS.LongProps[_propsMenuLongsIndex];
-                            ref var texture = ref GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
-                            var height = texture.height / 2f;
-                            var newQuads = new PropQuads
-                            {
-                                TopLeft = new(posV.X - 100, posV.Y - height),
-                                BottomLeft = new(posV.X - 100, posV.Y + height),
-                                TopRight = new(posV.X + 100, posV.Y - height),
-                                BottomRight = new(posV.X + 100, posV.Y + height)
-                            };
-                            
-                            PropLongSettings settings;
-                            int depth;
-
-                            if (_newlyCopied)
-                            {
-                                _newlyCopied = false;
-
-                                settings = (PropLongSettings)_copiedPropSettings;
-                                depth = _copiedDepth;
+                                _selected = new bool[GLOBALS.Level.Props.Length];
+                                ImportRopeModels();
                             }
-                            else
-                            {
-                                depth = GLOBALS.Layer * -10;
-                                settings = new();
-                            }
-                            
-                            GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
-                                (
-                                    InitPropType.Long, 
-                                    (-1, _propsMenuLongsIndex), 
-                                    new Prop(
-                                        depth, 
-                                        current.Name, 
-                                        false, 
-                                        newQuads
-                                    )
-                                    {
-                                        Extras = new PropExtras(settings, [])
-                                    }
-                                ) 
-                            ];
+                                break;
 
-                            _selected = new bool[GLOBALS.Level.Props.Length];
-                        }
-                            break;
-
-                        case 3: // Others
-                        {
-                            var init = _propsOnly[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
-                            var texture = GLOBALS.Textures.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
-                            
-                            var (width, height, settings) = init switch
+                            case 2: // Long Props
                             {
-                                InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings()),
-                                InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
-                                InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings()),
-                                InitSoftProp => (texture.width  / 2f, texture.height  / 2f, new PropSoftSettings()),
-                                InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings()),
-                                InitSimpleDecalProp => (texture.width / 2f, texture.height / 2f, new PropSimpleDecalSettings()), 
-                                InitSoftEffectProp => (texture.width / 2f, texture.height / 2f, new PropSoftEffectSettings()), 
-                                InitAntimatterProp => (texture.width / 2f, texture.height / 2f, new PropAntimatterSettings()),
-                                InitLongProp => (texture.width / 2f, texture.height / 2f, new PropLongSettings()), 
-                                InitRopeProp => (texture.width / 2f, texture.height / 2f, new PropRopeSettings()),
+                                var current = GLOBALS.LongProps[_propsMenuLongsIndex];
+                                ref var texture = ref GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
+                                var height = texture.height / 2f;
+                                var newQuads = new PropQuads
+                                {
+                                    TopLeft = new(posV.X - 100, posV.Y - height),
+                                    BottomLeft = new(posV.X - 100, posV.Y + height),
+                                    TopRight = new(posV.X + 100, posV.Y - height),
+                                    BottomRight = new(posV.X + 100, posV.Y + height)
+                                };
                                 
-                                _ => (texture.width / 2f, texture.height / 2f, new BasicPropSettings())
-                            };
-                            
-                            int depth;
+                                PropLongSettings settings;
 
-                            if (_newlyCopied)
-                            {
-                                _newlyCopied = false;
+                                if (_newlyCopied)
+                                {
+                                    _newlyCopied = false;
 
-                                settings = (PropLongSettings)_copiedPropSettings;
-                                depth = _copiedDepth;
+                                    settings = (PropLongSettings)_copiedPropSettings;
+                                    _defaultDepth = _copiedDepth;
+                                }
+                                else
+                                {
+                                    settings = new();
+                                }
+                                
+                                GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
+                                    (
+                                        InitPropType.Long, 
+                                        (-1, _propsMenuLongsIndex), 
+                                        new Prop(
+                                            _defaultDepth, 
+                                            current.Name, 
+                                            false, 
+                                            newQuads
+                                        )
+                                        {
+                                            Extras = new PropExtras(settings, [])
+                                        }
+                                    ) 
+                                ];
+
+                                _selected = new bool[GLOBALS.Level.Props.Length];
                             }
-                            else
+                                break;
+
+                            case 3: // Others
                             {
-                                depth = GLOBALS.Layer * -10;
-                            }
-                            
-                            GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
-                                (
-                                    init.Type, 
-                                    (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex),
-                                    new Prop(
-                                        depth, 
-                                        init.Name, 
-                                        false, 
-                                        new PropQuads(
-                                        new(posV.X - width, posV.Y - height), 
-                                        new(posV.X + width, posV.Y - height), 
-                                        new(posV.X + width, posV.Y + height), 
-                                        new(posV.X - width, posV.Y + height))
+                                var init = _propsOnly[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
+                                var texture = GLOBALS.Textures.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
+                                
+                                var (width, height, settings) = init switch
+                                {
+                                    InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings()),
+                                    InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
+                                    InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings()),
+                                    InitSoftProp => (texture.width  / 2f, texture.height  / 2f, new PropSoftSettings()),
+                                    InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings()),
+                                    InitSimpleDecalProp => (texture.width / 2f, texture.height / 2f, new PropSimpleDecalSettings()), 
+                                    InitSoftEffectProp => (texture.width / 2f, texture.height / 2f, new PropSoftEffectSettings()), 
+                                    InitAntimatterProp => (texture.width / 2f, texture.height / 2f, new PropAntimatterSettings()),
+                                    InitLongProp => (texture.width / 2f, texture.height / 2f, new PropLongSettings()), 
+                                    InitRopeProp => (texture.width / 2f, texture.height / 2f, new PropRopeSettings()),
+                                    
+                                    _ => (texture.width / 2f, texture.height / 2f, new BasicPropSettings())
+                                };
+
+                                if (_newlyCopied)
+                                {
+                                    _newlyCopied = false;
+
+                                    settings = (PropLongSettings)_copiedPropSettings;
+                                    _defaultDepth = _copiedDepth;
+                                }
+                                
+                                GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
+                                    (
+                                        init.Type, 
+                                        (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex),
+                                        new Prop(
+                                            _defaultDepth, 
+                                            init.Name, 
+                                            false, 
+                                            new PropQuads(
+                                            new(posV.X - width, posV.Y - height), 
+                                            new(posV.X + width, posV.Y - height), 
+                                            new(posV.X + width, posV.Y + height), 
+                                            new(posV.X - width, posV.Y + height))
+                                        )
+                                        {
+                                            Extras = new PropExtras(settings, [])
+                                        }
                                     )
-                                    {
-                                        Extras = new PropExtras(settings, [])
-                                    }
-                                )
-                            ];
+                                ];
+                            }
+                                break;
                         }
-                            break;
+                        
+                        // Do not forget to update _selected and _hidden
+
+                        _selected = [.._selected, false];
+                        _hidden = [.._hidden, false];
+                        
+                        skipPlacement:
+                        {
+                        }
                     }
-                    
-                    // Do not forget to update _selected and _hidden
+                }
+                else
+                {
+                    if (canDrawTile && (_shortcuts.PlaceProp.Check(ctrl, shift, alt) || _shortcuts.PlacePropAlt.Check(ctrl, shift, alt)))
+                    {
+                        var posV = _snapMode switch
+                        {
+                            1 => new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale,
+                            2 => new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f,
+                            _ => tileMouseWorld
+                        };
 
-                    _selected = [.._selected, false];
-                    _hidden = [.._hidden, false];
+                        switch (_menuRootCategoryIndex)
+                        {
+                            case 0: // Tiles as props
+                            {
+                                var currentTileAsProp = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
+                                var width = (float)(currentTileAsProp.init.Size.Item1 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
+                                var height = (float)(currentTileAsProp.init.Size.Item2 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
+                                
+                                BasicPropSettings settings;
+
+                                if (_newlyCopied)
+                                {
+                                    _newlyCopied = false;
+
+                                    settings = _copiedPropSettings;
+                                    _defaultDepth = _copiedDepth;
+                                }
+                                else
+                                {
+                                    settings = new();
+                                }
+                                
+                                GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
+                                    (
+                                        InitPropType.Tile, 
+                                        (currentTileAsPropCategory.index, currentTileAsProp.index),
+                                        new Prop(
+                                            _defaultDepth, 
+                                            currentTileAsProp.init.Name, 
+                                            true, 
+                                            new PropQuads(
+                                            new Vector2(posV.X - width, posV.Y - height), 
+                                            new  Vector2(posV.X + width, posV.Y - height), 
+                                            new Vector2(posV.X + width, posV.Y + height), 
+                                            new Vector2(posV.X - width, posV.Y + height)
+                                            )
+                                        )
+                                        {
+                                            Extras = new(settings, [])
+                                        }
+                                    )
+                                ];
+                            }
+                                break;
+
+                            case 1: // Ropes
+                            {
+                                var current = GLOBALS.RopeProps[_propsMenuRopesIndex];
+                                var newQuads = new PropQuads
+                                {
+                                    TopLeft = new(posV.X - 100, posV.Y - 30),
+                                    BottomLeft = new(posV.X - 100, posV.Y + 30),
+                                    TopRight = new(posV.X + 100, tileMouseWorld.Y - 30),
+                                    BottomRight = new(posV.X + 100, posV.Y + 30)
+                                };
+
+                                var ropeEnds = Utils.RopeEnds(newQuads);
+
+                                
+                                PropRopeSettings settings;
+                                Vector2[] ropePoints;
+
+                                if (_newlyCopied)
+                                {
+                                    _newlyCopied = false;
+
+                                    ropePoints = _copiedRopePoints;
+                                    settings = (PropRopeSettings)_copiedPropSettings;
+                                    _defaultDepth = _copiedDepth;
+                                }
+                                else
+                                {
+                                    ropePoints = Utils.GenerateRopePoints(ropeEnds.pA, ropeEnds.pB, 30);
+                                    settings = new();
+                                }
+
+                                    
+                                GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
+                                    (
+                                        InitPropType.Rope, 
+                                        (-1, _propsMenuRopesIndex), 
+                                        new Prop(
+                                            _defaultDepth, 
+                                            current.Name, 
+                                            false, 
+                                            newQuads
+                                        )
+                                        {
+                                            Extras = new PropExtras(
+                                                settings, 
+                                                ropePoints
+                                            )
+                                        }
+                                    ) 
+                                ];
+
+                                _selected = new bool[GLOBALS.Level.Props.Length];
+                                ImportRopeModels();
+                            }
+                                break;
+
+                            case 2: // Long Props
+                            {
+                                var current = GLOBALS.LongProps[_propsMenuLongsIndex];
+                                ref var texture = ref GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
+                                var height = texture.height / 2f;
+                                var newQuads = new PropQuads
+                                {
+                                    TopLeft = new(posV.X - 100, posV.Y - height),
+                                    BottomLeft = new(posV.X - 100, posV.Y + height),
+                                    TopRight = new(posV.X + 100, posV.Y - height),
+                                    BottomRight = new(posV.X + 100, posV.Y + height)
+                                };
+                                
+                                PropLongSettings settings;
+
+                                if (_newlyCopied)
+                                {
+                                    _newlyCopied = false;
+
+                                    settings = (PropLongSettings)_copiedPropSettings;
+                                    _defaultDepth = _copiedDepth;
+                                }
+                                else
+                                {
+                                    settings = new();
+                                }
+                                
+                                GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
+                                    (
+                                        InitPropType.Long, 
+                                        (-1, _propsMenuLongsIndex), 
+                                        new Prop(
+                                            _defaultDepth, 
+                                            current.Name, 
+                                            false, 
+                                            newQuads
+                                        )
+                                        {
+                                            Extras = new PropExtras(settings, [])
+                                        }
+                                    ) 
+                                ];
+
+                                _selected = new bool[GLOBALS.Level.Props.Length];
+                            }
+                                break;
+
+                            case 3: // Others
+                            {
+                                var init = _propsOnly[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
+                                var texture = GLOBALS.Textures.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
+                                
+                                var (width, height, settings) = init switch
+                                {
+                                    InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings()),
+                                    InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
+                                    InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings()),
+                                    InitSoftProp => (texture.width  / 2f, texture.height  / 2f, new PropSoftSettings()),
+                                    InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings()),
+                                    InitSimpleDecalProp => (texture.width / 2f, texture.height / 2f, new PropSimpleDecalSettings()), 
+                                    InitSoftEffectProp => (texture.width / 2f, texture.height / 2f, new PropSoftEffectSettings()), 
+                                    InitAntimatterProp => (texture.width / 2f, texture.height / 2f, new PropAntimatterSettings()),
+                                    InitLongProp => (texture.width / 2f, texture.height / 2f, new PropLongSettings()), 
+                                    InitRopeProp => (texture.width / 2f, texture.height / 2f, new PropRopeSettings()),
+                                    
+                                    _ => (texture.width / 2f, texture.height / 2f, new BasicPropSettings())
+                                };
+
+                                if (_newlyCopied)
+                                {
+                                    _newlyCopied = false;
+
+                                    settings = (PropLongSettings)_copiedPropSettings;
+                                    _defaultDepth = _copiedDepth;
+                                }
+                                
+                                GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
+                                    (
+                                        init.Type, 
+                                        (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex),
+                                        new Prop(
+                                            _defaultDepth, 
+                                            init.Name, 
+                                            false, 
+                                            new PropQuads(
+                                            new(posV.X - width, posV.Y - height), 
+                                            new(posV.X + width, posV.Y - height), 
+                                            new(posV.X + width, posV.Y + height), 
+                                            new(posV.X - width, posV.Y + height))
+                                        )
+                                        {
+                                            Extras = new PropExtras(settings, [])
+                                        }
+                                    )
+                                ];
+                            }
+                                break;
+                        }
+                        
+                        // Do not forget to update _selected and _hidden
+
+                        _selected = [.._selected, false];
+                        _hidden = [.._hidden, false];
+                    }
                 }
                 
                 // Cycle categories
@@ -2357,6 +2592,29 @@ internal class PropsEditorPage : IPage
                         }
                             break;
                     }
+                    
+                    // Depth Indicator
+
+                    unsafe
+                    {
+                        var d = -_defaultDepth;
+                        
+                        RayGui.GuiSpinner(
+                            new Rectangle(
+                                sWidth-205, 
+                                categoryRect.Y+categoryRect.height+10, 
+                                200, 
+                                40
+                            ), 
+                            "Default Depth",
+                            &d,
+                            0,
+                            29,
+                            false
+                        );
+
+                        _defaultDepth = -d;
+                    }
 
                     // Focus indicator
                     if (_menuRootCategoryIndex is 0 or 3)
@@ -2369,6 +2627,31 @@ internal class PropsEditorPage : IPage
                         );
                     }
                 
+                    // No-Collision Prop Placement Indicator
+
+                    {
+                        var texture = GLOBALS.Textures.PropGenerals[0];
+                        var rect = new Rectangle(sWidth - 5 - 100, sHeight - 45, 40, 40);
+                        var rectHovered = CheckCollisionPointRec(tileMouse, rect);
+                        
+                        if (rectHovered)
+                        {
+                            DrawRectangleRec(rect, BLUE with { a = 100 });
+
+                            if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                                _noCollisionPropPlacement = !_noCollisionPropPlacement;
+                        }
+                        if (_noCollisionPropPlacement) DrawRectangleRec(rect, BLUE);
+                        
+                        DrawTexturePro(
+                            texture,
+                            new Rectangle(0, 0, texture.width, texture.height),
+                            rect,
+                            new Vector2(0, 0),
+                            0,
+                            _noCollisionPropPlacement ? WHITE : BLACK
+                        );
+                    }
                 }
                     break;
 
@@ -2887,6 +3170,68 @@ internal class PropsEditorPage : IPage
 
                         if (upClicked) _selectedListPage--;
                     }
+                    
+                    // Edit Mode Indicators
+
+                    {
+                        var moveTexture = GLOBALS.Textures.PropEditModes[0];
+                        var rotateTexture = GLOBALS.Textures.PropEditModes[1];
+                        var scaleTexture = GLOBALS.Textures.PropEditModes[2];
+                        var warpTexture = GLOBALS.Textures.PropEditModes[3];
+                        var editPointsTexture = GLOBALS.Textures.PropEditModes[4];
+
+                        var moveRect = new Rectangle(menuPanelRect.X + 5 + 90, sHeight - 45, 40, 40);
+                        var rotateRect = new Rectangle(menuPanelRect.X + 5 + 130, sHeight - 45, 40, 40);
+                        var scaleRect = new Rectangle(menuPanelRect.X + 5 + 170, sHeight - 45, 40, 40);
+                        var warpRect = new Rectangle(menuPanelRect.X + 5 + 210, sHeight - 45, 40, 40);
+                        var editPointsRect = new Rectangle(menuPanelRect.X + 5 + 250, sHeight - 45, 40, 40);
+                        
+                        if (_movingProps) DrawRectangleRec(moveRect, BLUE);
+                        if (_rotatingProps) DrawRectangleRec(rotateRect, BLUE);
+                        if (_scalingProps) DrawRectangleRec(scaleRect, BLUE);
+                        if (_stretchingProp) DrawRectangleRec(warpRect, BLUE);
+                        if (_editingPropPoints) DrawRectangleRec(editPointsRect, BLUE);
+                        
+                        DrawTexturePro(
+                            moveTexture, 
+                            new Rectangle(0, 0, moveTexture.width, moveTexture.height),
+                            moveRect,
+                            new Vector2(0, 0),
+                            0,
+                            _movingProps ? WHITE : BLACK);
+                        
+                        DrawTexturePro(
+                            rotateTexture, 
+                            new Rectangle(0, 0, rotateTexture.width, rotateTexture.height),
+                            rotateRect,
+                            new Vector2(0, 0),
+                            0,
+                            _rotatingProps ? WHITE : BLACK);
+                        
+                        DrawTexturePro(
+                            scaleTexture, 
+                            new Rectangle(0, 0, scaleTexture.width, scaleTexture.height),
+                            scaleRect,
+                            new Vector2(0, 0),
+                            0,
+                            _scalingProps ? WHITE : BLACK);
+                        
+                        DrawTexturePro(
+                            warpTexture, 
+                            new Rectangle(0, 0, warpTexture.width, warpTexture.height),
+                            warpRect,
+                            new Vector2(0, 0),
+                            0,
+                            _stretchingProp ? WHITE: BLACK);
+                        
+                        DrawTexturePro(
+                            editPointsTexture, 
+                            new Rectangle(0, 0, editPointsTexture.width, editPointsTexture.height),
+                            editPointsRect,
+                            new Vector2(0, 0),
+                            0,
+                            _editingPropPoints ? WHITE : BLACK);
+                    }
                 }
                     break;
             }
@@ -3023,7 +3368,11 @@ internal class PropsEditorPage : IPage
                 DrawText("1", 48, sHeight - 60, 22, BLACK);
             }
 
-            if (newLayer != GLOBALS.Layer) GLOBALS.Layer = newLayer;
+            if (newLayer != GLOBALS.Layer)
+            {
+                GLOBALS.Layer = newLayer;
+                UpdateDefaultDepth();
+            }
         }
         #endregion
 
