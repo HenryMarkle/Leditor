@@ -3,11 +3,11 @@ using static Raylib_CsLo.Raylib;
 
 namespace Leditor;
 
-internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
+internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null) : IPage
 {
     readonly Serilog.Core.Logger _logger = logger;
 
-    private Camera2D _camera = new() { zoom = 0.5f, target = new(-500, -200) };
+    private Camera2D _camera = camera ?? new() { zoom = 0.5f, target = new(-500, -200) };
     private int _lightBrushTextureIndex;
     private float _lightBrushWidth = 200;
     private float _lightBrushHeight = 200;
@@ -227,10 +227,6 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
         }
         else ResetGrowthFactor();
 
-        if (_shortcuts.ToggleShadow.Check(ctrl, shift, alt))
-        {
-            _eraseShadow = !_eraseShadow;
-        }
 
         if (_shortcuts.ToggleTileVisibility.Check(ctrl, shift, alt)) _showTiles = !_showTiles;
         if (_shortcuts.ToggleTilePreview.Check(ctrl, shift, alt)) _tilePreview = !_tilePreview;
@@ -282,8 +278,6 @@ internal class LightEditorPage(Serilog.Core.Logger logger) : IPage
         }
         else _eraseShadow = false;
 
-        if (_shortcuts.SlowWarpSpeed.Check(ctrl, shift, alt)) _slowGrowth = !_slowGrowth;
-        
         if (IsKeyPressed(KeyboardKey.KEY_R)) _shading = !_shading;
 
         BeginDrawing();

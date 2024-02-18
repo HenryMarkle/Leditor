@@ -4,10 +4,10 @@ using static Raylib_CsLo.Raylib;
 
 namespace Leditor;
 
-internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
+internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null) : IPage
 {
     readonly Serilog.Core.Logger _logger = logger;
-    Camera2D _camera = new() { zoom = 1.0f };
+    Camera2D _camera = camera ?? new() { zoom = 1.0f };
 
     private readonly GlobalShortcuts _gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
     private readonly TileShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.TileEditor;
@@ -23,7 +23,6 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
     private int _tileScrollIndex;
     private int _materialCategoryScrollIndex;
     private int _materialScrollIndex;
-    private bool _showTileSpecs = GLOBALS.Settings.TileEditor.VisibleSpecs;
 
     private int _tileItemFocus;
     private int _tileCategoryItemFocus;
@@ -48,6 +47,11 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
     
     private int _tilePanelWidth = 400;
     private int _materialBrushRadius;
+
+    /*
+    private readonly TileGram _gram = new(30);
+    private List<TileGram.IPlaceAction> _tempPlaceGroupActions = [];
+    private List<TileGram.IRemoveAction> _tempRemoveGroupActions = [];*/
 
     public void Draw()
     {
@@ -182,6 +186,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
 
         if (_shortcuts.Draw.Check(ctrl, shift, alt, true) && canDrawTile && inMatrixBounds)
         {
+            // _clickTracker = true;
             if (_materialTileSwitch)
             {
                 if (_shortcuts.ForcePlaceTileWithGeo.Check(ctrl, shift, alt, true))
@@ -194,6 +199,14 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                             GLOBALS.Layer
                         )
                     );
+                    
+                    /*_tempPlaceGroupActions.Add(
+                        new TileGram.PlaceTileAction(
+                            (tileMatrixX, tileMatrixY, GLOBALS.Layer), 
+                            (_tileCategoryIndex, _tileIndex), 
+                            true
+                        )
+                    );*/
                 } 
                 else if (_shortcuts.ForcePlaceTileWithoutGeo.Check(ctrl, shift, alt, true))
                 {
@@ -205,24 +218,55 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                             GLOBALS.Layer
                         )
                     );
+                    
+                    /*_tempPlaceGroupActions.Add(
+                        new TileGram.PlaceTileAction(
+                            (tileMatrixX, tileMatrixY, GLOBALS.Layer), 
+                            (_tileCategoryIndex, _tileIndex), 
+                            false
+                        )
+                    );*/
                 }
                 else
                 {
-                    if (isTileLegal) 
+                    if (isTileLegal)
+                    {
                         Utils.ForcePlaceTileWithGeo(
-                            currentTileInit, 
-                            _tileCategoryIndex, 
-                            _tileIndex, 
-                            (tileMatrixX, tileMatrixY, 
+                            currentTileInit,
+                            _tileCategoryIndex,
+                            _tileIndex,
+                            (tileMatrixX, tileMatrixY,
                                 GLOBALS.Layer
-                                )
-                            );
+                            )
+                        );
+                        
+                        /*_tempPlaceGroupActions.Add(
+                            new TileGram.PlaceTileAction(
+                                (tileMatrixX, tileMatrixY, GLOBALS.Layer), 
+                                (_tileCategoryIndex, _tileIndex), 
+                                false
+                            )
+                        );*/
+                    }
                 }
             }
             else
             {
                 Utils.PlaceMaterial(currentMaterialInit, (tileMatrixX, tileMatrixY, GLOBALS.Layer), _materialBrushRadius);
+                
+                /*_tempPlaceGroupActions.Add(
+                    new TileGram.PlaceMaterialAction(
+                        (tileMatrixX, tileMatrixY, GLOBALS.Layer), 
+                        currentMaterialInit.Item1
+                    )
+                );*/
             }
+        }
+        if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw.Key)) && _clickTracker)
+        {
+            /*_clickTracker = false;
+            _gram.Proceed(new TileGram.PlaceGroupAction([.._tempPlaceGroupActions]));
+            _tempPlaceGroupActions.Clear();*/
         }
 
         if (canDrawTile || _clickTracker)
@@ -276,7 +320,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
         }
 
 
-        if (_shortcuts.CycleLayer.Check(ctrl, shift, alt))
+        if (_shortcuts.CycleLayers.Check(ctrl, shift, alt))
         {
             GLOBALS.Layer++;
 
@@ -430,7 +474,6 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
             }
         }
 
-        if (_shortcuts.ToggleTileSpecs.Check(ctrl, shift, alt)) _showTileSpecs = !_showTileSpecs;
         if (_shortcuts.TileMaterialSwitch.Check(ctrl, shift, alt)) _materialTileSwitch = !_materialTileSwitch;
 
         if (_shortcuts.HoveredItemInfo.Check(ctrl, shift, alt)) GLOBALS.Settings.TileEditor.HoveredTileInfo = !GLOBALS.Settings.TileEditor.HoveredTileInfo;
@@ -979,7 +1022,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger) : IPage
                         catch (IndexOutOfRangeException)
                         {
                             DrawText("Stray Tile Fragment", 
-                                (_materialTileSwitch) ? (_showTileSpecs ? specsRect.X + specsRect.width : 25) : 0,
+                                0,
                                 specsRect.Y + specsRect.height - 20,
                                 20,
                                 WHITE);

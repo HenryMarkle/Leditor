@@ -4,10 +4,10 @@ using static Raylib_CsLo.Raylib;
 
 namespace Leditor;
 
-internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
+internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null) : IPage
 {
     private readonly Serilog.Core.Logger _logger = logger;
-    private Camera2D camera = new() { zoom = 1.0f };
+    private Camera2D _camera = camera ?? new() { zoom = 1.0f };
 
     private readonly GeoShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.GeoEditor;
     private readonly GlobalShortcuts _gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
@@ -138,7 +138,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
         var scale = GLOBALS.Scale;
 
         var uiMouse = GetMousePosition();
-        var mouse = GetScreenToWorld2D(uiMouse, camera);
+        var mouse = GetScreenToWorld2D(uiMouse, _camera);
 
         //                        v this was done to avoid rounding errors
         var matrixY = mouse.Y < 0 ? -1 : (int)mouse.Y / GLOBALS.Scale;
@@ -224,7 +224,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
             GLOBALS.Page = 9;
         }
 
-        if (_shortcuts.CycleLayer.Check(ctrl, shift, alt)) GLOBALS.Layer = ++GLOBALS.Layer % 3;
+        if (_shortcuts.CycleLayers.Check(ctrl, shift, alt)) GLOBALS.Layer = ++GLOBALS.Layer % 3;
         if (_shortcuts.ToggleGrid.Check(ctrl, shift, alt)) gridContrast = !gridContrast;
         if (_shortcuts.ShowCameras.Check(ctrl, shift, alt)) GLOBALS.Settings.GeometryEditor.ShowCameras = !GLOBALS.Settings.GeometryEditor.ShowCameras;
 
@@ -328,8 +328,8 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
         if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true))
         {
             var delta = GetMouseDelta();
-            delta = RayMath.Vector2Scale(delta, -1.0f / camera.zoom);
-            camera.target = RayMath.Vector2Add(camera.target, delta);
+            delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
+            _camera.target = RayMath.Vector2Add(_camera.target, delta);
         }
 
 
@@ -337,11 +337,11 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
         var wheel = GetMouseWheelMove();
         if (wheel != 0)
         {
-            var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), camera);
-            camera.offset = GetMousePosition();
-            camera.target = mouseWorldPosition;
-            camera.zoom += wheel * GLOBALS.ZoomIncrement;
-            if (camera.zoom < GLOBALS.ZoomIncrement) camera.zoom = GLOBALS.ZoomIncrement;
+            var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
+            _camera.offset = GetMousePosition();
+            _camera.target = mouseWorldPosition;
+            _camera.zoom += wheel * GLOBALS.ZoomIncrement;
+            if (_camera.zoom < GLOBALS.ZoomIncrement) _camera.zoom = GLOBALS.ZoomIncrement;
         }
 
         // handle placing geo
@@ -813,7 +813,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
             ClearBackground(new Color(120, 120, 120, 255));
 
 
-            BeginMode2D(camera);
+            BeginMode2D(_camera);
             {
                 // geo matrix
 
@@ -921,7 +921,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger) : IPage
                 DrawRectangleLinesEx(new(0, 0, GLOBALS.Level.Width * scale, GLOBALS.Level.Height * scale), 2, new(0, 0, 0, 255));
 
                 // the border
-                DrawRectangleLinesEx(GLOBALS.Level.Border, camera.zoom < GLOBALS.ZoomIncrement ? 5 : 2, new(255, 255, 255, 255));
+                DrawRectangleLinesEx(GLOBALS.Level.Border, _camera.zoom < GLOBALS.ZoomIncrement ? 5 : 2, new(255, 255, 255, 255));
                 
                 // a lazy way to hide the rest of the grid
                 DrawRectangle(GLOBALS.Level.Width * -scale, -3, GLOBALS.Level.Width * scale, GLOBALS.Level.Height * 2 * scale, new(120, 120, 120, 255));

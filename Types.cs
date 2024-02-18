@@ -109,7 +109,7 @@ public class GeoShortcuts
     public KeyboardShortcut ToLeftGeo { get; set; } = new(KeyboardKey.KEY_A);
     public KeyboardShortcut ToTopGeo { get; set; } = new(KeyboardKey.KEY_W);
     public KeyboardShortcut ToBottomGeo { get; set; } = new(KeyboardKey.KEY_S);
-    public KeyboardShortcut CycleLayer { get; set; } = new(KeyboardKey.KEY_L);
+    public KeyboardShortcut CycleLayers { get; set; } = new(KeyboardKey.KEY_L);
     public KeyboardShortcut ToggleGrid { get; set; } = new(KeyboardKey.KEY_M);
     public KeyboardShortcut ShowCameras { get; set; } = new(KeyboardKey.KEY_C);
 
@@ -118,8 +118,8 @@ public class GeoShortcuts
 
     public KeyboardShortcut AltDraw { get; set; } = new(KeyboardKey.KEY_NULL);
     public KeyboardShortcut AltDrag { get; set; } = new(KeyboardKey.KEY_NULL);
-    public KeyboardShortcut Undo { get; set; } = new(Ctrl:true, Shift:false, Key:KeyboardKey.KEY_Z);
-    public KeyboardShortcut Redo { get; set; } = new(Ctrl:true, Shift:true, Key:KeyboardKey.KEY_Z);
+    public KeyboardShortcut Undo { get; set; } = new(ctrl:true, shift:false, key:KeyboardKey.KEY_Z);
+    public KeyboardShortcut Redo { get; set; } = new(ctrl:true, shift:true, key:KeyboardKey.KEY_Z);
 }
 
 public class ExperimentalGeoShortcuts
@@ -128,7 +128,7 @@ public class ExperimentalGeoShortcuts
     public KeyboardShortcut ToLeftGeo { get; set; } = new(KeyboardKey.KEY_A);
     public KeyboardShortcut ToTopGeo { get; set; } = new(KeyboardKey.KEY_W);
     public KeyboardShortcut ToBottomGeo { get; set; } = new(KeyboardKey.KEY_S);
-    public KeyboardShortcut CycleLayer { get; set; } = new(KeyboardKey.KEY_L);
+    public KeyboardShortcut CycleLayers { get; set; } = new(KeyboardKey.KEY_L);
     public KeyboardShortcut ToggleGrid { get; set; } = new(KeyboardKey.KEY_M);
     public KeyboardShortcut ShowCameras { get; set; } = new(KeyboardKey.KEY_K);
     public KeyboardShortcut ToggleMultiSelect { get; set; } = new(KeyboardKey.KEY_E);
@@ -137,20 +137,20 @@ public class ExperimentalGeoShortcuts
     public KeyboardShortcut ToggleTileVisibility { get; set; } = new(KeyboardKey.KEY_T);
     
     
-    public KeyboardShortcut ToggleMemoryLoadMode { get; set; } = new(KeyboardKey.KEY_C, Ctrl:true);
-    public KeyboardShortcut ToggleMemoryDumbMode { get; set; } = new(KeyboardKey.KEY_V, Ctrl:true);
+    public KeyboardShortcut ToggleMemoryLoadMode { get; set; } = new(KeyboardKey.KEY_C, ctrl:true);
+    public KeyboardShortcut ToggleMemoryDumbMode { get; set; } = new(KeyboardKey.KEY_V, ctrl:true);
     
     public MouseShortcut Draw { get; set; } = new(MouseButton.MOUSE_BUTTON_LEFT);
     public MouseShortcut Erase { get; set; } = new(MouseButton.MOUSE_BUTTON_RIGHT);
     
     public MouseShortcut DragLevel { get; set; } = new(MouseButton.MOUSE_BUTTON_MIDDLE);
 
-    public KeyboardShortcut DrawAlt { get; set; } = new(KeyboardKey.KEY_NULL);
-    public KeyboardShortcut EraseAlt { get; set; } = new(KeyboardKey.KEY_F);
-    public KeyboardShortcut DragLevelAlt { get; set; } = new(KeyboardKey.KEY_G);
+    public KeyboardShortcut AltDraw { get; set; } = new(KeyboardKey.KEY_NULL);
+    public KeyboardShortcut AltErase { get; set; } = new(KeyboardKey.KEY_F);
+    public KeyboardShortcut AltDragLevel { get; set; } = new(KeyboardKey.KEY_G);
     
-    public KeyboardShortcut Undo { get; set; } = new(Ctrl:true, Shift:false, Key:KeyboardKey.KEY_Z);
-    public KeyboardShortcut Redo { get; set; } = new(Ctrl:true, Shift:true, Key:KeyboardKey.KEY_Z);
+    public KeyboardShortcut Undo { get; set; } = new(ctrl:true, shift:false, key:KeyboardKey.KEY_Z);
+    public KeyboardShortcut Redo { get; set; } = new(ctrl:true, shift:true, key:KeyboardKey.KEY_Z);
 }
 
 public record TileShortcuts
@@ -159,26 +159,30 @@ public record TileShortcuts
     public KeyboardShortcut FocusOnTileCategoryMenu { get; set; } = new(KeyboardKey.KEY_A);
     public KeyboardShortcut MoveDown { get; set; } = new(KeyboardKey.KEY_S);
     public KeyboardShortcut MoveUp { get; set; } = new(KeyboardKey.KEY_W);
-    public KeyboardShortcut CycleLayer { get; set; } = new(KeyboardKey.KEY_L);
-    public KeyboardShortcut ToggleTileSpecs { get; set; } = new(KeyboardKey.KEY_T);
+    public KeyboardShortcut CycleLayers { get; set; } = new(KeyboardKey.KEY_L);
     public KeyboardShortcut PickupItem { get; set; } = new(KeyboardKey.KEY_Q);
     public KeyboardShortcut ForcePlaceTileWithGeo { get; set; } = new(KeyboardKey.KEY_G);
-    public KeyboardShortcut ForcePlaceTileWithoutGeo { get; set; } = new(KeyboardKey.KEY_F, Shift:false);
+    public KeyboardShortcut ForcePlaceTileWithoutGeo { get; set; } = new(KeyboardKey.KEY_F, shift:false);
     public KeyboardShortcut TileMaterialSwitch { get; set; } = new(KeyboardKey.KEY_M);
-    public KeyboardShortcut ThreeByThreeMaterialBrushSize { get; set; } = new(KeyboardKey.KEY_F, Shift:true);
-    public KeyboardShortcut FiveByFiveMaterialBrushSize { get; set; } = new(KeyboardKey.KEY_V, Shift:true);
     public KeyboardShortcut HoveredItemInfo { get; set; } = new(KeyboardKey.KEY_P);
+
+    public KeyboardShortcut Undo { get; set; } = new(KeyboardKey.KEY_Z, ctrl:true, shift:false);
+    public KeyboardShortcut Redo { get; set; } = new(KeyboardKey.KEY_Z, ctrl:true, shift: true);
 
     public KeyboardShortcut ToggleLayer1 { get; set; } = new(KeyboardKey.KEY_Z);
     public KeyboardShortcut ToggleLayer2 { get; set; } = new(KeyboardKey.KEY_X);
     public KeyboardShortcut ToggleLayer3 { get; set; } = new(KeyboardKey.KEY_C);
 
-    public KeyboardShortcut ToggleLayer1Tiles { get; set; } = new(KeyboardKey.KEY_Z, Shift:true);
-    public KeyboardShortcut ToggleLayer2Tiles { get; set; } = new(KeyboardKey.KEY_X, Shift:true);
-    public KeyboardShortcut ToggleLayer3Tiles { get; set; } = new(KeyboardKey.KEY_C, Shift:true);
+    public KeyboardShortcut ToggleLayer1Tiles { get; set; } = new(KeyboardKey.KEY_Z, shift:true);
+    public KeyboardShortcut ToggleLayer2Tiles { get; set; } = new(KeyboardKey.KEY_X, shift:true);
+    public KeyboardShortcut ToggleLayer3Tiles { get; set; } = new(KeyboardKey.KEY_C, shift:true);
 
     public KeyboardShortcut ResizeMaterialBrush { get; set; } = KeyboardKey.KEY_LEFT_ALT;
 
+    public KeyboardShortcut AltDraw { get; set; } = new(KeyboardKey.KEY_NULL);
+    public KeyboardShortcut AltErase { get; set; } = new(KeyboardKey.KEY_NULL);
+    public KeyboardShortcut AltDragLevel { get; set; } = new(KeyboardKey.KEY_NULL);
+    
     public MouseShortcut Draw { get; set; } = new(MouseButton.MOUSE_BUTTON_LEFT);
     public MouseShortcut Erase { get; set; } = new(MouseButton.MOUSE_BUTTON_RIGHT);
     public MouseShortcut DragLevel { get; set; } = new(MouseButton.MOUSE_BUTTON_MIDDLE);
@@ -190,6 +194,7 @@ public class CameraShortcuts
     public MouseShortcut GrabCamera { get; set; } = MouseButton.MOUSE_BUTTON_LEFT;
     public MouseShortcut CreateAndDeleteCamera { get; set; } = MouseButton.MOUSE_BUTTON_RIGHT;
     public MouseShortcut ManipulateCamera { get; set; } = MouseButton.MOUSE_BUTTON_LEFT;
+    
     public KeyboardShortcut ManipulateCameraAlt { get; set; } = KeyboardKey.KEY_NULL;
     
     
@@ -210,36 +215,34 @@ public class LightShortcuts
     public KeyboardShortcut NextBrush { get; set; } = KeyboardKey.KEY_F;
     public KeyboardShortcut PreviousBrush { get; set; } = KeyboardKey.KEY_R;
 
-    public KeyboardShortcut RotateBrushCounterClockwise { get; set; } = new(KeyboardKey.KEY_Q, Shift:false);
-    public KeyboardShortcut FastRotateBrushCounterClockwise { get; set; } = new(KeyboardKey.KEY_Q, Shift:true);
+    public KeyboardShortcut RotateBrushCounterClockwise { get; set; } = new(KeyboardKey.KEY_Q, shift:false);
+    public KeyboardShortcut FastRotateBrushCounterClockwise { get; set; } = new(KeyboardKey.KEY_Q, shift:true);
     
-    public KeyboardShortcut RotateBrushClockwise { get; set; } = new(KeyboardKey.KEY_E, Shift:false);
-    public KeyboardShortcut FastRotateBrushClockwise { get; set; } = new(KeyboardKey.KEY_E, Shift:true);
+    public KeyboardShortcut RotateBrushClockwise { get; set; } = new(KeyboardKey.KEY_E, shift:false);
+    public KeyboardShortcut FastRotateBrushClockwise { get; set; } = new(KeyboardKey.KEY_E, shift:true);
 
-    public KeyboardShortcut StretchBrushVertically { get; set; } = new(KeyboardKey.KEY_W, Shift:false);
-    public KeyboardShortcut FastStretchBrushVertically { get; set; } = new(KeyboardKey.KEY_W, Shift:true);
+    public KeyboardShortcut StretchBrushVertically { get; set; } = new(KeyboardKey.KEY_W, shift:false);
+    public KeyboardShortcut FastStretchBrushVertically { get; set; } = new(KeyboardKey.KEY_W, shift:true);
     
-    public KeyboardShortcut SqueezeBrushVertically { get; set; } = new(KeyboardKey.KEY_S, Shift:false);
-    public KeyboardShortcut FastSqueezeBrushVertically { get; set; } = new(KeyboardKey.KEY_S, Shift:true);
+    public KeyboardShortcut SqueezeBrushVertically { get; set; } = new(KeyboardKey.KEY_S, shift:false);
+    public KeyboardShortcut FastSqueezeBrushVertically { get; set; } = new(KeyboardKey.KEY_S, shift:true);
     
-    public KeyboardShortcut StretchBrushHorizontally { get; set; } = new (KeyboardKey.KEY_D, Shift:false);
-    public KeyboardShortcut FastStretchBrushHorizontally { get; set; } = new(KeyboardKey.KEY_D, Shift:true);
+    public KeyboardShortcut StretchBrushHorizontally { get; set; } = new (KeyboardKey.KEY_D, shift:false);
+    public KeyboardShortcut FastStretchBrushHorizontally { get; set; } = new(KeyboardKey.KEY_D, shift:true);
     
-    public KeyboardShortcut SqueezeBrushHorizontally { get; set; } = new (KeyboardKey.KEY_A, Shift:false);
-    public KeyboardShortcut FastSqueezeBrushHorizontally { get; set; } = new(KeyboardKey.KEY_A, Shift:true);
+    public KeyboardShortcut SqueezeBrushHorizontally { get; set; } = new (KeyboardKey.KEY_A, shift:false);
+    public KeyboardShortcut FastSqueezeBrushHorizontally { get; set; } = new(KeyboardKey.KEY_A, shift:true);
     
     public KeyboardShortcut ToggleTileVisibility { get; set; } = KeyboardKey.KEY_T;
 
     public KeyboardShortcut ToggleTilePreview { get; set; } = KeyboardKey.KEY_P;
     public KeyboardShortcut ToggleTintedTileTextures { get; set; } = KeyboardKey.KEY_Y;
 
-    public KeyboardShortcut SlowWarpSpeed { get; set; } = KeyboardKey.KEY_SPACE;
-
-    public KeyboardShortcut ToggleShadow { get; set; } = KeyboardKey.KEY_C;
 
     public KeyboardShortcut DragLevelAlt { get; set; } = KeyboardKey.KEY_G;
     public KeyboardShortcut PaintAlt { get; set; } = KeyboardKey.KEY_V;
     public KeyboardShortcut EraseAlt { get; set; } = KeyboardKey.KEY_NULL;
+    
     public MouseShortcut DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_MIDDLE;
     public MouseShortcut Paint { get; set; } = MouseButton.MOUSE_BUTTON_LEFT;
     public MouseShortcut Erase { get; set; } = MouseButton.MOUSE_BUTTON_RIGHT;
@@ -249,29 +252,28 @@ public class EffectsShortcuts
 {
     public KeyboardShortcut NewEffect { get; set; } = KeyboardKey.KEY_N;
 
-    public KeyboardShortcut NewEffectMenuCategoryNavigation { get; set; } = new(KeyboardKey.KEY_LEFT_SHIFT, Shift: true);    
+    public KeyboardShortcut NewEffectMenuCategoryNavigation { get; set; } = new(KeyboardKey.KEY_LEFT_SHIFT, shift: true);    
     public KeyboardShortcut MoveDownInNewEffectMenu { get; set; } = KeyboardKey.KEY_S;
     public KeyboardShortcut MoveUpInNewEffectMenu { get; set; } = KeyboardKey.KEY_W;
 
     public KeyboardShortcut AcceptNewEffect { get; set; } = KeyboardKey.KEY_SPACE;
     public KeyboardShortcut AcceptNewEffectAlt { get; set; } = KeyboardKey.KEY_ENTER;
 
-    public KeyboardShortcut ShiftAppliedEffectUp { get; set; } = new(KeyboardKey.KEY_W, Shift: true);
-    public KeyboardShortcut ShiftAppliedEffectDown { get; set; } = new(KeyboardKey.KEY_S, Shift: true);
+    public KeyboardShortcut ShiftAppliedEffectUp { get; set; } = new(KeyboardKey.KEY_W, shift: true);
+    public KeyboardShortcut ShiftAppliedEffectDown { get; set; } = new(KeyboardKey.KEY_S, shift: true);
 
-    public KeyboardShortcut CycleAppliedEffectUp { get; set; } = new(KeyboardKey.KEY_W, Alt:false);
-    public KeyboardShortcut CycleAppliedEffectDown { get; set; } = new(KeyboardKey.KEY_S, Alt:false);
+    public KeyboardShortcut CycleAppliedEffectUp { get; set; } = new(KeyboardKey.KEY_W, alt:false);
+    public KeyboardShortcut CycleAppliedEffectDown { get; set; } = new(KeyboardKey.KEY_S, alt:false);
 
     public KeyboardShortcut DeleteAppliedEffect { get; set; } = KeyboardKey.KEY_X;
     
-    public KeyboardShortcut CycleEffectOptionsUp { get; set; } = new(KeyboardKey.KEY_W, Alt: true);
-    public KeyboardShortcut CycleEffectOptionsDown { get; set; } = new(KeyboardKey.KEY_S, Alt: true);
+    public KeyboardShortcut CycleEffectOptionsUp { get; set; } = new(KeyboardKey.KEY_W, alt: true);
+    public KeyboardShortcut CycleEffectOptionsDown { get; set; } = new(KeyboardKey.KEY_S, alt: true);
     
-    public KeyboardShortcut CycleEffectOptionChoicesRight { get; set; } = new(KeyboardKey.KEY_D, Alt: true);
-    public KeyboardShortcut CycleEffectOptionChoicesLeft { get; set; } = new(KeyboardKey.KEY_A, Alt: true);
+    public KeyboardShortcut CycleEffectOptionChoicesRight { get; set; } = new(KeyboardKey.KEY_D, alt: true);
+    public KeyboardShortcut CycleEffectOptionChoicesLeft { get; set; } = new(KeyboardKey.KEY_A, alt: true);
 
     public KeyboardShortcut ToggleOptionsVisibility { get; set; } = KeyboardKey.KEY_O;
-    public KeyboardShortcut ToggleBrushEraseMode { get; set; } = KeyboardKey.KEY_Q;
 
     public KeyboardShortcut DragLevelAlt { get; set; } = KeyboardKey.KEY_G;
     public KeyboardShortcut PaintAlt { get; set; } = KeyboardKey.KEY_P;
@@ -289,8 +291,8 @@ public class PropsShortcuts
     public KeyboardShortcut EscapeSpinnerControl { get; set; } = KeyboardKey.KEY_ESCAPE;
     public KeyboardShortcut CycleLayers { get; set; } = KeyboardKey.KEY_L;
 
-    public KeyboardShortcut CycleModeRight { get; set; } = new(KeyboardKey.KEY_E, Shift:true);
-    public KeyboardShortcut CycleModeLeft { get; set; } = new(KeyboardKey.KEY_Q, Shift:true);
+    public KeyboardShortcut CycleModeRight { get; set; } = new(KeyboardKey.KEY_E, shift:true);
+    public KeyboardShortcut CycleModeLeft { get; set; } = new(KeyboardKey.KEY_Q, shift:true);
 
     public KeyboardShortcut CycleSnapMode { get; set; } = new(KeyboardKey.KEY_NULL);
 
@@ -298,12 +300,12 @@ public class PropsShortcuts
     public KeyboardShortcut ToggleLayer2 { get; set; } = KeyboardKey.KEY_X;
     public KeyboardShortcut ToggleLayer3 { get; set; } = KeyboardKey.KEY_C;
 
-    public KeyboardShortcut ToggleLayer1Tiles { get; set; } = new(KeyboardKey.KEY_Z, Shift:true);
-    public KeyboardShortcut ToggleLayer2Tiles { get; set; } = new(KeyboardKey.KEY_X, Shift:true);
-    public KeyboardShortcut ToggleLayer3Tiles { get; set; } = new(KeyboardKey.KEY_C, Shift:true);
+    public KeyboardShortcut ToggleLayer1Tiles { get; set; } = new(KeyboardKey.KEY_Z, shift:true);
+    public KeyboardShortcut ToggleLayer2Tiles { get; set; } = new(KeyboardKey.KEY_X, shift:true);
+    public KeyboardShortcut ToggleLayer3Tiles { get; set; } = new(KeyboardKey.KEY_C, shift:true);
     
-    public KeyboardShortcut CycleCategoriesRight { get; set; } = new(KeyboardKey.KEY_D, Shift: true);
-    public KeyboardShortcut CycleCategoriesLeft { get; set; } = new(KeyboardKey.KEY_A, Shift: true);
+    public KeyboardShortcut CycleCategoriesRight { get; set; } = new(KeyboardKey.KEY_D, shift: true);
+    public KeyboardShortcut CycleCategoriesLeft { get; set; } = new(KeyboardKey.KEY_A, shift: true);
 
     public KeyboardShortcut InnerCategoryFocusRight { get; set; } = KeyboardKey.KEY_D;
     public KeyboardShortcut InnerCategoryFocusLeft { get; set; } = KeyboardKey.KEY_A;
@@ -315,21 +317,21 @@ public class PropsShortcuts
     
     public KeyboardShortcut PlacePropAlt { get; set; } = KeyboardKey.KEY_NULL;
     
-    public KeyboardShortcut DraLevelAlt { get; set; } = KeyboardKey.KEY_G;
+    public KeyboardShortcut DragLevelAlt { get; set; } = KeyboardKey.KEY_G;
 
     
     public KeyboardShortcut ToggleMovingPropsMode { get; set; } = KeyboardKey.KEY_F;
     public KeyboardShortcut ToggleRotatingPropsMode { get; set; } = KeyboardKey.KEY_R;
     public KeyboardShortcut ToggleScalingPropsMode { get; set; } = KeyboardKey.KEY_S;
     public KeyboardShortcut TogglePropsVisibility { get; set; } = KeyboardKey.KEY_H;
-    public KeyboardShortcut ToggleEditingPropQuadsMode { get; set; } = new(KeyboardKey.KEY_Q, Shift:false);
+    public KeyboardShortcut ToggleEditingPropQuadsMode { get; set; } = new(KeyboardKey.KEY_Q, shift:false);
     public KeyboardShortcut DeleteSelectedProps { get; set; } = KeyboardKey.KEY_D;
     public KeyboardShortcut ToggleRopePointsEditingMode { get; set; } = KeyboardKey.KEY_P;
     public KeyboardShortcut ToggleRopeEditingMode { get; set; } = KeyboardKey.KEY_B;
 
     public KeyboardShortcut ToggleNoCollisionPropPlacement { get; set; } = KeyboardKey.KEY_NULL;
 
-    public KeyboardShortcut PropSelectionModifier { get; set; } = new(KeyboardKey.KEY_LEFT_CONTROL, Ctrl: true);
+    public KeyboardShortcut PropSelectionModifier { get; set; } = new(KeyboardKey.KEY_LEFT_CONTROL, ctrl: true);
     
     public KeyboardShortcut SelectPropsAlt { get; set; } = KeyboardKey.KEY_NULL;
     
@@ -422,7 +424,7 @@ public class GeoEditor(
     bool legacyGeoTools = false,
     bool allowOutboundsPlacement = false,
     bool showCameras = false,
-    bool showTiles = true
+    bool showTiles = false
 )
 {
     public LayerColors LayerColors { get; set; } = layerColors;
@@ -460,36 +462,62 @@ public interface IShortcut {
     bool Check(bool ctrl = false, bool shift = false, bool alt = false, bool hold = false);
 }
 
-public record KeyboardShortcut(
-    KeyboardKey Key, 
-    bool? Ctrl = null, 
-    bool? Shift = null,
-    bool? Alt = null
+public class KeyboardShortcut(
+    KeyboardKey key, 
+    bool? ctrl = null, 
+    bool? shift = null,
+    bool? alt = null
 ) : IShortcut
 {
+    public KeyboardKey Key { get; set; } = key;
+    public bool? Ctrl { get; set; } = ctrl;
+    public bool? Shift { get; set; } = shift;
+    public bool? Alt { get; set; } = alt;
+    
     public static implicit operator KeyboardKey(KeyboardShortcut k) => k.Key;
     public static implicit operator KeyboardShortcut(KeyboardKey k) => new(k);
     
     public bool Check(bool ctrl = false, bool shift = false, bool alt = false, bool hold = false)
     {
-        return (Ctrl is null || Ctrl == ctrl) && (Shift is null || Shift == shift) && (Alt is null || Alt == alt) && (hold ? Raylib.IsKeyDown(Key) : Raylib.IsKeyPressed(Key));
+        return (Ctrl is null || Ctrl == ctrl) && 
+               (Shift is null || Shift == shift) && 
+               (Alt is null || Alt == alt) && 
+               (hold ? Raylib.IsKeyDown(Key) : Raylib.IsKeyPressed(Key));
     }
 
     public override string ToString()
     {
-        return $"{(Ctrl is not null and not false ? "CTRL + " : "")}{(Shift is not null and not false ? "SHIFT + " : "")}{(Alt is not null and not false ? "ALT + " : "")}{(char)Key}";
+        return $"{(Ctrl is not null and not false ? "CTRL + " : "")}{(Shift is not null and not false ? "SHIFT + " : "")}{(Alt is not null and not false ? "ALT + " : "")}{Key switch {KeyboardKey.KEY_SPACE => "SPACE", KeyboardKey.KEY_ENTER => "ENTER", KeyboardKey.KEY_ESCAPE => "ESCAPE", var k => (char)k}}";
     }
 }
 
-public record MouseShortcut(MouseButton Button, bool? Ctrl = null, bool? Shift = null, bool? Alt = null) : IShortcut
+public class MouseShortcut(MouseButton button, bool? ctrl = null, bool? shift = null, bool? alt = null) : IShortcut
 {
+    public MouseButton Button { get; set; } = button;
+    public bool? Ctrl { get; set; } = ctrl;
+    public bool? Shift { get; set; } = shift;
+    public bool? Alt { get; set; } = alt;
+    
     public static implicit operator MouseButton(MouseShortcut b) => b.Button;
     public static implicit operator MouseShortcut(MouseButton m) => new(m);
+
+    private static string ButtonName(MouseButton button) => button switch
+    {
+        MouseButton.MOUSE_BUTTON_LEFT => "Left",
+        MouseButton.MOUSE_BUTTON_MIDDLE => "Middle",
+        MouseButton.MOUSE_BUTTON_RIGHT => "Right",
+        _ => "UNKNOWN"
+    };
     
     public bool Check(bool ctrl = false, bool shift = false, bool alt = false, bool hold = false)
     {
         return (Ctrl is null || Ctrl == ctrl) && (Shift is null || Shift == shift) && (Alt is null || Alt == alt) &&
                (hold ? Raylib.IsMouseButtonDown(Button) : Raylib.IsMouseButtonPressed(Button));
+    }
+    
+    public override string ToString()
+    {
+        return $"{(Ctrl is not null and not false ? "CTRL + " : "")}{(Shift is not null and not false ? "SHIFT + " : "")}{(Alt is not null and not false ? "ALT + " : "")}{ButtonName(Button)}";
     }
 }
 

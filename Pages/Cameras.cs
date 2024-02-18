@@ -4,11 +4,11 @@ using static Raylib_CsLo.Raylib;
 
 namespace Leditor;
 
-internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
+internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null) : IPage
 {
-    readonly Serilog.Core.Logger logger = logger;
+    private readonly Serilog.Core.Logger _logger = logger;
 
-    Camera2D camera = new() { zoom = 0.8f, target = new(-100, -100) };
+    Camera2D _camera = camera ?? new() { zoom = 0.8f, target = new(-100, -100) };
     bool clickTracker = false;
     int draggedCamera = -1;
     private readonly CameraShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.CameraEditor;
@@ -62,19 +62,19 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
         if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true))
         {
             Vector2 delta = Raylib.GetMouseDelta();
-            delta = RayMath.Vector2Scale(delta, -1.0f / camera.zoom);
-            camera.target = RayMath.Vector2Add(camera.target, delta);
+            delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
+            _camera.target = RayMath.Vector2Add(_camera.target, delta);
         }
 
         // handle zoom
         var cameraWheel = Raylib.GetMouseWheelMove();
         if (cameraWheel != 0)
         {
-            var mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-            camera.offset = Raylib.GetMousePosition();
-            camera.target = mouseWorldPosition;
-            camera.zoom += cameraWheel * GLOBALS.ZoomIncrement;
-            if (camera.zoom < GLOBALS.ZoomIncrement) camera.zoom = GLOBALS.ZoomIncrement;
+            var mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), _camera);
+            _camera.offset = Raylib.GetMousePosition();
+            _camera.target = mouseWorldPosition;
+            _camera.zoom += cameraWheel * GLOBALS.ZoomIncrement;
+            if (_camera.zoom < GLOBALS.ZoomIncrement) _camera.zoom = GLOBALS.ZoomIncrement;
         }
 
         if (IsMouseButtonReleased(_shortcuts.DragLevel.Button) || IsMouseButtonReleased(_shortcuts.ManipulateCamera.Button) && clickTracker)
@@ -84,7 +84,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
 
         if (_shortcuts.ManipulateCamera.Check(ctrl, shift, alt, true) && !clickTracker && draggedCamera != -1)
         {
-            var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
+            var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), _camera);
             GLOBALS.Level.Cameras[draggedCamera].Coords = new Vector2(pos.X - (72 * GLOBALS.Scale - 40) / 2f, pos.Y - (43 * GLOBALS.Scale - 60) / 2f);
             draggedCamera = -1;
             clickTracker = true;
@@ -92,7 +92,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
 
         if (_shortcuts.CreateCamera.Check(ctrl, shift, alt) && draggedCamera == -1)
         {
-            var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
+            var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), _camera);
             GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = new Vector2(0, 0), Quad = new(new(), new(), new(), new()) }];
             GLOBALS.CamQuadLocks = [..GLOBALS.CamQuadLocks, 0];
             draggedCamera = GLOBALS.Level.Cameras.Count - 1;
@@ -109,7 +109,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
         {
             if (draggedCamera == -1)
             {
-                var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
+                var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), _camera);
                 GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = new Vector2(0, 0), Quad = new(new(), new(), new(), new()) }];
                 GLOBALS.CamQuadLocks = [..GLOBALS.CamQuadLocks, 0];
                 draggedCamera = GLOBALS.Level.Cameras.Count - 1;
@@ -128,7 +128,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
         {
             Raylib.ClearBackground(new(170, 170, 170, 255));
 
-            Raylib.BeginMode2D(camera);
+            Raylib.BeginMode2D(_camera);
             {
 
                 Raylib.DrawRectangle(
@@ -250,11 +250,11 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger) : IPage
                 {
                     if (index == draggedCamera)
                     {
-                        var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
-                        Printers.DrawCameraSprite(new(pos.X - (72 * GLOBALS.Scale - 40) / 2, pos.Y - (43 * GLOBALS.Scale - 60) / 2), cam.Quad, camera, index);
+                        var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), _camera);
+                        Printers.DrawCameraSprite(new(pos.X - (72 * GLOBALS.Scale - 40) / 2, pos.Y - (43 * GLOBALS.Scale - 60) / 2), cam.Quad, _camera, index);
                         continue;
                     }
-                    var (clicked, hovered) = Printers.DrawCameraSprite(cam.Coords, cam.Quad, camera, index);
+                    var (clicked, hovered) = Printers.DrawCameraSprite(cam.Coords, cam.Quad, _camera, index);
 
                     if (clicked && !clickTracker)
                     {

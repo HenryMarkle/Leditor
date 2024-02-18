@@ -4,13 +4,13 @@ using System.Numerics;
 
 namespace Leditor;
 
-public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
+public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? camera = null) : IPage
 {
     private readonly Serilog.Core.Logger _logger = logger;
 
     private readonly ExperimentalGeoShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts;
 
-    private Camera2D _camera = new() { zoom = 1.0f };
+    private Camera2D _camera = camera ?? new() { zoom = 1.0f };
     
     private bool _multiselect;
     private bool _hideGrid;
@@ -155,7 +155,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
         // handle changing layers
 
-        if (_shortcuts.CycleLayer.Check(ctrl, shift, alt))
+        if (_shortcuts.CycleLayers.Check(ctrl, shift, alt))
         {
             GLOBALS.Layer = ++GLOBALS.Layer % 3;
         }
@@ -166,7 +166,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
         }
 
         // handle mouse drag
-        if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.DragLevelAlt.Check(ctrl, shift, alt, true))
+        if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.AltDragLevel.Check(ctrl, shift, alt, true))
         {
             var delta = GetMouseDelta();
             delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
@@ -278,7 +278,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
 
         if (_allowMultiSelect)
         {
-            if ((_shortcuts.Draw.Check(ctrl, shift, alt, true) || _shortcuts.DrawAlt.Check(ctrl, shift, alt, true)) && !_clickTracker)
+            if ((_shortcuts.Draw.Check(ctrl, shift, alt, true) || _shortcuts.AltDraw.Check(ctrl, shift, alt, true)) && !_clickTracker)
             {
                 if (canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width)
                 {
@@ -291,7 +291,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                     _eraseMode = false;
                 }
             }
-            else if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.EraseAlt.Check(ctrl, shift, alt, true)) && canDrawGeo && !_clickTracker)
+            else if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.AltErase.Check(ctrl, shift, alt, true)) && canDrawGeo && !_clickTracker)
             {
                 if (canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width)
                 {
@@ -305,7 +305,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 }
             }
 
-            if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.DrawAlt.Key)) && _prevCoordsX != -1)
+            if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw.Key)) && _prevCoordsX != -1)
             {
                 _clickTracker = false;
                 _eraseMode = false;
@@ -494,7 +494,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 
                 _multiselect = false;
             }
-            else if ((IsMouseButtonReleased(_shortcuts.Erase.Button) || IsKeyReleased(_shortcuts.EraseAlt.Key)) && _prevCoordsX != -1)
+            else if ((IsMouseButtonReleased(_shortcuts.Erase.Button) || IsKeyReleased(_shortcuts.AltErase.Key)) && _prevCoordsX != -1)
             {
                 _eraseMode = false;
                 _clickTracker = false;
@@ -621,7 +621,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
         // handle placing geo
         else
         {
-            if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.EraseAlt.Check(ctrl, shift, alt, true)) && canDrawGeo && inMatrixBounds)
+            if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.AltErase.Check(ctrl, shift, alt, true)) && canDrawGeo && inMatrixBounds)
             {
                 _clickTracker = true;
                 var cell = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
@@ -643,7 +643,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 
                 GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = cell;
             }
-            else if ((_shortcuts.Draw.Check(ctrl, shift, alt, true) || _shortcuts.DrawAlt.Check(ctrl, shift, alt, true)) && canDrawGeo && inMatrixBounds)
+            else if ((_shortcuts.Draw.Check(ctrl, shift, alt, true) || _shortcuts.AltDraw.Check(ctrl, shift, alt, true)) && canDrawGeo && inMatrixBounds)
             {
                 _clickTracker = true;
                 
@@ -720,14 +720,14 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger) : IPage
                 if (_groupedActions.Count == 0 || !equalActions) _groupedActions.Add(newAction);
             }
 
-            if ((IsMouseButtonReleased(_shortcuts.Erase.Button) || IsKeyReleased(_shortcuts.EraseAlt.Key)) &&
+            if ((IsMouseButtonReleased(_shortcuts.Erase.Button) || IsKeyReleased(_shortcuts.AltErase.Key)) &&
                 _clickTracker)
             {
                 _clickTracker = false;
                 _gram.Proceed([.._groupedActions]);
                 _groupedActions.Clear();
             }
-            else if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.DrawAlt.Key)) &&
+            else if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw.Key)) &&
                      _clickTracker)
             {
                 _clickTracker = false;

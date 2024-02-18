@@ -1,6 +1,7 @@
 ﻿using static Raylib_CsLo.Raylib;
 
 using System.Numerics;
+using System.Text.Json;
 
 namespace Leditor;
 
@@ -81,6 +82,8 @@ internal static class GLOBALS
         internal static string MaterialsInitPath => Path.Combine(IndexDirectory, "materials.txt");
         internal static string EffectsInitPath => Path.Combine(IndexDirectory, "effects.txt");
         internal static string PropsInitPath => Path.Combine(IndexDirectory, "props.txt");
+        
+        internal static string SettingsPath => Path.Combine(ExecutableDirectory, "settings.json");
 
 
 
@@ -677,5 +680,8 @@ internal static class GLOBALS
     internal static Task<PropCheckResult>? PropCheck { get; set; } = null;
     
     public static Serilog.Core.Logger? Logger { get; set; }
+
+    public static JsonSerializerOptions JsonSerializerOptions { get; set; } =
+        new JsonSerializerOptions { WriteIndented = true };
 #nullable disable
 }

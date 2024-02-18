@@ -443,7 +443,7 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.24";
+        const string version = "Henry's Leditor v0.9.26";
         const string raylibVersion = "Raylib v4.2.0.9";
         
         // Load tiles and props
@@ -774,6 +774,9 @@ class Program
         // Page event handlers
         startPage.ProjectLoaded += propsPage.OnProjectLoaded;
         startPage.ProjectLoaded += savePage.OnProjectLoaded;
+        
+        mainPage.ProjectLoaded += propsPage.OnProjectLoaded;
+        mainPage.ProjectLoaded += savePage.OnProjectLoaded;
         
         dimensionsPage.ProjectCreated += propsPage.OnProjectCreated;
         //

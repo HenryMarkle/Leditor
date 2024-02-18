@@ -8,7 +8,7 @@ internal class PropsEditorPage : IPage
 {
     private readonly Serilog.Core.Logger _logger;
 
-    private Camera2D _camera = new () { zoom = 0.8f };
+    private Camera2D _camera;
 
     private readonly PropsShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.PropsEditor;
     
@@ -55,7 +55,7 @@ internal class PropsEditorPage : IPage
     
     private const float PropScale = 0.4f;
 
-    private int _snapMode = 1;
+    private int _snapMode = 0;
 
     private int _selectedListPage;
 
@@ -76,7 +76,7 @@ internal class PropsEditorPage : IPage
     private bool _editingPropPoints;
     private bool _ropeMode;
 
-    private bool _noCollisionPropPlacement = true;
+    private bool _noCollisionPropPlacement;
 
     private byte _stretchAxes;
 
@@ -151,9 +151,10 @@ internal class PropsEditorPage : IPage
     
     private (int index, bool simSwitch, RopeModel model, Vector2[] bezierHandles)[] _models;
 
-    internal PropsEditorPage(Serilog.Core.Logger logger)
+    internal PropsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null)
     {
         _logger = logger;
+        _camera = camera ?? new() { zoom = 0.8f };
 
         for (var c = 0; c < GLOBALS.Tiles.Length; c++)
         {
@@ -394,7 +395,7 @@ internal class PropsEditorPage : IPage
         }
 
         // handle mouse drag
-        if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.DraLevelAlt.Check(ctrl, shift, alt, true))
+        if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.DragLevelAlt.Check(ctrl, shift, alt, true))
         {
             var delta = GetMouseDelta();
             delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);

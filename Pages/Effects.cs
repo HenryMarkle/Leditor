@@ -4,14 +4,14 @@ using static Raylib_CsLo.Raylib;
 
 namespace Leditor;
 
-internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures) : IPage
+internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures, Camera2D? camera = null) : IPage
 {
     private readonly Serilog.Core.Logger _logger = logger;
     private readonly Texture[] _textures = textures;
 
     private readonly EffectsShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.EffectsEditor;
 
-    private Camera2D _camera = new() { zoom = 1.0f };
+    private Camera2D _camera = camera ?? new() { zoom = 1.0f };
 
     private bool _addNewEffectMode;
 
@@ -571,7 +571,6 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures)
                 }
 
                 if (_shortcuts.ToggleOptionsVisibility.Check(ctrl, shift, alt)) _showEffectOptions = !_showEffectOptions;
-                if (_shortcuts.ToggleBrushEraseMode.Check(ctrl, shift, alt)) _brushEraseMode = !_brushEraseMode;
 
 
                 // Delete effect
