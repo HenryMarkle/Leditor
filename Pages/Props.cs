@@ -92,7 +92,6 @@ internal class PropsEditorPage : IPage
     private bool[] _hidden = [];
 
     private readonly (string name, Color color)[] _propCategoriesOnly = GLOBALS.PropCategories[..^2]; // a risky move..
-    private readonly InitPropBase[][] _propsOnly = GLOBALS.Props[..^2]; // a risky move..
 
     private readonly (int index, string category)[] _tilesAsPropsCategoryIndices = [];
     private readonly (int index, InitTile init)[][] _tilesAsPropsIndices = [];
@@ -179,7 +178,7 @@ internal class PropsEditorPage : IPage
         _tilesAsPropsCategoryNames = [..from c in _tilesAsPropsCategoryIndices select c.category];
         _tilesAsPropsNames = _tilesAsPropsIndices.Select(c => c.Select(t => t.init.Name).ToArray()).ToArray();
         _otherCategoryNames = [..from c in _propCategoriesOnly select c.name];
-        _otherNames = _propsOnly.Select(c => c.Select(p => p.Name).ToArray()).ToArray();
+        _otherNames = GLOBALS.Props.Select(c => c.Select(p => p.Name).ToArray()).ToArray();
     }
 
     #nullable enable
@@ -267,13 +266,13 @@ internal class PropsEditorPage : IPage
                 if (_propCategoryFocus)
                 {
                     _propsMenuOthersCategoryIndex--;
-                    if (_propsMenuOthersCategoryIndex < 0) _propsMenuOthersCategoryIndex = _propsOnly.Length - 1;
+                    if (_propsMenuOthersCategoryIndex < 0) _propsMenuOthersCategoryIndex = GLOBALS.Props.Length - 1;
                     _propsMenuOthersIndex = 0;
                 }
                 else
                 {
                     _propsMenuOthersIndex--;
-                    if (_propsMenuOthersIndex < 0) _propsMenuOthersIndex = _propsOnly[_propsMenuOthersCategoryIndex].Length - 1;
+                    if (_propsMenuOthersIndex < 0) _propsMenuOthersIndex = GLOBALS.Props[_propsMenuOthersCategoryIndex].Length - 1;
                 }
                 break;
         }
@@ -312,13 +311,13 @@ internal class PropsEditorPage : IPage
                 if (_propCategoryFocus)
                 {
                     _propsMenuOthersCategoryIndex++;
-                    if (_propsMenuOthersCategoryIndex > _propsOnly.Length - 1) _propsMenuOthersCategoryIndex = 0;
+                    if (_propsMenuOthersCategoryIndex > GLOBALS.Props.Length - 1) _propsMenuOthersCategoryIndex = 0;
                     _propsMenuOthersIndex = 0;
                 }
                 else
                 {
                     _propsMenuOthersIndex++;
-                    if (_propsMenuOthersIndex > _propsOnly[_propsMenuOthersCategoryIndex].Length - 1) _propsMenuOthersIndex = 0;
+                    if (_propsMenuOthersIndex > GLOBALS.Props[_propsMenuOthersCategoryIndex].Length - 1) _propsMenuOthersIndex = 0;
                 }
                 break;
         }
@@ -622,7 +621,7 @@ internal class PropsEditorPage : IPage
 
                             case 3: // Others
                             {
-                                var init = _propsOnly[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
+                                var init = GLOBALS.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
                                 var texture = GLOBALS.Textures.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
                                 
                                 var (width, height, settings) = init switch
@@ -843,7 +842,7 @@ internal class PropsEditorPage : IPage
 
                             case 3: // Others
                             {
-                                var init = _propsOnly[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
+                                var init = GLOBALS.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
                                 var texture = GLOBALS.Textures.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
                                 
                                 var (width, height, settings) = init switch
@@ -2207,7 +2206,7 @@ internal class PropsEditorPage : IPage
                         {
                             // Since I've already seperated regular props from everything else, this can be
                             // considered outdated
-                            var prop = _propsOnly[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
+                            var prop = GLOBALS.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
                             var texture = GLOBALS.Textures.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
                             
                             var (width, height, settings) = prop switch
