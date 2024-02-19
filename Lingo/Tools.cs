@@ -870,8 +870,8 @@ public static class Tools {
                 string name = ((AstNode.String)asList[1]).Value;
                 
                 AstNode.Base[] pointArgs = ((AstNode.GlobalCall)asList[0]).Arguments;
-                var category = ((AstNode.Number)pointArgs[0]).Value.IntValue;
-                var position = ((AstNode.Number)pointArgs[1]).Value.IntValue;
+                var category = pointArgs[0] is AstNode.UnaryOperator u ? (-1 * ((AstNode.Number)u.Expression).Value.IntValue) : ((AstNode.Number)pointArgs[0]).Value.IntValue;
+                var position = pointArgs[1] is AstNode.UnaryOperator u2 ? (-1 * ((AstNode.Number)u2.Expression).Value.IntValue) : ((AstNode.Number)pointArgs[1]).Value.IntValue;
 
                 casted = new TileHead(category, position, name);
                 break;

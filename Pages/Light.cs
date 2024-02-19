@@ -44,6 +44,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
 
     public void Draw()
     {
+        if (GLOBALS.Settings.GlobalCamera) _camera = GLOBALS.Camera with { target = GLOBALS.Camera.target + new Vector2(300, 300)};
         var mouse = GetMousePosition();
         
         var indicatorOrigin = new Vector2(GetScreenWidth() - 100, GetScreenHeight() - 100);
@@ -529,5 +530,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
             #endregion
         }
         EndDrawing();
+        
+        if (GLOBALS.Settings.GlobalCamera) GLOBALS.Camera = _camera with { target = _camera.target - new Vector2(300, 300)};
     }
 }

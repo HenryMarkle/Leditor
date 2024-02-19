@@ -15,6 +15,8 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
 
     public void Draw()
     {
+        if (GLOBALS.Settings.GlobalCamera) _camera = GLOBALS.Camera;
+        
         GLOBALS.PreviousPage = 4;
 
         #region CamerasInputHandlers
@@ -277,6 +279,8 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
 
             #endregion
         }
-        Raylib.EndDrawing();
+        EndDrawing();
+        
+        if (GLOBALS.Settings.GlobalCamera) GLOBALS.Camera = _camera;
     }
 }

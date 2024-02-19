@@ -57,6 +57,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
     {
         GLOBALS.Page = 3;
 
+        if (GLOBALS.Settings.GlobalCamera) _camera = GLOBALS.Camera;
+
         var teWidth = GetScreenWidth();
         var teHeight = GetScreenHeight();
 
@@ -174,8 +176,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 
                 case TileHead:
                 case TileBody:
-                    (_tileCategoryIndex, _tileIndex) = Utils.PickupTile(tileMatrixX, tileMatrixY, GLOBALS.Layer) ?? (_tileCategoryIndex, _tileIndex);
-                    _materialTileSwitch = true;
+                    var pickedTile = Utils.PickupTile(tileMatrixX, tileMatrixY, GLOBALS.Layer);
+                    (_tileCategoryIndex, _tileIndex) = pickedTile ?? (_tileCategoryIndex, _tileIndex);
+                    _materialTileSwitch = pickedTile is not null;
                     break;
             }
         }
@@ -963,10 +966,10 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
             if (inMatrixBounds && canDrawTile)
             {
-                #if DEBUG
 
                 TileCell hoveredTile;
 
+                #if DEBUG
                 try
                 {
                     hoveredTile = GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer];
@@ -977,28 +980,60 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         message:
                         $"Failed to fetch hovered tile from {nameof(GLOBALS.Level.TileMatrix)} (LX: {GLOBALS.Level.TileMatrix.GetLength(1)}, LY: {GLOBALS.Level.TileMatrix.GetLength(0)}): x, y, or z ({tileMatrixX}, {tileMatrixY}, {GLOBALS.Layer}) were out of bounds");
                 }
+                #else
+                hoveredTile = GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer];
+                #endif
 
                 switch (hoveredTile.Data)
                 {
                     case TileDefault:
                     {
-                        DrawText(
-                            GLOBALS.Level.DefaultMaterial,
-                            0,
-                            specsRect.Y + specsRect.height - 20,
-                            20,
-                            WHITE
-                        );
+                        if (GLOBALS.Font is null)
+                        {
+                            DrawText(
+                                GLOBALS.Level.DefaultMaterial,
+                                0,
+                                specsRect.Y + specsRect.height - 20,
+                                20,
+                                WHITE
+                            );
+                        }
+                        else
+                        {
+                            DrawTextEx(
+                                GLOBALS.Font.Value,
+                                GLOBALS.Level.DefaultMaterial,
+                                new Vector2(10, specsRect.Y + specsRect.height - 30),
+                                30,
+                                1,
+                                WHITE
+                            );
+                        }
                     }
                         break;
 
                     case TileHead h:
                     {
-                        DrawText(h.CategoryPostition.Item3,
-                            0,
-                            specsRect.Y + specsRect.height - 20,
-                            20,
-                            WHITE);
+                        if (GLOBALS.Font is null) {
+                            DrawText(
+                                h.CategoryPostition is (-1, -1, _) ? $"Undefined Tile \"{h.CategoryPostition.Name}\"" : h.CategoryPostition.Name,
+                                0,
+                                specsRect.Y + specsRect.height - 20,
+                                20,
+                                WHITE
+                            );
+                        }
+                        else
+                        {
+                            DrawTextEx(
+                                GLOBALS.Font.Value,
+                                h.CategoryPostition is (-1, -1, _) ? $"Undefined Tile \"{h.CategoryPostition.Name}\"" : h.CategoryPostition.Name,
+                                new Vector2(10, specsRect.Y + specsRect.height - 30),
+                                30,
+                                1,
+                                WHITE
+                            );
+                        }
                     }
                         break;
 
@@ -1009,86 +1044,86 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         try
                         {
                             var supposedHead = GLOBALS.Level.TileMatrix[hy-1, hx-1, hz-1];
+
+                            if (GLOBALS.Font is null)
+                            {
+                                DrawText(
+                                    supposedHead.Data is TileHead h
+                                        ? (h.CategoryPostition is (-1, -1, _) ? $"Undefined Tile \"{h.CategoryPostition.Name}\"" : h.CategoryPostition.Name)
+                                        : "Stray Tile Fragment",
+                                    0,
+                                    specsRect.Y + specsRect.height - 20,
+                                    20,
+                                    WHITE
+                                );
+                                
+                            }
+                            else
+                            {
+                                DrawTextEx(
+                                    GLOBALS.Font.Value,
+                                    supposedHead.Data is TileHead h
+                                        ? (h.CategoryPostition is (-1, -1, _) ? $"Undefined Tile \"{h.CategoryPostition.Name}\"" : h.CategoryPostition.Name)
+                                        : "Stray Tile Fragment",
+                                    new Vector2(10,
+                                        specsRect.Y + specsRect.height - 30),
+                                    30,
+                                    1,
+                                    WHITE
+                                );
+                            }
                         
-                            DrawText(
-                                supposedHead.Data is TileHead h
-                                    ? h.CategoryPostition.Item3
-                                    : "Stray Tile Fragment",
-                                0,
-                                specsRect.Y + specsRect.height - 20,
-                                20,
-                                WHITE);
                         }
                         catch (IndexOutOfRangeException)
                         {
-                            DrawText("Stray Tile Fragment", 
-                                0,
-                                specsRect.Y + specsRect.height - 20,
-                                20,
-                                WHITE);
+                            if (GLOBALS.Font is null) {
+                                DrawText("Stray Tile Fragment",
+                                    0,
+                                    specsRect.Y + specsRect.height - 20,
+                                    20,
+                                    WHITE
+                                );
+                            }
+                            else
+                            {
+                                DrawTextEx(
+                                    GLOBALS.Font.Value,
+                                    "Stray Tile Fragment",
+                                    new Vector2(10,
+                                        specsRect.Y + specsRect.height - 30),
+                                    30,
+                                    1,
+                                    WHITE
+                                );
+                            }
                         }
                     }
                         break;
                     
                     case TileMaterial m:
                     {
-                        DrawText(m.Name,
-                            0,
-                            specsRect.Y + specsRect.height - 20,
-                            20,
-                            WHITE);
+                        if (GLOBALS.Font is null) {
+                            DrawText(m.Name,
+                                0,
+                                specsRect.Y + specsRect.height - 20,
+                                20,
+                                WHITE
+                            );
+                        }
+                        else
+                        {
+                            DrawTextEx(
+                                GLOBALS.Font.Value,
+                                m.Name,
+                                new Vector2(10, specsRect.Y + specsRect.height - 30),
+                                30,
+                                1,
+                                WHITE
+                            );
+                        }
                     }
                         break;
                 }
-                #else
-                TileCell hoveredTile;
-
-                try
-                {
-                    hoveredTile = GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer];
-                }
-                catch (IndexOutOfRangeException ie)
-                {
-                    throw new IndexOutOfRangeException(innerException: ie,
-                        message:
-                        $"Failed to fetch hovered tile from {nameof(GLOBALS.Level.TileMatrix)} (LX: {GLOBALS.Level.TileMatrix.GetLength(1)}, LY: {GLOBALS.Level.TileMatrix.GetLength(0)}): x, y, or z ({tileMatrixX}, {tileMatrixY}, {GLOBALS.Layer}) were out of bounds");
-                }
-
-                if (hoveredTile.Data is TileBody tileBody)
-                {
-                    var (hx, hy, hz) = tileBody.HeadPosition;
-                    
-                    TileCell supposedHead;
-
-                    try
-                    {
-                        supposedHead = GLOBALS.Level.TileMatrix[hy, hx, hz];
-                        
-                        DrawText(hoveredTile.Data switch
-                            {
-                                TileHead h => h.CategoryPostition.Item3,
-                                TileBody => supposedHead.Data is TileHead h
-                                    ? h.CategoryPostition.Item3
-                                    : "Stray Tile Fragment",
-                                TileMaterial m => m.Name,
-                                TileDefault => GLOBALS.Level.DefaultMaterial,
-                                _ => throw new Exception("Invalid tile data")
-                            },
-                            (_materialTileSwitch) ? (_showTileSpecs ? specsRect.X + specsRect.width : 25) : 0,
-                            specsRect.Y + specsRect.height - 20,
-                            20,
-                            WHITE);
-                    }
-                    catch (IndexOutOfRangeException)
-                    {
-                        DrawText("Stray Tile Fragment", 
-                            (_materialTileSwitch) ? (_showTileSpecs ? specsRect.X + specsRect.width : 25) : 0,
-                            specsRect.Y + specsRect.height - 20,
-                            20,
-                            WHITE);
-                    }
-                }
-                #endif
             }
 
             // Tile specs panel
@@ -1228,5 +1263,6 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
         EndDrawing();
 
+        if (GLOBALS.Settings.GlobalCamera) GLOBALS.Camera = _camera;
     }
 }

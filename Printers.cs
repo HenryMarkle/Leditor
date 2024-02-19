@@ -572,11 +572,20 @@ internal static class Printers
                 {
                     var data = (TileHead)tileCell.Data;
 
-                    var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1];
+                    var (category, index, _) = data.CategoryPostition;
+                    var undefined = data.CategoryPostition is (-1, -1, _);
 
-                    var tileTexture = category[data.CategoryPostition.Item2];
-                    var color = GLOBALS.TileCategories[data.CategoryPostition.Item1].Item2;
-                    var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1][data.CategoryPostition.Item2];
+                    var tileTexture = undefined
+                        ? GLOBALS.Textures.MissingTile 
+                        : GLOBALS.Textures.Tiles[category][index];
+                    
+                    var color = undefined 
+                        ? PURPLE 
+                        : GLOBALS.TileCategories[category].Item2;
+                    
+                    var initTile = undefined
+                        ? GLOBALS.MissingTile 
+                        : GLOBALS.Tiles[category][index];
                     
                     var center = new Vector2(
                         initTile.Size.Item1 % 2 == 0 ? x * scale + scale : x * scale + scale/2f, 
@@ -584,44 +593,78 @@ internal static class Printers
 
                     var width = (scale / 20f)/2 * (initTile.Type == InitTileType.Box ? initTile.Size.Item1 : initTile.Size.Item1 + initTile.BufferTiles * 2) * 20;
                     var height = (scale / 20f)/2 * (initTile.Size.Item2 + initTile.BufferTiles*2) * 20;
-                    
-                    if (!preview)
+
+                    if (undefined)
                     {
-                        if (tinted)
-                        {
-                            DrawTileAsPropColored(
-                                ref tileTexture,
-                                ref initTile,
-                                ref center,
-                                [
-                                    new(width, -height),
-                                    new(-width, -height),
-                                    new(-width, height),
-                                    new(width, height),
-                                    new(width, -height)
-                                ],
-                                new Color(color.r, color.g, color.b, 255 - GLOBALS.Layer*100),
-                                0
-                            );
-                        }
-                        else
-                        {
-                            DrawTileAsProp(
-                                ref tileTexture,
-                                ref initTile,
-                                ref center,
-                                [
-                                    new(width, -height),
-                                    new(-width, -height),
-                                    new(-width, height),
-                                    new(width, height),
-                                    new(width, -height)
-                                ],
-                                255 - GLOBALS.Layer*100
-                            );
-                        }
+                        DrawTexturePro(
+                            tileTexture, 
+                            new Rectangle(0, 0, tileTexture.width, tileTexture.height),
+                            new(x*scale, y*scale, scale, scale),
+                            new Vector2(0, 0),
+                            0,
+                            WHITE
+                        );
                     }
-                    else DrawTilePreview(initTile, tileTexture, color, new Vector2(x, y), scale);
+                    else
+                    {
+                        if (!preview)
+                        {
+                            if (tinted)
+                            {
+                                DrawTileAsPropColored(
+                                    ref tileTexture,
+                                    ref initTile,
+                                    ref center,
+                                    [
+                                        new(width, -height),
+                                        new(-width, -height),
+                                        new(-width, height),
+                                        new(width, height),
+                                        new(width, -height)
+                                    ],
+                                    new Color(color.r, color.g, color.b, 255 - GLOBALS.Layer*100),
+                                    0
+                                );
+                            }
+                            else
+                            {
+                                DrawTileAsProp(
+                                    ref tileTexture,
+                                    ref initTile,
+                                    ref center,
+                                    [
+                                        new(width, -height),
+                                        new(-width, -height),
+                                        new(-width, height),
+                                        new(width, height),
+                                        new(width, -height)
+                                    ],
+                                    255 - GLOBALS.Layer*100
+                                );
+                            }
+                        }
+                        else DrawTilePreview(initTile, tileTexture, color, new Vector2(x, y), scale);
+                    }
+                }
+                else if (tileCell.Type == TileType.TileBody)
+                {
+                    var missingTexture = GLOBALS.Textures.MissingTile;
+                    
+                    var (hx, hy, hz) = ((TileBody)tileCell.Data).HeadPosition;
+
+                    var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
+
+                    if (supposedHead.Data is TileHead { CategoryPostition: (-1, -1, _) } or not TileHead)
+                    {
+                        DrawTexturePro(
+                            GLOBALS.Textures.MissingTile, 
+                            new Rectangle(0, 0, missingTexture.width, missingTexture.height),
+                            new Rectangle(x*scale, y*scale, scale, scale),
+                            new(0, 0),
+                            0,
+                            WHITE
+                        );
+                    }
                 }
                 else if (tileCell.Type == TileType.Material)
                 {
@@ -728,11 +771,20 @@ internal static class Printers
                 {
                     var data = (TileHead)tileCell.Data;
 
-                    var category = GLOBALS.Textures.Tiles[data.CategoryPostition.Item1];
+                    var (category, index, _) = data.CategoryPostition;
+                    var undefined = data.CategoryPostition is (-1, -1, _);
 
-                    var tileTexture = category[data.CategoryPostition.Item2];
-                    var color = GLOBALS.TileCategories[data.CategoryPostition.Item1].Item2;
-                    var initTile = GLOBALS.Tiles[data.CategoryPostition.Item1][data.CategoryPostition.Item2];
+                    var tileTexture = undefined
+                        ? GLOBALS.Textures.MissingTile 
+                        : GLOBALS.Textures.Tiles[category][index];
+                    
+                    var color = undefined 
+                        ? PURPLE 
+                        : GLOBALS.TileCategories[category].Item2;
+                    
+                    var initTile = undefined
+                        ? GLOBALS.MissingTile 
+                        : GLOBALS.Tiles[category][index];
                     
                     var center = new Vector2(
                         initTile.Size.Item1 % 2 == 0 ? x * scale + scale : x * scale + scale/2f, 
@@ -743,43 +795,77 @@ internal static class Printers
                     var width = (scale / 20f)/2 * (initTile.Type == InitTileType.Box ? initTile.Size.Item1 : initTile.Size.Item1 + initTile.BufferTiles * 2) * 20;
                     var height = (scale / 20f)/2 * (initTile.Size.Item2 + initTile.BufferTiles*2) * 20;
                     
-                    if (!preview)
+                    if (undefined)
                     {
-                        if (tinted)
+                        DrawTexturePro(
+                            tileTexture, 
+                            new Rectangle(0, 0, tileTexture.width, tileTexture.height),
+                            new(x*scale, y*scale, scale, scale),
+                            new Vector2(0, 0),
+                            0,
+                            WHITE
+                        );
+                    }
+                    else if (tileCell.Data is TileBody body)
+                    {
+                        var missingTexture = GLOBALS.Textures.MissingTile;
+                    
+                        var (hx, hy, hz) = body.HeadPosition;
+
+                        var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
+
+                        if (supposedHead.Data is TileHead { CategoryPostition: (-1, -1, _) } or not TileHead)
                         {
-                            DrawTileAsPropColored(
-                                ref tileTexture,
-                                ref initTile,
-                                ref center,
-                                [
-                                    new(width, -height),
-                                    new(-width, -height),
-                                    new(-width, height),
-                                    new(width, height),
-                                    new(width, -height)
-                                ],
-                                new Color(color.r, color.g, color.b, 255 - GLOBALS.Layer*100),
-                                0
-                            );
-                        }
-                        else
-                        {
-                            DrawTileAsProp(
-                                ref tileTexture,
-                                ref initTile,
-                                ref center,
-                                [
-                                    new(width, -height),
-                                    new(-width, -height),
-                                    new(-width, height),
-                                    new(width, height),
-                                    new(width, -height)
-                                ],
-                                255 - GLOBALS.Layer*100
+                            DrawTexturePro(
+                                GLOBALS.Textures.MissingTile, 
+                                new Rectangle(0, 0, missingTexture.width, missingTexture.height),
+                                new Rectangle(x*scale, y*scale, scale, scale),
+                                new(0, 0),
+                                0,
+                                WHITE
                             );
                         }
                     }
-                    else DrawTilePreview(initTile, tileTexture, color, new Vector2(x, y)+offsetPixels/scale, scale);
+                    else
+                    {
+                        if (!preview)
+                        {
+                            if (tinted)
+                            {
+                                DrawTileAsPropColored(
+                                    ref tileTexture,
+                                    ref initTile,
+                                    ref center,
+                                    [
+                                        new(width, -height),
+                                        new(-width, -height),
+                                        new(-width, height),
+                                        new(width, height),
+                                        new(width, -height)
+                                    ],
+                                    new Color(color.r, color.g, color.b, 255 - GLOBALS.Layer*100),
+                                    0
+                                );
+                            }
+                            else
+                            {
+                                DrawTileAsProp(
+                                    ref tileTexture,
+                                    ref initTile,
+                                    ref center,
+                                    [
+                                        new(width, -height),
+                                        new(-width, -height),
+                                        new(-width, height),
+                                        new(width, height),
+                                        new(width, -height)
+                                    ],
+                                    255 - GLOBALS.Layer*100
+                                );
+                            }
+                        }
+                        else DrawTilePreview(initTile, tileTexture, color, new Vector2(x, y)+offsetPixels/scale, scale);
+                    }
                 }
                 else if (tileCell.Type == TileType.Material)
                 {

@@ -4,6 +4,11 @@ namespace Leditor;
 
 #nullable enable
 
+public class LevelLoadedEventArgs(bool undefinedTiles) : EventArgs
+{
+    public bool UndefinedTiles { get; set; } = undefinedTiles;
+}
+
 public record struct TileInitLoadInfo(
     (string name, Color color)[] Categories,
     InitTile[][] Tiles,
@@ -437,16 +442,16 @@ public class GeoEditor(
 }
 
 public class TileEditor(
-    bool visibleSpecs = true, 
     bool hoveredTileInfo = false, 
     bool tintedTiles = false, 
-    bool useTextures = false
+    bool useTextures = false,
+    bool allowUndefinedTiles = true
     )
 {
-    public bool VisibleSpecs { get; set; } = visibleSpecs;
     public bool HoveredTileInfo { get; set; } = hoveredTileInfo;
     public bool TintedTiles { get; set; } = tintedTiles;
     public bool UseTextures { get; set; } = useTextures;
+    public bool AllowUndefinedTiles { get; set; } = allowUndefinedTiles;
 }
 
 public class LightEditor(ConColor background, bool accelerateWarpSpeed = false)
@@ -538,6 +543,7 @@ public class PropEditor(bool tintedTextures = false)
 public class Settings(
     bool developerMode,
     bool defaultFont,
+    bool globalCamera,
     Shortcuts shortcuts,
     Misc misc,
     GeoEditor geometryEditor,
@@ -549,6 +555,7 @@ public class Settings(
 {
     public bool DeveloperMode { get; set; } = developerMode;
     public bool DefaultFont { get; set; } = defaultFont;
+    public bool GlobalCamera { get; set; } = globalCamera;
     public Shortcuts Shortcuts { get; set; } = shortcuts;
     public Misc Misc { get; set; } = misc;
     public GeoEditor GeometryEditor { get; set; } = geometryEditor;
@@ -625,7 +632,7 @@ public class TileHead(int category, int position, string name)
 {
     private (int, int, string) _data = (category, position, name);
     
-    public (int, int, string) CategoryPostition
+    public (int Category, int Index, string Name) CategoryPostition
     {
         get => _data;
         set { _data = value; }

@@ -76,6 +76,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
     
     public void Draw()
     {
+        if (GLOBALS.Settings.GlobalCamera) _camera = GLOBALS.Camera;
+        
         var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
         var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
         var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
@@ -1236,5 +1238,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             if (newLayer != GLOBALS.Layer) GLOBALS.Layer = newLayer;
         }
         EndDrawing();
+        
+        if (GLOBALS.Settings.GlobalCamera) GLOBALS.Camera = _camera;
     }
 }

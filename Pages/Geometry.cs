@@ -134,6 +134,8 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
     public void Draw()
     {
         GLOBALS.PreviousPage = 2;
+        
+        if (GLOBALS.Settings.GlobalCamera) _camera = GLOBALS.Camera;
 
         var scale = GLOBALS.Scale;
 
@@ -1203,7 +1205,8 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
 
             if (newLayer != GLOBALS.Layer) GLOBALS.Layer = newLayer;
         }
-        Raylib.EndDrawing();
+        EndDrawing();
 
+        if (GLOBALS.Settings.GlobalCamera) GLOBALS.Camera = _camera;
     }
 }

@@ -52,6 +52,8 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                                 }
                             }
                         }
+                        
+                        ((TileHead)cell.Data).CategoryPostition = (-1, -1, name);
 
                         // Tile not found
                         return TileCheckResult.Missing;
@@ -278,11 +280,17 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                 // Tile check failure
                 if (GLOBALS.TileCheck.Result != TileCheckResult.Ok)
                 {
-                    GLOBALS.Page = 13;
-                    RayGui.GuiUnlock();
-                    
-                    EndDrawing();
-                    return;
+                    if (GLOBALS.TileCheck.Result == TileCheckResult.Missing && GLOBALS.Settings.TileEditor.AllowUndefinedTiles)
+                    {
+                    }
+                    else
+                    {
+                        GLOBALS.Page = 13;
+                        RayGui.GuiUnlock();
+                        
+                        EndDrawing();
+                        return;
+                    }
                 }
 
                 // Prop check failure
@@ -350,6 +358,8 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
 
                 GLOBALS.Level.ProjectName = result.Name;
                 GLOBALS.Page = 1;
+                
+                ProjectLoaded?.Invoke(this, new LevelLoadedEventArgs(GLOBALS.TileCheck.Result == TileCheckResult.Missing));
 
                 GLOBALS.TileCheck = null;
                 GLOBALS.PropCheck = null;
@@ -364,7 +374,6 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                 GLOBALS.ProjectPath = parent ?? GLOBALS.ProjectPath;
                 GLOBALS.Level.ProjectName = Path.GetFileNameWithoutExtension(_openFileDialog.Result);
                 
-                ProjectLoaded?.Invoke(this, EventArgs.Empty);
                 RayGui.GuiUnlock();
             }
             else

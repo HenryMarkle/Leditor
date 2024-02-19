@@ -66,6 +66,8 @@ internal static class Utils
 
         if (cell.Type == TileType.TileHead)
         {
+            if (cell.Data is TileHead { CategoryPostition: (-1, -1, _) }) return null;
+            
             var (category, index, _) = ((TileHead)cell.Data).CategoryPostition;
             return (category, index);
         }
@@ -79,6 +81,7 @@ internal static class Utils
             var supposedHead = GLOBALS.Level.TileMatrix[headY - 1, headX - 1, headZ - 1];
 
             if (supposedHead.Type != TileType.TileHead) return null;
+            if (supposedHead.Data is TileHead { CategoryPostition: (-1, -1, _) }) return null;
 
             var headTile = (TileHead)supposedHead.Data;
             return (headTile.CategoryPostition.Item1, headTile.CategoryPostition.Item2);
@@ -352,10 +355,16 @@ internal static class Utils
     {
         var cell = GLOBALS.Level.TileMatrix[my, mx, mz];
 
-        if (cell.Type == TileType.TileHead)
+        if (cell.Data is TileHead h)
         {
+            if (h.CategoryPostition is (-1, -1, _))
+            {
+                GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell
+                    { Type = TileType.Default, Data = new TileDefault() };
+                return;
+            }
             //Console.WriteLine($"Deleting tile head at ({mx},{my},{mz})");
-            var data = (TileHead)cell.Data;
+            var data = h;
             var tileInit = GLOBALS.Tiles[data.CategoryPostition.Item1][data.CategoryPostition.Item2];
             var (width, height) = tileInit.Size;
 
@@ -389,7 +398,7 @@ internal static class Utils
             var supposedHead = GLOBALS.Level.TileMatrix[headY - 1, headX - 1, headZ - 1];
 
             // if the head was not found, only delete the given tile body
-            if (supposedHead.Type != TileType.TileHead)
+            if (supposedHead.Data is TileHead { CategoryPostition: (-1, -1, _) } or not TileHead)
             {
                 //Console.WriteLine($"({mx}, {my}, {mz}) reported that ({headX}, {headY}, {headZ}) is supposed to be a tile head, but was found to be a body");
                 GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell() { Type = TileType.Default, Data = new TileDefault() };
@@ -397,6 +406,7 @@ internal static class Utils
             }
 
             var headTile = (TileHead)supposedHead.Data;
+            
             var tileInit = GLOBALS.Tiles[headTile.CategoryPostition.Item1][headTile.CategoryPostition.Item2];
             var (width, height) = tileInit.Size;
 

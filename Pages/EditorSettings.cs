@@ -154,6 +154,7 @@ public class SettingsPage : IPage
                GLOBALS.Settings = new Settings(
                    false,
                    false,
+                   true,
                    new Shortcuts(
                        new GlobalShortcuts(),
                        new GeoShortcuts(),
@@ -172,7 +173,7 @@ public class SettingsPage : IPage
                            layer3: new ConColor(255, 0, 0, 50)
                        )
                    ),
-                   new TileEditor(true),
+                   new TileEditor(),
                    new LightEditor(background: new ConColor(66, 108, 245, 255)),
                    new PropEditor(),
                    new Experimental()
@@ -188,6 +189,12 @@ public class SettingsPage : IPage
                     new Rectangle(subPanelX, categoryRect.Y, 20, 20), 
                     "Default Font", 
                     GLOBALS.Settings.DefaultFont
+                );
+
+                GLOBALS.Settings.GlobalCamera = GuiCheckBox(
+                    new Rectangle(subPanelX, categoryRect.Y + 25, 20, 20),
+                    "Global Camera",
+                    GLOBALS.Settings.GlobalCamera
                 );
             }
                 break;
@@ -676,6 +683,12 @@ public class SettingsPage : IPage
                         ? "Tinted" 
                         : "Original", 
                     GLOBALS.Settings.TileEditor.TintedTiles
+                );
+
+                GLOBALS.Settings.TileEditor.AllowUndefinedTiles = GuiCheckBox(
+                    new Rectangle(subPanelX, subPanelY + 460, 20, 20),
+                    "Allow Undefined Tiles",
+                    GLOBALS.Settings.TileEditor.AllowUndefinedTiles
                 );
                 
                 break;

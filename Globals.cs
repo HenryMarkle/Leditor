@@ -18,6 +18,8 @@ internal static class GLOBALS
     internal class TextureService
     {
         public Texture SplashScreen { get; set; }
+        
+        public Texture MissingTile { get; set; }
 
         public Texture[] GeoMenu { get; set; } = [];
         public Texture[] GeoBlocks { get; set; } = [];
@@ -394,6 +396,15 @@ internal static class GLOBALS
     /// Tile definitions
     internal static InitTile[][] Tiles { get; set; } = [];
 
+    internal static InitTile MissingTile { get; } = new()
+    {
+        Name = "Undefined",
+        Specs = [],
+        Specs2 = [],
+        Repeat = [],
+        Tags = []
+    };
+
     /// Embedded rope prop definitions
     internal static InitRopeProp[] RopeProps { get; } =
     [
@@ -650,6 +661,7 @@ internal static class GLOBALS
     internal static Settings Settings { get; set; } = new(
             false,
             false,
+            true,
             new Shortcuts(
                 new GlobalShortcuts(),
                 new GeoShortcuts(),
@@ -668,7 +680,7 @@ internal static class GLOBALS
                     layer3: new ConColor(255, 0, 0, 50)
                 )
             ),
-            new TileEditor(true),
+            new TileEditor(),
             new LightEditor(background: new ConColor(66, 108, 245, 255)),
             new PropEditor(),
             new Experimental()
@@ -690,5 +702,7 @@ internal static class GLOBALS
         new JsonSerializerOptions { WriteIndented = true };
     
     public static bool RendererExists { get; set; }
+    
+    public static Camera2D Camera { get; set; }
 #nullable disable
 }

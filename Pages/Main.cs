@@ -25,6 +25,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
 
     private bool _askForPath;
     private bool _failedToSave;
+    private bool _undefinedTilesAlert;
     
     private Task<string>? _openFileDialog;
     private Task<LoadFileResult>? _loadFileTask;
@@ -32,6 +33,14 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
     private int _fileDialogMode; // 0 - save, 1 - load
 
     private System.Diagnostics.Process _renderProcess = new();
+
+    public void OnLevelLoadedFromStart(object? sender, EventArgs e)
+    {
+        if (e is LevelLoadedEventArgs l)
+        {
+            _undefinedTilesAlert = l.UndefinedTiles;
+        }
+    }
     
     private async Task<SaveProjectResult> SaveProjectAsync(string path)
     {
@@ -85,7 +94,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                     {
                         var (category, position, name) = ((TileHead)cell.Data).CategoryPostition;
 
-                        // code readibility could be optimized using System.Linq
+                        // code readability could be optimized using System.Linq
 
                         for (var c = 0; c < GLOBALS.Tiles.Length; c++)
                         {
@@ -109,6 +118,8 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                                 }
                             }
                         }
+
+                        ((TileHead)cell.Data).CategoryPostition = (-1, -1, name);
 
                         // Tile not found
                         return TileCheckResult.Missing;
@@ -504,11 +515,17 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         // Tile check failure
                         if (GLOBALS.TileCheck.Result != TileCheckResult.Ok)
                         {
-                            GLOBALS.Page = 13;
-                            RayGui.GuiUnlock();
-                            
-                            EndDrawing();
-                            return;
+                            if (GLOBALS.TileCheck.Result == TileCheckResult.Missing && GLOBALS.Settings.TileEditor.AllowUndefinedTiles)
+                            {
+                            }
+                            else
+                            {
+                                GLOBALS.Page = 13;
+                                RayGui.GuiUnlock();
+                                
+                                EndDrawing();
+                                return;
+                            }
                         }
 
                         // Prop check failure
@@ -577,6 +594,11 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         GLOBALS.Level.ProjectName = result.Name;
                         GLOBALS.Page = 1;
 
+                        var undefinedTiles = GLOBALS.TileCheck.Result == TileCheckResult.Missing;
+                        _undefinedTilesAlert = undefinedTiles;
+
+                        ProjectLoaded?.Invoke(this, new LevelLoadedEventArgs(undefinedTiles));
+                        
                         GLOBALS.TileCheck = null;
                         GLOBALS.PropCheck = null;
                         _loadFileTask = null;
@@ -590,7 +612,6 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         GLOBALS.ProjectPath = parent ?? GLOBALS.ProjectPath;
                         GLOBALS.Level.ProjectName = Path.GetFileNameWithoutExtension(_openFileDialog.Result);
                         
-                        ProjectLoaded?.Invoke(this, EventArgs.Empty);
                         RayGui.GuiUnlock();
                     }
                         break;
@@ -908,6 +929,48 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                 {
                     GLOBALS.NewFlag = true;
                     GLOBALS.Page = 6;
+                }
+                
+                // Undefined Tiles Alert
+
+                if (_undefinedTilesAlert)
+                {
+                    var alertRect = new Rectangle(20, height - 50, 400, 40);
+
+                    if (CheckCollisionPointRec(GetMousePosition(), new Rectangle(400, height - 50, 20, 20)))
+                    {
+                        SetMouseCursor(MouseCursor.MOUSE_CURSOR_POINTING_HAND);
+
+                        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                        {
+                            _undefinedTilesAlert = false;
+                            SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+                        }
+                    }
+                    else SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+                    
+                    DrawRectangleRec(
+                        alertRect,
+                        RED
+                    );
+                    
+                    DrawText("x", 405, height - 50, 20, WHITE);
+
+                    if (GLOBALS.Font is null)
+                    {
+                        DrawText("Project contains undefined tiles", 30, height - 45, 22, WHITE);
+                    }
+                    else
+                    {
+                        DrawTextEx(
+                            GLOBALS.Font.Value,
+                            "Project contains undefined tiles",
+                            new(30, height - 45),
+                            30,
+                            1,
+                            WHITE
+                        );
+                    }
                 }
             }
         }

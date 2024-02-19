@@ -720,6 +720,9 @@ class Program
         // These two are going to be populated with textures later
         GLOBALS.Textures.Tiles = [];
 
+        GLOBALS.Textures.MissingTile =
+            LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "other", "missing tile.png"));
+
         GLOBALS.Textures.PropMenuCategories = [
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "prop category tiles.png")),
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "prop category ropes.png")),
@@ -811,6 +814,7 @@ class Program
 
         SetTargetFPS(GLOBALS.Settings.Misc.FPS);
 
+        GLOBALS.Camera = new Camera2D { zoom = 1f };
 
         float initialFrames = 0;
 
@@ -846,6 +850,7 @@ class Program
         // Page event handlers
         startPage.ProjectLoaded += propsPage.OnProjectLoaded;
         startPage.ProjectLoaded += savePage.OnProjectLoaded;
+        startPage.ProjectLoaded += mainPage.OnLevelLoadedFromStart;
         
         mainPage.ProjectLoaded += propsPage.OnProjectLoaded;
         mainPage.ProjectLoaded += savePage.OnProjectLoaded;
@@ -1251,6 +1256,8 @@ class Program
         logger.Information("unloading textures");
         
         UnloadImage(icon);
+        
+        UnloadTexture(GLOBALS.Textures.MissingTile);
 
         foreach (var texture in GLOBALS.Textures.GeoMenu) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.GeoBlocks) UnloadTexture(texture);
