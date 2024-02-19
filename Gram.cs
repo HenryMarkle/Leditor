@@ -29,7 +29,7 @@ public class GeoGram(int limit)
 
     public record CellAction(Coords Position, RunCell Previous, RunCell Next) : IAction;
 
-    public record RectAction(Coords Position, RunCell[,] Previous, RunCell[,] Next) : IAction;
+    public record RectAction(Coords Position, RunCell[,] Previous, RunCell[,] Next, bool FillAir = true) : IAction;
 
     public record GroupAction(CellAction[] CellActions) : IAction
     {
@@ -59,16 +59,16 @@ public class GeoGram(int limit)
         if (Actions.Count == limit) Actions.RemoveFirst();
     }
     
-    public void Proceed(Coords position, RunCell[,] previous, RunCell[,] current)
+    public void Proceed(Coords position, RunCell[,] previous, RunCell[,] current, bool fillAir = true)
     {
         if (_currentNode?.Next is not null)
         {
-            _currentNode.Next.Value = new RectAction(position, previous, current);
+            _currentNode.Next.Value = new RectAction(position, previous, current, fillAir);
             _currentNode = _currentNode.Next;
             return;
         }
         
-        Actions.AddLast(new RectAction(position, previous, current));
+        Actions.AddLast(new RectAction(position, previous, current, fillAir));
         _currentNode = Actions.Last;
         
         //
@@ -107,54 +107,17 @@ public class GeoGram(int limit)
 public class TileGram(int limit)
 {
     public interface IAction { }
-    
-    public interface IPlaceAction : IAction{ }
-    public interface IRemoveAction : IAction { }
-    public interface IGroupAction : IAction { }
-    
-    internal sealed record PlaceTileAction(Coords Position, (int category, int position) Tile, bool WithGeo) : IPlaceAction;
-    internal sealed record RemoveTileAction(Coords Position, (int category, int position) Tile) : IRemoveAction;
 
-    internal sealed record PlaceMaterialAction(Coords Position, string Material) : IPlaceAction;
-
-    internal sealed record RemoveMaterialAction(Coords Position, string Material) : IRemoveAction;
+    public record struct PlaceTileAction(Coords Position, InitTile Tile) : IAction;
+    public record struct RemoveTileAction(Coords Position, InitTile Tile) : IAction;
     
+    public record struct PlaceMaterialAction(Coords Position, string Material) : IAction;
+    public record struct RemoveMaterialAction(Coords Position, string Material) : IAction;
     
-    internal sealed record PlaceGroupAction(IEnumerable<IPlaceAction> Actions) : IPlaceAction, IGroupAction;
 
-    
-    internal sealed record RemoveGroupAction(IEnumerable<IRemoveAction> Actions) : IRemoveAction, IGroupAction;
-
+    public record struct GroupAction(IEnumerable<IAction> Actions) : IAction;
     
     private LinkedList<IAction> Actions { get; init; } = [];
 
     private LinkedListNode<IAction>? _currentNode;
-    
-    public IAction? Current => _currentNode?.Value;
-
-    public void Proceed(IAction action)
-    {
-        if (_currentNode?.Next is not null)
-        {
-            _currentNode.Next.Value = action;
-            _currentNode = _currentNode.Next;
-            return;
-        }
-
-        Actions.AddLast(action);
-        _currentNode = Actions.Last;
-        
-        //
-        
-        if (Actions.Count == limit) Actions.RemoveFirst();
-    }
-
-    public void Undo()
-    {
-        _currentNode = _currentNode?.Previous ?? _currentNode;
-    }
-    public void Redo()
-    {
-        _currentNode = _currentNode?.Next ?? _currentNode;
-    }
 }

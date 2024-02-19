@@ -159,7 +159,6 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                          (GLOBALS.Layer != 0 || !CheckCollisionPointRec(uiMouse, layer1Rect)) &&
                          !CheckCollisionPointRec(GetMousePosition(), new(GetScreenWidth() - 210, 50, 200, GetScreenHeight() - 100));
         
-        #region Shortcuts
         
         var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
         var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
@@ -274,11 +273,21 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                 case GeoGram.RectAction r:
                     for (var y = 0; y < r.Previous.GetLength(0); y++)
                     {
-                        for (var x = 0; x < r.Previous.GetLength(1); x++)
-                        {
-                            var prevCell = r.Previous[y, x];
-                            GLOBALS.Level.GeoMatrix[y + r.Position.Y, x + r.Position.X, r.Position.Z] = prevCell;
+                        var my = y + r.Position.Y;
+                        if (my >= 0 && my < GLOBALS.Level.Height) {
+                            for (var x = 0; x < r.Previous.GetLength(1); x++)
+                            {
+                                var mx = x + r.Position.X;
+                                if (mx >= 0 && mx < GLOBALS.Level.Width) {
+                                    var prevCell = r.Previous[y, x];
+                                    
+                                    GLOBALS.Level.GeoMatrix[my, mx, r.Position.Z].Stackables = prevCell.Stackables;
+                                    if (prevCell.Geo != 0 || r.FillAir) GLOBALS.Level.GeoMatrix[my, mx, r.Position.Z].Geo = prevCell.Geo;
+                                }
+
+                            }
                         }
+
                     }
                     break;
 
@@ -305,11 +314,21 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                 case GeoGram.RectAction r:
                     for (var y = 0; y < r.Previous.GetLength(0); y++)
                     {
-                        for (var x = 0; x < r.Previous.GetLength(1); x++)
-                        {
-                            var nextCell = r.Next[y, x];
-                            GLOBALS.Level.GeoMatrix[y + r.Position.Y, x + r.Position.X, r.Position.Z] = nextCell;
+                        var my = y + r.Position.Y;
+                        if (my >= 0 && my < GLOBALS.Level.Height) {
+                            for (var x = 0; x < r.Previous.GetLength(1); x++)
+                            {
+                                var mx = x + r.Position.X;
+
+                                if (mx >= 0 && mx < GLOBALS.Level.Width) {    
+                                    var nextCell = r.Next[y, x];
+                                    GLOBALS.Level.GeoMatrix[my, mx, r.Position.Z].Stackables = nextCell.Stackables;
+                                    if (nextCell.Geo != 0 || r.FillAir) GLOBALS.Level.GeoMatrix[my, mx, r.Position.Z].Geo = nextCell.Geo;
+                                }
+
+                            }
                         }
+
                     }
                     break;
                 
@@ -322,8 +341,6 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
             }
         }
 
-        #endregion
-        
         // handle mouse drag
         if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true))
         {
@@ -511,7 +528,19 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                         break;
 
                     case 13: // load from memory
-                        var newCopy = new RunCell[savedChunk.GetLength(0), savedChunk.GetLength(1)];
+                        
+                        break;
+                }
+            }
+
+            clickTracker = true;
+        }
+
+        if (_shortcuts.Draw.Check(ctrl, shift, alt) && canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width){
+            switch (geoIndex) {
+                case 13:
+                {
+                    var newCopy = new RunCell[savedChunk.GetLength(0), savedChunk.GetLength(1)];
                         var oldCopy = new RunCell[savedChunk.GetLength(0), savedChunk.GetLength(1)];
                         
                         for (var x = 0; x < savedChunk.GetLength(1); x++)
@@ -540,12 +569,11 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                                 }
                             }
                         }
-                        _gram.Proceed((matrixX, matrixY, GLOBALS.Layer), oldCopy, newCopy);
-                        break;
+                        _gram.Proceed((matrixX, matrixY, GLOBALS.Layer), oldCopy, newCopy, false);
                 }
+                    break;
             }
-
-            clickTracker = true;
+            
         }
 
         if (IsMouseButtonReleased(_shortcuts.Draw.Button))
@@ -786,6 +814,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                             }
 
                             savedChunk = new RunCell[endY - startY + 1, endX - startX + 1];
+                            
 
                             for (var x = 0; x < savedChunk.GetLength(1); x++)
                             {
@@ -802,6 +831,9 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                                     savedChunk[y, x] = _cell;
                                 }
                             }
+
+                            prevCoordsX = -1;
+                            prevCoordsY = -1;
                         }
                         break;
                 }
