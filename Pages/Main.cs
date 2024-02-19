@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Linq.Expressions;
+using System.Numerics;
 using System.Text;
 using Pidgin;
 using static Raylib_CsLo.Raylib;
@@ -29,6 +30,8 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
     private Task<LoadFileResult>? _loadFileTask;
     
     private int _fileDialogMode; // 0 - save, 1 - load
+
+    private System.Diagnostics.Process _renderProcess = new();
     
     private async Task<SaveProjectResult> SaveProjectAsync(string path)
     {
@@ -797,12 +800,18 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
 
                         if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
                         {
-                            // TODO: Render
+                            _logger.Debug($"Rendering level \"{GLOBALS.Level.ProjectName}\"");
 
                             var projectPath = Path.Combine(GLOBALS.ProjectPath, $"{GLOBALS.Level.ProjectName}.txt");
                             var arguments = $"render \"{projectPath}\"";
+
+                            try {
+                                _renderProcess.Kill();
+                            } catch (Exception e) {
+                                _logger.Error($"Unable to kill render process: {e}");  
+                            }
                             
-                            System.Diagnostics.Process renderProcess = new()
+                            _renderProcess = new()
                             {
                                 StartInfo =
                                 {
@@ -812,7 +821,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                                 }
                             };
 
-                            renderProcess.Start();
+                            _renderProcess.Start();
                         }
                     }
                     else SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
