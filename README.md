@@ -23,3 +23,7 @@ An alternative to the current Rain World's official level editor, powered by .NE
 ## Level Rendering
 
 This editor is shipped with [Drizzle](https://github.com/SlimeCubed/Drizzle) ([Slime_Cubed's fork](https://github.com/SlimeCubed)). In case you don't see a blue button named "RENDER" on the main page, you need to manually add the renderer in a directory named `/renderer`
+
+## Notes
+
+- Undo functionality is only available for the geometry editor, at the moment
