@@ -354,7 +354,9 @@ public class GlobalShortcuts
     public KeyboardShortcut ToPropsEditor { get; set; } = new(KeyboardKey.KEY_EIGHT);
     public KeyboardShortcut ToSettingsPage { get; set; } = new(KeyboardKey.KEY_NINE);
 
-    public KeyboardShortcut QuickSave { get; set; } = new(KeyboardKey.KEY_NULL);
+    public KeyboardShortcut QuickSave { get; set; } = new(KeyboardKey.KEY_S, shift:false, ctrl:true, alt:false);
+    public KeyboardShortcut QuickSaveAs { get; set; } = new(KeyboardKey.KEY_S, shift:true, ctrl:true, alt:false);
+    public KeyboardShortcut Render { get; set; } = new(KeyboardKey.KEY_NULL);
 }
 
 public class Shortcuts(
@@ -535,6 +537,7 @@ public class PropEditor(bool tintedTextures = false)
 
 public class Settings(
     bool developerMode,
+    bool defaultFont,
     Shortcuts shortcuts,
     Misc misc,
     GeoEditor geometryEditor,
@@ -545,6 +548,7 @@ public class Settings(
 )
 {
     public bool DeveloperMode { get; set; } = developerMode;
+    public bool DefaultFont { get; set; } = defaultFont;
     public Shortcuts Shortcuts { get; set; } = shortcuts;
     public Misc Misc { get; set; } = misc;
     public GeoEditor GeometryEditor { get; set; } = geometryEditor;

@@ -7,7 +7,7 @@ using Leditor.Lingo;
 using Pidgin;
 using System.Text.Json;
 using Serilog;
-using System.Security.Cryptography;
+using System.Security.Cryptography; 
 
 #nullable enable
 
@@ -235,6 +235,52 @@ class Program
             new InitTile("Dune Sand", (1, 1), [1], [], InitTileType.VoxelStructSandtype, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
         ]
     ];
+    
+    private record struct SaveProjectResult(bool Success, Exception? Exception = null);
+
+    private static bool _globalSave;
+    private static Task<string>? _saveFileDialog;
+    private static Task<SaveProjectResult>? _saveResult;
+
+    private static bool _askForPath;
+    private static bool _failedToSave;
+    
+    private static async Task<SaveProjectResult> SaveProjectAsync(string path)
+    {
+        SaveProjectResult result;
+        
+        try
+        {
+            var strTask = Leditor.Lingo.Exporters.ExportAsync(GLOBALS.Level);
+
+            // export light map
+            var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
+
+            unsafe
+            {
+                ImageFlipVertical(&image);
+            }
+            
+            var parent = Directory.GetParent(path)?.FullName ?? GLOBALS.ProjectPath;
+            var name = Path.GetFileNameWithoutExtension(path);
+                    
+            ExportImage(image, Path.Combine(parent, name+".png"));
+            
+            UnloadImage(image);
+
+            var str = await strTask;
+            
+            await File.WriteAllTextAsync(path, str);
+
+            result = new(true);
+        }
+        catch (Exception e)
+        {
+            result = new(false, e);
+        }
+
+        return result;
+    }
 
     private static Texture[][] LoadPropTextures()
     {
@@ -432,6 +478,13 @@ class Program
             logger.Fatal("Init.txt not found");
             //throw new Exception("Init.txt not found");
         }
+        
+        // Check for renderer
+
+        if (File.Exists(Path.Combine(GLOBALS.Paths.RendererDirectory, "Drizzle.ConsoleApp.exe")))
+        {
+            GLOBALS.RendererExists = true;
+        }
 
         // checksum files
 
@@ -443,7 +496,7 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.26";
+        const string version = "Henry's Leditor v0.9.27";
         const string raylibVersion = "Raylib v4.2.0.9";
         
         // Load tiles and props
@@ -545,6 +598,7 @@ class Program
         var icon = LoadImage("icon.png");
 
         SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE);
+        SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT);
         
         #if DEBUG
         // TODO: Change this
@@ -558,6 +612,24 @@ class Program
         //----------------------------------------------------------------------------
         InitWindow(GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight, "Henry's Leditor");
         //
+
+        if (!GLOBALS.Settings.DefaultFont)
+        {
+            
+
+
+            unsafe
+            {
+                var globalFont = LoadFontEx(Path.Combine(GLOBALS.Paths.FontsDirectory, "oswald", "Oswald-Regular.ttf"), 30, 95);
+                GenTextureMipmaps(&globalFont.texture);
+                GLOBALS.Font = globalFont;
+
+                RayGui.GuiSetFont(globalFont);
+                RayGui.GuiSetStyle(0, 16, 20);
+                SetTextureFilter(globalFont.texture, TextureFilter.TEXTURE_FILTER_TRILINEAR);
+            }
+        }
+        
         
         SetWindowIcon(icon);
         SetWindowMinSize(GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight);
@@ -999,39 +1071,163 @@ class Program
 
                     if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave.Check(ctrl, shift, alt))
                     {
-                        // TODO: quick save
+                        if (string.IsNullOrEmpty(GLOBALS.ProjectPath))
+                        {
+                            _askForPath = true;
+                            _saveFileDialog = Utils.SetFilePathAsync();
+                        }
+                        else
+                        {
+                            _askForPath = false;
+                        }
+
+                        _globalSave = true;
+                        RayGui.GuiLock();
                     }
                 }
 
-                // page switch
-
-                switch (GLOBALS.Page)
+                if (RayGui.GuiIsLocked() && _globalSave)
                 {
-
-                    case 0: startPage.Draw(); break;
-                    case 1: mainPage.Draw(); break;
-                    case 2: geoPage.Draw(); break;
-                    case 3: tilePage.Draw(); break;
-                    case 4: camerasPage.Draw(); break;
-                    case 5: lightPage.Draw(); break;
-                    case 6: dimensionsPage.Draw(); break;
-                    case 7: effectsPage.Draw(); break;
-                    case 8: propsPage.Draw(); break;
-                    case 9: settingsPage.Draw(); break;
-                    // case 11: loadPage.Draw(); break;
-                    case 12: savePage.Draw(); break;
-                    case 13: failedTileCheckOnLoadPage.Draw(); break;
-                    case 14: assetsNukedPage.Draw(); break;
-                    case 15: missingAssetsPage.Draw(); break;
-                    case 16: missingTexturesPage.Draw(); break;
-                    case 17: missingInitFilePage.Draw(); break;
-                    case 18: experimentalGeometryPage.Draw(); break;
-                    case 19: missingPropTexturesPage.Draw(); break;
-                    case 99: deathScreen.Draw(); break;
+                    BeginDrawing();
                     
-                    default:
-                        GLOBALS.Page = GLOBALS.PreviousPage;
-                        break;
+                    if (_askForPath)
+                    {
+                        
+                        if (_saveFileDialog is null)
+                        {
+                            if (_saveResult!.IsCompleted)
+                            {
+                                GLOBALS.Page = 1;
+                                _globalSave = false;
+                                RayGui.GuiUnlock();
+                            }
+                        }
+                        else
+                        {
+                            if (!_saveFileDialog.IsCompleted)
+                            {
+                                EndDrawing();
+                                continue;
+                            }
+                            if (string.IsNullOrEmpty(_saveFileDialog.Result))
+                            {
+                                _globalSave = false;
+                                RayGui.GuiUnlock();
+                                EndDrawing();
+                                continue;
+                            }
+
+                            var path = _saveFileDialog.Result;
+
+                            if (_saveResult is null)
+                            {
+                                _saveResult = SaveProjectAsync(path);
+                                EndDrawing();
+                                continue;
+                            }
+                            if (!_saveResult.IsCompleted)
+                            {
+                                EndDrawing();
+                                continue;
+                            }
+
+                            var result = _saveResult.Result;
+
+                            if (!result.Success)
+                            {
+                                _globalSave = false;
+                                _failedToSave = true;
+                                RayGui.GuiUnlock();
+                                EndDrawing();
+                                #if DEBUG
+                                if (result.Exception is not null) logger.Error($"Failed to save project: {result.Exception}");
+                                #endif
+                                _saveResult = null;
+                                _saveFileDialog = null;
+                                continue;
+                            }
+                            
+                            _globalSave = false;
+                            var parent = Directory.GetParent(_saveFileDialog.Result)?.FullName;
+                            
+                            GLOBALS.ProjectPath = parent ?? GLOBALS.ProjectPath;
+                            GLOBALS.Level.ProjectName = Path.GetFileNameWithoutExtension(_saveFileDialog.Result);
+
+                            _saveFileDialog = null;
+                            _saveResult = null;
+                            RayGui.GuiUnlock();
+                            EndDrawing();
+                        }
+                    }
+                    else
+                    {
+                        if (_saveResult is null)
+                        {
+                            _saveResult = SaveProjectAsync(Path.Combine(GLOBALS.ProjectPath, GLOBALS.Level.ProjectName+".txt"));
+                            EndDrawing();
+                            continue;
+                        }
+                        if (!_saveResult.IsCompleted)
+                        {
+                            EndDrawing();
+                            continue;
+                        }
+
+                        var result = _saveResult.Result;
+
+                        if (!result.Success)
+                        {
+                            _globalSave = false;
+                            _failedToSave = true;
+                            RayGui.GuiUnlock();
+                            EndDrawing();
+                            #if DEBUG
+                            if (result.Exception is not null) logger.Error($"Failed to save project: {result.Exception}");
+                            #endif
+                            _saveResult = null;
+                            _saveFileDialog = null;
+                            continue;
+                        }
+                        
+                        _globalSave = false;
+                        _saveFileDialog = null;
+                        _saveResult = null;
+                        RayGui.GuiUnlock();
+                        EndDrawing();
+                    }
+                }
+                else
+                {
+                    // page switch
+
+                    switch (GLOBALS.Page)
+                    {
+
+                        case 0: startPage.Draw(); break;
+                        case 1: mainPage.Draw(); break;
+                        case 2: geoPage.Draw(); break;
+                        case 3: tilePage.Draw(); break;
+                        case 4: camerasPage.Draw(); break;
+                        case 5: lightPage.Draw(); break;
+                        case 6: dimensionsPage.Draw(); break;
+                        case 7: effectsPage.Draw(); break;
+                        case 8: propsPage.Draw(); break;
+                        case 9: settingsPage.Draw(); break;
+                        // case 11: loadPage.Draw(); break;
+                        case 12: savePage.Draw(); break;
+                        case 13: failedTileCheckOnLoadPage.Draw(); break;
+                        case 14: assetsNukedPage.Draw(); break;
+                        case 15: missingAssetsPage.Draw(); break;
+                        case 16: missingTexturesPage.Draw(); break;
+                        case 17: missingInitFilePage.Draw(); break;
+                        case 18: experimentalGeometryPage.Draw(); break;
+                        case 19: missingPropTexturesPage.Draw(); break;
+                        case 99: deathScreen.Draw(); break;
+                        
+                        default:
+                            GLOBALS.Page = GLOBALS.PreviousPage;
+                            break;
+                    }
                 }
             }
             catch (Exception e)

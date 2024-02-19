@@ -214,8 +214,8 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
 
                 RayGui.GuiLine(
                     new(
-                        Raylib.GetScreenWidth() / 2f - 390,
-                        Raylib.GetScreenHeight() / 2f - 265,
+                        GetScreenWidth() / 2f - 390,
+                        GetScreenHeight() / 2f - 265,
                         150,
                         10
                     ),
@@ -224,18 +224,26 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
 
                 unsafe
                 {
+                    var panelRect = new Rectangle(
+                        GetScreenWidth() / 2f - 400,
+                        GetScreenHeight() / 2f - 300,
+                        800,
+                        600
+                    );
+
                     fixed (byte* pt = _addNewEffectPanelBytes)
                     {
                         RayGui.GuiPanel(
-                            new(
-                                Raylib.GetScreenWidth() / 2f - 400,
-                                Raylib.GetScreenHeight() / 2f - 300,
-                                800,
-                                600
-                            ),
+                            panelRect,
                             (sbyte*)pt
                         );
                     }
+
+                    // Close Button
+
+                    var closeClicked = RayGui.GuiButton(new Rectangle(panelRect.X + panelRect.width - 24, panelRect.Y, 24, 24), "X");
+
+                    if (closeClicked) _addNewEffectMode = false;
 
                     fixed (int* scrollIndex = &_newEffectCategoryScrollIndex)
                     {
@@ -530,15 +538,20 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                 }
                 else if (_shortcuts.CycleEffectOptionsDown.Check(ctrl, shift, alt))
                 {
-                    _optionsIndex = ++_optionsIndex % GLOBALS.Level.Effects[_currentAppliedEffect].Item2.Length;
-                    if (_optionsIndex == 0) _optionsIndex = 1;
+                    if (GLOBALS.Level.Effects[_currentAppliedEffect].Item2.Length > 0) {
+
+                        _optionsIndex = ++_optionsIndex % GLOBALS.Level.Effects[_currentAppliedEffect].Item2.Length;
+                        if (_optionsIndex == 0) _optionsIndex = 1;
+                    }
                 }
                 else if (_shortcuts.CycleEffectOptionChoicesRight.Check(ctrl, shift, alt))
                 {
                     var option = GLOBALS.Level.Effects[_currentAppliedEffect].Item2[_optionsIndex];
-                    var choiceIndex = Array.FindIndex(option.Options, op => op == option.Choice);
-                    choiceIndex = ++choiceIndex % option.Options.Length;
-                    option.Choice = option.Options[choiceIndex];
+                    if (option.Options.Length > 0) {
+                        var choiceIndex = Array.FindIndex(option.Options, op => op == option.Choice);
+                        choiceIndex = ++choiceIndex % option.Options.Length;
+                        option.Choice = option.Options[choiceIndex];
+                    }
                 }
                 else if (_shortcuts.CycleEffectOptionChoicesLeft.Check(ctrl, shift, alt))
                 {
@@ -546,7 +559,8 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                     var choiceIndex = Array.FindIndex(option.Options, op => op == option.Choice);
                     choiceIndex--;
                     if (choiceIndex < 0) choiceIndex = option.Options.Length - 1;
-                    option.Choice = option.Options[choiceIndex];
+
+                    if (choiceIndex >= 0 && choiceIndex < option.Options.Length) option.Choice = option.Options[choiceIndex];
                 }
                 
                 // Cycle applied effects
@@ -762,11 +776,14 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                 // Applied effects
 
                 var addEffectRect = new Rectangle(GetScreenWidth() - 290, 130, 35, 35);
+                var newEffectHovered = CheckCollisionPointRec(GetMousePosition(), addEffectRect);
 
-                if (CheckCollisionPointRec(GetMousePosition(), addEffectRect) &&
-                    IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                {
-                    _addNewEffectMode = true;
+                if (newEffectHovered) {
+                    DrawRectangleRec(addEffectRect, BLUE with { a = 150 });
+
+                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) {
+                        _addNewEffectMode = true;
+                    }
                 }
                 
                 DrawTexturePro(
@@ -812,13 +829,25 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                         BLUE
                     );
                     
-                    DrawText(
-                        e.Item1,
-                        GetScreenWidth() - 280,
-                        138 + (35 * i) + 50,
-                        14,
-                        new(0, 0, 0, 255)
-                    );
+                    if (GLOBALS.Font is null) {
+                        DrawText(
+                            e.Item1,
+                            GetScreenWidth() - 280,
+                            138 + (35 * i) + 50,
+                            14,
+                            new(0, 0, 0, 255)
+                        );
+                    } else {
+                        DrawTextEx(
+                            GLOBALS.Font.Value,
+                            e.Item1,
+                            new(GetScreenWidth() - 280, 133 + (35 * i) + 50),
+                            25,
+                            1,
+                            BLACK
+                        );
+                    }
+
                     
                     // Delete Button
 

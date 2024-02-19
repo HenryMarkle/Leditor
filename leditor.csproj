@@ -25,5 +25,20 @@
     <Using Include="System.Threading.Tasks"/> 
   </ItemGroup>
 
+  <!-- <ItemGroup>
+    <Reference Include="Drizzle.Editor">
+      <HintPath>..\Drizzle\Drizzle.Editor\obj\Debug\net7.0\ref\Drizzle.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Drizzle.Lingo.Runtime">
+      <HintPath>..\Drizzle\Drizzle.Lingo.Runtime\obj\Debug\net7.0\ref\Drizzle.Lingo.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Drizzle.Logic">
+      <HintPath>..\Drizzle\Drizzle.Logic\obj\Debug\net7.0\ref\Drizzle.Logic.dll</HintPath>
+    </Reference>
+    <Reference Include="Drizzle.Ported">
+      <HintPath>..\Drizzle\Drizzle.Ported\obj\Debug\net7.0\ref\Drizzle.Ported.dll</HintPath>
+    </Reference>
+  </ItemGroup> -->
+
 
 </Project>

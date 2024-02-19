@@ -76,6 +76,8 @@ internal static class GLOBALS
         internal static string UiAssetsDirectory => Path.Combine(AssetsDirectory, "interface");
         internal static string PackagesDirectory => Path.Combine(ExecutableDirectory, "packs");
         internal static string TilePackagesDirectory => Path.Combine(PackagesDirectory, "tiles");
+        internal static string FontsDirectory => Path.Combine(AssetsDirectory, "fonts");
+        internal static string RendererDirectory => Path.Combine(ExecutableDirectory, "renderer");
         
         
         internal static string TilesInitPath => Path.Combine(IndexDirectory, "tiles.txt");
@@ -647,6 +649,7 @@ internal static class GLOBALS
     
     internal static Settings Settings { get; set; } = new(
             false,
+            false,
             new Shortcuts(
                 new GlobalShortcuts(),
                 new GeoShortcuts(),
@@ -673,6 +676,8 @@ internal static class GLOBALS
     
     #nullable enable
     
+    internal static Font? Font { get; set; }
+    
     /// Used when loading a level
     internal static Task<TileCheckResult>? TileCheck { get; set; } = null;
     
@@ -683,5 +688,7 @@ internal static class GLOBALS
 
     public static JsonSerializerOptions JsonSerializerOptions { get; set; } =
         new JsonSerializerOptions { WriteIndented = true };
+    
+    public static bool RendererExists { get; set; }
 #nullable disable
 }

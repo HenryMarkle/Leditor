@@ -81,7 +81,16 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
             {
                 fixed (int* width = &_matrixWidthValue)
                 {
-                    Raylib.DrawText("Width", 50, 110, 20, new(0, 0, 0, 255));
+                    if (GLOBALS.Font is null)
+                    {
+                        DrawText("Width", 50, 110, 20, new(0, 0, 0, 255));
+                    }
+                    else
+                    {
+                        DrawTextEx(GLOBALS.Font.Value, "Width", new (50, 110), 20, 1, BLACK);
+                    }
+                    
+                    
                     if (RayGui.GuiSpinner(new(130, 100, 300, 40), "", width, 72, 999, _editControl == 0))
                     {
                         _editControl = 0;
@@ -90,8 +99,16 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
 
                 fixed (int* height = &_matrixHeightValue)
                 {
+                    if (GLOBALS.Font is null)
+                    {
+                        DrawText("Height", 50, 160, 20, new(0, 0, 0, 255));
+                    }
+                    else
+                    {
+                        DrawTextEx(GLOBALS.Font.Value, "Height", new (50, 160), 20, 1, BLACK);
+                    }
 
-                    DrawText("Height", 50, 160, 20, new(0, 0, 0, 255));
+                    
                     if (RayGui.GuiSpinner(new(130, 150, 300, 40), "", height, 43, 999, _editControl == 1))
                     {
                         _editControl = 1;
@@ -100,7 +117,15 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
 
                 fixed (int* left = &_leftPadding)
                 {
-                    DrawText("Left", 50, 260, 20, new(0, 0, 0, 255));
+                    if (GLOBALS.Font is null)
+                    {
+                        DrawText("Left", 50, 260, 20, new(0, 0, 0, 255));
+                    }
+                    else
+                    {
+                        DrawTextEx(GLOBALS.Font.Value, "Left", new (50, 260), 20, 1, BLACK);
+                    }
+                    
                     if (RayGui.GuiSpinner(new(130, 250, 300, 40), "", left, 0, 333, _editControl == 2))
                     {
                         _editControl = 2;
@@ -109,7 +134,15 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
 
                 fixed (int* top = &_topPadding)
                 {
-                    DrawText("Top", 50, 360, 20, new(0, 0, 0, 255));
+                    if (GLOBALS.Font is null)
+                    {
+                        DrawText("Top", 50, 360, 20, new(0, 0, 0, 255));
+                    }
+                    else
+                    {
+                        DrawTextEx(GLOBALS.Font.Value, "Top", new (50, 360), 20, 1, BLACK);
+                    }
+                    
                     if (RayGui.GuiSpinner(new(130, 350, 300, 40), "", top, 0, 111, _editControl == 4))
                     {
                         _editControl = 4;
@@ -118,7 +151,14 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
 
                 fixed (int* right = &_rightPadding)
                 {
-                    DrawText("Right", 50, 310, 20, new(0, 0, 0, 255));
+                    if (GLOBALS.Font is null)
+                    {
+                        DrawText("Right", 50, 310, 20, new(0, 0, 0, 255));
+                    }
+                    else
+                    {
+                        DrawTextEx(GLOBALS.Font.Value, "Right", new (50, 310), 20, 1, BLACK);
+                    }
                     if (RayGui.GuiSpinner(new(130, 300, 300, 40), "", right, 0, 333, _editControl == 3))
                     {
                         _editControl = 3;
@@ -127,8 +167,16 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
 
                 fixed (int* bottom = &_bottomPadding)
                 {
-                    DrawText("Bottom", 50, 410, 20, new(0, 0, 0, 255));
-                    if (Raylib_CsLo.RayGui.GuiSpinner(new(130, 400, 300, 40), "", bottom, 0, 111, _editControl == 5))
+                    if (GLOBALS.Font is null)
+                    {
+                        DrawText("Bottom", 50, 410, 20, new(0, 0, 0, 255));
+                    }
+                    else
+                    {
+                        DrawTextEx(GLOBALS.Font.Value, "Bottom", new (50, 410), 20, 1, BLACK);
+                    }
+                    
+                    if (RayGui.GuiSpinner(new(130, 400, 300, 40), "", bottom, 0, 111, _editControl == 5))
                     {
                         _editControl = 5;
                     }

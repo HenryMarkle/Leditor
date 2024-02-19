@@ -84,7 +84,7 @@ public static class Exporters
                     {
                         TileDefault => "0",
                         TileMaterial m => $"\"{m.Name}\"",
-                        TileHead h => $"[point({h.CategoryPostition.Item1}, {h.CategoryPostition.Item2}), \"{h.CategoryPostition.Item3}\"]",
+                        TileHead h => $"[point({h.CategoryPostition.Item1+1}, {h.CategoryPostition.Item2+1}), \"{h.CategoryPostition.Item3}\"]",
                         TileBody b => $"[point({b.HeadPosition.x}, {b.HeadPosition.y}), {b.HeadPosition.z}]",
                         
                         _ => throw new Exception("Invalid tile data")
@@ -220,7 +220,7 @@ public static class Exporters
             builder.Append(", ");
             builder.Append($"\"{prop.Name}\"");
             builder.Append(", ");
-            builder.Append($"point({category+1}, {index+1})");
+            builder.Append($"point({(category == -1 ? category + 2 : category + 1)}, {index+1})");
             builder.Append(", ");
             builder.Append($"[point({prop.Quads.TopLeft.X:0.0000}, {prop.Quads.TopLeft.Y:0.0000}), point({prop.Quads.TopRight.X:0.0000}, {prop.Quads.TopRight.Y:0.0000}), point({prop.Quads.BottomRight.X:0.0000}, {prop.Quads.BottomRight.Y:0.0000}), point({prop.Quads.BottomLeft.X:0.0000}, {prop.Quads.BottomLeft.Y:0.0000})]");
             builder.Append(", ");

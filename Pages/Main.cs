@@ -661,13 +661,27 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                     }
                 }
 
-                DrawText(
-                    GLOBALS.Level.ProjectName,
-                    GetScreenWidth() - 350,
-                    100,
-                    30,
-                    new(0, 0, 0, 255)
-                );
+                if (GLOBALS.Font is not null)
+                {
+                    DrawTextEx(RayGui.GuiGetFont(), GLOBALS.Level.ProjectName,
+                        new (GetScreenWidth() - 350,
+                            100),
+                        30,
+                        1,
+                        BLACK);
+                }
+                else
+                {
+                    DrawText(
+                        GLOBALS.Level.ProjectName,
+                        GetScreenWidth() - 350,
+                        100,
+                        30,
+                        new(0, 0, 0, 255)
+                    );
+                }
+                
+                
 
                 var helpPressed = RayGui.GuiButton(new(
                     GetScreenWidth() - 80,
@@ -680,11 +694,19 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
 
                 if (helpPressed) GLOBALS.Page = 9;
 
-                Raylib.DrawText("Seed", Raylib.GetScreenWidth() - 380, 205, 11, new(0, 0, 0, 255));
+
+                if (GLOBALS.Font is null)
+                {
+                    DrawText("Seed", GetScreenWidth() - 380, 205, 11, new(0, 0, 0, 255));
+                }
+                else
+                {
+                    DrawTextEx(GLOBALS.Font.Value, "Seed", new(GetScreenWidth() - 380, 200), 20, 1, BLACK);
+                }
 
                 GLOBALS.Level.Seed = (int)Math.Round(Raylib_CsLo.RayGui.GuiSlider(
                     new(
-                        Raylib.GetScreenWidth() - 290,
+                        GetScreenWidth() - 280,
                         200,
                         200,
                         20
@@ -714,16 +736,31 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                 "Default Medium",
                 GLOBALS.Level.DefaultTerrain);
 
-                Raylib.DrawText("Water Level",
-                    Raylib.GetScreenWidth() - 380,
-                    335,
-                    11,
-                    new(0, 0, 0, 255)
-                );
+                if (GLOBALS.Font is null)
+                {
+                    DrawText("Water Level",
+                        Raylib.GetScreenWidth() - 380,
+                        335,
+                        11,
+                        new(0, 0, 0, 255)
+                    );
+                }
+                else
+                {
+                    DrawTextEx(
+                        GLOBALS.Font.Value,
+                        "Water Level",
+                        new Vector2(GetScreenWidth() - 380,
+                            330),
+                        20,
+                        1,
+                        BLACK
+                        );
+                }
 
                 GLOBALS.Level.WaterLevel = (int)Math.Round(RayGui.GuiSlider(
                     new(
-                        width - 290,
+                        width - 280,
                         330,
                         200,
                         20
@@ -748,6 +785,50 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                 );
 
                 //
+
+                if (GLOBALS.RendererExists)
+                {
+                    var renderRect = new Rectangle(width - 390, height - 300, 360, 40);
+                    var renderHovered = CheckCollisionPointRec(GetMousePosition(), renderRect);
+
+                    if (renderHovered)
+                    {
+                        SetMouseCursor(MouseCursor.MOUSE_CURSOR_POINTING_HAND);
+
+                        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                        {
+                            // TODO: Render
+
+                            var projectPath = Path.Combine(GLOBALS.ProjectPath, $"{GLOBALS.Level.ProjectName}.txt");
+                            var arguments = $"render \"{projectPath}\"";
+                            
+                            System.Diagnostics.Process renderProcess = new()
+                            {
+                                StartInfo =
+                                {
+                                    FileName = Path.Combine(GLOBALS.Paths.RendererDirectory, "Drizzle.ConsoleApp.exe"),
+                                    WorkingDirectory = GLOBALS.Paths.ExecutableDirectory,
+                                    Arguments = arguments
+                                }
+                            };
+
+                            renderProcess.Start();
+                        }
+                    }
+                    else SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+                    
+                    DrawRectangleRec(renderRect, BLUE with { a = (byte)(renderHovered ? 100 : 150) });
+                    DrawRectangleLinesEx(renderRect, 2f, BLUE);
+                    DrawText(
+                        "RENDER", 
+                        renderRect.X + (renderRect.width - MeasureText("RENDER", 20))/2f, 
+                        height - 290, 
+                        20, 
+                        WHITE
+                    );
+                }
+
+                
 
                 var savePressed = RayGui.GuiButton(new(
                         GetScreenWidth() - 390,

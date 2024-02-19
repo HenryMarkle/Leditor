@@ -8,3 +8,5 @@ settings.json
 /index
 .vs
 .vscode
+.idea
+*.zip

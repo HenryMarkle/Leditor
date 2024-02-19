@@ -22,6 +22,7 @@ public class SettingsPage : IPage
     private Vector2 _shortcutsLightScrollPanelScroll;
     private Vector2 _shortcutsEffectsScrollPanelScroll;
     private Vector2 _shortcutsPropsScrollPanelScroll;
+    private Vector2 _shortcutsGlobalScrollPanelScroll;
 
     private bool _assigningShortcut;
 
@@ -152,6 +153,7 @@ public class SettingsPage : IPage
                
                GLOBALS.Settings = new Settings(
                    false,
+                   false,
                    new Shortcuts(
                        new GlobalShortcuts(),
                        new GeoShortcuts(),
@@ -181,6 +183,13 @@ public class SettingsPage : IPage
         switch (_activeCategory)
         {
             case 0: // General
+            {
+                GLOBALS.Settings.DefaultFont = GuiCheckBox(
+                    new Rectangle(subPanelX, categoryRect.Y, 20, 20), 
+                    "Default Font", 
+                    GLOBALS.Settings.DefaultFont
+                );
+            }
                 break;
             case 1: // Geometry Editor
                 DrawText(
@@ -690,7 +699,7 @@ public class SettingsPage : IPage
                     {
                         var newShortcutActiveCategory = GuiListView(
                             new Rectangle(250, 91, 160, height - 200),
-                            "Old Geometry Editor;New Geometry Editor;Tile Editor;Cameras Editor;Light Editor;Effects Editor;Props Editor",
+                            "Global;Old Geometry Editor;New Geometry Editor;Tile Editor;Cameras Editor;Light Editor;Effects Editor;Props Editor",
                             scrollIndex,
                             _shortcutActiveCategory
                         );
@@ -703,7 +712,101 @@ public class SettingsPage : IPage
 
                 switch (_shortcutActiveCategory)
                 {
-                    case 0: // Old Geometry
+                    case 0: // Global
+                    {
+                        if (resetShortcuts)
+                        {
+                            _assigningShortcut = false;
+                            _shortcutToAssign = null;
+                            _mouseShortcutToAssign = null;
+
+                            GLOBALS.Settings.Shortcuts.GlobalShortcuts = new GlobalShortcuts();
+                        }
+                        
+                        unsafe
+                        {
+                            fixed (byte* pl = _shortcutCategoryScrollPanelTitle)
+                            {
+                                fixed (Vector2* sv = &_shortcutsGlobalScrollPanelScroll)
+                                {
+                                    GuiScrollPanel(
+                                        shortcutsScrollPanelRect, 
+                                        (sbyte*)pl, 
+                                        new Rectangle(), 
+                                        sv
+                                    );
+                                }
+                            }
+                        }
+                        
+                        
+                        GuiLabel(new Rectangle(430, 150, 100, 40), "Main Screen");
+                        var assignToMainPage = GuiButton(new Rectangle(540, 150, 200, 40),
+                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage}");
+                        
+                        GuiLabel(new Rectangle(430, 195, 100, 40), "Geometry Editor");
+                        var assignToGeometryEditor = GuiButton(new Rectangle(540, 195, 200, 40),
+                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor}"); 
+                        
+                        GuiLabel(new Rectangle(430, 240, 100, 40), "Tiles Editor");
+                        var assignToTileEditor = GuiButton(new Rectangle(540, 240, 200, 40),
+                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor}"); 
+                        
+                        GuiLabel(new Rectangle(430, 285, 100, 40), "Cameras Editor");
+                        var assignToCamerasEditor = GuiButton(new Rectangle(540, 285, 200, 40),
+                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor}");
+                        
+                        GuiLabel(new Rectangle(430, 330, 100, 40), "Light Editor");
+                        var assignToLightEditor = GuiButton(new Rectangle(540, 330, 200, 40),
+                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor}"); 
+                        
+                        GuiLabel(new Rectangle(430, 375, 100, 40), "Dimensions Editor");
+                        var assignToDimensionsEditor = GuiButton(new Rectangle(540, 375, 200, 40),
+                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor}");
+                        
+                        GuiLabel(new Rectangle(430, 420, 100, 40), "Effects Editor");
+                        var assignToEffectsEditor = GuiButton(new Rectangle(540, 420, 200, 40),
+                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor}");
+                        
+                        GuiLabel(new Rectangle(430, 465, 100, 40), "Props Editor");
+                        var assignToPropsEditor = GuiButton(new Rectangle(540, 465, 200, 40),
+                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor}");
+                        
+                        
+                        GuiLabel(new Rectangle(430, 510, 100, 40), "Settings");
+                        var assignToSettings = GuiButton(new Rectangle(540, 510, 200, 40),
+                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage}");
+                        
+
+
+                        GuiLabel(new Rectangle(430, 555, 100, 40), "Save");
+                        var assignSave = GuiButton(new Rectangle(540, 555, 200, 40),
+                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave}");
+
+                        GuiLabel(new Rectangle(430, 600, 100, 40), "Save As");
+                        var assignSaveAs = GuiButton(new Rectangle(540, 600, 200, 40),
+                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSaveAs}");
+
+                        GuiLabel(new Rectangle(430, 645, 100, 40), "Render");
+                        var assignRender = GuiButton(new Rectangle(540, 645, 200, 40),
+                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.Render}");
+
+                        if (assignToMainPage) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage;
+                        if (assignToGeometryEditor) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor;
+                        if (assignToTileEditor) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor;
+                        if (assignToCamerasEditor) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor;
+                        if (assignToLightEditor) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor;
+                        if (assignToDimensionsEditor) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor;
+                        if (assignToEffectsEditor) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor;
+                        if (assignToPropsEditor) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor;
+                        if (assignToSettings) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage;
+                        if (assignSave) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave;
+                        if (assignSaveAs) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSaveAs;
+                        if (assignRender) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.Render;
+                    }
+                    break;
+                    
+                    case 1: // Old Geometry
                     {
                         if (resetShortcuts)
                         {
@@ -809,7 +912,7 @@ public class SettingsPage : IPage
                         if (assignAltPan) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GeoEditor.AltDrag;
                     }
                         break;
-                    case 1: // New Geometry
+                    case 2: // New Geometry
                     {
                         if (resetShortcuts)
                         {
@@ -949,7 +1052,7 @@ public class SettingsPage : IPage
                         if (assignAltErase) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.AltErase;
                     }
                         break;
-                    case 2: // Tiles Editor
+                    case 3: // Tiles Editor
                         {
                         if (resetShortcuts)
                         {
@@ -1105,7 +1208,7 @@ public class SettingsPage : IPage
                         if (assignToggleLayer3Tiles) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer3Tiles;
                     }
                         break;
-                    case 3: // Cameras Editor
+                    case 4: // Cameras Editor
                         {
                         if (resetShortcuts)
                         {
@@ -1200,7 +1303,7 @@ public class SettingsPage : IPage
                         if (assignCreateAndDeleteCameraKeyboard) _shortcutToAssign = GLOBALS.Settings.Shortcuts.CameraEditor.CreateAndDeleteCameraAlt;
                     }
                         break;
-                    case 4: // Light Editor
+                    case 5: // Light Editor
                         {
                         if (resetShortcuts)
                         {
@@ -1385,7 +1488,7 @@ public class SettingsPage : IPage
                         if (assignFastSqueezeBrushHorizontally) _shortcutToAssign = GLOBALS.Settings.Shortcuts.LightEditor.FastSqueezeBrushHorizontally;
                     }
                         break;
-                    case 5: // Effects Editor
+                    case 6: // Effects Editor
                         {
                         if (resetShortcuts)
                         {
@@ -1534,7 +1637,7 @@ public class SettingsPage : IPage
                         if (assignToggleOptionsVisibility) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.ToggleOptionsVisibility;
                     }
                         break;
-                    case 6: // Props
+                    case 7: // Props
                     {
                         if (resetShortcuts)
                         {
