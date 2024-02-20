@@ -1089,6 +1089,12 @@ class Program
                         _globalSave = true;
                         RayGui.GuiLock();
                     }
+                    else if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSaveAs.Check(ctrl, shift, alt))
+                    {
+                        _askForPath = true;
+                        _saveFileDialog = Utils.SetFilePathAsync();
+                        RayGui.GuiLock();
+                    }
                 }
 
                 if (RayGui.GuiIsLocked() && _globalSave)

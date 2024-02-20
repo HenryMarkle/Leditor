@@ -216,9 +216,6 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                         // it becomes useful in the future
                         if (isBecomingLarger)
                         {
-                            var fillCell = new RunCell { Geo = 1, Stackables = [] };
-                            var emptyCell = new RunCell { Geo = 0, Stackables = [] };
-
                             GLOBALS.Level.Resize(
                                 _matrixWidthValue,
                                 _matrixHeightValue,

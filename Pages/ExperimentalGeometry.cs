@@ -448,7 +448,18 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                     case 1:
                                         {
                                             var id = GeoMenuCategory2ToStackableId[_geoMenuIndex];
+                                            #if DEBUG
+                                            try
+                                            {
+                                                cell.Stackables[id] = !_eraseMode;
+                                            }
+                                            catch (IndexOutOfRangeException e)
+                                            {
+                                                throw new IndexOutOfRangeException(innerException: e, message: $"Geo cell at {x} {y} {GLOBALS.Layer} has stackables array that is not initialized correctly");
+                                            }
+                                            #else
                                             cell.Stackables[id] = !_eraseMode;
+                                            #endif
                                         }
                                         break;
 

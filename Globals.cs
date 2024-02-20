@@ -300,9 +300,9 @@ internal static class GLOBALS
                 width,
                 height,
                 [
-                    new RunCell() { Geo = geoIdFill[0], Stackables = [] },
-                    new RunCell() { Geo = geoIdFill[1], Stackables = [] },
-                    new RunCell() { Geo = geoIdFill[2], Stackables = [] }
+                    new RunCell { Geo = geoIdFill[0], Stackables = new bool[22] },
+                    new RunCell { Geo = geoIdFill[1], Stackables = new bool[22] },
+                    new RunCell { Geo = geoIdFill[2], Stackables = new bool[22] }
                 ]
             );
 

@@ -592,6 +592,12 @@ public struct RunCell {
         Geo = 0;
         Stackables = new bool[22];
     }
+
+    public RunCell(int geo)
+    {
+        Geo = geo;
+        Stackables = new bool[22];
+    }
 }
 
 public enum TileType { Default, Material, TileHead, TileBody }
