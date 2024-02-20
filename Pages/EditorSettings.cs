@@ -171,7 +171,8 @@ public class SettingsPage : IPage
                            layer1: new ConColor(0, 0, 0, 255),
                            layer2: new ConColor(0, 255, 0, 50),
                            layer3: new ConColor(255, 0, 0, 50)
-                       )
+                       ),
+                       new ConColor(0, 0, 255, 70)
                    ),
                    new TileEditor(),
                    new LightEditor(background: new ConColor(66, 108, 245, 255)),

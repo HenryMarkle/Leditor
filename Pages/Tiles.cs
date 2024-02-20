@@ -499,7 +499,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
         BeginMode2D(_camera);
         {
-            DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.PreviewScale, GLOBALS.Level.Height * GLOBALS.PreviewScale, new Color(255, 255, 255, 255));
+            DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.PreviewScale, GLOBALS.Level.Height * GLOBALS.PreviewScale, GLOBALS.Layer == 2 ? new(100, 100, 100, 100) : WHITE);
 
             #region Matrix
 
@@ -535,7 +535,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             #region TileEditorLayer2
             if (_showTileLayer2)
             {
-                if (GLOBALS.Layer != 2) DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.PreviewScale, GLOBALS.Level.Height * GLOBALS.PreviewScale, new(90, 90, 90, 120));
+                if (GLOBALS.Layer != 2) DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.PreviewScale, GLOBALS.Level.Height * GLOBALS.PreviewScale, new(100, 100, 100, 150));
 
                 Printers.DrawGeoLayer(
                     1, 

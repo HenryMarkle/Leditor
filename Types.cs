@@ -427,7 +427,8 @@ public class LayerColors(ConColor layer1, ConColor layer2, ConColor layer3)
 }
 
 public class GeoEditor(
-    LayerColors layerColors, 
+    LayerColors layerColors,
+    ConColor waterColor,
     bool legacyGeoTools = false,
     bool allowOutboundsPlacement = false,
     bool showCameras = false,
@@ -435,6 +436,7 @@ public class GeoEditor(
 )
 {
     public LayerColors LayerColors { get; set; } = layerColors;
+    public ConColor WaterColor { get; set; } = waterColor;
     public bool LegacyGeoTools { get; set; } = legacyGeoTools;
     public bool ShowCameras { get; set; } = showCameras;
     public bool ShowTiles { get; set; } = showTiles;

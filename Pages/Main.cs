@@ -26,6 +26,8 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
     private bool _askForPath;
     private bool _failedToSave;
     private bool _undefinedTilesAlert;
+
+    private int _spinnerLock;
     
     private Task<string>? _openFileDialog;
     private Task<LoadFileResult>? _loadFileTask;
@@ -276,7 +278,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
         var width = GetScreenWidth();
         var height = GetScreenHeight();
 
-        if (!RayGui.GuiIsLocked())
+        if (!RayGui.GuiIsLocked() && _spinnerLock == 0)
         {
             
             if (IsKeyReleased(KeyboardKey.KEY_TWO))
@@ -719,16 +721,16 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                 if (helpPressed) GLOBALS.Page = 9;
 
 
-                if (GLOBALS.Font is null)
+                /*if (GLOBALS.Font is null)
                 {
                     DrawText("Seed", GetScreenWidth() - 380, 205, 11, new(0, 0, 0, 255));
                 }
                 else
                 {
                     DrawTextEx(GLOBALS.Font.Value, "Seed", new(GetScreenWidth() - 380, 200), 20, 1, BLACK);
-                }
+                }*/
 
-                GLOBALS.Level.Seed = (int)Math.Round(Raylib_CsLo.RayGui.GuiSlider(
+                /*GLOBALS.Level.Seed = (int)Math.Round(RayGui.GuiSlider(
                     new(
                         GetScreenWidth() - 280,
                         200,
@@ -740,7 +742,46 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                     GLOBALS.Level.Seed,
                     0,
                     400
-                ));
+                ));*/
+
+                var seedRect = new Rectangle(GetScreenWidth() - 280, 190, 200, 40);
+                var waterRect = new Rectangle(
+                    width - 280,
+                    320,
+                    200,
+                    40
+                );
+                
+                if (CheckCollisionPointRec(GetMousePosition(), seedRect) &&
+                    IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _spinnerLock = 1;
+                }
+                else if (CheckCollisionPointRec(GetMousePosition(), waterRect) &&
+                         IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _spinnerLock = 2;
+                }
+                else if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT) || IsKeyPressed(KeyboardKey.KEY_ENTER) || IsKeyPressed(KeyboardKey.KEY_ESCAPE))
+                {
+                    _spinnerLock = 0;
+                }
+                
+                unsafe
+                {
+                    var seed = GLOBALS.Level.Seed;
+                    
+                    RayGui.GuiSpinner(
+                        seedRect,
+                        "Seed",
+                        &seed,
+                        0,
+                        10000,
+                        _spinnerLock == 1
+                    );
+
+                    if (seed != GLOBALS.Level.Seed) GLOBALS.Level.Seed = seed;
+                }
 
                 GLOBALS.Level.LightMode = RayGui.GuiCheckBox(new(
                     Raylib.GetScreenWidth() - 380,
@@ -760,7 +801,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                 "Default Medium",
                 GLOBALS.Level.DefaultTerrain);
 
-                if (GLOBALS.Font is null)
+                /*if (GLOBALS.Font is null)
                 {
                     DrawText("Water Level",
                         Raylib.GetScreenWidth() - 380,
@@ -780,21 +821,32 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         1,
                         BLACK
                         );
-                }
+                }*/
 
-                GLOBALS.Level.WaterLevel = (int)Math.Round(RayGui.GuiSlider(
-                    new(
-                        width - 280,
-                        330,
-                        200,
-                        20
-                    ),
+                /*GLOBALS.Level.WaterLevel = (int)Math.Round(RayGui.GuiSlider(
+                    waterRect,
                     "-1",
                     $"{GLOBALS.Level.Height + 10}",
                     GLOBALS.Level.WaterLevel,
                     -1,
                     GLOBALS.Level.Height + 10
-                ));
+                ));*/
+                
+                unsafe
+                {
+                    var waterLevel = GLOBALS.Level.WaterLevel;
+                    
+                    RayGui.GuiSpinner(
+                        waterRect,
+                        "Water Level",
+                        &waterLevel,
+                        -1,
+                        GLOBALS.Level.Height + 200,
+                        _spinnerLock == 2
+                    );
+
+                    if (waterLevel != GLOBALS.Level.WaterLevel) GLOBALS.Level.WaterLevel = waterLevel;
+                }
 
 
                 GLOBALS.Level.WaterAtFront = RayGui.GuiCheckBox(

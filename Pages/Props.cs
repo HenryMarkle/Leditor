@@ -1161,7 +1161,7 @@ internal class PropsEditorPage : IPage
                 {
                     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _movingProps = false;
                     var delta = GetMouseDelta(); // TODO: Scale to world2D
-                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+                    if (IsMouseButtonDown(_shortcuts.DragLevel.Button))
                     {
                         delta.X = 0;
                         delta.Y = 0;
@@ -1584,7 +1584,7 @@ internal class PropsEditorPage : IPage
 
         BeginMode2D(_camera);
         {
-            DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, new Color(215, 215, 215, 255));
+            DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, GLOBALS.Layer == 2 ? new(100, 100, 100, 100) : WHITE);
 
             #region TileEditorLayer3
             if (_showTileLayer3)
@@ -1744,7 +1744,7 @@ internal class PropsEditorPage : IPage
             #region TileEditorLayer2
             if (_showTileLayer2)
             {
-                if (GLOBALS.Layer != 2) DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, new(90, 90, 90, 120));
+                if (GLOBALS.Layer != 2) DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale,  new(100, 100, 100, 150));
 
                 Printers.DrawGeoLayer(
                     1, 

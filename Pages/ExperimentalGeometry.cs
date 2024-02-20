@@ -793,6 +793,19 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer3,
                     _layerStackableFilter
                 );
+                
+                // Water
+
+                if (GLOBALS.Level.WaterLevel > -1)
+                {
+                    DrawRectangle(
+                        0,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
+                        GLOBALS.Level.Width*GLOBALS.Scale,
+                        GLOBALS.Level.WaterLevel*GLOBALS.Scale,
+                        GLOBALS.Settings.GeometryEditor.WaterColor
+                    );
+                }
 
                 // draw stackables
                 
