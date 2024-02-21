@@ -1,6 +1,9 @@
 ﻿global using Raylib_CsLo;
 using static Raylib_CsLo.Raylib;
 
+using ImGuiNET;
+using rlImGui_cs;
+
 using System.Numerics;
 using System.Text;
 using Leditor.Lingo;
@@ -862,6 +865,10 @@ class Program
 
         Task<(bool success, Exception? exception)>? quickSaveTask = null;
         
+        //
+        rlImGui.Setup(false);
+        //
+        
         logger.Information("Begin main loop");
 
         while (!WindowShouldClose())
@@ -1303,6 +1310,10 @@ class Program
         UnloadShader(GLOBALS.Shaders.LongProp);
 
         unloadTileImages?.Wait();
+        
+        //
+        rlImGui.Shutdown();
+        //
 
         CloseWindow();
 

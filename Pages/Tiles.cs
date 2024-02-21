@@ -1,5 +1,7 @@
 ﻿using System.Numerics;
 using System.Text;
+using ImGuiNET;
+using rlImGui_cs;
 using static Raylib_CsLo.Raylib;
 
 namespace Leditor;
@@ -626,6 +628,15 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             }
             else
             {
+                /*rlImGui.Begin();
+
+                ImGui.Begin("Window");
+                ImGui.Text("TEST");
+                
+                
+                ImGui.End();
+                rlImGui.End();*/
+                
                 if (inMatrixBounds) DrawText(
                     $"x: {tileMatrixX}, y: {tileMatrixY}",
                     tileMatrixX * GLOBALS.PreviewScale + GLOBALS.PreviewScale,
