@@ -596,6 +596,50 @@ internal static class GLOBALS
         _ => "nn"
     };
 
+    public static Dictionary<string, int> EffectRepeats => new()
+    {
+        ["Slime"] = 130,
+        ["DecalsOnlySlime"] = 130,
+        ["Fat Slime"] = 200,
+        ["Scales"] = 200,
+        ["SlimeX3"] = 390,
+        ["Melt"] = 60,
+        ["Super Erode"] = 60,
+        ["Ultra Super Erode"] = 60,
+        ["Rust"] = 60,
+        ["Barnacles"] = 60,
+        ["Colored Barnacles"] = 60,
+        ["Clovers"] = 20,
+        ["Erode"] = 80,
+        ["Sand"] = 80,
+        ["Roughen"] = 30,
+        ["Impacts"] = 75,
+        ["Super Melt"] = 50,
+        ["Destructive Melt"] = 50,
+    };
+
+    public static Dictionary<string, float> EffectOpenAreas => new()
+    {
+        ["Slime"] = 0.5f,
+        ["DecalsOnlySlime"] = 0.5f,
+        ["Fat Slime"] = 0.5f,
+        ["Scales"] = 0.05f,
+        ["SlimeX3"] = 0.5f,
+        ["Melt"] = 0.5f,
+        ["Super Erode"] = 0.5f,
+        ["Ultra Super Erode"] = 0.5f,
+        ["Rust"] = 0.2f,
+        ["Barnacles"] = 0.3f,
+        ["Colored Barnacles"] = 0.3f,
+        ["Clovers"] = 0.2f,
+        ["Erode"] = 0.5f,
+        ["Sand"] = 0.5f,
+        ["Roughen"] = 0.05f,
+        ["Impacts"] = 0.05f,
+        ["Super Melt"] = 0.5f,
+        ["Destructive Melt"] = 0.5f,
+    };
+
     public static bool IsEffectCrossScreen(string name) => name switch
     {
         "Ivy" or "Rollers" or "Thorn Growers" or "Garbage Spirals" or "Spinets" or 
