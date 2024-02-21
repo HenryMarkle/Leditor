@@ -1074,7 +1074,7 @@ internal class PropsEditorPage : IPage
                     _rotatingProps = false;
                     _stretchingProp = false;
                     _editingPropPoints = false;
-                    // _ropeMode = false;
+                    _ropeMode = false;
                     
                     GLOBALS.Level.Props = _selected
                         .Select((s, i) => (s, i))
@@ -1083,6 +1083,12 @@ internal class PropsEditorPage : IPage
                         .ToArray();
                     
                     _selected = new bool[GLOBALS.Level.Props.Length]; // Update selected
+                    
+                    fetchedSelected = GLOBALS.Level.Props
+                        .Select((prop, index) => (prop, index))
+                        .Where(p => _selected[p.index])
+                        .Select(p => p)
+                        .ToArray();
                     
                     ImportRopeModels(); // don't forget to update the list when props list is modified
                 }
@@ -2884,6 +2890,12 @@ internal class PropsEditorPage : IPage
                             .ToArray();
 
                         _selected = new bool [GLOBALS.Level.Props.Length];
+                        
+                        fetchedSelected = GLOBALS.Level.Props
+                            .Select((prop, index) => (prop, index))
+                            .Where(p => _selected[p.index])
+                            .Select(p => p)
+                            .ToArray();
                         
                         ImportRopeModels();
                         

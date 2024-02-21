@@ -215,7 +215,7 @@ public class LightShortcuts
     public KeyboardShortcut IncreaseFlatness { get; set; } = KeyboardKey.KEY_I;
     public KeyboardShortcut DecreaseFlatness { get; set; } = KeyboardKey.KEY_K;
     public KeyboardShortcut IncreaseAngle { get; set; } = KeyboardKey.KEY_J;
-    public KeyboardShortcut DecreaseAngle { get; set; } = KeyboardKey.KEY_I;
+    public KeyboardShortcut DecreaseAngle { get; set; } = KeyboardKey.KEY_L;
 
     public KeyboardShortcut NextBrush { get; set; } = KeyboardKey.KEY_F;
     public KeyboardShortcut PreviousBrush { get; set; } = KeyboardKey.KEY_R;

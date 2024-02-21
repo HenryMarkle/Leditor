@@ -86,7 +86,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                           (GLOBALS.Layer != 0 || !CheckCollisionPointRec(tileMouse, layer1Rect)) && 
                           !CheckCollisionPointRec(tileMouse, tilePanelRect);
         
-        var categoriesPageSize = (int)panelMenuHeight / 30;
+        var categoriesPageSize = (int)panelMenuHeight / 26;
 
         // TODO: fetch init only when menu indices change
         var currentTileInit = GLOBALS.Tiles[_tileCategoryIndex][_tileIndex];
@@ -861,7 +861,11 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 }
 
 
-                foreach (var (index, color) in currentMaterialsList.Select(v => v.Item2).Skip(_materialScrollIndex).Take(categoriesPageSize).Select((v, i) => (i, v)))
+                foreach (var (index, color) in currentMaterialsList
+                             .Select(v => v.Item2)
+                             .Skip(_materialScrollIndex)
+                             .Take(categoriesPageSize)
+                             .Select((v, i) => (i, v)))
                 {
                     DrawRectangleV(
                         new(leftPanelSideStart.X + 23 + (_tilePanelWidth * 0.3f),

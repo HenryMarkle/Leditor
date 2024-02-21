@@ -1910,10 +1910,10 @@ public class SettingsPage : IPage
                         _shortcutToAssign = null;
                     }
                     
-                    if (key == 256)
+                    if (key == (int)KeyboardKey.KEY_ESCAPE)
                     {
                         _assigningShortcut = false;
-                        _shortcutToAssign = null;
+                        _mouseShortcutToAssign = null;
                     }
                 }
             }
