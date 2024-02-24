@@ -50,16 +50,80 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
     private int _tilePanelWidth = 400;
     private int _materialBrushRadius;
 
+    private bool _isShortcutsWinHovered;
+    private bool _isShortcutsWinDragged;
+
     /*
     private readonly TileGram _gram = new(30);
     private List<TileGram.IPlaceAction> _tempPlaceGroupActions = [];
     private List<TileGram.IRemoveAction> _tempRemoveGroupActions = [];*/
 
+    private void ToNextTileCategory(int pageSize)
+    {
+        _tileCategoryIndex = ++_tileCategoryIndex % GLOBALS.TileCategories.Length;
+
+        if (_tileCategoryIndex % (pageSize + _tileCategoryScrollIndex) == pageSize + _tileCategoryScrollIndex - 1
+            && _tileCategoryIndex != GLOBALS.TileCategories.Length - 1)
+            _tileCategoryScrollIndex++;
+
+        if (_tileCategoryIndex == 0)
+        {
+            _tileCategoryScrollIndex = 0;
+        }
+
+        _tileIndex = 0;
+    }
+
+    private void ToPreviousCategory(int pageSize)
+    {
+        _tileCategoryIndex--;
+
+        if (_tileCategoryIndex < 0)
+        {
+            _tileCategoryIndex = GLOBALS.Tiles.Length - 1;
+        }
+
+        if (_tileCategoryIndex == (_tileCategoryScrollIndex + 1) && _tileCategoryIndex != 1) _tileCategoryScrollIndex--;
+        if (_tileCategoryIndex == GLOBALS.Tiles.Length - 1) _tileCategoryScrollIndex += Math.Abs(GLOBALS.Tiles.Length - pageSize);
+        _tileIndex = 0;
+    }
+
+    private void ToNextMaterialCategory(int pageSize)
+    {
+        _materialCategoryIndex = ++_materialCategoryIndex % GLOBALS.MaterialCategories.Length;
+
+        if (_materialCategoryIndex % (pageSize + _materialCategoryScrollIndex) == pageSize + _materialCategoryScrollIndex - 1
+            && _materialCategoryIndex != GLOBALS.MaterialCategories.Length - 1)
+            _materialCategoryScrollIndex++;
+
+        if (_materialCategoryIndex == 0)
+        {
+            _materialCategoryScrollIndex = 0;
+        }
+
+        _materialIndex = 0;
+    }
+    
+    private void ToPreviousMaterialCategory(int pageSize)
+    {
+        _materialCategoryIndex--;
+
+        if (_materialCategoryIndex < 0)
+        {
+            _materialCategoryIndex = GLOBALS.MaterialCategories.Length - 1;
+
+            if (_materialCategoryIndex == (_materialCategoryScrollIndex + 1) && _materialCategoryIndex != 1) _materialCategoryScrollIndex--;
+            if (_materialCategoryScrollIndex == GLOBALS.MaterialCategories.Length - 1) _materialCategoryScrollIndex = Math.Abs(GLOBALS.MaterialCategories.Length - pageSize);
+
+            _materialIndex = 0;
+        }
+    }
+
     public void Draw()
     {
         GLOBALS.Page = 3;
 
-        if (GLOBALS.Settings.GlobalCamera) _camera = GLOBALS.Camera;
+        if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
 
         var teWidth = GetScreenWidth();
         var teHeight = GetScreenHeight();
@@ -83,12 +147,14 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
         var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
 
-        var canDrawTile = !CheckCollisionPointRec(tileMouse, layer3Rect) &&
+        var canDrawTile = !_isShortcutsWinHovered && 
+                          !_isShortcutsWinDragged &&
+                          !CheckCollisionPointRec(tileMouse, layer3Rect) &&
                           (GLOBALS.Layer != 1 || !CheckCollisionPointRec(tileMouse, layer2Rect)) &&
                           (GLOBALS.Layer != 0 || !CheckCollisionPointRec(tileMouse, layer1Rect)) && 
                           !CheckCollisionPointRec(tileMouse, tilePanelRect);
         
-        var categoriesPageSize = (int)panelMenuHeight / 30;
+        var categoriesPageSize = (int)panelMenuHeight / 26;
 
         // TODO: fetch init only when menu indices change
         var currentTileInit = GLOBALS.Tiles[_tileCategoryIndex][_tileIndex];
@@ -136,7 +202,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             #if DEBUG
             _logger.Debug($"Going to page 6");
             #endif
-            GLOBALS.ResizeFlag = true; GLOBALS.Page = 6;
+            GLOBALS.ResizeFlag = true; 
+            GLOBALS.NewFlag = false; 
+            GLOBALS.Page = 6;
         }
         if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift))
         {
@@ -366,24 +434,24 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
         // change tile category
 
+        if (_shortcuts.MoveToNextCategory.Check(ctrl, shift, alt))
+        {
+            if (_materialTileSwitch) ToNextTileCategory(categoriesPageSize);
+            else ToNextMaterialCategory(categoriesPageSize);
+        }
+        else if (_shortcuts.MoveToPreviousCategory.Check(ctrl, shift, alt))
+        {
+            if (_materialTileSwitch) ToPreviousCategory(categoriesPageSize);
+            else ToPreviousMaterialCategory(categoriesPageSize);
+        }
+
         if (_shortcuts.MoveDown.Check(ctrl, shift, alt))
         {
             if (_materialTileSwitch)
             {
                 if (_tileCategoryFocus)
                 {
-                    _tileCategoryIndex = ++_tileCategoryIndex % GLOBALS.TileCategories.Length;
-
-                    if (_tileCategoryIndex % (categoriesPageSize + _tileCategoryScrollIndex) == categoriesPageSize + _tileCategoryScrollIndex - 1
-                        && _tileCategoryIndex != GLOBALS.TileCategories.Length - 1)
-                        _tileCategoryScrollIndex++;
-
-                    if (_tileCategoryIndex == 0)
-                    {
-                        _tileCategoryScrollIndex = 0;
-                    }
-
-                    _tileIndex = 0;
+                    ToNextTileCategory(categoriesPageSize);
                 }
                 else
                 {
@@ -399,18 +467,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             {
                 if (_tileCategoryFocus)
                 {
-                    _materialCategoryIndex = ++_materialCategoryIndex % GLOBALS.MaterialCategories.Length;
-
-                    if (_materialCategoryIndex % (categoriesPageSize + _materialCategoryScrollIndex) == categoriesPageSize + _materialCategoryScrollIndex - 1
-                        && _materialCategoryIndex != GLOBALS.MaterialCategories.Length - 1)
-                        _materialCategoryScrollIndex++;
-
-                    if (_materialCategoryIndex == 0)
-                    {
-                        _materialCategoryScrollIndex = 0;
-                    }
-
-                    _materialIndex = 0;
+                    ToNextMaterialCategory(categoriesPageSize);
                 }
                 else
                 {
@@ -431,17 +488,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             {
                 if (_tileCategoryFocus)
                 {
-
-                    _tileCategoryIndex--;
-
-                    if (_tileCategoryIndex < 0)
-                    {
-                        _tileCategoryIndex = GLOBALS.Tiles.Length - 1;
-                    }
-
-                    if (_tileCategoryIndex == (_tileCategoryScrollIndex + 1) && _tileCategoryIndex != 1) _tileCategoryScrollIndex--;
-                    if (_tileCategoryIndex == GLOBALS.Tiles.Length - 1) _tileCategoryScrollIndex += Math.Abs(GLOBALS.Tiles.Length - categoriesPageSize);
-                    _tileIndex = 0;
+                    ToPreviousCategory(categoriesPageSize);
                 }
                 else
                 {
@@ -457,17 +504,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             {
                 if (_tileCategoryFocus)
                 {
-                    _materialCategoryIndex--;
-
-                    if (_materialCategoryIndex < 0)
-                    {
-                        _materialCategoryIndex = GLOBALS.MaterialCategories.Length - 1;
-
-                        if (_materialCategoryIndex == (_materialCategoryScrollIndex + 1) && _materialCategoryIndex != 1) _materialCategoryScrollIndex--;
-                        if (_materialCategoryScrollIndex == GLOBALS.MaterialCategories.Length - 1) _materialCategoryScrollIndex = Math.Abs(GLOBALS.MaterialCategories.Length - categoriesPageSize);
-
-                        _materialIndex = 0;
-                    }
+                    ToPreviousMaterialCategory(categoriesPageSize);
                 }
                 else
                 {
@@ -516,7 +553,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     false, 
                     GLOBALS.Layer == 2
                         ? BLACK 
-                        : new(0, 0, 0, 120)
+                        : new(0, 0, 0, 100)
                 );
 
                 // then draw the tiles
@@ -528,7 +565,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         GLOBALS.PreviewScale, 
                         false, 
                         !GLOBALS.Settings.TileEditor.UseTextures,
-                        GLOBALS.Settings.TileEditor.TintedTiles
+                        GLOBALS.Settings.TileEditor.TintedTiles,
+                        (byte)(GLOBALS.Layer == 2 ? 255 : 50)
                     );
                 }
             }
@@ -545,7 +583,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     false, 
                     GLOBALS.Layer == 1
                         ? BLACK 
-                        : new(0, 0, 0, 120)
+                        : new(0, 0, 0, 100)
                 );
 
                 // Draw layer 2 tiles
@@ -557,7 +595,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         GLOBALS.PreviewScale, 
                         false, 
                         !GLOBALS.Settings.TileEditor.UseTextures,
-                        GLOBALS.Settings.TileEditor.TintedTiles
+                        GLOBALS.Settings.TileEditor.TintedTiles,
+                        (byte)(GLOBALS.Layer == 1 ? 255 : 50)
                     );
                 }
             }
@@ -574,7 +613,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     false, 
                     GLOBALS.Layer == 0
                         ? BLACK 
-                        : new(0, 0, 0, 120)
+                        : new(0, 0, 0, 100)
                 );
 
                 // Draw layer 1 tiles
@@ -586,7 +625,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         GLOBALS.PreviewScale, 
                         false, 
                         !GLOBALS.Settings.TileEditor.UseTextures,
-                        GLOBALS.Settings.TileEditor.TintedTiles
+                        GLOBALS.Settings.TileEditor.TintedTiles,
+                        (byte)(GLOBALS.Layer == 0 ? 255 : 50)
                     );
                 }
             }
@@ -650,6 +690,123 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
         #region TileEditorUI
         {
+            
+            // ImGui
+
+            /*rlImGui.Begin();
+
+            if (ImGui.Begin(_materialTileSwitch ? "Tiles" : "Materials", ImGuiWindowFlags.NoFocusOnAppearing))
+            {
+                var pos = ImGui.GetWindowPos();
+                var winSpace = ImGui.GetWindowSize();
+                
+                ImGui.SetWindowPos(new Vector2(0, 0));
+                ImGui.SetWindowSize(new Vector2(winSpace.X, teHeight));
+
+                if (CheckCollisionPointRec(tileMouse, new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
+                {
+                    _isTilesWinHovered = true;
+
+                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isTilesWinDragged = true;
+                }
+                else
+                {
+                    _isTilesWinHovered = false;
+                }
+
+                if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isTilesWinDragged) _isTilesWinDragged = false;
+
+                if (ImGui.Selectable(_materialTileSwitch ? "Switch to materials" : "Switch to tiles"))
+                    _materialTileSwitch = !_materialTileSwitch;
+
+                if (!_materialTileSwitch)
+                {
+                    if (currentMaterialInit.Item1 == GLOBALS.Level.DefaultMaterial)
+                    {
+                        ImGui.Text("Current material is the default");
+                    }
+                    else
+                    {
+                        if (ImGui.Button("Set to default material"))
+                        {
+                            GLOBALS.Level.DefaultMaterial = currentMaterialInit.Item1;
+                        }
+                    }
+                }
+                
+                var halfWidth = ImGui.GetContentRegionAvail().X / 2f - ImGui.GetStyle().ItemSpacing.X / 2f;
+                var boxHeight = ImGui.GetContentRegionAvail().Y;
+                
+                if (ImGui.BeginListBox("##Groups", new Vector2(halfWidth, boxHeight)))
+                {
+                    if (_materialTileSwitch)
+                    {
+                        for (var category = 0; category < _tileCategoryNames.Length; category++)
+                        {
+                            var selected = ImGui.Selectable(_tileCategoryNames[category], _tileCategoryIndex == category);
+                            if (selected)
+                            {
+                                _tileCategoryIndex = category;
+                                _tileIndex = 0;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (var category = 0; category < _materialCategoryNames.Length; category++)
+                        {
+                            var selected = ImGui.Selectable(_materialCategoryNames[category], _materialCategoryIndex == category);
+                            if (selected)
+                            {
+                                _materialCategoryIndex = category;
+                                _materialIndex = 0;
+                            }
+                        }
+                    }
+                
+                    ImGui.EndListBox();
+                }
+                
+                ImGui.SameLine();
+                if (ImGui.BeginListBox("##Tiles", new Vector2(halfWidth, boxHeight)))
+                {
+                    if (_materialTileSwitch)
+                    {
+                        for (var tile = 0; tile < GLOBALS.Tiles[_tileCategoryIndex].Length; tile++)
+                        {
+                            var selected = ImGui.Selectable(
+                                GLOBALS.Tiles[_tileCategoryIndex][tile].Name, 
+                                _tileIndex == tile
+                            );
+
+                            if (selected) _tileIndex = tile;
+                        }
+                    }
+                    else
+                    {
+                        for (var material = 0; material < GLOBALS.Materials[_materialCategoryIndex].Length; material++)
+                        {
+                            var selected = ImGui.Selectable(
+                                GLOBALS.Materials[_materialCategoryIndex][material].Item1,
+                                _materialIndex == material
+                            );
+
+                            if (selected) _materialIndex = material;
+                            
+                            ImGui.SameLine();
+                        }
+                    }
+                    ImGui.EndListBox();
+                }
+
+                ImGui.Separator();
+                
+                
+            }
+            ImGui.End();
+            
+            rlImGui.End();*/
+            
             // Menu
 
             unsafe
@@ -1270,10 +1427,37 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 _showLayer3Tiles = RayGui.GuiCheckBox(new(tilePanelRect.X + 170, tilePanelRect.height - 5, 20, 20), "Tiles", _showLayer3Tiles);
             }*/
         }
+        
+        // Shortcuts window
+        if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
+        {
+            rlImGui.Begin();
+            var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.TileEditor);
+
+            _isShortcutsWinHovered = CheckCollisionPointRec(
+                tileMouse, 
+                shortcutWindowRect with
+                {
+                    X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
+                }
+            );
+
+            if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            {
+                _isShortcutsWinDragged = true;
+            }
+            else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+            {
+                _isShortcutsWinDragged = false;
+            }
+
+
+            rlImGui.End();
+        }
         #endregion
 
         EndDrawing();
 
-        if (GLOBALS.Settings.GlobalCamera) GLOBALS.Camera = _camera;
+        if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using Microsoft.Toolkit.HighPerformance;
+using rlImGui_cs;
 using static Raylib_CsLo.Raylib;
 
 namespace Leditor;
@@ -12,10 +13,13 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
     bool clickTracker = false;
     int draggedCamera = -1;
     private readonly CameraShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.CameraEditor;
+    
+    private bool _isShortcutsWinHovered;
+    private bool _isShortcutsWinDragged;
 
     public void Draw()
     {
-        if (GLOBALS.Settings.GlobalCamera) _camera = GLOBALS.Camera;
+        if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
         
         GLOBALS.PreviousPage = 4;
 
@@ -45,6 +49,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
         if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.ResizeFlag = true;
+            GLOBALS.NewFlag = false;
             GLOBALS.Page = 6;
         }
         if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
@@ -275,12 +280,37 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
 
             #region CameraEditorUI
 
+            // Shortcuts window
+            if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
+            {
+                rlImGui.Begin();
+                var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.TileEditor);
 
+                _isShortcutsWinHovered = CheckCollisionPointRec(
+                    GetMousePosition(), 
+                    shortcutWindowRect with
+                    {
+                        X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
+                    }
+                );
+
+                if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _isShortcutsWinDragged = true;
+                }
+                else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _isShortcutsWinDragged = false;
+                }
+
+
+                rlImGui.End();
+            }
 
             #endregion
         }
         EndDrawing();
         
-        if (GLOBALS.Settings.GlobalCamera) GLOBALS.Camera = _camera;
+        if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera;
     }
 }

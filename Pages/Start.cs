@@ -130,16 +130,16 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
 
             var objTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[0]));
             var tilesObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[1]));
+            var terrainObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[4]));
             var obj2Task = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[5]));
             var effObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[2]));
             var lightObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[3]));
             var camsObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[6]));
             var propsObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[8]));
 
-            await Task.WhenAll([objTask, tilesObjTask, obj2Task, effObjTask, lightObjTask, camsObjTask, propsObjTask]);
-            
             var obj = await objTask;
             var tilesObj = await tilesObjTask;
+            var terrainModeObj = await terrainObjTask;
             var obj2 = await obj2Task;
             var effObj = await effObjTask;
             var lightObj = await lightObjTask;
@@ -149,6 +149,8 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
             var mtx = Lingo.Tools.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
             var tlMtx = Lingo.Tools.GetTileMatrix(tilesObj, out _, out _);
             var buffers = Lingo.Tools.GetBufferTiles(obj2);
+            var terrain = Lingo.Tools.GetTerrainMedium(terrainModeObj);
+            var lightMode = Lingo.Tools.GetLightMode(obj2);
             var effects = Lingo.Tools.GetEffects(effObj, givenWidth, givenHeight);
             var cams = Lingo.Tools.GetCameras(camsObj);
             
@@ -193,6 +195,8 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                 Cameras = cams,
                 PropsArray = props.ToArray(),
                 LightSettings = lightSettings,
+                LightMode = lightMode,
+                DefaultTerrain = terrain,
                 Name = Path.GetFileNameWithoutExtension(filePath)
             };
         }
@@ -316,6 +320,8 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                     result.Cameras,
                     result.PropsArray!,
                     result.LightSettings,
+                    result.LightMode,
+                    result.DefaultTerrain,
                     projectName: result.Name
                 );
                 

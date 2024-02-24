@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using rlImGui_cs;
 using static Raylib_CsLo.Raylib;
 
 namespace Leditor;
@@ -41,10 +42,13 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
     readonly byte[] _lightBrushMenuPanelBytes = "Brushes"u8.ToArray();
 
     private readonly LightShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.LightEditor;
+    
+    private bool _isShortcutsWinHovered;
+    private bool _isShortcutsWinDragged;
 
     public void Draw()
     {
-        if (GLOBALS.Settings.GlobalCamera) _camera = GLOBALS.Camera with { target = GLOBALS.Camera.target + new Vector2(300, 300)};
+        if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera with { target = GLOBALS.Camera.target + new Vector2(300, 300)};
         var mouse = GetMousePosition();
         
         var indicatorOrigin = new Vector2(GetScreenWidth() - 100, GetScreenHeight() - 100);
@@ -94,6 +98,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
         if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
         {
             GLOBALS.ResizeFlag = true;
+            GLOBALS.NewFlag = false;
             GLOBALS.Page = 6;
         }
         if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
@@ -296,11 +301,11 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
 
                 Printers.DrawGeoLayer(2, GLOBALS.Scale, false, BLACK with { a = 150 }, new Vector2(300, 300));
                 
-                if (_showTiles) Printers.DrawTileLayer(2, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new(300, 300));
+                if (_showTiles) Printers.DrawTileLayer(2, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new Vector2(300, 300));
                 
                 Printers.DrawGeoLayer(1, GLOBALS.Scale, false, BLACK with { a = 150 }, new Vector2(300, 300));
                 
-                if (_showTiles) Printers.DrawTileLayer(1, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new(300, 300));
+                if (_showTiles) Printers.DrawTileLayer(1, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new Vector2(300, 300));
 
                 if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                 {
@@ -314,7 +319,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
                 }
 
                 Printers.DrawGeoLayer(0, GLOBALS.Scale, false, BLACK, new Vector2(300, 300));
-                if (_showTiles) Printers.DrawTileLayer(0, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new(300, 300));
+                if (_showTiles) Printers.DrawTileLayer(0, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new Vector2(300, 300));
 
                 if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                 {
@@ -528,9 +533,36 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
             );
             
             #endregion
+            
+            // Shortcuts window
+            if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
+            {
+                rlImGui.Begin();
+                var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.TileEditor);
+
+                _isShortcutsWinHovered = CheckCollisionPointRec(
+                    mouse, 
+                    shortcutWindowRect with
+                    {
+                        X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
+                    }
+                );
+
+                if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _isShortcutsWinDragged = true;
+                }
+                else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _isShortcutsWinDragged = false;
+                }
+
+
+                rlImGui.End();
+            }
         }
         EndDrawing();
         
-        if (GLOBALS.Settings.GlobalCamera) GLOBALS.Camera = _camera with { target = _camera.target - new Vector2(300, 300)};
+        if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera with { target = _camera.target - new Vector2(300, 300)};
     }
 }
