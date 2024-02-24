@@ -1621,7 +1621,8 @@ internal class PropsEditorPage : IPage
                         GLOBALS.PreviewScale, 
                         false, 
                         true,
-                        false
+                        false,
+                        255
                     );
                 }
                 
@@ -1776,7 +1777,8 @@ internal class PropsEditorPage : IPage
                         GLOBALS.PreviewScale, 
                         false, 
                         true,
-                        false
+                        false,
+                        (byte)(GLOBALS.Layer < 2 ? 255 : 90)
                     );
                 }
                 
@@ -1931,7 +1933,8 @@ internal class PropsEditorPage : IPage
                         GLOBALS.PreviewScale, 
                         false, 
                         true,
-                        false
+                        false,
+                        (byte)(GLOBALS.Layer < 1 ? 255 : 90)
                     );
                 }
                 

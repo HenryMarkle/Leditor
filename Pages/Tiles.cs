@@ -566,7 +566,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         false, 
                         !GLOBALS.Settings.TileEditor.UseTextures,
                         GLOBALS.Settings.TileEditor.TintedTiles,
-                        (byte)(GLOBALS.Layer == 2 ? 255 : 50)
+                        255
                     );
                 }
             }
@@ -596,7 +596,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         false, 
                         !GLOBALS.Settings.TileEditor.UseTextures,
                         GLOBALS.Settings.TileEditor.TintedTiles,
-                        (byte)(GLOBALS.Layer == 1 ? 255 : 50)
+                        (byte)(GLOBALS.Layer < 2 ? 255 : 90)
                     );
                 }
             }
@@ -626,7 +626,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         false, 
                         !GLOBALS.Settings.TileEditor.UseTextures,
                         GLOBALS.Settings.TileEditor.TintedTiles,
-                        (byte)(GLOBALS.Layer == 0 ? 255 : 50)
+                        (byte)(GLOBALS.Layer < 1 ? 255 : 90)
                     );
                 }
             }
