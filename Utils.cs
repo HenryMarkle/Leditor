@@ -1202,9 +1202,9 @@ internal static class Utils
 
                     for (int x = width; x < newWidth; x++)
                     {
-                        newArray[y, x, 0] = layersFill[0];
-                        newArray[y, x, 1] = layersFill[1];
-                        newArray[y, x, 2] = layersFill[2];
+                        newArray[y, x, 0] = layersFill[0] with { Stackables = [..layersFill[0].Stackables] };
+                        newArray[y, x, 1] = layersFill[1] with { Stackables = [..layersFill[1].Stackables] };
+                        newArray[y, x, 2] = layersFill[2] with { Stackables = [..layersFill[2].Stackables] };
                     }
                 }
             }
@@ -1228,9 +1228,9 @@ internal static class Utils
                 {
                     for (int x = 0; x < newWidth; x++)
                     {
-                        newArray[y, x, 0] = layersFill[0];
-                        newArray[y, x, 1] = layersFill[1];
-                        newArray[y, x, 2] = layersFill[2];
+                        newArray[y, x, 0] = layersFill[0] with { Stackables = [..layersFill[0].Stackables] };
+                        newArray[y, x, 1] = layersFill[1] with { Stackables = [..layersFill[1].Stackables] };
+                        newArray[y, x, 2] = layersFill[2] with { Stackables = [..layersFill[2].Stackables] };
                     }
                 }
             }
@@ -1247,9 +1247,9 @@ internal static class Utils
 
                     for (int x = width; x < newWidth; x++)
                     {
-                        newArray[y, x, 0] = layersFill[0];
-                        newArray[y, x, 1] = layersFill[1];
-                        newArray[y, x, 2] = layersFill[2];
+                        newArray[y, x, 0] = layersFill[0] with { Stackables = [..layersFill[0].Stackables] };
+                        newArray[y, x, 1] = layersFill[1] with { Stackables = [..layersFill[1].Stackables] };
+                        newArray[y, x, 2] = layersFill[2] with { Stackables = [..layersFill[2].Stackables] };
                     }
                 }
 
@@ -1257,9 +1257,9 @@ internal static class Utils
                 {
                     for (int x = 0; x < newWidth; x++)
                     {
-                        newArray[y, x, 0] = layersFill[0];
-                        newArray[y, x, 1] = layersFill[1];
-                        newArray[y, x, 2] = layersFill[2];
+                        newArray[y, x, 0] = layersFill[0] with { Stackables = [..layersFill[0].Stackables] };
+                        newArray[y, x, 1] = layersFill[1] with { Stackables = [..layersFill[1].Stackables] };
+                        newArray[y, x, 2] = layersFill[2] with { Stackables = [..layersFill[2].Stackables] };
                     }
                 }
             }
@@ -2076,6 +2076,26 @@ internal static class Utils
         }
         
         return result;
+    }
+
+    internal static IEnumerable<(string, string)> GetShortcutStrings(object? obj)
+    {
+        var properties = obj.GetType().GetProperties();
+
+        List<(string, string)> pairs = [];
+
+        foreach (var property in properties)
+        {
+            if (property.PropertyType != typeof(KeyboardShortcut) && property.PropertyType != typeof(MouseShortcut)) continue;
+            {
+                var name = property.Name;
+                var shortcut = property.GetValue(obj);
+                    
+                pairs.Add((name, shortcut?.ToString() ?? ""));
+            }
+        }
+
+        return pairs;
     }
     #nullable disable
 }

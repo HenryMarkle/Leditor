@@ -41,6 +41,9 @@ public class LoadFileResult
     public BufferTiles BufferTiles { get; init; } = new();
     public (string, EffectOptions[], double[,])[] Effects { get; init; } = [];
 
+    public bool LightMode { get; init; }
+    public bool DefaultTerrain { get; set; }
+
     public RunCell[,,]? GeoMatrix { get; init; } = null;
     public TileCell[,,]? TileMatrix { get; init; } = null;
     public Color[,,]? MaterialColorMatrix { get; init; } = null;
@@ -108,7 +111,12 @@ public class EffectOptions(string name, IEnumerable<string> options, dynamic cho
     public dynamic Choice { get; set; } = choice;
 }
 
-public class GeoShortcuts
+public interface IEditorShortcuts
+{
+    IEnumerable<(string Name, string Shortcut)> CachedStrings { get; }
+}
+
+public class GeoShortcuts : IEditorShortcuts
 {
     public KeyboardShortcut ToRightGeo { get; set; } = new(KeyboardKey.KEY_D);
     public KeyboardShortcut ToLeftGeo { get; set; } = new(KeyboardKey.KEY_A);
@@ -125,9 +133,16 @@ public class GeoShortcuts
     public KeyboardShortcut AltDrag { get; set; } = new(KeyboardKey.KEY_NULL);
     public KeyboardShortcut Undo { get; set; } = new(ctrl:true, shift:false, key:KeyboardKey.KEY_Z);
     public KeyboardShortcut Redo { get; set; } = new(ctrl:true, shift:true, key:KeyboardKey.KEY_Z);
+
+    public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
+
+    public GeoShortcuts()
+    {
+        CachedStrings = Utils.GetShortcutStrings(this);
+    }
 }
 
-public class ExperimentalGeoShortcuts
+public class ExperimentalGeoShortcuts : IEditorShortcuts
 {
     public KeyboardShortcut ToRightGeo { get; set; } = new(KeyboardKey.KEY_D);
     public KeyboardShortcut ToLeftGeo { get; set; } = new(KeyboardKey.KEY_A);
@@ -156,12 +171,22 @@ public class ExperimentalGeoShortcuts
     
     public KeyboardShortcut Undo { get; set; } = new(ctrl:true, shift:false, key:KeyboardKey.KEY_Z);
     public KeyboardShortcut Redo { get; set; } = new(ctrl:true, shift:true, key:KeyboardKey.KEY_Z);
+    
+    public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
+
+    public ExperimentalGeoShortcuts()
+    {
+        CachedStrings = Utils.GetShortcutStrings(this);
+    }
 }
 
-public record TileShortcuts
+public record TileShortcuts : IEditorShortcuts
 {
     public KeyboardShortcut FocusOnTileMenu { get; set; } = new(KeyboardKey.KEY_D);
     public KeyboardShortcut FocusOnTileCategoryMenu { get; set; } = new(KeyboardKey.KEY_A);
+    public KeyboardShortcut MoveToNextCategory { get; set; } = new(KeyboardKey.KEY_NULL);
+    public KeyboardShortcut MoveToPreviousCategory { get; set; } = new(KeyboardKey.KEY_NULL);
+    
     public KeyboardShortcut MoveDown { get; set; } = new(KeyboardKey.KEY_S);
     public KeyboardShortcut MoveUp { get; set; } = new(KeyboardKey.KEY_W);
     public KeyboardShortcut CycleLayers { get; set; } = new(KeyboardKey.KEY_L);
@@ -191,9 +216,16 @@ public record TileShortcuts
     public MouseShortcut Draw { get; set; } = new(MouseButton.MOUSE_BUTTON_LEFT);
     public MouseShortcut Erase { get; set; } = new(MouseButton.MOUSE_BUTTON_RIGHT);
     public MouseShortcut DragLevel { get; set; } = new(MouseButton.MOUSE_BUTTON_MIDDLE);
+    
+    public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
+
+    public TileShortcuts()
+    {
+        CachedStrings = Utils.GetShortcutStrings(this);
+    }
 }
 
-public class CameraShortcuts
+public class CameraShortcuts : IEditorShortcuts
 {
     public MouseShortcut DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_MIDDLE;
     public MouseShortcut GrabCamera { get; set; } = MouseButton.MOUSE_BUTTON_LEFT;
@@ -208,9 +240,16 @@ public class CameraShortcuts
     public KeyboardShortcut CreateCamera { get; set; } = KeyboardKey.KEY_N;
     public KeyboardShortcut DeleteCamera { get; set; } = KeyboardKey.KEY_D;
     public KeyboardShortcut CreateAndDeleteCameraAlt { get; set; } = KeyboardKey.KEY_SPACE;
+    
+    public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
+
+    public CameraShortcuts()
+    {
+        CachedStrings = Utils.GetShortcutStrings(this);
+    }
 }
 
-public class LightShortcuts
+public class LightShortcuts : IEditorShortcuts
 {
     public KeyboardShortcut IncreaseFlatness { get; set; } = KeyboardKey.KEY_I;
     public KeyboardShortcut DecreaseFlatness { get; set; } = KeyboardKey.KEY_K;
@@ -251,9 +290,16 @@ public class LightShortcuts
     public MouseShortcut DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_MIDDLE;
     public MouseShortcut Paint { get; set; } = MouseButton.MOUSE_BUTTON_LEFT;
     public MouseShortcut Erase { get; set; } = MouseButton.MOUSE_BUTTON_RIGHT;
+    
+    public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
+
+    public LightShortcuts()
+    {
+        CachedStrings = Utils.GetShortcutStrings(this);
+    }
 }
 
-public class EffectsShortcuts
+public class EffectsShortcuts : IEditorShortcuts
 {
     public KeyboardShortcut NewEffect { get; set; } = KeyboardKey.KEY_N;
 
@@ -289,9 +335,16 @@ public class EffectsShortcuts
     public MouseShortcut DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_MIDDLE;
     public MouseShortcut Paint { get; set; } = MouseButton.MOUSE_BUTTON_LEFT;
     public MouseShortcut Erase { get; set; } = MouseButton.MOUSE_BUTTON_RIGHT;
+    
+    public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
+
+    public EffectsShortcuts()
+    {
+        CachedStrings = Utils.GetShortcutStrings(this);
+    }
 }
 
-public class PropsShortcuts
+public class PropsShortcuts : IEditorShortcuts
 {
     public KeyboardShortcut EscapeSpinnerControl { get; set; } = KeyboardKey.KEY_ESCAPE;
     public KeyboardShortcut CycleLayers { get; set; } = KeyboardKey.KEY_L;
@@ -345,9 +398,16 @@ public class PropsShortcuts
     public MouseShortcut PlaceProp { get; set; } = MouseButton.MOUSE_BUTTON_LEFT;
     
     public MouseShortcut DragLevel { get; set; } = MouseButton.MOUSE_BUTTON_MIDDLE;
+    
+    public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
+
+    public PropsShortcuts()
+    {
+        CachedStrings = Utils.GetShortcutStrings(this);
+    }
 }
 
-public class GlobalShortcuts
+public class GlobalShortcuts : IEditorShortcuts
 {
     public KeyboardShortcut ToMainPage { get; set; } = new(KeyboardKey.KEY_ONE);
     public KeyboardShortcut ToGeometryEditor { get; set; } = new(KeyboardKey.KEY_TWO);
@@ -362,6 +422,13 @@ public class GlobalShortcuts
     public KeyboardShortcut QuickSave { get; set; } = new(KeyboardKey.KEY_S, shift:false, ctrl:true, alt:false);
     public KeyboardShortcut QuickSaveAs { get; set; } = new(KeyboardKey.KEY_S, shift:true, ctrl:true, alt:false);
     public KeyboardShortcut Render { get; set; } = new(KeyboardKey.KEY_NULL);
+    
+    public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
+    
+    public GlobalShortcuts()
+    {
+        CachedStrings = Utils.GetShortcutStrings(this);
+    }
 }
 
 public class Shortcuts(
@@ -496,7 +563,10 @@ public class KeyboardShortcut(
 
     public override string ToString()
     {
-        return $"{(Ctrl is not null and not false ? "CTRL + " : "")}{(Shift is not null and not false ? "SHIFT + " : "")}{(Alt is not null and not false ? "ALT + " : "")}{Key switch {KeyboardKey.KEY_SPACE => "SPACE", KeyboardKey.KEY_ENTER => "ENTER", KeyboardKey.KEY_ESCAPE => "ESCAPE", var k => (char)k}}";
+        return $"{(Ctrl is not null and not false ? "CTRL + " : "")}" +
+               $"{(Shift is not null and not false ? "SHIFT + " : "")}" +
+               $"{(Alt is not null and not false ? "ALT + " : "")}" +
+               $"{Key switch {KeyboardKey.KEY_SPACE => "SPACE", KeyboardKey.KEY_ENTER => "ENTER", KeyboardKey.KEY_LEFT_ALT => "ALT", KeyboardKey.KEY_LEFT_SHIFT => "SHIT", KeyboardKey.KEY_LEFT_CONTROL => "CTRL", KeyboardKey.KEY_NULL => "NONE", KeyboardKey.KEY_ESCAPE => "ESCAPE", var k => (char)k}}";
     }
 }
 
@@ -542,10 +612,21 @@ public class PropEditor(bool tintedTextures = false)
     public bool TintedTextures { get; set; } = tintedTextures;
 }
 
+public class GeneralSettings(
+    bool developerMode = false, 
+    bool defaultFont = false, 
+    bool globalCamera = true,
+    bool shortcutWindow = true
+    )
+{
+    public bool DeveloperMode { get; set; } = developerMode;
+    public bool DefaultFont { get; set; } = defaultFont;
+    public bool GlobalCamera { get; set; } = globalCamera;
+    public bool ShortcutWindow { get; set; } = shortcutWindow;
+}
+
 public class Settings(
-    bool developerMode,
-    bool defaultFont,
-    bool globalCamera,
+    GeneralSettings generalSettings,
     Shortcuts shortcuts,
     Misc misc,
     GeoEditor geometryEditor,
@@ -555,9 +636,7 @@ public class Settings(
     Experimental experimental
 )
 {
-    public bool DeveloperMode { get; set; } = developerMode;
-    public bool DefaultFont { get; set; } = defaultFont;
-    public bool GlobalCamera { get; set; } = globalCamera;
+    public GeneralSettings GeneralSettings { get; set; } = generalSettings;
     public Shortcuts Shortcuts { get; set; } = shortcuts;
     public Misc Misc { get; set; } = misc;
     public GeoEditor GeometryEditor { get; set; } = geometryEditor;

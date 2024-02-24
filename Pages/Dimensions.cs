@@ -73,7 +73,327 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
             }
         }
 
-        if (_advanced)
+        if (GLOBALS.NewFlag)
+        {
+            if (_advanced)
+            {
+                RayGui.GuiLine(new(50, 200, Raylib.GetScreenWidth() - 100, 40), "Padding");
+
+                unsafe
+                {
+                    fixed (int* width = &_matrixWidthValue)
+                    {
+                        if (GLOBALS.Font is null)
+                        {
+                            DrawText("Width", 50, 110, 20, new(0, 0, 0, 255));
+                        }
+                        else
+                        {
+                            DrawTextEx(GLOBALS.Font.Value, "Width", new (50, 110), 20, 1, BLACK);
+                        }
+                        
+                        
+                        if (RayGui.GuiSpinner(new(130, 100, 300, 40), "", width, 72, 999, _editControl == 0))
+                        {
+                            _editControl = 0;
+                        }
+                    }
+
+                    fixed (int* height = &_matrixHeightValue)
+                    {
+                        if (GLOBALS.Font is null)
+                        {
+                            DrawText("Height", 50, 160, 20, new(0, 0, 0, 255));
+                        }
+                        else
+                        {
+                            DrawTextEx(GLOBALS.Font.Value, "Height", new (50, 160), 20, 1, BLACK);
+                        }
+
+                        
+                        if (RayGui.GuiSpinner(new(130, 150, 300, 40), "", height, 43, 999, _editControl == 1))
+                        {
+                            _editControl = 1;
+                        }
+                    }
+
+                    fixed (int* left = &_leftPadding)
+                    {
+                        if (GLOBALS.Font is null)
+                        {
+                            DrawText("Left", 50, 260, 20, new(0, 0, 0, 255));
+                        }
+                        else
+                        {
+                            DrawTextEx(GLOBALS.Font.Value, "Left", new (50, 260), 20, 1, BLACK);
+                        }
+                        
+                        if (RayGui.GuiSpinner(new(130, 250, 300, 40), "", left, 0, 333, _editControl == 2))
+                        {
+                            _editControl = 2;
+                        }
+                    }
+
+                    fixed (int* top = &_topPadding)
+                    {
+                        if (GLOBALS.Font is null)
+                        {
+                            DrawText("Top", 50, 360, 20, new(0, 0, 0, 255));
+                        }
+                        else
+                        {
+                            DrawTextEx(GLOBALS.Font.Value, "Top", new (50, 360), 20, 1, BLACK);
+                        }
+                        
+                        if (RayGui.GuiSpinner(new(130, 350, 300, 40), "", top, 0, 111, _editControl == 4))
+                        {
+                            _editControl = 4;
+                        }
+                    }
+
+                    fixed (int* right = &_rightPadding)
+                    {
+                        if (GLOBALS.Font is null)
+                        {
+                            DrawText("Right", 50, 310, 20, new(0, 0, 0, 255));
+                        }
+                        else
+                        {
+                            DrawTextEx(GLOBALS.Font.Value, "Right", new (50, 310), 20, 1, BLACK);
+                        }
+                        if (RayGui.GuiSpinner(new(130, 300, 300, 40), "", right, 0, 333, _editControl == 3))
+                        {
+                            _editControl = 3;
+                        }
+                    }
+
+                    fixed (int* bottom = &_bottomPadding)
+                    {
+                        if (GLOBALS.Font is null)
+                        {
+                            DrawText("Bottom", 50, 410, 20, new(0, 0, 0, 255));
+                        }
+                        else
+                        {
+                            DrawTextEx(GLOBALS.Font.Value, "Bottom", new (50, 410), 20, 1, BLACK);
+                        }
+                        
+                        if (RayGui.GuiSpinner(new(130, 400, 300, 40), "", bottom, 0, 111, _editControl == 5))
+                        {
+                            _editControl = 5;
+                        }
+                    }
+                }
+
+                var isBecomingLarger = _matrixWidthValue > GLOBALS.Level.Width || _matrixHeightValue > GLOBALS.Level.Height;
+
+                if (isBecomingLarger)
+                {
+                    RayGui.GuiLine(new(600, 100, 400, 20), "Fill extra space");
+                    _fillLayer1 = RayGui.GuiCheckBox(new(600, 130, 28, 28), "Fill Layer 1", _fillLayer1);
+                    _fillLayer2 = RayGui.GuiCheckBox(new(750, 130, 28, 28), "Fill Layer 2", _fillLayer2);
+                    _fillLayer3 = RayGui.GuiCheckBox(new(900, 130, 28, 28), "Fill Layer 3", _fillLayer3);
+                }
+
+                if (RayGui.GuiButton(new(panelRect.x + 20, panelRect.height - 92, 260, 40), "Simple Options"))
+                    _advanced = false;
+
+                if (RayGui.GuiButton(new(360, GetScreenHeight() - 160, 300, 40), "Ok") || Raylib.IsKeyPressed(KeyboardKey.KEY_ENTER))
+                {
+                    _logger.Debug("page 6: Ok button clicked");
+
+                    _logger.Debug("new flag detected; creating a new level");
+                        
+                    GLOBALS.Level.New(
+                        _matrixWidthValue,
+                        _matrixHeightValue,
+                        (_leftPadding, _topPadding, _rightPadding, _bottomPadding),
+                        [1, 1, 0]
+                    );
+
+                    UnloadRenderTexture(GLOBALS.Textures.LightMap);
+                    GLOBALS.Textures.LightMap = LoadRenderTexture((GLOBALS.Level.Width * GLOBALS.Scale) + 300, (GLOBALS.Level.Height * GLOBALS.Scale) + 300);
+
+                    BeginTextureMode(GLOBALS.Textures.LightMap);
+                    ClearBackground(new(255, 255, 255, 255));
+                    EndTextureMode();
+
+                    GLOBALS.NewFlag = false;
+
+                    GLOBALS.Page = 1;
+                }
+
+                if (RayGui.GuiButton(new(50, Raylib.GetScreenHeight() - 160, 300, 40), "Cancel"))
+                {
+                    _logger.Debug("page 6: Cancel button clicked");
+
+                    _leftPadding = GLOBALS.Level.Padding.left;
+                    _rightPadding = GLOBALS.Level.Padding.right;
+                    _topPadding = GLOBALS.Level.Padding.top;
+                    _bottomPadding = GLOBALS.Level.Padding.bottom;
+
+                    _matrixWidthValue = GLOBALS.Level.Width;
+                    _matrixHeightValue = GLOBALS.Level.Height;
+
+                    GLOBALS.Page = GLOBALS.PreviousPage;
+                    GLOBALS.NewFlag = false;
+
+                }
+            }
+            else
+            {
+                unsafe
+                {
+                    fixed (int* columnsPtr = &_columns)
+                    {
+                        RayGui.GuiSpinner(new(panelRect.x + 20, panelRect.y + 50, 100, 40), "", columnsPtr, 1, 4, false);
+                    }
+                    
+                    fixed (int* rowsPtr = &_rows)
+                    {
+                        RayGui.GuiSpinner(new(panelRect.x + 180, panelRect.y + 50, 100, 40), "", rowsPtr, 1, 4, false);
+                    }
+                }
+
+                RayGui.GuiLine(new(panelRect.x + 20, panelRect.y + 100, 260, 30), "Fill Layers");
+
+                _simpleFillLayer1 = RayGui.GuiCheckBox(new(panelRect.x + 20, panelRect.y + 150, 15, 15), "Layer 1", _simpleFillLayer1);
+                _simpleFillLayer2 = RayGui.GuiCheckBox(new(panelRect.x + 20, panelRect.y + 170, 15, 15), "Layer 2", _simpleFillLayer2);
+                _simpleFillLayer3 = RayGui.GuiCheckBox(new(panelRect.x + 20, panelRect.y + 190, 15, 15), "Layer 3", _simpleFillLayer3);
+
+                RayGui.GuiLine(new(panelRect.x + 20, panelRect.y + 225, 260, 30), "Cameras");
+
+                if (GLOBALS.NewFlag) _createCameras = RayGui.GuiCheckBox(new(panelRect.x + 20, panelRect.y + 275, 15, 15), "Auto-Create Cameras", _createCameras);
+
+                DrawLineEx(new(panelRect.x + 140, panelRect.y + 60), new(panelRect.x + 160, panelRect.y + 80), 2f, GRAY);
+                DrawLineEx(new(panelRect.x + 140, panelRect.y + 80), new(panelRect.x + 160, panelRect.y + 60), 2f, GRAY);
+
+                if (RayGui.GuiButton(new(panelRect.x + 20, panelRect.height - 92, 260, 40), "Advanced Options")) _advanced = true;
+                
+                if (RayGui.GuiButton(new(panelRect.x + 20, panelRect.height - 51, 260, 40), GLOBALS.NewFlag ? "Create" : "Resize"))
+                {
+                    if (GLOBALS.NewFlag)
+                    {
+                        _advanced = true;
+                        
+                        _logger.Debug("new flag detected; creating a new level");
+
+                        GLOBALS.Level.New(
+                            _columns * 52 + 20,
+                            _rows * 40 + 3,
+                            (6, 3, 6, 5),
+                            [_simpleFillLayer1 ? 1 : 0, _simpleFillLayer2 ? 1 : 0, _simpleFillLayer3 ? 1 : 0]
+                        );
+                        
+                        UnloadRenderTexture(GLOBALS.Textures.LightMap);
+                        GLOBALS.Textures.LightMap = LoadRenderTexture((GLOBALS.Level.Width * GLOBALS.Scale) + 300, (GLOBALS.Level.Height * GLOBALS.Scale) + 300);
+
+                        BeginTextureMode(GLOBALS.Textures.LightMap);
+                        ClearBackground(new(255, 255, 255, 255));
+                        EndTextureMode();
+
+                        // create cameras
+
+                        if (_createCameras)
+                        {
+                            for (int i = 0; i < _rows; i++)
+                            {
+                                for (int j = 0; j < _columns; j++)
+                                {
+                                    if (i == 0 && j == 0) continue;
+
+                                    GLOBALS.Level.Cameras.Add(new RenderCamera() { Coords = new Vector2(20f + j*(GLOBALS.EditorCameraWidth - 380), 30f + i*(GLOBALS.EditorCameraHeight - 40)), Quad = new(new(), new(), new(), new()) });
+                                }
+                            }
+                            GLOBALS.CamQuadLocks = new int[_rows*_columns];
+                        }
+                        else GLOBALS.CamQuadLocks = new int[1];
+
+                        GLOBALS.NewFlag = false;
+                        ProjectCreated?.Invoke(this, EventArgs.Empty);
+                    }
+                    else if (GLOBALS.ResizeFlag)
+                    {
+                        _logger.Debug("resize flag detected");
+
+                        if (
+                            GLOBALS.Level.Height != _matrixHeightValue ||
+                            GLOBALS.Level.Width != _matrixWidthValue)
+                        {
+                            _logger.Debug("dimensions don't match; resizing");
+
+
+                            GLOBALS.Level.Resize(
+                                _matrixWidthValue,
+                                _matrixHeightValue,
+                                (_leftPadding, _topPadding, _rightPadding, _bottomPadding),
+                                [
+                                    _simpleFillLayer1 ? 1 : 0, 
+                                    _simpleFillLayer2 ? 1 : 0, 
+                                    _simpleFillLayer3 ? 1 : 0, 
+                                ]
+                            );
+
+
+                            _logger.Debug("resizing light map");
+
+                            ResizeLightMap(_matrixWidthValue, _matrixHeightValue);
+                        }
+
+                        GLOBALS.ResizeFlag = false;
+                    }
+
+                    GLOBALS.Page = 1;
+                }
+                if (RayGui.GuiButton(new(panelRect.x + 20, panelRect.height - 10, 260, 40), "Cancel"))
+                {
+                    _logger.Debug("page 6: Cancel button clicked");
+
+                    _leftPadding = GLOBALS.Level.Padding.left;
+                    _rightPadding = GLOBALS.Level.Padding.right;
+                    _topPadding = GLOBALS.Level.Padding.top;
+                    _bottomPadding = GLOBALS.Level.Padding.bottom;
+
+                    _matrixWidthValue = GLOBALS.Level.Width;
+                    _matrixHeightValue = GLOBALS.Level.Height;
+
+                    GLOBALS.Page = GLOBALS.PreviousPage;
+                }
+
+
+                // Visualizer
+
+                if (_simpleFillLayer1) DrawRectangleRec(visualRect, GLOBALS.Settings.GeometryEditor.LayerColors.Layer1);
+                if (_simpleFillLayer2) DrawRectangleRec(visualRect, GLOBALS.Settings.GeometryEditor.LayerColors.Layer2);
+                if (_simpleFillLayer3) DrawRectangleRec(visualRect, GLOBALS.Settings.GeometryEditor.LayerColors.Layer3);
+
+                var scale = Math.Min(visualRect.width / (_columns * 1400), visualRect.height / (_rows * 800));
+                var width = 1400 * scale;
+                var height = 800 * scale;
+
+
+                for (int i = 0; i < _rows; i++)
+                {
+                    for (int j = 0; j < _columns; j++)
+                    {
+                        DrawRectangleLinesEx(
+                            new(visualRect.x + (visualRect.width - width*_columns)/2 + j * width + 20, visualRect.y + (visualRect.height - height*_rows)/2 + i * height + 20, width - 40, height - 40), 
+                            4f, WHITE
+                        );
+
+                        if (GLOBALS.NewFlag && _createCameras)
+                        {
+                            DrawCircleLines(
+                                (int)(visualRect.x + (visualRect.width - width*_columns)/2 + j * width + width/2), 
+                                (int)(visualRect.y + (visualRect.height - height*_rows)/2 + i * height + height/2),
+                                50 * scale, WHITE
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        else if (GLOBALS.ResizeFlag)
         {
             RayGui.GuiLine(new(50, 200, Raylib.GetScreenWidth() - 100, 40), "Padding");
 
@@ -192,79 +512,59 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                 _fillLayer2 = RayGui.GuiCheckBox(new(750, 130, 28, 28), "Fill Layer 2", _fillLayer2);
                 _fillLayer3 = RayGui.GuiCheckBox(new(900, 130, 28, 28), "Fill Layer 3", _fillLayer3);
             }
-            
-            if (GLOBALS.NewFlag) if (RayGui.GuiButton(new(panelRect.x + 20, panelRect.height - 92, 260, 40), "Simple Options")) _advanced = false;
+
+            if (RayGui.GuiButton(new(panelRect.x + 20, panelRect.height - 92, 260, 40), "Simple Options"))
+                _advanced = false;
 
             if (RayGui.GuiButton(new(360, GetScreenHeight() - 160, 300, 40), "Ok") || Raylib.IsKeyPressed(KeyboardKey.KEY_ENTER))
             {
                 _logger.Debug("page 6: Ok button clicked");
 
-                if (GLOBALS.ResizeFlag)
+                _logger.Debug("resize flag detected");
+
+                if (
+                    GLOBALS.Level.Height != _matrixHeightValue ||
+                    GLOBALS.Level.Width != _matrixWidthValue)
                 {
-                    _logger.Debug("resize flag detected");
+                    _logger.Debug("dimensions don't match; resizing");
 
-                    if (
-                        GLOBALS.Level.Height != _matrixHeightValue ||
-                        GLOBALS.Level.Width != _matrixWidthValue)
+                    _logger.Debug("resizing geometry matrix");
+
+
+                    // I know this can be simplified, but I'm keeping it in case 
+                    // it becomes useful in the future
+                    if (isBecomingLarger)
                     {
-                        _logger.Debug("dimensions don't match; resizing");
-
-                        _logger.Debug("resizing geometry matrix");
-
-
-                        // I know this can be simplified, but I'm keeping it in case 
-                        // it becomes useful in the future
-                        if (isBecomingLarger)
-                        {
-                            GLOBALS.Level.Resize(
-                                _matrixWidthValue,
-                                _matrixHeightValue,
-                                (_leftPadding, _topPadding, _rightPadding, _bottomPadding),
-                                [
-                                    _fillLayer1 ? 1 : 0,
-                                    _fillLayer2 ? 1 : 0,
-                                    _fillLayer3 ? 1 : 0
-                                ]
-                            );
-                        }
-                        else
-                        {
-                            GLOBALS.Level.Resize(
-                                _matrixWidthValue,
-                                _matrixHeightValue,
-                                (_leftPadding, _topPadding, _rightPadding, _bottomPadding),
-                                [ 0, 0, 0 ]
-                            );
-                        }
-
-
-                        _logger.Debug("resizing light map");
-
-                        ResizeLightMap(_matrixWidthValue, _matrixHeightValue);
+                        GLOBALS.Level.Resize(
+                            _matrixWidthValue,
+                            _matrixHeightValue,
+                            (_leftPadding, _topPadding, _rightPadding, _bottomPadding),
+                            [
+                                _fillLayer1 ? 1 : 0,
+                                _fillLayer2 ? 1 : 0,
+                                _fillLayer3 ? 1 : 0
+                            ]
+                        );
+                    }
+                    else
+                    {
+                        GLOBALS.Level.Resize(
+                            _matrixWidthValue,
+                            _matrixHeightValue,
+                            (_leftPadding, _topPadding, _rightPadding, _bottomPadding),
+                            [ 0, 0, 0 ]
+                        );
                     }
 
-                    GLOBALS.ResizeFlag = false;
+
+                    _logger.Debug("resizing light map");
+
+                    ResizeLightMap(_matrixWidthValue, _matrixHeightValue);
                 }
-                else if (GLOBALS.NewFlag)
-                {
-                    _logger.Debug("new flag detected; creating a new level");
                     
-                    GLOBALS.Level.New(
-                        _matrixWidthValue,
-                        _matrixHeightValue,
-                        (_leftPadding, _topPadding, _rightPadding, _bottomPadding),
-                        [1, 1, 0]
-                    );
+                GLOBALS.Level.Padding = (_leftPadding, _topPadding, _rightPadding, _bottomPadding);
 
-                    UnloadRenderTexture(GLOBALS.Textures.LightMap);
-                    GLOBALS.Textures.LightMap = LoadRenderTexture((GLOBALS.Level.Width * GLOBALS.Scale) + 300, (GLOBALS.Level.Height * GLOBALS.Scale) + 300);
-
-                    BeginTextureMode(GLOBALS.Textures.LightMap);
-                    ClearBackground(new(255, 255, 255, 255));
-                    EndTextureMode();
-
-                    GLOBALS.NewFlag = false;
-                }
+                GLOBALS.ResizeFlag = false;
 
                 GLOBALS.Page = 1;
             }
@@ -282,160 +582,11 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                 _matrixHeightValue = GLOBALS.Level.Height;
 
                 GLOBALS.Page = GLOBALS.PreviousPage;
-            }
-        }
-        else
-        {
-            unsafe
-            {
-                fixed (int* columnsPtr = &_columns)
-                {
-                    RayGui.GuiSpinner(new(panelRect.x + 20, panelRect.y + 50, 100, 40), "", columnsPtr, 1, 4, false);
-                }
                 
-                fixed (int* rowsPtr = &_rows)
-                {
-                    RayGui.GuiSpinner(new(panelRect.x + 180, panelRect.y + 50, 100, 40), "", rowsPtr, 1, 4, false);
-                }
-            }
-
-            RayGui.GuiLine(new(panelRect.x + 20, panelRect.y + 100, 260, 30), "Fill Layers");
-
-            _simpleFillLayer1 = RayGui.GuiCheckBox(new(panelRect.x + 20, panelRect.y + 150, 15, 15), "Layer 1", _simpleFillLayer1);
-            _simpleFillLayer2 = RayGui.GuiCheckBox(new(panelRect.x + 20, panelRect.y + 170, 15, 15), "Layer 2", _simpleFillLayer2);
-            _simpleFillLayer3 = RayGui.GuiCheckBox(new(panelRect.x + 20, panelRect.y + 190, 15, 15), "Layer 3", _simpleFillLayer3);
-
-            RayGui.GuiLine(new(panelRect.x + 20, panelRect.y + 225, 260, 30), "Cameras");
-
-            if (GLOBALS.NewFlag) _createCameras = RayGui.GuiCheckBox(new(panelRect.x + 20, panelRect.y + 275, 15, 15), "Auto-Create Cameras", _createCameras);
-
-            DrawLineEx(new(panelRect.x + 140, panelRect.y + 60), new(panelRect.x + 160, panelRect.y + 80), 2f, GRAY);
-            DrawLineEx(new(panelRect.x + 140, panelRect.y + 80), new(panelRect.x + 160, panelRect.y + 60), 2f, GRAY);
-
-            if (RayGui.GuiButton(new(panelRect.x + 20, panelRect.height - 92, 260, 40), "Advanced Options")) _advanced = true;
-            
-            if (RayGui.GuiButton(new(panelRect.x + 20, panelRect.height - 51, 260, 40), GLOBALS.NewFlag ? "Create" : "Resize"))
-            {
-                if (GLOBALS.NewFlag)
-                {
-                    _advanced = true;
-                    
-                    _logger.Debug("new flag detected; creating a new level");
-
-                    GLOBALS.Level.New(
-                        _columns * 52 + 20,
-                        _rows * 40 + 3,
-                        (6, 3, 6, 5),
-                        [_simpleFillLayer1 ? 1 : 0, _simpleFillLayer2 ? 1 : 0, _simpleFillLayer3 ? 1 : 0]
-                    );
-                    
-                    UnloadRenderTexture(GLOBALS.Textures.LightMap);
-                    GLOBALS.Textures.LightMap = LoadRenderTexture((GLOBALS.Level.Width * GLOBALS.Scale) + 300, (GLOBALS.Level.Height * GLOBALS.Scale) + 300);
-
-                    BeginTextureMode(GLOBALS.Textures.LightMap);
-                    ClearBackground(new(255, 255, 255, 255));
-                    EndTextureMode();
-
-                    // create cameras
-
-                    if (_createCameras)
-                    {
-                        for (int i = 0; i < _rows; i++)
-                        {
-                            for (int j = 0; j < _columns; j++)
-                            {
-                                if (i == 0 && j == 0) continue;
-
-                                GLOBALS.Level.Cameras.Add(new RenderCamera() { Coords = new Vector2(20f + j*(GLOBALS.EditorCameraWidth - 380), 30f + i*(GLOBALS.EditorCameraHeight - 40)), Quad = new(new(), new(), new(), new()) });
-                            }
-                        }
-                        GLOBALS.CamQuadLocks = new int[_rows*_columns];
-                    }
-                    else GLOBALS.CamQuadLocks = new int[1];
-
-                    GLOBALS.NewFlag = false;
-                    ProjectCreated?.Invoke(this, EventArgs.Empty);
-                }
-                else if (GLOBALS.ResizeFlag)
-                {
-                    _logger.Debug("resize flag detected");
-
-                    if (
-                        GLOBALS.Level.Height != _matrixHeightValue ||
-                        GLOBALS.Level.Width != _matrixWidthValue)
-                    {
-                        _logger.Debug("dimensions don't match; resizing");
-
-
-                        GLOBALS.Level.Resize(
-                            _matrixWidthValue,
-                            _matrixHeightValue,
-                            (_leftPadding, _topPadding, _rightPadding, _bottomPadding),
-                            [
-                                _simpleFillLayer1 ? 1 : 0, 
-                                _simpleFillLayer2 ? 1 : 0, 
-                                _simpleFillLayer3 ? 1 : 0, 
-                            ]
-                        );
-
-
-                        _logger.Debug("resizing light map");
-
-                        ResizeLightMap(_matrixWidthValue, _matrixHeightValue);
-                    }
-
-                    GLOBALS.ResizeFlag = false;
-                }
-
-                GLOBALS.Page = 1;
-            }
-            if (RayGui.GuiButton(new(panelRect.x + 20, panelRect.height - 10, 260, 40), "Cancel"))
-            {
-                _logger.Debug("page 6: Cancel button clicked");
-
-                _leftPadding = GLOBALS.Level.Padding.left;
-                _rightPadding = GLOBALS.Level.Padding.right;
-                _topPadding = GLOBALS.Level.Padding.top;
-                _bottomPadding = GLOBALS.Level.Padding.bottom;
-
-                _matrixWidthValue = GLOBALS.Level.Width;
-                _matrixHeightValue = GLOBALS.Level.Height;
-
-                GLOBALS.Page = GLOBALS.PreviousPage;
-            }
-
-
-            // Visualizer
-
-            if (_simpleFillLayer1) DrawRectangleRec(visualRect, GLOBALS.Settings.GeometryEditor.LayerColors.Layer1);
-            if (_simpleFillLayer2) DrawRectangleRec(visualRect, GLOBALS.Settings.GeometryEditor.LayerColors.Layer2);
-            if (_simpleFillLayer3) DrawRectangleRec(visualRect, GLOBALS.Settings.GeometryEditor.LayerColors.Layer3);
-
-            var scale = Math.Min(visualRect.width / (_columns * 1400), visualRect.height / (_rows * 800));
-            var width = 1400 * scale;
-            var height = 800 * scale;
-
-
-            for (int i = 0; i < _rows; i++)
-            {
-                for (int j = 0; j < _columns; j++)
-                {
-                    DrawRectangleLinesEx(
-                        new(visualRect.x + (visualRect.width - width*_columns)/2 + j * width + 20, visualRect.y + (visualRect.height - height*_rows)/2 + i * height + 20, width - 40, height - 40), 
-                        4f, WHITE
-                    );
-
-                    if (GLOBALS.NewFlag && _createCameras)
-                    {
-                        DrawCircleLines(
-                            (int)(visualRect.x + (visualRect.width - width*_columns)/2 + j * width + width/2), 
-                            (int)(visualRect.y + (visualRect.height - height*_rows)/2 + i * height + height/2),
-                            50 * scale, WHITE
-                        );
-                    }
-                }
+                GLOBALS.ResizeFlag = false;
             }
         }
+
 
         EndDrawing();
     }

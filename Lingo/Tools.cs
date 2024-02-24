@@ -946,6 +946,19 @@ public static class Tools {
 
         return matrix;
     }
-    
-    
+
+    public static bool GetLightMode(AstNode.Base @base)
+    {
+        var light = (AstNode.Number)((AstNode.PropertyList)@base).Values
+            .Single(p => ((AstNode.Symbol)p.Key).Value == "light").Value;
+
+        return light.Value.IntValue == 1;
+    }
+
+    public static bool GetTerrainMedium(AstNode.Base @base)
+    {
+        var terrain = (AstNode.Number) ((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "defaultterrain").Value;
+
+        return terrain.Value.IntValue == 1;
+    }
 }

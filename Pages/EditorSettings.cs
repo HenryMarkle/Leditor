@@ -82,20 +82,28 @@ public class SettingsPage : IPage
         var subPanelY = (int)(categoryRect.y + 60);
 
         #region Shortcuts
+        
+        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
+        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+        
         if (!_assigningShortcut)
         {
-            if (IsKeyPressed(KeyboardKey.KEY_ONE)) GLOBALS.Page = 1;
-            if (IsKeyPressed(KeyboardKey.KEY_TWO)) GLOBALS.Page = 2;
-            if (IsKeyPressed(KeyboardKey.KEY_THREE)) GLOBALS.Page = 3;
-            if (IsKeyPressed(KeyboardKey.KEY_FOUR)) GLOBALS.Page = 4;
-            if (IsKeyPressed(KeyboardKey.KEY_FIVE)) GLOBALS.Page = 5;
-            if (IsKeyPressed(KeyboardKey.KEY_SIX))
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 2;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 3;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 4;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 5;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
             {
                 GLOBALS.ResizeFlag = true;
+                GLOBALS.NewFlag = false;
                 GLOBALS.Page = 6;
+                _logger.Debug("go from GLOBALS.Page 2 to GLOBALS.Page 6");
             }
-            if (IsKeyPressed(KeyboardKey.KEY_SEVEN)) GLOBALS.Page = 7;
-            if (IsKeyPressed(KeyboardKey.KEY_EIGHT)) GLOBALS.Page = 8;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 7;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
         }
         #endregion
         
@@ -152,9 +160,7 @@ public class SettingsPage : IPage
                _mouseShortcutToAssign = null;
                
                GLOBALS.Settings = new Settings(
-                   false,
-                   false,
-                   true,
+                   new GeneralSettings(),
                    new Shortcuts(
                        new GlobalShortcuts(),
                        new GeoShortcuts(),
@@ -186,17 +192,22 @@ public class SettingsPage : IPage
         {
             case 0: // General
             {
-                GLOBALS.Settings.DefaultFont = GuiCheckBox(
+                GLOBALS.Settings.GeneralSettings.DefaultFont = GuiCheckBox(
                     new Rectangle(subPanelX, categoryRect.Y, 20, 20), 
                     "Default Font", 
-                    GLOBALS.Settings.DefaultFont
+                    GLOBALS.Settings.GeneralSettings.DefaultFont
                 );
 
-                GLOBALS.Settings.GlobalCamera = GuiCheckBox(
+                GLOBALS.Settings.GeneralSettings.GlobalCamera = GuiCheckBox(
                     new Rectangle(subPanelX, categoryRect.Y + 25, 20, 20),
                     "Global Camera",
-                    GLOBALS.Settings.GlobalCamera
+                    GLOBALS.Settings.GeneralSettings.GlobalCamera
                 );
+
+                GLOBALS.Settings.GeneralSettings.ShortcutWindow = GuiCheckBox(
+                    new Rectangle(subPanelX, categoryRect.Y + 50, 20, 20),
+                    "Shortcuts Window",
+                    GLOBALS.Settings.GeneralSettings.ShortcutWindow);
             }
                 break;
             case 1: // Geometry Editor
@@ -1140,36 +1151,40 @@ public class SettingsPage : IPage
                         //
                         
                         GuiLabel(new Rectangle(430, 350, 100, 40), "Cycle Layers");
-                        var assignCycleLayers = GuiButton(new Rectangle(600, 350, 200, 40),
+                        var assignCycleLayers = GuiButton(new Rectangle(610, 350, 200, 40),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.CycleLayers}");
                         
                         GuiLabel(new Rectangle(430, 395, 100, 40), "Pickup Item");
-                        var assignPickupItem = GuiButton(new Rectangle(600, 395, 200, 40),
+                        var assignPickupItem = GuiButton(new Rectangle(610, 395, 200, 40),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.PickupItem}"); 
                         
                         GuiLabel(new Rectangle(430, 440, 100, 40), "Force-Place Tile With Geo");
-                        var assignForcePlaceTileWithGeo = GuiButton(new Rectangle(600, 440, 200, 40),
+                        var assignForcePlaceTileWithGeo = GuiButton(new Rectangle(610, 440, 200, 40),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.ForcePlaceTileWithGeo}"); 
                         
                         GuiLabel(new Rectangle(430, 485, 100, 40), "Undo");
-                        var assignUndo = GuiButton(new Rectangle(600, 485, 200, 40),
+                        var assignUndo = GuiButton(new Rectangle(610, 485, 200, 40),
                             $"");
                         
                         GuiLabel(new Rectangle(430, 530, 100, 40), "Redo");
-                        var assignRedo = GuiButton(new Rectangle(600, 530, 200, 40),
+                        var assignRedo = GuiButton(new Rectangle(610, 530, 200, 40),
                             $""); 
                         
                         GuiLabel(new Rectangle(430, 575, 100, 40), "Draw");
-                        var assignAltDraw = GuiButton(new Rectangle(600, 575, 200, 40),
+                        var assignAltDraw = GuiButton(new Rectangle(610, 575, 200, 40),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.AltDraw}");
                         
                         GuiLabel(new Rectangle(430, 620, 100, 40), "Level Pan");
-                        var assignAltPan = GuiButton(new Rectangle(600, 620, 200, 40),
+                        var assignAltPan = GuiButton(new Rectangle(610, 620, 200, 40),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.AltDragLevel}");
                         
                         GuiLabel(new Rectangle(430, 665, 100, 40), "Force-Place Tile Without Geo");
-                        var assignForcePlaceTileWithoutGeo = GuiButton(new Rectangle(600, 665, 200, 40),
+                        var assignForcePlaceTileWithoutGeo = GuiButton(new Rectangle(610, 665, 200, 40),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.ForcePlaceTileWithoutGeo}");
+                        
+                        GuiLabel(new Rectangle(430, 710, 100, 40), "Move to Next Category");
+                        var assignMoveToNextCategory = GuiButton(new Rectangle(610, 710, 200, 40),
+                            $"{GLOBALS.Settings.Shortcuts.TileEditor.MoveToNextCategory}");
                         
                         
                         GuiLabel(new Rectangle(mouseShortcutsOffset, 350, 100, 40), "Tile/Material Switch");
@@ -1203,6 +1218,10 @@ public class SettingsPage : IPage
                         GuiLabel(new Rectangle(mouseShortcutsOffset, 665, 100, 40), "Show/Hide Layer 3 Tiles");
                         var assignToggleLayer3Tiles = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 665, 200, 40),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer3Tiles}");
+                        
+                        GuiLabel(new Rectangle(mouseShortcutsOffset, 710, 100, 40), "Move to Previous Category");
+                        var assignMoveToPreviousCategory = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 710, 200, 40),
+                            $"{GLOBALS.Settings.Shortcuts.TileEditor.MoveToPreviousCategory}");
 
                         if (assignCycleLayers) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.CycleLayers;
                         if (assignPickupItem) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.PickupItem;
@@ -1220,6 +1239,8 @@ public class SettingsPage : IPage
                         if (assignToggleLayer1Tiles) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer1Tiles;
                         if (assignToggleLayer3Tiles) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer2Tiles;
                         if (assignToggleLayer3Tiles) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer3Tiles;
+                        if (assignMoveToNextCategory) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.MoveToNextCategory;
+                        if (assignMoveToPreviousCategory) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.MoveToPreviousCategory;
                     }
                         break;
                     case 4: // Cameras Editor
@@ -1872,7 +1893,18 @@ public class SettingsPage : IPage
                 {
                     var key = GetKeyPressed();
 
-                    if (key != 0 && key != 340 && key != 341 && key != 342 && key != 256)
+                    if (key == 256)
+                    {
+                        if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+                        {
+                            _shortcutToAssign.Key = KeyboardKey.KEY_NULL;
+                        }
+                        
+                        _assigningShortcut = false;
+                        _shortcutToAssign = null;
+                    }
+
+                    if (key != 0 && key != 340 && key != 341 && key != 342 && key != 256 && key != 4)
                     {
                         _shortcutToAssign.Key = (KeyboardKey)key;
                         _shortcutToAssign.Shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
@@ -1883,11 +1915,6 @@ public class SettingsPage : IPage
                         _shortcutToAssign = null;
                     }
                     
-                    if (key == 256)
-                    {
-                        _assigningShortcut = false;
-                        _shortcutToAssign = null;
-                    }
                 }
                 else if (_mouseShortcutToAssign is not null)
                 {
@@ -1898,6 +1925,11 @@ public class SettingsPage : IPage
                     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_MIDDLE)) button = 2;
                     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_RIGHT)) button = 1;
 
+                    if (key == 256)
+                    {
+                        _assigningShortcut = false;
+                        _mouseShortcutToAssign = null;
+                    }
 
                     if (button != -1 && key != 340 && key != 341 && key != 342 && key != 256)
                     {
@@ -1907,14 +1939,9 @@ public class SettingsPage : IPage
                         _mouseShortcutToAssign.Alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
                         
                         _assigningShortcut = false;
-                        _shortcutToAssign = null;
-                    }
-                    
-                    if (key == (int)KeyboardKey.KEY_ESCAPE)
-                    {
-                        _assigningShortcut = false;
                         _mouseShortcutToAssign = null;
                     }
+                    
                 }
             }
                 break;

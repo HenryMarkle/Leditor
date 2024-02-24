@@ -1,6 +1,9 @@
 ﻿global using Raylib_CsLo;
 using static Raylib_CsLo.Raylib;
 
+using ImGuiNET;
+using rlImGui_cs;
+
 using System.Numerics;
 using System.Text;
 using Leditor.Lingo;
@@ -496,7 +499,7 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.31";
+        const string version = "Henry's Leditor v0.9.33";
         const string raylibVersion = "Raylib v4.2.0.9";
         
         // Load tiles and props
@@ -613,7 +616,7 @@ class Program
         InitWindow(GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight, "Henry's Leditor");
         //
 
-        if (!GLOBALS.Settings.DefaultFont)
+        if (!GLOBALS.Settings.GeneralSettings.DefaultFont)
         {
             
 
@@ -862,6 +865,10 @@ class Program
 
         Task<(bool success, Exception? exception)>? quickSaveTask = null;
         
+        //
+        rlImGui.Setup(false);
+        //
+        
         logger.Information("Begin main loop");
 
         while (!WindowShouldClose())
@@ -892,7 +899,7 @@ class Program
                     if (initialFrames > 70)
                     {
                         DrawText(raylibVersion, 700, 70, 15, WHITE);
-                        if (GLOBALS.Settings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
+                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
                     }
 
                     if (initialFrames > 75)
@@ -979,7 +986,7 @@ class Program
                     );
 
                     if (missingTextureFound) DrawText("missing textures found", 700, 300, 16, new(252, 38, 38, 255));
-                    if (GLOBALS.Settings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
+                    if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
 
                     DrawText(version, 700, 50, 15, WHITE);
                     DrawText(raylibVersion, 700, 70, 15, WHITE);
@@ -1036,7 +1043,7 @@ class Program
 #else
                         if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, YELLOW);
 #endif
-                        if (GLOBALS.Settings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
+                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
 
                         DrawText(version, 700, 50, 15, WHITE);
                         DrawText(raylibVersion, 700, 70, 15, WHITE);
@@ -1303,6 +1310,10 @@ class Program
         UnloadShader(GLOBALS.Shaders.LongProp);
 
         unloadTileImages?.Wait();
+        
+        //
+        rlImGui.Shutdown();
+        //
 
         CloseWindow();
 

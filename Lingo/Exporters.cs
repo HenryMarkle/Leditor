@@ -150,6 +150,13 @@ public static class Exporters
             
             builder.Append(']');
 
+            if (GLOBALS.EffectType(name) == "standardErosion")
+            {
+                var repeatsExists = GLOBALS.EffectRepeats.TryGetValue(name, out var repeats);
+                var openAreasExists = GLOBALS.EffectOpenAreas.TryGetValue(name, out var openAreas);
+                builder.Append($", #repeats: {(repeatsExists ? repeats : 0)}, #affectOpenAreas: {(openAreasExists ? openAreas : 0):0.0000}");
+            }
+
             builder.Append(']');
 
             if (e != effects.Length - 1) builder.Append(", ");

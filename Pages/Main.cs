@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Text;
 using Pidgin;
+using rlImGui_cs;
 using static Raylib_CsLo.Raylib;
 
 namespace Leditor;
@@ -35,6 +36,9 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
     private int _fileDialogMode; // 0 - save, 1 - load
 
     private System.Diagnostics.Process _renderProcess = new();
+    
+    private bool _isShortcutsWinHovered;
+    private bool _isShortcutsWinDragged;
 
     public void OnLevelLoadedFromStart(object? sender, EventArgs e)
     {
@@ -198,16 +202,16 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
 
             var objTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[0]));
             var tilesObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[1]));
+            var terrainObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[4]));
             var obj2Task = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[5]));
             var effObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[2]));
             var lightObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[3]));
             var camsObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[6]));
             var propsObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[8]));
 
-            await Task.WhenAll([objTask, tilesObjTask, obj2Task, effObjTask, lightObjTask, camsObjTask, propsObjTask]);
-            
             var obj = await objTask;
             var tilesObj = await tilesObjTask;
+            var terrainModeObj = await terrainObjTask;
             var obj2 = await obj2Task;
             var effObj = await effObjTask;
             var lightObj = await lightObjTask;
@@ -217,6 +221,8 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
             var mtx = Lingo.Tools.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
             var tlMtx = Lingo.Tools.GetTileMatrix(tilesObj, out _, out _);
             var buffers = Lingo.Tools.GetBufferTiles(obj2);
+            var terrain = Lingo.Tools.GetTerrainMedium(terrainModeObj);
+            var lightMode = Lingo.Tools.GetLightMode(obj2);
             var effects = Lingo.Tools.GetEffects(effObj, givenWidth, givenHeight);
             var cams = Lingo.Tools.GetCameras(camsObj);
             
@@ -226,7 +232,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
 
             // map material colors
 
-            Color[,,] materialColors = Utils.NewMaterialColorMatrix(givenWidth, givenHeight, new(0, 0, 0, 255));
+            var materialColors = Utils.NewMaterialColorMatrix(givenWidth, givenHeight, new(0, 0, 0, 255));
 
             for (int y = 0; y < givenHeight; y++)
             {
@@ -255,6 +261,8 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                 BufferTiles = buffers,
                 GeoMatrix = mtx,
                 TileMatrix = tlMtx,
+                LightMode = lightMode,
+                DefaultTerrain = terrain,
                 MaterialColorMatrix = materialColors,
                 Effects = effects,
                 LightMapImage = lightMap,
@@ -277,40 +285,45 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
 
         var width = GetScreenWidth();
         var height = GetScreenHeight();
+        
+        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
+        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
 
         if (!RayGui.GuiIsLocked() && _spinnerLock == 0)
         {
             
-            if (IsKeyReleased(KeyboardKey.KEY_TWO))
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
             {
                 GLOBALS.Page = 2;
             }
-            if (IsKeyReleased(KeyboardKey.KEY_THREE))
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt))
             {
                 GLOBALS.Page = 3;
             }
-            if (IsKeyReleased(KeyboardKey.KEY_FOUR))
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
             {
                 GLOBALS.Page = 4;
             }
-            if (IsKeyReleased(KeyboardKey.KEY_FIVE))
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt))
             {
                 GLOBALS.Page = 5;
             }
-            if (IsKeyReleased(KeyboardKey.KEY_SIX))
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
             {
                 GLOBALS.ResizeFlag = true;
+                GLOBALS.NewFlag = false;
                 GLOBALS.Page = 6;
             }
-            if (IsKeyReleased(KeyboardKey.KEY_SEVEN))
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
             {
                 GLOBALS.Page = 7;
             }
-            if (IsKeyReleased(KeyboardKey.KEY_EIGHT))
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
             {
                 GLOBALS.Page = 8;
             }
-            if (IsKeyReleased(KeyboardKey.KEY_NINE))
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
             {
                 GLOBALS.Page = 9;
             }
@@ -553,6 +566,8 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                             result.Cameras,
                             result.PropsArray!,
                             result.LightSettings,
+                            result.LightMode,
+                            result.DefaultTerrain,
                             projectName: result.Name
                         );
                         
@@ -1024,6 +1039,33 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         );
                     }
                 }
+            }
+            
+            // Shortcuts window
+            if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
+            {
+                rlImGui.Begin();
+                var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.TileEditor);
+
+                _isShortcutsWinHovered = CheckCollisionPointRec(
+                    GetMousePosition(), 
+                    shortcutWindowRect with
+                    {
+                        X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
+                    }
+                );
+
+                if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _isShortcutsWinDragged = true;
+                }
+                else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _isShortcutsWinDragged = false;
+                }
+
+
+                rlImGui.End();
             }
         }
         EndDrawing();

@@ -127,10 +127,25 @@ internal static class GLOBALS
     /// </summary>
     internal class LevelState
     {
+        private (int left, int top, int right, int bottom) _padding;
+        
         internal int Width { get; private set; }
         internal int Height { get; private set; }
 
-        internal (int left, int top, int right, int bottom) Padding { get; private set; }
+        internal (int left, int top, int right, int bottom) Padding
+        {
+            get => _padding;
+            set
+            {
+                _padding = value;
+                Border = new Rectangle(
+                    _padding.left * Scale,
+                    _padding.top * Scale,
+                    (Width - (_padding.right + _padding.left)) * Scale,
+                    (Height - (_padding.bottom + _padding.top)) * Scale
+                );
+            }
+        }
         internal Rectangle Border { get; private set; }
         internal int WaterLevel { get; set; } = -1;
         internal bool WaterAtFront { get; set; } = false;
@@ -170,6 +185,8 @@ internal static class GLOBALS
             List<RenderCamera> cameras,
             (InitPropType type, (int category, int index) position, Prop prop)[] props,
             (int angle, int flatness) lightSettings,
+            bool lightMode,
+            bool terrainMedium,
             string defaultMaterial = "Concrete",
             string projectName = "New Project"
         )
@@ -190,30 +207,27 @@ internal static class GLOBALS
             Cameras = cameras;
             Props = props;
 
-            Border = new(
-                Padding.left * Scale,
-                Padding.top * Scale,
-                (Width - (Padding.right + Padding.left)) * Scale,
-                (Height - (Padding.bottom + Padding.top)) * Scale
-            );
+            LightMode = lightMode;
+            DefaultTerrain = terrainMedium;
         }
 
         internal void New(
             int width,
             int height,
             (int left, int top, int right, int bottom) padding,
-            Span<int> geoIdFill)
+            Span<int> geoIdFill
+        )
         {
             Width = width;
             Height = height;
             Padding = padding;
 
-            Border = new(
+            /*Border = new(
                 Padding.left * Scale,
                 Padding.top * Scale,
                 (Width - (Padding.right + Padding.left)) * Scale,
                 (Height - (Padding.bottom + Padding.top)) * Scale
-            );
+            );*/
 
             Cameras = [new RenderCamera { Coords = new Vector2(20f, 30f), Quad = new(new(), new(), new(), new()) }];
 
@@ -332,12 +346,12 @@ internal static class GLOBALS
             Height = height;
             Padding = padding;
 
-            Border = new(
+            /*Border = new(
                 Padding.left * Scale,
                 Padding.top * Scale,
                 (Width - (Padding.right + Padding.left)) * Scale,
                 (Height - (Padding.bottom + Padding.top)) * Scale
-            );
+            );*/
         }
     }
 
@@ -596,6 +610,50 @@ internal static class GLOBALS
         _ => "nn"
     };
 
+    public static Dictionary<string, int> EffectRepeats => new()
+    {
+        ["Slime"] = 130,
+        ["DecalsOnlySlime"] = 130,
+        ["Fat Slime"] = 200,
+        ["Scales"] = 200,
+        ["SlimeX3"] = 390,
+        ["Melt"] = 60,
+        ["Super Erode"] = 60,
+        ["Ultra Super Erode"] = 60,
+        ["Rust"] = 60,
+        ["Barnacles"] = 60,
+        ["Colored Barnacles"] = 60,
+        ["Clovers"] = 20,
+        ["Erode"] = 80,
+        ["Sand"] = 80,
+        ["Roughen"] = 30,
+        ["Impacts"] = 75,
+        ["Super Melt"] = 50,
+        ["Destructive Melt"] = 50,
+    };
+
+    public static Dictionary<string, float> EffectOpenAreas => new()
+    {
+        ["Slime"] = 0.5f,
+        ["DecalsOnlySlime"] = 0.5f,
+        ["Fat Slime"] = 0.5f,
+        ["Scales"] = 0.05f,
+        ["SlimeX3"] = 0.5f,
+        ["Melt"] = 0.5f,
+        ["Super Erode"] = 0.5f,
+        ["Ultra Super Erode"] = 0.5f,
+        ["Rust"] = 0.2f,
+        ["Barnacles"] = 0.3f,
+        ["Colored Barnacles"] = 0.3f,
+        ["Clovers"] = 0.2f,
+        ["Erode"] = 0.5f,
+        ["Sand"] = 0.5f,
+        ["Roughen"] = 0.05f,
+        ["Impacts"] = 0.05f,
+        ["Super Melt"] = 0.5f,
+        ["Destructive Melt"] = 0.5f,
+    };
+
     public static bool IsEffectCrossScreen(string name) => name switch
     {
         "Ivy" or "Rollers" or "Thorn Growers" or "Garbage Spirals" or "Spinets" or 
@@ -659,9 +717,7 @@ internal static class GLOBALS
     ];
     
     internal static Settings Settings { get; set; } = new(
-            false,
-            false,
-            true,
+            new GeneralSettings(),
             new Shortcuts(
                 new GlobalShortcuts(),
                 new GeoShortcuts(),
@@ -705,5 +761,11 @@ internal static class GLOBALS
     public static bool RendererExists { get; set; }
     
     public static Camera2D Camera { get; set; }
+
+    internal static void OnLevelLoaded(object? sender, EventArgs e)
+    {
+        NewFlag = false;
+        ResizeFlag = false;
+    }
 #nullable disable
 }

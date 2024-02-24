@@ -1,5 +1,6 @@
 using static Raylib_CsLo.Raylib;
 using System.Numerics;
+using ImGuiNET;
 
 namespace Leditor;
 
@@ -8,6 +9,47 @@ namespace Leditor;
 /// </summary>
 internal static class Printers
 {
+    internal static void DrawSlope(int id, int scale, Vector2 position, Color color)
+    {
+        switch (id)
+        {
+            case 2:
+                DrawTriangle(
+                    position,
+                    new(position.X, position.Y + scale),
+                    new(position.X + scale, position.Y + scale),
+                    color
+                );
+                break;
+
+            case 3:
+                DrawTriangle(
+                    new(position.X + scale, position.Y),
+                    new(position.X, position.Y + scale),
+                    new(position.X + scale, position.Y + scale),
+                    color
+                );
+                break;
+
+            case 4:
+                DrawTriangle(
+                    position,
+                    new(position.X, position.Y + scale),
+                    new(position.X + scale, position.Y),
+                    color
+                );
+                break;
+            case 5:
+                DrawTriangle(
+                    position,
+                    new(position.X + scale, position.Y + scale),
+                    new(position.X + scale, position.Y),
+                    color
+                );
+                break;
+        }
+    }
+    
     internal static void DrawGrid(int scale)
     {
         for (var x = 0; x < GLOBALS.Level.Width; x++)
@@ -57,8 +99,10 @@ internal static class Printers
             for (var x = 0; x < GLOBALS.Level.Width; x++)
             {
                 var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
+                
+                DrawTileSpec(x*scale, y*scale, cell.Geo, scale, color);
 
-                var texture = Utils.GetBlockIndex(cell.Geo);
+                /*var texture = Utils.GetBlockIndex(cell.Geo);
 
                 if (texture >= 0)
                 {
@@ -72,7 +116,7 @@ internal static class Printers
                         0,
                         color
                     );
-                }
+                }*/
 
                 if (grid) DrawRectangleLinesEx(
                     new(x * scale, y * scale, scale, scale),
@@ -179,10 +223,12 @@ internal static class Printers
             for (var x = 0; x < GLOBALS.Level.Width; x++)
             {
                 var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
+                
+                DrawTileSpec(x*scale, y*scale, cell.Geo, scale, color);
 
-                var texture = Utils.GetBlockIndex(cell.Geo);
+                // var texture = Utils.GetBlockIndex(cell.Geo);
 
-                if (texture >= 0)
+                /*if (texture >= 0)
                 {
                     var fetchedTexture = GLOBALS.Textures.GeoBlocks[texture];
 
@@ -194,7 +240,7 @@ internal static class Printers
                         0,
                         color
                     );
-                }
+                }*/
 
                 if (grid) DrawRectangleLinesEx(
                     new(offsetPixels.X + x * scale, offsetPixels.Y + y * scale, scale, scale),
@@ -301,8 +347,10 @@ internal static class Printers
             for (var x = 0; x < GLOBALS.Level.Width; x++)
             {
                 var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
+                
+                DrawTileSpec(x*scale, y*scale, cell.Geo, scale, color);
 
-                var texture = Utils.GetBlockIndex(cell.Geo);
+                /*var texture = Utils.GetBlockIndex(cell.Geo);
 
                 if (texture >= 0)
                 {
@@ -316,7 +364,7 @@ internal static class Printers
                         0,
                         color
                     );
-                }
+                }*/
 
                 if (grid) DrawRectangleLinesEx(
                     new(x * scale, y * scale, scale, scale),
@@ -425,8 +473,10 @@ internal static class Printers
                 var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
 
                 if (!geos) goto skipGeos;
+                
+                DrawTileSpec(x*scale, y*scale, cell.Geo, scale, color);
 
-                var texture = Utils.GetBlockIndex(cell.Geo);
+                /*var texture = Utils.GetBlockIndex(cell.Geo);
 
                 if (texture >= 0)
                 {
@@ -436,7 +486,7 @@ internal static class Printers
                         y * scale, 
                         color
                     );
-                }
+                }*/
 
                 if (grid) DrawRectangleLinesEx(
                     new(x * scale, y * scale, scale, scale),
@@ -541,7 +591,7 @@ internal static class Printers
         }
     }
 
-    internal static void DrawTileLayer(int layer, int scale, bool grid, bool preview, bool tinted)
+    internal static void DrawTileLayer(int layer, int scale, bool grid, bool preview, bool tinted, byte opacity = 255, bool deepTileOpacity = true)
     {
         for (var y = 0; y < GLOBALS.Level.Height; y++)
         {
@@ -602,7 +652,7 @@ internal static class Printers
                             new(x*scale, y*scale, scale, scale),
                             new Vector2(0, 0),
                             0,
-                            WHITE
+                            WHITE with { a = opacity }
                         );
                     }
                     else
@@ -622,7 +672,7 @@ internal static class Printers
                                         new(width, height),
                                         new(width, -height)
                                     ],
-                                    new Color(color.r, color.g, color.b, 255 - GLOBALS.Layer*100),
+                                    new Color(color.r, color.g, color.b, deepTileOpacity && layer == GLOBALS.Layer - 1 && initTile.Specs2.Length > 0 ? 255 : opacity),
                                     0
                                 );
                             }
@@ -639,11 +689,14 @@ internal static class Printers
                                         new(width, height),
                                         new(width, -height)
                                     ],
-                                    255 - GLOBALS.Layer*100
+                                    deepTileOpacity && layer == GLOBALS.Layer - 1 && initTile.Specs2.Length > 0 ? 255 : opacity
                                 );
                             }
                         }
-                        else DrawTilePreview(initTile, tileTexture, color, new Vector2(x, y), scale);
+                        else DrawTilePreview(initTile, tileTexture, color with { a = (byte)(deepTileOpacity &&
+                            layer == GLOBALS.Layer - 1 && initTile.Specs2.Length > 0
+                                ? 255
+                                : opacity) }, new Vector2(x, y), scale);
                     }
                 }
                 else if (tileCell.Type == TileType.TileBody)
@@ -672,7 +725,7 @@ internal static class Printers
                     var origin = new Vector2(x * scale + 5, y * scale + 5);
                     var color = GLOBALS.Level.MaterialColors[y, x, layer];
 
-                    if (layer != GLOBALS.Layer) color.a = 120;
+                    color.a = opacity;
 
                     if (color.r != 0 || color.g != 0 || color.b != 0)
                     {
@@ -1113,7 +1166,7 @@ internal static class Printers
 
         BeginShaderMode(GLOBALS.Shaders.TilePreview);
         SetShaderValueTexture(GLOBALS.Shaders.TilePreview, uniformLoc, texture);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, colorLoc, new Vector4(color.r, color.g, color.b, color.a/255f), ShaderUniformDataType.SHADER_UNIFORM_VEC4);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, colorLoc, new Vector4(color.r, color.g, color.b, color.a), ShaderUniformDataType.SHADER_UNIFORM_VEC4);
         SetShaderValue(GLOBALS.Shaders.TilePreview, heightStartLoc, calcStartingTextureHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
         SetShaderValue(GLOBALS.Shaders.TilePreview, heightLoc, calcTextureHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
         SetShaderValue(GLOBALS.Shaders.TilePreview, widthLoc, calcTextureWidth, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
@@ -2551,6 +2604,110 @@ internal static class Printers
 
             // glass
             case 9: break;
+        }
+    }
+    
+    /// <summary>
+    /// Draws an individual tile geo-spec based on the ID.
+    /// </summary>
+    /// <param name="id">geo-tile ID</param>
+    /// <param name="origin">the top-left corner to start drawing</param>
+    /// <param name="scale">the scale of the drawing</param>
+    /// <param name="color">the color of the sprite</param>
+    internal static void DrawTileSpec(int x, int y, int id, float scale, Color color)
+    {
+        var vector = new Vector2(x, y);
+        
+        switch (id)
+        {
+            // air
+            case 0:
+                DrawRectangleLinesEx(
+                    new(x + 10, y + 10, scale - 20, scale - 20),
+                    2,
+                    color
+                );
+                break;
+
+            // solid
+            case 1:
+                DrawRectangleV(vector, RayMath.Vector2Scale(new(1, 1), scale), color);
+                break;
+
+            // slopes
+            case 2:
+                DrawTriangle(
+                    vector,
+                    new(x, y + scale),
+                    new(x + scale, y + scale),
+                    color
+                );
+                break;
+
+            case 3:
+                DrawTriangle(
+                    new(x + scale, y),
+                    new(x, y + scale),
+                    new(x + scale, y + scale),
+                    color
+                );
+                break;
+
+            case 4:
+                DrawTriangle(
+                    vector,
+                    new(x, y + scale),
+                    new(x + scale, y),
+                    color
+                );
+                break;
+            case 5:
+                DrawTriangle(
+                    vector,
+                    new(x + scale, y + scale),
+                    new(x + scale, y),
+                    color
+                );
+                break;
+
+            // platform
+            case 6:
+                DrawRectangleV(
+                    vector,
+                    new(scale, scale / 2),
+                    color
+                );
+                break;
+
+            // shortcut entrance
+            case 7: break;
+
+            // glass
+            case 9: break;
+        }
+    }
+
+    /// Needs rlImGui mode
+    internal static class ImGui
+    {
+        internal static Rectangle ShortcutsWindow(IEditorShortcuts editorShortcuts)
+        {
+            var strings = editorShortcuts.CachedStrings;
+
+            var expanded = ImGuiNET.ImGui.Begin("Shortcuts");
+            var pos = ImGuiNET.ImGui.GetWindowPos();
+            var size = ImGuiNET.ImGui.GetWindowSize();
+            
+            if (expanded)
+            {
+                foreach (var (nameStr, shortcutStr) in strings)
+                {
+                    ImGuiNET.ImGui.Text($"{nameStr}: {shortcutStr}");
+                }
+            }
+            ImGuiNET.ImGui.End();
+
+            return new Rectangle(pos.X, pos.Y, size.X, size.Y);
         }
     }
 }
