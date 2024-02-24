@@ -77,6 +77,12 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
     
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
+
+    private int _lastChangingMatrixX = -1;
+    private int _lastChangingMatrixY = -1;
+
+    private string _selectionSizeString = "";
+    private Rectangle _selectionRectangle = new(0, 0, 0, 0);
     
     public void Draw()
     {
@@ -123,10 +129,13 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
         Rectangle panelRect = new(sWidth - 200, 50, 188, 400);
 
-        var canDrawGeo = !CheckCollisionPointRec(GetMousePosition(), panelRect) &&
+        var canDrawGeo = !_isShortcutsWinHovered && 
+                         !_isShortcutsWinDragged && 
+                         !CheckCollisionPointRec(GetMousePosition(), panelRect) &&
                          !CheckCollisionPointRec(uiMouse, layer3Rect) &&
                          (GLOBALS.Layer != 1 || !CheckCollisionPointRec(uiMouse, layer2Rect)) &&
                          (GLOBALS.Layer != 0 || !CheckCollisionPointRec(uiMouse, layer1Rect));
+        
         var inMatrixBounds = matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 &&
                              matrixX < GLOBALS.Level.Width;
 
@@ -635,6 +644,34 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                 
                 _multiselect = false;
             }
+
+            if (_clickTracker)
+            {
+                if (_lastChangingMatrixX != matrixX || _lastChangingMatrixY != matrixY)
+                {
+                    _lastChangingMatrixX = matrixX;
+                    _lastChangingMatrixY = matrixY;
+                    
+                    // TODO: Performance issue
+                    
+                    _selectionRectangle = Utils.RecFromTwoVecs(
+                        new Vector2(matrixX, matrixY),
+                        new Vector2(_prevCoordsX, _prevCoordsY));
+
+                    _selectionRectangle.X *= scale;
+                    _selectionRectangle.Y *= scale;
+                    _selectionRectangle.width = _selectionRectangle.width * scale + scale;
+                    _selectionRectangle.height = _selectionRectangle.height * scale + scale;
+
+                    _selectionSizeString = $"{_selectionRectangle.width / scale:0}w {_selectionRectangle.height / scale:0}h";
+                }
+            }
+            else
+            {
+                _lastChangingMatrixX = -1;
+                _lastChangingMatrixY = -1;
+                _selectionRectangle = new Rectangle(0, 0, 0, 0);
+            }
         }
         // handle placing geo
         else
@@ -938,6 +975,10 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                 {
                     for (var x = 0; x < GLOBALS.Level.Width; x++)
                     {
+                        if (!_multiselect && _selectionRectangle is not { width: 0, height: 0 })
+                            _selectionRectangle = new Rectangle(0, 0, 0, 0);
+                        
+                        
                         if (_memDumbMode)
                         {
                             DrawRectangleLinesEx(
@@ -952,31 +993,11 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                         }
                         else if (_multiselect)
                         {
-                            var XS = matrixX - _prevCoordsX;
-                            var YS = matrixY - _prevCoordsY;
-                            var width = Math.Abs(XS == 0 ? 1 : XS + (XS > 0 ? 1 : -1)) * scale;
-                            var height = Math.Abs(YS == 0 ? 1 : YS + (YS > 0 ? 1 : -1)) * scale;
-
-                            Rectangle rec = (XS >= 0, YS >= 0) switch
-                            {
-                                // br
-                                (true, true) => new(_prevCoordsX * scale, _prevCoordsY * scale, width, height),
-
-                                // tr
-                                (true, false) => new(_prevCoordsX * scale, matrixY * scale, width, height),
-
-                                // bl
-                                (false, true) => new(matrixX * scale, _prevCoordsY * scale, width, height),
-
-                                // tl
-                                (false, false) => new(matrixX * scale, matrixY * scale, width, height)
-                            };
-
                             DrawRectangleLinesEx(
-                                rec, 
+                                _selectionRectangle,
                                 2, 
                                 _eraseMode 
-                                    ? new Color(255, 0, 0, 255) 
+                                    ? RED
                                     : (_memLoadMode 
                                         ? new Color(89, 7, 222, 255) 
                                         : WHITE
@@ -984,11 +1005,11 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                             );
 
                             DrawText(
-                                $"{width / scale:0}x{height / scale:0}",
+                                _selectionSizeString,
                                 (int)mouse.X + 10,
                                 (int)mouse.Y,
                                 4,
-                                new Color(255, 255, 255, 255)
+                                WHITE
                                 );
                         }
                         else

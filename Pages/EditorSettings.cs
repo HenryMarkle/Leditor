@@ -1561,11 +1561,11 @@ public class SettingsPage : IPage
                         GuiLabel(new Rectangle(440, 255, 100, 30), "Accept");
                         GuiLabel(new Rectangle(440, 290, 100, 30), "Alt Accept");
                         
-                        var assignNewEffectCategoryNavigation = GuiButton(new Rectangle(550, 150, 200, 30), "SHIFT");
-                        var assignMoveUp = GuiButton(new Rectangle(550, 185, 200, 30), $"{GLOBALS.Settings.Shortcuts.EffectsEditor.MoveUpInNewEffectMenu}");
-                        var assignMoveDown = GuiButton(new Rectangle(550, 220, 200, 30), $"{GLOBALS.Settings.Shortcuts.EffectsEditor.MoveDownInNewEffectMenu}");
-                        var assignAcceptNewEffect = GuiButton(new Rectangle(550, 255, 200, 30), $"{GLOBALS.Settings.Shortcuts.EffectsEditor.AcceptNewEffect}");
-                        var assignAcceptNewEffectAlt = GuiButton(new Rectangle(550, 290, 200, 30), $"{GLOBALS.Settings.Shortcuts.EffectsEditor.AcceptNewEffectAlt}");
+                        var assignNewEffectCategoryNavigation = GuiButton(new Rectangle(570, 150, 200, 30), "SHIFT");
+                        var assignMoveUp = GuiButton(new Rectangle(570, 185, 200, 30), $"{GLOBALS.Settings.Shortcuts.EffectsEditor.MoveUpInNewEffectMenu}");
+                        var assignMoveDown = GuiButton(new Rectangle(570, 220, 200, 30), $"{GLOBALS.Settings.Shortcuts.EffectsEditor.MoveDownInNewEffectMenu}");
+                        var assignAcceptNewEffect = GuiButton(new Rectangle(570, 255, 200, 30), $"{GLOBALS.Settings.Shortcuts.EffectsEditor.AcceptNewEffect}");
+                        var assignAcceptNewEffectAlt = GuiButton(new Rectangle(570, 290, 200, 30), $"{GLOBALS.Settings.Shortcuts.EffectsEditor.AcceptNewEffectAlt}");
 
                         // if (assignNewEffectCategoryNavigation) GLOBALS.Settings.Shortcuts.EffectsEditor.NewEffectMenuCategoryNavigation;
                         if (assignMoveUp) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.MoveUpInNewEffectMenu;
@@ -1615,44 +1615,48 @@ public class SettingsPage : IPage
                         
                         
                         GuiLabel(new Rectangle(430, 370, 100, 30), "Shift Applied Effect Up");
-                        var assignShiftAppliedEffectUp = GuiButton(new Rectangle(580, 370, 200, 30),
+                        var assignShiftAppliedEffectUp = GuiButton(new Rectangle(600, 370, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.EffectsEditor.ShiftAppliedEffectUp}");
                         
                         GuiLabel(new Rectangle(430, 405, 100, 30), "Shift Applied Effect Down");
-                        var assignShiftAppliedEffectDown = GuiButton(new Rectangle(580, 405, 200, 30),
+                        var assignShiftAppliedEffectDown = GuiButton(new Rectangle(600, 405, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.EffectsEditor.ShiftAppliedEffectDown}"); 
                         
                         GuiLabel(new Rectangle(430, 440, 100, 30), "Cycle Applied Effects Up");
-                        var assignCycleAppliedEffectUp = GuiButton(new Rectangle(580, 440, 200, 30),
+                        var assignCycleAppliedEffectUp = GuiButton(new Rectangle(600, 440, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.EffectsEditor.CycleAppliedEffectUp}"); 
                         
                         GuiLabel(new Rectangle(430, 475, 100, 30), "Cycle Applied Effects Down");
-                        var assignCycleAppliedEffectDown = GuiButton(new Rectangle(580, 475, 200, 30),
+                        var assignCycleAppliedEffectDown = GuiButton(new Rectangle(600, 475, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.EffectsEditor.CycleAppliedEffectDown}");
                         
                         GuiLabel(new Rectangle(430, 510, 100, 30), "Delete Applied Effect");
-                        var assignDeleteAppliedEffect = GuiButton(new Rectangle(580, 510, 200, 30),
+                        var assignDeleteAppliedEffect = GuiButton(new Rectangle(600, 510, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.EffectsEditor.DeleteAppliedEffect}"); 
                         
                         GuiLabel(new Rectangle(430, 545, 100, 30), "Cycle Effect Options Up");
-                        var assignCycleEffectOptionsUp = GuiButton(new Rectangle(580, 545, 200, 30),
+                        var assignCycleEffectOptionsUp = GuiButton(new Rectangle(600, 545, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionsUp}");
                         
                         GuiLabel(new Rectangle(430, 580, 100, 30), "Cycle Effect Options Down");
-                        var assignCycleEffectOptionsDown = GuiButton(new Rectangle(580, 580, 200, 30),
+                        var assignCycleEffectOptionsDown = GuiButton(new Rectangle(600, 580, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionsDown}");
                         
                         GuiLabel(new Rectangle(430, 615, 100, 30), "To Right Option Choice");
-                        var assignToRightOptionChoice = GuiButton(new Rectangle(580, 615, 200, 30),
+                        var assignToRightOptionChoice = GuiButton(new Rectangle(600, 615, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionChoicesRight}");
                         
                         GuiLabel(new Rectangle(430, 650, 100, 30), "To Left Option Choice");
-                        var assignToLeftOptionChoice = GuiButton(new Rectangle(580, 650, 200, 30),
+                        var assignToLeftOptionChoice = GuiButton(new Rectangle(600, 650, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionChoicesLeft}");
                         
                         GuiLabel(new Rectangle(430, 685, 100, 30), "Show/Hide Options");
-                        var assignToggleOptionsVisibility = GuiButton(new Rectangle(580, 685, 200, 30),
+                        var assignToggleOptionsVisibility = GuiButton(new Rectangle(600, 685, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.EffectsEditor.ToggleOptionsVisibility}");
+                        
+                        GuiLabel(new Rectangle(430, 720, 100, 30), "Strong Brush");
+                        var assignStrongBrush = GuiButton(new Rectangle(600, 720, 200, 30),
+                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.StrongBrush}");
                         
                         
 
@@ -1670,6 +1674,7 @@ public class SettingsPage : IPage
                         if (assignToRightOptionChoice) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionChoicesRight;
                         if (assignToLeftOptionChoice) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionChoicesLeft;
                         if (assignToggleOptionsVisibility) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.ToggleOptionsVisibility;
+                        if (assignStrongBrush) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.StrongBrush;
                     }
                         break;
                     case 7: // Props

@@ -70,7 +70,10 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
         var panelHeight = GetScreenHeight() - 100;
         var brushPanel = new Rectangle(10, 50, 120, panelHeight);
 
-        var canPaint = !CheckCollisionPointRec(mouse, brushPanel) && !indHovered && !_isDraggingIndicator;
+        var canPaint = !_isShortcutsWinHovered && 
+                       !_isShortcutsWinDragged && 
+                       !CheckCollisionPointRec(mouse, brushPanel) && !indHovered && 
+                       !_isDraggingIndicator;
         
         var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
         var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);

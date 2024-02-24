@@ -326,6 +326,8 @@ public class EffectsShortcuts : IEditorShortcuts
 
     public KeyboardShortcut ToggleOptionsVisibility { get; set; } = KeyboardKey.KEY_O;
 
+    public KeyboardShortcut StrongBrush { get; set; } = KeyboardKey.KEY_T;
+
     public KeyboardShortcut DragLevelAlt { get; set; } = KeyboardKey.KEY_G;
     public KeyboardShortcut PaintAlt { get; set; } = KeyboardKey.KEY_P;
     public KeyboardShortcut EraseAlt { get; set; } = KeyboardKey.KEY_NULL;

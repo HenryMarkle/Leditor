@@ -48,7 +48,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
     private readonly byte[] _effectOptionsPanelBytes = "Options"u8.ToArray();
 
     // Paints an effect in the effects editor
-    static void PaintEffect(double[,] matrix, (int x, int y) matrixSize, (int x, int y) center, int brushSize, double strength)
+    /*static void PaintEffect(double[,] matrix, (int x, int y) matrixSize, (int x, int y) center, int brushSize, double strength)
     {
         for (var y = center.y - brushSize; y < center.y + brushSize + 1; y++)
         {
@@ -64,7 +64,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                 if (matrix[y, x] < 0) matrix[y, x] = 0;
             }
         }
-    }
+    }*/
     
     // Paints an effect in the effects editor
     static void PaintEffectCircular(double[,] matrix, (int x, int y) center, int radius, double strength)
@@ -90,16 +90,18 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                 var squareV = new Vector2(x + 0.5f, y + 0.5f) * GLOBALS.PreviewScale;
 
                 
-                if (CheckCollisionCircleRec(centerV, (radius-0.5f) * GLOBALS.PreviewScale,
+                if (CheckCollisionCircleRec(centerV, radius * GLOBALS.PreviewScale,
                         new(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale,
                             GLOBALS.PreviewScale)))
                 {
-                    if (strength >= 99f)
+                    var painted = cell + strength;
+                    
+                    if (painted >= 99f)
                     {
                         cell = 100;
                         continue;
                     }
-                    if (strength <= -99f)
+                    if (painted <= -99f)
                     {
                         cell = 0;
                         continue;
@@ -363,7 +365,11 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
             var appliedEffectPageSize = (appliedEffectsPanelHeight / (appliedEffectRecHeight + 30));
 
             // Prevent using the brush when mouse over the effects list
-            var canUseBrush = !_newEffectModeExitLock && !_addNewEffectMode && !CheckCollisionPointRec(
+            var canUseBrush = !_isShortcutsWinHovered && 
+                              !_isShortcutsWinDragged && 
+                              !_newEffectModeExitLock && 
+                              !_addNewEffectMode && 
+                              !CheckCollisionPointRec(
                 GetMousePosition(),
                 new(
                     GetScreenWidth() - 300,
@@ -450,12 +456,15 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                     #else
                     mtx = GLOBALS.Level.Effects[currentAppliedEffect];
                     #endif
+
+                    var strength = Utils.GetEffectBrushStrength(mtx.Item1);
+                    var useStrong = _shortcuts.StrongBrush.Check(ctrl, shift, alt, true);
                     
                     PaintEffectCircular(
                         mtx.Item3,
                         (effectsMatrixX, effectsMatrixY),
                         _brushRadius,
-                        Utils.GetEffectBrushStrength(mtx.Item1)
+                        useStrong ? strength + 10  : strength
                     );
 
                     _prevMatrixX = effectsMatrixX;
@@ -492,11 +501,14 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                     mtx = GLOBALS.Level.Effects[currentAppliedEffect];
                     #endif
                     
+                    var strength = -Utils.GetEffectBrushStrength(mtx.Item1);
+                    var useStrong = _shortcuts.StrongBrush.Check(ctrl, shift, alt, true);
+                    
                     PaintEffectCircular(
                         mtx.Item3,
                         (effectsMatrixX, effectsMatrixY),
                         _brushRadius,
-                        -Utils.GetEffectBrushStrength(mtx.Item1)
+                        useStrong ? strength - 10 : strength
                     );
 
                     _prevMatrixX = effectsMatrixX;
@@ -647,31 +659,26 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                             for (int x = 0; x < GLOBALS.Level.Width; x++)
                             {
                                 DrawRectangle(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale, GLOBALS.PreviewScale, GLOBALS.PreviewScale, new(0, 255, 0, (int)GLOBALS.Level.Effects[_currentAppliedEffect].Item3[y, x] * 255 / 100));
-                            }
-                        }
-                    }
-
-                    // Brush
-
-                    for (var y = 0; y < GLOBALS.Level.Height; y++)
-                    {
-                        for (var x = 0; x < GLOBALS.Level.Width; x++)
-                        {
-                            var effAreaRect = new Rectangle(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale,
-                                GLOBALS.PreviewScale, GLOBALS.PreviewScale);
-                            if (_brushRadius > 0 && CheckCollisionCircleRec(
-                                    new Vector2(effectsMatrixX+0.5f, effectsMatrixY+0.5f) * GLOBALS.PreviewScale,
-                                    (_brushRadius-0.5f)*GLOBALS.PreviewScale, effAreaRect
-                                    )
-                                )
-                            {
-                                DrawRectangleRec(effAreaRect, WHITE with { a = 100 });
-                            }
-                            
-                            if (effectsMatrixX == x && effectsMatrixY == y)
-                            {
-                                if (_brushEraseMode)
+                                
+                                // Brush
+                                
+                                var effAreaRect = new Rectangle(x * GLOBALS.PreviewScale, y * GLOBALS.PreviewScale,
+                                    GLOBALS.PreviewScale, GLOBALS.PreviewScale);
+                                if (_brushRadius > 0 && CheckCollisionCircleRec(
+                                        new Vector2(effectsMatrixX+0.5f, effectsMatrixY+0.5f) * GLOBALS.PreviewScale,
+                                        _brushRadius*GLOBALS.PreviewScale, effAreaRect))
                                 {
+                                    DrawRectangleRec(effAreaRect, WHITE with { a = 50 });
+                                }
+                                
+                                if (effectsMatrixX == x && effectsMatrixY == y)
+                                {
+                                    DrawCircleLines(
+                                        (int) ((x + 0.5f) * GLOBALS.PreviewScale), 
+                                        (int) ((y + 0.5f) * GLOBALS.PreviewScale),
+                                        (_brushRadius+1)*GLOBALS.PreviewScale,
+                                        _brushEraseMode ? RED : WHITE);
+                                        
                                     DrawRectangleLinesEx(
                                         new Rectangle(
                                             x * GLOBALS.PreviewScale,
@@ -680,41 +687,12 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                                             GLOBALS.PreviewScale
                                         ),
                                         2.0f,
-                                        new(255, 0, 0, 255)
+                                        _brushEraseMode ? RED : WHITE
                                     );
-
-
-                                    DrawRectangleLines(
-                                        (effectsMatrixX - _brushRadius) * GLOBALS.PreviewScale,
-                                        (effectsMatrixY - _brushRadius) * GLOBALS.PreviewScale,
-                                        (_brushRadius * 2 + 1) * GLOBALS.PreviewScale,
-                                        (_brushRadius * 2 + 1) * GLOBALS.PreviewScale,
-                                        new(255, 0, 0, 255));
-                                }
-                                else
-                                {
-                                    DrawRectangleLinesEx(
-                                        new Rectangle(
-                                            x * GLOBALS.PreviewScale,
-                                            y * GLOBALS.PreviewScale,
-                                            GLOBALS.PreviewScale,
-                                            GLOBALS.PreviewScale
-                                        ),
-                                        2.0f,
-                                        new(255, 255, 255, 255)
-                                    );
-
-                                    DrawRectangleLines(
-                                        (effectsMatrixX - _brushRadius) * GLOBALS.PreviewScale,
-                                        (effectsMatrixY - _brushRadius) * GLOBALS.PreviewScale,
-                                        (_brushRadius * 2 + 1) * GLOBALS.PreviewScale,
-                                        (_brushRadius * 2 + 1) * GLOBALS.PreviewScale,
-                                        new(255, 255, 255, 255));
                                 }
                             }
                         }
                     }
-
                 }
                 EndMode2D();
 

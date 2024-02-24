@@ -367,7 +367,9 @@ internal class PropsEditorPage : IPage
         var tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / previewScale;
         var tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / previewScale;
 
-        var canDrawTile = !CheckCollisionPointRec(tileMouse, menuPanelRect) &&
+        var canDrawTile = !_isShortcutsWinHovered && 
+                          !_isShortcutsWinDragged && 
+                          !CheckCollisionPointRec(tileMouse, menuPanelRect) &&
                           !CheckCollisionPointRec(tileMouse, layer3Rect) &&
                           (GLOBALS.Layer != 1 || !CheckCollisionPointRec(tileMouse, layer2Rect)) &&
                           (GLOBALS.Layer != 0 || !CheckCollisionPointRec(tileMouse, layer1Rect)) &&

@@ -160,7 +160,9 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
         var layer2Rect = new Rectangle(20, sHeight - 60, 40, 40);
         var layer3Rect = new Rectangle(10, sHeight - 50, 40, 40);
 
-        var canDrawGeo = !CheckCollisionPointRec(uiMouse, layer3Rect) && 
+        var canDrawGeo = !_isShortcutsWinHovered && 
+                         !_isShortcutsWinDragged && 
+                         !CheckCollisionPointRec(uiMouse, layer3Rect) && 
                          (GLOBALS.Layer != 1 || !CheckCollisionPointRec(uiMouse, layer2Rect)) &&
                          (GLOBALS.Layer != 0 || !CheckCollisionPointRec(uiMouse, layer1Rect)) &&
                          !CheckCollisionPointRec(GetMousePosition(), new(GetScreenWidth() - 210, 50, 200, GetScreenHeight() - 100));
