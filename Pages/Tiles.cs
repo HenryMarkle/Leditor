@@ -551,9 +551,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     2, 
                     GLOBALS.PreviewScale, 
                     false, 
-                    GLOBALS.Layer == 2
-                        ? BLACK 
-                        : new(0, 0, 0, 100)
+                    BLACK
                 );
 
                 // then draw the tiles
@@ -565,8 +563,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         GLOBALS.PreviewScale, 
                         false, 
                         !GLOBALS.Settings.TileEditor.UseTextures,
-                        GLOBALS.Settings.TileEditor.TintedTiles,
-                        255
+                        GLOBALS.Settings.TileEditor.TintedTiles
                     );
                 }
             }
@@ -581,9 +578,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     1, 
                     GLOBALS.PreviewScale, 
                     false, 
-                    GLOBALS.Layer == 1
+                    GLOBALS.Layer < 2
                         ? BLACK 
-                        : new(0, 0, 0, 100)
+                        : new(0, 0, 0, 80)
                 );
 
                 // Draw layer 2 tiles
@@ -596,7 +593,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         false, 
                         !GLOBALS.Settings.TileEditor.UseTextures,
                         GLOBALS.Settings.TileEditor.TintedTiles,
-                        (byte)(GLOBALS.Layer < 2 ? 255 : 90)
+                        (byte)(GLOBALS.Layer < 2 ? 255 : 80)
                     );
                 }
             }
@@ -611,9 +608,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     0, 
                     GLOBALS.PreviewScale, 
                     false, 
-                    GLOBALS.Layer == 0
+                    GLOBALS.Layer < 1
                         ? BLACK 
-                        : new(0, 0, 0, 100)
+                        : new(0, 0, 0, 80)
                 );
 
                 // Draw layer 1 tiles
@@ -626,7 +623,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         false, 
                         !GLOBALS.Settings.TileEditor.UseTextures,
                         GLOBALS.Settings.TileEditor.TintedTiles,
-                        (byte)(GLOBALS.Layer < 1 ? 255 : 90)
+                        (byte)(GLOBALS.Layer < 1 ? 255 : 80)
                     );
                 }
             }
@@ -638,7 +635,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             // currently held tile
             if (_materialTileSwitch)
             {
-                var color = isTileLegal ? currentTilePreviewColor : new(255, 0, 0, 255);
+                var color = isTileLegal ? currentTilePreviewColor : RED;
                 Printers.DrawTilePreview(ref currentTileInit, ref currentTileTexture, ref color, (tileMatrixX, tileMatrixY));
 
                 EndShaderMode();

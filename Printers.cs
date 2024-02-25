@@ -224,23 +224,7 @@ internal static class Printers
             {
                 var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
                 
-                DrawTileSpec(x*scale, y*scale, cell.Geo, scale, color);
-
-                // var texture = Utils.GetBlockIndex(cell.Geo);
-
-                /*if (texture >= 0)
-                {
-                    var fetchedTexture = GLOBALS.Textures.GeoBlocks[texture];
-
-                    DrawTexturePro(
-                        GLOBALS.Textures.GeoBlocks[texture],
-                        new(0, 0, fetchedTexture.width, fetchedTexture.height),
-                        new Rectangle(offsetPixels.X + x * scale, offsetPixels.Y + y * scale, scale, scale),
-                        new(0, 0),
-                        0,
-                        color
-                    );
-                }*/
+                DrawTileSpec(x*scale + offsetPixels.X, y*scale + offsetPixels.Y, cell.Geo, scale, color);
 
                 if (grid) DrawRectangleLinesEx(
                     new(offsetPixels.X + x * scale, offsetPixels.Y + y * scale, scale, scale),
@@ -1091,7 +1075,7 @@ internal static class Printers
 
         BeginShaderMode(GLOBALS.Shaders.TilePreview);
         SetShaderValueTexture(GLOBALS.Shaders.TilePreview, uniformLoc, texture);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, colorLoc, new System.Numerics.Vector4(color.r, color.g, color.b, 1), ShaderUniformDataType.SHADER_UNIFORM_VEC4);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, colorLoc, new System.Numerics.Vector4(color.r, color.g, color.b, color.a), ShaderUniformDataType.SHADER_UNIFORM_VEC4);
         SetShaderValue(GLOBALS.Shaders.TilePreview, heightStartLoc, calcStartingTextureHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
         SetShaderValue(GLOBALS.Shaders.TilePreview, heightLoc, calcTextureHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
         SetShaderValue(GLOBALS.Shaders.TilePreview, widthLoc, calcTextureWidth, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
@@ -1102,7 +1086,7 @@ internal static class Printers
             new(position.x * GLOBALS.PreviewScale, position.y * GLOBALS.PreviewScale, init.Size.Item1 * GLOBALS.PreviewScale, init.Size.Item2 * GLOBALS.PreviewScale),
             RayMath.Vector2Scale(Utils.GetTileHeadOrigin(ref init), GLOBALS.PreviewScale),
             0,
-            new(255, 255, 255, 255)
+            WHITE
         );
         EndShaderMode();
     }
@@ -1128,7 +1112,7 @@ internal static class Printers
 
         BeginShaderMode(GLOBALS.Shaders.TilePreview);
         SetShaderValueTexture(GLOBALS.Shaders.TilePreview, uniformLoc, texture);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, colorLoc, new Vector4(color.r, color.g, color.b, color.a/255f), ShaderUniformDataType.SHADER_UNIFORM_VEC4);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, colorLoc, new Vector4(color.r, color.g, color.b, color.a), ShaderUniformDataType.SHADER_UNIFORM_VEC4);
         SetShaderValue(GLOBALS.Shaders.TilePreview, heightStartLoc, calcStartingTextureHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
         SetShaderValue(GLOBALS.Shaders.TilePreview, heightLoc, calcTextureHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
         SetShaderValue(GLOBALS.Shaders.TilePreview, widthLoc, calcTextureWidth, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
@@ -2659,6 +2643,108 @@ internal static class Printers
     /// <param name="scale">the scale of the drawing</param>
     /// <param name="color">the color of the sprite</param>
     internal static void DrawTileSpec(int x, int y, int id, float scale, Color color)
+    {
+        var vector = new Vector2(x, y);
+        
+        switch (id)
+        {
+            // air
+            case 0:
+                DrawRectangleLinesEx(
+                    new(x + 10, y + 10, scale - 20, scale - 20),
+                    2,
+                    color
+                );
+                break;
+
+            // solid
+            case 1:
+                DrawRectangleV(vector, RayMath.Vector2Scale(new(1, 1), scale), color);
+                break;
+
+            // slopes
+            case 2:
+                DrawTriangle(
+                    vector,
+                    new(x, y + scale),
+                    new(x + scale, y + scale),
+                    color
+                );
+                break;
+
+            case 3:
+                DrawTriangle(
+                    new(x + scale, y),
+                    new(x, y + scale),
+                    new(x + scale, y + scale),
+                    color
+                );
+                break;
+
+            case 4:
+                DrawTriangle(
+                    vector,
+                    new(x, y + scale),
+                    new(x + scale, y),
+                    color
+                );
+                break;
+            case 5:
+                DrawTriangle(
+                    vector,
+                    new(x + scale, y + scale),
+                    new(x + scale, y),
+                    color
+                );
+                break;
+
+            // platform
+            case 6:
+                DrawRectangleV(
+                    vector,
+                    new(scale, scale / 2),
+                    color
+                );
+                break;
+
+            // shortcut entrance
+            case 7:
+                var entryTexture = GLOBALS.Textures.GeoBlocks[6];
+                
+                DrawTexturePro(
+                    entryTexture, 
+                    new(0, 0, entryTexture.width, entryTexture.height),
+                    new (x, y, scale, scale),
+                    new(0, 0),
+                    0,
+                    color
+                );
+                break;
+
+            // glass
+            case 9: 
+                var glassTexture = GLOBALS.Textures.GeoBlocks[7];
+                
+                DrawTexturePro(
+                    glassTexture, 
+                    new(0, 0, glassTexture.width, glassTexture.height),
+                    new (x, y, scale, scale),
+                    new(0, 0),
+                    0,
+                    color
+                );
+                break;
+        }
+    }
+    
+    /// <summary>
+    /// Draws an individual tile geo-spec based on the ID.
+    /// </summary>
+    /// <param name="id">geo-tile ID</param>
+    /// <param name="origin">the top-left corner to start drawing</param>
+    /// <param name="scale">the scale of the drawing</param>
+    /// <param name="color">the color of the sprite</param>
+    internal static void DrawTileSpec(float x, float y, int id, float scale, Color color)
     {
         var vector = new Vector2(x, y);
         

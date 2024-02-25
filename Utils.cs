@@ -116,7 +116,7 @@ internal static class Utils
         var specs2 = init.Specs2;
 
         // get the "middle" point of the tile
-        var head = Utils.GetTileHeadOrigin(ref init);
+        var head = GetTileHeadOrigin(init);
 
         // the top-left of the tile
         var start = RayMath.Vector2Subtract(point, head);
@@ -143,7 +143,7 @@ internal static class Utils
 
                     var spec = specs[specsIndex];
 
-                    bool isLegal = false;
+                    bool isLegal;
 
                     if (specs2.Length > 0 && GLOBALS.Layer != 2)
                     {
@@ -153,23 +153,22 @@ internal static class Utils
                         var spec2 = specs2[specsIndex];
 
                         isLegal =
-                            (tileCell.Type == TileType.Default || tileCell.Type == TileType.Material)
+                            /*(tileCell.Type == TileType.Default || tileCell.Type == TileType.Material)
                             &&
                             (tileCellNextLayer.Type == TileType.Default || tileCellNextLayer.Type == TileType.Material)
+                            &&*/
+                            (spec == -1 || (geoCell.Geo == spec && tileCell.Type is TileType.Default or TileType.Material))
                             &&
-                            (spec == -1 || geoCell.Geo == spec)
-                            &&
-                            (spec2 == -1 || geoCellNextLayer.Geo == spec2);
+                            (spec2 == -1 || (geoCellNextLayer.Geo == spec2 && tileCellNextLayer.Type is TileType.Default or TileType.Material));
                     }
                     else
                     {
-                        isLegal = (tileCell.Type == TileType.Default || tileCell.Type == TileType.Material) && (spec == -1 || geoCell.Geo == spec);
+                        isLegal = spec == -1 || (geoCell.Geo == spec && tileCell.Type is TileType.Default or TileType.Material);
                     }
 
                     if (!isLegal) return false;
                 }
                 else return false;
-
             }
         }
 
@@ -518,7 +517,7 @@ internal static class Utils
     {
         "BlackGoo" or "Fungi Flowers" or "Lighthouse Flowers" or
             "Fern" or "Giant Mushroom" or "Sprawlbush" or
-            "featherFern" or "Fungus Tree" or "Restore As Scaffolding" or "Restore As Pipes" => 100,
+            "featherFern" or "Fungus Tree" or "Restore As Scaffolding" or "Restore As Pipes" or "Super BlackGoo" => 100,
 
         _ => 10
     };

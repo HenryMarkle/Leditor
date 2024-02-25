@@ -1,4 +1,5 @@
 ﻿global using Raylib_CsLo;
+using System.Globalization;
 using static Raylib_CsLo.Raylib;
 
 using ImGuiNET;
@@ -10,7 +11,8 @@ using Leditor.Lingo;
 using Pidgin;
 using System.Text.Json;
 using Serilog;
-using System.Security.Cryptography; 
+using System.Security.Cryptography;
+using System.Threading;
 
 #nullable enable
 
@@ -289,7 +291,7 @@ class Program
     {
         return GLOBALS.Props.Select(category =>
             category.Select(prop =>
-                LoadTexture(Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, prop.Name + ".png"))
+                LoadTexture(Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, prop.Name + ".png")) // cause a random crash
             ).ToArray()
         ).ToArray();
     }
@@ -358,6 +360,8 @@ class Program
     // MAIN FUNCTION
     static void Main()
     {
+        Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
+
         // Initialize logging
 
         try
@@ -499,7 +503,7 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.35";
+        const string version = "Henry's Leditor v0.9.36";
         const string raylibVersion = "Raylib v4.2.0.9";
         
         // Load tiles and props

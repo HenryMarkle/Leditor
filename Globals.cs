@@ -149,7 +149,7 @@ internal static class GLOBALS
         internal Rectangle Border { get; private set; }
         internal int WaterLevel { get; set; } = -1;
         internal bool WaterAtFront { get; set; } = false;
-        internal int LightAngle { get; set; } = 90; // 90 - 180
+        internal int LightAngle { get; set; } = 180; // 0 - 360
         internal int LightFlatness { get; set; } = 1; // 1 - 10
         
         internal bool LightMode { get; set; } = true;
@@ -221,6 +221,9 @@ internal static class GLOBALS
             Width = width;
             Height = height;
             Padding = padding;
+
+            LightFlatness = 1;
+            LightAngle = 180;
 
             /*Border = new(
                 Padding.left * Scale,

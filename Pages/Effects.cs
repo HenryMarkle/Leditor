@@ -39,7 +39,6 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
     private bool _clickTracker = false;
     private bool _brushEraseMode = false;
     private bool _showEffectOptions = true;
-    private bool _newEffectModeExitLock;
 
     private int _optionsIndex = 1;
 
@@ -96,12 +95,12 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                 {
                     var painted = cell + strength;
                     
-                    if (painted >= 99f)
+                    if (strength > 90 || painted >= 99f)
                     {
                         cell = 100;
                         continue;
                     }
-                    if (painted <= -99f)
+                    if (strength < -90 || painted < -90f)
                     {
                         cell = 0;
                         continue;
@@ -155,7 +154,6 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
         if (_shortcuts.NewEffect.Check(ctrl, shift, alt))
         {
             _addNewEffectMode = !_addNewEffectMode;
-            _newEffectModeExitLock = true;
         }
 
         //
@@ -196,7 +194,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
             
 
             if ((_shortcuts.AcceptNewEffect.Check(ctrl, shift, alt) || _shortcuts.AcceptNewEffectAlt.Check(ctrl, shift, alt)) && 
-                _newEffectSelectedValue > -1)
+                _newEffectSelectedValue > -1 && _newEffectSelectedValue < GLOBALS.Effects[_newEffectCategorySelectedValue].Length)
             {
                 GLOBALS.Level.Effects = [
                     .. GLOBALS.Level.Effects,
@@ -367,7 +365,6 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
             // Prevent using the brush when mouse over the effects list
             var canUseBrush = !_isShortcutsWinHovered && 
                               !_isShortcutsWinDragged && 
-                              !_newEffectModeExitLock && 
                               !_addNewEffectMode && 
                               !CheckCollisionPointRec(
                 GetMousePosition(),
@@ -431,7 +428,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
 
             // Use brush
 
-            if ((_shortcuts.Paint.Check(ctrl, shift, alt, true) || _shortcuts.PaintAlt.Check(ctrl, shift, alt, true)) && !_newEffectModeExitLock && canUseBrush)
+            if ((_shortcuts.Paint.Check(ctrl, shift, alt, true) || _shortcuts.PaintAlt.Check(ctrl, shift, alt, true)) && canUseBrush)
             {
                 if (
                         effectsMatrixX >= 0 &&
@@ -473,7 +470,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
 
                 _clickTracker = true;
             }
-            if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.EraseAlt.Check(ctrl, shift, alt, true)) && !_newEffectModeExitLock && canUseBrush)
+            if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.EraseAlt.Check(ctrl, shift, alt, true)) && canUseBrush)
             {
                 _brushEraseMode = true;
                 
@@ -522,7 +519,6 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
             if (IsMouseButtonReleased(_shortcuts.Paint.Button) || IsKeyReleased(_shortcuts.PaintAlt.Key))
             {
                 _clickTracker = false;
-                _newEffectModeExitLock = false;
             }
 
             //

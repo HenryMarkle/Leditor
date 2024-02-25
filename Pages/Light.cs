@@ -54,10 +54,8 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
         var indicatorOrigin = new Vector2(GetScreenWidth() - 100, GetScreenHeight() - 100);
 
         var indicatorPoint = new Vector2(
-            indicatorOrigin.X + (float)((15 + GLOBALS.Level.LightFlatness * 7) *
-                                        -Math.Cos(float.DegreesToRadians(GLOBALS.Level.LightAngle - 180))),
-            indicatorOrigin.Y + (float)((15 + GLOBALS.Level.LightFlatness * 7) *
-                                        Math.Sin(float.DegreesToRadians(GLOBALS.Level.LightAngle - 180)))
+            indicatorOrigin.X + (float)((15 + GLOBALS.Level.LightFlatness * 7) * Math.Cos(float.DegreesToRadians(GLOBALS.Level.LightAngle + 90))),
+            indicatorOrigin.Y + (float)((15 + GLOBALS.Level.LightFlatness * 7) * Math.Sin(float.DegreesToRadians(GLOBALS.Level.LightAngle + 90)))
         );
         
         var indHovered = CheckCollisionPointCircle(mouse, indicatorPoint, 10f);
@@ -121,15 +119,15 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
 
         var pageSize = (panelHeight - 100) / textureSize;
 
-        if (_shortcuts.DecreaseAngle.Check(ctrl, shift, alt, true))
-        {
-            // lightAngleVariable += 0.01f;
-            GLOBALS.Level.LightAngle--;/* = (int)(180 * Math.Sin(lightAngleVariable) + 90);*/
-        }
         if (_shortcuts.IncreaseAngle.Check(ctrl, shift, alt, true))
         {
-            // lightAngleVariable -= 0.01f;
-            GLOBALS.Level.LightAngle++;/* = (int)(180 * Math.Sin(lightAngleVariable) + 90);*/
+            GLOBALS.Level.LightAngle--;
+
+            if (GLOBALS.Level.LightAngle == 0) GLOBALS.Level.LightAngle = 360;
+        }
+        if (_shortcuts.DecreaseAngle.Check(ctrl, shift, alt, true))
+        {
+            GLOBALS.Level.LightAngle = ++GLOBALS.Level.LightAngle % 360;
         }
 
         // handle mouse drag
@@ -299,7 +297,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
                     0, 0,
                     GLOBALS.Level.Width * GLOBALS.Scale + 300,
                     GLOBALS.Level.Height * GLOBALS.Scale + 300,
-                    new(255, 255, 255, 255)
+                    WHITE
                 );
 
                 Printers.DrawGeoLayer(2, GLOBALS.Scale, false, BLACK with { a = 150 }, new Vector2(300, 300));
@@ -521,8 +519,15 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
             {
                 var radius = (int) RayMath.Vector2Distance(mouse, indicatorOrigin);
 
-                GLOBALS.Level.LightAngle = -(int)float.RadiansToDegrees(RayMath.Vector2Angle(indicatorOrigin with { X = indicatorOrigin.X + 1 } - indicatorOrigin,
-                    mouse - indicatorOrigin));
+                var newAngle = (int)float.RadiansToDegrees(RayMath.Vector2Angle(
+                    indicatorOrigin with { Y = indicatorOrigin.Y + 1 } - indicatorOrigin,
+                    mouse - indicatorOrigin
+                    )
+                );
+
+                if (newAngle < 0) newAngle += 360;
+
+                GLOBALS.Level.LightAngle = newAngle;
 
                 if (radius > 85) radius = 85;
                 if (radius < 1) radius = 1;

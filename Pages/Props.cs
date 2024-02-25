@@ -774,7 +774,7 @@ internal class PropsEditorPage : IPage
                                 else
                                 {
                                     ropePoints = Utils.GenerateRopePoints(ropeEnds.pA, ropeEnds.pB, 30);
-                                    settings = new();
+                                    settings = new(thickness: current.Name is "Wire" or "Zero-G Wire" ? 2 : null);
                                 }
 
                                     
