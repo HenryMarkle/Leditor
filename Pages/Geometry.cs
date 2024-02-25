@@ -471,7 +471,15 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                                 if (cell_.Stackables[id] != newValue)
                                 {
                                     cell_.Stackables[id] = newValue;
-                                    if (id == 4) { cell_.Geo = 0; }
+                                    
+                                    if (id == 4)
+                                    {
+                                        /*var context = Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width,
+                                            GLOBALS.Level.Height, matrixY, matrixX, GLOBALS.Layer);
+                                        var isConnected = Utils.IsConnectionEntranceConnected(context);*/
+                                                
+                                        cell_.Geo = 0;
+                                    }
                                     GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = cell_;
                                     // _gram.Proceed((matrixX, matrixY, GLOBALS.Layer), oldCell, cell_);
                                     _groupedActions.Add(new((matrixX, matrixY, GLOBALS.Layer), oldCell, cell_));

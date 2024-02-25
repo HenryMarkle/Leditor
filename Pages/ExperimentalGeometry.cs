@@ -504,6 +504,15 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
                                             var id = GeoMenuCategory4ToStackableId[_geoMenuIndex];
                                             cell.Stackables[id] = true;
+
+                                            /*if (id == 4)
+                                            {
+                                                /*var context = Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width,
+                                                    GLOBALS.Level.Height, x, y, GLOBALS.Layer);
+                                                var isConnected = Utils.IsConnectionEntranceConnected(context);#1#
+
+                                                cell.Geo = 7;
+                                            }*/
                                         }
                                         break;
                                 }
@@ -1006,9 +1015,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
                             DrawText(
                                 _selectionSizeString,
-                                (int)mouse.X + 10,
-                                (int)mouse.Y,
-                                4,
+                                (matrixX + 1) * scale,
+                                (matrixY - 1) * scale,
+                                12,
                                 WHITE
                                 );
                         }
@@ -1029,12 +1038,73 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                 // Coordinates
 
                                 if (matrixX >= 0 && matrixX < GLOBALS.Level.Width && matrixY >= 0 && matrixY < GLOBALS.Level.Height)
-                                    Raylib.DrawText(
+                                    DrawText(
                                         $"x: {matrixX:0} y: {matrixY:0}",
                                         (matrixX + 1) * scale,
                                         (matrixY - 1) * scale,
                                         12,
                                         WHITE);
+                            }
+                        }
+
+                        if (GLOBALS.Settings.GeometryEditor.ShowCurrentGeoIndicator && matrixX == x && matrixY == y)
+                        {
+                            var id = _geoMenuCategory switch
+                            {
+                                0 => GeoMenuIndexToBlockId[_geoMenuIndex],
+                                1 => GeoMenuCategory2ToStackableId[_geoMenuIndex],
+                                2 => GeoMenuCategory3ToStackableId[_geoMenuIndex],
+                                3 => GeoMenuCategory4ToStackableId[_geoMenuIndex]
+                            };
+                            
+                            if (_geoMenuCategory == 0) Printers.DrawTileSpec(id, new Vector2(matrixX+1, matrixY+1)*scale, 40, WHITE with { a = 100 });
+                            else
+                            {
+                                if (id == 4)
+                                {
+                                    var textureIndex = 26;
+
+                                    var texture = GLOBALS.Textures.GeoStackables[textureIndex];
+                                        
+                                    DrawTexturePro(
+                                        texture,
+                                        new(0, 0, texture.width, texture.height),
+                                        new ((x+1)*scale, (y+1)*scale, 40, 40),
+                                        new(0, 0),
+                                        0,
+                                        WHITE with { a = 100 });
+                                }
+                                else if (id == 11)
+                                {
+                                    var textureIndex = 7;
+
+                                    var texture = GLOBALS.Textures.GeoStackables[textureIndex];
+                                        
+                                    DrawTexturePro(
+                                        texture,
+                                        new(0, 0, texture.width, texture.height),
+                                        new ((x+1)*scale, (y+1)*scale, 40, 40),
+                                        new(0, 0),
+                                        0,
+                                        WHITE with { a = 100 });
+                                }
+                                else
+                                {
+                                    var textureIndex = Utils.GetStackableTextureIndex(id);
+
+                                    if (textureIndex != -1)
+                                    {
+                                        var texture = GLOBALS.Textures.GeoStackables[textureIndex];
+                                        
+                                        DrawTexturePro(
+                                            texture,
+                                            new(0, 0, texture.width, texture.height),
+                                            new ((x+1)*scale, (y+1)*scale, 40, 40),
+                                            new(0, 0),
+                                            0,
+                                            WHITE with { a = 100 });
+                                    }
+                                }
                             }
                         }
                     }
@@ -1212,6 +1282,85 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                 }
             }
             
+            #region GeoIcons
+
+            /*switch (_geoMenuCategory)
+            {
+                case 0:
+                {
+                    ref var solid = ref GLOBALS.Textures.GeoBlocks[0];
+                    ref var slope = ref GLOBALS.Textures.GeoBlocks[1]; 
+                    ref var platform = ref GLOBALS.Textures.GeoBlocks[5];
+                    
+                    DrawTexturePro(
+                        solid, 
+                        new(0, 0, solid.width, solid.height), 
+                        new(panelRect.X + 20, 157, 15, 15),
+                        new(0, 0),
+                        0,    
+                        BLACK);
+                    
+                    DrawTexturePro(
+                        slope, 
+                        new(0, 0, slope.width, slope.height), 
+                        new(panelRect.X + 20, 183, 15, 15),
+                        new(0, 0),
+                        0,    
+                        BLACK);
+                    
+                    DrawTexturePro(
+                        platform, 
+                        new(0, 0, platform.width, platform.height), 
+                        new(panelRect.X + 20, 209, 15, 15),
+                        new(0, 0),
+                        0,    
+                        BLACK);
+                }
+                    break;
+
+                case 1:
+                {
+                    ref var horizontal = ref GLOBALS.Textures.GeoStackables[0];
+                    ref var vertical = ref GLOBALS.Textures.GeoStackables[1]; 
+                    ref var cracked = ref GLOBALS.Textures.GeoMenu[9];
+                    
+                    DrawTexturePro(
+                        horizontal, 
+                        new(0, 0, horizontal.width, horizontal.height), 
+                        new(panelRect.X + 20, 157, 15, 15),
+                        new(0, 0),
+                        0,    
+                        BLACK);
+                    
+                    DrawTexturePro(
+                        vertical, 
+                        new(0, 0, vertical.width, vertical.height), 
+                        new(panelRect.X + 20, 183, 15, 15),
+                        new(0, 0),
+                        0,    
+                        BLACK);
+                    
+                    DrawTexturePro(
+                        cracked, 
+                        new(0, 0, cracked.width, cracked.height), 
+                        new(panelRect.X + 20, 209, 15, 15),
+                        new(0, 0),
+                        0,    
+                        BLACK);
+                }
+                    break;
+
+                case 2:
+                {
+                    
+                }
+                    break;
+                
+                case 3:
+                    break;
+            }*/
+            
+            #endregion
 
             _allowMultiSelect = RayGui.GuiCheckBox(new(panelRect.X + 10, 360, 15, 15), "Multi-Select", _allowMultiSelect);
             _eraseAllMode = RayGui.GuiCheckBox(new(panelRect.X + 10, 380, 15, 15), "Erase Everything", _eraseAllMode);

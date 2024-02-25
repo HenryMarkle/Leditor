@@ -870,6 +870,91 @@ internal static class Utils
         _ => -1
     };
 
+    public static bool IsConnectionEntranceConnected(RunCell[][] context)
+    {
+        if (
+                context[0][0].Stackables[4] || context[0][1].Stackables[4] || context[0][2].Stackables[4] ||
+                context[1][0].Stackables[4] || context[1][2].Stackables[4] ||
+                context[2][0].Stackables[4] || context[2][1].Stackables[4] || context[2][2].Stackables[4]
+        ) return false;
+
+        var pattern = (
+            false, context[0][1].Stackables[5] ^ context[0][1].Stackables[6] ^ context[0][1].Stackables[7] ^ context[0][1].Stackables[19] ^ context[0][1].Stackables[21], false,
+            context[1][0].Stackables[5] ^ context[1][0].Stackables[6] ^ context[1][0].Stackables[7] ^ context[1][0].Stackables[19] ^ context[1][0].Stackables[21], false, context[1][2].Stackables[5] ^ context[1][2].Stackables[6] ^ context[1][2].Stackables[7] ^ context[1][2].Stackables[19] ^ context[1][2].Stackables[21],
+            false, context[2][1].Stackables[5] ^ context[2][1].Stackables[6] ^ context[2][1].Stackables[7] ^ context[2][1].Stackables[19] ^ context[2][1].Stackables[21], false
+        );
+
+        var directionIndex = pattern switch
+        {
+
+            (
+                _, true, _,
+                false, _, false,
+                _, false, _
+            ) => true,
+
+            (
+                _, false, _,
+                false, _, true,
+                _, false, _
+            ) => true,
+
+            (
+                _, false, _,
+                false, _, false,
+                _, true, _
+            ) => true,
+
+            (
+                _, false, _,
+                true, _, false,
+                _, false, _
+            ) => true,
+
+            _ => false
+        };
+
+        if (!directionIndex) return false;
+
+        var geoPattern = (
+            context[0][0].Geo, context[0][1].Geo, context[0][2].Geo,
+            context[1][0].Geo, 0, context[1][2].Geo,
+            context[2][0].Geo, context[2][1].Geo, context[2][2].Geo
+        );
+
+        directionIndex = geoPattern switch
+        {
+
+            (
+                1, _, 1,
+                1, _, 1,
+                1, 1, 1
+            ) => context[0][1].Geo is 0 or 6 ? directionIndex : false,
+
+            (
+                1, 1, 1,
+                1, _, _,
+                1, 1, 1
+            ) => context[1][2].Geo is 0 or 6 ? directionIndex : false,
+
+            (
+                1, 1, 1,
+                1, _, 1,
+                1, _, 1
+            ) => context[2][1].Geo is 0 or 6 ? directionIndex : false,
+
+            (
+                1, 1, 1,
+                _, _, 1,
+                1, 1, 1
+            ) => context[1][0].Geo is 0 or 6 ? directionIndex : false,
+
+            _ => false
+        };
+
+        return directionIndex;
+    }
+
     /// <summary>
     /// This is used to determine the index of the stackable texture, including the directional ones.
     /// </summary>

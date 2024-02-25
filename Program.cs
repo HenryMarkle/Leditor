@@ -499,7 +499,7 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.34";
+        const string version = "Henry's Leditor v0.9.35";
         const string raylibVersion = "Raylib v4.2.0.9";
         
         // Load tiles and props
@@ -1072,7 +1072,7 @@ class Program
 
                 // page preprocessing
 
-                if (GLOBALS.Page == 2 && GLOBALS.Settings.Experimental.NewGeometryEditor) GLOBALS.Page = 18;
+                if (GLOBALS.Page == 2 && GLOBALS.Settings.GeometryEditor.LegacyInterface) GLOBALS.Page = 18;
                 
                 // Globals quick save
 
@@ -1223,7 +1223,7 @@ class Program
 
                         case 0: startPage.Draw(); break;
                         case 1: mainPage.Draw(); break;
-                        case 2: geoPage.Draw(); break;
+                        case 2: experimentalGeometryPage.Draw(); break;
                         case 3: tilePage.Draw(); break;
                         case 4: camerasPage.Draw(); break;
                         case 5: lightPage.Draw(); break;
@@ -1238,7 +1238,7 @@ class Program
                         case 15: missingAssetsPage.Draw(); break;
                         case 16: missingTexturesPage.Draw(); break;
                         case 17: missingInitFilePage.Draw(); break;
-                        case 18: experimentalGeometryPage.Draw(); break;
+                        case 18: geoPage.Draw(); break;
                         case 19: missingPropTexturesPage.Draw(); break;
                         case 99: deathScreen.Draw(); break;
                         

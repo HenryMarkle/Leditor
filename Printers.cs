@@ -2522,10 +2522,32 @@ internal static class Printers
                 break;
 
             // shortcut entrance
-            case 7: break;
+            case 7:
+                var entryTexture = GLOBALS.Textures.GeoBlocks[6];
+                
+                DrawTexturePro(
+                    entryTexture, 
+                    new(0, 0, entryTexture.width, entryTexture.height),
+                    new (origin.X, origin.Y, scale, scale),
+                    new(0, 0),
+                    0,
+                    color
+                );
+                break;
 
             // glass
-            case 9: break;
+            case 9: 
+                var glassTexture = GLOBALS.Textures.GeoBlocks[7];
+                
+                DrawTexturePro(
+                    glassTexture, 
+                    new(0, 0, glassTexture.width, glassTexture.height),
+                    new (origin.X, origin.Y, scale, scale),
+                    new(0, 0),
+                    0,
+                    color
+                );
+                break;
         }
     }
     
@@ -2600,10 +2622,32 @@ internal static class Printers
                 break;
 
             // shortcut entrance
-            case 7: break;
+            case 7:
+                var entryTexture = GLOBALS.Textures.GeoBlocks[6];
+                
+                DrawTexturePro(
+                    entryTexture, 
+                    new(0, 0, entryTexture.width, entryTexture.height),
+                    new (origin.X, origin.Y, scale, scale),
+                    new(0, 0),
+                    0,
+                    color
+                );
+                break;
 
             // glass
-            case 9: break;
+            case 9: 
+                var glassTexture = GLOBALS.Textures.GeoBlocks[7];
+                
+                DrawTexturePro(
+                    glassTexture, 
+                    new(0, 0, glassTexture.width, glassTexture.height),
+                    new (origin.X, origin.Y, scale, scale),
+                    new(0, 0),
+                    0,
+                    color
+                );
+                break;
         }
     }
     
@@ -2680,10 +2724,32 @@ internal static class Printers
                 break;
 
             // shortcut entrance
-            case 7: break;
+            case 7:
+                var entryTexture = GLOBALS.Textures.GeoBlocks[6];
+                
+                DrawTexturePro(
+                    entryTexture, 
+                    new(0, 0, entryTexture.width, entryTexture.height),
+                    new (x, y, scale, scale),
+                    new(0, 0),
+                    0,
+                    color
+                );
+                break;
 
             // glass
-            case 9: break;
+            case 9: 
+                var glassTexture = GLOBALS.Textures.GeoBlocks[7];
+                
+                DrawTexturePro(
+                    glassTexture, 
+                    new(0, 0, glassTexture.width, glassTexture.height),
+                    new (x, y, scale, scale),
+                    new(0, 0),
+                    0,
+                    color
+                );
+                break;
         }
     }
 

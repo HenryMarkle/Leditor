@@ -312,13 +312,17 @@ public class SettingsPage : IPage
                     "Allow placing out of bounds",
                     GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement
                 );
-
-                DrawText("Experimental", subPanelX, subPanelY + 500, 30, BLACK);
-
-                GLOBALS.Settings.Experimental.NewGeometryEditor = GuiCheckBox(
-                    new(subPanelX, subPanelY + 550, 20, 20), 
-                    "New Interface",
-                    GLOBALS.Settings.Experimental.NewGeometryEditor
+                
+                GLOBALS.Settings.GeometryEditor.ShowCurrentGeoIndicator = GuiCheckBox(
+                    new (subPanelX, subPanelY + 440, 20, 20),
+                    "Currently Selected Tile Indicator",
+                    GLOBALS.Settings.GeometryEditor.ShowCurrentGeoIndicator
+                );
+                
+                GLOBALS.Settings.GeometryEditor.LegacyInterface = GuiCheckBox(
+                    new (subPanelX, subPanelY + 470, 20, 20),
+                    "Legacy Interface",
+                    GLOBALS.Settings.GeometryEditor.LegacyInterface
                 );
                 
                 break;

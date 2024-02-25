@@ -501,7 +501,9 @@ public class GeoEditor(
     bool legacyGeoTools = false,
     bool allowOutboundsPlacement = false,
     bool showCameras = false,
-    bool showTiles = false
+    bool showTiles = false,
+    bool showCurrentGeoIndicator = true,
+    bool legacyInterface = false
 )
 {
     public LayerColors LayerColors { get; set; } = layerColors;
@@ -510,6 +512,8 @@ public class GeoEditor(
     public bool ShowCameras { get; set; } = showCameras;
     public bool ShowTiles { get; set; } = showTiles;
     public bool AllowOutboundsPlacement { get; set; } = allowOutboundsPlacement;
+    public bool ShowCurrentGeoIndicator { get; set; } = showCurrentGeoIndicator;
+    public bool LegacyInterface { get; set; } = legacyInterface;
 }
 
 public class TileEditor(

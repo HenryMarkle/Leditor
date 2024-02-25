@@ -1036,10 +1036,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                              .Select((v, i) => (i, v)))
                 {
                     DrawRectangleV(
-                        new(leftPanelSideStart.X + 23 + (_tilePanelWidth * 0.3f),
-                        77 + (index * 26)),
-                        new(15,
-                        15),
+                        new(leftPanelSideStart.X + 23 + _tilePanelWidth*0.3f, 77 + index*26),
+                        new(15, 15),
                         color
                     );
                 }
