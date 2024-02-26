@@ -39,7 +39,6 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
 
     private bool _clickTracker = false;
     private bool _brushEraseMode = false;
-    private bool _showEffectOptions = true;
 
     private int _optionsIndex = 1;
 
@@ -367,7 +366,6 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
             var effectsMatrixY = effectsMouse.Y < 0 ? -1 : (int)effectsMouse.Y / GLOBALS.PreviewScale;
             var effectsMatrixX = effectsMouse.X < 0 ? -1 : (int)effectsMouse.X / GLOBALS.PreviewScale;
 
-
             var appliedEffectsPanelHeight = GetScreenHeight() - 200;
             const int appliedEffectRecHeight = 30;
             var appliedEffectPageSize = (appliedEffectsPanelHeight / (appliedEffectRecHeight + 30));
@@ -385,14 +383,6 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                     100,
                     280,
                     appliedEffectsPanelHeight
-                )
-            ) && !CheckCollisionPointRec(
-                GetMousePosition(),
-                new(
-                    20,
-                    Raylib.GetScreenHeight() - 220,
-                    600,
-                    200
                 )
             ) && GLOBALS.Level.Effects.Length > 0;
 
@@ -610,9 +600,6 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                     
                     _optionsIndex = 1;
                 }
-
-                if (_shortcuts.ToggleOptionsVisibility.Check(ctrl, shift, alt)) _showEffectOptions = !_showEffectOptions;
-
 
                 // Delete effect
                 if (_shortcuts.DeleteAppliedEffect.Check(ctrl, shift, alt))

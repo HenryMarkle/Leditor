@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Reflection.Metadata.Ecma335;
+using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_CsLo.Raylib;
 
@@ -13,8 +14,6 @@ internal class PropsEditorPage : IPage
 
     private readonly PropsShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.PropsEditor;
     
-    private const float SelectionMargin = 3f;
-
     private bool _showLayer1Tiles = true;
     private bool _showLayer2Tiles = true;
     private bool _showLayer3Tiles = true;
@@ -54,9 +53,7 @@ internal class PropsEditorPage : IPage
     
     private int _spinnerLock;
     
-    private const float PropScale = 0.4f;
-
-    private int _snapMode = 0;
+    private int _snapMode;
 
     private int _selectedListPage;
 
@@ -65,8 +62,6 @@ internal class PropsEditorPage : IPage
     private int _bezierHandleLock = -1;
 
     private bool _clickTracker;
-
-    private bool _showRopePanel;
 
     private int _mode;
 
@@ -153,6 +148,9 @@ internal class PropsEditorPage : IPage
     
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
+
+    private bool _isRopeWinHovered;
+    private bool _isRopeWinDragged;
 
     internal PropsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null)
     {
@@ -359,21 +357,20 @@ internal class PropsEditorPage : IPage
         var tileMouse = GetMousePosition();
         var tileMouseWorld = GetScreenToWorld2D(tileMouse, _camera);
 
-        Rectangle menuPanelRect = new(sWidth - 360, 0, 360, sHeight);
-        Rectangle ropePanelRect = new(0, 0, 250, 280);
-
+        var menuPanelRect = new Rectangle(sWidth - 360, 0, 360, sHeight);
 
         //                        v this was done to avoid rounding errors
         var tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / previewScale;
         var tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / previewScale;
 
-        var canDrawTile = !_isShortcutsWinHovered && 
+        var canDrawTile = !_isRopeWinHovered && 
+                          !_isRopeWinDragged && 
+                          !_isShortcutsWinHovered && 
                           !_isShortcutsWinDragged && 
                           !CheckCollisionPointRec(tileMouse, menuPanelRect) &&
                           !CheckCollisionPointRec(tileMouse, layer3Rect) &&
                           (GLOBALS.Layer != 1 || !CheckCollisionPointRec(tileMouse, layer2Rect)) &&
-                          (GLOBALS.Layer != 0 || !CheckCollisionPointRec(tileMouse, layer1Rect)) &&
-                           (!CheckCollisionPointRec(tileMouse, ropePanelRect) || !_showRopePanel);
+                          (GLOBALS.Layer != 0 || !CheckCollisionPointRec(tileMouse, layer1Rect));
 
         var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
 
@@ -1552,7 +1549,7 @@ internal class PropsEditorPage : IPage
                         _clickTracker = true;
                     }
 
-                    if ((IsMouseButtonReleased(_shortcuts.SelectProps.Button) || IsKeyReleased(_shortcuts.SelectPropsAlt.Key)) && _clickTracker)
+                    if ((IsMouseButtonReleased(_shortcuts.SelectProps.Button) || IsKeyReleased(_shortcuts.SelectPropsAlt.Key)) && _clickTracker && !(_isRopeWinHovered || _isRopeWinDragged))
                     {
                         _clickTracker = false;
                     
@@ -1593,11 +1590,11 @@ internal class PropsEditorPage : IPage
         #region TileEditorDrawing
         BeginDrawing();
 
-        ClearBackground(new(170, 170, 170, 255));
+        ClearBackground(GRAY);
 
         BeginMode2D(_camera);
         {
-            DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, GLOBALS.Layer == 2 ? new(100, 100, 100, 100) : WHITE);
+            DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, GLOBALS.Layer == 2 ? new Color(100, 100, 100, 100) : WHITE);
 
             #region TileEditorLayer3
             if (_showTileLayer3)
@@ -2680,13 +2677,11 @@ internal class PropsEditorPage : IPage
                         .Where(p => _selected[p.index])
                         .Select(p => p)
                         .ToArray();
-
+                    
                     
                     // Rope Panel
                     if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.type == InitPropType.Rope)
                     {
-                        _showRopePanel = true;
-
                         var modelIndex = -1;
 
                         for (var i = 0; i < _models.Length; i++)
@@ -2709,127 +2704,114 @@ internal class PropsEditorPage : IPage
 
                         ref var currentModel = ref _models[modelIndex];
 
-                        unsafe
-                        {
-                            fixed (byte* pt = _ropePanelBytes)
-                            {
-                                RayGui.GuiPanel(ropePanelRect, (sbyte*)pt);
-                            }
-                        }
-
-                        var simButton = new Rectangle(ropePanelRect.X + 10, ropePanelRect.Y + 40,
-                            ropePanelRect.width - 20, 40);
-
-                        if (
-                            RayGui.GuiButton(
-                                simButton,
-                                currentModel.simSwitch ? "Simulation" : "Bezier Path"
-                            )
-                        ) currentModel.simSwitch = !currentModel.simSwitch;
-
                         var oldSegmentCount = GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints.Length;
                         var segmentCount = oldSegmentCount;
-
-                        unsafe
-                        {
-                            RayGui.GuiSpinner(
-                                simButton with { Y = 100, X = ropePanelRect.X + 90, width = ropePanelRect.width - 100 },
-                                "segments",
-                                &segmentCount,
-                                3,
-                                100,
-                                false
-                            );
-                        }
-
-                        // Update segment count if needed
-
-
-                        if (segmentCount > oldSegmentCount)
-                        {
-                            GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
-                            [
-                                ..GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints, new Vector2()
-                            ];
-                        }
-                        else if (segmentCount < oldSegmentCount)
-                        {
-                            GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
-                                GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints[..^1];
-                        }
-
-                        if (segmentCount != oldSegmentCount) UpdateRopeModelSegments();
-
-                        //
-
-                        _ropeMode = RayGui.GuiCheckBox(
-                            simButton with { Y = 150, X = ropePanelRect.X + 10, width = 20, height = 20 },
-                            "Toggle Editing",
-                            _ropeMode
-                        );
-
-                        if (currentModel.simSwitch) // Simulation mode
-                        {
-                            if (RayGui.GuiButton(simButton with { Y = 180 },
-                                $"{60 / _ropeSimulationFrameCut} FPS")) _ropeSimulationFrameCut = ++_ropeSimulationFrameCut % 3 + 1;
-                            
-                            var release = (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings).Release;
-
-                            var releaseClicked = RayGui.GuiButton(simButton with { Y = 230 }, release switch
-                            {
-                                PropRopeRelease.Left => "Release Left",
-                                PropRopeRelease.None => "Release None",
-                                PropRopeRelease.Right => "Release Right"
-                            });
-
-                            if (releaseClicked)
-                            {
-                                release = (PropRopeRelease)((int)release + 1);
-                                if ((int)release > 2) release = (PropRopeRelease)0;
-
-                                (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings).Release = release;
-                            }
-                        }
-                        else // Bezier mode
-                        {
-                            var oldHandlePointNumber = currentModel.bezierHandles.Length;
-                            var handlePointNumber = oldHandlePointNumber;
-
-                            unsafe
-                            {
-                                RayGui.GuiSpinner(
-                                    simButton with
-                                    {
-                                        Y = 180, X = ropePanelRect.X + 90, width = ropePanelRect.width - 100
-                                    },
-                                    "Control Points",
-                                    &handlePointNumber,
-                                    1,
-                                    4,
-                                    false
-                                );
-                            }
-
-                            var quads = GLOBALS.Level.Props[currentModel.index].prop.Quads;
-                            var center = Utils.QuadsCenter(ref quads);
-
-                            if (handlePointNumber > oldHandlePointNumber)
-                            {
-                                currentModel.bezierHandles = [..currentModel.bezierHandles, center];
-                            }
-                            else if (handlePointNumber < oldHandlePointNumber)
-                            {
-                                currentModel.bezierHandles = currentModel.bezierHandles[..^1];
-                            }
-                        }
-
                         
+                        
+                        // ImGui
+                        rlImGui.Begin();
 
-                        ropeNotFound:
+                        if (ImGui.Begin("Rope Options"))
                         {
+                            var pos = ImGui.GetWindowPos();
+                            var winSpace = ImGui.GetWindowSize();
+                            
+                            if (CheckCollisionPointRec(GetMousePosition(), new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
+                            {
+                                _isRopeWinHovered = true;
+
+                                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isRopeWinDragged = true;
+                            }
+                            else
+                            {
+                                _isRopeWinHovered = false;
+                            }
+                
+                            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isRopeWinDragged) _isRopeWinDragged = false;
+                            
+                            var switchSimSelected = ImGui.Button(currentModel.simSwitch ? "Simulation" : "Bezier Path");
+
+                            if (switchSimSelected) currentModel.simSwitch = !currentModel.simSwitch;
+                            
+                            ImGui.SetNextItemWidth(100);
+
+                            ImGui.InputInt("Segment Count", ref segmentCount);
+                            
+                            // Update segment count if needed
+
+
+                            if (segmentCount > oldSegmentCount)
+                            {
+                                GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
+                                [
+                                    ..GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints, new Vector2()
+                                ];
+                            }
+                            else if (segmentCount < oldSegmentCount)
+                            {
+                                GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
+                                    GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints[..^1];
+                            }
+
+                            if (segmentCount != oldSegmentCount) UpdateRopeModelSegments();
+
+                            //
+
+                            ImGui.Checkbox("Simulate Rope", ref _ropeMode);
+                            
+                            if (currentModel.simSwitch) // Simulation mode
+                            {
+                                var cycleFpsSelected = ImGui.Button($"{60 / _ropeSimulationFrameCut} FPS");
+                                
+                                if (cycleFpsSelected) _ropeSimulationFrameCut = ++_ropeSimulationFrameCut % 3 + 1;
+                                
+                                var release = (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings).Release;
+
+                                var releaseClicked = ImGui.Button(release switch
+                                {
+                                    PropRopeRelease.Left => "Release Left",
+                                    PropRopeRelease.None => "Release None",
+                                    PropRopeRelease.Right => "Release Right",
+                                    _ => "Error"
+                                });
+
+                                if (releaseClicked)
+                                {
+                                    release = (PropRopeRelease)((int)release + 1);
+                                    if ((int)release > 2) release = 0;
+
+                                    (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings).Release = release;
+                                }
+                            }
+                            else // Bezier mode
+                            {
+                                var oldHandlePointNumber = currentModel.bezierHandles.Length;
+                                var handlePointNumber = oldHandlePointNumber;
+
+                                ImGui.SetNextItemWidth(100);
+                                ImGui.InputInt("Control Points", ref handlePointNumber);
+
+                                var quads = GLOBALS.Level.Props[currentModel.index].prop.Quads;
+                                var center = Utils.QuadsCenter(ref quads);
+
+                                if (handlePointNumber > oldHandlePointNumber)
+                                {
+                                    currentModel.bezierHandles = [..currentModel.bezierHandles, center];
+                                }
+                                else if (handlePointNumber < oldHandlePointNumber)
+                                {
+                                    currentModel.bezierHandles = currentModel.bezierHandles[..^1];
+                                }
+                            }
+                            
+                            ImGui.End();
                         }
+                        
+                        rlImGui.End();
+                        //
+                        
+                        ropeNotFound: { }
                     }
-                    else _showRopePanel = false;
                     //
                     
                     var listRect = new Rectangle(

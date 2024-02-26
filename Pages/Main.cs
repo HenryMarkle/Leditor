@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 using System.Numerics;
 using System.Text;
+using ImGuiNET;
 using Pidgin;
 using rlImGui_cs;
 using static Raylib_CsLo.Raylib;
@@ -11,13 +12,13 @@ namespace Leditor;
 
 internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : IPage
 {
-    readonly Serilog.Core.Logger _logger = logger;
+    private readonly Serilog.Core.Logger _logger = logger;
     
     internal event EventHandler? ProjectLoaded;
 
-    Camera2D _camera = camera ?? new() { zoom = 0.5f };
+    private Camera2D _camera = camera ?? new Camera2D { zoom = 0.5f };
 
-    readonly byte[] previewPanelBytes = Encoding.ASCII.GetBytes("Level Options");
+    private readonly byte[] _previewPanelBytes = "Level Options"u8.ToArray();
     
     private record struct SaveProjectResult(bool Success, Exception? Exception = null);
 
@@ -361,7 +362,6 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                     {
                         if (_askForPath)
                         {
-                            
                             if (_saveFileDialog is null)
                             {
                                 if (_saveResult!.IsCompleted)
@@ -685,9 +685,28 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                 }
                 EndMode2D();
 
+                if (_failedToSave)
+                {
+                    rlImGui.Begin();
+
+                    if (ImGui.Begin("Error##ProjectSaveFail"))
+                    {
+                        
+                        ImGui.Text("Failed to save your project");
+
+                        var okSelected = ImGui.Button("Ok");
+
+                        if (okSelected) _failedToSave = false;
+                        
+                        ImGui.End();
+                    }
+                    
+                    rlImGui.End();
+                }
+
                 unsafe
                 {
-                    fixed (byte* pt = previewPanelBytes)
+                    fixed (byte* pt = _previewPanelBytes)
                     {
                         RayGui.GuiPanel(
                             new(
@@ -1063,7 +1082,6 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                 {
                     _isShortcutsWinDragged = false;
                 }
-
 
                 rlImGui.End();
             }

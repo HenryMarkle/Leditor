@@ -155,16 +155,15 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
         var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
 
-        var canDrawTile = !_isSpecsWinHovered && 
-                          !_isSpecsWinDragged && 
-                          !_isTilesWinHovered && 
-                          !_isTilesWinDragged && 
-                          !_isShortcutsWinHovered && 
+        var canDrawTile = !_isSpecsWinHovered &&
+                          !_isSpecsWinDragged &&
+                          !_isTilesWinHovered &&
+                          !_isTilesWinDragged &&
+                          !_isShortcutsWinHovered &&
                           !_isShortcutsWinDragged &&
                           !CheckCollisionPointRec(tileMouse, layer3Rect) &&
                           (GLOBALS.Layer != 1 || !CheckCollisionPointRec(tileMouse, layer2Rect)) &&
-                          (GLOBALS.Layer != 0 || !CheckCollisionPointRec(tileMouse, layer1Rect)) && 
-                          !CheckCollisionPointRec(tileMouse, tilePanelRect);
+                          (GLOBALS.Layer != 0 || !CheckCollisionPointRec(tileMouse, layer1Rect));
         
         var categoriesPageSize = (int)panelMenuHeight / 26;
 
@@ -810,9 +809,6 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             {
                 var pos = ImGui.GetWindowPos();
                 var winSpace = ImGui.GetWindowSize();
-                
-                // ImGui.SetWindowPos(new Vector2(0, 0));
-                // ImGui.SetWindowSize(new Vector2(winSpace.X, teHeight));
 
                 if (CheckCollisionPointRec(tileMouse, new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
                 {
@@ -924,7 +920,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             {
                 var pos = ImGui.GetWindowPos();
                 var winSpace = ImGui.GetWindowSize();
-
+                
                 if (CheckCollisionPointRec(GetMousePosition(), new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
                 {
                     _isSpecsWinHovered = true;
