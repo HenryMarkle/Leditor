@@ -284,7 +284,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
             if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
             {
                 rlImGui.Begin();
-                var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.TileEditor);
+                var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.CameraEditor);
 
                 _isShortcutsWinHovered = CheckCollisionPointRec(
                     GetMousePosition(), 

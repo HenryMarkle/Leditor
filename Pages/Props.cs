@@ -3404,7 +3404,7 @@ internal class PropsEditorPage : IPage
         if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
         {
             rlImGui.Begin();
-            var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.TileEditor);
+            var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.PropsEditor);
 
             _isShortcutsWinHovered = CheckCollisionPointRec(
                 tileMouse, 

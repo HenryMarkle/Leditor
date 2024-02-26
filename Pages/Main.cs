@@ -1045,7 +1045,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
             if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
             {
                 rlImGui.Begin();
-                var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.TileEditor);
+                var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.GlobalShortcuts);
 
                 _isShortcutsWinHovered = CheckCollisionPointRec(
                     GetMousePosition(), 

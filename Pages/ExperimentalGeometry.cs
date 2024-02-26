@@ -1441,7 +1441,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
             {
                 rlImGui.Begin();
-                var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.GeoEditor);
+                var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts);
             
                 _isShortcutsWinHovered = CheckCollisionPointRec(
                     uiMouse, 
