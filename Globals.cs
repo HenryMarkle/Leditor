@@ -35,6 +35,10 @@ internal static class GLOBALS
         public Texture[] PropGenerals { get; set; } = [];
         
         public RenderTexture LightMap { get; set; }
+        
+        // Might be a really bad idea
+        
+        public Raylib_cs.RenderTexture2D TileSpecs { get; set; }
     }
 
     /// <summary>

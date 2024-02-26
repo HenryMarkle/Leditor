@@ -622,10 +622,10 @@ public static class Tools {
                     dynamic choice = o.Values[2] switch
                     {
                         AstNode.String s => s.Value,
-                        AstNode.Number n => n.Value,
+                        AstNode.Number n => n.Value.IntValue,
                         AstNode.UnaryOperator u => u.Type == AstNode.UnaryOperatorType.Negate
                             ? ((AstNode.Number)u.Expression).Value.IntValue * -1
-                            : ((AstNode.Number)u.Expression).Value,
+                            : ((AstNode.Number)u.Expression).Value.IntValue,
                         
                         var b => throw new Exception($"Invalid effect option choice: {StringifyBase(b)}")
                     };

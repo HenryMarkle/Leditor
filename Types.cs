@@ -411,15 +411,15 @@ public class PropsShortcuts : IEditorShortcuts
 
 public class GlobalShortcuts : IEditorShortcuts
 {
-    public KeyboardShortcut ToMainPage { get; set; } = new(KeyboardKey.KEY_ONE);
-    public KeyboardShortcut ToGeometryEditor { get; set; } = new(KeyboardKey.KEY_TWO);
-    public KeyboardShortcut ToTileEditor { get; set; } = new(KeyboardKey.KEY_THREE);
-    public KeyboardShortcut ToCameraEditor { get; set; } = new(KeyboardKey.KEY_FOUR);
-    public KeyboardShortcut ToLightEditor { get; set; } = new(KeyboardKey.KEY_FIVE);
-    public KeyboardShortcut ToDimensionsEditor { get; set; } = new(KeyboardKey.KEY_SIX);
-    public KeyboardShortcut ToEffectsEditor { get; set; } = new(KeyboardKey.KEY_SEVEN);
-    public KeyboardShortcut ToPropsEditor { get; set; } = new(KeyboardKey.KEY_EIGHT);
-    public KeyboardShortcut ToSettingsPage { get; set; } = new(KeyboardKey.KEY_NINE);
+    public KeyboardShortcut ToMainPage { get; set; } = new(KeyboardKey.KEY_ONE, shift:false, ctrl:false, alt:false);
+    public KeyboardShortcut ToGeometryEditor { get; set; } = new(KeyboardKey.KEY_TWO, shift:false, ctrl:false, alt:false);
+    public KeyboardShortcut ToTileEditor { get; set; } = new(KeyboardKey.KEY_THREE, shift:false, ctrl:false, alt:false);
+    public KeyboardShortcut ToCameraEditor { get; set; } = new(KeyboardKey.KEY_FOUR, shift:false, ctrl:false, alt:false);
+    public KeyboardShortcut ToLightEditor { get; set; } = new(KeyboardKey.KEY_FIVE, shift:false, ctrl:false, alt:false);
+    public KeyboardShortcut ToDimensionsEditor { get; set; } = new(KeyboardKey.KEY_SIX, shift:false, ctrl:false, alt:false);
+    public KeyboardShortcut ToEffectsEditor { get; set; } = new(KeyboardKey.KEY_SEVEN, shift:false, ctrl:false, alt:false);
+    public KeyboardShortcut ToPropsEditor { get; set; } = new(KeyboardKey.KEY_EIGHT, shift:false, ctrl:false, alt:false);
+    public KeyboardShortcut ToSettingsPage { get; set; } = new(KeyboardKey.KEY_NINE, shift:false, ctrl:false, alt:false);
 
     public KeyboardShortcut QuickSave { get; set; } = new(KeyboardKey.KEY_S, shift:false, ctrl:true, alt:false);
     public KeyboardShortcut QuickSaveAs { get; set; } = new(KeyboardKey.KEY_S, shift:true, ctrl:true, alt:false);

@@ -503,7 +503,7 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.36";
+        const string version = "Henry's Leditor v0.9.37";
         const string raylibVersion = "Raylib v4.2.0.9";
         
         // Load tiles and props
@@ -774,6 +774,10 @@ class Program
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "arrow down icon.png")),
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "cross icon.png"))
         ];
+        
+        //
+
+        GLOBALS.Textures.TileSpecs = Raylib_cs.Raylib.LoadRenderTexture(200, 200);
 
         //
 
@@ -1294,6 +1298,8 @@ class Program
         logger.Debug("Unloading light map");
 
         UnloadRenderTexture(GLOBALS.Textures.LightMap);
+        
+        Raylib_cs.Raylib.UnloadRenderTexture(GLOBALS.Textures.TileSpecs);
         
         logger.Debug("Unloading shaders");
 

@@ -1114,8 +1114,8 @@ public class SettingsPage : IPage
                         );
                         
                         GuiLabel(new Rectangle(440, 150, 100, 40), "Move to left");
-                        GuiLabel(new Rectangle(440, 195, 100, 40), "Move to top");
-                        GuiLabel(new Rectangle(440, 240, 100, 40), "Move to right");
+                        GuiLabel(new Rectangle(440, 195, 100, 40), "Move to right");
+                        GuiLabel(new Rectangle(440, 240, 100, 40), "Move to top");
                         GuiLabel(new Rectangle(440, 285, 100, 40), "Move to bottom");
                         
                         var assignFocusOnCategory = GuiButton(new Rectangle(550, 150, 200, 40), $"{GLOBALS.Settings.Shortcuts.TileEditor.FocusOnTileCategoryMenu}");

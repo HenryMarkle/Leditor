@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Text;
+using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_CsLo.Raylib;
 
@@ -122,6 +123,11 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
     
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
+    
+    private bool _isOptionsWinHovered;
+    private bool _isOptionsWinDragged;
+
+    private bool _isOptionsInputActive;
 
     public void Draw()
     {
@@ -132,22 +138,26 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
         var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
         
         GLOBALS.PreviousPage = 7;
-
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 2;
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 3;
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 4;
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 5;
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
+        
+        if (!_isOptionsInputActive)
         {
-            GLOBALS.ResizeFlag = true;
-            GLOBALS.NewFlag = false;
-            GLOBALS.Page = 6;
-            _logger.Debug("go from GLOBALS.Page 7 to GLOBALS.Page 6");
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 2;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 3;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 4;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 5;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
+            {
+                GLOBALS.ResizeFlag = true;
+                GLOBALS.NewFlag = false;
+                GLOBALS.Page = 6;
+                _logger.Debug("go from GLOBALS.Page 7 to GLOBALS.Page 6");
+            }
+            // if (IsKeyReleased(KeyboardKey.KEY_SEVEN)) GLOBALS.Page = 7;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
+            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
         }
-        // if (Raylib.IsKeyReleased(KeyboardKey.KEY_SEVEN)) GLOBALS.Page = 7;
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
+
 
         // Display menu
 
@@ -363,7 +373,9 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
             var appliedEffectPageSize = (appliedEffectsPanelHeight / (appliedEffectRecHeight + 30));
 
             // Prevent using the brush when mouse over the effects list
-            var canUseBrush = !_isShortcutsWinHovered && 
+            var canUseBrush = !_isOptionsWinHovered && 
+                              !_isOptionsWinDragged && 
+                              !_isShortcutsWinHovered && 
                               !_isShortcutsWinDragged && 
                               !_addNewEffectMode && 
                               !CheckCollisionPointRec(
@@ -923,10 +935,84 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                 }
 
                 // Options
+                
+                var options = GLOBALS.Level.Effects.Length > 0 && _currentAppliedEffect != -1
+                    ? GLOBALS.Level.Effects[_currentAppliedEffect].Item2 
+                    : [];
+                
+                rlImGui.Begin();
 
-                if (_showEffectOptions)
+                if (ImGui.Begin("Options"))
                 {
-                    unsafe
+                    var pos = ImGui.GetWindowPos();
+                    var winSpace = ImGui.GetWindowSize();
+                    
+                    if (CheckCollisionPointRec(GetMousePosition(), new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
+                    {
+                        _isOptionsWinHovered = true;
+
+                        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isOptionsWinDragged = true;
+                    }
+                    else
+                    {
+                        _isOptionsWinHovered = false;
+                    }
+                    
+                    if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isOptionsWinDragged) _isOptionsWinDragged = false;
+                    
+                    var halfWidth = ImGui.GetContentRegionAvail().X / 2f - ImGui.GetStyle().ItemSpacing.X / 2f;
+                    var boxHeight = ImGui.GetContentRegionAvail().Y;
+                    
+                    if (options is not [])
+                    {
+                        if (ImGui.BeginListBox("##EffectOptionTitles", new Vector2(halfWidth, boxHeight)))
+                        {
+                            for (var optionIndex = 0; optionIndex < options.Length; optionIndex++)
+                            {
+                                if (options[optionIndex].Name == "Delete/Move") continue;
+                                
+                                var selected = ImGui.Selectable(options[optionIndex].Name, optionIndex == _optionsIndex);
+                                if (selected) _optionsIndex = optionIndex;
+                            }
+                            ImGui.EndListBox();
+                        }
+                        
+                        ImGui.SameLine();
+                        
+                        ref var currentOption = ref options[_optionsIndex];
+                        
+                        if (currentOption.Options is [] && currentOption.Choice is int number)
+                        {
+                            ImGui.SetNextItemWidth(halfWidth);
+                            var active = ImGui.InputInt(string.Empty, ref number);
+                            
+                            _isOptionsInputActive = active;
+
+                            if (number != (int)currentOption.Choice) currentOption.Choice = number;
+                        }
+                        else if (ImGui.BeginListBox("##EffectOptionList", new Vector2(halfWidth, boxHeight)))
+                        {
+                            foreach (var t in currentOption.Options)
+                            {
+                                var selected = ImGui.Selectable(t, t == currentOption.Choice);
+
+                                if (selected) currentOption.Choice = t;
+                            }
+
+                            ImGui.EndListBox();
+                        }
+                    }
+                    else ImGui.Text("No Options");
+                    
+                    ImGui.End();
+                }
+                
+                rlImGui.End();
+
+                /*if (_showEffectOptions)
+                {
+                    
+                    /*unsafe
                     {
                         fixed (byte* pt = _effectOptionsPanelBytes)
                         {
@@ -942,9 +1028,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                         }
                     }
 
-                    var options = GLOBALS.Level.Effects.Length > 0 && _currentAppliedEffect != -1
-                        ? GLOBALS.Level.Effects[_currentAppliedEffect].Item2 
-                        : [];
+                    
 
                     if (options.Length > 0)
                     {
@@ -982,13 +1066,16 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Texture[] textures,
                             commulativeWidth += length + 30;
                         }
                     }
-                }
+                    #1#
+                    
+                    
+                }*/
 
                 // Shortcuts window
                 if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
                 {
                     rlImGui.Begin();
-                    var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.TileEditor);
+                    var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.EffectsEditor);
 
                     _isShortcutsWinHovered = CheckCollisionPointRec(
                         GetMousePosition(), 
