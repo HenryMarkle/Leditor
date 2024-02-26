@@ -1594,7 +1594,7 @@ internal class PropsEditorPage : IPage
 
         BeginMode2D(_camera);
         {
-            DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, GLOBALS.Layer == 2 ? new Color(100, 100, 100, 100) : WHITE);
+            // DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, GLOBALS.Layer == 2 ? new Color(100, 100, 100, 100) : WHITE);
 
             #region TileEditorLayer3
             if (_showTileLayer3)
@@ -1605,13 +1605,10 @@ internal class PropsEditorPage : IPage
                     2, 
                     GLOBALS.PreviewScale, 
                     false, 
-                    GLOBALS.Layer == 2 
-                        ? BLACK 
-                        : new(0, 0, 0, 120), 
-                    _layerStackableFilter
+                    BLACK
                 );
 
-                // Then draw the tiles
+                // then draw the tiles
 
                 if (_showLayer3Tiles)
                 {
@@ -1619,9 +1616,8 @@ internal class PropsEditorPage : IPage
                         2, 
                         GLOBALS.PreviewScale, 
                         false, 
-                        true,
-                        false,
-                        255
+                        !GLOBALS.Settings.TileEditor.UseTextures,
+                        GLOBALS.Settings.TileEditor.TintedTiles
                     );
                 }
                 
@@ -1755,16 +1751,20 @@ internal class PropsEditorPage : IPage
             #region TileEditorLayer2
             if (_showTileLayer2)
             {
-                if (GLOBALS.Layer != 2) DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale,  new(100, 100, 100, 150));
+                if (GLOBALS.Layer != 2) DrawRectangle(
+                    0, 
+                    0, 
+                    GLOBALS.Level.Width * GLOBALS.PreviewScale, 
+                    GLOBALS.Level.Height * GLOBALS.PreviewScale, 
+                    GRAY with { a = 130 });
 
                 Printers.DrawGeoLayer(
                     1, 
                     GLOBALS.PreviewScale, 
                     false, 
-                    GLOBALS.Layer == 1 
+                    GLOBALS.Layer < 2
                         ? BLACK 
-                        : new(0, 0, 0, 120), 
-                    _layerStackableFilter
+                        : BLACK with { a = 80 }
                 );
 
                 // Draw layer 2 tiles
@@ -1775,9 +1775,9 @@ internal class PropsEditorPage : IPage
                         1, 
                         GLOBALS.PreviewScale, 
                         false, 
-                        true,
-                        false,
-                        (byte)(GLOBALS.Layer < 2 ? 255 : 90)
+                        !GLOBALS.Settings.TileEditor.UseTextures,
+                        GLOBALS.Settings.TileEditor.TintedTiles,
+                        (byte)(GLOBALS.Layer < 2 ? 255 : 80)
                     );
                 }
                 
@@ -1912,7 +1912,14 @@ internal class PropsEditorPage : IPage
             #region TileEditorLayer1
             if (_showTileLayer1)
             {
-                if (GLOBALS.Layer != 1 && GLOBALS.Layer != 2) DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, new(100, 100, 100, 100));
+                if (GLOBALS.Layer != 1 && GLOBALS.Layer!= 2) 
+                    DrawRectangle(
+                        0, 
+                        0, 
+                        GLOBALS.Level.Width * GLOBALS.PreviewScale, 
+                        GLOBALS.Level.Height * GLOBALS.PreviewScale, 
+                        GRAY with { a = 130 }
+                    );
 
                 Printers.DrawGeoLayer(
                     0, 
@@ -1920,7 +1927,7 @@ internal class PropsEditorPage : IPage
                     false, 
                     GLOBALS.Layer == 0
                         ? BLACK 
-                        : new(0, 0, 0, 120)
+                        : BLACK with { a = 80 }
                 );
 
                 // Draw layer 1 tiles
@@ -1931,9 +1938,9 @@ internal class PropsEditorPage : IPage
                         0, 
                         GLOBALS.PreviewScale, 
                         false, 
-                        true,
-                        false,
-                        (byte)(GLOBALS.Layer < 1 ? 255 : 90)
+                        !GLOBALS.Settings.TileEditor.UseTextures,
+                        GLOBALS.Settings.TileEditor.TintedTiles,
+                        (byte)(GLOBALS.Layer == 0 ? 255 : 80)
                     );
                 }
                 

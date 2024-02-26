@@ -209,6 +209,8 @@ public record TileShortcuts : IEditorShortcuts
 
     public KeyboardShortcut ResizeMaterialBrush { get; set; } = KeyboardKey.KEY_LEFT_ALT;
 
+    public KeyboardShortcut TogglePathsView { get; set; } = new(KeyboardKey.KEY_O, ctrl: false, shift:false, alt: false);
+
     public KeyboardShortcut AltDraw { get; set; } = new(KeyboardKey.KEY_NULL);
     public KeyboardShortcut AltErase { get; set; } = new(KeyboardKey.KEY_NULL);
     public KeyboardShortcut AltDragLevel { get; set; } = new(KeyboardKey.KEY_NULL);
@@ -411,15 +413,15 @@ public class PropsShortcuts : IEditorShortcuts
 
 public class GlobalShortcuts : IEditorShortcuts
 {
-    public KeyboardShortcut ToMainPage { get; set; } = new(KeyboardKey.KEY_ONE, shift:false, ctrl:false, alt:false);
-    public KeyboardShortcut ToGeometryEditor { get; set; } = new(KeyboardKey.KEY_TWO, shift:false, ctrl:false, alt:false);
-    public KeyboardShortcut ToTileEditor { get; set; } = new(KeyboardKey.KEY_THREE, shift:false, ctrl:false, alt:false);
-    public KeyboardShortcut ToCameraEditor { get; set; } = new(KeyboardKey.KEY_FOUR, shift:false, ctrl:false, alt:false);
-    public KeyboardShortcut ToLightEditor { get; set; } = new(KeyboardKey.KEY_FIVE, shift:false, ctrl:false, alt:false);
-    public KeyboardShortcut ToDimensionsEditor { get; set; } = new(KeyboardKey.KEY_SIX, shift:false, ctrl:false, alt:false);
-    public KeyboardShortcut ToEffectsEditor { get; set; } = new(KeyboardKey.KEY_SEVEN, shift:false, ctrl:false, alt:false);
-    public KeyboardShortcut ToPropsEditor { get; set; } = new(KeyboardKey.KEY_EIGHT, shift:false, ctrl:false, alt:false);
-    public KeyboardShortcut ToSettingsPage { get; set; } = new(KeyboardKey.KEY_NINE, shift:false, ctrl:false, alt:false);
+    public KeyboardShortcut ToMainPage { get; set; } = new(KeyboardKey.KEY_ONE, shift:false, ctrl:false, alt:true);
+    public KeyboardShortcut ToGeometryEditor { get; set; } = new(KeyboardKey.KEY_TWO, shift:false, ctrl:false, alt:true);
+    public KeyboardShortcut ToTileEditor { get; set; } = new(KeyboardKey.KEY_THREE, shift:false, ctrl:false, alt:true);
+    public KeyboardShortcut ToCameraEditor { get; set; } = new(KeyboardKey.KEY_FOUR, shift:false, ctrl:false, alt:true);
+    public KeyboardShortcut ToLightEditor { get; set; } = new(KeyboardKey.KEY_FIVE, shift:false, ctrl:false, alt:true);
+    public KeyboardShortcut ToDimensionsEditor { get; set; } = new(KeyboardKey.KEY_SIX, shift:false, ctrl:false, alt:true);
+    public KeyboardShortcut ToEffectsEditor { get; set; } = new(KeyboardKey.KEY_SEVEN, shift:false, ctrl:false, alt:true);
+    public KeyboardShortcut ToPropsEditor { get; set; } = new(KeyboardKey.KEY_EIGHT, shift:false, ctrl:false, alt:true);
+    public KeyboardShortcut ToSettingsPage { get; set; } = new(KeyboardKey.KEY_NINE, shift:false, ctrl:false, alt:true);
 
     public KeyboardShortcut QuickSave { get; set; } = new(KeyboardKey.KEY_S, shift:false, ctrl:true, alt:false);
     public KeyboardShortcut QuickSaveAs { get; set; } = new(KeyboardKey.KEY_S, shift:true, ctrl:true, alt:false);

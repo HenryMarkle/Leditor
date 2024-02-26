@@ -1109,19 +1109,19 @@ public class SettingsPage : IPage
                         }
                         
                         GuiGroupBox(
-                            new Rectangle(430, 130, shortcutsScrollPanelRect.width/2f - 10, 210), 
-                            "Tiles Menu"
+                            new Rectangle(430, 130, shortcutsScrollPanelRect.width/2f - 10, 180), 
+                            "Tiles & Materials Menu"
                         );
                         
-                        GuiLabel(new Rectangle(440, 150, 100, 40), "Move to left");
-                        GuiLabel(new Rectangle(440, 195, 100, 40), "Move to right");
-                        GuiLabel(new Rectangle(440, 240, 100, 40), "Move to top");
-                        GuiLabel(new Rectangle(440, 285, 100, 40), "Move to bottom");
+                        GuiLabel(new Rectangle(440, 150, 100, 30), "Move to left");
+                        GuiLabel(new Rectangle(440, 185, 100, 30), "Move to right");
+                        GuiLabel(new Rectangle(440, 220, 100, 30), "Move to top");
+                        GuiLabel(new Rectangle(440, 255, 100, 30), "Move to bottom");
                         
-                        var assignFocusOnCategory = GuiButton(new Rectangle(550, 150, 200, 40), $"{GLOBALS.Settings.Shortcuts.TileEditor.FocusOnTileCategoryMenu}");
-                        var assignFocusOnTiles =GuiButton(new Rectangle(550, 195, 200, 40), $"{GLOBALS.Settings.Shortcuts.TileEditor.FocusOnTileMenu}");
-                        var assignMoveUp = GuiButton(new Rectangle(550, 240, 200, 40), $"{GLOBALS.Settings.Shortcuts.TileEditor.MoveUp}");
-                        var assignMoveDown = GuiButton(new Rectangle(550, 285, 200, 40), $"{GLOBALS.Settings.Shortcuts.TileEditor.MoveDown}");
+                        var assignFocusOnCategory = GuiButton(new Rectangle(550, 150, 200, 30), $"{GLOBALS.Settings.Shortcuts.TileEditor.FocusOnTileCategoryMenu}");
+                        var assignFocusOnTiles =GuiButton(new Rectangle(550, 185, 200, 30), $"{GLOBALS.Settings.Shortcuts.TileEditor.FocusOnTileMenu}");
+                        var assignMoveUp = GuiButton(new Rectangle(550, 220, 200, 30), $"{GLOBALS.Settings.Shortcuts.TileEditor.MoveUp}");
+                        var assignMoveDown = GuiButton(new Rectangle(550, 255, 200, 30), $"{GLOBALS.Settings.Shortcuts.TileEditor.MoveDown}");
 
                         if (assignFocusOnCategory) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.FocusOnTileCategoryMenu;
                         if (assignFocusOnTiles) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.FocusOnTileMenu;
@@ -1133,19 +1133,19 @@ public class SettingsPage : IPage
                         var mouseShortcutsOffset = 430 + shortcutsScrollPanelRect.width / 2f;
                         
                         GuiGroupBox(
-                            new Rectangle(mouseShortcutsOffset, 130, shortcutsScrollPanelRect.width/2f - 20, 210), 
+                            new Rectangle(mouseShortcutsOffset, 130, shortcutsScrollPanelRect.width/2f - 20, 180), 
                             "Mouse Shortcuts"
                         );
                         
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 150, 100, 40), "Draw");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 195, 100, 40), "Level Pan");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 240, 100, 40), "Erase");
+                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 150, 100, 30), "Draw");
+                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 185, 100, 30), "Level Pan");
+                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 220, 100, 30), "Erase");
 
-                        var assignDraw = GuiButton(new Rectangle(mouseShortcutsOffset+110, 150, 200, 40),
+                        var assignDraw = GuiButton(new Rectangle(mouseShortcutsOffset+110, 150, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.Draw}");
-                        var assignPan = GuiButton(new Rectangle(mouseShortcutsOffset+110, 195, 200, 40),
+                        var assignPan = GuiButton(new Rectangle(mouseShortcutsOffset+110, 185, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.DragLevel}");
-                        var assignErase = GuiButton(new Rectangle(mouseShortcutsOffset+110, 240, 200, 40), 
+                        var assignErase = GuiButton(new Rectangle(mouseShortcutsOffset+110, 220, 200, 30), 
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.Erase}");
 
                         if (assignDraw) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.Draw;
@@ -1154,77 +1154,81 @@ public class SettingsPage : IPage
                         
                         //
                         
-                        GuiLabel(new Rectangle(430, 350, 100, 40), "Cycle Layers");
-                        var assignCycleLayers = GuiButton(new Rectangle(610, 350, 200, 40),
+                        GuiLabel(new Rectangle(430, 320, 100, 30), "Cycle Layers");
+                        var assignCycleLayers = GuiButton(new Rectangle(610, 320, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.CycleLayers}");
                         
-                        GuiLabel(new Rectangle(430, 395, 100, 40), "Pickup Item");
-                        var assignPickupItem = GuiButton(new Rectangle(610, 395, 200, 40),
+                        GuiLabel(new Rectangle(430, 355, 100, 30), "Pickup Item");
+                        var assignPickupItem = GuiButton(new Rectangle(610, 355, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.PickupItem}"); 
                         
-                        GuiLabel(new Rectangle(430, 440, 100, 40), "Force-Place Tile With Geo");
-                        var assignForcePlaceTileWithGeo = GuiButton(new Rectangle(610, 440, 200, 40),
+                        GuiLabel(new Rectangle(430, 390, 100, 30), "Force-Place Tile With Geo");
+                        var assignForcePlaceTileWithGeo = GuiButton(new Rectangle(610, 390, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.ForcePlaceTileWithGeo}"); 
                         
-                        GuiLabel(new Rectangle(430, 485, 100, 40), "Undo");
-                        var assignUndo = GuiButton(new Rectangle(610, 485, 200, 40),
+                        GuiLabel(new Rectangle(430, 425, 100, 30), "Undo");
+                        var assignUndo = GuiButton(new Rectangle(610, 425, 200, 30),
                             $"");
                         
-                        GuiLabel(new Rectangle(430, 530, 100, 40), "Redo");
-                        var assignRedo = GuiButton(new Rectangle(610, 530, 200, 40),
+                        GuiLabel(new Rectangle(430, 460, 100, 30), "Redo");
+                        var assignRedo = GuiButton(new Rectangle(610, 460, 200, 30),
                             $""); 
                         
-                        GuiLabel(new Rectangle(430, 575, 100, 40), "Draw");
-                        var assignAltDraw = GuiButton(new Rectangle(610, 575, 200, 40),
+                        GuiLabel(new Rectangle(430, 495, 100, 40), "Draw");
+                        var assignAltDraw = GuiButton(new Rectangle(610, 495, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.AltDraw}");
                         
-                        GuiLabel(new Rectangle(430, 620, 100, 40), "Level Pan");
-                        var assignAltPan = GuiButton(new Rectangle(610, 620, 200, 40),
+                        GuiLabel(new Rectangle(430, 530, 100, 30), "Level Pan");
+                        var assignAltPan = GuiButton(new Rectangle(610, 530, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.AltDragLevel}");
                         
-                        GuiLabel(new Rectangle(430, 665, 100, 40), "Force-Place Tile Without Geo");
-                        var assignForcePlaceTileWithoutGeo = GuiButton(new Rectangle(610, 665, 200, 40),
+                        GuiLabel(new Rectangle(430, 565, 100, 30), "Force-Place Tile Without Geo");
+                        var assignForcePlaceTileWithoutGeo = GuiButton(new Rectangle(610, 565, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.ForcePlaceTileWithoutGeo}");
                         
-                        GuiLabel(new Rectangle(430, 710, 100, 40), "Move to Next Category");
-                        var assignMoveToNextCategory = GuiButton(new Rectangle(610, 710, 200, 40),
+                        GuiLabel(new Rectangle(430, 600, 100, 30), "Move to Next Category");
+                        var assignMoveToNextCategory = GuiButton(new Rectangle(610, 600, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.MoveToNextCategory}");
                         
+                        GuiLabel(new Rectangle(430, 635, 100, 30), "Toggle Paths View");
+                        var assignTogglePathsView = GuiButton(new Rectangle(610, 635, 200, 30),
+                            $"{GLOBALS.Settings.Shortcuts.TileEditor.TogglePathsView}");
                         
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 350, 100, 40), "Tile/Material Switch");
-                        var assignTileMaterialSwitch = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 350, 200, 40),
+                        
+                        GuiLabel(new Rectangle(mouseShortcutsOffset, 320, 100, 30), "Tile/Material Switch");
+                        var assignTileMaterialSwitch = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 320, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.TileMaterialSwitch}");
                         
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 395, 100, 40), "Toggle Hovered Item Info");
-                        var assignToggleHoveredItemInfo = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 395, 200, 40),
+                        GuiLabel(new Rectangle(mouseShortcutsOffset, 355, 100, 30), "Toggle Hovered Item Info");
+                        var assignToggleHoveredItemInfo = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 355, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.HoveredItemInfo}");
                         
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 440, 100, 40), "Show/Hide Layer 1");
-                        var assignToggleLayer1 = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 440, 200, 40),
+                        GuiLabel(new Rectangle(mouseShortcutsOffset, 390, 100, 30), "Show/Hide Layer 1");
+                        var assignToggleLayer1 = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 390, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer1}");
                         
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 485, 100, 40), "Show/Hide Layer 2");
-                        var assignToggleLayer2 = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 485, 200, 40),
+                        GuiLabel(new Rectangle(mouseShortcutsOffset, 425, 100, 30), "Show/Hide Layer 2");
+                        var assignToggleLayer2 = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 425, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer2}");
                         
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 530, 100, 40), "Show/Hide Layer 3");
-                        var assignToggleLayer3 = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 530, 200, 40),
+                        GuiLabel(new Rectangle(mouseShortcutsOffset, 460, 100, 30), "Show/Hide Layer 3");
+                        var assignToggleLayer3 = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 460, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer3}");
                         
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 575, 100, 40), "Show/Hide Layer 1 Tiles");
-                        var assignToggleLayer1Tiles = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 575, 200, 40),
+                        GuiLabel(new Rectangle(mouseShortcutsOffset, 495, 100, 30), "Show/Hide Layer 1 Tiles");
+                        var assignToggleLayer1Tiles = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 495, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer1Tiles}");
                             
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 620, 100, 40), "Show/Hide Layer 2 Tiles");
-                        var assignToggleLayer2Tiles = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 620, 200, 40),
+                        GuiLabel(new Rectangle(mouseShortcutsOffset, 530, 100, 30), "Show/Hide Layer 2 Tiles");
+                        var assignToggleLayer2Tiles = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 530, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer2Tiles}");
                         
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 665, 100, 40), "Show/Hide Layer 3 Tiles");
-                        var assignToggleLayer3Tiles = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 665, 200, 40),
+                        GuiLabel(new Rectangle(mouseShortcutsOffset, 565, 100, 30), "Show/Hide Layer 3 Tiles");
+                        var assignToggleLayer3Tiles = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 565, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer3Tiles}");
                         
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 710, 100, 40), "Move to Previous Category");
-                        var assignMoveToPreviousCategory = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 710, 200, 40),
+                        GuiLabel(new Rectangle(mouseShortcutsOffset, 600, 100, 30), "Move to Previous Category");
+                        var assignMoveToPreviousCategory = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 600, 200, 30),
                             $"{GLOBALS.Settings.Shortcuts.TileEditor.MoveToPreviousCategory}");
 
                         if (assignCycleLayers) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.CycleLayers;
@@ -1241,10 +1245,11 @@ public class SettingsPage : IPage
                         if (assignToggleLayer2) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer2;
                         if (assignToggleLayer3) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer3;
                         if (assignToggleLayer1Tiles) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer1Tiles;
-                        if (assignToggleLayer3Tiles) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer2Tiles;
+                        if (assignToggleLayer2Tiles) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer2Tiles;
                         if (assignToggleLayer3Tiles) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer3Tiles;
                         if (assignMoveToNextCategory) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.MoveToNextCategory;
                         if (assignMoveToPreviousCategory) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.MoveToPreviousCategory;
+                        if (assignTogglePathsView) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.TogglePathsView;
                     }
                         break;
                     case 4: // Cameras Editor

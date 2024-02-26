@@ -722,6 +722,32 @@ internal static class GLOBALS
         false, // 21
         true
     ];
+
+    internal static readonly bool[] GeoPathsFilter =
+    [
+        false, // 0
+        false, // 1
+        false, // 2
+        false, // 3 
+        true, // 4 entrance
+        true, // 5 path
+        true, // 6 passage
+        true, // 7 den
+        false, // 8
+        false, // 9
+        false, // 10
+        false, // 11
+        false, // 12
+        false, // 13
+        false, // 14
+        false, // 15
+        false, // 16
+        false, // 17
+        false, // 18
+        true, // 19 wack
+        false, // 20
+        true  // 21 scavenger
+    ];
     
     internal static Settings Settings { get; set; } = new(
             new GeneralSettings(),

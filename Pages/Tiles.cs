@@ -26,6 +26,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
     private int _materialCategoryScrollIndex;
     private int _materialScrollIndex;
 
+    private bool _highlightPaths;
+
     private int _tileItemFocus;
     private int _tileCategoryItemFocus;
     
@@ -538,6 +540,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         if (_shortcuts.ToggleLayer2.Check(ctrl, shift, alt)) _showTileLayer2 = !_showTileLayer2;
         if (_shortcuts.ToggleLayer3.Check(ctrl, shift, alt)) _showTileLayer3 = !_showTileLayer3;
 
+        if (_shortcuts.TogglePathsView.Check(ctrl, shift, alt)) _highlightPaths = !_highlightPaths;
+
         var currentTilePreviewColor = GLOBALS.TileCategories[_tileCategoryIndex].Item2;
         var currentTileTexture = GLOBALS.Textures.Tiles[_tileCategoryIndex][_tileIndex];
 
@@ -549,7 +553,13 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
         BeginMode2D(_camera);
         {
-            DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.PreviewScale, GLOBALS.Level.Height * GLOBALS.PreviewScale, GLOBALS.Layer == 2 ? new(100, 100, 100, 100) : WHITE);
+            // DrawRectangle(
+            //     0, 
+            //     0, 
+            //     GLOBALS.Level.Width * GLOBALS.PreviewScale, 
+            //     GLOBALS.Level.Height * GLOBALS.PreviewScale, 
+            //     GLOBALS.Layer == 2 ? GRAY with { a = 100 } : WHITE
+            // );
 
             #region Matrix
 
@@ -583,7 +593,12 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             #region TileEditorLayer2
             if (_showTileLayer2)
             {
-                if (GLOBALS.Layer != 2) DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.PreviewScale, GLOBALS.Level.Height * GLOBALS.PreviewScale, new(100, 100, 100, 150));
+                if (GLOBALS.Layer != 2) DrawRectangle(
+                    0, 
+                    0, 
+                    GLOBALS.Level.Width * GLOBALS.PreviewScale, 
+                    GLOBALS.Level.Height * GLOBALS.PreviewScale, 
+                    GRAY with { a = 130 });
 
                 Printers.DrawGeoLayer(
                     1, 
@@ -591,7 +606,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     false, 
                     GLOBALS.Layer < 2
                         ? BLACK 
-                        : new(0, 0, 0, 80)
+                        : BLACK with { a = 80 }
                 );
 
                 // Draw layer 2 tiles
@@ -613,15 +628,22 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             #region TileEditorLayer1
             if (_showTileLayer1)
             {
-                if (GLOBALS.Layer != 1 && GLOBALS.Layer!= 2) DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.PreviewScale, GLOBALS.Level.Height * GLOBALS.PreviewScale, new(100, 100, 100, 100));
+                if (GLOBALS.Layer != 1 && GLOBALS.Layer!= 2) 
+                    DrawRectangle(
+                        0, 
+                    0, 
+                        GLOBALS.Level.Width * GLOBALS.PreviewScale, 
+                        GLOBALS.Level.Height * GLOBALS.PreviewScale, 
+                        GRAY with { a = 130 }
+                    );
 
                 Printers.DrawGeoLayer(
                     0, 
                     GLOBALS.PreviewScale, 
                     false, 
-                    GLOBALS.Layer < 1
+                    GLOBALS.Layer == 0
                         ? BLACK 
-                        : new(0, 0, 0, 80)
+                        : BLACK with { a = 80 }
                 );
 
                 // Draw layer 1 tiles
@@ -634,12 +656,24 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         false, 
                         !GLOBALS.Settings.TileEditor.UseTextures,
                         GLOBALS.Settings.TileEditor.TintedTiles,
-                        (byte)(GLOBALS.Layer < 1 ? 255 : 80)
+                        (byte)(GLOBALS.Layer == 0 ? 255 : 80)
                     );
                 }
             }
             #endregion
 
+            if (_highlightPaths)
+            {
+                DrawRectangle(
+                    0,
+                    0,
+                    GLOBALS.Level.Width * GLOBALS.PreviewScale,
+                    GLOBALS.Level.Height * GLOBALS.PreviewScale,
+                    BLACK with { a = 190 });
+            }
+
+            Printers.DrawGeoLayer(0, GLOBALS.PreviewScale, false, WHITE, false, GLOBALS.GeoPathsFilter);
+            
             #endregion
 
 

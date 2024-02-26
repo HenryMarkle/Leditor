@@ -574,6 +574,130 @@ internal static class Printers
             }
         }
     }
+    internal static void DrawGeoLayer(int layer, int scale, bool grid, Color color, bool geos, bool[] stackableFilter)
+    {
+        for (var y = 0; y < GLOBALS.Level.Height; y++)
+        {
+            for (var x = 0; x < GLOBALS.Level.Width; x++)
+            {
+                var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
+
+                if (!geos) goto skipGeos;
+                
+                DrawTileSpec(x*scale, y*scale, cell.Geo, scale, color);
+
+                /*var texture = Utils.GetBlockIndex(cell.Geo);
+
+                if (texture >= 0)
+                {
+                    DrawTexture(
+                        GLOBALS.Textures.GeoBlocks[texture], 
+                        x * scale, 
+                        y * scale, 
+                        color
+                    );
+                }*/
+
+                if (grid) DrawRectangleLinesEx(
+                    new(x * scale, y * scale, scale, scale),
+                    0.4f,
+                    new(255, 255, 255, 50)
+                );
+                
+                if (grid && x % 2 == 0 && y % 2 == 0) DrawRectangleLinesEx(
+                    new(x * scale, y * scale, scale*2, scale*2),
+                    0.6f,
+                    new(255, 255, 255, 55)
+                );
+                
+                skipGeos:
+
+                for (var s = 1; s < cell.Stackables.Length; s++)
+                {
+                    if (stackableFilter[s] && cell.Stackables[s])
+                    {
+                        switch (s)
+                        {
+                            // dump placement
+                            case 1:     // ph
+                            case 2:     // pv
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+
+                                DrawTexturePro(
+                                    stackableTexture, 
+                                    new(0, 0, stackableTexture.width, stackableTexture.height),
+                                    new(x * scale, y * scale, scale, scale), 
+                                    new(0, 0), 
+                                    0, 
+                                    color
+                                );
+                                break;
+                            case 3:     // bathive
+                                case 5:     // entrance
+                                case 6:     // passage
+                                case 7:     // den
+                                case 9:     // rock
+                                case 10:    // spear
+                                case 12:    // forbidflychains
+                                case 13:    // garbagewormhole
+                                case 18:    // waterfall
+                                case 19:    // wac
+                                case 20:    // worm
+                                case 21:    // scav
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+
+                                    DrawTexturePro(
+                                        stackableTexture2,
+                                        new(0, 0, stackableTexture2.width, stackableTexture2.height),
+                                        new(x * scale, y*scale, scale, scale), 
+                                        new(0, 0),
+                                        0, 
+                                        WHITE
+                                    ); // TODO: remove opacity from entrances
+                                break;
+
+                            // directional placement
+                            case 4:     // entrance
+                                var index = Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, layer));
+
+                                if (index is 22 or 23 or 24 or 25)
+                                {
+                                    GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
+                                }
+
+                                var t = GLOBALS.Textures.GeoStackables[index];
+                                DrawTexturePro(
+                                    t,
+                                    new(0, 0, t.width, t.height),
+                                    new(x*scale, y*scale, scale, scale), 
+                                    new(0, 0),
+                                    0, 
+                                    WHITE
+                                );
+                                break;
+                            case 11:    // crack
+                                var crackTexture = GLOBALS.Textures.GeoStackables[
+                                    Utils.GetStackableTextureIndex(s,
+                                        Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width,
+                                            GLOBALS.Level.Height, x, y, layer))];
+                                DrawTexturePro(
+                                    crackTexture,
+                                    new(0, 0, crackTexture.width, crackTexture.height),
+                                    new(
+                                    x * scale,
+                                    y * scale,scale, scale
+                                    ),
+                                    new(0, 0),
+                                    0,
+                                    WHITE
+                                );
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     internal static void DrawTileLayer(int layer, int scale, bool grid, bool preview, bool tinted, byte opacity = 255, bool deepTileOpacity = true)
     {
