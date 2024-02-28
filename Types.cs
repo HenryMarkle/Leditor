@@ -34,6 +34,10 @@ public interface IVariable { int Variation { get; set; } }
 public class LoadFileResult
 {
     public bool Success { get; init; } = false;
+    
+    public int Seed { get; set; }
+    public int WaterLevel { get; set; }
+    public bool WaterInFront { get; set; }
 
     public int Width { get; init; } = 0;
     public int Height { get; init; } = 0;
@@ -43,6 +47,7 @@ public class LoadFileResult
 
     public bool LightMode { get; init; }
     public bool DefaultTerrain { get; set; }
+    public string DefaultMaterial { get; set; }
 
     public RunCell[,,]? GeoMatrix { get; init; } = null;
     public TileCell[,,]? TileMatrix { get; init; } = null;

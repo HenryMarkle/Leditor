@@ -961,4 +961,29 @@ public static class Tools {
 
         return terrain.Value.IntValue == 1;
     }
+
+    public static (int waterLevel, bool waterInFront) GetWaterData(AstNode.Base @base)
+    {
+        var waterLevelBase = ((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "waterlevel").Value;
+        var waterInFrontBase = ((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "waterinfront").Value;
+
+        var waterLevel = NumberToInteger(waterLevelBase);
+        var waterInFront = NumberToInteger(waterInFrontBase) != 0;
+
+        return (waterLevel, waterInFront);
+    }
+
+    public static int GetSeed(AstNode.Base @base)
+    {
+        var seedBase = ((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "tileseed").Value;
+
+        return NumberToInteger(seedBase);
+    }
+
+    public static string GetDefaultMaterial(AstNode.Base @base)
+    {
+        var materialBase = (AstNode.String) ((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "defaultmaterial").Value;
+
+        return materialBase.Value;
+    }
 }

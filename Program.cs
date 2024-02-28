@@ -503,7 +503,7 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.39";
+        const string version = "Henry's Leditor v0.9.40";
         const string raylibVersion = "Raylib v4.2.0.9";
         
         // Load tiles and props
@@ -868,6 +868,11 @@ class Program
         
         dimensionsPage.ProjectCreated += propsPage.OnProjectCreated;
         //
+
+        unsafe
+        {
+            GLOBALS.WindowHandle = new IntPtr(GetWindowHandle());
+        }
         
         // Quick save task
 
@@ -1085,37 +1090,13 @@ class Program
                 
                 // Globals quick save
 
-                {
-                    var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
-                    var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
-                    var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
-
-                    if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave.Check(ctrl, shift, alt))
-                    {
-                        if (string.IsNullOrEmpty(GLOBALS.ProjectPath))
-                        {
-                            _askForPath = true;
-                            _saveFileDialog = Utils.SetFilePathAsync();
-                        }
-                        else
-                        {
-                            _askForPath = false;
-                        }
-
-                        _globalSave = true;
-                        RayGui.GuiLock();
-                    }
-                    else if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSaveAs.Check(ctrl, shift, alt))
-                    {
-                        _askForPath = true;
-                        _saveFileDialog = Utils.SetFilePathAsync();
-                        RayGui.GuiLock();
-                    }
-                }
-
                 if (RayGui.GuiIsLocked() && _globalSave)
                 {
                     BeginDrawing();
+                    
+                    ClearBackground(BLACK);
+                    
+                    DrawText("Please wait..", GetScreenWidth() / 2 - 100, GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
                     
                     if (_askForPath)
                     {
@@ -1225,6 +1206,34 @@ class Program
                 }
                 else
                 {
+                    {
+                        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
+                        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+                        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+
+                        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave.Check(ctrl, shift, alt))
+                        {
+                            if (string.IsNullOrEmpty(GLOBALS.ProjectPath))
+                            {
+                                _askForPath = true;
+                                _saveFileDialog = Utils.SetFilePathAsync();
+                            }
+                            else
+                            {
+                                _askForPath = false;
+                            }
+
+                            _globalSave = true;
+                            RayGui.GuiLock();
+                        }
+                        else if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSaveAs.Check(ctrl, shift, alt))
+                        {
+                            _askForPath = true;
+                            _saveFileDialog = Utils.SetFilePathAsync();
+                            RayGui.GuiLock();
+                        }
+                    }
+                    
                     // page switch
 
                     switch (GLOBALS.Page)

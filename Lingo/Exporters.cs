@@ -178,13 +178,13 @@ public static class Exporters
         return builder.ToString();
     }
 
-    private static string Export(bool terrainMedium, bool light, (int width, int height) size, (int left, int top, int right, int bottom) bufferTiles)
+    private static string Export(bool terrainMedium, bool light, (int width, int height) size, (int left, int top, int right, int bottom) bufferTiles, int seed)
     {
         System.Text.StringBuilder builder = new();
 
         builder.Append($"[#timeLimit: 4800, #defaultTerrain: {(terrainMedium ? 1 : 0)}, #maxFlies: 10, #flySpawnRate: 50, #lizards: [], #ambientSounds: [], #music: \"NONE\", #tags: [], #lightType: \"Static\", #waterDrips: 1, #lightRect: rect(0, 0, 1040, 800), #Matrix: []]");
         builder.Append('\r');
-        builder.Append($"[#mouse: 1, #lastMouse: 1, #mouseClick: 0, #pal: 1, #pals: [[#detCol: color( 255, 0, 0 )]], #eCol1: 1, #eCol2: 2, #totEcols: 5, #tileSeed: 68, #colGlows: [0, 0], #size: point({size.width}, {size.height}), #extraTiles: [{bufferTiles.left}, {bufferTiles.top}, {bufferTiles.right}, {bufferTiles.bottom}], #light: {(light ? 1 : 0)}]");
+        builder.Append($"[#mouse: 1, #lastMouse: 1, #mouseClick: 0, #pal: 1, #pals: [[#detCol: color( 255, 0, 0 )]], #eCol1: 1, #eCol2: 2, #totEcols: 5, #tileSeed: {seed}, #colGlows: [0, 0], #size: point({size.width}, {size.height}), #extraTiles: [{bufferTiles.left}, {bufferTiles.top}, {bufferTiles.right}, {bufferTiles.bottom}], #light: {(light ? 1 : 0)}]");
         
         return builder.ToString();
     }
@@ -264,7 +264,7 @@ public static class Exporters
         var tileTask = Task.Factory.StartNew(() => Export(level.TileMatrix, level.DefaultMaterial));
         var effTask = Task.Factory.StartNew(() => Export(level.Effects));
         var lightTask = Task.Factory.StartNew(() => Export(level.LightAngle, level.LightFlatness));
-        var generalTask = Task.Factory.StartNew(() => Export(level.DefaultTerrain, level.LightMode, (level.Width, level.Height), level.Padding));
+        var generalTask = Task.Factory.StartNew(() => Export(level.DefaultTerrain, level.LightMode, (level.Width, level.Height), level.Padding, level.Seed));
         var camsTask = Task.Factory.StartNew(() => Export(level.Cameras));
         var envTask = Task.Factory.StartNew(() => Export(level.WaterLevel, level.WaterAtFront));
         var propsTask = Task.Factory.StartNew(() => Export(level.Props));

@@ -191,12 +191,18 @@ internal static class GLOBALS
             (int angle, int flatness) lightSettings,
             bool lightMode,
             bool terrainMedium,
+            int seed,
+            int waterLevel,
+            bool waterInFront,
             string defaultMaterial = "Concrete",
             string projectName = "New Project"
         )
         {
             Width = width;
             Height = height;
+            Seed = seed;
+            WaterLevel = waterLevel;
+            WaterAtFront = waterInFront;
             Padding = padding;
             GeoMatrix = geoMatrix;
             TileMatrix = tileMatrix;
@@ -800,5 +806,7 @@ internal static class GLOBALS
         NewFlag = false;
         ResizeFlag = false;
     }
+    
+    internal static IntPtr WindowHandle { get; set; } 
 #nullable disable
 }

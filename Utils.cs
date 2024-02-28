@@ -16,12 +16,15 @@ internal static class Utils
             var dialog = new OpenFileDialog
             {
                 InitialDirectory = GLOBALS.Paths.ProjectsDirectory,
-                Filter = "txt files (*.txt)|*.txt",
+                Filter = "text files (*.txt)|*.txt",
                 Multiselect = false,
                 CheckFileExists = true
             };
-
-            if (dialog.ShowDialog() == DialogResult.OK)
+            
+            var nativeWindow = new NativeWindow();
+            nativeWindow.AssignHandle(GLOBALS.WindowHandle);
+            
+            if (dialog.ShowDialog(/*nativeWindow*/) == DialogResult.OK)
             {
                 path = dialog.FileName;
             }

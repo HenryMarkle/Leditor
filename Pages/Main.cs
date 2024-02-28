@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Text;
 using ImGuiNET;
+using Leditor.Lingo.Drizzle;
 using Pidgin;
 using rlImGui_cs;
 using static Raylib_CsLo.Raylib;
@@ -208,6 +209,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
             var effObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[2]));
             var lightObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[3]));
             var camsObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[6]));
+            var waterObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[7]));
             var propsObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[8]));
 
             var obj = await objTask;
@@ -217,13 +219,17 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
             var effObj = await effObjTask;
             var lightObj = await lightObjTask;
             var camsObj = await camsObjTask;
+            var waterObj = await waterObjTask;
             var propsObj = await propsObjTask;
 
             var mtx = Lingo.Tools.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
             var tlMtx = Lingo.Tools.GetTileMatrix(tilesObj, out _, out _);
+            var defaultMaterial = Lingo.Tools.GetDefaultMaterial(tilesObj);
             var buffers = Lingo.Tools.GetBufferTiles(obj2);
             var terrain = Lingo.Tools.GetTerrainMedium(terrainModeObj);
             var lightMode = Lingo.Tools.GetLightMode(obj2);
+            var seed = Lingo.Tools.GetSeed(obj2);
+            var waterData = Lingo.Tools.GetWaterData(waterObj);
             var effects = Lingo.Tools.GetEffects(effObj, givenWidth, givenHeight);
             var cams = Lingo.Tools.GetCameras(camsObj);
             
@@ -254,11 +260,15 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
 
             //
 
-            return new()
+            return new LoadFileResult
             {
                 Success = true,
+                Seed = seed,
+                WaterLevel = waterData.waterLevel,
+                WaterInFront = waterData.waterInFront,
                 Width = givenWidth,
                 Height = givenHeight,
+                DefaultMaterial = defaultMaterial,
                 BufferTiles = buffers,
                 GeoMatrix = mtx,
                 TileMatrix = tlMtx,
@@ -568,7 +578,11 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                             result.LightSettings,
                             result.LightMode,
                             result.DefaultTerrain,
-                            projectName: result.Name
+                            result.Seed,
+                            result.WaterLevel,
+                            result.WaterInFront,
+                            result.DefaultMaterial,
+                            result.Name
                         );
                         
                         #if DEBUG
