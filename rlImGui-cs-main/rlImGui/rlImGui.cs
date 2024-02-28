@@ -32,6 +32,8 @@ namespace rlImGui_cs
 
         static Dictionary<Raylib_cs.KeyboardKey, ImGuiKey> RaylibKeyMap = new Dictionary<Raylib_cs.KeyboardKey, ImGuiKey>();
 
+        internal static nint iniFilenameAlloc = 0;
+        
         internal static bool LastFrameFocused = false;
 
         internal static bool LastControlPressed = false;
@@ -80,6 +82,21 @@ namespace rlImGui_cs
                 ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
 
             EndInitImGui();
+        }
+        
+        public static void SetIniFilename(string iniFilename)
+        {
+            if (iniFilenameAlloc != 0)
+                Marshal.FreeHGlobal(iniFilenameAlloc);
+
+            byte[] nameBytes = System.Text.Encoding.ASCII.GetBytes(iniFilename + "\0");
+            iniFilenameAlloc = Marshal.AllocHGlobal(nameBytes.Count());
+            Marshal.Copy(nameBytes, 0, iniFilenameAlloc, nameBytes.Count());
+            
+            unsafe
+            {
+                ImGui.GetIO().NativePtr->IniFilename = (byte*) iniFilenameAlloc;
+            }
         }
 
         /// <summary>
@@ -651,6 +668,9 @@ namespace rlImGui_cs
 
                 IconFonts.FontAwesome6.IconFontRanges = IntPtr.Zero;
             }
+            
+            if (iniFilenameAlloc != 0)
+                Marshal.FreeHGlobal(iniFilenameAlloc);
         }
 
         /// <summary>

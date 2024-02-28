@@ -503,7 +503,7 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.38";
+        const string version = "Henry's Leditor v0.9.39";
         const string raylibVersion = "Raylib v4.2.0.9";
         
         // Load tiles and props
@@ -875,6 +875,7 @@ class Program
         
         //
         rlImGui.Setup(false);
+        rlImGui.SetIniFilename("index/imgui.ini");
         //
         
         logger.Information("Begin main loop");
