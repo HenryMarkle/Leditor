@@ -22,6 +22,7 @@ internal static class GLOBALS
         public Texture MissingTile { get; set; }
 
         public Texture[] GeoMenu { get; set; } = [];
+        public Texture[] GeoInterface { get; set; } = [];
         public Texture[] GeoBlocks { get; set; } = [];
         public Texture[] GeoStackables { get; set; } = [];
         public Texture[] LightBrushes { get; set; } = [];
@@ -32,6 +33,7 @@ internal static class GLOBALS
         public Texture[] PropMenuCategories { get; set; } = [];
         public Texture[] PropModes { get; set; } = [];
         public Texture[] PropEditModes { get; set; } = [];
+        public Texture[] EffectsUI { get; set; } = [];
         public Texture[] PropGenerals { get; set; } = [];
         
         public RenderTexture LightMap { get; set; }

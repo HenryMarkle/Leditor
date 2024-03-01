@@ -26,6 +26,41 @@ public enum PropCheckResult
     Ok, Undefined, MissingTexture
 }
 
+
+public class DisTexture(Raylib_CsLo.Texture texture) : IDisposable
+{
+    private readonly Raylib_CsLo.Texture _texture = texture;
+
+    public Raylib_CsLo.Texture Texture => _texture;
+
+
+    private void ReleaseUnmanagedResources()
+    {
+        Raylib_CsLo.Raylib.UnloadTexture(_texture);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        ReleaseUnmanagedResources();
+        if (disposing)
+        {
+            // TODO release managed resources here
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    ~DisTexture()
+    {
+        Dispose(false);
+    }
+}
+
+
 public interface IVariableInit { int Variations { get; } }
 public interface IVariable { int Variation { get; set; } }
 

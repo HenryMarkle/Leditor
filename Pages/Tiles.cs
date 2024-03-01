@@ -152,8 +152,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         var layer1Rect = new Rectangle(30, teHeight - 100, 40, 40);
 
         //                        v this was done to avoid rounding errors
-        int tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / GLOBALS.PreviewScale;
-        int tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / GLOBALS.PreviewScale;
+        int tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / GLOBALS.Scale;
+        int tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / GLOBALS.Scale;
 
         var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
 
@@ -556,8 +556,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             // DrawRectangle(
             //     0, 
             //     0, 
-            //     GLOBALS.Level.Width * GLOBALS.PreviewScale, 
-            //     GLOBALS.Level.Height * GLOBALS.PreviewScale, 
+            //     GLOBALS.Level.Width * GLOBALS.Scale, 
+            //     GLOBALS.Level.Height * GLOBALS.Scale, 
             //     GLOBALS.Layer == 2 ? GRAY with { a = 100 } : WHITE
             // );
 
@@ -570,7 +570,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
                 Printers.DrawGeoLayer(
                     2, 
-                    GLOBALS.PreviewScale, 
+                    GLOBALS.Scale, 
                     false, 
                     BLACK
                 );
@@ -581,7 +581,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 {
                     Printers.DrawTileLayer(
                         2, 
-                        GLOBALS.PreviewScale, 
+                        GLOBALS.Scale, 
                         false, 
                         !GLOBALS.Settings.TileEditor.UseTextures,
                         GLOBALS.Settings.TileEditor.TintedTiles
@@ -596,13 +596,13 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 if (GLOBALS.Layer != 2) DrawRectangle(
                     0, 
                     0, 
-                    GLOBALS.Level.Width * GLOBALS.PreviewScale, 
-                    GLOBALS.Level.Height * GLOBALS.PreviewScale, 
+                    GLOBALS.Level.Width * GLOBALS.Scale, 
+                    GLOBALS.Level.Height * GLOBALS.Scale, 
                     GRAY with { a = 130 });
 
                 Printers.DrawGeoLayer(
                     1, 
-                    GLOBALS.PreviewScale, 
+                    GLOBALS.Scale, 
                     false, 
                     GLOBALS.Layer < 2
                         ? BLACK 
@@ -615,7 +615,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 {
                     Printers.DrawTileLayer(
                         1, 
-                        GLOBALS.PreviewScale, 
+                        GLOBALS.Scale, 
                         false, 
                         !GLOBALS.Settings.TileEditor.UseTextures,
                         GLOBALS.Settings.TileEditor.TintedTiles,
@@ -632,14 +632,14 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     DrawRectangle(
                         0, 
                     0, 
-                        GLOBALS.Level.Width * GLOBALS.PreviewScale, 
-                        GLOBALS.Level.Height * GLOBALS.PreviewScale, 
+                        GLOBALS.Level.Width * GLOBALS.Scale, 
+                        GLOBALS.Level.Height * GLOBALS.Scale, 
                         GRAY with { a = 130 }
                     );
 
                 Printers.DrawGeoLayer(
                     0, 
-                    GLOBALS.PreviewScale, 
+                    GLOBALS.Scale, 
                     false, 
                     GLOBALS.Layer == 0
                         ? BLACK 
@@ -652,7 +652,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 {
                     Printers.DrawTileLayer(
                         0, 
-                        GLOBALS.PreviewScale, 
+                        GLOBALS.Scale, 
                         false, 
                         !GLOBALS.Settings.TileEditor.UseTextures,
                         GLOBALS.Settings.TileEditor.TintedTiles,
@@ -667,12 +667,12 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 DrawRectangle(
                     0,
                     0,
-                    GLOBALS.Level.Width * GLOBALS.PreviewScale,
-                    GLOBALS.Level.Height * GLOBALS.PreviewScale,
+                    GLOBALS.Level.Width * GLOBALS.Scale,
+                    GLOBALS.Level.Height * GLOBALS.Scale,
                     BLACK with { a = 190 });
             }
 
-            Printers.DrawGeoLayer(0, GLOBALS.PreviewScale, false, WHITE, false, GLOBALS.GeoPathsFilter);
+            Printers.DrawGeoLayer(0, GLOBALS.Scale, false, WHITE, false, GLOBALS.GeoPathsFilter);
             
             #endregion
 
@@ -689,8 +689,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             {
                 DrawRectangleLinesEx(
                     new(
-                        (tileMatrixX - _materialBrushRadius) * GLOBALS.PreviewScale, 
-                        (tileMatrixY - _materialBrushRadius) * GLOBALS.PreviewScale, (_materialBrushRadius*2+1)*GLOBALS.PreviewScale, (_materialBrushRadius*2+1)*GLOBALS.PreviewScale),
+                        (tileMatrixX - _materialBrushRadius) * GLOBALS.Scale, 
+                        (tileMatrixY - _materialBrushRadius) * GLOBALS.Scale, (_materialBrushRadius*2+1)*GLOBALS.Scale, (_materialBrushRadius*2+1)*GLOBALS.Scale),
                     2f,
                     WHITE
                 );
@@ -702,8 +702,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             {
                 if (inMatrixBounds) DrawText(
                     $"x: {tileMatrixX}, y: {tileMatrixY}\n{GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer]}",
-                    tileMatrixX * GLOBALS.PreviewScale + GLOBALS.PreviewScale,
-                    tileMatrixY * GLOBALS.PreviewScale - GLOBALS.PreviewScale,
+                    tileMatrixX * GLOBALS.Scale + GLOBALS.Scale,
+                    tileMatrixY * GLOBALS.Scale - GLOBALS.Scale,
                     15,
                     WHITE
                 );
@@ -721,8 +721,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 
                 if (inMatrixBounds) DrawText(
                     $"x: {tileMatrixX}, y: {tileMatrixY}",
-                    tileMatrixX * GLOBALS.PreviewScale + GLOBALS.PreviewScale,
-                    tileMatrixY * GLOBALS.PreviewScale - GLOBALS.PreviewScale,
+                    tileMatrixX * GLOBALS.Scale + GLOBALS.Scale,
+                    tileMatrixY * GLOBALS.Scale - GLOBALS.Scale,
                     15,
                     WHITE
                 );

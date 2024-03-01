@@ -842,10 +842,10 @@ internal static class Printers
                         {
                             case 1:
                                 DrawRectangle(
-                                    x * scale + 5,
-                                    y * scale + 5,
-                                    6,
-                                    6,
+                                    x * scale + 6,
+                                    y * scale + 6,
+                                    scale - 12,
+                                    scale - 12,
                                     color
                                 );
                                 break;
@@ -1045,8 +1045,8 @@ internal static class Printers
                                 DrawRectangle(
                                     (int)offsetPixels.X + x * scale + 5,
                                     (int)offsetPixels.Y + y * scale + 5,
-                                    6,
-                                    6,
+                                    scale - 12,
+                                    scale - 12,
                                     color
                                 );
                                 break;

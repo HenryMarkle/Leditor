@@ -767,14 +767,19 @@ class Program
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Fan.png"))
         ];
 
-        Texture[] effectsPageTextures =
+        GLOBALS.Textures.EffectsUI =
         [
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "plus icon.png")),
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "arrow up icon.png")),
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "arrow down icon.png")),
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "cross icon.png"))
         ];
-        
+
+        GLOBALS.Textures.GeoInterface =
+        [
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "camera icon.png"))
+        ];
+
         //
 
         GLOBALS.Textures.TileSpecs = Raylib_cs.Raylib.LoadRenderTexture(200, 200);
@@ -841,7 +846,7 @@ class Program
         LightEditorPage lightPage = new(logger);
         DimensionsEditorPage dimensionsPage = new(logger);
         DeathScreen deathScreen = new(logger, null, null);
-        EffectsEditorPage effectsPage = new(logger, effectsPageTextures);
+        EffectsEditorPage effectsPage = new(logger);
         PropsEditorPage propsPage = new(logger);
         MainPage mainPage = new(logger);
         StartPage startPage = new(logger);
@@ -880,8 +885,10 @@ class Program
         
         //
         rlImGui.Setup(false);
-        rlImGui.SetIniFilename("index/imgui.ini");
+        // rlImGui.SetIniFilename("index/imgui.ini");
         //
+        
+        ImGui.LoadIniSettingsFromDisk(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "imgui.ini"));
         
         logger.Information("Begin main loop");
 
@@ -1303,7 +1310,8 @@ class Program
         foreach (var texture in GLOBALS.Textures.PropEditModes) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.PropGenerals) UnloadTexture(texture);
         foreach (var texture in settingsPreviewTextures) UnloadTexture(texture);
-        foreach (var texture in effectsPageTextures) UnloadTexture(texture);
+        foreach (var texture in GLOBALS.Textures.EffectsUI) UnloadTexture(texture);
+        foreach (var texture in GLOBALS.Textures.GeoInterface) UnloadTexture(texture);
         
         logger.Debug("Unloading light map");
 

@@ -21,8 +21,8 @@ internal static class Utils
                 CheckFileExists = true
             };
             
-            var nativeWindow = new NativeWindow();
-            nativeWindow.AssignHandle(GLOBALS.WindowHandle);
+            // var nativeWindow = new NativeWindow();
+            // nativeWindow.AssignHandle(GLOBALS.WindowHandle);
             
             if (dialog.ShowDialog(/*nativeWindow*/) == DialogResult.OK)
             {

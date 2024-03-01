@@ -1,6 +1,7 @@
 using static Raylib_CsLo.Raylib;
 
 using System.Numerics;
+using ImGuiNET;
 using rlImGui_cs;
 
 namespace Leditor;
@@ -11,8 +12,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
     private readonly ExperimentalGeoShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts;
 
-    private Camera2D _camera = camera ?? new() { zoom = 1.0f };
-    
+    private Camera2D _camera = camera ?? new Camera2D() { zoom = 1.0f };
+
     private bool _multiselect;
     private bool _hideGrid;
     private bool _clickTracker;
@@ -77,7 +78,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
     
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
-
+    
     private int _lastChangingMatrixX = -1;
     private int _lastChangingMatrixY = -1;
 
@@ -127,9 +128,13 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
         var layer2Rect = new Rectangle(20, sHeight - 60, 40, 40);
         var layer1Rect = new Rectangle(30, sHeight - 70, 40, 40);
 
+        var toggleCameraRect = new Rectangle(90, sHeight - 60, 50, 50);
+        var toggleCameraHovered = CheckCollisionPointRec(uiMouse, toggleCameraRect);
+
         Rectangle panelRect = new(sWidth - 200, 50, 188, 400);
 
-        var canDrawGeo = !_isShortcutsWinHovered && 
+        var canDrawGeo = !toggleCameraHovered &&
+                         !_isShortcutsWinHovered && 
                          !_isShortcutsWinDragged && 
                          !CheckCollisionPointRec(GetMousePosition(), panelRect) &&
                          !CheckCollisionPointRec(uiMouse, layer3Rect) &&
@@ -1137,6 +1142,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             EndMode2D();
 
             // geo menu
+            
+            // ImGui
 
             unsafe
             {
@@ -1435,6 +1442,31 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             }
 
             if (newLayer != GLOBALS.Layer) GLOBALS.Layer = newLayer;
+            
+            // Show Camera Indicator
+
+            ref var toggleCameraTexture = ref GLOBALS.Textures.GeoInterface[0];
+            
+            DrawRectangleRec(toggleCameraRect, WHITE);
+
+            if (toggleCameraHovered)
+            {
+                DrawRectangleRec(toggleCameraRect, BLUE with { a = 100 });
+
+                if (toggleCameraHovered && IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    GLOBALS.Settings.GeometryEditor.ShowCameras = !GLOBALS.Settings.GeometryEditor.ShowCameras;
+                }
+            }
+            
+            DrawTexturePro(
+                toggleCameraTexture, 
+                new Rectangle(0, 0, toggleCameraTexture.width, toggleCameraTexture.height),
+                toggleCameraRect,
+                new Vector2(0, 0),
+                0,
+                BLACK
+            );
             
             // Shortcuts Window
 
