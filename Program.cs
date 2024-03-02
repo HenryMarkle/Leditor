@@ -884,11 +884,10 @@ class Program
         Task<(bool success, Exception? exception)>? quickSaveTask = null;
         
         //
-        rlImGui.Setup(false);
-        // rlImGui.SetIniFilename("index/imgui.ini");
-        //
+        rlImGui.Setup(GLOBALS.Settings.GeneralSettings.DarkTheme);
         
         ImGui.LoadIniSettingsFromDisk(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "imgui.ini"));
+        //
         
         logger.Information("Begin main loop");
 
@@ -1162,23 +1161,44 @@ class Program
                                 continue;
                             }
                             
-                            _globalSave = false;
-                            var parent = Directory.GetParent(_saveFileDialog.Result)?.FullName;
-                            
-                            GLOBALS.ProjectPath = parent ?? GLOBALS.ProjectPath;
-                            GLOBALS.Level.ProjectName = Path.GetFileNameWithoutExtension(_saveFileDialog.Result);
+                            // export light map
+                            {
+                                var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
 
-                            _saveFileDialog = null;
-                            _saveResult = null;
-                            RayGui.GuiUnlock();
-                            EndDrawing();
+                                unsafe
+                                {
+                                    ImageFlipVertical(&image);
+                                }
+
+                                var parent = Directory.GetParent(path)?.FullName ?? GLOBALS.ProjectPath;
+                                var name = Path.GetFileNameWithoutExtension(path);
+
+                                ExportImage(image, Path.Combine(parent, name + ".png"));
+
+                                UnloadImage(image);
+                            }
+
+                            {
+                                _globalSave = false;
+                                var parent = Directory.GetParent(_saveFileDialog.Result)?.FullName;
+
+                                GLOBALS.ProjectPath = parent ?? GLOBALS.ProjectPath;
+                                GLOBALS.Level.ProjectName = Path.GetFileNameWithoutExtension(_saveFileDialog.Result);
+
+                                _saveFileDialog = null;
+                                _saveResult = null;
+                                RayGui.GuiUnlock();
+                                EndDrawing();
+                            }
                         }
                     }
                     else
                     {
+                        var path = Path.Combine(GLOBALS.ProjectPath, GLOBALS.Level.ProjectName + ".txt");
+                        
                         if (_saveResult is null)
                         {
-                            _saveResult = SaveProjectAsync(Path.Combine(GLOBALS.ProjectPath, GLOBALS.Level.ProjectName+".txt"));
+                            _saveResult = SaveProjectAsync(path);
                             EndDrawing();
                             continue;
                         }
@@ -1202,6 +1222,23 @@ class Program
                             _saveResult = null;
                             _saveFileDialog = null;
                             continue;
+                        }
+                        
+                        // export light map
+                        {
+                            var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
+
+                            unsafe
+                            {
+                                ImageFlipVertical(&image);
+                            }
+
+                            var parent = Directory.GetParent(path)?.FullName ?? GLOBALS.ProjectPath;
+                            var name = Path.GetFileNameWithoutExtension(path);
+
+                            ExportImage(image, Path.Combine(parent, name + ".png"));
+
+                            UnloadImage(image);
                         }
                         
                         _globalSave = false;

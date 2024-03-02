@@ -1630,7 +1630,7 @@ internal class PropsEditorPage : IPage
                     var current = GLOBALS.Level.Props[p];
                     
                     // Filter based on depth
-                    if (current.prop.Depth > -20 || current.type == InitPropType.Rope) continue;
+                    if (current.prop.Depth > -20) continue;
 
                     var (category, index) = current.position;
                     var quads = current.prop.Quads;
@@ -1790,7 +1790,7 @@ internal class PropsEditorPage : IPage
                     var current = GLOBALS.Level.Props[p];
                     
                     // Filter based on depth
-                    if (current.prop.Depth > -10 || current.prop.Depth < -19 || current.type == InitPropType.Rope) continue;
+                    if (current.prop.Depth > -10 || current.prop.Depth < -19) continue;
 
                     var (category, index) = current.position;
                     var quads = current.prop.Quads;

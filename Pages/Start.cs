@@ -52,9 +52,13 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                                 }
                             }
                         }
-                        
-                        ((TileHead)cell.Data).CategoryPostition = (-1, -1, name);
 
+                        var data = (TileHead)cell.Data;
+                        
+                        data.CategoryPostition = (-1, -1, name);
+
+                        res.TileMatrix![y, x, z] = cell with { Data = data };
+                        
                         // Tile not found
                         return TileCheckResult.Missing;
                     }

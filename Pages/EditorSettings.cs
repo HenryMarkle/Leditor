@@ -208,6 +208,11 @@ public class SettingsPage : IPage
                     new Rectangle(subPanelX, categoryRect.Y + 50, 20, 20),
                     "Shortcuts Window",
                     GLOBALS.Settings.GeneralSettings.ShortcutWindow);
+
+                GLOBALS.Settings.GeneralSettings.DarkTheme = GuiCheckBox(
+                    new Rectangle(subPanelX, categoryRect.Y + 75, 20, 20),
+                    "Dark Theme",
+                    GLOBALS.Settings.GeneralSettings.DarkTheme);
             }
                 break;
             case 1: // Geometry Editor
@@ -1168,11 +1173,11 @@ public class SettingsPage : IPage
                         
                         GuiLabel(new Rectangle(430, 425, 100, 30), "Undo");
                         var assignUndo = GuiButton(new Rectangle(610, 425, 200, 30),
-                            $"");
+                            $"{GLOBALS.Settings.Shortcuts.TileEditor.Undo}");
                         
                         GuiLabel(new Rectangle(430, 460, 100, 30), "Redo");
                         var assignRedo = GuiButton(new Rectangle(610, 460, 200, 30),
-                            $""); 
+                            $"{GLOBALS.Settings.Shortcuts.TileEditor.Redo}"); 
                         
                         GuiLabel(new Rectangle(430, 495, 100, 40), "Draw");
                         var assignAltDraw = GuiButton(new Rectangle(610, 495, 200, 30),

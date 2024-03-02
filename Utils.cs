@@ -436,20 +436,6 @@ internal static class Utils
         }
     }
 
-    public static void PlaceMaterial((string name, Color color) material, (int x, int y, int z) position)
-    {
-        var (x, y, z) = position;
-        var cell = GLOBALS.Level.TileMatrix[y, x, z];
-
-        if (cell.Type != TileType.Default && cell.Type != TileType.Material) return;
-
-        cell.Type = TileType.Material;
-        cell.Data = new TileMaterial(material.name);
-
-        GLOBALS.Level.TileMatrix[y, x, z] = cell;
-        GLOBALS.Level.MaterialColors[y, x, z] = material.color;
-    }
-
     public static void PlaceMaterial((string name, Color color) material, (int x, int y, int z) position, int radius)
     {
         var (x, y, z) = position;
@@ -479,17 +465,6 @@ internal static class Utils
         }
     }
     
-    public static void RemoveMaterial(int x, int y, int z)
-    {
-        var cell = GLOBALS.Level.TileMatrix[y, x, z];
-
-        if (cell.Type != TileType.Material) return;
-
-        cell.Type = TileType.Default;
-        cell.Data = new TileDefault();
-
-        GLOBALS.Level.TileMatrix[y, x, z] = cell;
-    }
     public static void RemoveMaterial(int x, int y, int z, int radius)
     {
         for (var lx = -radius; lx < radius+1; lx++)

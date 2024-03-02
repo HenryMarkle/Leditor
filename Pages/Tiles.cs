@@ -28,12 +28,12 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
     private bool _highlightPaths;
 
-    private int _tileItemFocus;
-    private int _tileCategoryItemFocus;
-    
-    private int _materialItemFocus;
-    private int _materialCategoryFocus;
-    
+    private bool _drawClickTracker;
+    private bool _eraseClickTracker;
+
+    private int _prevPosX = -1;
+    private int _prevPosY = -1;
+
     private bool _showLayer1Tiles = true;
     private bool _showLayer2Tiles = true;
     private bool _showLayer3Tiles = true;
@@ -63,10 +63,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
     private bool _isSpecsWinHovered;
     private bool _isSpecsWinDragged;
 
-    /*
-    private readonly TileGram _gram = new(30);
-    private List<TileGram.IPlaceAction> _tempPlaceGroupActions = [];
-    private List<TileGram.IRemoveAction> _tempRemoveGroupActions = [];*/
+    private List<Gram.ISingleAction<TileCell>> _tempActions = [];
 
     private void ToNextTileCategory(int pageSize)
     {
@@ -127,6 +124,469 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
             _materialIndex = 0;
         }
+    }
+
+    private static bool IsCoordsInBounds(Coords position)
+    {
+        var outX = position.X < 0 || position.X >= GLOBALS.Level.Width;
+        var outY = position.Y < 0 || position.Y >= GLOBALS.Level.Height;
+        var outZ = position.Z is < 0 or > 2;
+
+        return !outX && !outY && !outZ;
+    }
+
+    private static void Undo()
+    {
+        var currentAction = GLOBALS.Gram.Current;
+
+        UndoThis(currentAction);
+        GLOBALS.Gram.Undo();
+        return;
+
+        void UndoThis(Gram.IAction action)
+        {
+            switch (action)
+            {
+                case Gram.TileAction tileAction:
+                {
+                    if (!IsCoordsInBounds(tileAction.Position)) return;
+
+                    var (x, y, z) = tileAction.Position;
+
+                    GLOBALS.Level.TileMatrix[y, x, z] = tileAction.Old;
+
+                    if (tileAction.Old.Data is TileMaterial m) 
+                        GLOBALS.Level.MaterialColors[y, x, z] = GLOBALS.MaterialColors[m.Name];
+                    
+                }
+                    break;
+                
+                case Gram.GroupAction<TileCell> groupAction:
+                    foreach (var a in groupAction.Actions.Reverse()) UndoThis(a);
+                    break;
+            }
+        }
+    }
+    
+    private void Redo()
+    {
+        var currentAction = GLOBALS.Gram.Current;
+
+        GLOBALS.Gram.Redo();
+        UndoThis(currentAction);
+        return;
+
+        void UndoThis(Gram.IAction action)
+        {
+            switch (action)
+            {
+                case Gram.TileAction tileAction:
+                {
+                    if (!IsCoordsInBounds(tileAction.Position)) return;
+
+                    var (x, y, z) = tileAction.Position;
+
+                    GLOBALS.Level.TileMatrix[y, x, z] = tileAction.New;
+
+                    if (tileAction.Old.Data is TileMaterial m) 
+                        GLOBALS.Level.MaterialColors[y, x, z] = GLOBALS.MaterialColors[m.Name];
+                    
+                }
+                    break;
+                
+                case Gram.GroupAction<TileCell> groupAction:
+                    foreach (var a in groupAction.Actions) UndoThis(a);
+                    break;
+            }
+        }
+    }
+    
+    private static List<Gram.ISingleAction<TileCell>> RemoveMaterial(int x, int y, int z, int radius)
+    {
+        List<Gram.ISingleAction<TileCell>> actions = [];
+        
+        for (var lx = -radius; lx < radius+1; lx++)
+        {
+            var matrixX = x + lx;
+            
+            if (matrixX < 0 || matrixX >= GLOBALS.Level.Width) continue;
+            
+            for (var ly = -radius; ly < radius+1; ly++)
+            {
+                var matrixY = y + ly;
+                
+                if (matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
+
+                var cell = GLOBALS.Level.TileMatrix[matrixY, matrixX, z];
+                
+                if (cell.Type != TileType.Default && cell.Type != TileType.Material) continue;
+
+                var newCell = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                
+                actions.Add(new Gram.TileAction((lx, ly, x), cell, newCell));
+                
+                GLOBALS.Level.TileMatrix[matrixY, matrixX, z] = newCell;
+            }
+        }
+        
+        return actions;
+    }
+    
+    private static List<Gram.ISingleAction<TileCell>> PlaceMaterial((string name, Color color) material, (int x, int y, int z) position, int radius)
+    {
+        var (x, y, z) = position;
+
+        List<Gram.ISingleAction<TileCell>> actions = [];
+
+        for (var lx = -radius; lx < radius+1; lx++)
+        {
+            var matrixX = x + lx;
+            
+            if (matrixX < 0 || matrixX >= GLOBALS.Level.Width) continue;
+            
+            for (var ly = -radius; ly < radius+1; ly++)
+            {
+                var matrixY = y + ly;
+                
+                if (matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
+
+                var cell = GLOBALS.Level.TileMatrix[matrixY, matrixX, z];
+                
+                if (cell.Type != TileType.Default && cell.Type != TileType.Material) continue;
+
+                var newCell = new TileCell { Type = TileType.Material, Data = new TileMaterial(material.name) }; // waste of space, ik
+                actions.Add(new Gram.TileAction((matrixX, matrixY, z), cell, newCell));
+                
+                GLOBALS.Level.TileMatrix[matrixY, matrixX, z] = newCell;
+                GLOBALS.Level.MaterialColors[matrixY, matrixX, z] = material.color;
+            }
+        }
+        
+        return actions;
+    }
+    
+    private static List<Gram.ISingleAction<TileCell>> RemoveTile(int mx, int my, int mz)
+    {
+        var cell = GLOBALS.Level.TileMatrix[my, mx, mz];
+
+        List<Gram.ISingleAction<TileCell>> actions = [];
+
+        if (cell.Data is TileHead h)
+        {
+            if (h.CategoryPostition is (-1, -1, _))
+            {
+                var oldCell = GLOBALS.Level.TileMatrix[my, mx, mz];
+                var newCell = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                
+                GLOBALS.Level.TileMatrix[my, mx, mz] = newCell;
+                
+                return [ new Gram.TileAction((mx, my, mz), oldCell, newCell) ];
+            }
+            
+            //Console.WriteLine($"Deleting tile head at ({mx},{my},{mz})");
+            var data = h;
+            var tileInit = GLOBALS.Tiles[data.CategoryPostition.Item1][data.CategoryPostition.Item2];
+            var (width, height) = tileInit.Size;
+
+            bool isThick = tileInit.Specs2.Length > 0;
+
+            // get the "middle" point of the tile
+            var head = Utils.GetTileHeadOrigin(tileInit);
+
+            // the top-left of the tile
+            var start = RayMath.Vector2Subtract(new(mx, my), head);
+
+            for (var y = 0; y < height; y++)
+            {
+                for (var x = 0; x < width; x++)
+                {
+                    var matrixX = x + (int)start.X;
+                    var matrixY = y + (int)start.Y;
+
+                    if (matrixX < 0 || matrixX >= GLOBALS.Level.Width || matrixY < 0 || matrixY >=GLOBALS.Level.Height) continue;
+
+                    var oldCell = GLOBALS.Level.TileMatrix[matrixY, matrixX, mz];
+                    var newCell = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                    
+                    actions.Add(new Gram.TileAction((matrixX, matrixY, mz), oldCell, newCell));
+
+                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = newCell;
+                    
+                    if (isThick && mz != 2)
+                    {
+                        var oldCell2 = GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1];
+                        var newCell2 = new TileCell
+                            { Type = TileType.Default, Data = new TileDefault() };
+                        
+                        actions.Add(new Gram.TileAction((matrixX, matrixY, mz + 1), oldCell2, newCell2));
+                        
+                        GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = newCell2;
+                    }
+                }
+            }
+        }
+        else if (cell.Type == TileType.TileBody)
+        {
+            var (headX, headY, headZ) = ((TileBody)cell.Data).HeadPosition;
+
+            // This is done because Lingo is 1-based index
+            var supposedHead = GLOBALS.Level.TileMatrix[headY - 1, headX - 1, headZ - 1];
+
+            // if the head was not found, only delete the given tile body
+            if (supposedHead.Data is TileHead { CategoryPostition: (-1, -1, _) } or not TileHead)
+            {
+                //Console.WriteLine($"({mx}, {my}, {mz}) reported that ({headX}, {headY}, {headZ}) is supposed to be a tile head, but was found to be a body");
+                GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell() { Type = TileType.Default, Data = new TileDefault() };
+                return [];
+            }
+
+            var headTile = (TileHead)supposedHead.Data;
+            
+            var tileInit = GLOBALS.Tiles[headTile.CategoryPostition.Item1][headTile.CategoryPostition.Item2];
+            var (width, height) = tileInit.Size;
+
+            var isThick = tileInit.Specs2.Length > 0;
+
+            // get the "middle" point of the tile
+            var head = Utils.GetTileHeadOrigin(tileInit);
+
+            // the top-left of the tile
+            var start = RayMath.Vector2Subtract(new(headX, headY), RayMath.Vector2AddValue(head, 1));
+
+            for (var y = 0; y < height; y++)
+            {
+                for (var x = 0; x < width; x++)
+                {
+                    var matrixX = x + (int)start.X;
+                    var matrixY = y + (int)start.Y;
+                    
+                    if (matrixX < 0 || matrixX >= GLOBALS.Level.Width || matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
+
+                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                    if (isThick && mz != 2) GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                }
+            }
+        }
+
+        return actions;
+    }
+    
+    private static List<Gram.ISingleAction<TileCell>> ForcePlaceTileWithGeo(
+        in InitTile init,
+        int tileCategoryIndex,
+        int tileIndex,
+        (int x, int y, int z) matrixPosition
+    )
+    {
+        var (mx, my, mz) = matrixPosition;
+        var (width, height) = init.Size;
+        var specs = init.Specs;
+        var specs2 = init.Specs2;
+
+        // get the "middle" point of the tile
+        var head = Utils.GetTileHeadOrigin(init);
+
+        // the top-left of the tile
+        var start = RayMath.Vector2Subtract(new(mx, my), head);
+        
+        // First remove tile heads in the way
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var matrixX = x + (int)start.X;
+                var matrixY = y + (int)start.Y;
+
+                if (
+                    !(matrixX >= 0 &&
+                      matrixX < GLOBALS.Level.GeoMatrix.GetLength(1) &&
+                      matrixY >= 0 &&
+                      matrixY < GLOBALS.Level.GeoMatrix.GetLength(0))
+                ) continue;
+
+                ref var cell = ref GLOBALS.Level.TileMatrix[matrixY, matrixX, mz];
+
+                if (cell.Data is TileHead) RemoveTile(matrixX, matrixY, mz);
+            }
+        }
+        
+        // Record the action
+
+        var newTileHead = new TileCell
+        {
+            Type = TileType.TileHead,
+            Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
+        };
+        
+        List<Gram.ISingleAction<TileCell>> actions =
+        [
+            new Gram.TileAction(matrixPosition, GLOBALS.Level.TileMatrix[my, mx, mz], newTileHead)
+        ];
+
+        // Place the head of the tile at matrixPosition
+        GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell()
+        {
+            Type = TileType.TileHead,
+            Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
+        };
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var matrixX = x + (int)start.X;
+                var matrixY = y + (int)start.Y;
+
+                // This function depends on the rest of the program to guarantee that all level matrices have the same x and y dimensions
+                if (
+                    matrixX >= 0 &&
+                    matrixX < GLOBALS.Level.GeoMatrix.GetLength(1) &&
+                    matrixY >= 0 &&
+                    matrixY < GLOBALS.Level.GeoMatrix.GetLength(0)
+                )
+                {
+                    var specsIndex = (x * height) + y;
+
+                    var spec = specs[specsIndex];
+                    var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
+
+                    if (spec != -1) GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz].Geo = spec;
+                    if (spec2 != -1 && mz != 2) GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz + 1].Geo = spec2;
+                    
+                    // leave the newly placed tile head
+                    if (x == (int)head.X && y == (int)head.Y) continue;
+                    
+                    var newCell = new TileCell
+                    {
+                        Type = TileType.TileBody,
+                        Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                    };
+                    
+                    actions.Add(new Gram.TileAction((matrixX, matrixY, mz), GLOBALS.Level.TileMatrix[matrixY, matrixX, mz], newCell));
+
+                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = newCell;
+
+                    if (specs2.Length > 0 && mz != 2)
+                    {
+                        var newerCell = new TileCell
+                        {
+                            Type = TileType.TileBody,
+                            Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                        };
+                        
+                        actions.Add(new Gram.TileAction((matrixX, matrixY, mz+1), GLOBALS.Level.TileMatrix[matrixY, matrixX, mz], newCell));
+                        
+                        GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = newerCell;
+                    }
+                }
+            }
+        }
+
+        return actions;
+    }
+    
+    private static List<Gram.ISingleAction<TileCell>> ForcePlaceTileWithoutGeo(
+        in InitTile init,
+        int tileCategoryIndex,
+        int tileIndex,
+        (int x, int y, int z) matrixPosition
+    )
+    {
+        var (mx, my, mz) = matrixPosition;
+        var (width, height) = init.Size;
+        var specs = init.Specs;
+        var specs2 = init.Specs2;
+
+        // get the "middle" point of the tile
+        var head = Utils.GetTileHeadOrigin(init);
+
+        // the top-left of the tile
+        var start = RayMath.Vector2Subtract(new(mx, my), head);
+        
+        // First remove tile heads in the way
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var matrixX = x + (int)start.X;
+                var matrixY = y + (int)start.Y;
+
+                if (
+                    !(matrixX >= 0 &&
+                      matrixX < GLOBALS.Level.GeoMatrix.GetLength(1) &&
+                      matrixY >= 0 &&
+                      matrixY < GLOBALS.Level.GeoMatrix.GetLength(0))
+                ) continue;
+
+                ref var cell = ref GLOBALS.Level.TileMatrix[matrixY, matrixX, mz];
+
+                if (cell.Data is TileHead) RemoveTile(matrixX, matrixY, mz);
+            }
+        }
+        
+        // Record the action
+
+        var newTileHead = new TileCell
+        {
+            Type = TileType.TileHead,
+            Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
+        };
+        
+        List<Gram.ISingleAction<TileCell>> actions =
+        [
+            new Gram.TileAction(matrixPosition, GLOBALS.Level.TileMatrix[my, mx, mz], newTileHead)
+        ];
+
+        // Place the head of the tile at matrixPosition
+        GLOBALS.Level.TileMatrix[my, mx, mz] = newTileHead;
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                // leave the newly placed tile head
+                if (x == (int)head.X && y == (int)head.Y) continue;
+
+                var matrixX = x + (int)start.X;
+                var matrixY = y + (int)start.Y;
+
+                // This function depends on the rest of the program to guarantee that all level matrices have the same x and y dimensions
+                if (
+                    matrixX >= 0 &&
+                    matrixX < GLOBALS.Level.GeoMatrix.GetLength(1) &&
+                    matrixY >= 0 &&
+                    matrixY < GLOBALS.Level.GeoMatrix.GetLength(0)
+                )
+                {
+                    var newCell = new TileCell
+                    {
+                        Type = TileType.TileBody,
+                        Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                    };
+                    
+                    actions.Add(new Gram.TileAction((matrixX, matrixY, mz), GLOBALS.Level.TileMatrix[matrixY, matrixX, mz], newCell));
+
+                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = newCell;
+
+                    if (specs2.Length > 0 && mz != 2)
+                    {
+                        var newerCell = new TileCell
+                        {
+                            Type = TileType.TileBody,
+                            Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                        };
+                        
+                        actions.Add(new Gram.TileAction((matrixX, matrixY, mz+1), GLOBALS.Level.TileMatrix[matrixY, matrixX, mz], newCell));
+                        
+                        GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = newerCell;
+                    }
+                }
+            }
+        }
+        
+        return actions;
     }
 
     public void Draw()
@@ -241,6 +701,16 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             GLOBALS.Page = 9;
         }
         
+        // Undo
+
+        if (_shortcuts.Undo.Check(ctrl, shift, alt)) Undo();
+        
+        // Redo
+        
+        if (_shortcuts.Redo.Check(ctrl, shift, alt)) Redo();
+        
+        //
+        
         if (_shortcuts.PickupItem.Check(ctrl, shift, alt) && canDrawTile && inMatrixBounds)
         {
             switch (GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer].Data)
@@ -277,82 +747,80 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             {
                 if (_shortcuts.ForcePlaceTileWithGeo.Check(ctrl, shift, alt, true))
                 {
-                    Utils.ForcePlaceTileWithGeo(
-                        currentTileInit, 
-                        _tileCategoryIndex, 
-                        _tileIndex, 
-                        (tileMatrixX, tileMatrixY, 
-                            GLOBALS.Layer
-                        )
-                    );
-                    
-                    /*_tempPlaceGroupActions.Add(
-                        new TileGram.PlaceTileAction(
-                            (tileMatrixX, tileMatrixY, GLOBALS.Layer), 
-                            (_tileCategoryIndex, _tileIndex), 
-                            true
-                        )
-                    );*/
+                    if (!_drawClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY)
+                    {
+                        var actions = ForcePlaceTileWithGeo(
+                            currentTileInit, 
+                            _tileCategoryIndex, 
+                            _tileIndex, 
+                            (tileMatrixX, tileMatrixY, 
+                                GLOBALS.Layer
+                            )
+                        );
+                        
+                        foreach (var action in actions) _tempActions.Add(action);
+                    }
                 } 
                 else if (_shortcuts.ForcePlaceTileWithoutGeo.Check(ctrl, shift, alt, true))
                 {
-                    Utils.ForcePlaceTileWithoutGeo(
-                        currentTileInit, 
-                        _tileCategoryIndex, 
-                        _tileIndex, 
-                        (tileMatrixX, tileMatrixY, 
-                            GLOBALS.Layer
-                        )
-                    );
-                    
-                    /*_tempPlaceGroupActions.Add(
-                        new TileGram.PlaceTileAction(
-                            (tileMatrixX, tileMatrixY, GLOBALS.Layer), 
-                            (_tileCategoryIndex, _tileIndex), 
-                            false
-                        )
-                    );*/
+                    if (!_drawClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY)
+                    {
+                        var actions = ForcePlaceTileWithoutGeo(
+                            currentTileInit, 
+                            _tileCategoryIndex, 
+                            _tileIndex, 
+                            (tileMatrixX, tileMatrixY, 
+                                GLOBALS.Layer
+                            )
+                        );
+                        
+                        foreach (var action in actions) _tempActions.Add(action);
+                    }
                 }
                 else
                 {
                     if (isTileLegal)
                     {
-                        Utils.ForcePlaceTileWithGeo(
-                            currentTileInit,
-                            _tileCategoryIndex,
-                            _tileIndex,
-                            (tileMatrixX, tileMatrixY,
-                                GLOBALS.Layer
-                            )
-                        );
-                        
-                        /*_tempPlaceGroupActions.Add(
-                            new TileGram.PlaceTileAction(
-                                (tileMatrixX, tileMatrixY, GLOBALS.Layer), 
-                                (_tileCategoryIndex, _tileIndex), 
-                                false
-                            )
-                        );*/
+                        if (!_drawClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY)
+                        {
+                            var actions = ForcePlaceTileWithGeo(
+                                currentTileInit,
+                                _tileCategoryIndex,
+                                _tileIndex,
+                                (tileMatrixX, tileMatrixY,
+                                    GLOBALS.Layer
+                                )
+                            );
+                            
+                            foreach (var action in actions) _tempActions.Add(action);
+                        }
                     }
                 }
             }
             else
             {
-                Utils.PlaceMaterial(currentMaterialInit, (tileMatrixX, tileMatrixY, GLOBALS.Layer), _materialBrushRadius);
-                
-                /*_tempPlaceGroupActions.Add(
-                    new TileGram.PlaceMaterialAction(
-                        (tileMatrixX, tileMatrixY, GLOBALS.Layer), 
-                        currentMaterialInit.Item1
-                    )
-                );*/
+                if (!_drawClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY)
+                {
+                    var actions = PlaceMaterial(currentMaterialInit, (tileMatrixX, tileMatrixY, GLOBALS.Layer), _materialBrushRadius);
+
+                    foreach (var action in actions) _tempActions.Add(action);
+                }
             }
+
+            _prevPosX = tileMatrixX;
+            _prevPosY = tileMatrixY;
+            
+            _drawClickTracker = true;
         }
-        if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw.Key)) && _clickTracker)
+        if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw.Key)) && _drawClickTracker)
         {
-            /*_clickTracker = false;
-            _gram.Proceed(new TileGram.PlaceGroupAction([.._tempPlaceGroupActions]));
-            _tempPlaceGroupActions.Clear();*/
+            GLOBALS.Gram.Proceed(new Gram.GroupAction<TileCell>([.._tempActions]));
+            _tempActions.Clear();
+            
+            _prevPosX = -1;
+            _prevPosY = -1;
+            
+            _drawClickTracker = false;
         }
 
         if (canDrawTile || _clickTracker)
@@ -377,13 +845,26 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 {
                     case TileHead:
                     case TileBody:
-                        Utils.RemoveTile(tileMatrixX, tileMatrixY, GLOBALS.Layer);
-                        break;
-                    
+                    if (!_eraseClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY) {
+                        var actions = RemoveTile(tileMatrixX, tileMatrixY, GLOBALS.Layer);
+                        
+                        foreach (var action in actions) _tempActions.Add(action);
+                    }
+                    break;
+
                     case TileMaterial:
-                        Utils.RemoveMaterial(tileMatrixX, tileMatrixY, GLOBALS.Layer, _materialBrushRadius);
-                        break;
+                    if (!_eraseClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY) {
+                        var actions = RemoveMaterial(tileMatrixX, tileMatrixY, GLOBALS.Layer, _materialBrushRadius);
+                        
+                        foreach (var action in actions) _tempActions.Add(action);
+                    }
+                    break;
                 }
+                
+                _prevPosX = tileMatrixX;
+                _prevPosY = tileMatrixY;
+            
+                _eraseClickTracker = true;
             }
 
             // handle zoom
@@ -403,6 +884,16 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     if (_camera.zoom < GLOBALS.ZoomIncrement) _camera.zoom = GLOBALS.ZoomIncrement;
                 }
             }
+        }
+
+        if (IsMouseButtonReleased(_shortcuts.Erase.Button) && _eraseClickTracker)
+        {
+            _tempActions.Clear();
+            
+            _prevPosX = -1;
+            _prevPosY = -1;
+            
+            _eraseClickTracker = false;
         }
 
 
@@ -549,19 +1040,18 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
         BeginDrawing();
 
-        ClearBackground(new(170, 170, 170, 255));
+        if (GLOBALS.Settings.GeneralSettings.DarkTheme)
+            ClearBackground(new Color(110, 110, 110, 255));
+        else ClearBackground(new Color(170, 170, 170, 255));
 
         BeginMode2D(_camera);
         {
-            // DrawRectangle(
-            //     0, 
-            //     0, 
-            //     GLOBALS.Level.Width * GLOBALS.Scale, 
-            //     GLOBALS.Level.Height * GLOBALS.Scale, 
-            //     GLOBALS.Layer == 2 ? GRAY with { a = 100 } : WHITE
-            // );
-
             #region Matrix
+            
+            DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale,
+                GLOBALS.Settings.GeneralSettings.DarkTheme
+                    ? new Color(50, 50, 50, 255)
+                    : WHITE);
 
             #region TileEditorLayer3
             // Draw geos first
@@ -661,6 +1151,15 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 }
             }
             #endregion
+            
+            // Dark Theme
+
+            if (GLOBALS.Settings.GeneralSettings.DarkTheme)
+            {
+                DrawRectangleLines(0, 0, GLOBALS.Level.Width*GLOBALS.Scale, GLOBALS.Level.Height*GLOBALS.Scale, WHITE);
+            }
+            
+            //
 
             if (_highlightPaths)
             {
@@ -676,12 +1175,11 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             
             #endregion
 
-
             // currently held tile
             if (_materialTileSwitch)
             {
                 var color = isTileLegal ? currentTilePreviewColor : RED;
-                Printers.DrawTilePreview(ref currentTileInit, ref currentTileTexture, ref color, (tileMatrixX, tileMatrixY));
+                Printers.DrawTilePreview(ref currentTileInit, ref currentTileTexture, ref color, (tileMatrixX, tileMatrixY), GLOBALS.Scale);
 
                 EndShaderMode();
             }
@@ -710,22 +1208,16 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             }
             else
             {
-                /*rlImGui.Begin();
-
-                ImGui.Begin("Window");
-                ImGui.Text("TEST");
-                
-                
-                ImGui.End();
-                rlImGui.End();*/
-                
-                if (inMatrixBounds) DrawText(
-                    $"x: {tileMatrixX}, y: {tileMatrixY}",
-                    tileMatrixX * GLOBALS.Scale + GLOBALS.Scale,
-                    tileMatrixY * GLOBALS.Scale - GLOBALS.Scale,
-                    15,
-                    WHITE
-                );
+                if (inMatrixBounds)
+                {
+                    DrawText(
+                        $"x: {tileMatrixX}, y: {tileMatrixY}",
+                        tileMatrixX * GLOBALS.Scale + GLOBALS.Scale,
+                        tileMatrixY * GLOBALS.Scale - GLOBALS.Scale,
+                        15,
+                        WHITE
+                    );
+                }
             }
         }
         EndMode2D();

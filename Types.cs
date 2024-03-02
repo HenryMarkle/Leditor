@@ -390,17 +390,17 @@ public class EffectsShortcuts : IEditorShortcuts
 
 public class PropsShortcuts : IEditorShortcuts
 {
-    public KeyboardShortcut EscapeSpinnerControl { get; set; } = KeyboardKey.KEY_ESCAPE;
-    public KeyboardShortcut CycleLayers { get; set; } = KeyboardKey.KEY_L;
+    public KeyboardShortcut EscapeSpinnerControl { get; set; } = new(KeyboardKey.KEY_ESCAPE, ctrl: false, shift: false, alt: false);
+    public KeyboardShortcut CycleLayers { get; set; } = new(KeyboardKey.KEY_L, ctrl: false, shift: false, alt: false);
 
     public KeyboardShortcut CycleModeRight { get; set; } = new(KeyboardKey.KEY_E, shift:true);
     public KeyboardShortcut CycleModeLeft { get; set; } = new(KeyboardKey.KEY_Q, shift:true);
 
     public KeyboardShortcut CycleSnapMode { get; set; } = new(KeyboardKey.KEY_NULL);
 
-    public KeyboardShortcut ToggleLayer1 { get; set; } = KeyboardKey.KEY_Z;
-    public KeyboardShortcut ToggleLayer2 { get; set; } = KeyboardKey.KEY_X;
-    public KeyboardShortcut ToggleLayer3 { get; set; } = KeyboardKey.KEY_C;
+    public KeyboardShortcut ToggleLayer1 { get; set; } = new(KeyboardKey.KEY_Z, ctrl: false, shift: false, alt: false);
+    public KeyboardShortcut ToggleLayer2 { get; set; } = new(KeyboardKey.KEY_X, ctrl: false, shift: false, alt: false);
+    public KeyboardShortcut ToggleLayer3 { get; set; } = new(KeyboardKey.KEY_C, ctrl: false, shift: false, alt: false);
 
     public KeyboardShortcut ToggleLayer1Tiles { get; set; } = new(KeyboardKey.KEY_Z, shift:true);
     public KeyboardShortcut ToggleLayer2Tiles { get; set; } = new(KeyboardKey.KEY_X, shift:true);
@@ -409,27 +409,27 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut CycleCategoriesRight { get; set; } = new(KeyboardKey.KEY_D, shift: true);
     public KeyboardShortcut CycleCategoriesLeft { get; set; } = new(KeyboardKey.KEY_A, shift: true);
 
-    public KeyboardShortcut InnerCategoryFocusRight { get; set; } = KeyboardKey.KEY_D;
-    public KeyboardShortcut InnerCategoryFocusLeft { get; set; } = KeyboardKey.KEY_A;
+    public KeyboardShortcut InnerCategoryFocusRight { get; set; } = new(KeyboardKey.KEY_D, ctrl: false, shift: false, alt: false);
+    public KeyboardShortcut InnerCategoryFocusLeft { get; set; } = new(KeyboardKey.KEY_A, ctrl: false, shift: false, alt: false);
 
-    public KeyboardShortcut NavigateMenuUp { get; set; } = KeyboardKey.KEY_W;
-    public KeyboardShortcut NavigateMenuDown { get; set; } = KeyboardKey.KEY_S;
+    public KeyboardShortcut NavigateMenuUp { get; set; } = new(KeyboardKey.KEY_W, ctrl: false, shift: false, alt: false);
+    public KeyboardShortcut NavigateMenuDown { get; set; } = new(KeyboardKey.KEY_S, ctrl: false, shift: false, alt: false);
 
-    public KeyboardShortcut PickupProp { get; set; } = KeyboardKey.KEY_Q;
+    public KeyboardShortcut PickupProp { get; set; } = new(KeyboardKey.KEY_Q, ctrl: false, shift: false, alt: false);
     
     public KeyboardShortcut PlacePropAlt { get; set; } = KeyboardKey.KEY_NULL;
     
-    public KeyboardShortcut DragLevelAlt { get; set; } = KeyboardKey.KEY_G;
+    public KeyboardShortcut DragLevelAlt { get; set; } = new(KeyboardKey.KEY_G, ctrl: false, shift: false, alt: false);
 
     
-    public KeyboardShortcut ToggleMovingPropsMode { get; set; } = KeyboardKey.KEY_F;
-    public KeyboardShortcut ToggleRotatingPropsMode { get; set; } = KeyboardKey.KEY_R;
-    public KeyboardShortcut ToggleScalingPropsMode { get; set; } = KeyboardKey.KEY_S;
-    public KeyboardShortcut TogglePropsVisibility { get; set; } = KeyboardKey.KEY_H;
-    public KeyboardShortcut ToggleEditingPropQuadsMode { get; set; } = new(KeyboardKey.KEY_Q, shift:false);
-    public KeyboardShortcut DeleteSelectedProps { get; set; } = KeyboardKey.KEY_D;
-    public KeyboardShortcut ToggleRopePointsEditingMode { get; set; } = KeyboardKey.KEY_P;
-    public KeyboardShortcut ToggleRopeEditingMode { get; set; } = KeyboardKey.KEY_B;
+    public KeyboardShortcut ToggleMovingPropsMode { get; set; } = new(KeyboardKey.KEY_F, ctrl: false, shift: false, alt: false);
+    public KeyboardShortcut ToggleRotatingPropsMode { get; set; } = new(KeyboardKey.KEY_R, ctrl: false, shift: false, alt: false);
+    public KeyboardShortcut ToggleScalingPropsMode { get; set; } = new(KeyboardKey.KEY_S, ctrl: false, shift: false, alt: false);
+    public KeyboardShortcut TogglePropsVisibility { get; set; } = new(KeyboardKey.KEY_H, ctrl: false, shift: false, alt: false);
+    public KeyboardShortcut ToggleEditingPropQuadsMode { get; set; } = new(KeyboardKey.KEY_Q, ctrl: false, shift: false, alt: false);
+    public KeyboardShortcut DeleteSelectedProps { get; set; } = new(KeyboardKey.KEY_D, ctrl: false, shift: false, alt: false);
+    public KeyboardShortcut ToggleRopePointsEditingMode { get; set; } = new(KeyboardKey.KEY_P, ctrl: false, shift: false, alt: false);
+    public KeyboardShortcut ToggleRopeEditingMode { get; set; } = new(KeyboardKey.KEY_B, ctrl: false, shift: false, alt: false);
 
     public KeyboardShortcut ToggleNoCollisionPropPlacement { get; set; } = KeyboardKey.KEY_NULL;
 
@@ -664,13 +664,15 @@ public class GeneralSettings(
     bool developerMode = false, 
     bool defaultFont = false, 
     bool globalCamera = true,
-    bool shortcutWindow = true
+    bool shortcutWindow = true,
+    bool darkTheme = false
     )
 {
     public bool DeveloperMode { get; set; } = developerMode;
     public bool DefaultFont { get; set; } = defaultFont;
     public bool GlobalCamera { get; set; } = globalCamera;
     public bool ShortcutWindow { get; set; } = shortcutWindow;
+    public bool DarkTheme { get; set; } = darkTheme;
 }
 
 public class Settings(
@@ -743,14 +745,14 @@ public struct TileCell {
 }
 
 
-public class TileDefault
+public struct TileDefault
 {
     public int Value => 0;
 
     public override string ToString() => $"TileDefault";
 }
 
-public class TileMaterial(string material)
+public struct TileMaterial(string material)
 {
     private string _data = material;
 
@@ -763,7 +765,7 @@ public class TileMaterial(string material)
     public override string ToString() => $"TileMaterial(\"{_data}\")";
 }
 
-public class TileHead(int category, int position, string name)
+public struct TileHead(int category, int position, string name)
 {
     private (int, int, string) _data = (category, position, name);
     
@@ -776,7 +778,7 @@ public class TileHead(int category, int position, string name)
     public override string ToString() => $"TileHead({_data.Item1}, {_data.Item2}, \"{_data.Item3}\")";
 }
 
-public class TileBody(int x, int y, int z)
+public struct TileBody(int x, int y, int z)
 {
     private (int x, int y, int z) _data = (x, y, z);
     public (int x, int y, int z) HeadPosition

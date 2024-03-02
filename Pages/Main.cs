@@ -59,19 +59,19 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
             var strTask = Leditor.Lingo.Exporters.ExportAsync(GLOBALS.Level);
 
             // export light map
-            var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
-
-            unsafe
-            {
-                ImageFlipVertical(&image);
-            }
-            
-            var parent = Directory.GetParent(path)?.FullName ?? GLOBALS.ProjectPath;
-            var name = Path.GetFileNameWithoutExtension(path);
-                    
-            ExportImage(image, Path.Combine(parent, name+".png"));
-            
-            UnloadImage(image);
+            // var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
+            //
+            // unsafe
+            // {
+            //     ImageFlipVertical(&image);
+            // }
+            //
+            // var parent = Directory.GetParent(path)?.FullName ?? GLOBALS.ProjectPath;
+            // var name = Path.GetFileNameWithoutExtension(path);
+            //         
+            // ExportImage(image, Path.Combine(parent, name+".png"));
+            //
+            // UnloadImage(image);
 
             var str = await strTask;
             
@@ -127,8 +127,12 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                             }
                         }
 
-                        ((TileHead)cell.Data).CategoryPostition = (-1, -1, name);
+                        var data = (TileHead)cell.Data;
+                        
+                        data.CategoryPostition = (-1, -1, name);
 
+                        res.TileMatrix![y, x, z] = cell with { Data = data };
+                        
                         // Tile not found
                         return TileCheckResult.Missing;
                     }
@@ -423,22 +427,44 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                                     return;
                                 }
                                 
-                                var parent = Directory.GetParent(_saveFileDialog.Result)?.FullName;
-                                
-                                GLOBALS.ProjectPath = parent ?? GLOBALS.ProjectPath;
-                                GLOBALS.Level.ProjectName = Path.GetFileNameWithoutExtension(_saveFileDialog.Result);
+                                // export light map
+                                {
+                                    var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
 
-                                _saveFileDialog = null;
-                                _saveResult = null;
-                                RayGui.GuiUnlock();
-                                EndDrawing();
+                                    unsafe
+                                    {
+                                        ImageFlipVertical(&image);
+                                    }
+
+                                    var parent = Directory.GetParent(path)?.FullName ?? GLOBALS.ProjectPath;
+                                    var name = Path.GetFileNameWithoutExtension(path);
+
+                                    ExportImage(image, Path.Combine(parent, name + ".png"));
+
+                                    UnloadImage(image);
+                                }
+
+                                {
+                                    var parent = Directory.GetParent(_saveFileDialog.Result)?.FullName;
+
+                                    GLOBALS.ProjectPath = parent ?? GLOBALS.ProjectPath;
+                                    GLOBALS.Level.ProjectName =
+                                        Path.GetFileNameWithoutExtension(_saveFileDialog.Result);
+
+                                    _saveFileDialog = null;
+                                    _saveResult = null;
+                                    RayGui.GuiUnlock();
+                                    EndDrawing();
+                                }
                             }
                         }
                         else
                         {
+                            var path = Path.Combine(GLOBALS.ProjectPath, GLOBALS.Level.ProjectName + ".txt");
+                            
                             if (_saveResult is null)
                             {
-                                _saveResult = SaveProjectAsync(Path.Combine(GLOBALS.ProjectPath, GLOBALS.Level.ProjectName+".txt"));
+                                _saveResult = SaveProjectAsync(path);
                                 EndDrawing();
                                 return;
                             }
@@ -461,6 +487,23 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                                 _saveResult = null;
                                 _saveFileDialog = null;
                                 return;
+                            }
+                            
+                            // export light map
+                            {
+                                var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
+
+                                unsafe
+                                {
+                                    ImageFlipVertical(&image);
+                                }
+
+                                var parent = Directory.GetParent(path)?.FullName ?? GLOBALS.ProjectPath;
+                                var name = Path.GetFileNameWithoutExtension(path);
+
+                                ExportImage(image, Path.Combine(parent, name + ".png"));
+
+                                UnloadImage(image);
                             }
                             
                             _saveFileDialog = null;
@@ -664,14 +707,19 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
             }
             else
             {
-                ClearBackground(new(170, 170, 170, 255));
+                ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
+                    ? BLACK 
+                    : new(170, 170, 170, 255));
 
                 BeginMode2D(_camera);
                 {
-                    DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, new(255, 255, 255, 255));
+                    DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale,
+                        GLOBALS.Settings.GeneralSettings.DarkTheme
+                            ? new Color(50, 50, 50, 255)
+                            : WHITE);
 
-                    Printers.DrawGeoLayer(2, GLOBALS.Scale, false, BLACK with { a = 150 });
-                    Printers.DrawGeoLayer(1, GLOBALS.Scale, false, BLACK with { a = 150 });
+                    Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(170, 170, 170, 255) : BLACK with { a = 150 });
+                    Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(120, 120, 120, 255) : BLACK with { a = 150 });
                     
                     if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                     {
@@ -696,6 +744,8 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                             new(0, 0, 255, 110)
                         );
                     }
+                    
+                    DrawRectangleLines(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, WHITE);
                 }
                 EndMode2D();
 

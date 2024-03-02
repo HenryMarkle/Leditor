@@ -131,118 +131,39 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
 
         #endregion
 
-        Raylib.BeginDrawing();
+        BeginDrawing();
         {
-            Raylib.ClearBackground(new(170, 170, 170, 255));
+            ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK : new(170, 170, 170, 255));
 
-            Raylib.BeginMode2D(_camera);
+            BeginMode2D(_camera);
             {
-
-                Raylib.DrawRectangle(
-                    0, 0,
-                    GLOBALS.Level.Width * GLOBALS.Scale,
-                    GLOBALS.Level.Height * GLOBALS.Scale,
-                    new(255, 255, 255, 255)
-                );
+                
+                DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale,
+                    GLOBALS.Settings.GeneralSettings.DarkTheme
+                        ? new Color(50, 50, 50, 255)
+                        : WHITE);
 
                 #region CamerasLevelBackground
 
-                for (int y = 0; y < GLOBALS.Level.Height; y++)
-                {
-                    for (int x = 0; x < GLOBALS.Level.Width; x++)
-                    {
-                        for (int z = 1; z < 3; z++)
-                        {
-                            var cell = GLOBALS.Level.GeoMatrix[y, x, z];
-
-                            var texture = Utils.GetBlockIndex(cell.Geo);
-
-                            if (texture >= 0)
-                            {
-                                Raylib.DrawTexture(GLOBALS.Textures.GeoBlocks[texture], x * GLOBALS.Scale, y * GLOBALS.Scale, new(0, 0, 0, 170));
-                            }
-                        }
-                    }
-                }
-
+                Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(170, 170, 170, 255) : BLACK with { a = 150 });
+                Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(120, 120, 120, 255) : BLACK with { a = 150 });
+                    
                 if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                 {
-                    Raylib.DrawRectangle(
+                    DrawRectangle(
                         (-1) * GLOBALS.Scale,
                         (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
                         (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
                         GLOBALS.Level.WaterLevel * GLOBALS.Scale,
-                        new(0, 0, 255, 255)
+                        new(0, 0, 255, 110)
                     );
                 }
-
-                for (int y = 0; y < GLOBALS.Level.Height; y++)
-                {
-                    for (int x = 0; x < GLOBALS.Level.Width; x++)
-                    {
-                        var cell = GLOBALS.Level.GeoMatrix[y, x, 0];
-
-                        var texture = Utils.GetBlockIndex(cell.Geo);
-
-                        if (texture >= 0)
-                        {
-                            DrawTexture(GLOBALS.Textures.GeoBlocks[texture], x * GLOBALS.Scale, y * GLOBALS.Scale, new(0, 0, 0, 225));
-                        }
-
-                        for (int s = 1; s < cell.Stackables.Length; s++)
-                        {
-                            if (cell.Stackables[s])
-                            {
-                                switch (s)
-                                {
-                                    // dump placement
-                                    case 1:     // ph
-                                    case 2:     // pv
-                                        Raylib.DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, BLACK);
-                                        break;
-                                    case 3:     // bathive
-                                    case 5:     // entrance
-                                    case 6:     // passage
-                                    case 7:     // den
-                                    case 9:     // rock
-                                    case 10:    // spear
-                                    case 12:    // forbidflychains
-                                    case 13:    // garbagewormhole
-                                    case 18:    // waterfall
-                                    case 19:    // wac
-                                    case 20:    // worm
-                                    case 21:    // scav
-                                        Raylib.DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE);
-                                        break;
-
-                                    // directional placement
-                                    case 4:     // entrance
-                                        var index = Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, 0));
-
-                                        if (index is 22 or 23 or 24 or 25)
-                                        {
-                                            GLOBALS.Level.GeoMatrix[y, x, 0].Geo = 7;
-                                        }
-
-                                        DrawTexture(GLOBALS.Textures.GeoStackables[index], x * GLOBALS.Scale, y * GLOBALS.Scale, WHITE);
-                                        break;
-                                    case 11:    // crack
-                                        DrawTexture(
-                                            GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, 0))],
-                                            x * GLOBALS.Scale,
-                                            y * GLOBALS.Scale,
-                                            BLACK
-                                        );
-                                        break;
-                                }
-                            }
-                        }
-                    }
-                }
+                    
+                Printers.DrawGeoLayer(0, GLOBALS.Scale, false, BLACK);
 
                 if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                 {
-                    Raylib.DrawRectangle(
+                    DrawRectangle(
                         (-1) * GLOBALS.Scale,
                         (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
                         (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
@@ -275,8 +196,13 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                     4f,
                     new(200, 66, 245, 255)
                 );
+                
+                if (GLOBALS.Settings.GeneralSettings.DarkTheme)
+                {
+                    DrawRectangleLines(0, 0, GLOBALS.Level.Width*GLOBALS.Scale, GLOBALS.Level.Height*GLOBALS.Scale, WHITE);
+                }
             }
-            Raylib.EndMode2D();
+            EndMode2D();
 
             #region CameraEditorUI
 

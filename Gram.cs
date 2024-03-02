@@ -104,20 +104,62 @@ public class GeoGram(int limit)
     }
 }
 
-public class TileGram(int limit)
+public class Gram(int limit)
 {
     public interface IAction { }
 
-    public record struct PlaceTileAction(Coords Position, InitTile Tile) : IAction;
-    public record struct RemoveTileAction(Coords Position, InitTile Tile) : IAction;
+    public interface ISingleAction<out T> : IAction
+    {
+        Coords Position { get; }
+        
+        T Old { get; }
+        T New { get; }
+    }
     
-    public record struct PlaceMaterialAction(Coords Position, string Material) : IAction;
-    public record struct RemoveMaterialAction(Coords Position, string Material) : IAction;
-    
+    public interface IGroupAction<out T> : IAction
+    {
+        IEnumerable<ISingleAction<T>> Actions { get; }
+    }
 
-    public record struct GroupAction(IEnumerable<IAction> Actions) : IAction;
     
     private LinkedList<IAction> Actions { get; init; } = [];
 
     private LinkedListNode<IAction>? _currentNode;
+    
+    public IAction? Current => _currentNode?.Value;
+
+
+    public void Proceed(IAction action)
+    {
+        if (_currentNode?.Next is not null)
+        {
+            _currentNode.Next.Value = action;
+            _currentNode = _currentNode.Next;
+            return;
+        }
+
+        Actions.AddLast(action);
+        _currentNode = Actions.Last;
+        
+        //
+        
+        if (Actions.Count == limit) Actions.RemoveFirst();
+    }
+    
+    
+    public void Redo()
+    {
+        _currentNode = _currentNode?.Next ?? _currentNode;
+    }
+
+    public void Undo()
+    {
+        _currentNode = _currentNode?.Previous ?? _currentNode;
+    }
+    
+    //
+
+    public record struct TileAction(Coords Position, TileCell Old, TileCell New) : ISingleAction<TileCell>;
+    public record struct GroupAction<TG>(IEnumerable<ISingleAction<TG>> Actions) : IGroupAction<TG>;
+
 }

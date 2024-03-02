@@ -1216,6 +1216,43 @@ internal static class Printers
     }
     
     internal static void DrawTilePreview(
+        ref InitTile init, 
+        ref Texture texture, 
+        ref Color color, 
+        (int x, int y) position,
+        int scale
+    )
+    {
+        var uniformLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "inputTexture");
+        var colorLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "highlightColor");
+        var heightStartLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "heightStart");
+        var heightLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "height");
+        var widthLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "width");
+
+        var startingTextureHeight = Utils.GetTilePreviewStartingHeight(init);
+        float calcStartingTextureHeight = (float)startingTextureHeight / (float)texture.height;
+        float calcTextureHeight = (float)(init.Size.Item2 * GLOBALS.PreviewScale) / (float)texture.height;
+        float calcTextureWidth = (float)(init.Size.Item1 * GLOBALS.PreviewScale) / (float)texture.width;
+
+        BeginShaderMode(GLOBALS.Shaders.TilePreview);
+        SetShaderValueTexture(GLOBALS.Shaders.TilePreview, uniformLoc, texture);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, colorLoc, new System.Numerics.Vector4(color.r, color.g, color.b, color.a), ShaderUniformDataType.SHADER_UNIFORM_VEC4);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, heightStartLoc, calcStartingTextureHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, heightLoc, calcTextureHeight, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, widthLoc, calcTextureWidth, ShaderUniformDataType.SHADER_UNIFORM_FLOAT);
+
+        DrawTexturePro(
+            texture,
+            new(0, 0, texture.width, texture.height),
+            new(position.x * scale, position.y * scale, init.Size.Item1 * scale, init.Size.Item2 * scale),
+            RayMath.Vector2Scale(Utils.GetTileHeadOrigin(init), scale),
+            0,
+            WHITE
+        );
+        EndShaderMode();
+    }
+    
+    internal static void DrawTilePreview(
         in InitTile init, 
         in Texture texture, 
         in Color color, 

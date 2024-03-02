@@ -808,11 +808,20 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
         BeginDrawing();
         {
-            ClearBackground(new Color(120, 120, 120, 255));
-
+            ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
+                ? BLACK 
+                : new Color(120, 120, 120, 255));
 
             BeginMode2D(_camera);
             {
+                DrawRectangle(
+                    0, 
+                    0, 
+                    GLOBALS.Level.Width * GLOBALS.Scale, 
+                    GLOBALS.Level.Height * GLOBALS.Scale, 
+                    new Color(120, 120, 120, 255)
+                );
+                
                 // geo matrix
 
                 // first layer without stackables
@@ -980,8 +989,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                 DrawRectangleLinesEx(GLOBALS.Level.Border, _camera.zoom < GLOBALS.ZoomIncrement ? 5 : 2, new(255, 255, 255, 255));
                 
                 // a lazy way to hide the rest of the grid
-                DrawRectangle(GLOBALS.Level.Width * -scale, -3, GLOBALS.Level.Width * scale, GLOBALS.Level.Height * 2 * scale, new(120, 120, 120, 255));
-                DrawRectangle(0, GLOBALS.Level.Height * scale, GLOBALS.Level.Width * scale + 2, GLOBALS.Level.Height * scale, new(120, 120, 120, 255));
+                // DrawRectangle(GLOBALS.Level.Width * -scale, -3, GLOBALS.Level.Width * scale, GLOBALS.Level.Height * 2 * scale, new(120, 120, 120, 255));
+                // DrawRectangle(0, GLOBALS.Level.Height * scale, GLOBALS.Level.Width * scale + 2, GLOBALS.Level.Height * scale, new(120, 120, 120, 255));
 
                 // the selection rectangle
 

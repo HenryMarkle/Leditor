@@ -809,6 +809,8 @@ internal static class GLOBALS
         ResizeFlag = false;
     }
     
-    internal static IntPtr WindowHandle { get; set; } 
+    internal static IntPtr WindowHandle { get; set; }
+
+    internal static Gram Gram { get; set; } = new(100);
 #nullable disable
 }
