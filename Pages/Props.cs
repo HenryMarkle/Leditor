@@ -151,6 +151,9 @@ internal class PropsEditorPage : IPage
 
     private bool _isRopeWinHovered;
     private bool _isRopeWinDragged;
+    
+    private bool _isNavigationWinHovered;
+    private bool _isNavigationWinDragged;
 
     internal PropsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null)
     {
@@ -367,6 +370,8 @@ internal class PropsEditorPage : IPage
                           !_isRopeWinDragged && 
                           !_isShortcutsWinHovered && 
                           !_isShortcutsWinDragged && 
+                          !_isNavigationWinHovered &&
+                          !_isNavigationWinDragged &&
                           !CheckCollisionPointRec(tileMouse, menuPanelRect) &&
                           !CheckCollisionPointRec(tileMouse, layer3Rect) &&
                           (GLOBALS.Layer != 1 || !CheckCollisionPointRec(tileMouse, layer2Rect)) &&
@@ -2746,6 +2751,7 @@ internal class PropsEditorPage : IPage
                             
                             // Update segment count if needed
 
+                            if (segmentCount < 1) segmentCount = 1;
 
                             if (segmentCount > oldSegmentCount)
                             {
@@ -3389,10 +3395,29 @@ internal class PropsEditorPage : IPage
         }
         #endregion
         
+        rlImGui.Begin();
+        
+        // Navigation
+            
+        var navWindowRect = Printers.ImGui.NavigationWindow();
+
+        _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
+        {
+            X = navWindowRect.X - 5, width = navWindowRect.width + 10
+        });
+                
+        if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+        {
+            _isNavigationWinDragged = true;
+        }
+        else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+        {
+            _isNavigationWinDragged = false;
+        }
+        
         // Shortcuts window
         if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
         {
-            rlImGui.Begin();
             var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.PropsEditor);
 
             _isShortcutsWinHovered = CheckCollisionPointRec(
@@ -3411,10 +3436,9 @@ internal class PropsEditorPage : IPage
             {
                 _isShortcutsWinDragged = false;
             }
-
-
-            rlImGui.End();
         }
+        
+        rlImGui.End();
 
         EndDrawing();
         #endregion

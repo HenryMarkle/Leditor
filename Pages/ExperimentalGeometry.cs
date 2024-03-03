@@ -78,6 +78,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
     
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
+
+    private bool _isNavigationWinHovered;
+    private bool _isNavigationWinDragged;
     
     private int _lastChangingMatrixX = -1;
     private int _lastChangingMatrixY = -1;
@@ -96,7 +99,6 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
         GLOBALS.PreviousPage = 2;
         var scale = GLOBALS.Scale;
         var settings = GLOBALS.Settings;
-        Span<Color> layerColors = [settings.GeometryEditor.LayerColors.Layer1, settings.GeometryEditor.LayerColors.Layer2, settings.GeometryEditor.LayerColors.Layer3];
 
         if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
         // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 2;
@@ -136,6 +138,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
         var canDrawGeo = !toggleCameraHovered &&
                          !_isShortcutsWinHovered && 
                          !_isShortcutsWinDragged && 
+                         !_isNavigationWinHovered &&
+                         !_isNavigationWinDragged &&
                          !CheckCollisionPointRec(GetMousePosition(), panelRect) &&
                          !CheckCollisionPointRec(uiMouse, layer3Rect) &&
                          (GLOBALS.Layer != 1 || !CheckCollisionPointRec(uiMouse, layer2Rect)) &&
@@ -1477,11 +1481,30 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                 BLACK
             );
             
+            rlImGui.Begin();
+            
+            // Navigation
+            
+            var navWindowRect = Printers.ImGui.NavigationWindow();
+
+            _isNavigationWinHovered = CheckCollisionPointRec(uiMouse, navWindowRect with
+            {
+                X = navWindowRect.X - 5, width = navWindowRect.width + 10
+            });
+                
+            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            {
+                _isNavigationWinDragged = true;
+            }
+            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+            {
+                _isNavigationWinDragged = false;
+            }
+            
             // Shortcuts Window
 
             if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
             {
-                rlImGui.Begin();
                 var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts);
             
                 _isShortcutsWinHovered = CheckCollisionPointRec(
@@ -1500,8 +1523,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                 {
                     _isShortcutsWinDragged = false;
                 }
-                rlImGui.End();
             }
+            
+            rlImGui.End();
         }
         EndDrawing();
         

@@ -60,7 +60,10 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
     {
         BeginDrawing();
 
-        ClearBackground(new(170, 170, 170, 255));
+        ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
+            ? new Color(100, 100, 100, 255) 
+            :  GRAY
+        );
 
         Rectangle panelRect = new(30, 60, Raylib.GetScreenWidth() - 60, Raylib.GetScreenHeight() - 120);
         Rectangle visualRect = new(panelRect.x + 300, panelRect.y + 50, panelRect.width - 320, panelRect.height - 70);

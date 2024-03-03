@@ -42,10 +42,6 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
     private bool _showTileLayer2 = true;
     private bool _showTileLayer3 = true;
 
-    private readonly byte[] _tilesPanelBytes = "Tiles"u8.ToArray();
-    private readonly byte[] _materialsPanelBytes = "Materials"u8.ToArray();
-    private readonly byte[] _tileSpecsPanelBytes = "Tile Specs"u8.ToArray();
-
     private readonly string[] _tileCategoryNames = [..GLOBALS.TileCategories.Select(t => t.Item1)];
     private readonly string[] _materialCategoryNames = [..GLOBALS.MaterialCategories];
 
@@ -62,6 +58,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
     
     private bool _isSpecsWinHovered;
     private bool _isSpecsWinDragged;
+    
+    private bool _isNavigationWinHovered;
+    private bool _isNavigationWinDragged;
 
     private List<Gram.ISingleAction<TileCell>> _tempActions = [];
 
@@ -623,6 +622,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                           !_isTilesWinDragged &&
                           !_isShortcutsWinHovered &&
                           !_isShortcutsWinDragged &&
+                          !_isNavigationWinHovered &&
+                          !_isNavigationWinDragged &&
                           !CheckCollisionPointRec(tileMouse, layer3Rect) &&
                           (GLOBALS.Layer != 1 || !CheckCollisionPointRec(tileMouse, layer2Rect)) &&
                           (GLOBALS.Layer != 0 || !CheckCollisionPointRec(tileMouse, layer1Rect));
@@ -1041,7 +1042,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         BeginDrawing();
 
         if (GLOBALS.Settings.GeneralSettings.DarkTheme)
-            ClearBackground(new Color(110, 110, 110, 255));
+            ClearBackground(BLACK);
         else ClearBackground(new Color(170, 170, 170, 255));
 
         BeginMode2D(_camera);
@@ -1050,7 +1051,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             
             DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale,
                 GLOBALS.Settings.GeneralSettings.DarkTheme
-                    ? new Color(50, 50, 50, 255)
+                    ? new Color(100, 100, 100, 255)
                     : WHITE);
 
             #region TileEditorLayer3
@@ -1330,6 +1331,26 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             Raylib_cs.Raylib.EndTextureMode();
 
             rlImGui.Begin();
+            
+            // Navigation
+            
+            var navWindowRect = Printers.ImGui.NavigationWindow();
+
+            _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
+            {
+                X = navWindowRect.X - 5, width = navWindowRect.width + 10
+            });
+                
+            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            {
+                _isNavigationWinDragged = true;
+            }
+            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+            {
+                _isNavigationWinDragged = false;
+            }
+            
+            // Menu
 
             if (ImGui.Begin("Tiles & Materials", ImGuiWindowFlags.NoFocusOnAppearing))
             {
@@ -1718,6 +1739,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 tileMouse, 
                 shortcutWindowRect with
                 {
+                    Y = shortcutWindowRect.Y - 5, height = shortcutWindowRect.height + 10,
                     X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
                 }
             );

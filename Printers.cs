@@ -1,6 +1,7 @@
 using static Raylib_CsLo.Raylib;
 using System.Numerics;
 using ImGuiNET;
+using rlImGui_cs;
 
 namespace Leditor;
 
@@ -3020,6 +3021,30 @@ internal static class Printers
             }
             ImGuiNET.ImGui.End();
 
+            return new Rectangle(pos.X, pos.Y, size.X, size.Y);
+        }
+
+        internal static Rectangle NavigationWindow()
+        {
+            var expanded = ImGuiNET.ImGui.Begin("Navigation##GlobalNavigation");
+            var pos = ImGuiNET.ImGui.GetWindowPos();
+            var size = ImGuiNET.ImGui.GetWindowSize();
+            
+            if (expanded)
+            {
+                if (ImGuiNET.ImGui.Selectable("Main")) GLOBALS.Page = 1;
+                if (ImGuiNET.ImGui.Selectable("Geometry")) GLOBALS.Page = 2;
+                if (ImGuiNET.ImGui.Selectable("Tiles")) GLOBALS.Page = 3;
+                if (ImGuiNET.ImGui.Selectable("Cameras")) GLOBALS.Page = 4;
+                if (ImGuiNET.ImGui.Selectable("Light")) GLOBALS.Page = 5;
+                if (ImGuiNET.ImGui.Selectable("Dimensions")) GLOBALS.Page = 6;
+                if (ImGuiNET.ImGui.Selectable("Effects")) GLOBALS.Page = 7;
+                if (ImGuiNET.ImGui.Selectable("Props")) GLOBALS.Page = 8;
+                if (ImGuiNET.ImGui.Selectable("Settings")) GLOBALS.Page = 9;
+                
+                ImGuiNET.ImGui.End();
+            }
+            
             return new Rectangle(pos.X, pos.Y, size.X, size.Y);
         }
     }

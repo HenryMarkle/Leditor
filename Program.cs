@@ -24,7 +24,7 @@ class Program
 {
     // Used to load geo blocks menu item textures.
     // Do not alter the indices, and do NOT call before InitWindow()
-    static Texture[] LoadUITextures() => [
+    private static Texture[] LoadUiTextures() => [
         LoadTexture("assets/geo/ui/solid.png"),             // 0
         LoadTexture("assets/geo/ui/air.png"),               // 1
         // LoadTexture("assets/geo/ui/slopebr.png"),     
@@ -60,7 +60,7 @@ class Program
 
     // Used to load geo block textures.
     // Do not alter the indices, and do NOT call before InitWindow()
-    static Texture[] LoadGeoTextures() => [
+    private static Texture[] LoadGeoTextures() => [
         // 0: air
         LoadTexture("assets/geo/solid.png"),
         LoadTexture("assets/geo/cbl.png"),
@@ -358,7 +358,7 @@ class Program
     }
     
     // MAIN FUNCTION
-    static void Main()
+    private static void Main()
     {
         Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
 
@@ -503,7 +503,7 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.41";
+        const string version = "Henry's Leditor v0.9.42";
         const string raylibVersion = "Raylib v4.2.0.9";
         
         // Load tiles and props
@@ -701,7 +701,7 @@ class Program
         try
         {
             logger.Debug("loading UI textures");
-            GLOBALS.Textures.GeoMenu = LoadUITextures();
+            GLOBALS.Textures.GeoMenu = LoadUiTextures();
             logger.Debug("loading geo textures");
             GLOBALS.Textures.GeoBlocks = LoadGeoTextures();
             GLOBALS.Textures.GeoStackables = LoadStackableTextures();

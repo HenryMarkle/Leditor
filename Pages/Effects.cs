@@ -36,33 +36,13 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
 
     private int _brushRadius = 3;
 
-    private bool _clickTracker = false;
-    private bool _brushEraseMode = false;
+    private bool _clickTracker;
+    private bool _brushEraseMode;
 
     private int _optionsIndex = 1;
 
     private readonly byte[] _addNewEffectPanelBytes = "New Effect"u8.ToArray();
     private readonly byte[] _appliedEffectsPanelBytes = "Applied Effects"u8.ToArray();
-    private readonly byte[] _effectOptionsPanelBytes = "Options"u8.ToArray();
-
-    // Paints an effect in the effects editor
-    /*static void PaintEffect(double[,] matrix, (int x, int y) matrixSize, (int x, int y) center, int brushSize, double strength)
-    {
-        for (var y = center.y - brushSize; y < center.y + brushSize + 1; y++)
-        {
-            if (y < 0 || y >= matrixSize.y) continue;
-
-            for (var x = center.x - brushSize; x < center.x + brushSize + 1; x++)
-            {
-                if (x < 0 || x >= matrixSize.x) continue;
-
-                matrix[y, x] += strength;
-
-                if (matrix[y, x] > 100) matrix[y, x] = 100;
-                if (matrix[y, x] < 0) matrix[y, x] = 0;
-            }
-        }
-    }*/
     
     // Paints an effect in the effects editor
     static void PaintEffectCircular(double[,] matrix, (int x, int y) center, int radius, double strength)
@@ -124,6 +104,12 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
     
     private bool _isOptionsWinHovered;
     private bool _isOptionsWinDragged;
+    
+    private bool _isEffectsWinHovered;
+    private bool _isEffectsWinDragged;
+    
+    private bool _isNavigationWinHovered;
+    private bool _isNavigationWinDragged;
 
     private bool _isOptionsInputActive;
 
@@ -165,7 +151,6 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
         }
 
         //
-
 
         if (_addNewEffectMode)
         {
@@ -374,6 +359,10 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                               !_isOptionsWinDragged && 
                               !_isShortcutsWinHovered && 
                               !_isShortcutsWinDragged && 
+                              !_isNavigationWinHovered &&
+                              !_isNavigationWinDragged &&
+                              !_isEffectsWinHovered &&
+                              !_isEffectsWinDragged &&
                               !_addNewEffectMode && 
                               !CheckCollisionPointRec(
                 GetMousePosition(),
@@ -417,7 +406,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
             }
             else
             {
-                if (effectsMouseWheel != 0)
+                if (effectsMouseWheel != 0 && canUseBrush)
                 {
                     var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
                     _camera.offset = GetMousePosition();
@@ -692,375 +681,181 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
 
                 // UI
 
-                unsafe
-                {
-                    fixed (byte* pt = _appliedEffectsPanelBytes)
-                    {
-                        RayGui.GuiPanel(
-                            new Rectangle(
-                                GetScreenWidth() - 300,
-                                100,
-                                280,
-                               appliedEffectsPanelHeight
-                            ),
-                            (sbyte*)pt
-                        );
-                    }
-                }
-
-                if (GLOBALS.Level.Effects.Length > appliedEffectPageSize)
-                {
-                    if (_currentAppliedEffectPage < (GLOBALS.Level.Effects.Length / appliedEffectPageSize))
-                    {
-                        var appliedEffectsPageDownPressed = RayGui.GuiButton(
-                            new Rectangle(
-                                GetScreenWidth() - 290,
-                                GetScreenHeight() - 140,
-                                130,
-                                32
-                            ),
-
-                            "Page Down"
-                        );
-
-                        if (appliedEffectsPageDownPressed)
-                        {
-                            _currentAppliedEffectPage++;
-                            _currentAppliedEffect = appliedEffectPageSize * _currentAppliedEffectPage;
-                        }
-                    }
-
-                    if (_currentAppliedEffectPage > 0)
-                    {
-                        var appliedEffectsPageUpPressed = RayGui.GuiButton(
-                            new Rectangle(
-                                GetScreenWidth() - 155,
-                                GetScreenHeight() - 140,
-                                130,
-                                32
-                            ),
-
-                            "Page Up"
-                        );
-
-                        if (appliedEffectsPageUpPressed)
-                        {
-                            _currentAppliedEffectPage--;
-                            _currentAppliedEffect = appliedEffectPageSize * (_currentAppliedEffectPage + 1) - 1;
-                        }
-                    }
-                }
-
-
-                // Applied effects
-
-                var addEffectRect = new Rectangle(GetScreenWidth() - 290, 130, 35, 35);
-                var newEffectHovered = CheckCollisionPointRec(GetMousePosition(), addEffectRect);
-
-                if (newEffectHovered) {
-                    DrawRectangleRec(addEffectRect, BLUE with { a = 150 });
-
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) {
-                        _addNewEffectMode = true;
-                    }
-                }
-                
-                DrawTexturePro(
-                    GLOBALS.Textures.EffectsUI[0], 
-                    new Rectangle(0, 0, GLOBALS.Textures.EffectsUI[0].width, GLOBALS.Textures.EffectsUI[0].height), 
-                    addEffectRect,
-                    new Vector2(0, 0),
-                    0,
-                    BLACK
-                );
-
-                // i is index relative to the GLOBALS.Page; oi is index relative to the whole list
-                foreach (var (i, (oi, e)) in GLOBALS.Level.Effects
-                             .Select((value, i) => (i, value))
-                             .Skip(appliedEffectPageSize * _currentAppliedEffectPage)
-                             .Take(appliedEffectPageSize)
-                             .Select((value, i) => (i, value)))
-                {
-                    var appliedEffectRect = new Rectangle(GetScreenWidth() - 290, 130 + (35 * i) + 50, 260, appliedEffectRecHeight);
-                    var appliedEffectHovered = CheckCollisionPointRec(GetMousePosition(), appliedEffectRect);
-                    if (appliedEffectHovered && IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                    {
-                        _currentAppliedEffect = oi;
-                        _currentAppliedEffectPage = _currentAppliedEffect / appliedEffectPageSize;
-                    }
-                    
-                    DrawRectangleLines(
-                        GetScreenWidth() - 290,
-                        130 + (35 * i) + 50,
-                        260,
-                        appliedEffectRecHeight,
-                        appliedEffectHovered ? BLUE with { a = 100 } : GRAY
-                    );
-                    
-                    if (oi == _currentAppliedEffect) DrawRectangleLinesEx(
-                        new Rectangle(
-                            GetScreenWidth() - 290,
-                            130 + (35 * i) + 50,
-                            260,
-                            appliedEffectRecHeight
-                        ),
-                        2.0f,
-                        BLUE
-                    );
-                    
-                    if (GLOBALS.Font is null) {
-                        DrawText(
-                            e.Item1,
-                            GetScreenWidth() - 280,
-                            138 + (35 * i) + 50,
-                            14,
-                            new(0, 0, 0, 255)
-                        );
-                    } else {
-                        DrawTextEx(
-                            GLOBALS.Font.Value,
-                            e.Item1,
-                            new(GetScreenWidth() - 280, 133 + (35 * i) + 50),
-                            25,
-                            1,
-                            BLACK
-                        );
-                    }
-
-                    
-                    // Delete Button
-
-                    var deleteRect = new Rectangle(
-                        GetScreenWidth() - 67, 132 + (35 * i) + 50, 26, 26);
-                    var deleteHovered = CheckCollisionPointRec(GetMousePosition(), deleteRect);
-                    
-                    if (deleteHovered)
-                    {
-                        DrawRectangleRec(deleteRect, BLUE);
-                        
-                        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                        {
-                            GLOBALS.Level.Effects = GLOBALS.Level.Effects.Where((_, ei) => ei != oi).ToArray();
-                            if (_currentAppliedEffect < 0) _currentAppliedEffect = 0;
-                            else if (_currentAppliedEffect >= GLOBALS.Level.Effects.Length - 1)
-                                _currentAppliedEffect = GLOBALS.Level.Effects.Length - 1;
-                        }
-                    }
-                    
-                    DrawTexturePro(
-                        GLOBALS.Textures.EffectsUI[3],
-                        new Rectangle(0, 0, GLOBALS.Textures.EffectsUI[3].width, GLOBALS.Textures.EffectsUI[3].height),
-                        deleteRect,
-                        new(0, 0),
-                        0,
-                        deleteHovered ? WHITE : BLACK
-                    );
-                    
-                    // Shift Up
-                    if (oi > 0)
-                    {
-                        var shiftUpRect = new Rectangle(
-                            GetScreenWidth() - 105,
-                            132 + (35 * i) + 50,
-                            26,
-                            26
-                        );
-                        
-                        var shiftUpHovered = CheckCollisionPointRec(GetMousePosition(), shiftUpRect);
-                        
-                        DrawTexturePro(
-                            GLOBALS.Textures.EffectsUI[1],
-                            new(0, 0, GLOBALS.Textures.EffectsUI[1].width, GLOBALS.Textures.EffectsUI[1].height),
-                            shiftUpRect,
-                            new(0, 0),
-                            0,
-                            shiftUpHovered ? WHITE : BLACK
-                        );
-
-                        if (shiftUpHovered)
-                        {
-                            DrawRectangleRec(shiftUpRect, BLUE);
-                            if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                            {
-                                (GLOBALS.Level.Effects[oi], GLOBALS.Level.Effects[oi - 1]) = (GLOBALS.Level.Effects[oi - 1], GLOBALS.Level.Effects[oi]);
-                            }
-                        }
-                    }
-
-                    // Shift Down
-                    if (oi < GLOBALS.Level.Effects.Length - 1)
-                    {
-                        var shiftDownRect = new Rectangle(
-                            GetScreenWidth() - 143,
-                            132 + (35 * i) + 50,
-                            37,
-                            26
-                        );
-
-                        var shiftDownHovered = CheckCollisionPointRec(GetMousePosition(), shiftDownRect);
-                        
-                        DrawTexturePro(
-                            GLOBALS.Textures.EffectsUI[2], 
-                            new Rectangle(0, 0, GLOBALS.Textures.EffectsUI[2].width, GLOBALS.Textures.EffectsUI[2].height),
-                            shiftDownRect,
-                            new(0, 0),
-                            0,
-                            shiftDownHovered ? WHITE : BLACK
-                        );
-
-                        if (shiftDownHovered)
-                        {
-                            DrawRectangleRec(shiftDownRect, BLUE);
-                            
-                            if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                            {
-                                (GLOBALS.Level.Effects[oi], GLOBALS.Level.Effects[oi + 1]) = (GLOBALS.Level.Effects[oi + 1], GLOBALS.Level.Effects[oi]);
-                            }
-                        }
-                    }
-                }
-
-                // Options
-                
-                var options = GLOBALS.Level.Effects.Length > 0 && _currentAppliedEffect != -1
-                    ? GLOBALS.Level.Effects[_currentAppliedEffect].Item2 
-                    : [];
-                
                 rlImGui.Begin();
+                
+                // Applied Effects
 
-                if (ImGui.Begin("Options"))
+                if (ImGui.Begin("Effects##AppliedEffectsList"))
                 {
                     var pos = ImGui.GetWindowPos();
                     var winSpace = ImGui.GetWindowSize();
-                    
+
                     if (CheckCollisionPointRec(GetMousePosition(), new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
                     {
-                        _isOptionsWinHovered = true;
+                        _isEffectsWinHovered = true;
 
-                        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isOptionsWinDragged = true;
+                        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isEffectsWinDragged = true;
                     }
                     else
                     {
-                        _isOptionsWinHovered = false;
+                        _isEffectsWinHovered = false;
                     }
+
+                    if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isEffectsWinDragged) _isEffectsWinDragged = false;
                     
-                    if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isOptionsWinDragged) _isOptionsWinDragged = false;
+                    //
                     
-                    var halfWidth = ImGui.GetContentRegionAvail().X / 2f - ImGui.GetStyle().ItemSpacing.X / 2f;
-                    var boxHeight = ImGui.GetContentRegionAvail().Y;
+                    if (ImGui.Button("+")) _addNewEffectMode = true;
                     
-                    if (options is not [])
+                    ImGui.SameLine();
+                    if (GLOBALS.Level.Effects.Length > 0 && ImGui.Button("X"))
                     {
-                        if (ImGui.BeginListBox("##EffectOptionTitles", new Vector2(halfWidth, boxHeight)))
-                        {
-                            for (var optionIndex = 0; optionIndex < options.Length; optionIndex++)
-                            {
-                                if (options[optionIndex].Name == "Delete/Move") continue;
-                                
-                                var selected = ImGui.Selectable(options[optionIndex].Name, optionIndex == _optionsIndex);
-                                if (selected) _optionsIndex = optionIndex;
-                            }
-                            ImGui.EndListBox();
-                        }
-                        
+                        GLOBALS.Level.Effects = GLOBALS.Level.Effects.Where((_, ei) => ei != _currentAppliedEffect).ToArray();
+
+                        if (_currentAppliedEffect < 0) _currentAppliedEffect = 0;
+                        else if (_currentAppliedEffect >= GLOBALS.Level.Effects.Length - 1)
+                            _currentAppliedEffect = GLOBALS.Level.Effects.Length - 1;
+                    }
+
+                    if (_currentAppliedEffect > 0)
+                    {
                         ImGui.SameLine();
-                        
-                        ref var currentOption = ref options[_optionsIndex];
-                        
-                        if (currentOption.Options is [] && currentOption.Choice is int number)
+                        if (ImGui.Button("Shift Up"))
                         {
-                            ImGui.SetNextItemWidth(halfWidth);
-                            var active = ImGui.InputInt(string.Empty, ref number);
+                            (GLOBALS.Level.Effects[_currentAppliedEffect],
+                                GLOBALS.Level.Effects[_currentAppliedEffect - 1]) = (
+                                GLOBALS.Level.Effects[_currentAppliedEffect - 1],
+                                GLOBALS.Level.Effects[_currentAppliedEffect]);
                             
-                            _isOptionsInputActive = active;
-
-                            if (number != (int)currentOption.Choice) currentOption.Choice = number;
-                        }
-                        else if (ImGui.BeginListBox("##EffectOptionList", new Vector2(halfWidth, boxHeight)))
-                        {
-                            foreach (var t in currentOption.Options)
-                            {
-                                var selected = ImGui.Selectable(t, t == currentOption.Choice);
-
-                                if (selected) currentOption.Choice = t;
-                            }
-
-                            ImGui.EndListBox();
+                            _currentAppliedEffect--;
                         }
                     }
-                    else ImGui.Text("No Options");
+
+                    if (_currentAppliedEffect < GLOBALS.Level.Effects.Length - 1)
+                    {
+                        ImGui.SameLine();
+                        if (ImGui.Button("Shift Down"))
+                        {
+                            (GLOBALS.Level.Effects[_currentAppliedEffect],
+                                GLOBALS.Level.Effects[_currentAppliedEffect + 1]) = (
+                                GLOBALS.Level.Effects[_currentAppliedEffect + 1],
+                                GLOBALS.Level.Effects[_currentAppliedEffect]);
+                            
+                            _currentAppliedEffect++;
+                        }
+                    }
+
+                    if (ImGui.BeginListBox("##AppliedEffects", ImGui.GetContentRegionAvail()))
+                    {
+                        // i is index relative to the GLOBALS.Page; oi is index relative to the whole list
+                        foreach (var (i, (name, _, _)) in GLOBALS.Level.Effects.Select((value, i) => (i, value)))
+                        {
+                            if (ImGui.Selectable(name, i == _currentAppliedEffect)) _currentAppliedEffect = i;
+                        }
+
+                        ImGui.EndListBox();
+                    }
                     
                     ImGui.End();
                 }
                 
-                rlImGui.End();
+                // Navigation
+            
+                var navWindowRect = Printers.ImGui.NavigationWindow();
 
-                /*if (_showEffectOptions)
+                _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
                 {
-                    
-                    /*unsafe
+                    X = navWindowRect.X - 5, width = navWindowRect.width + 10
+                });
+                
+                if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _isNavigationWinDragged = true;
+                }
+                else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _isNavigationWinDragged = false;
+                }
+                
+                // Options
+                {
+                    var options = GLOBALS.Level.Effects.Length > 0 && _currentAppliedEffect != -1
+                        ? GLOBALS.Level.Effects[_currentAppliedEffect].Item2
+                        : [];
+
+
+                    if (ImGui.Begin("Options"))
                     {
-                        fixed (byte* pt = _effectOptionsPanelBytes)
+                        var pos = ImGui.GetWindowPos();
+                        var winSpace = ImGui.GetWindowSize();
+
+                        if (CheckCollisionPointRec(GetMousePosition(),
+                                new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
                         {
-                            RayGui.GuiPanel(
-                                new(
-                                    20,
-                                    GetScreenHeight() - 220,
-                                    600,
-                                    200
-                                ),
-                                (sbyte*)pt
-                            );
+                            _isOptionsWinHovered = true;
+
+                            if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isOptionsWinDragged = true;
                         }
-                    }
-
-                    
-
-                    if (options.Length > 0)
-                    {
-                        ref var currentOption = ref options[_optionsIndex];
-
-                        DrawText(currentOption.Name, 30, GetScreenHeight() - 190, 20, BLACK);
-
-                        var commulativeWidth = 30;
-
-                        foreach (var choice in currentOption.Options)
+                        else
                         {
-                            var length = MeasureText(choice, 20);
+                            _isOptionsWinHovered = false;
+                        }
 
-                            var chosen = currentOption.Choice == choice;
+                        if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isOptionsWinDragged)
+                            _isOptionsWinDragged = false;
 
-                            if (chosen)
+                        var halfWidth = ImGui.GetContentRegionAvail().X / 2f - ImGui.GetStyle().ItemSpacing.X / 2f;
+                        var boxHeight = ImGui.GetContentRegionAvail().Y;
+
+                        if (options is not [])
+                        {
+                            if (ImGui.BeginListBox("##EffectOptionTitles", new Vector2(halfWidth, boxHeight)))
                             {
-                                DrawRectangle(
-                                    commulativeWidth - 10,
-                                    GetScreenHeight() - 150,
-                                    length + 20,
-                                    20,
-                                    BLUE
-                                );
+                                for (var optionIndex = 0; optionIndex < options.Length; optionIndex++)
+                                {
+                                    if (options[optionIndex].Name == "Delete/Move") continue;
+
+                                    var selected = ImGui.Selectable(options[optionIndex].Name,
+                                        optionIndex == _optionsIndex);
+                                    if (selected) _optionsIndex = optionIndex;
+                                }
+
+                                ImGui.EndListBox();
                             }
 
-                            DrawText(
-                                choice,
-                                commulativeWidth,
-                                GetScreenHeight() - 150,
-                                20,
-                                chosen ? WHITE : BLACK
-                            );
+                            ImGui.SameLine();
 
-                            commulativeWidth += length + 30;
+                            ref var currentOption = ref options[_optionsIndex];
+
+                            if (currentOption.Options is [] && currentOption.Choice is int number)
+                            {
+                                ImGui.SetNextItemWidth(halfWidth);
+                                var active = ImGui.InputInt(string.Empty, ref number);
+
+                                _isOptionsInputActive = active;
+
+                                if (number != (int)currentOption.Choice) currentOption.Choice = number;
+                            }
+                            else if (ImGui.BeginListBox("##EffectOptionList", new Vector2(halfWidth, boxHeight)))
+                            {
+                                foreach (var t in currentOption.Options)
+                                {
+                                    var selected = ImGui.Selectable(t, t == currentOption.Choice);
+
+                                    if (selected) currentOption.Choice = t;
+                                }
+
+                                ImGui.EndListBox();
+                            }
                         }
-                    }
-                    #1#
-                    
-                    
-                }*/
+                        else ImGui.Text("No Options");
 
+                        ImGui.End();
+                    }
+                }
                 // Shortcuts window
                 if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
                 {
-                    rlImGui.Begin();
                     var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.EffectsEditor);
 
                     _isShortcutsWinHovered = CheckCollisionPointRec(
@@ -1081,13 +876,13 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                     }
 
 
-                    rlImGui.End();
                 }
-
+                rlImGui.End();
             }
             EndDrawing();
             
-            if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera;
         }
+        
+        if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera;
     }
 }

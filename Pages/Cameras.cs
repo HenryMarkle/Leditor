@@ -16,6 +16,9 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
     
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
+    
+    private bool _isNavigationWinHovered;
+    private bool _isNavigationWinDragged;
 
     public void Draw()
     {
@@ -206,10 +209,30 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
 
             #region CameraEditorUI
 
+            rlImGui.Begin();
+            
+            // Navigation
+            
+            var navWindowRect = Printers.ImGui.NavigationWindow();
+
+            _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
+            {
+                X = navWindowRect.X - 5, width = navWindowRect.width + 10
+            });
+                
+            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            {
+                _isNavigationWinDragged = true;
+            }
+            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+            {
+                _isNavigationWinDragged = false;
+            }
+            
             // Shortcuts window
+            
             if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
             {
-                rlImGui.Begin();
                 var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.CameraEditor);
 
                 _isShortcutsWinHovered = CheckCollisionPointRec(
@@ -228,11 +251,9 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                 {
                     _isShortcutsWinDragged = false;
                 }
-
-
-                rlImGui.End();
             }
 
+            rlImGui.End();
             #endregion
         }
         EndDrawing();

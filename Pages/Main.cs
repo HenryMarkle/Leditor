@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Numerics;
 using System.Text;
 using ImGuiNET;
@@ -41,6 +42,9 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
     
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
+    
+    private bool _isNavigationWinHovered;
+    private bool _isNavigationWinDragged;
 
     public void OnLevelLoadedFromStart(object? sender, EventArgs e)
     {
@@ -728,7 +732,9 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                             (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
                             (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
                             GLOBALS.Level.WaterLevel * GLOBALS.Scale,
-                            new(0, 0, 255, 110)
+                            GLOBALS.Settings.GeneralSettings.DarkTheme 
+                                ? GLOBALS.DarkThemeWaterColor 
+                                : GLOBALS.LightThemeWaterColor
                         );
                     }
                     
@@ -741,7 +747,9 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                             (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
                             (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
                             GLOBALS.Level.WaterLevel * GLOBALS.Scale,
-                            new(0, 0, 255, 110)
+                            GLOBALS.Settings.GeneralSettings.DarkTheme 
+                                ? GLOBALS.DarkThemeWaterColor 
+                                : GLOBALS.LightThemeWaterColor
                         );
                     }
                     
@@ -767,222 +775,73 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                     
                     rlImGui.End();
                 }
-
-                unsafe
-                {
-                    fixed (byte* pt = _previewPanelBytes)
-                    {
-                        RayGui.GuiPanel(
-                            new(
-                                GetScreenWidth() - 400,
-                                50,
-                                380,
-                                GetScreenHeight() - 100
-                            ),
-                            (sbyte*)pt
-                        );
-
-                    }
-                }
-
-                if (GLOBALS.Font is not null)
-                {
-                    DrawTextEx(RayGui.GuiGetFont(), GLOBALS.Level.ProjectName,
-                        new (GetScreenWidth() - 350,
-                            100),
-                        30,
-                        1,
-                        BLACK);
-                }
-                else
-                {
-                    DrawText(
-                        GLOBALS.Level.ProjectName,
-                        GetScreenWidth() - 350,
-                        100,
-                        30,
-                        new(0, 0, 0, 255)
-                    );
-                }
                 
+                // Menu
                 
+                rlImGui.Begin();
 
-                var helpPressed = RayGui.GuiButton(new(
-                    GetScreenWidth() - 80,
-                    100,
-                    40,
-                    40
-                ),
-                "?"
-                );
+                if (ImGui.Begin("Options##MainMenu"))
+                {
+                    ImGui.Text($"{GLOBALS.Level.ProjectName}");
+                    
+                    ImGui.SameLine();
 
-                if (helpPressed) GLOBALS.Page = 9;
+                    var helpSelected = ImGui.Button("?");
+                    if (helpSelected) GLOBALS.Page = 9;
+                    
+                    ImGui.Separator();
 
-
-                /*if (GLOBALS.Font is null)
-                {
-                    DrawText("Seed", GetScreenWidth() - 380, 205, 11, new(0, 0, 0, 255));
-                }
-                else
-                {
-                    DrawTextEx(GLOBALS.Font.Value, "Seed", new(GetScreenWidth() - 380, 200), 20, 1, BLACK);
-                }*/
-
-                /*GLOBALS.Level.Seed = (int)Math.Round(RayGui.GuiSlider(
-                    new(
-                        GetScreenWidth() - 280,
-                        200,
-                        200,
-                        20
-                    ),
-                    "0",
-                    "400",
-                    GLOBALS.Level.Seed,
-                    0,
-                    400
-                ));*/
-
-                var seedRect = new Rectangle(GetScreenWidth() - 280, 190, 200, 40);
-                var waterRect = new Rectangle(
-                    width - 280,
-                    320,
-                    200,
-                    40
-                );
-                
-                if (CheckCollisionPointRec(GetMousePosition(), seedRect) &&
-                    IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                {
-                    _spinnerLock = 1;
-                }
-                else if (CheckCollisionPointRec(GetMousePosition(), waterRect) &&
-                         IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                {
-                    _spinnerLock = 2;
-                }
-                else if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT) || IsKeyPressed(KeyboardKey.KEY_ENTER) || IsKeyPressed(KeyboardKey.KEY_ESCAPE))
-                {
-                    _spinnerLock = 0;
-                }
-                
-                unsafe
-                {
+                    // Seed
+                    
                     var seed = GLOBALS.Level.Seed;
+                    ImGui.SetNextItemWidth(100);
+                    ImGui.InputInt("Seed", ref seed);
+                    if (GLOBALS.Level.Seed != seed) GLOBALS.Level.Seed = seed;
+
+                    // Water Level
                     
-                    RayGui.GuiSpinner(
-                        seedRect,
-                        "Seed",
-                        &seed,
-                        0,
-                        10000,
-                        _spinnerLock == 1
-                    );
-
-                    if (seed != GLOBALS.Level.Seed) GLOBALS.Level.Seed = seed;
-                }
-
-                GLOBALS.Level.LightMode = RayGui.GuiCheckBox(new(
-                    Raylib.GetScreenWidth() - 380,
-                    250,
-                    20,
-                    20
-                ),
-                "Light Mode",
-                GLOBALS.Level.LightMode);
-
-                GLOBALS.Level.DefaultTerrain = RayGui.GuiCheckBox(new(
-                    GetScreenWidth() - 380,
-                    290,
-                    20,
-                    20
-                ),
-                "Default Medium",
-                GLOBALS.Level.DefaultTerrain);
-
-                /*if (GLOBALS.Font is null)
-                {
-                    DrawText("Water Level",
-                        Raylib.GetScreenWidth() - 380,
-                        335,
-                        11,
-                        new(0, 0, 0, 255)
-                    );
-                }
-                else
-                {
-                    DrawTextEx(
-                        GLOBALS.Font.Value,
-                        "Water Level",
-                        new Vector2(GetScreenWidth() - 380,
-                            330),
-                        20,
-                        1,
-                        BLACK
-                        );
-                }*/
-
-                /*GLOBALS.Level.WaterLevel = (int)Math.Round(RayGui.GuiSlider(
-                    waterRect,
-                    "-1",
-                    $"{GLOBALS.Level.Height + 10}",
-                    GLOBALS.Level.WaterLevel,
-                    -1,
-                    GLOBALS.Level.Height + 10
-                ));*/
-                
-                unsafe
-                {
                     var waterLevel = GLOBALS.Level.WaterLevel;
+                    ImGui.SetNextItemWidth(100);
+                    ImGui.InputInt("Water Level", ref waterLevel);
+                    if (waterLevel < -1) waterLevel = -1;
+                    if (GLOBALS.Level.WaterLevel != waterLevel) GLOBALS.Level.WaterLevel = waterLevel;
                     
-                    RayGui.GuiSpinner(
-                        waterRect,
-                        "Water Level",
-                        &waterLevel,
-                        -1,
-                        GLOBALS.Level.Height + 200,
-                        _spinnerLock == 2
-                    );
+                    // Water Position
+                    
+                    var waterInFront = GLOBALS.Level.WaterAtFront;
+                    ImGui.Checkbox("Water In Front", ref waterInFront);
+                    if (GLOBALS.Level.WaterAtFront != waterInFront) GLOBALS.Level.WaterAtFront = waterInFront;
+                    
+                    ImGui.Separator();
+                    
+                    // Buttons
 
-                    if (waterLevel != GLOBALS.Level.WaterLevel) GLOBALS.Level.WaterLevel = waterLevel;
-                }
+                    var saveSelected = ImGui.Button("Save");
+                    var saveAsSelected = ImGui.Button("Save as..");
+                    var loadSelected = ImGui.Button("Load Project..");
+                    var newSelected = ImGui.Button("New Project");
 
-
-                GLOBALS.Level.WaterAtFront = RayGui.GuiCheckBox(
-                    new(
-                        Raylib.GetScreenWidth() - 380,
-                        360,
-                        20,
-                        20
-                    ),
-                    "Water In Front",
-                    GLOBALS.Level.WaterAtFront
-                );
-
-                //
-
-                if (GLOBALS.RendererExists)
-                {
-                    var renderRect = new Rectangle(width - 390, height - 300, 360, 40);
-                    var renderHovered = CheckCollisionPointRec(GetMousePosition(), renderRect);
-
-                    if (renderHovered)
+                    if (GLOBALS.RendererExists)
                     {
-                        SetMouseCursor(MouseCursor.MOUSE_CURSOR_POINTING_HAND);
-
-                        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                        var renderSelected = ImGui.Button("RENDER");
+                        
+                        if (renderSelected)
                         {
                             _logger.Debug($"Rendering level \"{GLOBALS.Level.ProjectName}\"");
 
                             var projectPath = Path.Combine(GLOBALS.ProjectPath, $"{GLOBALS.Level.ProjectName}.txt");
                             var arguments = $"render \"{projectPath}\"";
 
-                            try {
+                            try
+                            {
                                 _renderProcess.Kill();
+                                    
+                                _renderProcess.Dispose();
                             } catch (Exception e) {
                                 _logger.Error($"Unable to kill render process: {e}");  
                             }
-                            
-                            _renderProcess = new()
+                                
+                            _renderProcess = new Process
                             {
                                 StartInfo =
                                 {
@@ -995,160 +854,108 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                             _renderProcess.Start();
                         }
                     }
-                    else SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
                     
-                    DrawRectangleRec(renderRect, BLUE with { a = (byte)(renderHovered ? 100 : 150) });
-                    DrawRectangleLinesEx(renderRect, 2f, BLUE);
-                    DrawText(
-                        "RENDER", 
-                        renderRect.X + (renderRect.width - MeasureText("RENDER", 20))/2f, 
-                        height - 290, 
-                        20, 
-                        WHITE
-                    );
-                }
-
-                
-
-                var savePressed = RayGui.GuiButton(new(
-                        GetScreenWidth() - 390,
-                        GetScreenHeight() - 250,
-                        360,
-                        40
-                    ),
-                    "Save Project"
-                );
-                
-                var saveAsPressed = RayGui.GuiButton(new(
-                        GetScreenWidth() - 390,
-                        GetScreenHeight() - 200,
-                        360,
-                        40
-                    ),
-                    "Save Project As.."
-                );
-
-                if (savePressed)
-                {
-                    _fileDialogMode = 0;
-                    if (string.IsNullOrEmpty(GLOBALS.ProjectPath))
+                    if (saveSelected)
                     {
+                        _fileDialogMode = 0;
+                        if (string.IsNullOrEmpty(GLOBALS.ProjectPath))
+                        {
+                            _askForPath = true;
+                            _saveFileDialog = Utils.SetFilePathAsync();
+                        }
+                        else
+                        {
+                            _askForPath = false;
+                        }
+                        RayGui.GuiLock();
+                    }
+
+                    if (saveAsSelected)
+                    {
+                        _fileDialogMode = 0;
                         _askForPath = true;
                         _saveFileDialog = Utils.SetFilePathAsync();
+                        RayGui.GuiLock();
                     }
-                    else
+                    
+                    if (loadSelected)
                     {
-                        _askForPath = false;
+                        _fileDialogMode = 1;
+                        _openFileDialog = Utils.GetFilePathAsync();
+                        RayGui.GuiLock();
                     }
-                    RayGui.GuiLock();
+                    
+                    if (newSelected)
+                    {
+                        GLOBALS.NewFlag = true;
+                        GLOBALS.Page = 6;
+                    }
+                    ImGui.End();
                 }
-
-                if (saveAsPressed)
-                {
-                    _fileDialogMode = 0;
-                    _askForPath = true;
-                    _saveFileDialog = Utils.SetFilePathAsync();
-                    RayGui.GuiLock();
-                }
-
-                var loadPressed = RayGui.GuiButton(new(
-                        width - 390,
-                        height - 150,
-                        360,
-                        40
-                    ),
-                    "Load Project"
-                );
-
-                var newPressed = RayGui.GuiButton(new(
-                        width - 390,
-                        height - 100,
-                        360,
-                        40
-                    ),
-                    "New Project"
-                );
-
-                if (loadPressed)
-                {
-                    _fileDialogMode = 1;
-                    _openFileDialog = Utils.GetFilePathAsync();
-                    RayGui.GuiLock();
-                }
-                if (newPressed)
-                {
-                    GLOBALS.NewFlag = true;
-                    GLOBALS.Page = 6;
-                }
-                
-                // Undefined Tiles Alert
 
                 if (_undefinedTilesAlert)
                 {
-                    var alertRect = new Rectangle(20, height - 50, 400, 40);
-
-                    if (CheckCollisionPointRec(GetMousePosition(), new Rectangle(400, height - 50, 20, 20)))
+                    if (ImGui.Begin("Alert##UndefinedTilesAlert", 
+                            ImGuiWindowFlags.Modal | 
+                            ImGuiWindowFlags.NoCollapse))
                     {
-                        SetMouseCursor(MouseCursor.MOUSE_CURSOR_POINTING_HAND);
-
-                        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                        {
-                            _undefinedTilesAlert = false;
-                            SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
-                        }
-                    }
-                    else SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
-                    
-                    DrawRectangleRec(
-                        alertRect,
-                        RED
-                    );
-                    
-                    DrawText("x", 405, height - 50, 20, WHITE);
-
-                    if (GLOBALS.Font is null)
-                    {
-                        DrawText("Project contains undefined tiles", 30, height - 45, 22, WHITE);
-                    }
-                    else
-                    {
-                        DrawTextEx(
-                            GLOBALS.Font.Value,
-                            "Project contains undefined tiles",
-                            new(30, height - 45),
-                            30,
-                            1,
-                            WHITE
-                        );
+                        var winSize = ImGui.GetWindowSize();
+                        var screenSize = new Vector2(width, height);
+                        
+                        ImGui.SetWindowPos((screenSize - winSize)/2);
+                        ImGui.Text("This  project contains undefined tiles.");
+                        
+                        var okSelected = ImGui.Button("Ok");
+                        
+                        if (okSelected) _undefinedTilesAlert = false;
+                        
+                        ImGui.End();
                     }
                 }
+                
+                // Shortcuts window
+                if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
+                {
+                    var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.GlobalShortcuts);
+
+                    _isShortcutsWinHovered = CheckCollisionPointRec(
+                        GetMousePosition(), 
+                        shortcutWindowRect with
+                        {
+                            X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
+                        }
+                    );
+
+                    if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                    {
+                        _isShortcutsWinDragged = true;
+                    }
+                    else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                    {
+                        _isShortcutsWinDragged = false;
+                    }
+                }
+
+                var navWindowRect = Printers.ImGui.NavigationWindow();
+
+                _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
+                {
+                    X = navWindowRect.X - 5, width = navWindowRect.width + 10
+                });
+                
+                if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _isNavigationWinDragged = true;
+                }
+                else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _isNavigationWinDragged = false;
+                }
+                
+                rlImGui.End();
+                
             }
             
-            // Shortcuts window
-            if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
-            {
-                rlImGui.Begin();
-                var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.GlobalShortcuts);
-
-                _isShortcutsWinHovered = CheckCollisionPointRec(
-                    GetMousePosition(), 
-                    shortcutWindowRect with
-                    {
-                        X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
-                    }
-                );
-
-                if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
-                {
-                    _isShortcutsWinDragged = true;
-                }
-                else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
-                {
-                    _isShortcutsWinDragged = false;
-                }
-
-                rlImGui.End();
-            }
         }
         EndDrawing();
     }

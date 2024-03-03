@@ -811,6 +811,9 @@ internal static class GLOBALS
     
     internal static IntPtr WindowHandle { get; set; }
 
+    internal static Color DarkThemeWaterColor { get; set; } = new(80, 80, 255, 110);
+    internal static Color LightThemeWaterColor { get; set; } = new(0, 0, 255, 110);
+    
     internal static Gram Gram { get; set; } = new(100);
 #nullable disable
 }
