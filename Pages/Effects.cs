@@ -110,6 +110,9 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
     
     private bool _isNavigationWinHovered;
     private bool _isNavigationWinDragged;
+    
+    private bool _isSettingsWinHovered;
+    private bool _isSettingsWinDragged;
 
     private bool _isOptionsInputActive;
 
@@ -207,137 +210,188 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                 DrawRectangle(
                     0,
                     0,
-                    Raylib.GetScreenWidth(),
-                    Raylib.GetScreenHeight(),
+                    GetScreenWidth(),
+                    GetScreenHeight(),
                     new Color(0, 0, 0, 90)
                 );
 
-                RayGui.GuiLine(
-                    new(
-                        GetScreenWidth() / 2f - 390,
-                        GetScreenHeight() / 2f - 265,
-                        150,
-                        10
-                    ),
-                    "Categories"
-                );
+                // RayGui.GuiLine(
+                //     new Rectangle(
+                //         GetScreenWidth() / 2f - 390,
+                //         GetScreenHeight() / 2f - 265,
+                //         150,
+                //         10
+                //     ),
+                //     "Categories"
+                // );
 
-                unsafe
+                // unsafe
+                // {
+                //     var panelRect = new Rectangle(
+                //         GetScreenWidth() / 2f - 400,
+                //         GetScreenHeight() / 2f - 300,
+                //         800,
+                //         600
+                //     );
+                //
+                //     fixed (byte* pt = _addNewEffectPanelBytes)
+                //     {
+                //         RayGui.GuiPanel(
+                //             panelRect,
+                //             (sbyte*)pt
+                //         );
+                //     }
+                //
+                //     // Close Button
+                //
+                //     var closeClicked = RayGui.GuiButton(new Rectangle(panelRect.X + panelRect.width - 24, panelRect.Y, 24, 24), "X");
+                //
+                //     if (closeClicked) _addNewEffectMode = false;
+                //
+                //     fixed (int* scrollIndex = &_newEffectCategoryScrollIndex)
+                //     {
+                //         fixed (int* fc = &_newEffectCategoryItemFocus)
+                //         {
+                //             var newNewEffectCategorySelectedValue = RayGui.GuiListViewEx(
+                //                 new(
+                //                     GetScreenWidth() / 2f - 390,
+                //                     GetScreenHeight() / 2f - 250,
+                //                     150,
+                //                     540
+                //                 ),
+                //                 _newEffectCategoryNames,
+                //                 _newEffectCategoryNames.Length,
+                //                 fc,
+                //                 scrollIndex,
+                //                 _newEffectCategorySelectedValue
+                //             );
+                //
+                //             if (newNewEffectCategorySelectedValue != _newEffectCategorySelectedValue &&
+                //                 newNewEffectCategorySelectedValue != -1)
+                //             {
+                //                 #if DEBUG
+                //                 _logger.Debug($"New new effect category index: {newNewEffectCategorySelectedValue}");
+                //                 #endif
+                //                 _newEffectCategorySelectedValue = newNewEffectCategorySelectedValue;
+                //             }
+                //         }
+                //     }
+                // }
+                //
+                // unsafe
+                // {
+                //     fixed (int* scrollIndex = &_newEffectScrollIndex)
+                //     {
+                //         fixed (int* fc = &_newEffectItemFocus)
+                //         {
+                //             var newNewEffectSelectedValue = RayGui.GuiListViewEx(
+                //                 new(
+                //                     GetScreenWidth() / 2f - 230,
+                //                     GetScreenHeight() / 2f - 250,
+                //                     620,
+                //                     540
+                //                 ),
+                //                 _newEffectNames[_newEffectCategorySelectedValue],
+                //                 _newEffectNames[_newEffectCategorySelectedValue].Length,
+                //                 fc,
+                //                 scrollIndex,
+                //                 _newEffectSelectedValue
+                //             );
+                //
+                //             if (newNewEffectSelectedValue == -1) {
+                //                 GLOBALS.Level.Effects = [
+                //                     .. GLOBALS.Level.Effects,
+                //                     (
+                //                         GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue],
+                //                         Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
+                //                         new double[GLOBALS.Level.Height, GLOBALS.Level.Width]
+                //                     )
+                //                 ];
+                //
+                //                 _addNewEffectMode = false;
+                //                 if (_currentAppliedEffect == -1) _currentAppliedEffect = 0;
+                //             }
+                //             else
+                //             {
+                //                 _newEffectSelectedValue = newNewEffectSelectedValue;
+                //             }
+                //         }
+                //     }
+                // }
+
+                // ImGui
+                
+                rlImGui.Begin();
+                if (ImGui.Begin("New Effect##NewEffectMenu", ImGuiWindowFlags.NoCollapse))
                 {
-                    var panelRect = new Rectangle(
-                        GetScreenWidth() / 2f - 400,
-                        GetScreenHeight() / 2f - 300,
-                        800,
-                        600
-                    );
-
-                    fixed (byte* pt = _addNewEffectPanelBytes)
+                    var availableSpace = ImGui.GetContentRegionAvail();
+                    
+                    ImGui.LabelText("##NewEffectCategories", "Categories");
+                    
+                    ImGui.SameLine();
+                    
+                    ImGui.LabelText("##NewEffects", "Effects");
+                    
+                    if (ImGui.BeginListBox("##NewEffectCategories", availableSpace with { X = 250, Y = availableSpace.Y - 60 }))
                     {
-                        RayGui.GuiPanel(
-                            panelRect,
-                            (sbyte*)pt
-                        );
-                    }
-
-                    // Close Button
-
-                    var closeClicked = RayGui.GuiButton(new Rectangle(panelRect.X + panelRect.width - 24, panelRect.Y, 24, 24), "X");
-
-                    if (closeClicked) _addNewEffectMode = false;
-
-                    fixed (int* scrollIndex = &_newEffectCategoryScrollIndex)
-                    {
-                        fixed (int* fc = &_newEffectCategoryItemFocus)
+                        for (var index = 0; index < _newEffectCategoryNames.Length; index++)
                         {
-                            var newNewEffectCategorySelectedValue = RayGui.GuiListViewEx(
-                                new(
-                                    GetScreenWidth() / 2f - 390,
-                                    GetScreenHeight() / 2f - 250,
-                                    150,
-                                    540
-                                ),
-                                _newEffectCategoryNames,
-                                _newEffectCategoryNames.Length,
-                                fc,
-                                scrollIndex,
-                                _newEffectCategorySelectedValue
-                            );
-
-                            if (newNewEffectCategorySelectedValue != _newEffectCategorySelectedValue &&
-                                newNewEffectCategorySelectedValue != -1)
+                            var selected = ImGui.Selectable(_newEffectCategoryNames[index], index == _newEffectCategorySelectedValue);
+                            if (selected)
                             {
-                                #if DEBUG
-                                _logger.Debug($"New new effect category index: {newNewEffectCategorySelectedValue}");
-                                #endif
-                                _newEffectCategorySelectedValue = newNewEffectCategorySelectedValue;
+                                _newEffectCategorySelectedValue = index;
+                                Utils.Restrict(ref _newEffectSelectedValue, 0, _newEffectNames[_newEffectCategorySelectedValue].Length-1);
                             }
                         }
+                        
+                        ImGui.EndListBox();
                     }
-                }
-
-                /*if (!_newEffectFocus) DrawRectangleLinesEx(
-                    new(
-                        GetScreenWidth() / 2f - 390,
-                        GetScreenHeight() / 2f - 250,
-                        150,
-                        540
-                    ),
-                    2.0f,
-                    new(0, 0, 255, 255)
-                );*/
-
-                unsafe
-                {
-                    fixed (int* scrollIndex = &_newEffectScrollIndex)
+                    
+                    ImGui.SameLine();
+                    
+                    if (ImGui.BeginListBox("##NewEffects", availableSpace with { Y = availableSpace.Y - 60 }))
                     {
-                        fixed (int* fc = &_newEffectItemFocus)
+                        for (var index = 0; index < _newEffectNames[_newEffectCategorySelectedValue].Length; index++)
                         {
-                            var newNewEffectSelectedValue = RayGui.GuiListViewEx(
-                                new(
-                                    GetScreenWidth() / 2f - 230,
-                                    GetScreenHeight() / 2f - 250,
-                                    620,
-                                    540
-                                ),
-                                _newEffectNames[_newEffectCategorySelectedValue],
-                                _newEffectNames[_newEffectCategorySelectedValue].Length,
-                                fc,
-                                scrollIndex,
-                                _newEffectSelectedValue
-                            );
+                            var selected =
+                                ImGui.Selectable(
+                                    _newEffectNames[_newEffectCategorySelectedValue][index],index == _newEffectSelectedValue);
 
-                            if (newNewEffectSelectedValue == -1) {
-                                GLOBALS.Level.Effects = [
-                                    .. GLOBALS.Level.Effects,
-                                    (
-                                        GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue],
-                                        Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
-                                        new double[GLOBALS.Level.Height, GLOBALS.Level.Width]
-                                    )
-                                ];
-
-                                _addNewEffectMode = false;
-                                if (_currentAppliedEffect == -1) _currentAppliedEffect = 0;
-                            }
-                            else
-                            {
-                                _newEffectSelectedValue = newNewEffectSelectedValue;
-                            }
+                            if (selected) _newEffectSelectedValue = index;
                         }
+                        
+                        ImGui.EndListBox();
                     }
+                    
+                    ImGui.Dummy(new (availableSpace.X - 120, 20));
+                    ImGui.SameLine();
+                    var cancelSelected = ImGui.Button("Cancel");
+                    ImGui.SameLine();
+                    var selectSelected = ImGui.Button("Select");
+
+                    if (cancelSelected)
+                    {
+                        _addNewEffectMode = false;
+                    }
+
+                    if (selectSelected)
+                    {
+                        GLOBALS.Level.Effects = [
+                            .. GLOBALS.Level.Effects,
+                            (
+                                GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue],
+                                Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
+                                new double[GLOBALS.Level.Height, GLOBALS.Level.Width]
+                            )
+                        ];
+
+                        _addNewEffectMode = false;
+                        if (_currentAppliedEffect == -1) _currentAppliedEffect = 0;
+                    }
+                    
+                    ImGui.End();
                 }
-
-
-                /*if (_newEffectFocus) DrawRectangleLinesEx(
-                    new(
-                        GetScreenWidth() / 2f - 230,
-                        GetScreenHeight() / 2f - 250,
-                        620,
-                        540
-                    ),
-                    2.0f,
-                    new(0, 0, 255, 255)
-                );*/
+                rlImGui.End();
             }
             EndDrawing();
         }
@@ -355,7 +409,9 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
             var appliedEffectPageSize = (appliedEffectsPanelHeight / (appliedEffectRecHeight + 30));
 
             // Prevent using the brush when mouse over the effects list
-            var canUseBrush = !_isOptionsWinHovered && 
+            var canUseBrush = !_isSettingsWinHovered && 
+                              !_isSettingsWinDragged && 
+                              !_isOptionsWinHovered && 
                               !_isOptionsWinDragged && 
                               !_isShortcutsWinHovered && 
                               !_isShortcutsWinDragged && 
@@ -365,14 +421,14 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                               !_isEffectsWinDragged &&
                               !_addNewEffectMode && 
                               !CheckCollisionPointRec(
-                GetMousePosition(),
-                new(
-                    GetScreenWidth() - 300,
-                    100,
-                    280,
-                    appliedEffectsPanelHeight
-                )
-            ) && GLOBALS.Level.Effects.Length > 0;
+                                  GetMousePosition(),
+                                  new(
+                                      GetScreenWidth() - 300,
+                                      100,
+                                      280,
+                                      appliedEffectsPanelHeight
+                                  )
+                              ) && GLOBALS.Level.Effects.Length > 0;
 
             // Movement
 
@@ -613,20 +669,52 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                             (GLOBALS.Level.Height * GLOBALS.Scale) + 4
                         ),
                         2f,
-                        new(255, 255, 255, 255)
+                        WHITE
                     );
                     
-                    DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, new(255, 255, 255, 255));
+                    DrawRectangle(
+                        0, 
+                        0, 
+                        GLOBALS.Level.Width * GLOBALS.Scale, 
+                        GLOBALS.Level.Height * GLOBALS.Scale, 
+                        GLOBALS.Settings.GeneralSettings.DarkTheme
+                            ? new Color(50, 50, 50, 255)
+                            : WHITE);
 
-                    Printers.DrawGeoLayer(2, GLOBALS.Scale, false, BLACK with { a = 100 }, GLOBALS.LayerStackableFilter);
+                    Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : BLACK with { a = 150 }, GLOBALS.LayerStackableFilter);
                     Printers.DrawTileLayer(2, GLOBALS.Scale, false, true, true);
                     
-                    Printers.DrawGeoLayer(1, GLOBALS.Scale, false, BLACK with { a = 200 }, GLOBALS.LayerStackableFilter);
+                    Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : BLACK with { a = 150 }, GLOBALS.LayerStackableFilter);
                     Printers.DrawTileLayer(1, GLOBALS.Scale, false, true, true);
+                    
+                    if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
+                    {
+                        DrawRectangle(
+                            (-1) * GLOBALS.Scale,
+                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
+                            (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
+                            GLOBALS.Level.WaterLevel * GLOBALS.Scale,
+                            GLOBALS.Settings.GeneralSettings.DarkTheme 
+                                ? GLOBALS.DarkThemeWaterColor 
+                                : GLOBALS.LightThemeWaterColor
+                        );
+                    }
                     
                     Printers.DrawGeoLayer(0, GLOBALS.Scale, false, BLACK with { a = 255 });
                     Printers.DrawTileLayer(0, GLOBALS.Scale, false, true, true);
                     
+                    if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
+                    {
+                        DrawRectangle(
+                            (-1) * GLOBALS.Scale,
+                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
+                            (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
+                            GLOBALS.Level.WaterLevel * GLOBALS.Scale,
+                            GLOBALS.Settings.GeneralSettings.DarkTheme 
+                                ? GLOBALS.DarkThemeWaterColor 
+                                : GLOBALS.LightThemeWaterColor
+                        );
+                    }
 
                     // Effect matrix
 
@@ -635,13 +723,23 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                         _currentAppliedEffect < GLOBALS.Level.Effects.Length)
                     {
 
-                        DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, new(215, 66, 245, 100));
+                        if (!GLOBALS.Settings.GeneralSettings.DarkTheme) DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, new(215, 66, 245, 100));
 
-                        for (int y = 0; y < GLOBALS.Level.Height; y++)
+                        var brushColor = GLOBALS.Settings.GeneralSettings.DarkTheme
+                            ? GLOBALS.Settings.EffectsSettings.EffectColorDark
+                            : GLOBALS.Settings.EffectsSettings.EffectColorLight;
+                        
+                        for (var y = 0; y < GLOBALS.Level.Height; y++)
                         {
-                            for (int x = 0; x < GLOBALS.Level.Width; x++)
+                            for (var x = 0; x < GLOBALS.Level.Width; x++)
                             {
-                                DrawRectangle(x * GLOBALS.Scale, y * GLOBALS.Scale, GLOBALS.Scale, GLOBALS.Scale, new(0, 255, 0, (int)GLOBALS.Level.Effects[_currentAppliedEffect].Item3[y, x] * 255 / 100));
+                                DrawRectangle(
+                                    x * GLOBALS.Scale, 
+                                    y * GLOBALS.Scale, 
+                                    GLOBALS.Scale, 
+                                    GLOBALS.Scale, 
+                                    brushColor with { A = (byte)(GLOBALS.Level.Effects[_currentAppliedEffect].Item3[y, x] * 255 / 100) }
+                                );
                                 
                                 // Brush
                                 
@@ -707,9 +805,9 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                     
                     if (ImGui.Button("+")) _addNewEffectMode = true;
                     
-                    ImGui.SameLine();
                     if (GLOBALS.Level.Effects.Length > 0 && ImGui.Button("X"))
                     {
+                        ImGui.SameLine();
                         GLOBALS.Level.Effects = GLOBALS.Level.Effects.Where((_, ei) => ei != _currentAppliedEffect).ToArray();
 
                         if (_currentAppliedEffect < 0) _currentAppliedEffect = 0;
@@ -853,6 +951,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                         ImGui.End();
                     }
                 }
+                
                 // Shortcuts window
                 if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
                 {
@@ -877,6 +976,49 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
 
 
                 }
+                
+                // Settings window
+                if (ImGui.Begin("Settings##EffectsSettings"))
+                {
+                    var pos = ImGui.GetWindowPos();
+                    var winSpace = ImGui.GetWindowSize();
+
+                    if (CheckCollisionPointRec(GetMousePosition(), new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
+                    {
+                        _isSettingsWinHovered = true;
+
+                        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isSettingsWinDragged = true;
+                    }
+                    else
+                    {
+                        _isSettingsWinHovered = false;
+                    }
+
+                    if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isSettingsWinDragged) _isSettingsWinDragged = false;
+                    
+                    //
+                    
+                    ImGui.SeparatorText("Colors");
+                    var lightEffectColor = GLOBALS.Settings.EffectsSettings.EffectColorLight;
+                    var darkEffectColor = GLOBALS.Settings.EffectsSettings.EffectColorDark;
+
+                    var lightColor = new Vector3(lightEffectColor.R/255f, lightEffectColor.G/255f, lightEffectColor.B/255f);
+                    ImGui.SetNextItemWidth(250);
+                    ImGui.ColorEdit3("Light-mode effect", ref lightColor);
+                    
+                    var darkColor = new Vector3(darkEffectColor.R/255f, darkEffectColor.G/255f, darkEffectColor.B/255f);
+                    ImGui.SetNextItemWidth(250);
+                    ImGui.ColorEdit3("Dark-mode effect", ref darkColor);
+
+                    GLOBALS.Settings.EffectsSettings.EffectColorLight = new ConColor((byte)(lightColor.X * 255), (byte)
+                        (lightColor.Y * 255), (byte)(lightColor.Z * 255), 255);
+                    
+                    GLOBALS.Settings.EffectsSettings.EffectColorDark = new ConColor((byte)(darkColor.X * 255), (byte)
+                        (darkColor.Y * 255), (byte)(darkColor.Z * 255), 255);
+                    
+                    ImGui.End();
+                }
+                
                 rlImGui.End();
             }
             EndDrawing();

@@ -152,20 +152,20 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
             var waterObj = await waterObjTask;
             var propsObj = await propsObjTask;
 
-            var mtx = Lingo.Tools.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
-            var tlMtx = Lingo.Tools.GetTileMatrix(tilesObj, out _, out _);
-            var defaultMaterial = Lingo.Tools.GetDefaultMaterial(tilesObj);
-            var buffers = Lingo.Tools.GetBufferTiles(obj2);
-            var terrain = Lingo.Tools.GetTerrainMedium(terrainModeObj);
-            var lightMode = Lingo.Tools.GetLightMode(obj2);
-            var seed = Lingo.Tools.GetSeed(obj2);
-            var waterData = Lingo.Tools.GetWaterData(waterObj);
-            var effects = Lingo.Tools.GetEffects(effObj, givenWidth, givenHeight);
-            var cams = Lingo.Tools.GetCameras(camsObj);
+            var mtx = Lingo.Importers.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
+            var tlMtx = Lingo.Importers.GetTileMatrix(tilesObj, out _, out _);
+            var defaultMaterial = Lingo.Importers.GetDefaultMaterial(tilesObj);
+            var buffers = Lingo.Importers.GetBufferTiles(obj2);
+            var terrain = Lingo.Importers.GetTerrainMedium(terrainModeObj);
+            var lightMode = Lingo.Importers.GetLightMode(obj2);
+            var seed = Lingo.Importers.GetSeed(obj2);
+            var waterData = Lingo.Importers.GetWaterData(waterObj);
+            var effects = Lingo.Importers.GetEffects(effObj, givenWidth, givenHeight);
+            var cams = Lingo.Importers.GetCameras(camsObj);
             
             // TODO: catch PropNotFoundException
-            var props = Lingo.Tools.GetProps(propsObj);
-            var lightSettings = Lingo.Tools.GetLightSettings(lightObj);
+            var props = Lingo.Importers.GetProps(propsObj);
+            var lightSettings = Lingo.Importers.GetLightSettings(lightObj);
 
             // map material colors
 

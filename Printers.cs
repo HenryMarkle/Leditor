@@ -3001,6 +3001,83 @@ internal static class Printers
         }
     }
 
+    internal static void DrawDepthIndicator((InitPropType type, (int category, int index) position, Prop prop) prop)
+    {
+        var (c, i) = prop.position;
+        
+        switch (prop.type)
+        {
+            case InitPropType.Tile:
+            {
+                InitTile init;
+                
+                init = GLOBALS.Tiles[c][i];
+                
+                var depth = init.Repeat.Sum() * 10;
+                var offset = -prop.prop.Depth * 10;
+                var overflow = offset + depth - 290;
+            
+                DrawRectangleRec(
+                    new Rectangle(
+                        offset, 
+                        0, 
+                        depth - (overflow > 0 ? overflow : 0), 
+                        20
+                    ),
+                    new Color(100, 100, 180, 255)
+                );
+            }
+                break;
+            
+            case InitPropType.Long:
+                break;
+            
+            case InitPropType.Rope:
+                break;
+
+            default:
+            {
+                var init = GLOBALS.Props[c][i];
+                
+                DrawRectangleRec(
+                    new Rectangle(
+                        -prop.prop.Depth * 10, 
+                        0,
+                        init switch
+                        {
+                            InitVariedStandardProp v => v.Repeat.Length,
+                            InitStandardProp s => s.Repeat.Length,
+                            _ => init.Depth
+                        } * 10, 
+                        20
+                    ),
+                    new Color(100, 100, 180, 255)
+                );
+            }
+                break;
+        }
+        
+        DrawRectangleLinesEx(
+            new Rectangle(0, 0, 290, 20),
+            2f,
+            BLACK
+        );
+
+        DrawLineEx(
+            new Vector2(90, 0 + 0),
+            new Vector2(90, 0 + 5),
+            2f,
+            BLACK
+        );
+
+        DrawLineEx(
+            new Vector2(180, 0),
+            new Vector2(180, 5),
+            2f,
+            BLACK
+        );
+    }
+
     /// Needs rlImGui mode
     internal static class ImGui
     {
@@ -3032,15 +3109,15 @@ internal static class Printers
             
             if (expanded)
             {
-                if (ImGuiNET.ImGui.Selectable("Main")) GLOBALS.Page = 1;
-                if (ImGuiNET.ImGui.Selectable("Geometry")) GLOBALS.Page = 2;
-                if (ImGuiNET.ImGui.Selectable("Tiles")) GLOBALS.Page = 3;
-                if (ImGuiNET.ImGui.Selectable("Cameras")) GLOBALS.Page = 4;
-                if (ImGuiNET.ImGui.Selectable("Light")) GLOBALS.Page = 5;
-                if (ImGuiNET.ImGui.Selectable("Dimensions")) GLOBALS.Page = 6;
-                if (ImGuiNET.ImGui.Selectable("Effects")) GLOBALS.Page = 7;
-                if (ImGuiNET.ImGui.Selectable("Props")) GLOBALS.Page = 8;
-                if (ImGuiNET.ImGui.Selectable("Settings")) GLOBALS.Page = 9;
+                if (ImGuiNET.ImGui.Selectable("Main", GLOBALS.Page == 1)) GLOBALS.Page = 1;
+                if (ImGuiNET.ImGui.Selectable("Geometry", GLOBALS.Page == 2)) GLOBALS.Page = 2;
+                if (ImGuiNET.ImGui.Selectable("Tiles", GLOBALS.Page == 3)) GLOBALS.Page = 3;
+                if (ImGuiNET.ImGui.Selectable("Cameras", GLOBALS.Page == 4)) GLOBALS.Page = 4;
+                if (ImGuiNET.ImGui.Selectable("Light", GLOBALS.Page == 5)) GLOBALS.Page = 5;
+                if (ImGuiNET.ImGui.Selectable("Dimensions", GLOBALS.Page == 6)) GLOBALS.Page = 6;
+                if (ImGuiNET.ImGui.Selectable("Effects", GLOBALS.Page == 7)) GLOBALS.Page = 7;
+                if (ImGuiNET.ImGui.Selectable("Props", GLOBALS.Page == 8)) GLOBALS.Page = 8;
+                if (ImGuiNET.ImGui.Selectable("Settings", GLOBALS.Page == 9)) GLOBALS.Page = 9;
                 
                 ImGuiNET.ImGui.End();
             }

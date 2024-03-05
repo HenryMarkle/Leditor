@@ -295,6 +295,15 @@ class Program
             ).ToArray()
         ).ToArray();
     }
+    
+    private static Texture[][] LoadPropTexturesFromRenderer()
+    {
+        return GLOBALS.Props.Select(category =>
+            category.Select(prop =>
+                LoadTexture(Path.Combine(Path.Combine(GLOBALS.Paths.RendererDirectory, "Data", "Props"), prop.Name + ".png")) // cause a random crash
+            ).ToArray()
+        ).ToArray();
+    }
 
     private static (string[], (string, Color)[][]) LoadMaterialInit()
     {
@@ -302,7 +311,7 @@ class Program
 
         var text = File.ReadAllText(path);
 
-        return Tools.GetMaterialInit(text);
+        return Importers.GetMaterialInit(text);
     }
 
     private static ((string, Color)[], InitTile[][]) LoadTileInit()
@@ -311,7 +320,16 @@ class Program
 
         var text = File.ReadAllText(path).ReplaceLineEndings();
 
-        return Tools.GetTileInit(text);
+        return Importers.GetTileInit(text);
+    }
+
+    private static ((string, Color)[], InitTile[][]) LoadTileInitFromRenderer()
+    {
+        var path = Path.Combine(GLOBALS.Paths.RendererDirectory, "Data", "Graphics", "Init.txt");
+
+        var text = File.ReadAllText(path).ReplaceLineEndings();
+
+        return Importers.GetTileInit(text);
     }
 
     private static async Task<TileInitLoadInfo[]> LoadTileInitPackages()
@@ -324,7 +342,7 @@ class Program
             .Where(p => File.Exists(p.Item2))
             .Select(p => 
                 Task.Factory.StartNew(() => {
-                        var (categories, tiles) = Tools.GetTileInit(File.ReadAllText(p.file).ReplaceLineEndings());
+                        var (categories, tiles) = Importers.GetTileInit(File.ReadAllText(p.file).ReplaceLineEndings());
 
                         return new TileInitLoadInfo(categories, tiles, p.directory);
                 })
@@ -341,7 +359,13 @@ class Program
     private static ((string category, Color color)[] categories, InitPropBase[][] init) LoadPropInit()
     {
         var text = File.ReadAllText(GLOBALS.Paths.PropsInitPath).ReplaceLineEndings();
-        return Tools.GetPropsInit(text);
+        return Importers.GetPropsInit(text);
+    }
+    
+    private static ((string category, Color color)[] categories, InitPropBase[][] init) LoadPropInitFromRenderer()
+    {
+        var text = File.ReadAllText(Path.Combine(GLOBALS.Paths.RendererDirectory, "Data", "Props", "Init.txt")).ReplaceLineEndings();
+        return Importers.GetPropsInit(text);
     }
 
     // This is used to check whether the Init.txt file has been altered
@@ -503,69 +527,45 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.42";
+        const string version = "Henry's Leditor v0.9.43";
         const string raylibVersion = "Raylib v4.2.0.9";
         
         // Load tiles and props
 
         logger.Information("indexing tiles and props");
-        
-        (GLOBALS.TileCategories, GLOBALS.Tiles) = initExists ? LoadTileInit() : ([], []);
-        
-        var materialsInit = LoadMaterialInit();
-
-        GLOBALS.MaterialCategories = [..GLOBALS.MaterialCategories, ..materialsInit.Item1];
-        GLOBALS.Materials = [..GLOBALS.Materials, ..materialsInit.Item2];
 
         try
         {
-            var (categories, props) = LoadPropInit();
-            
-            // Shift rope props to the end of the arrays
-            (GLOBALS.PropCategories, GLOBALS.Props) = ([..categories, ..GLOBALS.PropCategories], [..props, ..GLOBALS.Props]);
+            (GLOBALS.TileCategories, GLOBALS.Tiles) = initExists ? LoadTileInit() : ([], []);
         }
         catch (Exception e)
         {
-            logger.Fatal($"failed to load props init: {e}");
-            GLOBALS.Page = 99;
+            throw new Exception(innerException: e, message: $"Failed to load tiles init: {e}");
         }
-
-        int tileNumber = 0;
-        int embeddedTileNumber = 0;
-
-        for (int c = 0; c < GLOBALS.Tiles.Length; c++)
-        {
-            for (int t = 0; t < GLOBALS.Tiles[c].Length; t++) tileNumber++;
-        }
-
-        for (int c = 0; c < embeddedTiles.Length; c++)
-        {
-            for (int t = 0; t < embeddedTiles[c].Length; t++) embeddedTileNumber++;
-        }
-
-        // check for missing textures
-
-        var missingTileImagesTask = from category in GLOBALS.Tiles from tile in category select Task.Factory.StartNew(() => { var path = Path.Combine(GLOBALS.Paths.AssetsDirectory, "tiles", $"{tile.Name}.png"); return (File.Exists(path), path); });
-
-        using var missingTileImagesTaskEnum = missingTileImagesTask.GetEnumerator();
-
-        var missingTextureFound = false;
-
-        var checkMissingTextureProgress = 0;
-        var checkMissingEmbeddedTextureProgress = 0;
-
-        var checkMissingTextureDone = false;
-        var checkMissingEmbeddedTextureDone = false;
-
-        // if the enumerators are empty, there are missing textures.
-
-        if (!missingTileImagesTaskEnum.MoveNext()) missingTextureFound = true;
-
-        // APPEND INTERNAL TILES
-
-        /*GLOBALS.TileCategories = [.. GLOBALS.TileCategories, .. embeddedCategories];
-        GLOBALS.Tiles = [..GLOBALS.Tiles, ..embeddedTiles];*/
         
+        try
+        {
+            var materialsInit = LoadMaterialInit();
+
+            GLOBALS.MaterialCategories = [..GLOBALS.MaterialCategories, ..materialsInit.Item1];
+            GLOBALS.Materials = [..GLOBALS.Materials, ..materialsInit.Item2];
+        }
+        catch (Exception e)
+        {
+            throw new Exception(innerException: e, message: $"Failed to load materials init: {e}");
+        }
+
+        try
+        {
+            (GLOBALS.PropCategories, GLOBALS.Props) = LoadPropInit();
+        }
+        catch (Exception e)
+        {
+            throw new Exception(innerException: e, message: $"Failed to load props init: {e}");
+        }
+
+        //
+
         // Merge tile packages
 
         // List<string> tileInitLoadDirs = [GLOBALS.Paths.TilesAssetsDirectory];
@@ -597,7 +597,73 @@ class Program
                 logger.Error($"Failed to load tile packages: {e}"); 
             }
         }
+        
+        // MERGE TILES
+        
+        GLOBALS.TileCategories = [..GLOBALS.TileCategories, ..loadedPackageTileCategories];
+        GLOBALS.Tiles = [..GLOBALS.Tiles, ..loadedPackageTiles];
+        
+        // Load Tile Textures
 
+        using var tileTextures = new TileTexturesLoader();
+        using var propTextures = new PropTexturesLoader();
+        using var lightTextures = new LightTexturesLoader();
+        
+        // 1. Get all texture paths
+        
+        var tileImagePaths = GLOBALS.Tiles
+            .Select((category, index) =>
+                category.Select(tile => 
+                        Path.Combine(GLOBALS.Paths.TilesAssetsDirectory, $"{tile.Name}.png"))
+                    .ToArray()
+            )
+            .ToArray();
+        
+        var packTileImagePaths = tilePackagesTask.Result
+            .SelectMany(result => result.Tiles
+                .Select(category => category
+                    .Select(tile =>
+                    {
+                        var path = Path.Combine(result.LoadDirectory, $"{tile.Name}.png");
+                        if (!File.Exists(path)) logger.Error($"Missing tile texture: \"{path}\"");
+
+                        return path;
+                    })
+                    .ToArray())
+                .ToArray()
+            ).ToArray();
+        
+        var ropePropImagePaths = GLOBALS.RopeProps
+            .Select(r => Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, r.Name + ".png"))
+            .ToArray();
+        
+        var longPropImagePaths = GLOBALS.LongProps
+            .Select(l => Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, l.Name + ".png"))
+            .ToArray();
+        
+        var otherPropImagePaths = GLOBALS.Props.Select(category =>
+            category.Select(prop => Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, prop.Name + ".png")
+            ).ToArray()
+        ).ToArray();
+        
+        var lightImagePaths = Directory
+            .GetFileSystemEntries(GLOBALS.Paths.LightAssetsDirectory)
+            .Where(e => e.EndsWith(".png"))
+            .Select(e =>
+            {
+                logger.Debug($"Loading light texture \"{e}\""); 
+                return e; 
+            })
+            .ToArray();
+        
+        // 2. Load the images
+
+        var loadTileImagesTask = tileTextures.PrepareFromPathsAsync([..tileImagePaths, ..packTileImagePaths]);
+        var loadPropImagesTask = propTextures.PrepareFromPathsAsync(ropePropImagePaths, longPropImagePaths, otherPropImagePaths);
+        var loadLightImagesTask = lightTextures.PrepareFromPathsAsync(lightImagePaths);
+        
+        // 3. Await loading in later stages
+        
         //
 
         logger.Information("Initializing window");
@@ -619,12 +685,9 @@ class Program
         //----------------------------------------------------------------------------
         InitWindow(GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight, "Henry's Leditor");
         //
-
+        
         if (!GLOBALS.Settings.GeneralSettings.DefaultFont)
         {
-            
-
-
             unsafe
             {
                 var globalFont = LoadFontEx(Path.Combine(GLOBALS.Paths.FontsDirectory, "oswald", "Oswald-Regular.ttf"), 30, 95);
@@ -636,7 +699,6 @@ class Program
                 SetTextureFilter(globalFont.texture, TextureFilter.TEXTURE_FILTER_TRILINEAR);
             }
         }
-        
         
         SetWindowIcon(icon);
         SetWindowMinSize(GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight);
@@ -658,45 +720,6 @@ class Program
         // Load images to RAM concurrently first, then load them to VRAM in the main thread.
         // Do NOT load textures directly to VRAM on a separate thread.
 
-        Task<Image>[][] vanillaTileImagesTasks = GLOBALS.Tiles
-                .Select((category, index) =>
-                    category.Select(tile => 
-                        Task.Factory.StartNew(() => 
-                            LoadImage(Path.Combine(GLOBALS.Paths.TilesAssetsDirectory, $"{tile.Name}.png"))))
-                        .ToArray()
-                )
-                .ToArray();
-
-        Task<Image>[][] tileImagesTasks = [..vanillaTileImagesTasks, ..tilePackagesTask.Result
-            .SelectMany(result => result.Tiles
-                .Select(category => category
-                    .Select(tile =>
-                    {
-                        var path = Path.Combine(result.LoadDirectory, $"{tile.Name}.png");
-                        var task = Task.Factory.StartNew(() =>
-                            LoadImage(path));
-                        
-                        if (!File.Exists(path)) logger.Error($"Missing tile texture: \"{path}\"");
-
-                        return task;
-                    })
-                    .ToArray())
-                .ToArray()
-            ).ToArray()];
-
-        Task<Image[]>[] tileImageCategoriesDone = tileImagesTasks.Select(Task.WhenAll).ToArray();
-
-        // Of course, don't forget to unload the images after loading the textures to VRAM.
-        Task? unloadTileImages = null;
-
-        bool imagesLoaded = false;
-        bool texturesLoaded = false;
-        
-        // MERGE Tiles
-        
-        GLOBALS.TileCategories = [..GLOBALS.TileCategories, ..loadedPackageTileCategories];
-        GLOBALS.Tiles = [..GLOBALS.Tiles, ..loadedPackageTiles];
-
         //
         try
         {
@@ -705,16 +728,6 @@ class Program
             logger.Debug("loading geo textures");
             GLOBALS.Textures.GeoBlocks = LoadGeoTextures();
             GLOBALS.Textures.GeoStackables = LoadStackableTextures();
-            logger.Debug("loading prop textures");
-            GLOBALS.Textures.Props = LoadPropTextures();
-            logger.Debug("loading embedded long prop textures");
-            GLOBALS.Textures.LongProps = GLOBALS.LongProps
-                .Select(l => LoadTexture(Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, l.Name + ".png"))).ToArray();
-            
-            logger.Debug("loading embedded rope prop textures");
-            GLOBALS.Textures.RopeProps = GLOBALS.RopeProps
-                .Select(r => LoadTexture(Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, r.Name + ".png"))).ToArray();
-
             logger.Debug("loading light brush textures");
             // Light textures need to be loaded on a separate thread, just like tile textures
             GLOBALS.Textures.LightBrushes = LoadLightTextures(logger);
@@ -777,12 +790,29 @@ class Program
 
         GLOBALS.Textures.GeoInterface =
         [
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "slope_black.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pc_black.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "spear_black.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "entry_black.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "slope.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pc.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "spear.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "entry.png")),
+            
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "solid_black.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "platform_black.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "glass_black.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "solid.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "platform.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "glass.png")),
+            
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "camera icon.png"))
         ];
 
         //
 
         GLOBALS.Textures.TileSpecs = Raylib_cs.Raylib.LoadRenderTexture(200, 200);
+        GLOBALS.Textures.PropDepth = Raylib_cs.Raylib.LoadRenderTexture(290, 20);
 
         //
 
@@ -889,8 +919,32 @@ class Program
         ImGui.LoadIniSettingsFromDisk(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "imgui.ini"));
         //
         
-        logger.Information("Begin main loop");
+        // Tile & Prop Textures
 
+        Task.WaitAll([loadTileImagesTask, loadPropImagesTask, loadLightImagesTask]);
+
+        var loadTileTexturesList = loadTileImagesTask.Result;
+        var loadPropTexturesList = loadPropImagesTask.Result;
+        var loadLightTexturesList = loadLightImagesTask.Result;
+        
+        using var loadTileTexturesEnumerator = loadTileTexturesList.GetEnumerator();
+        using var loadPropTexturesEnumerator = loadPropTexturesList.GetEnumerator();
+        using var loadLightTexturesEnumerator = loadLightTexturesList.GetEnumerator();
+
+        var tileTexturesLoadProgress = 0;
+        var propTexturesLoadProgress = 0;
+        var lightTexturesLoadProgress = 0;
+
+        var totalTileTexturesLoadProgress = loadTileTexturesList.Count;
+        var totalPropTexturesLoadProgress = loadPropTexturesList.Count;
+        var totalLightTexturesLoadProgress = loadLightTexturesList.Count;
+
+        var loadRate = GLOBALS.Settings.Misc.TileImageScansPerFrame;
+
+        var isLoadingTexturesDone = false;
+        
+        logger.Information("Begin main loop");
+        
         while (!WindowShouldClose())
         {
             try
@@ -952,96 +1006,22 @@ class Program
                 if (integrityFailed) GLOBALS.Page = 15;
                 
                 // Then check tile textures individually
-                else if (!checkMissingTextureDone)
-                {
-                    int r = 0;
-
-                    do
-                    {
-                        var currentTileTask = missingTileImagesTaskEnum.Current;
-
-                        if (!currentTileTask.IsCompleted) goto skip;
-
-                        var currentTile = currentTileTask.Result;
-
-                        if (!currentTile.Item1)
-                        {
-                            missingTextureFound = true;
-                            logger.Fatal($"missing texture: \"{currentTile.Item2}\"");
-                        }
-
-                        checkMissingTextureProgress++;
-
-                        if (!missingTileImagesTaskEnum.MoveNext())
-                        {
-                            checkMissingTextureDone = true;
-                            goto out_;
-                        }
-
-                        r++;
-
-                    // Do not remove this label
-                    skip:
-                        { }
-
-                        // settings.Misc.TileImageScansPerFrame is used to determine the number of scans oer frame.
-                    } while (r < GLOBALS.Settings.Misc.TileImageScansPerFrame);
-
-                // Do not remove this label
-                out_:
-
-                    var width = GetScreenWidth();
-                    var height = GetScreenHeight();
-
-                    BeginDrawing();
-                    ClearBackground(new(0, 0, 0, 255));
-
-                    DrawTexturePro(
-                        GLOBALS.Textures.SplashScreen,
-                        new(0, 0, GLOBALS.Textures.SplashScreen.width, GLOBALS.Textures.SplashScreen.height),
-                        new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
-                        new(0, 0),
-                        0,
-                        new(255, 255, 255, 255)
-                    );
-
-                    if (missingTextureFound) DrawText("missing textures found", 700, 300, 16, new(252, 38, 38, 255));
-                    if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
-
-                    DrawText(version, 700, 50, 15, WHITE);
-                    DrawText(raylibVersion, 700, 70, 15, WHITE);
-
-                    RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", checkMissingTextureProgress, 0, tileNumber);
-                    EndDrawing();
-
-                    continue;
-                }
-                else if (missingTextureFound)
-                {
-                    GLOBALS.Page = 16;
-                }
-                else
+                else if (!isLoadingTexturesDone)
                 {
                     // Loading screen
 
-                    if (!imagesLoaded)
+                    loadLoop:
+                    
+                    if (loadTileTexturesEnumerator.MoveNext())
                     {
-                        int doneCount = 0;
-                        int completedProgress = 0;
-
-
-                        for (int c = 0; c < tileImageCategoriesDone.Length; c++)
+                        loadTileTexturesEnumerator.Current?.Invoke();
+                        tileTexturesLoadProgress++;
+                        
+                        while (tileTexturesLoadProgress % loadRate != 0 && loadTileTexturesEnumerator.MoveNext())
                         {
-                            if (tileImageCategoriesDone[c].IsCompletedSuccessfully) doneCount++;
-
-                            for (int t = 0; t < tileImagesTasks[c].Length; t++)
-                            {
-                                if (tileImagesTasks[c][t].IsCompletedSuccessfully) completedProgress++;
-                            }
+                            loadTileTexturesEnumerator.Current?.Invoke();
+                            tileTexturesLoadProgress++;
                         }
-
-
-                        if (doneCount == tileImageCategoriesDone.Length) imagesLoaded = true;
 
                         var width = GetScreenWidth();
                         var height = GetScreenHeight();
@@ -1058,36 +1038,135 @@ class Program
                             new(255, 255, 255, 255)
                         );
 
-#if DEBUG
+                        #if DEBUG
                         if (!initChecksum) DrawText("Init.txt failed checksum", 10, 300, 16, YELLOW);
-#else
+                        #else
                         if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, YELLOW);
-#endif
+                        #endif
                         if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
 
                         DrawText(version, 700, 50, 15, WHITE);
                         DrawText(raylibVersion, 700, 70, 15, WHITE);
+                        
+                        if (GLOBALS.Font is null)
+                            DrawText("Loading tile textures", 100, height - 120, 20, WHITE);
+                        else
+                            DrawTextEx(GLOBALS.Font.Value, "Loading tile textures", new Vector2(100, height - 120), 20, 1, WHITE);
 
-                        RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", completedProgress, 0, (tileNumber + embeddedTileNumber));
+
+                        RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", tileTexturesLoadProgress, 0, totalTileTexturesLoadProgress);
                         EndDrawing();
 
+                        if (tileTexturesLoadProgress % loadRate != 0) goto loadLoop;
+                        
                         continue;
                     }
-                    else if (!texturesLoaded)
+                    if (loadPropTexturesEnumerator.MoveNext())
                     {
-                        GLOBALS.Textures.Tiles = tileImagesTasks.Select(c => c.Select(t => LoadTextureFromImage(t.Result)).ToArray()).ToArray();
+                        loadPropTexturesEnumerator.Current?.Invoke();
+                        propTexturesLoadProgress++;
 
-                        unloadTileImages = Task.Factory.StartNew(() =>
+                        while (propTexturesLoadProgress % loadRate != 0 && loadPropTexturesEnumerator.MoveNext())
                         {
-                            foreach (var category in tileImagesTasks)
-                            {
-                                foreach (var imageTask in category) UnloadImage(imageTask.Result);
-                            }
-                        });
+                            loadPropTexturesEnumerator.Current?.Invoke();
+                            propTexturesLoadProgress++;
+                        }
 
-                        texturesLoaded = true;
+                        var width = GetScreenWidth();
+                        var height = GetScreenHeight();
+
+                        BeginDrawing();
+                        ClearBackground(new(0, 0, 0, 255));
+
+                        DrawTexturePro(
+                            GLOBALS.Textures.SplashScreen,
+                            new(0, 0, GLOBALS.Textures.SplashScreen.width, GLOBALS.Textures.SplashScreen.height),
+                            new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
+                            new(0, 0),
+                            0,
+                            new(255, 255, 255, 255)
+                        );
+
+                        #if DEBUG
+                        if (!initChecksum) DrawText("Init.txt failed checksum", 10, 300, 16, YELLOW);
+                        #else
+                        if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, YELLOW);
+                        #endif
+                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
+
+                        DrawText(version, 700, 50, 15, WHITE);
+                        DrawText(raylibVersion, 700, 70, 15, WHITE);
+                        
+                        
+                        if (GLOBALS.Font is null)
+                            DrawText("Loading prop textures", 100, height - 120, 20, WHITE);
+                        else
+                            DrawTextEx(GLOBALS.Font.Value, "Loading prop textures", new Vector2(100, height - 120), 20, 1, WHITE);
+
+
+                        RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", propTexturesLoadProgress, 0, totalPropTexturesLoadProgress);
+                        EndDrawing();
+                        
                         continue;
                     }
+                    if (loadLightTexturesEnumerator.MoveNext())
+                    {
+                        loadLightTexturesEnumerator.Current?.Invoke();
+                        lightTexturesLoadProgress++;
+
+                        while (lightTexturesLoadProgress % loadRate != 0 && loadLightTexturesEnumerator.MoveNext())
+                        {
+                            loadLightTexturesEnumerator.Current?.Invoke();
+                            lightTexturesLoadProgress++;
+                        }
+
+                        var width = GetScreenWidth();
+                        var height = GetScreenHeight();
+
+                        BeginDrawing();
+                        ClearBackground(new(0, 0, 0, 255));
+
+                        DrawTexturePro(
+                            GLOBALS.Textures.SplashScreen,
+                            new(0, 0, GLOBALS.Textures.SplashScreen.width, GLOBALS.Textures.SplashScreen.height),
+                            new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
+                            new(0, 0),
+                            0,
+                            new(255, 255, 255, 255)
+                        );
+
+                        #if DEBUG
+                        if (!initChecksum) DrawText("Init.txt failed checksum", 10, 300, 16, YELLOW);
+                        #else
+                        if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, YELLOW);
+                        #endif
+                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
+
+                        DrawText(version, 700, 50, 15, WHITE);
+                        DrawText(raylibVersion, 700, 70, 15, WHITE);
+                        
+                        if (GLOBALS.Font is null)
+                            DrawText("Loading light brushed", 100, height - 120, 20, WHITE);
+                        else
+                            DrawTextEx(GLOBALS.Font.Value, "Loading light brushes", new Vector2(100, height - 120), 20, 1, WHITE);
+
+                        RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", lightTexturesLoadProgress, 0, totalLightTexturesLoadProgress);
+                        EndDrawing();
+                        
+                        continue;
+                    }
+
+                    GLOBALS.Textures.Tiles = tileTextures.Textures;
+                    GLOBALS.Textures.Props = propTextures.Others;
+                    GLOBALS.Textures.RopeProps = propTextures.Ropes;
+                    GLOBALS.Textures.LongProps = propTextures.Longs;
+                    GLOBALS.Textures.LightBrushes = lightTextures.Textures;
+                    
+                    loadTileTexturesList.Clear();
+                    loadPropTexturesList.Clear();
+                    loadLightTexturesList.Clear();
+
+                    isLoadingTexturesDone = true;
                 }
 
                 // page preprocessing
@@ -1355,6 +1434,7 @@ class Program
         UnloadRenderTexture(GLOBALS.Textures.LightMap);
         
         Raylib_cs.Raylib.UnloadRenderTexture(GLOBALS.Textures.TileSpecs);
+        Raylib_cs.Raylib.UnloadRenderTexture(GLOBALS.Textures.PropDepth);
         
         logger.Debug("Unloading shaders");
 
@@ -1374,7 +1454,7 @@ class Program
         UnloadShader(GLOBALS.Shaders.ColoredBoxTileProp);
         UnloadShader(GLOBALS.Shaders.LongProp);
 
-        unloadTileImages?.Wait();
+        // unloadTileImages?.Wait();
         
         //
         rlImGui.Shutdown();

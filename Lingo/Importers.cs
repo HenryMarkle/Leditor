@@ -5,7 +5,7 @@ using Leditor.Leditor.Lingo;
 
 namespace Leditor.Lingo;
 
-public static class Tools {
+public static class Importers {
     /// Meaningless name; this function turns a sequel of stackable IDs to an array that can be used at leditor runtime
     private static bool[] DecomposeStackables(IEnumerable<int> seq)
     {

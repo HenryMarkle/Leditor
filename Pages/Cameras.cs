@@ -148,8 +148,8 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
 
                 #region CamerasLevelBackground
 
-                Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(170, 170, 170, 255) : BLACK with { a = 150 });
-                Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(120, 120, 120, 255) : BLACK with { a = 150 });
+                Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : BLACK with { a = 150 });
+                Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : BLACK with { a = 150 });
                     
                 if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                 {

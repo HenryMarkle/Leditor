@@ -7,6 +7,36 @@ namespace Leditor;
 /// A collection of helper functions used across pages
 internal static class Utils
 {
+    internal static void Restrict(ref int value, int min, int max)
+    {
+        if (value < min) value = min;
+        if (value > max) value = max;
+    }
+    
+    internal static void Restrict(ref int value, int min)
+    {
+        if (value < min) value = min;
+    }
+
+    internal static void Restrict(ref float value, float min, float max)
+    {
+        if (value < min) value = min;
+        if (value > max) value = max;
+    }
+    
+    internal static void Restrict(ref float value, float min)
+    {
+        if (value < min) value = min;
+    }
+
+    internal static int GetPropDepth(in InitTile tile) => tile.Repeat.Sum();
+    internal static int GetPropDepth(in InitPropBase prop) => prop switch
+    {
+        InitVariedStandardProp v => v.Repeat.Length, 
+        InitStandardProp s => s.Repeat.Length, 
+        _ => prop.Depth
+    };
+    
     internal static async Task<string> GetFilePathAsync()
     {
         var path = string.Empty;

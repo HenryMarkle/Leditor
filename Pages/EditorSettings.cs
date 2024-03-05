@@ -182,6 +182,9 @@ public class SettingsPage : IPage
                    ),
                    new TileEditor(),
                    new LightEditor(background: new ConColor(66, 108, 245, 255)),
+                   new EffectsSettings(
+                       effectColorLight:GREEN,
+                       effectColorDark:new(214, 187, 9, 255)),
                    new PropEditor(),
                    new Experimental()
                );

@@ -82,6 +82,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
     private bool _isNavigationWinHovered;
     private bool _isNavigationWinDragged;
     
+    private bool _isSettingsWinHovered;
+    private bool _isSettingsWinDragged;
+    
     private int _lastChangingMatrixX = -1;
     private int _lastChangingMatrixY = -1;
 
@@ -136,6 +139,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
         Rectangle panelRect = new(sWidth - 200, 50, 188, 400);
 
         var canDrawGeo = !toggleCameraHovered &&
+                         !_isSettingsWinHovered && 
+                         !_isSettingsWinDragged &&
                          !_isShortcutsWinHovered && 
                          !_isShortcutsWinDragged && 
                          !_isNavigationWinHovered &&
@@ -200,7 +205,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
         
         // handle zoom
         var wheel = GetMouseWheelMove();
-        if (wheel != 0)
+        if (wheel != 0 && canDrawGeo)
         {
             var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
             _camera.offset = GetMousePosition();
@@ -1129,7 +1134,14 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                 }
 
                 // the outbound border
-                DrawRectangleLinesEx(new(0, 0, GLOBALS.Level.Width * scale, GLOBALS.Level.Height * scale), 2, new(0, 0, 0, 255));
+                DrawRectangleLinesEx(
+                    new Rectangle(
+                        -2, 
+                        -2, 
+                        GLOBALS.Level.Width * scale + 4, 
+                        GLOBALS.Level.Height * scale + 4), 
+                    2, 
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
 
                 // the border
                 DrawRectangleLinesEx(GLOBALS.Level.Border, _camera.zoom < GLOBALS.ZoomIncrement ? 5 : 2, new(255, 255, 255, 255));
@@ -1147,10 +1159,6 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                         );
                     }
                 }
-                
-                /*// a lazy way to hide the rest of the grid
-                DrawRectangle(matrixWidth * -scale, -3, matrixWidth * scale, matrixHeight * 2 * scale, new(120, 120, 120, 255));
-                DrawRectangle(0, matrixHeight * scale, matrixWidth * scale + 2, matrixHeight * scale, new(120, 120, 120, 255));*/
             }
             EndMode2D();
 
@@ -1405,12 +1413,12 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
             DrawRectangleRec(
                 layer3Rect,
-                WHITE
+                GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
             );
 
             DrawRectangleLines(10, sHeight - 50, 40, 40, GRAY);
 
-            if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, BLACK);
+            if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
             
             if (GLOBALS.Layer is 1 or 0)
             {
@@ -1425,12 +1433,12 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                 
                 DrawRectangleRec(
                     layer2Rect,
-                    WHITE
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
                 );
 
                 DrawRectangleLines(20, sHeight - 60, 40, 40, GRAY);
 
-                if (GLOBALS.Layer == 1) DrawText("2", 35, sHeight - 50, 22, BLACK);
+                if (GLOBALS.Layer == 1) DrawText("2", 35, sHeight - 50, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
             }
 
             if (GLOBALS.Layer == 0)
@@ -1445,20 +1453,20 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                 
                 DrawRectangleRec(
                     layer1Rect,
-                    WHITE
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
                 );
 
                 DrawRectangleLines(
                     30, sHeight - 70, 40, 40, GRAY);
 
-                DrawText("1", 48, sHeight - 60, 22, BLACK);
+                DrawText("1", 48, sHeight - 60, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
             }
 
             if (newLayer != GLOBALS.Layer) GLOBALS.Layer = newLayer;
             
             // Show Camera Indicator
 
-            ref var toggleCameraTexture = ref GLOBALS.Textures.GeoInterface[0];
+            ref var toggleCameraTexture = ref GLOBALS.Textures.GeoInterface[8];
             
             DrawRectangleRec(toggleCameraRect, WHITE);
 
@@ -1482,6 +1490,182 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             );
             
             rlImGui.Begin();
+            
+            // Geo Menu
+
+            // TODO: Unfinished
+            if (false && ImGui.Begin("Blocks##GeoBlocks"))
+            {
+                var availableSpace = ImGui.GetContentRegionAvail();
+                var quarterWidth = availableSpace.X / 4f;
+
+                ImGui.ImageButton(
+                    "Blocks", 
+                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[4].id : GLOBALS.Textures.GeoInterface[0].id), 
+                    new Vector2(30, 30));
+                
+                ImGui.SameLine();
+
+                ImGui.ImageButton(
+                    "Poles", 
+                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[5].id : GLOBALS.Textures.GeoInterface[1].id), 
+                    new Vector2(30, 30));
+                
+                ImGui.SameLine();
+
+                ImGui.ImageButton(
+                    "Stuff", 
+                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[6].id : GLOBALS.Textures.GeoInterface[2].id), 
+                    new Vector2(30, 30));
+                
+                ImGui.SameLine();
+
+                ImGui.ImageButton(
+                    "Paths", 
+                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[7].id : GLOBALS.Textures.GeoInterface[3].id), 
+                    new Vector2(30, 30));
+
+                if (ImGui.BeginListBox("##GeosList", availableSpace with { Y = availableSpace.Y - 40 }))
+                {
+                    switch (_geoMenuCategory)
+                    {
+                        case 0:
+                        {
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[11].id : GLOBALS.Textures.GeoInterface[8].id), new(20, 20));
+                            ImGui.SameLine();
+                            ImGui.Selectable("Block", _geoMenuIndex == 0);
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[4].id : GLOBALS.Textures.GeoInterface[0].id), new(20, 20));
+                            ImGui.SameLine();
+                            ImGui.Selectable("Slope", _geoMenuIndex == 1);
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[12].id : GLOBALS.Textures.GeoInterface[9].id), new(20, 20));
+                            ImGui.SameLine();
+                            ImGui.Selectable("Platform", _geoMenuIndex == 2);
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[13].id : GLOBALS.Textures.GeoInterface[10].id), new(20, 20));
+                            ImGui.SameLine();
+                            ImGui.Selectable("Glass", _geoMenuIndex == 3);
+                        }
+                            break;
+                        case 1:
+                            break;
+                        case 2:
+                            break;
+                        case 3:
+                            break;
+                    }
+                    ImGui.EndListBox();
+                }
+                
+                ImGui.End();
+            }
+            
+            // Settings Window
+
+            if (ImGui.Begin("Settings##NewGeoSettings"))
+            {
+                var pos = ImGui.GetWindowPos();
+                var winSpace = ImGui.GetWindowSize();
+
+                if (CheckCollisionPointRec(GetMousePosition(), new(pos.X - 5, pos.Y-5, winSpace.X + 10, winSpace.Y+10)))
+                {
+                    _isSettingsWinHovered = true;
+
+                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isSettingsWinDragged = true;
+                }
+                else
+                {
+                    _isSettingsWinHovered = false;
+                }
+
+                if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isSettingsWinDragged) _isSettingsWinDragged = false;
+
+                //
+                
+                var availableSpace = ImGui.GetContentRegionAvail();
+                
+                ImGui.SeparatorText("Colors");
+
+                var layer1Color = GLOBALS.Settings.GeometryEditor.LayerColors.Layer1;
+                var layer2Color = GLOBALS.Settings.GeometryEditor.LayerColors.Layer2;
+                var layer3Color = GLOBALS.Settings.GeometryEditor.LayerColors.Layer3;
+
+                var waterColor = GLOBALS.Settings.GeometryEditor.WaterColor;
+
+                var layer1ColorVec = new Vector3(layer1Color.R / 255f, layer1Color.G / 255f, layer1Color.B / 255f);
+                var layer2ColorVec = new Vector3(layer2Color.R / 255f, layer2Color.G / 255f, layer2Color.B / 255f);
+                var layer3ColorVec = new Vector3(layer3Color.R / 255f, layer3Color.G / 255f, layer3Color.B / 255f);
+                
+                var waterColorVec = new Vector3(waterColor.R / 255f, waterColor.G / 255f, waterColor.B / 255f);
+                
+                ImGui.SetNextItemWidth(250);
+                ImGui.ColorEdit3("Layer 1", ref layer1ColorVec);
+                
+                ImGui.SetNextItemWidth(250);
+                ImGui.ColorEdit3("Layer 2", ref layer2ColorVec);
+                
+                ImGui.SetNextItemWidth(250);
+                ImGui.ColorEdit3("Layer 3", ref layer3ColorVec);
+                
+                ImGui.SetNextItemWidth(250);
+                ImGui.ColorEdit3("Water", ref waterColorVec);
+
+                GLOBALS.Settings.GeometryEditor.LayerColors.Layer1 = new ConColor((byte)(layer1ColorVec.X * 255),
+                    (byte)(layer1ColorVec.Y * 255), (byte)(layer1ColorVec.Z * 255));
+                
+                GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 = new ConColor((byte)(layer2ColorVec.X * 255),
+                    (byte)(layer2ColorVec.Y * 255), (byte)(layer2ColorVec.Z * 255), 50);
+                
+                GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 = new ConColor((byte)(layer3ColorVec.X * 255),
+                    (byte)(layer3ColorVec.Y * 255), (byte)(layer3ColorVec.Z * 255), 50);
+                
+                GLOBALS.Settings.GeometryEditor.WaterColor = new ConColor((byte)(waterColorVec.X * 255),
+                    (byte)(waterColorVec.Y * 255), (byte)(waterColorVec.Z * 255), 50);
+
+                var resetColorsSelected = ImGui.Button("Reset Colors", availableSpace with { Y = 20 });
+
+                if (resetColorsSelected)
+                {
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer1 = BLACK;
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 = new ConColor(0, 255, 0, 50);
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 = new ConColor(255, 0, 0, 50);
+                    GLOBALS.Settings.GeometryEditor.WaterColor = new ConColor(0, 0, 255, 70);
+                }
+                
+                // Visibility
+
+                ImGui.SeparatorText("Visibility");
+                
+                var showLayer1 = _showLayer1;
+                var showLayer2 = _showLayer2;
+                var showLayer3 = _showLayer3;
+
+                ImGui.Checkbox("Layer 1", ref showLayer1);
+                ImGui.Checkbox("Layer 2", ref showLayer2);
+                ImGui.Checkbox("Layer 3", ref showLayer3);
+
+                _showLayer1 = showLayer1;
+                _showLayer2 = showLayer2;
+                _showLayer3 = showLayer3;
+                
+                ImGui.Spacing();
+
+                var showCameras = GLOBALS.Settings.GeometryEditor.ShowCameras;
+                
+                ImGui.Checkbox("Cameras", ref showCameras);
+
+                GLOBALS.Settings.GeometryEditor.ShowCameras = showCameras;
+                
+                // Controls
+                
+                ImGui.SeparatorText("Controls");
+
+                var multiSelect = _allowMultiSelect;
+                
+                ImGui.Checkbox("Multi-Select", ref multiSelect);
+
+                _allowMultiSelect = multiSelect;
+                
+                ImGui.End();
+            }
             
             // Navigation
             

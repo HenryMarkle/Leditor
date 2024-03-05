@@ -106,6 +106,8 @@ internal class PropsEditorPage : IPage
     private bool _newlyCopied; // to signify that the copied properties should be used
 
     private int _defaultDepth;
+    private int _defaultVariation;
+    private int _defaultSeed;
 
     private void UpdateDefaultDepth()
     {
@@ -142,18 +144,17 @@ internal class PropsEditorPage : IPage
     private readonly string[] _menuCategoryNames = [ "Tiles", "Ropes", "Long Props", "Other" ];
 
     private readonly byte[] _menuPanelBytes = "Menu"u8.ToArray();
-    private readonly byte[] _ropePanelBytes = "Rope Settings"u8.ToArray();
     
     private (int index, bool simSwitch, RopeModel model, Vector2[] bezierHandles)[] _models;
     
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
-
-    private bool _isRopeWinHovered;
-    private bool _isRopeWinDragged;
     
     private bool _isNavigationWinHovered;
     private bool _isNavigationWinDragged;
+    
+    private bool _isPropsWinHovered;
+    private bool _isPropsWinDragged;
 
     internal PropsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null)
     {
@@ -366,8 +367,8 @@ internal class PropsEditorPage : IPage
         var tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / previewScale;
         var tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / previewScale;
 
-        var canDrawTile = !_isRopeWinHovered && 
-                          !_isRopeWinDragged && 
+        var canDrawTile = !_isPropsWinHovered && 
+                          !_isPropsWinDragged && 
                           !_isShortcutsWinHovered && 
                           !_isShortcutsWinDragged && 
                           !_isNavigationWinHovered &&
@@ -637,11 +638,11 @@ internal class PropsEditorPage : IPage
                                 
                                 var (width, height, settings) = init switch
                                 {
-                                    InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings()),
+                                    InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings(variation:_defaultVariation)),
                                     InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
-                                    InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings()),
+                                    InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings(variation:_defaultVariation)),
                                     InitSoftProp => (texture.width  / 2f, texture.height  / 2f, new PropSoftSettings()),
-                                    InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings()),
+                                    InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings(variation:_defaultVariation)),
                                     InitSimpleDecalProp => (texture.width / 2f, texture.height / 2f, new PropSimpleDecalSettings()), 
                                     InitSoftEffectProp => (texture.width / 2f, texture.height / 2f, new PropSoftEffectSettings()), 
                                     InitAntimatterProp => (texture.width / 2f, texture.height / 2f, new PropAntimatterSettings()),
@@ -654,8 +655,8 @@ internal class PropsEditorPage : IPage
                                 if (_newlyCopied)
                                 {
                                     _newlyCopied = false;
-
-                                    settings = (PropLongSettings)_copiedPropSettings;
+                                
+                                    settings = _copiedPropSettings;
                                     _defaultDepth = _copiedDepth;
                                 }
                                 
@@ -858,11 +859,11 @@ internal class PropsEditorPage : IPage
                                 
                                 var (width, height, settings) = init switch
                                 {
-                                    InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings()),
+                                    InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings(variation:_defaultVariation)),
                                     InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
-                                    InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings()),
+                                    InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings(variation:_defaultVariation)),
                                     InitSoftProp => (texture.width  / 2f, texture.height  / 2f, new PropSoftSettings()),
-                                    InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings()),
+                                    InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings(variation:_defaultVariation)),
                                     InitSimpleDecalProp => (texture.width / 2f, texture.height / 2f, new PropSimpleDecalSettings()), 
                                     InitSoftEffectProp => (texture.width / 2f, texture.height / 2f, new PropSoftEffectSettings()), 
                                     InitAntimatterProp => (texture.width / 2f, texture.height / 2f, new PropAntimatterSettings()),
@@ -876,7 +877,7 @@ internal class PropsEditorPage : IPage
                                 {
                                     _newlyCopied = false;
 
-                                    settings = (PropLongSettings)_copiedPropSettings;
+                                    settings = _copiedPropSettings;
                                     _defaultDepth = _copiedDepth;
                                 }
                                 
@@ -1554,7 +1555,7 @@ internal class PropsEditorPage : IPage
                         _clickTracker = true;
                     }
 
-                    if ((IsMouseButtonReleased(_shortcuts.SelectProps.Button) || IsKeyReleased(_shortcuts.SelectPropsAlt.Key)) && _clickTracker && !(_isRopeWinHovered || _isRopeWinDragged))
+                    if ((IsMouseButtonReleased(_shortcuts.SelectProps.Button) || IsKeyReleased(_shortcuts.SelectPropsAlt.Key)) && _clickTracker && !(_isPropsWinHovered || _isPropsWinDragged))
                     {
                         _clickTracker = false;
                     
@@ -2238,11 +2239,11 @@ internal class PropsEditorPage : IPage
                             
                             var (width, height, settings) = prop switch
                             {
-                                InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings()),
+                                InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings(variation:_defaultVariation)),
                                 InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
-                                InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings()),
+                                InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings(variation:_defaultVariation)),
                                 InitSoftProp => (texture.width  / 2f, texture.height  / 2f, new PropSoftSettings()),
-                                InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings()),
+                                InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings(variation:_defaultVariation)),
                                 InitSimpleDecalProp => (texture.width / 2f, texture.height / 2f, new PropSimpleDecalSettings()), 
                                 InitSoftEffectProp => (texture.width / 2f, texture.height / 2f, new PropSoftEffectSettings()), 
                                 InitAntimatterProp => (texture.width / 2f, texture.height / 2f, new PropAntimatterSettings()),
@@ -2308,1019 +2309,38 @@ internal class PropsEditorPage : IPage
         EndMode2D();
 
         #region TileEditorUI
+
         {
+            // Selected Props
+            var fetchedSelected = GLOBALS.Level.Props
+                .Select((prop, index) => (prop, index))
+                .Where(p => _selected[p.index])
+                .Select(p => p)
+                .ToArray();
+
             // Coordinates
 
             if (GLOBALS.Settings.TileEditor.HoveredTileInfo && canDrawTile)
             {
-                if (inMatrixBounds) DrawText(
-                    $"x: {tileMatrixX}, y: {tileMatrixY}\n{GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer]}",
-                    tileMouse.X + previewScale,
-                    tileMouse.Y + previewScale,
-                    15,
-                    WHITE
-                );
+                if (inMatrixBounds)
+                    DrawText(
+                        $"x: {tileMatrixX}, y: {tileMatrixY}\n{GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer]}",
+                        tileMouse.X + previewScale,
+                        tileMouse.Y + previewScale,
+                        15,
+                        WHITE
+                    );
             }
             else
             {
-                if (inMatrixBounds) DrawText(
-                    $"x: {tileMatrixX}, y: {tileMatrixY}",
-                    tileMouse.X + previewScale,
-                    tileMouse.Y + previewScale,
-                    15,
-                    WHITE
-                );
-            }
-
-            // Menu
-
-            unsafe
-            {
-                fixed (byte* pt = _menuPanelBytes)
-                {
-                    RayGui.GuiPanel(
-                        menuPanelRect,
-                        (sbyte*)pt
-                    );
-                }
-            }
-            
-            // Panel
-            switch (_mode)
-            {
-                case 1: // Place Mode
-                {
-                    DrawRectangleRec(new Rectangle(menuPanelRect.x + 30 + (_menuRootCategoryIndex * 40), 40, 40, 40), BLUE);
-
-                    var tilesAsPropsRect = new Rectangle(menuPanelRect.x + 30, 40, 40, 40);
-                    var ropesRect = new Rectangle(menuPanelRect.x + 30 + (40), 40, 40, 40);
-                    var longsRect = new Rectangle(menuPanelRect.x + 30 + (80), 40, 40, 40);
-                    var othersRect = new Rectangle(menuPanelRect.x + 30 + (120), 40, 40, 40);
-
-                    var tilesAsPropsHovered = CheckCollisionPointRec(tileMouse, tilesAsPropsRect);
-                    var ropesHovered = CheckCollisionPointRec(tileMouse, ropesRect);
-                    var longsHovered = CheckCollisionPointRec(tileMouse, longsRect);
-                    var othersHovered = CheckCollisionPointRec(tileMouse, othersRect);
-                    
-                    if (tilesAsPropsHovered)
-                    {
-                        DrawRectangleRec(tilesAsPropsRect, BLUE with { a = 100 });
-                        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _menuRootCategoryIndex = 0;
-                    }
-                    if (ropesHovered)
-                    {
-                        DrawRectangleRec(ropesRect, BLUE with { a = 100 });
-                        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _menuRootCategoryIndex = 1;
-                    }
-                    if (longsHovered)
-                    {
-                        DrawRectangleRec(longsRect, BLUE with { a = 100 });
-                        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _menuRootCategoryIndex = 2;
-                    }
-                    if (othersHovered)
-                    {
-                        DrawRectangleRec(othersRect, BLUE with { a = 100 });
-                        if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _menuRootCategoryIndex = 3;
-                    }
-                    
-                    DrawTexture(
-                        GLOBALS.Textures.PropMenuCategories[0], 
-                        (int)menuPanelRect.x + 30, 
-                        40, 
-                        _menuRootCategoryIndex == 0 ? WHITE : BLACK
-                    );
-
-                    DrawTexture(
-                        GLOBALS.Textures.PropMenuCategories[1], 
-                        (int)menuPanelRect.x + 30 + 40, 
-                        40, 
-                        _menuRootCategoryIndex == 1 ? WHITE : BLACK
-                    );
-            
-                    DrawTexture(
-                        GLOBALS.Textures.PropMenuCategories[2], 
-                        (int)menuPanelRect.x + 30 + 80, 
-                        40, 
-                        _menuRootCategoryIndex == 2 ? WHITE : BLACK
-                    );
-                    
-                    DrawTexture(
-                        GLOBALS.Textures.PropMenuCategories[3], 
-                        (int)menuPanelRect.x + 30 + 120, 
-                        40, 
-                        _menuRootCategoryIndex == 3 ? WHITE : BLACK
-                    );
-                    
+                if (inMatrixBounds)
                     DrawText(
-                        _menuCategoryNames[_menuRootCategoryIndex], 
-                        (int)menuPanelRect.x + 30 + 190,
-                        50,
-                        20,
-                        BLACK
+                        $"x: {tileMatrixX}, y: {tileMatrixY}",
+                        tileMouse.X + previewScale,
+                        tileMouse.Y + previewScale,
+                        15,
+                        WHITE
                     );
-
-                    Rectangle categoryRect = new((int)(menuPanelRect.x + 5), 90, 145, (int)(menuPanelRect.height - 300));
-                    Rectangle listRect = new((int)(menuPanelRect.x + 155), 90, menuPanelRect.width - 160, (int)(menuPanelRect.height - 300));
-
-                    switch (_menuRootCategoryIndex)
-                    {
-                        case 0: // Tiles as props
-                        {
-                            int newCategoryIndex;
-
-                            unsafe
-                            {
-                                fixed (int* scrollIndex = &_propsMenuTilesCategoryScrollIndex)
-                                {
-                                    fixed (int* fc = &_propsMenuTilesCategoryItemFocus)
-                                    {
-                                        // draw the category list first
-                                        newCategoryIndex = RayGui.GuiListViewEx(
-                                            categoryRect,
-                                            _tilesAsPropsCategoryNames,
-                                            _tilesAsPropsCategoryIndices.Length,
-                                            fc,
-                                            scrollIndex,
-                                            _propsMenuTilesCategoryIndex);
-                                    }
-                                }
-                            }
-
-                            if (newCategoryIndex != _propsMenuTilesCategoryIndex && newCategoryIndex != -1)
-                            {
-                                #if DEBUG
-                                _logger.Debug($"New tiles category index: {newCategoryIndex}");
-                                #endif
-                                
-                                _propsMenuTilesIndex = 0;
-                                _propsMenuTilesCategoryIndex = newCategoryIndex;
-                            }
-
-                            unsafe
-                            {
-                                fixed (int* scrollIndex = &_propsMenuTilesScrollIndex)
-                                {
-                                    fixed (int* fc = &_propsMenuTilesItemFocus)
-                                    {
-                                        // draw the list
-
-                                        var newPropsMenuTilesIndex = RayGui.GuiListViewEx(
-                                            listRect,
-                                            _tilesAsPropsNames[_propsMenuTilesCategoryIndex],
-                                            _tilesAsPropsNames[_propsMenuTilesCategoryIndex].Length,
-                                            fc,
-                                            scrollIndex,
-                                            _propsMenuTilesIndex
-                                        );
-
-                                        if (newPropsMenuTilesIndex != _propsMenuTilesIndex && newPropsMenuTilesIndex != -1)
-                                        {
-                                            #if DEBUG
-                                            _logger.Debug($"New tiles index: {newPropsMenuTilesIndex}");
-                                            #endif
-                                            
-                                            _propsMenuTilesIndex = newPropsMenuTilesIndex;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                            break;
-
-                        case 1: // Ropes
-                        {
-                            unsafe
-                            {
-                                int newIndex;
-
-                                fixed (int* scrollIndex = &_propsMenuRopesScrollIndex)
-                                {
-                                    fixed (int* fc = &_propsMenuRopesItemFocus)
-                                    {
-                                        newIndex = RayGui.GuiListViewEx(
-                                            categoryRect with { width = menuPanelRect.width - 10 },
-                                            _ropeNames,
-                                            _ropeNames.Length,
-                                            fc,
-                                            scrollIndex,
-                                            _propsMenuRopesIndex
-                                        );
-                                    }
-                                }
-
-                                if (newIndex != _propsMenuRopesIndex && newIndex != -1)
-                                {
-                                    #if DEBUG
-                                    _logger.Debug($"New props Index: {newIndex}");
-                                    #endif
-                                    
-                                    _propsMenuRopesIndex = newIndex;
-                                }
-                            }
-                        }
-                            break;
-
-                        case 2: // Long Props
-                        {
-                            int newIndex;
-                            
-                            unsafe
-                            {
-                                fixed (int* scrollIndex = &_propsMenuLongsScrollIndex)
-                                {
-                                    fixed (int* fc = &_propsMenuLongItemFocus)
-                                    {
-                                        newIndex = RayGui.GuiListViewEx(
-                                            categoryRect with { width = menuPanelRect.width - 10 },
-                                            _longNames,
-                                            _longNames.Length,
-                                            fc,
-                                            scrollIndex,
-                                            _propsMenuLongsIndex
-                                        );
-                                    }
-                                }
-                            }
-
-                            if (newIndex != _propsMenuLongsIndex && newIndex != -1)
-                            {
-                                #if DEBUG
-                                _logger.Debug($"New longs index: {newIndex}");
-                                #endif
-                                
-                                _propsMenuLongsIndex = newIndex;
-                            }
-                        }
-
-                    break;
-
-                        case 3: // Props
-                        {
-                            int newCategoryIndex;
-
-                            unsafe
-                            {
-                                fixed (int* scrollIndex = &_propsMenuOthersCategoryScrollIndex)
-                                {
-                                    fixed (int* fc = &_propsMenuOtherCategoryItemFocus)
-                                    {
-                                        // draw the category list first
-                                        newCategoryIndex = RayGui.GuiListViewEx(
-                                            categoryRect,
-                                            _otherCategoryNames,
-                                            _otherCategoryNames.Length,
-                                            fc,
-                                            scrollIndex,
-                                            _propsMenuOthersCategoryIndex);
-                                    }
-                                }
-                            }
-                            
-                            // reset selection index when changing categories
-                            if (newCategoryIndex != _propsMenuOthersCategoryIndex && newCategoryIndex != -1)
-                            {
-                                #if DEBUG
-                                _logger.Debug($"New others category index: {_propsMenuOthersCategoryIndex}");
-                                #endif
-                                
-                                _propsMenuOthersIndex = 0;
-                                _propsMenuOthersCategoryIndex = newCategoryIndex;
-                            }
-                            
-                            unsafe
-                            {
-                                fixed (int* scrollIndex = &_propsMenuOthersScrollIndex)
-                                {
-                                    fixed (int* fc = &_propsMenuOtherItemFocus)
-                                    {
-                                        // draw the list
-
-                                        var  newPropsMenuOthersIndex = RayGui.GuiListViewEx(
-                                            listRect,
-                                            _otherNames[_propsMenuOthersCategoryIndex],
-                                            _otherNames[_propsMenuOthersCategoryIndex].Length,
-                                            fc,
-                                            scrollIndex,
-                                            _propsMenuOthersIndex
-                                        );
-
-                                        if (newPropsMenuOthersIndex != _propsMenuOthersIndex &&
-                                            newPropsMenuOthersIndex != -1)
-                                        {
-                                            #if DEBUG
-                                            _logger.Debug($"New other prop index: {newPropsMenuOthersIndex}");
-                                            #endif
-                                            
-                                            _propsMenuOthersIndex = newPropsMenuOthersIndex;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                            break;
-                    }
-                    
-                    // Depth Indicator
-
-                    unsafe
-                    {
-                        var d = -_defaultDepth;
-                        
-                        RayGui.GuiSpinner(
-                            new Rectangle(
-                                sWidth-205, 
-                                categoryRect.Y+categoryRect.height+10, 
-                                200, 
-                                40
-                            ), 
-                            "Default Depth",
-                            &d,
-                            0,
-                            29,
-                            false
-                        );
-
-                        _defaultDepth = -d;
-                    }
-
-                    // Focus indicator
-                    if (_menuRootCategoryIndex is 0 or 3)
-                    {
-                        
-                        DrawRectangleLinesEx(
-                            _propCategoryFocus ? categoryRect : listRect,
-                            4f,
-                            BLUE
-                        );
-                    }
-                
-                    // No-Collision Prop Placement Indicator
-
-                    {
-                        var texture = GLOBALS.Textures.PropGenerals[0];
-                        var rect = new Rectangle(sWidth - 5 - 100, sHeight - 45, 40, 40);
-                        var rectHovered = CheckCollisionPointRec(tileMouse, rect);
-                        
-                        if (rectHovered)
-                        {
-                            DrawRectangleRec(rect, BLUE with { a = 100 });
-
-                            if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                                _noCollisionPropPlacement = !_noCollisionPropPlacement;
-                        }
-                        if (_noCollisionPropPlacement) DrawRectangleRec(rect, BLUE);
-                        
-                        DrawTexturePro(
-                            texture,
-                            new Rectangle(0, 0, texture.width, texture.height),
-                            rect,
-                            new Vector2(0, 0),
-                            0,
-                            _noCollisionPropPlacement ? WHITE : BLACK
-                        );
-                    }
-                }
-                    break;
-
-                case 0: // Select Mode
-                {
-                    var fetchedSelected = GLOBALS.Level.Props
-                        .Select((prop, index) => (prop, index))
-                        .Where(p => _selected[p.index])
-                        .Select(p => p)
-                        .ToArray();
-                    
-                    
-                    // Rope Panel
-                    if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.type == InitPropType.Rope)
-                    {
-                        var modelIndex = -1;
-
-                        for (var i = 0; i < _models.Length; i++)
-                        {
-                            if (_models[i].index == fetchedSelected[0].index) modelIndex = i;
-                        }
-
-                        if (modelIndex == -1)
-                        {
-#if DEBUG
-                            _logger.Fatal(
-                                $"failed to fetch selected rope from {nameof(_models)}: no element with index [{fetchedSelected[0].index}] was found");
-                            throw new Exception(
-                                message:
-                                $"failed to fetch selected rope from {nameof(_models)}: no element with index [{fetchedSelected[0].index}] was found");
-#else
-                            goto ropeNotFound;
-#endif
-                        }
-
-                        ref var currentModel = ref _models[modelIndex];
-
-                        var oldSegmentCount = GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints.Length;
-                        var segmentCount = oldSegmentCount;
-                        
-                        
-                        // ImGui
-                        rlImGui.Begin();
-
-                        if (ImGui.Begin("Rope Options"))
-                        {
-                            var pos = ImGui.GetWindowPos();
-                            var winSpace = ImGui.GetWindowSize();
-                            
-                            if (CheckCollisionPointRec(GetMousePosition(), new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
-                            {
-                                _isRopeWinHovered = true;
-
-                                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isRopeWinDragged = true;
-                            }
-                            else
-                            {
-                                _isRopeWinHovered = false;
-                            }
-                
-                            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isRopeWinDragged) _isRopeWinDragged = false;
-                            
-                            var switchSimSelected = ImGui.Button(currentModel.simSwitch ? "Simulation" : "Bezier Path");
-
-                            if (switchSimSelected) currentModel.simSwitch = !currentModel.simSwitch;
-                            
-                            ImGui.SetNextItemWidth(100);
-
-                            ImGui.InputInt("Segment Count", ref segmentCount);
-                            
-                            // Update segment count if needed
-
-                            if (segmentCount < 1) segmentCount = 1;
-
-                            if (segmentCount > oldSegmentCount)
-                            {
-                                GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
-                                [
-                                    ..GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints, new Vector2()
-                                ];
-                            }
-                            else if (segmentCount < oldSegmentCount)
-                            {
-                                GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
-                                    GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints[..^1];
-                            }
-
-                            if (segmentCount != oldSegmentCount) UpdateRopeModelSegments();
-
-                            //
-
-                            ImGui.Checkbox("Simulate Rope", ref _ropeMode);
-                            
-                            if (currentModel.simSwitch) // Simulation mode
-                            {
-                                var cycleFpsSelected = ImGui.Button($"{60 / _ropeSimulationFrameCut} FPS");
-                                
-                                if (cycleFpsSelected) _ropeSimulationFrameCut = ++_ropeSimulationFrameCut % 3 + 1;
-                                
-                                var release = (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings).Release;
-
-                                var releaseClicked = ImGui.Button(release switch
-                                {
-                                    PropRopeRelease.Left => "Release Left",
-                                    PropRopeRelease.None => "Release None",
-                                    PropRopeRelease.Right => "Release Right",
-                                    _ => "Error"
-                                });
-
-                                if (releaseClicked)
-                                {
-                                    release = (PropRopeRelease)((int)release + 1);
-                                    if ((int)release > 2) release = 0;
-
-                                    (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings).Release = release;
-                                }
-                            }
-                            else // Bezier mode
-                            {
-                                var oldHandlePointNumber = currentModel.bezierHandles.Length;
-                                var handlePointNumber = oldHandlePointNumber;
-
-                                ImGui.SetNextItemWidth(100);
-                                ImGui.InputInt("Control Points", ref handlePointNumber);
-
-                                var quads = GLOBALS.Level.Props[currentModel.index].prop.Quads;
-                                var center = Utils.QuadsCenter(ref quads);
-
-                                if (handlePointNumber > oldHandlePointNumber)
-                                {
-                                    currentModel.bezierHandles = [..currentModel.bezierHandles, center];
-                                }
-                                else if (handlePointNumber < oldHandlePointNumber)
-                                {
-                                    currentModel.bezierHandles = currentModel.bezierHandles[..^1];
-                                }
-                            }
-                            
-                            ImGui.End();
-                        }
-                        
-                        rlImGui.End();
-                        //
-                        
-                        ropeNotFound: { }
-                    }
-                    //
-                    
-                    var listRect = new Rectangle(
-                        (int)(menuPanelRect.x + 5), 
-                        90, 
-                        menuPanelRect.width - 10, 
-                        (int)(menuPanelRect.height - 450)
-                    );
-                    
-                    DrawRectangleLinesEx(listRect, 1.2f, GRAY);
-
-                    var pageSize = (int) listRect.height / 24;
-                    
-                    // Hide-all Checkbox
-
-                    var isAllHidden = _hidden.All(h => h);
-
-                    var hideAll = RayGui.GuiCheckBox(
-                        new Rectangle(sWidth - 80, listRect.y - 30, 20, 20),
-                        "",
-                        isAllHidden
-                    );
-                    
-                    if (!hideAll && isAllHidden)
-                    {
-                        for (var i = 0; i < _hidden.Length; i++) _hidden[i] = false;
-                    }
-                    else if (hideAll)
-                    {
-                        for (var i = 0; i < _hidden.Length; i++) _hidden[i] = true;
-                    }
-                    
-                    // Select-all Checkbox
-
-                    var isAllSelected = _selected.All(h => h);
-                    
-                    var selectAll = RayGui.GuiCheckBox(
-                        new Rectangle(sWidth - 35, listRect.y - 30, 20, 20),
-                        "",
-                        isAllSelected
-                    );
-
-                    if (!selectAll && isAllSelected)
-                    {
-                        for (var i = 0; i < _selected.Length; i++) _selected[i] = false;
-                    }
-                    else if (selectAll)
-                    {
-                        for (var i = 0; i < _selected.Length; i++) _selected[i] = true;
-                    }
-                    
-                    // Delete Selected
-
-                    var deleteRect = new Rectangle(menuPanelRect.x + 10, listRect.y - 30, 20, 20);
-                    var deleteHovered = CheckCollisionPointRec(tileMouse, deleteRect);
-                    
-                    DrawRectangleRec(
-                        deleteRect,
-                        deleteHovered ? new(255, 50, 50, 255) : RED
-                    );
-                    
-                    if (deleteHovered && IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                    {
-                        GLOBALS.Level.Props = _selected
-                            .Select((s, i) => (s, i))
-                            .Where(v => !v.s)
-                            .Select(v => GLOBALS.Level.Props[v.i])
-                            .ToArray();
-
-                        _selected = new bool [GLOBALS.Level.Props.Length];
-                        
-                        fetchedSelected = GLOBALS.Level.Props
-                            .Select((prop, index) => (prop, index))
-                            .Where(p => _selected[p.index])
-                            .Select(p => p)
-                            .ToArray();
-                        
-                        ImportRopeModels();
-                        
-                        /*_stretchingProp = false;
-                        _movingProps = false;
-                        _rotatingProps = false;*/
-                    }
-                    
-                    DrawLineEx(new(menuPanelRect.x + 11, listRect.y - 32), new(menuPanelRect.x + 29, listRect.y - 11), 2f, WHITE);
-                    DrawLineEx(new(menuPanelRect.x + 11, listRect.y - 11), new(menuPanelRect.x + 29, listRect.y - 32), 2f, WHITE);
-                    
-                    // Prop Settings
-
-                    var indicatorOffset = listRect.x + (listRect.width - 290) / 2f;
-                    
-                    if (fetchedSelected.Length == 1)
-                    {
-                        // Depth indicator
-                        
-                        var (c, i) = fetchedSelected[0].prop.position;
-
-                        switch (fetchedSelected[0].prop.type)
-                        {
-                            case InitPropType.Tile:
-                            {
-                                InitTile init;
-                                
-                                #if DEBUG
-                                try
-                                {
-                                    init = GLOBALS.Tiles[c][i];
-                                }
-                                catch (IndexOutOfRangeException e)
-                                {
-                                    _logger.Fatal($"failed to fetch tile init from {nameof(GLOBALS.Tiles)}[{GLOBALS.Tiles.Length}]: c or i ({c}, {i}) were out of bounds");
-                                    throw new IndexOutOfRangeException(
-                                        message:
-                                        $"failed to fetch tile init from {nameof(GLOBALS.Tiles)}[{GLOBALS.Tiles.Length}]: c or i ({c}, {i}) were out of bounds",
-                                        innerException: e);
-                                }
-                                #else
-                                init = GLOBALS.Tiles[c][i];
-                                #endif
-                                
-                                var depth = init.Repeat.Sum() * 10;
-                                var offset = indicatorOffset - fetchedSelected[0].prop.prop.Depth * 10;
-                                var overflow = offset + depth - (indicatorOffset + 290);
-                            
-                                DrawRectangleRec(
-                                    new Rectangle(
-                                        offset, 
-                                        listRect.y + listRect.height + 40, 
-                                        depth - (overflow > 0 ? overflow : 0), 
-                                        30
-                                    ),
-                                    new Color(100, 100, 180, 255)
-                                );
-                            }
-                                break;
-                            
-                            case InitPropType.Long:
-                                break;
-                            
-                            case InitPropType.Rope:
-                                break;
-
-                            default:
-                            {
-                                InitPropBase init;
-                                #if DEBUG
-                                try { init = GLOBALS.Props[c][i]; }
-                                catch (IndexOutOfRangeException e)
-                                {
-                                    _logger.Fatal($"failed to fetch prop init from {nameof(GLOBALS.Props)}[{GLOBALS.Props.Length}]: c, or i ({c}, {i}) were out of bounds");
-                                    throw new IndexOutOfRangeException(message: $"failed to fetch prop init from {nameof(GLOBALS.Props)}[{GLOBALS.Props.Length}]: c, or i ({c}, {i}) were out of bounds", innerException: e);
-                                }
-                                
-                                DrawRectangleRec(
-                                    new Rectangle(
-                                        indicatorOffset - fetchedSelected[0].prop.prop.Depth * 10, 
-                                        listRect.y + listRect.height + 40, 
-                                        init switch
-                                        {
-                                            InitVariedStandardProp v => v.Repeat.Length, 
-                                            InitStandardProp s => s.Repeat.Length, 
-                                            _ => init.Depth
-                                        } * 10, 
-                                        30
-                                    ),
-                                    new Color(100, 100, 180, 255)
-                                );
-                                #else
-                                DrawRectangleRec(
-                                    new Rectangle(
-                                        indicatorOffset - fetchedSelected[0].prop.prop.Depth * 10, 
-                                        listRect.y + listRect.height + 40, 
-                                        init switch
-                                        {
-                                            InitVariedStandardProp v => v.Repeat.Length, 
-                                            InitStandardProp s => s.Repeat.Length, 
-                                            _ => init.Depth
-                                        } * 10, 
-                                        30
-                                    ),
-                                    new Color(100, 100, 180, 255)
-                                );
-                                #endif
-                            }
-                                break;
-                        }
-                        
-                        DrawRectangleLinesEx(
-                            new Rectangle(indicatorOffset, listRect.y + listRect.height + 40, 290, 30),
-                            2f,
-                            BLACK
-                        );
-                    
-                        DrawLineEx(
-                            new Vector2(indicatorOffset + 90, listRect.y + listRect.height + 40),
-                            new Vector2(indicatorOffset + 90, listRect.y + listRect.height + 45),
-                            2f,
-                            BLACK
-                        );
-                    
-                        DrawLineEx(
-                            new Vector2(indicatorOffset + 180, listRect.y + listRect.height + 40),
-                            new Vector2(indicatorOffset + 180, listRect.y + listRect.height + 45),
-                            2f,
-                            BLACK
-                        );
-                        
-                        unsafe
-                        {
-                            int depth;
-                            
-                            #if DEBUG
-                            try
-                            {
-                                depth = -fetchedSelected[0].prop.prop.Depth;
-                            }
-                            catch (IndexOutOfRangeException e)
-                            {
-                                _logger.Fatal($"failed to fetch the depth of the selected prop: {nameof(fetchedSelected)} was empty when expected to hold exactly one element");
-                                throw new IndexOutOfRangeException($"failed to fetch the depth of the selected prop: {nameof(fetchedSelected)} was empty when expected to hold exactly one element", innerException: e);
-                            }
-                            #else
-                            depth = -fetchedSelected[0].prop.prop.Depth;
-                            #endif
-
-                            if (RayGui.GuiSpinner(
-                                new Rectangle(indicatorOffset, listRect.y + listRect.height + 90, 290, 40),
-                                "",
-                                &depth,
-                                0,
-                                29,
-                                _spinnerLock == 1
-                            )) _spinnerLock = 1;
-                            
-                            #if DEBUG
-                            try
-                            {
-                                fetchedSelected[0].prop.prop.Depth = -depth;
-                            }
-                            catch (IndexOutOfRangeException e)
-                            {
-                                _logger.Fatal($"failed to update depth: {nameof(fetchedSelected)} was empty when it was supposed to hold exactly one element");
-                                throw new IndexOutOfRangeException(
-                                    message: $"failed to update depth: {nameof(fetchedSelected)} was empty when it was supposed to hold exactly one element", 
-                                    innerException: e);
-                            }
-
-                            try
-                            {
-                                GLOBALS.Level.Props[fetchedSelected[0].index].prop.Depth = -depth;
-                            }
-                            catch (IndexOutOfRangeException e)
-                            {
-                                _logger.Fatal($"failed to update prop in {nameof(GLOBALS.Level.Props)}: fetchedSelected[0].index = {fetchedSelected[0].index} held an out-of-bounds index");
-                                throw new IndexOutOfRangeException(
-                                    message:
-                                    $"failed to update prop in {nameof(GLOBALS.Level.Props)}: fetchedSelected[0].index = {fetchedSelected[0].index} held an out-of-bounds index",
-                                    innerException: e);
-                            }
-                            #else
-                            fetchedSelected[0].prop.prop.Depth = -depth;
-                            GLOBALS.Level.Props[fetchedSelected[0].index].prop.Depth = -depth;
-                            #endif
-                            
-                            
-                            // Variation Selector
-
-                            BasicPropSettings propSettings;
-                            
-                            #if DEBUG
-                            try
-                            {
-                                propSettings = fetchedSelected[0].prop.prop.Extras.Settings;
-                            }
-                            catch (IndexOutOfRangeException e)
-                            {
-                                _logger.Fatal($"failed to fetch prop settings: {nameof(fetchedSelected)} was empty when expected to hold exactly one item");
-                                throw new IndexOutOfRangeException(message: $"failed to fetch prop settings: {nameof(fetchedSelected)} was empty when expected to hold exactly one item", innerException: e);
-                            }
-                            #else
-                            propSettings = fetchedSelected[0].prop.prop.Extras.Settings;
-                            #endif
-
-                            if (propSettings is IVariable variable)
-                            {
-                                var init = GLOBALS.Props[c][i];
-                                var variations = ((IVariableInit)init).Variations + 1;
-                                var variation = variable.Variation + 1;
-
-                                RayGui.GuiSpinner(
-                                    new Rectangle(
-                                        indicatorOffset, 
-                                        listRect.y + listRect.height + 140, 
-                                        290, 
-                                        40
-                                    ), 
-                                    "", 
-                                    &variation, 
-                                    1, 
-                                    variations + 1, 
-                                    false
-                                );
-
-                                variable.Variation = variation - 1;
-                            }
-                        }
-                    }
-                    
-                    // Menu
-                    // TODO: Add pagination
-                    
-                    for (var i = 0; i < pageSize; i++)
-                    {
-                        var listIndex = pageSize * _selectedListPage + i;
-                        
-                        if (listIndex >= GLOBALS.Level.Props.Length) continue;
-                        
-                        var current = GLOBALS.Level.Props[listIndex];
-                        
-                        DrawText(
-                            current.prop.Name, 
-                            listRect.x + 10, 
-                            listRect.y + 10 + 24*i, 
-                            20, 
-                            BLACK
-                        );
-
-                        _selected[listIndex] = RayGui.GuiCheckBox(
-                            new Rectangle(sWidth - 35, listRect.y+10+24*i, 20, 20), 
-                            "", 
-                            _selected[listIndex]);
-
-                        _hidden[listIndex] = RayGui.GuiCheckBox(
-                            new Rectangle(sWidth - 80, listRect.y + 10 + 24 * i, 20, 20),
-                            "",
-                            _hidden[listIndex]
-                        );
-                    }
-                    
-                    // Page buttons
-                    if (GLOBALS.Level.Props.Length > pageSize * (_selectedListPage + 1))
-                    {
-                        var downClicked = RayGui.GuiButton(
-                            listRect with
-                            {
-                                Y = listRect.Y + listRect.height, width = listRect.width / 2f, height = 30
-                            },
-                            "Down");
-
-                        if (downClicked) _selectedListPage++;
-                    }
-                    
-                    if (_selectedListPage != 0)
-                    {
-                        var upClicked = RayGui.GuiButton(
-                            listRect with
-                            {
-                                Y = listRect.Y + listRect.height, width = listRect.width / 2f, height = 30,
-                                X = listRect.X + listRect.width / 2f
-                            },
-                            "Up");
-
-                        if (upClicked) _selectedListPage--;
-                    }
-                    
-                    // Edit Mode Indicators
-
-                    {
-                        var moveTexture = GLOBALS.Textures.PropEditModes[0];
-                        var rotateTexture = GLOBALS.Textures.PropEditModes[1];
-                        var scaleTexture = GLOBALS.Textures.PropEditModes[2];
-                        var warpTexture = GLOBALS.Textures.PropEditModes[3];
-                        var editPointsTexture = GLOBALS.Textures.PropEditModes[4];
-
-                        var moveRect = new Rectangle(menuPanelRect.X + 5 + 90, sHeight - 45, 40, 40);
-                        var rotateRect = new Rectangle(menuPanelRect.X + 5 + 130, sHeight - 45, 40, 40);
-                        var scaleRect = new Rectangle(menuPanelRect.X + 5 + 170, sHeight - 45, 40, 40);
-                        var warpRect = new Rectangle(menuPanelRect.X + 5 + 210, sHeight - 45, 40, 40);
-                        var editPointsRect = new Rectangle(menuPanelRect.X + 5 + 250, sHeight - 45, 40, 40);
-                        
-                        if (_movingProps) DrawRectangleRec(moveRect, BLUE);
-                        if (_rotatingProps) DrawRectangleRec(rotateRect, BLUE);
-                        if (_scalingProps) DrawRectangleRec(scaleRect, BLUE);
-                        if (_stretchingProp) DrawRectangleRec(warpRect, BLUE);
-                        if (_editingPropPoints) DrawRectangleRec(editPointsRect, BLUE);
-                        
-                        DrawTexturePro(
-                            moveTexture, 
-                            new Rectangle(0, 0, moveTexture.width, moveTexture.height),
-                            moveRect,
-                            new Vector2(0, 0),
-                            0,
-                            _movingProps ? WHITE : BLACK);
-                        
-                        DrawTexturePro(
-                            rotateTexture, 
-                            new Rectangle(0, 0, rotateTexture.width, rotateTexture.height),
-                            rotateRect,
-                            new Vector2(0, 0),
-                            0,
-                            _rotatingProps ? WHITE : BLACK);
-                        
-                        DrawTexturePro(
-                            scaleTexture, 
-                            new Rectangle(0, 0, scaleTexture.width, scaleTexture.height),
-                            scaleRect,
-                            new Vector2(0, 0),
-                            0,
-                            _scalingProps ? WHITE : BLACK);
-                        
-                        DrawTexturePro(
-                            warpTexture, 
-                            new Rectangle(0, 0, warpTexture.width, warpTexture.height),
-                            warpRect,
-                            new Vector2(0, 0),
-                            0,
-                            _stretchingProp ? WHITE: BLACK);
-                        
-                        DrawTexturePro(
-                            editPointsTexture, 
-                            new Rectangle(0, 0, editPointsTexture.width, editPointsTexture.height),
-                            editPointsRect,
-                            new Vector2(0, 0),
-                            0,
-                            _editingPropPoints ? WHITE : BLACK);
-                    }
-                }
-                    break;
-            }
-            
-            // modes
-
-            var selectModeTexture = GLOBALS.Textures.PropModes[0];
-            var placeModeTexture = GLOBALS.Textures.PropModes[1];
-            
-            DrawRectangleV(
-                new Vector2(menuPanelRect.x + 5 + _mode*40, sHeight - 45), 
-                new Vector2(40, 40), BLUE
-            );
-
-            var selectModeRect = new Rectangle(menuPanelRect.x + 5, sHeight - 45, 40, 40);
-            var selectModeHovered = CheckCollisionPointRec(tileMouse, selectModeRect);
-
-            if (selectModeHovered)
-            {
-                DrawRectangleRec(selectModeRect, BLUE with { a = 100 });
-
-                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _mode = 0;
-            }
-                
-            DrawTexturePro(
-                selectModeTexture,
-                new Rectangle(0, 0, selectModeTexture.width, selectModeTexture.height),
-                selectModeRect,
-                new(0, 0),
-                0,
-                _mode == 0 ? WHITE : BLACK
-            );
-
-            var placeModeRect = new Rectangle(menuPanelRect.x + 45, sHeight - 45, 40, 40);
-            var placeModeHovered = CheckCollisionPointRec(tileMouse, placeModeRect);
-            if (placeModeHovered)
-            {
-                DrawRectangleRec(placeModeRect, BLUE with { a = 100 });
-
-                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _mode = 1;
-            }
-                
-            DrawTexturePro(
-                placeModeTexture,
-                new Rectangle(0, 0, selectModeTexture.width, selectModeTexture.height),
-                placeModeRect,
-                new(0, 0),
-                0,
-                _mode == 1 ? WHITE : BLACK
-            );
-            
-            
-            // Snap mode
-
-            var snapButtonRect = new Rectangle(menuPanelRect.X + menuPanelRect.width - 45, sHeight - 45, 40, 40);
-            
-            DrawRectangleRec(snapButtonRect, BLUE);
-
-            DrawText(
-                _snapMode switch { 1 => "1.0", 2 => "0.5", _ => "0.0" }, 
-                snapButtonRect.X + 10, 
-                snapButtonRect.Y + 10, 
-                20, 
-                WHITE
-            );
-
-            if (CheckCollisionPointRec(tileMouse, snapButtonRect) &&
-                IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-            {
-                _snapMode = ++_snapMode % 3;
             }
 
             // layer indicator
@@ -3338,13 +2358,13 @@ internal class PropsEditorPage : IPage
 
             DrawRectangleRec(
                 layer3Rect,
-                WHITE
+                GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
             );
 
             DrawRectangleLines(10, sHeight - 50, 40, 40, GRAY);
 
-            if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, BLACK);
-            
+            if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
+
             if (GLOBALS.Layer is 1 or 0)
             {
                 var layer2Hovered = GLOBALS.Layer == 1 && CheckCollisionPointRec(tileMouse, layer2Rect);
@@ -3355,15 +2375,15 @@ internal class PropsEditorPage : IPage
 
                     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 2;
                 }
-                
+
                 DrawRectangleRec(
                     layer2Rect,
-                    WHITE
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
                 );
 
                 DrawRectangleLines(20, sHeight - 60, 40, 40, GRAY);
 
-                if (GLOBALS.Layer == 1) DrawText("2", 35, sHeight - 50, 22, BLACK);
+                if (GLOBALS.Layer == 1) DrawText("2", 35, sHeight - 50, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
             }
 
             if (GLOBALS.Layer == 0)
@@ -3375,16 +2395,16 @@ internal class PropsEditorPage : IPage
                     DrawRectangleRec(layer1Rect, BLUE with { a = 100 });
                     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 1;
                 }
-                
+
                 DrawRectangleRec(
                     layer1Rect,
-                    WHITE
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
                 );
 
                 DrawRectangleLines(
                     30, sHeight - 70, 40, 40, GRAY);
 
-                DrawText("1", 48, sHeight - 60, 22, BLACK);
+                DrawText("1", 48, sHeight - 60, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
             }
 
             if (newLayer != GLOBALS.Layer)
@@ -3392,53 +2412,602 @@ internal class PropsEditorPage : IPage
                 GLOBALS.Layer = newLayer;
                 UpdateDefaultDepth();
             }
+
+            // Update prop depth render texture
+            if (fetchedSelected.Length == 1)
+            {
+                Raylib_cs.Raylib.BeginTextureMode(GLOBALS.Textures.PropDepth);
+                Raylib_cs.Raylib.ClearBackground(Raylib_cs.Color.Green);
+                Printers.DrawDepthIndicator(fetchedSelected[0].prop);
+                Raylib_cs.Raylib.EndTextureMode();
+            }
+
+            // Edit Mode Indicators
+            if (_mode == 0) {
+                 var moveTexture = GLOBALS.Textures.PropEditModes[0];
+                 var rotateTexture = GLOBALS.Textures.PropEditModes[1];
+                 var scaleTexture = GLOBALS.Textures.PropEditModes[2];
+                 var warpTexture = GLOBALS.Textures.PropEditModes[3];
+                 var editPointsTexture = GLOBALS.Textures.PropEditModes[4];
+
+                 var moveRect = new Rectangle(135, sHeight - 50, 40, 40);
+                 var rotateRect = new Rectangle(180, sHeight - 50, 40, 40);
+                 var scaleRect = new Rectangle(225, sHeight - 50, 40, 40);
+                 var warpRect = new Rectangle(270, sHeight - 50, 40, 40);
+                 var editPointsRect = new Rectangle(315, sHeight - 50, 40, 40);
+
+                 var rectColor = GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE;
+
+                 DrawRectangleRec(moveRect, rectColor);
+                 DrawRectangleRec(rotateRect, rectColor);
+                 DrawRectangleRec(scaleRect, rectColor);
+                 DrawRectangleRec(warpRect, rectColor);
+                 DrawRectangleRec(editPointsRect, rectColor);
+                 
+                 if (_movingProps) DrawRectangleRec(moveRect, BLUE);
+                 if (_rotatingProps) DrawRectangleRec(rotateRect, BLUE);
+                 if (_scalingProps) DrawRectangleRec(scaleRect, BLUE);
+                 if (_stretchingProp) DrawRectangleRec(warpRect, BLUE);
+                 if (_editingPropPoints) DrawRectangleRec(editPointsRect, BLUE);
+
+                 DrawTexturePro(
+                     moveTexture,
+                     new Rectangle(0, 0, moveTexture.width, moveTexture.height),
+                     moveRect,
+                     new Vector2(0, 0),
+                     0,
+                     GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : _movingProps ? WHITE : BLACK);
+
+                 DrawTexturePro(
+                     rotateTexture,
+                     new Rectangle(0, 0, rotateTexture.width, rotateTexture.height),
+                     rotateRect,
+                     new Vector2(0, 0),
+                     0,
+                     GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : _rotatingProps ? WHITE : BLACK);
+
+                 DrawTexturePro(
+                     scaleTexture,
+                     new Rectangle(0, 0, scaleTexture.width, scaleTexture.height),
+                     scaleRect,
+                     new Vector2(0, 0),
+                     0,
+                     GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : _scalingProps ? WHITE : BLACK);
+
+                 DrawTexturePro(
+                     warpTexture,
+                     new Rectangle(0, 0, warpTexture.width, warpTexture.height),
+                     warpRect,
+                     new Vector2(0, 0),
+                     0,
+                     GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : _stretchingProp ? WHITE : BLACK);
+
+                 DrawTexturePro(
+                     editPointsTexture,
+                     new Rectangle(0, 0, editPointsTexture.width, editPointsTexture.height),
+                     editPointsRect,
+                     new Vector2(0, 0),
+                     0,
+                     GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : _editingPropPoints ? WHITE : BLACK);
+            }
+            //
+
+            rlImGui.Begin();
+
+            if (ImGui.Begin("Props##PropsPanel"))
+            {
+                var pos = ImGui.GetWindowPos();
+                var winSpace = ImGui.GetWindowSize();
+
+                if (CheckCollisionPointRec(tileMouse, new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
+                {
+                    _isPropsWinHovered = true;
+
+                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isPropsWinDragged = true;
+                }
+                else
+                {
+                    _isPropsWinHovered = false;
+                }
+
+                if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isPropsWinDragged) _isPropsWinDragged = false;
+                
+                //
+                
+                var availableSpace = ImGui.GetContentRegionAvail();
+
+                var halfWidth = availableSpace.X / 2f;
+                var halfSize = new Vector2(halfWidth, 20);
+                
+                ImGui.SeparatorText("Mode");
+                
+                if (ImGui.Selectable(
+                        "Selection", 
+                        _mode == 0, 
+                        ImGuiSelectableFlags.None, 
+                        halfSize)
+                ) _mode = 0;
+                
+                ImGui.SameLine();
+                
+                if (ImGui.Selectable(
+                        "Placement", 
+                        _mode == 1, 
+                        ImGuiSelectableFlags.None, 
+                        halfSize)
+                ) _mode = 1;
+
+                var precisionSelected = ImGui.Button(
+                    $"Precision: {_snapMode switch { 0 => "Free", 1 => "Grid", 2 => "Precise", _ => "?" }}",
+                    availableSpace with { Y = 20 });
+
+                if (precisionSelected) _snapMode = ++_snapMode % 3;
+                
+                switch (_mode)
+                {
+                    case 0: // Selection
+                    {
+                        ImGui.SeparatorText("Placed Props");
+                        
+                        if (ImGui.Button("Select All", availableSpace with { Y = 20 }))
+                        {
+                            for (var i = 0; i < _selected.Length; i++) _selected[i] = true;
+                        }
+
+                        if (ImGui.BeginListBox("Props", availableSpace with { Y = availableSpace.Y - 400 }))
+                        {
+                            for (var index = 0; index < GLOBALS.Level.Props.Length; index++)
+                            {
+                                ref var currentProp = ref GLOBALS.Level.Props[index];
+                                
+                                var selected = ImGui.Selectable(
+                                    $"{index}. {currentProp.prop.Name}{(_hidden[index] ? " [hidden]" : "")}", 
+                                    _selected[index]);
+                                
+                                if (selected)
+                                {
+                                    if (IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL))
+                                    {
+                                        _selected[index] = !_selected[index];
+                                    }
+                                    else if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+                                    {
+                                        var otherSelected = Array.IndexOf(_selected, true);
+                                        
+                                        if (otherSelected == -1) _selected = _selected.Select((p, i) => i == index).ToArray();
+
+                                        var first = Math.Min(otherSelected, index);
+                                        var second = Math.Max(otherSelected, index);
+
+                                        for (var i = 0; i < _selected.Length; i++)
+                                        {
+                                            _selected[i] = i >= first && i <= second;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        _selected = _selected.Select((p, i) => i == index).ToArray();
+                                    }
+                                }
+                            }
+                            
+                            ImGui.EndListBox();
+                        }
+
+                        var hideSelected = ImGui.Button("Hide Selected", availableSpace with { Y = 20 });
+
+                        if (hideSelected)
+                        {
+                            for (var i = 0; i < _hidden.Length; i++)
+                            {
+                                if (_selected[i]) _hidden[i] = !_hidden[i];
+                            }
+                        }
+
+                        var deleteSelected = ImGui.Button("Delete Selected", availableSpace with { Y = 20 });
+
+                        if (deleteSelected)
+                        {
+                            GLOBALS.Level.Props = _selected
+                                .Select((s, i) => (s, i))
+                                .Where(v => !v.s)
+                                .Select(v => GLOBALS.Level.Props[v.i])
+                                .ToArray();
+
+                            _selected = new bool [GLOBALS.Level.Props.Length];
+
+                            fetchedSelected = GLOBALS.Level.Props
+                                .Select((prop, index) => (prop, index))
+                                .Where(p => _selected[p.index])
+                                .Select(p => p)
+                                .ToArray();
+
+                            ImportRopeModels();
+                        }
+                        
+                        ImGui.SeparatorText("Selected Prop Options");
+                        
+                        if (fetchedSelected.Length == 1)
+                        {
+                            var (selectedProp, _) = fetchedSelected[0];
+                    
+                            // Seed
+
+                            var seed = selectedProp.prop.Extras.Settings.Seed;
+                    
+                            ImGui.SetNextItemWidth(100);
+                            ImGui.InputInt("Seed", ref seed);
+
+                            selectedProp.prop.Extras.Settings.Seed = seed;
+                    
+                            // Depth
+                    
+                            ImGui.Image(new IntPtr(GLOBALS.Textures.PropDepth.Texture.Id), new Vector2(290, 20));
+
+                            var depth = selectedProp.prop.Depth;
+                    
+                            ImGui.SetNextItemWidth(100);
+                            ImGui.InputInt("Depth", ref depth);
+                    
+                            Utils.Restrict(ref depth, -29, 0);
+                    
+                            selectedProp.prop.Depth = depth;
+                    
+                            // Variation
+
+                            if (selectedProp.prop.Extras.Settings is IVariable v)
+                            {
+                                var init = GLOBALS.Props[selectedProp.position.category][selectedProp.position.index];
+                                var variations = (init as IVariableInit).Variations;
+                                ImGui.SetNextItemWidth(100);
+                                var variation = v.Variation;
+                                ImGui.InputInt("Variation", ref variation);
+                                Utils.Restrict(ref variation, 0, variations -1);
+
+                                v.Variation = variation;
+                            }
+                            
+                            // Rope
+                            
+                            
+                            if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.type == InitPropType.Rope)
+                            {
+                                ImGui.SeparatorText("Rope Options");
+                                
+                                var modelIndex = -1;
+
+                                for (var i = 0; i < _models.Length; i++)
+                                {
+                                    if (_models[i].index == fetchedSelected[0].index) modelIndex = i;
+                                }
+
+                                if (modelIndex == -1)
+                                {
+#if DEBUG
+                                    _logger.Fatal(
+                                        $"failed to fetch selected rope from {nameof(_models)}: no element with index [{fetchedSelected[0].index}] was found");
+                                    throw new Exception(
+                                        message:
+                                        $"failed to fetch selected rope from {nameof(_models)}: no element with index [{fetchedSelected[0].index}] was found");
+#else
+                            goto ropeNotFound;
+#endif
+                                }
+
+                                ref var currentModel = ref _models[modelIndex];
+
+                                var oldSegmentCount = GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints.Length;
+                                var segmentCount = oldSegmentCount;
+                                
+                                var switchSimSelected = ImGui.Button(currentModel.simSwitch ? "Simulation" : "Bezier Path");
+
+                                if (switchSimSelected) currentModel.simSwitch = !currentModel.simSwitch;
+
+                                ImGui.SetNextItemWidth(100);
+
+                                ImGui.InputInt("Segment Count", ref segmentCount);
+
+                                // Update segment count if needed
+
+                                if (segmentCount < 1) segmentCount = 1;
+
+                                if (segmentCount > oldSegmentCount)
+                                {
+                                    GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
+                                    [
+                                        ..GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints, new Vector2()
+                                    ];
+                                }
+                                else if (segmentCount < oldSegmentCount)
+                                {
+                                    GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
+                                        GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints[..^1];
+                                }
+
+                                if (segmentCount != oldSegmentCount) UpdateRopeModelSegments();
+
+                                //
+
+                                ImGui.Checkbox("Simulate Rope", ref _ropeMode);
+
+                                if (currentModel.simSwitch) // Simulation mode
+                                {
+                                    var cycleFpsSelected = ImGui.Button($"{60 / _ropeSimulationFrameCut} FPS");
+
+                                    if (cycleFpsSelected) _ropeSimulationFrameCut = ++_ropeSimulationFrameCut % 3 + 1;
+
+                                    var release = (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings)
+                                        .Release;
+
+                                    var releaseClicked = ImGui.Button(release switch
+                                    {
+                                        PropRopeRelease.Left => "Release Left",
+                                        PropRopeRelease.None => "Release None",
+                                        PropRopeRelease.Right => "Release Right",
+                                        _ => "Error"
+                                    });
+
+                                    if (releaseClicked)
+                                    {
+                                        release = (PropRopeRelease)((int)release + 1);
+                                        if ((int)release > 2) release = 0;
+
+                                        (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings).Release =
+                                            release;
+                                    }
+                                }
+                                else // Bezier mode
+                                {
+                                    var oldHandlePointNumber = currentModel.bezierHandles.Length;
+                                    var handlePointNumber = oldHandlePointNumber;
+
+                                    ImGui.SetNextItemWidth(100);
+                                    ImGui.InputInt("Control Points", ref handlePointNumber);
+
+                                    var quads = GLOBALS.Level.Props[currentModel.index].prop.Quads;
+                                    var center = Utils.QuadsCenter(ref quads);
+
+                                    if (handlePointNumber > oldHandlePointNumber)
+                                    {
+                                        currentModel.bezierHandles = [..currentModel.bezierHandles, center];
+                                    }
+                                    else if (handlePointNumber < oldHandlePointNumber)
+                                    {
+                                        currentModel.bezierHandles = currentModel.bezierHandles[..^1];
+                                    }
+                                }
+
+                                ropeNotFound:
+                                {
+                                }
+                            }
+                        }
+                        
+                    }
+                        break;
+
+                    case 1: // Placement
+                    {
+                        ImGui.SeparatorText("Categories");
+
+                        var quarterSpace = availableSpace with { X = availableSpace.X / 4f, Y = 20 };
+
+                        var tilesSelected = ImGui.Selectable("Tiles", _menuRootCategoryIndex == 0, ImGuiSelectableFlags.None, quarterSpace);
+                        ImGui.SameLine();
+                        var ropesSelected = ImGui.Selectable("Ropes", _menuRootCategoryIndex == 1, ImGuiSelectableFlags.None, quarterSpace);
+                        ImGui.SameLine();
+                        var longsSelected = ImGui.Selectable("Longs", _menuRootCategoryIndex == 2, ImGuiSelectableFlags.None, quarterSpace);
+                        ImGui.SameLine();
+                        var othersSelected = ImGui.Selectable("Others", _menuRootCategoryIndex == 3, ImGuiSelectableFlags.None, quarterSpace);
+
+                        if (tilesSelected) _menuRootCategoryIndex = 0;
+                        if (ropesSelected) _menuRootCategoryIndex = 1;
+                        if (longsSelected) _menuRootCategoryIndex = 2;
+                        if (othersSelected) _menuRootCategoryIndex = 3;
+
+                        var listSize = new Vector2(halfWidth, availableSpace.Y - 230);
+                        
+                        switch (_menuRootCategoryIndex)
+                        {
+                            case 0: // Tiles-As-Props
+                            {
+                                if (ImGui.BeginListBox("##TileCategories", listSize))
+                                {
+                                    for (var index = 0; index < _tilesAsPropsCategoryNames.Length; index++)
+                                    {
+                                        var selected = ImGui.Selectable(_tilesAsPropsCategoryNames[index],
+                                            index == _propsMenuTilesCategoryIndex);
+                                        
+                                        if (selected)
+                                        {
+                                            _propsMenuTilesCategoryIndex = index;
+                                            Utils.Restrict(ref _propsMenuTilesIndex, 0, _tilesAsPropsNames[_propsMenuTilesCategoryIndex].Length-1);
+                                        }
+                                    }
+                                    ImGui.EndListBox();
+                                }
+                                
+                                ImGui.SameLine();
+
+                                if (ImGui.BeginListBox("##Tiles", listSize))
+                                {
+                                    var array = _tilesAsPropsNames[_propsMenuTilesCategoryIndex];
+
+                                    for (var index = 0; index < array.Length; index++)
+                                    {
+                                        var selected = ImGui.Selectable(array[index], index == _propsMenuTilesIndex);
+                                        if (selected) _propsMenuTilesIndex = index;
+                                    }
+                                    ImGui.EndListBox();
+                                }
+                            }
+                                break;
+                            case 1: // Ropes
+                            {
+                                if (ImGui.BeginListBox("##Ropes", listSize))
+                                {
+                                    for (var index = 0; index < _ropeNames.Length; index++)
+                                    {
+                                        var selected = ImGui.Selectable(_ropeNames[index], index == _propsMenuRopesIndex);
+                                        if (selected) _propsMenuRopesIndex = index;
+                                    }
+                                    ImGui.EndListBox();
+                                }
+                            }
+                                break;
+                            case 2: // Longs
+                            {
+                                if (ImGui.BeginListBox("##Longs", listSize))
+                                {
+                                    for (var index = 0; index < _longNames.Length; index++)
+                                    {
+                                        var selected = ImGui.Selectable(_longNames[index], index == _propsMenuLongsIndex);
+                                        if (selected) _propsMenuLongsIndex = index;
+                                    }
+                                    ImGui.EndListBox();
+                                }
+                            }
+                                break;
+                            case 3: // Others
+                            {
+                                if (ImGui.BeginListBox("##OtherPropCategories", listSize))
+                                {
+                                    for (var index = 0; index < _otherCategoryNames.Length; index++)
+                                    {
+                                        var selected = ImGui.Selectable(_otherCategoryNames[index],
+                                            index == _propsMenuOthersCategoryIndex);
+                                        
+                                        if (selected)
+                                        {
+                                            _propsMenuOthersCategoryIndex = index;
+                                            Utils.Restrict(ref _propsMenuOthersIndex, 0, _otherNames[_propsMenuOthersCategoryIndex].Length-1);
+                                        }
+                                    }
+                                    ImGui.EndListBox();
+                                }
+                                
+                                ImGui.SameLine();
+
+                                if (ImGui.BeginListBox("##OtherProps", listSize))
+                                {
+                                    var array = _otherNames[_propsMenuOthersCategoryIndex];
+
+                                    for (var index = 0; index < array.Length; index++)
+                                    {
+                                        var selected = ImGui.Selectable(array[index], index == _propsMenuOthersIndex);
+                                        if (selected) _propsMenuOthersIndex = index;
+                                    }
+                                    ImGui.EndListBox();
+                                }
+                            }
+                                break;
+                        }
+
+                        ImGui.SeparatorText("Placement Options");
+                        
+                        // Seed
+
+                        var seed = _defaultSeed;
+
+                        ImGui.SetNextItemWidth(100);
+                        ImGui.InputInt("Seed", ref seed);
+
+                        _defaultSeed = seed;
+                
+                        // Depth
+                
+                        var currentTile = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
+                        var currentRope = GLOBALS.RopeProps[_propsMenuRopesIndex];
+                        var currentLong = GLOBALS.LongProps[_propsMenuLongsIndex];
+                        var currentOther = GLOBALS.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
+                
+                        var depth = _defaultDepth;
+                            
+                        ImGui.SetNextItemWidth(100);
+                        ImGui.InputInt("Depth", ref depth);
+
+                        Utils.Restrict(ref depth, -29, 0);
+
+                        _defaultDepth = depth;
+
+                        var propDepthTo = _menuRootCategoryIndex switch
+                        {
+                            0 => Utils.GetPropDepth(currentTile.init),
+                            1 => Utils.GetPropDepth(currentRope),
+                            2 => Utils.GetPropDepth(currentLong),
+                            3 => Utils.GetPropDepth(currentOther),
+                            _ => 0
+                        };
+                
+                        ImGui.Text($"From {_defaultDepth} to {_defaultDepth - propDepthTo}");
+                
+                        // Variation
+
+                        if (_menuRootCategoryIndex == 3 && currentOther is IVariableInit v)
+                        {
+                            var variations = v.Variations;
+                            var variation = _defaultVariation;
+                    
+                            ImGui.SetNextItemWidth(100);
+                            ImGui.InputInt("Variation", ref variation);
+                    
+                            Utils.Restrict(ref variation, 0, variations-1);
+
+                            _defaultVariation = variation;
+                        }
+                    }
+                        break;
+                }
+
+                ImGui.End();
+            }
+
+            
+            // Navigation
+                
+            var navWindowRect = Printers.ImGui.NavigationWindow();
+
+            _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
+            {
+                X = navWindowRect.X - 5, width = navWindowRect.width + 10
+            });
+                    
+            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            {
+                _isNavigationWinDragged = true;
+            }
+            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+            {
+                _isNavigationWinDragged = false;
+            }
+            
+            // Shortcuts window
+            if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
+            {
+                var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.PropsEditor);
+
+                _isShortcutsWinHovered = CheckCollisionPointRec(
+                    tileMouse, 
+                    shortcutWindowRect with
+                    {
+                        X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
+                    }
+                );
+
+                if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _isShortcutsWinDragged = true;
+                }
+                else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    _isShortcutsWinDragged = false;
+                }
+            }
+            
+            rlImGui.End();
+        
         }
         #endregion
-        
-        rlImGui.Begin();
-        
-        // Navigation
-            
-        var navWindowRect = Printers.ImGui.NavigationWindow();
-
-        _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
-        {
-            X = navWindowRect.X - 5, width = navWindowRect.width + 10
-        });
-                
-        if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
-        {
-            _isNavigationWinDragged = true;
-        }
-        else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
-        {
-            _isNavigationWinDragged = false;
-        }
-        
-        // Shortcuts window
-        if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
-        {
-            var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.PropsEditor);
-
-            _isShortcutsWinHovered = CheckCollisionPointRec(
-                tileMouse, 
-                shortcutWindowRect with
-                {
-                    X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
-                }
-            );
-
-            if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
-            {
-                _isShortcutsWinDragged = true;
-            }
-            else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
-            {
-                _isShortcutsWinDragged = false;
-            }
-        }
-        
-        rlImGui.End();
 
         EndDrawing();
         #endregion

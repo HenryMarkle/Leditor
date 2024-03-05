@@ -660,6 +660,14 @@ public class PropEditor(bool tintedTextures = false)
     public bool TintedTextures { get; set; } = tintedTextures;
 }
 
+public class EffectsSettings(
+    ConColor effectColorLight,
+    ConColor effectColorDark)
+{
+    public ConColor EffectColorLight { get; set; } = effectColorLight;
+    public ConColor EffectColorDark { get; set; } = effectColorDark;
+}
+
 public class GeneralSettings(
     bool developerMode = false, 
     bool defaultFont = false, 
@@ -682,6 +690,7 @@ public class Settings(
     GeoEditor geometryEditor,
     TileEditor tileEditor,
     LightEditor lightEditor,
+    EffectsSettings effectsSettings,
     PropEditor propEditor,
     Experimental experimental
 )
@@ -692,6 +701,7 @@ public class Settings(
     public GeoEditor GeometryEditor { get; set; } = geometryEditor;
     public TileEditor TileEditor { get; set; } = tileEditor;
     public LightEditor LightEditor { get; set; } = lightEditor;
+    public EffectsSettings EffectsSettings { get; set; } = effectsSettings;
     public PropEditor PropEditor { get; set; } = propEditor;
     public Experimental Experimental { get; set; } = experimental;
 }

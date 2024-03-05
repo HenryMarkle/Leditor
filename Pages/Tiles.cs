@@ -611,8 +611,17 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         var layer1Rect = new Rectangle(30, teHeight - 100, 40, 40);
 
         //                        v this was done to avoid rounding errors
-        int tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / GLOBALS.Scale;
-        int tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / GLOBALS.Scale;
+        var tileMatrixY = tileMouseWorld.Y < 0 
+            ? -1 
+            : tileMouseWorld.Y > GLOBALS.Level.Height *GLOBALS.Scale 
+                ? GLOBALS.Level.Height*GLOBALS.Scale 
+                : (int)tileMouseWorld.Y / GLOBALS.Scale;
+        
+        var tileMatrixX = tileMouseWorld.X < 0 
+            ? -1 
+            : tileMouseWorld.X > GLOBALS.Level.Width*GLOBALS.Scale 
+                ? GLOBALS.Level.Width*GLOBALS.Scale 
+                : (int)tileMouseWorld.X / GLOBALS.Scale;
 
         var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
 
@@ -1511,12 +1520,12 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
             DrawRectangleRec(
                 layer3Rect,
-                WHITE
+                GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
             );
 
             DrawRectangleLines(10, (int)layer3Rect.Y, 40, 40, GRAY);
 
-            if (GLOBALS.Layer == 2) DrawText("3", 26, (int)layer3Rect.Y+10, 22, BLACK);
+            if (GLOBALS.Layer == 2) DrawText("3", 26, (int)layer3Rect.Y+10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
             
             if (GLOBALS.Layer is 1 or 0)
             {
@@ -1531,12 +1540,12 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 
                 DrawRectangleRec(
                     layer2Rect,
-                    WHITE
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
                 );
 
                 DrawRectangleLines(20, (int)layer2Rect.Y, 40, 40, GRAY);
 
-                if (GLOBALS.Layer == 1) DrawText("2", 35, (int)layer2Rect.Y + 10, 22, BLACK);
+                if (GLOBALS.Layer == 1) DrawText("2", 35, (int)layer2Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
             }
 
             if (GLOBALS.Layer == 0)
@@ -1551,13 +1560,13 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 
                 DrawRectangleRec(
                     layer1Rect,
-                    WHITE
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
                 );
 
                 DrawRectangleLines(
                     30, (int)layer1Rect.Y, 40, 40, GRAY);
 
-                DrawText("1", 48, (int)layer1Rect.Y + 10, 22, BLACK);
+                DrawText("1", 48, (int)layer1Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
             }
 
             if (newLayer != GLOBALS.Layer) GLOBALS.Layer = newLayer;

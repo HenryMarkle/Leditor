@@ -230,20 +230,20 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
             var waterObj = await waterObjTask;
             var propsObj = await propsObjTask;
 
-            var mtx = Lingo.Tools.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
-            var tlMtx = Lingo.Tools.GetTileMatrix(tilesObj, out _, out _);
-            var defaultMaterial = Lingo.Tools.GetDefaultMaterial(tilesObj);
-            var buffers = Lingo.Tools.GetBufferTiles(obj2);
-            var terrain = Lingo.Tools.GetTerrainMedium(terrainModeObj);
-            var lightMode = Lingo.Tools.GetLightMode(obj2);
-            var seed = Lingo.Tools.GetSeed(obj2);
-            var waterData = Lingo.Tools.GetWaterData(waterObj);
-            var effects = Lingo.Tools.GetEffects(effObj, givenWidth, givenHeight);
-            var cams = Lingo.Tools.GetCameras(camsObj);
+            var mtx = Lingo.Importers.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
+            var tlMtx = Lingo.Importers.GetTileMatrix(tilesObj, out _, out _);
+            var defaultMaterial = Lingo.Importers.GetDefaultMaterial(tilesObj);
+            var buffers = Lingo.Importers.GetBufferTiles(obj2);
+            var terrain = Lingo.Importers.GetTerrainMedium(terrainModeObj);
+            var lightMode = Lingo.Importers.GetLightMode(obj2);
+            var seed = Lingo.Importers.GetSeed(obj2);
+            var waterData = Lingo.Importers.GetWaterData(waterObj);
+            var effects = Lingo.Importers.GetEffects(effObj, givenWidth, givenHeight);
+            var cams = Lingo.Importers.GetCameras(camsObj);
             
             // TODO: catch PropNotFoundException
-            var props = Lingo.Tools.GetProps(propsObj);
-            var lightSettings = Lingo.Tools.GetLightSettings(lightObj);
+            var props = Lingo.Importers.GetProps(propsObj);
+            var lightSettings = Lingo.Importers.GetLightSettings(lightObj);
 
             // map material colors
 
@@ -722,8 +722,8 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                             ? new Color(50, 50, 50, 255)
                             : WHITE);
 
-                    Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(170, 170, 170, 255) : BLACK with { a = 150 });
-                    Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(120, 120, 120, 255) : BLACK with { a = 150 });
+                    Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : BLACK with { a = 150 });
+                    Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : BLACK with { a = 150 });
                     
                     if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                     {

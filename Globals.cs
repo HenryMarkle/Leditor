@@ -41,6 +41,7 @@ internal static class GLOBALS
         // Might be a really bad idea
         
         public Raylib_cs.RenderTexture2D TileSpecs { get; set; }
+        public Raylib_cs.RenderTexture2D PropDepth { get; set; }
     }
 
     /// <summary>
@@ -780,6 +781,9 @@ internal static class GLOBALS
             ),
             new TileEditor(),
             new LightEditor(background: new ConColor(66, 108, 245, 255)),
+            new EffectsSettings(
+                effectColorLight:GREEN,
+                effectColorDark:new(214, 187, 9, 255)),
             new PropEditor(),
             new Experimental()
     );
