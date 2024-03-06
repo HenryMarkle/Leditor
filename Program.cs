@@ -1,14 +1,11 @@
-﻿global using Raylib_CsLo;
+﻿global using Raylib_cs;
 using System.Globalization;
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
-using ImGuiNET;
 using rlImGui_cs;
 
 using System.Numerics;
-using System.Text;
 using Leditor.Lingo;
-using Pidgin;
 using System.Text.Json;
 using Serilog;
 using System.Security.Cryptography;
@@ -24,7 +21,7 @@ class Program
 {
     // Used to load geo blocks menu item textures.
     // Do not alter the indices, and do NOT call before InitWindow()
-    private static Texture[] LoadUiTextures() => [
+    private static Texture2D[] LoadUiTextures() => [
         LoadTexture("assets/geo/ui/solid.png"),             // 0
         LoadTexture("assets/geo/ui/air.png"),               // 1
         // LoadTexture("assets/geo/ui/slopebr.png"),     
@@ -60,7 +57,7 @@ class Program
 
     // Used to load geo block textures.
     // Do not alter the indices, and do NOT call before InitWindow()
-    private static Texture[] LoadGeoTextures() => [
+    private static Texture2D[] LoadGeoTextures() => [
         // 0: air
         LoadTexture("assets/geo/solid.png"),
         LoadTexture("assets/geo/cbl.png"),
@@ -77,7 +74,7 @@ class Program
 
     // Used to load geo stackables textures.
     // And you guessed it: do not alter the indices, and do NOT call before InitWindow()
-    static Texture[] LoadStackableTextures() => [
+    static Texture2D[] LoadStackableTextures() => [
         LoadTexture("assets/geo/ph.png"),             // 0
         LoadTexture("assets/geo/pv.png"),             // 1
         LoadTexture("assets/geo/bathive.png"),        // 2
@@ -116,7 +113,7 @@ class Program
     ];
 
     // Used to load light/shadow brush images as textures.
-    private static Texture[] LoadLightTextures(Serilog.Core.Logger logger) => Directory
+    private static Texture2D[] LoadLightTextures(Serilog.Core.Logger logger) => Directory
         .GetFileSystemEntries(GLOBALS.Paths.LightAssetsDirectory)
         .Where(e => e.EndsWith(".png"))
         .Select((e) =>
@@ -249,6 +246,8 @@ class Program
 
     private static bool _askForPath;
     private static bool _failedToSave;
+
+    private static bool _isGuiLocked;
     
     private static async Task<SaveProjectResult> SaveProjectAsync(string path)
     {
@@ -259,7 +258,7 @@ class Program
             var strTask = Leditor.Lingo.Exporters.ExportAsync(GLOBALS.Level);
 
             // export light map
-            var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
+            var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);
 
             unsafe
             {
@@ -287,7 +286,7 @@ class Program
         return result;
     }
 
-    private static Texture[][] LoadPropTextures()
+    private static Texture2D[][] LoadPropTextures()
     {
         return GLOBALS.Props.Select(category =>
             category.Select(prop =>
@@ -296,7 +295,7 @@ class Program
         ).ToArray();
     }
     
-    private static Texture[][] LoadPropTexturesFromRenderer()
+    private static Texture2D[][] LoadPropTexturesFromRenderer()
     {
         return GLOBALS.Props.Select(category =>
             category.Select(prop =>
@@ -527,8 +526,8 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.44";
-        const string raylibVersion = "Raylib v4.2.0.9";
+        const string version = "Henry's Leditor v0.9.45";
+        const string raylibVersion = "Raylib v6.0.0";
         
         // Load tiles and props
 
@@ -670,12 +669,12 @@ class Program
 
         var icon = LoadImage("icon.png");
 
-        SetConfigFlags(ConfigFlags.FLAG_WINDOW_RESIZABLE);
-        SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT);
+        SetConfigFlags(ConfigFlags.ResizableWindow);
+        SetConfigFlags(ConfigFlags.Msaa4xHint);
         
         #if DEBUG
         // TODO: Change this
-        SetTraceLogLevel(4);
+        SetTraceLogLevel(TraceLogLevel.Error);
         #else
         SetTraceLogLevel(7);
         #endif
@@ -688,21 +687,12 @@ class Program
         
         if (!GLOBALS.Settings.GeneralSettings.DefaultFont)
         {
-            unsafe
-            {
-                var globalFont = LoadFontEx(Path.Combine(GLOBALS.Paths.FontsDirectory, "oswald", "Oswald-Regular.ttf"), 30, 95);
-                GenTextureMipmaps(&globalFont.texture);
-                GLOBALS.Font = globalFont;
-
-                RayGui.GuiSetFont(globalFont);
-                RayGui.GuiSetStyle(0, 16, 20);
-                SetTextureFilter(globalFont.texture, TextureFilter.TEXTURE_FILTER_TRILINEAR);
-            }
+            GLOBALS.Font = LoadFont(Path.Combine(GLOBALS.Paths.FontsDirectory, "oswald", "Oswald-Regular.ttf"));
         }
         
         SetWindowIcon(icon);
         SetWindowMinSize(GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight);
-        SetExitKey(KeyboardKey.KEY_NULL);
+        SetExitKey(KeyboardKey.Null);
 
         // The splashscreen
         GLOBALS.Textures.SplashScreen = LoadTexture(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "splashscreen.png"));
@@ -770,7 +760,7 @@ class Program
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "no collision icon.png"))
         ];
 
-        Texture[] settingsPreviewTextures =
+        Texture2D[] settingsPreviewTextures =
         [
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Bigger Head.png")),
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Crossbox B.png")),
@@ -894,11 +884,11 @@ class Program
 
         SetTargetFPS(GLOBALS.Settings.Misc.FPS);
 
-        GLOBALS.Camera = new Camera2D { zoom = 1f };
+        GLOBALS.Camera = new Camera2D { Zoom = 1f };
 
         float initialFrames = 0;
 
-        Texture? screenshotTexture = null;
+        Texture2D? screenshotTexture = null;
 
         logger.Information("Initializing pages");
         
@@ -914,8 +904,6 @@ class Program
         PropsEditorPage propsPage = new(logger);
         MainPage mainPage = new(logger);
         StartPage startPage = new(logger);
-        HelpPage helpPage = new(logger);
-        SaveProjectPage savePage = new(logger);
         FailedTileCheckOnLoadPage failedTileCheckOnLoadPage = new(logger);
         AssetsNukedPage assetsNukedPage = new(logger);
         MissingAssetsPage missingAssetsPage = new(logger);
@@ -929,12 +917,12 @@ class Program
         
         // Page event handlers
         startPage.ProjectLoaded += propsPage.OnProjectLoaded;
-        startPage.ProjectLoaded += savePage.OnProjectLoaded;
+        // startPage.ProjectLoaded += savePage.OnProjectLoaded;
         startPage.ProjectLoaded += mainPage.OnLevelLoadedFromStart;
         startPage.ProjectLoaded += dimensionsPage.OnProjectLoaded;
         
         mainPage.ProjectLoaded += propsPage.OnProjectLoaded;
-        mainPage.ProjectLoaded += savePage.OnProjectLoaded;
+        // mainPage.ProjectLoaded += savePage.OnProjectLoaded;
         mainPage.ProjectLoaded += dimensionsPage.OnProjectLoaded;
         
         dimensionsPage.ProjectCreated += propsPage.OnProjectCreated;
@@ -996,7 +984,7 @@ class Program
 
                     DrawTexturePro(
                         GLOBALS.Textures.SplashScreen,
-                        new(0, 0, GLOBALS.Textures.SplashScreen.width, GLOBALS.Textures.SplashScreen.height),
+                        new(0, 0, GLOBALS.Textures.SplashScreen.Width, GLOBALS.Textures.SplashScreen.Height),
                         new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
                         new(0, 0),
                         0,
@@ -1004,12 +992,12 @@ class Program
                     );
 
 
-                    if (initialFrames > 60) DrawText(version, 700, 50, 15, WHITE);
+                    if (initialFrames > 60) DrawText(version, 700, 50, 15, Color.White);
 
                     if (initialFrames > 70)
                     {
-                        DrawText(raylibVersion, 700, 70, 15, WHITE);
-                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
+                        DrawText(raylibVersion, 700, 70, 15, Color.White);
+                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
                     }
 
                     if (initialFrames > 75)
@@ -1020,9 +1008,9 @@ class Program
                     if (initialFrames > 80)
                     {
                         #if DEBUG
-                        if (!initChecksum) DrawText("Init.txt failed checksum", 700, 300, 16, YELLOW);
+                        if (!initChecksum) DrawText("Init.txt failed checksum", 700, 300, 16, Color.Yellow);
                         #else
-                        if (!initChecksum) DrawText("Tiles have been modified", 700, 300, 16, YELLOW);
+                        if (!initChecksum) DrawText("Tiles have been modified", 700, 300, 16, Color.Yellow);
                         #endif
                     }
 
@@ -1067,7 +1055,7 @@ class Program
 
                         DrawTexturePro(
                             GLOBALS.Textures.SplashScreen,
-                            new(0, 0, GLOBALS.Textures.SplashScreen.width, GLOBALS.Textures.SplashScreen.height),
+                            new(0, 0, GLOBALS.Textures.SplashScreen.Width, GLOBALS.Textures.SplashScreen.Height),
                             new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
                             new(0, 0),
                             0,
@@ -1075,22 +1063,22 @@ class Program
                         );
 
                         #if DEBUG
-                        if (!initChecksum) DrawText("Init.txt failed checksum", 10, 300, 16, YELLOW);
+                        if (!initChecksum) DrawText("Init.txt failed checksum", 10, 300, 16, Color.Yellow);
                         #else
-                        if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, YELLOW);
+                        if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, Color.Yellow);
                         #endif
-                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
+                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
 
-                        DrawText(version, 700, 50, 15, WHITE);
-                        DrawText(raylibVersion, 700, 70, 15, WHITE);
+                        DrawText(version, 700, 50, 15, Color.White);
+                        DrawText(raylibVersion, 700, 70, 15, Color.White);
                         
                         if (GLOBALS.Font is null)
-                            DrawText("Loading tile textures", 100, height - 120, 20, WHITE);
+                            DrawText("Loading tile textures", 100, height - 120, 20, Color.White);
                         else
-                            DrawTextEx(GLOBALS.Font.Value, "Loading tile textures", new Vector2(100, height - 120), 20, 1, WHITE);
+                            DrawTextEx(GLOBALS.Font.Value, "Loading tile textures", new Vector2(100, height - 120), 20, 1, Color.White);
 
 
-                        RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", tileTexturesLoadProgress, 0, totalTileTexturesLoadProgress);
+                        //Raylib_CsLo.RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", tileTexturesLoadProgress, 0, totalTileTexturesLoadProgress);
                         EndDrawing();
 
                         if (tileTexturesLoadProgress % loadRate != 0) goto loadLoop;
@@ -1116,7 +1104,7 @@ class Program
 
                         DrawTexturePro(
                             GLOBALS.Textures.SplashScreen,
-                            new(0, 0, GLOBALS.Textures.SplashScreen.width, GLOBALS.Textures.SplashScreen.height),
+                            new(0, 0, GLOBALS.Textures.SplashScreen.Width, GLOBALS.Textures.SplashScreen.Height),
                             new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
                             new(0, 0),
                             0,
@@ -1124,23 +1112,23 @@ class Program
                         );
 
                         #if DEBUG
-                        if (!initChecksum) DrawText("Init.txt failed checksum", 10, 300, 16, YELLOW);
+                        if (!initChecksum) DrawText("Init.txt failed checksum", 10, 300, 16, Color.Yellow);
                         #else
-                        if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, YELLOW);
+                        if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, Color.Yellow);
                         #endif
-                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
+                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
 
-                        DrawText(version, 700, 50, 15, WHITE);
-                        DrawText(raylibVersion, 700, 70, 15, WHITE);
+                        DrawText(version, 700, 50, 15, Color.White);
+                        DrawText(raylibVersion, 700, 70, 15, Color.White);
                         
                         
                         if (GLOBALS.Font is null)
-                            DrawText("Loading prop textures", 100, height - 120, 20, WHITE);
+                            DrawText("Loading prop textures", 100, height - 120, 20, Color.White);
                         else
-                            DrawTextEx(GLOBALS.Font.Value, "Loading prop textures", new Vector2(100, height - 120), 20, 1, WHITE);
+                            DrawTextEx(GLOBALS.Font.Value, "Loading prop textures", new Vector2(100, height - 120), 20, 1, Color.White);
 
 
-                        RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", propTexturesLoadProgress, 0, totalPropTexturesLoadProgress);
+                        //Raylib_CsLo.RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", propTexturesLoadProgress, 0, totalPropTexturesLoadProgress);
                         EndDrawing();
                         
                         continue;
@@ -1164,7 +1152,7 @@ class Program
 
                         DrawTexturePro(
                             GLOBALS.Textures.SplashScreen,
-                            new(0, 0, GLOBALS.Textures.SplashScreen.width, GLOBALS.Textures.SplashScreen.height),
+                            new(0, 0, GLOBALS.Textures.SplashScreen.Width, GLOBALS.Textures.SplashScreen.Height),
                             new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
                             new(0, 0),
                             0,
@@ -1172,21 +1160,21 @@ class Program
                         );
 
                         #if DEBUG
-                        if (!initChecksum) DrawText("Init.txt failed checksum", 10, 300, 16, YELLOW);
+                        if (!initChecksum) DrawText("Init.txt failed checksum", 10, 300, 16, Color.Yellow);
                         #else
-                        if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, YELLOW);
+                        if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, Color.Yellow);
                         #endif
-                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, YELLOW);
+                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
 
-                        DrawText(version, 700, 50, 15, WHITE);
-                        DrawText(raylibVersion, 700, 70, 15, WHITE);
+                        DrawText(version, 700, 50, 15, Color.White);
+                        DrawText(raylibVersion, 700, 70, 15, Color.White);
                         
                         if (GLOBALS.Font is null)
-                            DrawText("Loading light brushed", 100, height - 120, 20, WHITE);
+                            DrawText("Loading light brushed", 100, height - 120, 20, Color.White);
                         else
-                            DrawTextEx(GLOBALS.Font.Value, "Loading light brushes", new Vector2(100, height - 120), 20, 1, WHITE);
+                            DrawTextEx(GLOBALS.Font.Value, "Loading light brushes", new Vector2(100, height - 120), 20, 1, Color.White);
 
-                        RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", lightTexturesLoadProgress, 0, totalLightTexturesLoadProgress);
+                        //Raylib_CsLo.RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", lightTexturesLoadProgress, 0, totalLightTexturesLoadProgress);
                         EndDrawing();
                         
                         continue;
@@ -1211,11 +1199,11 @@ class Program
                 
                 // Globals quick save
 
-                if (RayGui.GuiIsLocked() && _globalSave)
+                if (_isGuiLocked && _globalSave)
                 {
                     BeginDrawing();
                     
-                    ClearBackground(BLACK);
+                    ClearBackground(Color.Black);
                     
                     DrawText("Please wait..", GetScreenWidth() / 2 - 100, GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
                     
@@ -1228,7 +1216,7 @@ class Program
                             {
                                 GLOBALS.Page = 1;
                                 _globalSave = false;
-                                RayGui.GuiUnlock();
+                                _isGuiLocked = false;
                             }
                         }
                         else
@@ -1241,7 +1229,7 @@ class Program
                             if (string.IsNullOrEmpty(_saveFileDialog.Result))
                             {
                                 _globalSave = false;
-                                RayGui.GuiUnlock();
+                                _isGuiLocked = false;
                                 EndDrawing();
                                 continue;
                             }
@@ -1266,7 +1254,7 @@ class Program
                             {
                                 _globalSave = false;
                                 _failedToSave = true;
-                                RayGui.GuiUnlock();
+                                _isGuiLocked = false;
                                 EndDrawing();
                                 #if DEBUG
                                 if (result.Exception is not null) logger.Error($"Failed to save project: {result.Exception}");
@@ -1278,7 +1266,7 @@ class Program
                             
                             // export light map
                             {
-                                var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
+                                var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);
 
                                 unsafe
                                 {
@@ -1302,7 +1290,7 @@ class Program
 
                                 _saveFileDialog = null;
                                 _saveResult = null;
-                                RayGui.GuiUnlock();
+                                _isGuiLocked = false;
                                 EndDrawing();
                             }
                         }
@@ -1329,7 +1317,7 @@ class Program
                         {
                             _globalSave = false;
                             _failedToSave = true;
-                            RayGui.GuiUnlock();
+                            _isGuiLocked = false;
                             EndDrawing();
                             #if DEBUG
                             if (result.Exception is not null) logger.Error($"Failed to save project: {result.Exception}");
@@ -1341,7 +1329,7 @@ class Program
                         
                         // export light map
                         {
-                            var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
+                            var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);
 
                             unsafe
                             {
@@ -1359,16 +1347,16 @@ class Program
                         _globalSave = false;
                         _saveFileDialog = null;
                         _saveResult = null;
-                        RayGui.GuiUnlock();
+                        _isGuiLocked = false;
                         EndDrawing();
                     }
                 }
                 else
                 {
                     {
-                        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
-                        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
-                        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+                        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
+                        var shift = IsKeyDown(KeyboardKey.LeftShift);
+                        var alt = IsKeyDown(KeyboardKey.LeftAlt);
 
                         if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave.Check(ctrl, shift, alt))
                         {
@@ -1383,13 +1371,13 @@ class Program
                             }
 
                             _globalSave = true;
-                            RayGui.GuiLock();
+                            _isGuiLocked = true;
                         }
                         else if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSaveAs.Check(ctrl, shift, alt))
                         {
                             _askForPath = true;
                             _saveFileDialog = Utils.SetFilePathAsync();
-                            RayGui.GuiLock();
+                            _isGuiLocked = true;
                         }
                     }
                     
@@ -1409,7 +1397,7 @@ class Program
                         case 8: propsPage.Draw(); break;
                         case 9: settingsPage.Draw(); break;
                         // case 11: loadPage.Draw(); break;
-                        case 12: savePage.Draw(); break;
+                        // case 12: savePage.Draw(); break;
                         case 13: failedTileCheckOnLoadPage.Draw(); break;
                         case 14: assetsNukedPage.Draw(); break;
                         case 15: missingAssetsPage.Draw(); break;

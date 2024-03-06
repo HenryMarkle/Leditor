@@ -1,8 +1,7 @@
 ﻿using System.Numerics;
-using System.Text;
 using ImGuiNET;
 using rlImGui_cs;
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
@@ -12,7 +11,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
 
     private readonly EffectsShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.EffectsEditor;
 
-    private Camera2D _camera = camera ?? new() { zoom = 1.0f };
+    private Camera2D _camera = camera ?? new() { Zoom = 1.0f };
 
     private bool _addNewEffectMode;
 
@@ -85,7 +84,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                         continue;
                     }
                     
-                    var distance = RayMath.Vector2Distance(squareV, centerV) / GLOBALS.Scale;
+                    var distance = Raymath.Vector2Distance(squareV, centerV) / GLOBALS.Scale;
 
                     if (distance < 1) distance = 1;
                     
@@ -120,9 +119,9 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
         
-        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
-        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
-        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt);
         
         GLOBALS.PreviousPage = 7;
         
@@ -435,8 +434,8 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
             if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.DragLevelAlt.Check(ctrl, shift, alt, true))
             {
                 var delta = GetMouseDelta();
-                delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
-                _camera.target = RayMath.Vector2Add(_camera.target, delta);
+                delta = Raymath.Vector2Scale(delta, -1.0f / _camera.Zoom);
+                _camera.Target = Raymath.Vector2Add(_camera.Target, delta);
             }
 
             // Brush size
@@ -465,10 +464,10 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                 if (effectsMouseWheel != 0 && canUseBrush)
                 {
                     var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
-                    _camera.offset = GetMousePosition();
-                    _camera.target = mouseWorldPosition;
-                    _camera.zoom += effectsMouseWheel * GLOBALS.ZoomIncrement;
-                    if (_camera.zoom < GLOBALS.ZoomIncrement) _camera.zoom = GLOBALS.ZoomIncrement;
+                    _camera.Offset = GetMousePosition();
+                    _camera.Target = mouseWorldPosition;
+                    _camera.Zoom += effectsMouseWheel * GLOBALS.ZoomIncrement;
+                    if (_camera.Zoom < GLOBALS.ZoomIncrement) _camera.Zoom = GLOBALS.ZoomIncrement;
                 }
             }
 
@@ -669,7 +668,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                             (GLOBALS.Level.Height * GLOBALS.Scale) + 4
                         ),
                         2f,
-                        WHITE
+                        Color.White
                     );
                     
                     DrawRectangle(
@@ -679,12 +678,12 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                         GLOBALS.Level.Height * GLOBALS.Scale, 
                         GLOBALS.Settings.GeneralSettings.DarkTheme
                             ? new Color(50, 50, 50, 255)
-                            : WHITE);
+                            : Color.White);
 
-                    Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : BLACK with { a = 150 }, GLOBALS.LayerStackableFilter);
+                    Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
                     Printers.DrawTileLayer(2, GLOBALS.Scale, false, true, true);
                     
-                    Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : BLACK with { a = 150 }, GLOBALS.LayerStackableFilter);
+                    Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
                     Printers.DrawTileLayer(1, GLOBALS.Scale, false, true, true);
                     
                     if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
@@ -700,7 +699,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                         );
                     }
                     
-                    Printers.DrawGeoLayer(0, GLOBALS.Scale, false, BLACK with { a = 255 });
+                    Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.Black with { A = 255 });
                     Printers.DrawTileLayer(0, GLOBALS.Scale, false, true, true);
                     
                     if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
@@ -749,7 +748,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                                         new Vector2(effectsMatrixX+0.5f, effectsMatrixY+0.5f) * GLOBALS.Scale,
                                         _brushRadius*GLOBALS.Scale, effAreaRect))
                                 {
-                                    DrawRectangleRec(effAreaRect, WHITE with { a = 50 });
+                                    DrawRectangleRec(effAreaRect, Color.White with { A = 50 });
                                 }
                                 
                                 if (effectsMatrixX == x && effectsMatrixY == y)
@@ -758,7 +757,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                                         (int) ((x + 0.5f) * GLOBALS.Scale), 
                                         (int) ((y + 0.5f) * GLOBALS.Scale),
                                         (_brushRadius+1)*GLOBALS.Scale,
-                                        _brushEraseMode ? RED : WHITE);
+                                        _brushEraseMode ? Color.Red : Color.White);
                                         
                                     DrawRectangleLinesEx(
                                         new Rectangle(
@@ -768,7 +767,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                                             GLOBALS.Scale
                                         ),
                                         2.0f,
-                                        _brushEraseMode ? RED : WHITE
+                                        _brushEraseMode ? Color.Red : Color.White
                                     );
                                 }
                             }
@@ -792,14 +791,14 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                 {
                     _isEffectsWinHovered = true;
 
-                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isEffectsWinDragged = true;
+                    if (IsMouseButtonDown(MouseButton.Left)) _isEffectsWinDragged = true;
                 }
                 else
                 {
                     _isEffectsWinHovered = false;
                 }
 
-                if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isEffectsWinDragged) _isEffectsWinDragged = false;
+                if (IsMouseButtonReleased(MouseButton.Left) && _isEffectsWinDragged) _isEffectsWinDragged = false;
                 
                 if (effectsOpened)
                 {
@@ -863,14 +862,14 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
 
                 _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
                 {
-                    X = navWindowRect.X - 5, width = navWindowRect.width + 10
+                    X = navWindowRect.X - 5, Width = navWindowRect.Width + 10
                 });
                 
-                if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.Left))
                 {
                     _isNavigationWinDragged = true;
                 }
-                else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.Left))
                 {
                     _isNavigationWinDragged = false;
                 }
@@ -891,14 +890,14 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                     {
                         _isOptionsWinHovered = true;
 
-                        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isOptionsWinDragged = true;
+                        if (IsMouseButtonDown(MouseButton.Left)) _isOptionsWinDragged = true;
                     }
                     else
                     {
                         _isOptionsWinHovered = false;
                     }
 
-                    if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isOptionsWinDragged)
+                    if (IsMouseButtonReleased(MouseButton.Left) && _isOptionsWinDragged)
                         _isOptionsWinDragged = false;
                     
                     if (optionsOpened)
@@ -962,15 +961,15 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                         GetMousePosition(), 
                         shortcutWindowRect with
                         {
-                            X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
+                            X = shortcutWindowRect.X - 5, Width = shortcutWindowRect.Width + 10
                         }
                     );
 
-                    if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                    if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.Left))
                     {
                         _isShortcutsWinDragged = true;
                     }
-                    else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                    else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.Left))
                     {
                         _isShortcutsWinDragged = false;
                     }
@@ -989,14 +988,14 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                 {
                     _isSettingsWinHovered = true;
 
-                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isSettingsWinDragged = true;
+                    if (IsMouseButtonDown(MouseButton.Left)) _isSettingsWinDragged = true;
                 }
                 else
                 {
                     _isSettingsWinHovered = false;
                 }
 
-                if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isSettingsWinDragged) _isSettingsWinDragged = false;
+                if (IsMouseButtonReleased(MouseButton.Left) && _isSettingsWinDragged) _isSettingsWinDragged = false;
                 
                 if (settingsOpened)
                 {

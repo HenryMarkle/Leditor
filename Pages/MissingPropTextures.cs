@@ -1,4 +1,4 @@
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
@@ -19,10 +19,10 @@ public class MissingPropTexturesPage(Serilog.Core.Logger logger) : IPage
         
         BeginDrawing();
         
-        ClearBackground(BLACK);
+        ClearBackground(Color.Black);
         
-        DrawText(Title, (width - _titleWidth)/2, 200, 50, WHITE);
-        DrawText(Subtitle, (width - _subtitleWidth)/2, 400, 20, WHITE);
+        DrawText(Title, (width - _titleWidth)/2, 200, 50, Color.White);
+        DrawText(Subtitle, (width - _subtitleWidth)/2, 400, 20, Color.White);
         
         EndDrawing();
     }

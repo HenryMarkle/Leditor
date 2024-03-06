@@ -1,4 +1,4 @@
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
@@ -15,20 +15,20 @@ public class MissingAssetsPage(Serilog.Core.Logger logger) : IPage
         var sHeight = GetScreenHeight();
 
         BeginDrawing();
-        ClearBackground(BLACK);
+        ClearBackground(Color.Black);
 
         DrawText(
             MissingAssetsSubfoldersWarnTitleText,
             (sWidth - MeasureText(MissingAssetsSubfoldersWarnTitleText, 50)) / 2,
             200,
             50,
-            WHITE
+            Color.White
         );
         DrawText(MissingAssetsSubfoldersWarnSubtitleText,
             (sWidth - MeasureText(MissingAssetsSubfoldersWarnSubtitleText, 20)) / 2,
             400,
             20,
-            WHITE
+            Color.White
         );
 
         if (GLOBALS.Paths.DirectoryIntegrity.Any(d => !d.Item2))
@@ -42,7 +42,7 @@ public class MissingAssetsPage(Serilog.Core.Logger logger) : IPage
                 200,
                 500,
                 20,
-                WHITE
+                Color.White
             );
         }
 
@@ -57,7 +57,7 @@ public class MissingAssetsPage(Serilog.Core.Logger logger) : IPage
                 600,
                 500,
                 20,
-                WHITE
+                Color.White
             );
         }
         

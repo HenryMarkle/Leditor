@@ -1,4 +1,4 @@
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
@@ -85,21 +85,22 @@ public class FailedTileCheckOnLoadPage(Serilog.Core.Logger logger) : IPage
 
 
             DrawRectangleRoundedLines(okButtonRect, 3, 6, 3, new(255, 255, 255, 255));
-            DrawText("Ok", okButtonRect.X + (okButtonRect.width - MeasureText("Ok", 20)) / 2, okButtonRect.Y + 15, 20, new(255, 255, 255, 255));
+            DrawText("Ok", (int)(okButtonRect.X + (okButtonRect.Width - MeasureText("Ok", 20)) / 2), (int)(okButtonRect
+                .Y + 15), 20, new(255, 255, 255, 255));
 
             if (CheckCollisionPointRec(GetMousePosition(), okButtonRect))
             {
-                SetMouseCursor(MouseCursor.MOUSE_CURSOR_POINTING_HAND);
+                SetMouseCursor(MouseCursor.PointingHand);
 
-                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                if (IsMouseButtonPressed(MouseButton.Left))
                 {
-                    SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+                    SetMouseCursor(MouseCursor.Default);
 
                     GLOBALS.TileCheck = null;
                     GLOBALS.Page = 0;
                 }
             }
-            else SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+            else SetMouseCursor(MouseCursor.Default);
         }
         EndDrawing();    
     }

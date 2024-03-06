@@ -1,5 +1,6 @@
+using System.Numerics;
 using Pidgin;
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
@@ -10,6 +11,8 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
     private readonly Serilog.Core.Logger _logger = logger;
     
     internal event EventHandler? ProjectLoaded;
+
+    private bool _uiLocked;
 
     private Task<string>? _openFileDialog;
     private Task<LoadFileResult>? _loadFileTask;
@@ -226,9 +229,9 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
 
         BeginDrawing();
         {
-            if (RayGui.GuiIsLocked())
+            if (_uiLocked)
             {
-                ClearBackground(BLACK);
+                ClearBackground(Color.Black);
                 
                 if (_openFileDialog!.IsCompleted != true)
                 {
@@ -240,7 +243,7 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                 if (string.IsNullOrEmpty(_openFileDialog.Result))
                 {
                     _openFileDialog = null;
-                    RayGui.GuiUnlock();
+                    _uiLocked = false;
                     EndDrawing();
                     return;
                 }
@@ -264,7 +267,7 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                 {
                     _loadFileTask = null;
                     _openFileDialog = null;
-                    RayGui.GuiUnlock();
+                    _uiLocked = false;
                     EndDrawing();
                     return;
                 }
@@ -303,7 +306,7 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                     else
                     {
                         GLOBALS.Page = 13;
-                        RayGui.GuiUnlock();
+                        _uiLocked = false;
                         
                         EndDrawing();
                         return;
@@ -314,7 +317,7 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                 if (GLOBALS.PropCheck.Result != PropCheckResult.Ok)
                 {
                     GLOBALS.Page = 19;
-                    RayGui.GuiUnlock();
+                    _uiLocked = false;
                     
                     EndDrawing();
                     return;
@@ -364,7 +367,7 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                 BeginTextureMode(GLOBALS.Textures.LightMap);
                 DrawTextureRec(
                     lightMapTexture,
-                    new(0, 0, lightMapTexture.width, lightMapTexture.height),
+                    new(0, 0, lightMapTexture.Width, lightMapTexture.Height),
                     new(0, 0),
                     new(255, 255, 255, 255)
                 );
@@ -396,23 +399,57 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                     
                 GLOBALS.ProjectPath = parent ?? GLOBALS.ProjectPath;
                 GLOBALS.Level.ProjectName = Path.GetFileNameWithoutExtension(_openFileDialog.Result);
-                
-                RayGui.GuiUnlock();
+
+                _uiLocked = false;
             }
             else
             {
-                ClearBackground(new(170, 170, 170, 255));
+                ClearBackground(new Color(170, 170, 170, 255));
+                
+                // Create
 
-                if (RayGui.GuiButton(new(GetScreenWidth() / 2f - 200, GetScreenHeight() / 2f - 42, 400, 40), "Create New Project"))
+                var createRect = new Rectangle(GetScreenWidth() / 2f - 200, GetScreenHeight() / 2f - 42, 400, 40);
+                var createHovered = CheckCollisionPointRec(GetMousePosition(), createRect);
+                
+                DrawRectangleLinesEx(createRect, 1, Color.Black);
+
+                if (GLOBALS.Font is null)
+                    DrawText("Create", (int)(createRect.X + 5), (int)(createRect.Y + 10), 20, Color.Black);
+                else 
+                    DrawTextEx(GLOBALS.Font.Value, "Create", new Vector2(createRect.X + (createRect.Width - MeasureText("Create", 20))/2, createRect.Y + 10), 20, 1, Color.Black);
+                
+                if (createHovered)
                 {
-                    GLOBALS.NewFlag = true;
-                    GLOBALS.Page = 6;
+                    DrawRectangleRec(createRect, Color.Blue with { A = 100 });
+                    
+                    if (IsMouseButtonPressed(MouseButton.Left))
+                    {
+                        GLOBALS.NewFlag = true;
+                        GLOBALS.Page = 6;
+                    }
                 }
+                
+                // Load
 
-                if (RayGui.GuiButton(new(GetScreenWidth() / 2f - 200, GetScreenHeight() / 2f, 400, 40), "Load Project"))
+                var loadRect = new Rectangle(GetScreenWidth() / 2f - 200, GetScreenHeight() / 2f, 400, 40);
+                var loadHovered = CheckCollisionPointRec(GetMousePosition(), loadRect);
+                
+                DrawRectangleLinesEx(loadRect, 1, Color.Black);
+
+                if (GLOBALS.Font is null)
+                    DrawText("Load", (int)(loadRect.X + 5), (int)(loadRect.Y + 10), 20, Color.Black);
+                else 
+                    DrawTextEx(GLOBALS.Font.Value, "Load", new Vector2(loadRect.X + (loadRect.Width - MeasureText("Load", 20))/2, loadRect.Y + 10), 20, 1, Color.Black);
+                
+                if (loadHovered)
                 {
-                    _openFileDialog = Utils.GetFilePathAsync();
-                    RayGui.GuiLock();
+                    DrawRectangleRec(loadRect, Color.Blue with { A = 100 });
+                    
+                    if (IsMouseButtonPressed(MouseButton.Left))
+                    {
+                        _openFileDialog = Utils.GetFilePathAsync();
+                        _uiLocked = true;
+                    }
                 }
             }
         }

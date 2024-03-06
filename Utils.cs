@@ -152,7 +152,7 @@ internal static class Utils
         var head = GetTileHeadOrigin(init);
 
         // the top-left of the tile
-        var start = RayMath.Vector2Subtract(point, head);
+        var start = Raymath.Vector2Subtract(point, head);
 
         for (var y = 0; y < height; y++)
         {
@@ -223,7 +223,7 @@ internal static class Utils
         var head = GetTileHeadOrigin(init);
 
         // the top-left of the tile
-        var start = RayMath.Vector2Subtract(new(mx, my), head);
+        var start = Raymath.Vector2Subtract(new(mx, my), head);
         
         // First remove tile heads in the way
 
@@ -315,7 +315,7 @@ internal static class Utils
         var head = Utils.GetTileHeadOrigin(init);
 
         // the top-left of the tile
-        var start = RayMath.Vector2Subtract(new(mx, my), head);
+        var start = Raymath.Vector2Subtract(new(mx, my), head);
         
         // First remove tile heads in the way
 
@@ -406,7 +406,7 @@ internal static class Utils
             var head = Utils.GetTileHeadOrigin(tileInit);
 
             // the top-left of the tile
-            var start = RayMath.Vector2Subtract(new(mx, my), head);
+            var start = Raymath.Vector2Subtract(new(mx, my), head);
 
             for (var y = 0; y < height; y++)
             {
@@ -448,7 +448,7 @@ internal static class Utils
             var head = Utils.GetTileHeadOrigin(tileInit);
 
             // the top-left of the tile
-            var start = RayMath.Vector2Subtract(new(headX, headY), RayMath.Vector2AddValue(head, 1));
+            var start = Raymath.Vector2Subtract(new(headX, headY), Raymath.Vector2AddValue(head, 1));
 
             for (var y = 0; y < height; y++)
             {
@@ -1822,7 +1822,7 @@ internal static class Utils
         
         // Get the center of the rectangle
 
-        var center = new Vector2(rect.x + rect.width/2, rect.y + rect.height/2);
+        var center = new Vector2(rect.X + rect.Width/2, rect.Y + rect.Height/2);
 
         // var center = new Vector2(0, 0);
         
@@ -1965,43 +1965,43 @@ internal static class Utils
     internal static Vector2 QuadsCenter(ref PropQuads quads)
     {
         var rect = EncloseQuads(quads);
-        return new(rect.X + rect.width/2, rect.y + rect.height/2);
+        return new(rect.X + rect.Width/2, rect.Y + rect.Height/2);
     }
 
-    internal static Vector2 RectangleCenter(ref Rectangle rectangle) => new(rectangle.X + rectangle.width / 2, rectangle.Y + rectangle.height / 2);
+    internal static Vector2 RectangleCenter(ref Rectangle rectangle) => new(rectangle.X + rectangle.Width / 2, rectangle.Y + rectangle.Height / 2);
 
     internal static void ScaleQuads(ref PropQuads quads, float factor)
     {
         var enclose = EncloseQuads(quads);
         var center = RectangleCenter(ref enclose);
         
-        quads.TopLeft = RayMath.Vector2Add(
-            RayMath.Vector2Scale(
-                RayMath.Vector2Subtract(quads.TopLeft, center), 
+        quads.TopLeft = Raymath.Vector2Add(
+            Raymath.Vector2Scale(
+                Raymath.Vector2Subtract(quads.TopLeft, center), 
                 factor
             ), 
             center
         );
                         
-        quads.TopRight = RayMath.Vector2Add(
-            RayMath.Vector2Scale(
-                RayMath.Vector2Subtract(quads.TopRight, center), 
+        quads.TopRight = Raymath.Vector2Add(
+            Raymath.Vector2Scale(
+                Raymath.Vector2Subtract(quads.TopRight, center), 
                 factor
             ), 
             center
         );
                         
-        quads.BottomLeft = RayMath.Vector2Add(
-            RayMath.Vector2Scale(
-                RayMath.Vector2Subtract(quads.BottomLeft, center), 
+        quads.BottomLeft = Raymath.Vector2Add(
+            Raymath.Vector2Scale(
+                Raymath.Vector2Subtract(quads.BottomLeft, center), 
                 factor
             ), 
             center
         ); 
                         
-        quads.BottomRight = RayMath.Vector2Add(
-            RayMath.Vector2Scale(
-                RayMath.Vector2Subtract(quads.BottomRight, center), 
+        quads.BottomRight = Raymath.Vector2Add(
+            Raymath.Vector2Scale(
+                Raymath.Vector2Subtract(quads.BottomRight, center), 
                 factor
             ), 
             center
@@ -2010,33 +2010,33 @@ internal static class Utils
     
     internal static void ScaleQuads(ref PropQuads quads, Vector2 center, float factor)
     {
-        quads.TopLeft = RayMath.Vector2Add(
-            RayMath.Vector2Scale(
-                RayMath.Vector2Subtract(quads.TopLeft, center), 
+        quads.TopLeft = Raymath.Vector2Add(
+            Raymath.Vector2Scale(
+                Raymath.Vector2Subtract(quads.TopLeft, center), 
                 factor
             ), 
             center
         );
                         
-        quads.TopRight = RayMath.Vector2Add(
-            RayMath.Vector2Scale(
-                RayMath.Vector2Subtract(quads.TopRight, center), 
+        quads.TopRight = Raymath.Vector2Add(
+            Raymath.Vector2Scale(
+                Raymath.Vector2Subtract(quads.TopRight, center), 
                 factor
             ), 
             center
         );
                         
-        quads.BottomLeft = RayMath.Vector2Add(
-            RayMath.Vector2Scale(
-                RayMath.Vector2Subtract(quads.BottomLeft, center), 
+        quads.BottomLeft = Raymath.Vector2Add(
+            Raymath.Vector2Scale(
+                Raymath.Vector2Subtract(quads.BottomLeft, center), 
                 factor
             ), 
             center
         ); 
                         
-        quads.BottomRight = RayMath.Vector2Add(
-            RayMath.Vector2Scale(
-                RayMath.Vector2Subtract(quads.BottomRight, center), 
+        quads.BottomRight = Raymath.Vector2Add(
+            Raymath.Vector2Scale(
+                Raymath.Vector2Subtract(quads.BottomRight, center), 
                 factor
             ), 
             center
@@ -2062,16 +2062,16 @@ internal static class Utils
     internal static (Vector2 pA, Vector2 pB) RopeEnds(in PropQuads quads)
     {
         return (
-            RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopLeft, quads.BottomLeft), new(2f, 2f)), 
-            RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopRight, quads.BottomRight), new(2f, 2f))
+            Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), new(2f, 2f)), 
+            Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), new(2f, 2f))
         );
     }
     
     internal static (Vector2 pA, Vector2 pB) RopeEnds(PropQuads quads)
     {
         return (
-            RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopLeft, quads.BottomLeft), new(2f, 2f)), 
-            RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopRight, quads.BottomRight), new(2f, 2f))
+            Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), new(2f, 2f)), 
+            Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), new(2f, 2f))
         );
     }
 
@@ -2087,13 +2087,13 @@ internal static class Utils
     
     internal static Vector2[] GenerateRopePoints(in Vector2 pointA, in Vector2 pointB, int count = 3)
     {
-        var distance = RayMath.Vector2Distance(pointA, pointB);
+        var distance = Raymath.Vector2Distance(pointA, pointB);
 
         var delta = distance / count;
 
         List<Vector2> points = [];
         
-        for (var step = 0; step < count; step++) points.Add(RayMath.Vector2MoveTowards(pointA, pointB, delta * step));
+        for (var step = 0; step < count; step++) points.Add(Raymath.Vector2MoveTowards(pointA, pointB, delta * step));
 
         return [..points];
     }
@@ -2141,7 +2141,7 @@ internal static class Utils
             var strTask = Leditor.Lingo.Exporters.ExportAsync(GLOBALS.Level);
 
             // export light map
-            var image = Raylib.LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
+            var image = Raylib.LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);
 
             unsafe
             {

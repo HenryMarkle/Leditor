@@ -1,4 +1,4 @@
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
@@ -11,14 +11,14 @@ public class MissingInitFilePage(Serilog.Core.Logger logger) : IPage
         var width = GetScreenWidth();
 
         BeginDrawing();
-        ClearBackground(BLACK);
+        ClearBackground(Color.Black);
 
         DrawText(
             "The editor is missing the Init.txt file",
             (width - MeasureText("The editor is missing the Init.txt file", 50)) / 2,
             200,
             50,
-            WHITE
+            Color.White
         );
 
         DrawText(
@@ -26,7 +26,7 @@ public class MissingInitFilePage(Serilog.Core.Logger logger) : IPage
             (width - MeasureText("The editor cannot function without it; Please restore it and try again.", 20)) / 2,
             400,
             20,
-            WHITE
+            Color.White
         );
         EndDrawing();
     }

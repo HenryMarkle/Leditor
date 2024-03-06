@@ -1,12 +1,9 @@
 ﻿using System.Diagnostics;
-using System.Linq.Expressions;
 using System.Numerics;
-using System.Text;
 using ImGuiNET;
-using Leditor.Lingo.Drizzle;
 using Pidgin;
 using rlImGui_cs;
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
@@ -18,7 +15,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
     
     internal event EventHandler? ProjectLoaded;
 
-    private Camera2D _camera = camera ?? new Camera2D { zoom = 0.5f };
+    private Camera2D _camera = camera ?? new Camera2D { Zoom = 0.5f };
 
     private readonly byte[] _previewPanelBytes = "Level Options"u8.ToArray();
     
@@ -30,6 +27,8 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
     private bool _askForPath;
     private bool _failedToSave;
     private bool _undefinedTilesAlert;
+
+    private bool _isGuiLocked;
 
     private int _spinnerLock;
     
@@ -305,11 +304,11 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
         var width = GetScreenWidth();
         var height = GetScreenHeight();
         
-        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
-        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
-        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt);
 
-        if (!RayGui.GuiIsLocked() && _spinnerLock == 0)
+        if (!_isGuiLocked && _spinnerLock == 0)
         {
             
             if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
@@ -351,28 +350,28 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
             var mainPageWheel = GetMouseWheelMove();
             if (mainPageWheel != 0)
             {
-                var mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), _camera);
-                _camera.offset = Raylib.GetMousePosition();
-                _camera.target = mouseWorldPosition;
-                _camera.zoom += mainPageWheel * GLOBALS.ZoomIncrement;
-                if (_camera.zoom < GLOBALS.ZoomIncrement) _camera.zoom = GLOBALS.ZoomIncrement;
+                var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
+                _camera.Offset = GetMousePosition();
+                _camera.Target = mouseWorldPosition;
+                _camera.Zoom += mainPageWheel * GLOBALS.ZoomIncrement;
+                if (_camera.Zoom < GLOBALS.ZoomIncrement) _camera.Zoom = GLOBALS.ZoomIncrement;
             }
 
             // handle mouse drag
-            if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_MIDDLE))
+            if (IsMouseButtonDown(MouseButton.Middle))
             {
                 var delta = GetMouseDelta();
-                delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
-                _camera.target = RayMath.Vector2Add(_camera.target, delta);
+                delta = Raymath.Vector2Scale(delta, -1.0f / _camera.Zoom);
+                _camera.Target = Raymath.Vector2Add(_camera.Target, delta);
             }
         }
         
 
         BeginDrawing();
         {
-            if (RayGui.GuiIsLocked())
+            if (_isGuiLocked)
             {
-                ClearBackground(BLACK);
+                ClearBackground(Color.Black);
 
                 switch (_fileDialogMode)
                 {
@@ -385,7 +384,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                                 if (_saveResult!.IsCompleted)
                                 {
                                     GLOBALS.Page = 1;
-                                    RayGui.GuiUnlock();
+                                    _isGuiLocked = false;
                                 }
                             }
                             else
@@ -397,7 +396,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                                 }
                                 if (string.IsNullOrEmpty(_saveFileDialog.Result))
                                 {
-                                    RayGui.GuiUnlock();
+                                    _isGuiLocked = false;
                                     EndDrawing();
                                     return;
                                 }
@@ -421,7 +420,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                                 if (!result.Success)
                                 {
                                     _failedToSave = true;
-                                    RayGui.GuiUnlock();
+                                    _isGuiLocked = false;
                                     EndDrawing();
                                     #if DEBUG
                                     if (result.Exception is not null) _logger.Error($"Failed to save project: {result.Exception}");
@@ -433,7 +432,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                                 
                                 // export light map
                                 {
-                                    var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
+                                    var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);
 
                                     unsafe
                                     {
@@ -457,7 +456,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
 
                                     _saveFileDialog = null;
                                     _saveResult = null;
-                                    RayGui.GuiUnlock();
+                                    _isGuiLocked = false;
                                     EndDrawing();
                                 }
                             }
@@ -483,7 +482,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                             if (!result.Success)
                             {
                                 _failedToSave = true;
-                                RayGui.GuiUnlock();
+                                _isGuiLocked = false;
                                 EndDrawing();
                                 #if DEBUG
                                 if (result.Exception is not null) _logger.Error($"Failed to save project: {result.Exception}");
@@ -495,7 +494,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                             
                             // export light map
                             {
-                                var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
+                                var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);
 
                                 unsafe
                                 {
@@ -512,7 +511,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                             
                             _saveFileDialog = null;
                             _saveResult = null;
-                            RayGui.GuiUnlock();
+                            _isGuiLocked = false;
                             EndDrawing();
                         }
                     }
@@ -530,7 +529,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         if (string.IsNullOrEmpty(_openFileDialog.Result))
                         {
                             _openFileDialog = null;
-                            RayGui.GuiUnlock();
+                            _isGuiLocked = false;
                             EndDrawing();
                             return;
                         }
@@ -554,7 +553,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         {
                             _loadFileTask = null;
                             _openFileDialog = null;
-                            RayGui.GuiUnlock();
+                            _isGuiLocked = false;
                             EndDrawing();
                             return;
                         }
@@ -593,7 +592,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                             else
                             {
                                 GLOBALS.Page = 13;
-                                RayGui.GuiUnlock();
+                                _isGuiLocked = false;
                                 
                                 EndDrawing();
                                 return;
@@ -604,7 +603,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         if (GLOBALS.PropCheck.Result != PropCheckResult.Ok)
                         {
                             GLOBALS.Page = 19;
-                            RayGui.GuiUnlock();
+                            _isGuiLocked = false;
                             
                             EndDrawing();
                             return;
@@ -654,7 +653,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         BeginTextureMode(GLOBALS.Textures.LightMap);
                         DrawTextureRec(
                             lightMapTexture,
-                            new(0, 0, lightMapTexture.width, lightMapTexture.height),
+                            new(0, 0, lightMapTexture.Width, lightMapTexture.Height),
                             new(0, 0),
                             new(255, 255, 255, 255)
                         );
@@ -689,22 +688,22 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                             
                         GLOBALS.ProjectPath = parent ?? GLOBALS.ProjectPath;
                         GLOBALS.Level.ProjectName = Path.GetFileNameWithoutExtension(_openFileDialog.Result);
-                        
-                        RayGui.GuiUnlock();
+
+                        _isGuiLocked = false;
                     }
                         break;
                     
                     default:
-                        RayGui.GuiUnlock();
+                        _isGuiLocked = false;
                         break;
                 }
                 
                 DrawText(
                     "Please wait..", 
-                    (width - MeasureText("Please wait..", 50))/2f, 
+                    (int)(width - MeasureText("Please wait..", 50))/2, 
                     100, 
                     50, 
-                    WHITE
+                    Color.White
                 );
 
                 
@@ -712,7 +711,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
             else
             {
                 ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
-                    ? BLACK 
+                    ? Color.Black 
                     : new(170, 170, 170, 255));
 
                 BeginMode2D(_camera);
@@ -720,10 +719,10 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                     DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale,
                         GLOBALS.Settings.GeneralSettings.DarkTheme
                             ? new Color(50, 50, 50, 255)
-                            : WHITE);
+                            : Color.White);
 
-                    Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : BLACK with { a = 150 });
-                    Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : BLACK with { a = 150 });
+                    Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : Color.Black with { A = 150 });
+                    Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : Color.Black with { A = 150 });
                     
                     if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                     {
@@ -738,7 +737,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         );
                     }
                     
-                    Printers.DrawGeoLayer(0, GLOBALS.Scale, false, BLACK);
+                    Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.Black);
 
                     if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                     {
@@ -753,7 +752,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         );
                     }
                     
-                    DrawRectangleLines(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, WHITE);
+                    DrawRectangleLines(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, Color.White);
                 }
                 EndMode2D();
 
@@ -867,7 +866,8 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         {
                             _askForPath = false;
                         }
-                        RayGui.GuiLock();
+
+                        _isGuiLocked = true;
                     }
 
                     if (saveAsSelected)
@@ -875,14 +875,14 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         _fileDialogMode = 0;
                         _askForPath = true;
                         _saveFileDialog = Utils.SetFilePathAsync();
-                        RayGui.GuiLock();
+                        _isGuiLocked = true;
                     }
                     
                     if (loadSelected)
                     {
                         _fileDialogMode = 1;
                         _openFileDialog = Utils.GetFilePathAsync();
-                        RayGui.GuiLock();
+                        _isGuiLocked = true;
                     }
                     
                     if (newSelected)
@@ -922,15 +922,15 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         GetMousePosition(), 
                         shortcutWindowRect with
                         {
-                            X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
+                            X = shortcutWindowRect.X - 5, Width = shortcutWindowRect.Width + 10
                         }
                     );
 
-                    if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                    if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.Left))
                     {
                         _isShortcutsWinDragged = true;
                     }
-                    else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                    else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.Left))
                     {
                         _isShortcutsWinDragged = false;
                     }
@@ -940,14 +940,14 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
 
                 _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
                 {
-                    X = navWindowRect.X - 5, width = navWindowRect.width + 10
+                    X = navWindowRect.X - 5, Width = navWindowRect.Width + 10
                 });
                 
-                if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.Left))
                 {
                     _isNavigationWinDragged = true;
                 }
-                else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.Left))
                 {
                     _isNavigationWinDragged = false;
                 }

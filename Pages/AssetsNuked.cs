@@ -1,4 +1,4 @@
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
@@ -14,20 +14,20 @@ public class AssetsNukedPage(Serilog.Core.Logger logger) : IPage
         var width = GetScreenWidth();
 
         BeginDrawing();
-        ClearBackground(BLACK);
+        ClearBackground(Color.Black);
 
         DrawText(
             MissingAssetsFolderWarnTitleText,
             (width - MeasureText(MissingAssetsFolderWarnTitleText, 50)) / 2,
             200,
             50,
-            WHITE
+            Color.White
         );
         DrawText(MissingAssetsFolderWarnSubtitleText,
             (width - MeasureText(MissingAssetsFolderWarnSubtitleText, 20)) / 2,
             400,
             20,
-            WHITE
+            Color.White
         );
         EndDrawing();
     }

@@ -1,8 +1,7 @@
 ﻿using System.Numerics;
-using System.Reflection.Metadata.Ecma335;
 using ImGuiNET;
 using rlImGui_cs;
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
@@ -159,7 +158,7 @@ internal class PropsEditorPage : IPage
     internal PropsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null)
     {
         _logger = logger;
-        _camera = camera ?? new() { zoom = 0.8f };
+        _camera = camera ?? new() { Zoom = 0.8f };
 
         for (var c = 0; c < GLOBALS.Tiles.Length; c++)
         {
@@ -333,9 +332,9 @@ internal class PropsEditorPage : IPage
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
         
-        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
-        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
-        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt);
             
         if (_selected.Length != GLOBALS.Level.Props.Length)
         {
@@ -409,8 +408,8 @@ internal class PropsEditorPage : IPage
         if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.DragLevelAlt.Check(ctrl, shift, alt, true))
         {
             var delta = GetMouseDelta();
-            delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
-            _camera.target = RayMath.Vector2Add(_camera.target, delta);
+            delta = Raymath.Vector2Scale(delta, -1.0f / _camera.Zoom);
+            _camera.Target = Raymath.Vector2Add(_camera.Target, delta);
         }
 
         // handle zoom
@@ -418,10 +417,10 @@ internal class PropsEditorPage : IPage
         if (tileWheel != 0 && canDrawTile)
         {
             var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
-            _camera.offset = GetMousePosition();
-            _camera.target = mouseWorldPosition;
-            _camera.zoom += tileWheel * GLOBALS.ZoomIncrement;
-            if (_camera.zoom < GLOBALS.ZoomIncrement) _camera.zoom = GLOBALS.ZoomIncrement;
+            _camera.Offset = GetMousePosition();
+            _camera.Target = mouseWorldPosition;
+            _camera.Zoom += tileWheel * GLOBALS.ZoomIncrement;
+            if (_camera.Zoom < GLOBALS.ZoomIncrement) _camera.Zoom = GLOBALS.ZoomIncrement;
         }
         
         // Cycle layer
@@ -588,7 +587,7 @@ internal class PropsEditorPage : IPage
                             {
                                 var current = GLOBALS.LongProps[_propsMenuLongsIndex];
                                 ref var texture = ref GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
-                                var height = texture.height / 2f;
+                                var height = texture.Height / 2f;
                                 var newQuads = new PropQuads
                                 {
                                     TopLeft = new(posV.X - 100, posV.Y - height),
@@ -641,15 +640,15 @@ internal class PropsEditorPage : IPage
                                     InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings(variation:_defaultVariation)),
                                     InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
                                     InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings(variation:_defaultVariation)),
-                                    InitSoftProp => (texture.width  / 2f, texture.height  / 2f, new PropSoftSettings()),
+                                    InitSoftProp => (texture.Width  / 2f, texture.Height  / 2f, new PropSoftSettings()),
                                     InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings(variation:_defaultVariation)),
-                                    InitSimpleDecalProp => (texture.width / 2f, texture.height / 2f, new PropSimpleDecalSettings()), 
-                                    InitSoftEffectProp => (texture.width / 2f, texture.height / 2f, new PropSoftEffectSettings()), 
-                                    InitAntimatterProp => (texture.width / 2f, texture.height / 2f, new PropAntimatterSettings()),
-                                    InitLongProp => (texture.width / 2f, texture.height / 2f, new PropLongSettings()), 
-                                    InitRopeProp => (texture.width / 2f, texture.height / 2f, new PropRopeSettings()),
+                                    InitSimpleDecalProp => (texture.Width / 2f, texture.Height / 2f, new PropSimpleDecalSettings()), 
+                                    InitSoftEffectProp => (texture.Width / 2f, texture.Height / 2f, new PropSoftEffectSettings()), 
+                                    InitAntimatterProp => (texture.Width / 2f, texture.Height / 2f, new PropAntimatterSettings()),
+                                    InitLongProp => (texture.Width / 2f, texture.Height / 2f, new PropLongSettings()), 
+                                    InitRopeProp => (texture.Width / 2f, texture.Height / 2f, new PropRopeSettings()),
                                     
-                                    _ => (texture.width / 2f, texture.height / 2f, new BasicPropSettings())
+                                    _ => (texture.Width / 2f, texture.Height / 2f, new BasicPropSettings())
                                 };
 
                                 if (_newlyCopied)
@@ -809,7 +808,7 @@ internal class PropsEditorPage : IPage
                             {
                                 var current = GLOBALS.LongProps[_propsMenuLongsIndex];
                                 ref var texture = ref GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
-                                var height = texture.height / 2f;
+                                var height = texture.Height / 2f;
                                 var newQuads = new PropQuads
                                 {
                                     TopLeft = new(posV.X - 100, posV.Y - height),
@@ -862,15 +861,15 @@ internal class PropsEditorPage : IPage
                                     InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings(variation:_defaultVariation)),
                                     InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
                                     InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings(variation:_defaultVariation)),
-                                    InitSoftProp => (texture.width  / 2f, texture.height  / 2f, new PropSoftSettings()),
+                                    InitSoftProp => (texture.Width  / 2f, texture.Height  / 2f, new PropSoftSettings()),
                                     InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings(variation:_defaultVariation)),
-                                    InitSimpleDecalProp => (texture.width / 2f, texture.height / 2f, new PropSimpleDecalSettings()), 
-                                    InitSoftEffectProp => (texture.width / 2f, texture.height / 2f, new PropSoftEffectSettings()), 
-                                    InitAntimatterProp => (texture.width / 2f, texture.height / 2f, new PropAntimatterSettings()),
-                                    InitLongProp => (texture.width / 2f, texture.height / 2f, new PropLongSettings()), 
-                                    InitRopeProp => (texture.width / 2f, texture.height / 2f, new PropRopeSettings()),
+                                    InitSimpleDecalProp => (texture.Width / 2f, texture.Height / 2f, new PropSimpleDecalSettings()), 
+                                    InitSoftEffectProp => (texture.Width / 2f, texture.Height / 2f, new PropSoftEffectSettings()), 
+                                    InitAntimatterProp => (texture.Width / 2f, texture.Height / 2f, new PropAntimatterSettings()),
+                                    InitLongProp => (texture.Width / 2f, texture.Height / 2f, new PropLongSettings()), 
+                                    InitRopeProp => (texture.Width / 2f, texture.Height / 2f, new PropRopeSettings()),
                                     
-                                    _ => (texture.width / 2f, texture.height / 2f, new BasicPropSettings())
+                                    _ => (texture.Width / 2f, texture.Height / 2f, new BasicPropSettings())
                                 };
 
                                 if (_newlyCopied)
@@ -1010,16 +1009,16 @@ internal class PropsEditorPage : IPage
                 {
                     _selectedPropsEncloser = Utils.EncloseProps(fetchedSelected.Select(p => p.prop.prop.Quads));
                     _selectedPropsCenter = new Vector2(
-                        _selectedPropsEncloser.x + 
-                        _selectedPropsEncloser.width/2, 
-                        _selectedPropsEncloser.y + 
-                        _selectedPropsEncloser.height/2
+                        _selectedPropsEncloser.X + 
+                        _selectedPropsEncloser.Width/2, 
+                        _selectedPropsEncloser.Y + 
+                        _selectedPropsEncloser.Height/2
                     );
                 }
                 else
                 {
-                    _selectedPropsEncloser.width = 0;
-                    _selectedPropsEncloser.height = 0;
+                    _selectedPropsEncloser.Width = 0;
+                    _selectedPropsEncloser.Height = 0;
 
                     _selectedPropsCenter.X = 0;
                     _selectedPropsCenter.Y = 0;
@@ -1056,7 +1055,7 @@ internal class PropsEditorPage : IPage
                     _stretchAxes = 0;
                     // _ropeMode = false;
                     
-                    SetMouseCursor(MouseCursor.MOUSE_CURSOR_RESIZE_NESW);
+                    SetMouseCursor(MouseCursor.ResizeNesw);
                 }
                 // Hide
                 else if (_shortcuts.TogglePropsVisibility.Check(ctrl, shift, alt) && anySelected)
@@ -1129,7 +1128,7 @@ internal class PropsEditorPage : IPage
                         _ropeMode = !_ropeMode;
                     }
                 }
-                else SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+                else SetMouseCursor(MouseCursor.Default);
 
                 if (_ropeMode && fetchedSelected.Length == 1)
                 {
@@ -1156,7 +1155,7 @@ internal class PropsEditorPage : IPage
                         
                         fetchedSelected[0].prop.prop.Extras.RopePoints = Utils.Casteljau(fetchedSelected[0].prop.prop.Extras.RopePoints.Length, [ ends.pA, ..foundRope.bezierHandles, ends.pB ]);
 
-                        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                        if (IsMouseButtonDown(MouseButton.Left))
                         {
                             for (var b = 0; b < foundRope.bezierHandles.Length; b++)
                             {
@@ -1167,7 +1166,7 @@ internal class PropsEditorPage : IPage
                             }
                         }
 
-                        if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _bezierHandleLock != -1)
+                        if (IsMouseButtonReleased(MouseButton.Left) && _bezierHandleLock != -1)
                             _bezierHandleLock = -1;
                     }
                 }
@@ -1175,7 +1174,7 @@ internal class PropsEditorPage : IPage
                 // TODO: switch on enums instead
                 if (_movingProps && anySelected)
                 {
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _movingProps = false;
+                    if (IsMouseButtonPressed(MouseButton.Left)) _movingProps = false;
                     var delta = GetMouseDelta(); // TODO: Scale to world2D
                     if (IsMouseButtonDown(_shortcuts.DragLevel.Button))
                     {
@@ -1189,10 +1188,10 @@ internal class PropsEditorPage : IPage
                         
                         var quads = GLOBALS.Level.Props[s].prop.Quads;
 
-                        quads.TopLeft = RayMath.Vector2Add(quads.TopLeft, delta);
-                        quads.TopRight = RayMath.Vector2Add(quads.TopRight, delta);
-                        quads.BottomRight = RayMath.Vector2Add(quads.BottomRight, delta);
-                        quads.BottomLeft = RayMath.Vector2Add(quads.BottomLeft, delta);
+                        quads.TopLeft = Raymath.Vector2Add(quads.TopLeft, delta);
+                        quads.TopRight = Raymath.Vector2Add(quads.TopRight, delta);
+                        quads.BottomRight = Raymath.Vector2Add(quads.BottomRight, delta);
+                        quads.BottomLeft = Raymath.Vector2Add(quads.BottomLeft, delta);
 
                         GLOBALS.Level.Props[s].prop.Quads = quads;
 
@@ -1202,7 +1201,7 @@ internal class PropsEditorPage : IPage
                             {
                                 for (var p = 0; p < GLOBALS.Level.Props[s].prop.Extras.RopePoints.Length; p++)
                                 {
-                                    GLOBALS.Level.Props[s].prop.Extras.RopePoints[p] = RayMath.Vector2Add(GLOBALS.Level.Props[s].prop.Extras.RopePoints[p], delta);
+                                    GLOBALS.Level.Props[s].prop.Extras.RopePoints[p] = Raymath.Vector2Add(GLOBALS.Level.Props[s].prop.Extras.RopePoints[p], delta);
                                 }
                             }
 
@@ -1221,7 +1220,7 @@ internal class PropsEditorPage : IPage
                 }
                 else if (_rotatingProps && anySelected)
                 {
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _rotatingProps = false;
+                    if (IsMouseButtonPressed(MouseButton.Left)) _rotatingProps = false;
 
                     var delta = GetMouseDelta();
                     
@@ -1243,22 +1242,22 @@ internal class PropsEditorPage : IPage
                 }
                 else if (_scalingProps && anySelected)
                 {
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                    if (IsMouseButtonPressed(MouseButton.Left))
                     {
                         _stretchAxes = 0;
                         _scalingProps = false;
-                        SetMouseCursor(MouseCursor.MOUSE_CURSOR_DEFAULT);
+                        SetMouseCursor(MouseCursor.Default);
                     }
 
-                    if (IsKeyPressed(KeyboardKey.KEY_X))
+                    if (IsKeyPressed(KeyboardKey.X))
                     {
                         _stretchAxes = (byte)(_stretchAxes == 1 ? 0 : 1);
-                        SetMouseCursor(MouseCursor.MOUSE_CURSOR_RESIZE_EW);
+                        SetMouseCursor(MouseCursor.ResizeNesw);
                     }
-                    if (IsKeyPressed(KeyboardKey.KEY_Y))
+                    if (IsKeyPressed(KeyboardKey.Y))
                     {
                         _stretchAxes =  (byte)(_stretchAxes == 2 ? 0 : 2);
-                        SetMouseCursor(MouseCursor.MOUSE_CURSOR_RESIZE_NS);
+                        SetMouseCursor(MouseCursor.ResizeNs);
                     }
 
                     var delta = GetMouseDelta();
@@ -1319,23 +1318,23 @@ internal class PropsEditorPage : IPage
                         _ => tileMouseWorld
                     };
 
-                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                    if (IsMouseButtonDown(MouseButton.Left))
                     {
                         if (fetchedSelected[0].prop.type == InitPropType.Rope)
                         {
-                            var middleLeft = RayMath.Vector2Divide(
-                                RayMath.Vector2Add(currentQuads.TopLeft, currentQuads.BottomLeft),
+                            var middleLeft = Raymath.Vector2Divide(
+                                Raymath.Vector2Add(currentQuads.TopLeft, currentQuads.BottomLeft),
                                 new(2f, 2f)
                             );
 
-                            var middleRight = RayMath.Vector2Divide(
-                                RayMath.Vector2Add(currentQuads.TopRight, currentQuads.BottomRight),
+                            var middleRight = Raymath.Vector2Divide(
+                                Raymath.Vector2Add(currentQuads.TopRight, currentQuads.BottomRight),
                                 new(2f, 2f)
                             );
                             
-                            var beta = RayMath.Vector2Angle(RayMath.Vector2Subtract(middleLeft, middleRight), new(1.0f, 0.0f));
+                            var beta = Raymath.Vector2Angle(Raymath.Vector2Subtract(middleLeft, middleRight), new(1.0f, 0.0f));
                             
-                            var r = RayMath.Vector2Length(RayMath.Vector2Subtract(currentQuads.TopLeft, middleLeft));
+                            var r = Raymath.Vector2Length(Raymath.Vector2Subtract(currentQuads.TopLeft, middleLeft));
                             
                             if (
                                 CheckCollisionPointCircle(
@@ -1344,22 +1343,22 @@ internal class PropsEditorPage : IPage
                                 ) || _quadLock == 1)
                             {
                                 _quadLock = 1;
-                                currentQuads.BottomLeft = RayMath.Vector2Add(
+                                currentQuads.BottomLeft = Raymath.Vector2Add(
                                     posV, 
                                     new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                     );
                                 
-                                currentQuads.TopLeft = RayMath.Vector2Add(
+                                currentQuads.TopLeft = Raymath.Vector2Add(
                                     posV, 
                                     new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                     );
                                 
-                                currentQuads.BottomRight = RayMath.Vector2Add(
+                                currentQuads.BottomRight = Raymath.Vector2Add(
                                     middleRight, 
                                     new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                 );
                                 
-                                currentQuads.TopRight = RayMath.Vector2Add(
+                                currentQuads.TopRight = Raymath.Vector2Add(
                                     middleRight, 
                                     new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                 );
@@ -1373,22 +1372,22 @@ internal class PropsEditorPage : IPage
                             {
                                 _quadLock = 2;
                                 
-                                currentQuads.BottomLeft = RayMath.Vector2Add(
+                                currentQuads.BottomLeft = Raymath.Vector2Add(
                                     middleLeft, 
                                     new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                 );
                                 
-                                currentQuads.TopLeft = RayMath.Vector2Add(
+                                currentQuads.TopLeft = Raymath.Vector2Add(
                                     middleLeft, 
                                     new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                 );
                                 
-                                currentQuads.BottomRight = RayMath.Vector2Add(
+                                currentQuads.BottomRight = Raymath.Vector2Add(
                                     posV, 
                                     new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                 );
                                 
-                                currentQuads.TopRight = RayMath.Vector2Add(
+                                currentQuads.TopRight = Raymath.Vector2Add(
                                     posV, 
                                     new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                 );
@@ -1398,9 +1397,9 @@ internal class PropsEditorPage : IPage
                         {
                             var (left, top, right, bottom) = Utils.LongSides(fetchedSelected[0].prop.prop.Quads);
                             
-                            var beta = RayMath.Vector2Angle(RayMath.Vector2Subtract(left, right), new(1.0f, 0.0f));
+                            var beta = Raymath.Vector2Angle(Raymath.Vector2Subtract(left, right), new(1.0f, 0.0f));
                             
-                            var r = RayMath.Vector2Length(RayMath.Vector2Subtract(currentQuads.TopLeft, left));
+                            var r = Raymath.Vector2Length(Raymath.Vector2Subtract(currentQuads.TopLeft, left));
 
                             if (CheckCollisionPointCircle(tileMouseWorld, left, 5f) && _quadLock == 0)
                             {
@@ -1422,44 +1421,44 @@ internal class PropsEditorPage : IPage
                             switch (_quadLock)
                             {
                                 case 1: // left
-                                    currentQuads.BottomLeft = RayMath.Vector2Add(
+                                    currentQuads.BottomLeft = Raymath.Vector2Add(
                                         posV, 
                                         new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                     );
                                 
-                                    currentQuads.TopLeft = RayMath.Vector2Add(
+                                    currentQuads.TopLeft = Raymath.Vector2Add(
                                         posV, 
                                         new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                     );
                                 
-                                    currentQuads.BottomRight = RayMath.Vector2Add(
+                                    currentQuads.BottomRight = Raymath.Vector2Add(
                                         right, 
                                         new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                     );
                                 
-                                    currentQuads.TopRight = RayMath.Vector2Add(
+                                    currentQuads.TopRight = Raymath.Vector2Add(
                                         right, 
                                         new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                     );
                                     break;
                                 
                                 case 2: // right
-                                    currentQuads.BottomLeft = RayMath.Vector2Add(
+                                    currentQuads.BottomLeft = Raymath.Vector2Add(
                                         left, 
                                         new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                     );
                                 
-                                    currentQuads.TopLeft = RayMath.Vector2Add(
+                                    currentQuads.TopLeft = Raymath.Vector2Add(
                                         left, 
                                         new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                     );
                                 
-                                    currentQuads.BottomRight = RayMath.Vector2Add(
+                                    currentQuads.BottomRight = Raymath.Vector2Add(
                                         posV, 
                                         new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
                                     );
                                 
-                                    currentQuads.TopRight = RayMath.Vector2Add(
+                                    currentQuads.TopRight = Raymath.Vector2Add(
                                         posV, 
                                         new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                                     );
@@ -1518,13 +1517,13 @@ internal class PropsEditorPage : IPage
                         
                         GLOBALS.Level.Props[fetchedSelected[0].index].prop.Quads = currentQuads;
                     }
-                    else if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _quadLock != 0) _quadLock = 0;
+                    else if (IsMouseButtonReleased(MouseButton.Left) && _quadLock != 0) _quadLock = 0;
                 }
                 else if (_editingPropPoints && fetchedSelected.Length == 1)
                 {
                     var points = fetchedSelected[0].prop.prop.Extras.RopePoints;
                     
-                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                    if (IsMouseButtonDown(MouseButton.Left))
                     {
                         // Check Collision of Each Point
 
@@ -1545,7 +1544,7 @@ internal class PropsEditorPage : IPage
                             }
                         }
                     }
-                    else if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _pointLock != -1) _pointLock = -1;
+                    else if (IsMouseButtonReleased(MouseButton.Left) && _pointLock != -1) _pointLock = -1;
                 }
                 else if (!_ropeMode)
                 {
@@ -1596,11 +1595,11 @@ internal class PropsEditorPage : IPage
         #region TileEditorDrawing
         BeginDrawing();
 
-        ClearBackground(GRAY);
+        ClearBackground(Color.Gray);
 
         BeginMode2D(_camera);
         {
-            // DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, GLOBALS.Layer == 2 ? new Color(100, 100, 100, 100) : WHITE);
+            // DrawRectangle(0, 0, GLOBALS.Level.Width * previewScale, GLOBALS.Level.Height * previewScale, GLOBALS.Layer == 2 ? new Color(100, 100, 100, 100) : Color.White);
 
             #region TileEditorLayer3
             if (_showTileLayer3)
@@ -1611,7 +1610,7 @@ internal class PropsEditorPage : IPage
                     2, 
                     GLOBALS.PreviewScale, 
                     false, 
-                    BLACK
+                    Color.Black
                 );
 
                 // then draw the tiles
@@ -1651,7 +1650,7 @@ internal class PropsEditorPage : IPage
                     {
                         foreach (var point in current.prop.Extras.RopePoints)
                         {
-                            DrawCircleV(point, 3f, WHITE);
+                            DrawCircleV(point, 3f, Color.White);
                         }
                     }
                     
@@ -1659,7 +1658,7 @@ internal class PropsEditorPage : IPage
                     {
                         // Side Lines
                         
-                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, BLUE);
+                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
                         
                         // Quad Points
 
@@ -1668,30 +1667,30 @@ internal class PropsEditorPage : IPage
                             if (current.type == InitPropType.Rope)
                             {
                                 DrawCircleV(
-                                    RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
+                                    Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
                                         new(2f, 2f)), 
                                     5f, 
-                                    BLUE
+                                    Color.Blue
                                 );
                                 
                                 DrawCircleV(
-                                    RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopRight, quads.BottomRight), 
+                                    Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), 
                                         new(2f, 2f)), 
                                     5f, 
-                                    BLUE
+                                    Color.Blue
                                 );
                                 
-                                DrawCircleV(quads.TopLeft, 2f, BLUE);
-                                DrawCircleV(quads.TopRight, 2f, BLUE);
-                                DrawCircleV(quads.BottomRight, 2f, BLUE);
-                                DrawCircleV(quads.BottomLeft, 2f, BLUE);
+                                DrawCircleV(quads.TopLeft, 2f, Color.Blue);
+                                DrawCircleV(quads.TopRight, 2f, Color.Blue);
+                                DrawCircleV(quads.BottomRight, 2f, Color.Blue);
+                                DrawCircleV(quads.BottomLeft, 2f, Color.Blue);
                             }
                             else
                             {
-                                DrawCircleV(quads.TopLeft, 5f, BLUE);
-                                DrawCircleV(quads.TopRight, 5f, BLUE);
-                                DrawCircleV(quads.BottomRight, 5f, BLUE);
-                                DrawCircleV(quads.BottomLeft, 5f, BLUE);
+                                DrawCircleV(quads.TopLeft, 5f, Color.Blue);
+                                DrawCircleV(quads.TopRight, 5f, Color.Blue);
+                                DrawCircleV(quads.BottomRight, 5f, Color.Blue);
+                                DrawCircleV(quads.BottomLeft, 5f, Color.Blue);
                             }
                         }
                         else if (_scalingProps)
@@ -1705,7 +1704,7 @@ internal class PropsEditorPage : IPage
                                         center with { X = -10 }, 
                                         center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
                                         2f, 
-                                        RED
+                                        Color.Red
                                     );
                                     break;
                                 case 2:
@@ -1713,7 +1712,7 @@ internal class PropsEditorPage : IPage
                                         center with { Y = -10 },
                                         center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
                                         2f,
-                                        GREEN
+                                        Color.Green
                                     );
                                     break;
                             }
@@ -1726,14 +1725,14 @@ internal class PropsEditorPage : IPage
                             {
                                 foreach (var point in current.prop.Extras.RopePoints)
                                 {
-                                    DrawCircleV(point, 3f, RED);
+                                    DrawCircleV(point, 3f, Color.Red);
                                 }
                             }
                             else
                             {
                                 foreach (var point in current.prop.Extras.RopePoints)
                                 {
-                                    DrawCircleV(point, 2f, ORANGE);
+                                    DrawCircleV(point, 2f, Color.Orange);
                                 }
                             }
                             
@@ -1745,7 +1744,7 @@ internal class PropsEditorPage : IPage
 
                                 if (!model.simSwitch)
                                 {
-                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, GREEN);
+                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
                                 }
                             }
                         }
@@ -1762,15 +1761,15 @@ internal class PropsEditorPage : IPage
                     0, 
                     GLOBALS.Level.Width * GLOBALS.PreviewScale, 
                     GLOBALS.Level.Height * GLOBALS.PreviewScale, 
-                    GRAY with { a = 130 });
+                    Color.Gray with { A = 130 });
 
                 Printers.DrawGeoLayer(
                     1, 
                     GLOBALS.PreviewScale, 
                     false, 
                     GLOBALS.Layer < 2
-                        ? BLACK 
-                        : BLACK with { a = 80 }
+                        ? Color.Black 
+                        : Color.Black with { A = 80 }
                 );
 
                 // Draw layer 2 tiles
@@ -1811,7 +1810,7 @@ internal class PropsEditorPage : IPage
                     {
                         foreach (var point in current.prop.Extras.RopePoints)
                         {
-                            DrawCircleV(point, 3f, WHITE);
+                            DrawCircleV(point, 3f, Color.White);
                         }
                     }
                     
@@ -1819,7 +1818,7 @@ internal class PropsEditorPage : IPage
                     {
                         // Side Lines
                         
-                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, BLUE);
+                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
                         
                         // Quad Points
 
@@ -1828,30 +1827,30 @@ internal class PropsEditorPage : IPage
                             if (current.type == InitPropType.Rope)
                             {
                                 DrawCircleV(
-                                    RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
+                                    Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
                                         new(2f, 2f)), 
                                     5f, 
-                                    BLUE
+                                    Color.Blue
                                 );
                                 
                                 DrawCircleV(
-                                    RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopRight, quads.BottomRight), 
+                                    Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), 
                                         new(2f, 2f)), 
                                     5f, 
-                                    BLUE
+                                    Color.Blue
                                 );
                                 
-                                DrawCircleV(quads.TopLeft, 2f, BLUE);
-                                DrawCircleV(quads.TopRight, 2f, BLUE);
-                                DrawCircleV(quads.BottomRight, 2f, BLUE);
-                                DrawCircleV(quads.BottomLeft, 2f, BLUE);
+                                DrawCircleV(quads.TopLeft, 2f, Color.Blue);
+                                DrawCircleV(quads.TopRight, 2f, Color.Blue);
+                                DrawCircleV(quads.BottomRight, 2f, Color.Blue);
+                                DrawCircleV(quads.BottomLeft, 2f, Color.Blue);
                             }
                             else
                             {
-                                DrawCircleV(quads.TopLeft, 5f, BLUE);
-                                DrawCircleV(quads.TopRight, 5f, BLUE);
-                                DrawCircleV(quads.BottomRight, 5f, BLUE);
-                                DrawCircleV(quads.BottomLeft, 5f, BLUE);
+                                DrawCircleV(quads.TopLeft, 5f, Color.Blue);
+                                DrawCircleV(quads.TopRight, 5f, Color.Blue);
+                                DrawCircleV(quads.BottomRight, 5f, Color.Blue);
+                                DrawCircleV(quads.BottomLeft, 5f, Color.Blue);
                             }
                         }
                         else if (_scalingProps)
@@ -1865,7 +1864,7 @@ internal class PropsEditorPage : IPage
                                         center with { X = -10 }, 
                                         center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
                                         2f, 
-                                        RED
+                                        Color.Red
                                     );
                                     break;
                                 case 2:
@@ -1873,7 +1872,7 @@ internal class PropsEditorPage : IPage
                                         center with { Y = -10 },
                                         center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
                                         2f,
-                                        GREEN
+                                        Color.Green
                                     );
                                     break;
                             }
@@ -1886,14 +1885,14 @@ internal class PropsEditorPage : IPage
                             {
                                 foreach (var point in current.prop.Extras.RopePoints)
                                 {
-                                    DrawCircleV(point, 3f, RED);
+                                    DrawCircleV(point, 3f, Color.Red);
                                 }
                             }
                             else
                             {
                                 foreach (var point in current.prop.Extras.RopePoints)
                                 {
-                                    DrawCircleV(point, 2f, ORANGE);
+                                    DrawCircleV(point, 2f, Color.Orange);
                                 }
                             }
                             
@@ -1905,7 +1904,7 @@ internal class PropsEditorPage : IPage
 
                                 if (!model.simSwitch)
                                 {
-                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, GREEN);
+                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
                                 }
                             }
                         }
@@ -1924,7 +1923,7 @@ internal class PropsEditorPage : IPage
                         0, 
                         GLOBALS.Level.Width * GLOBALS.PreviewScale, 
                         GLOBALS.Level.Height * GLOBALS.PreviewScale, 
-                        GRAY with { a = 130 }
+                        Color.Gray with { A = 130 }
                     );
 
                 Printers.DrawGeoLayer(
@@ -1932,8 +1931,8 @@ internal class PropsEditorPage : IPage
                     GLOBALS.PreviewScale, 
                     false, 
                     GLOBALS.Layer == 0
-                        ? BLACK 
-                        : BLACK with { a = 80 }
+                        ? Color.Black 
+                        : Color.Black with { A = 80 }
                 );
 
                 // Draw layer 1 tiles
@@ -1974,7 +1973,7 @@ internal class PropsEditorPage : IPage
                     {
                         foreach (var point in current.prop.Extras.RopePoints)
                         {
-                            DrawCircleV(point, 3f, WHITE);
+                            DrawCircleV(point, 3f, Color.White);
                         }
                     }
                     
@@ -1982,7 +1981,7 @@ internal class PropsEditorPage : IPage
                     {
                         // Side Lines
                         
-                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, BLUE);
+                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
                         
                         // Quad Points
 
@@ -1991,39 +1990,39 @@ internal class PropsEditorPage : IPage
                             if (current.type == InitPropType.Rope)
                             {
                                 DrawCircleV(
-                                    RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
+                                    Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
                                         new(2f, 2f)), 
                                     5f, 
-                                    BLUE
+                                    Color.Blue
                                 );
                                 
                                 DrawCircleV(
-                                    RayMath.Vector2Divide(RayMath.Vector2Add(quads.TopRight, quads.BottomRight), 
+                                    Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), 
                                         new(2f, 2f)), 
                                     5f, 
-                                    BLUE
+                                    Color.Blue
                                 );
                                 
-                                /*DrawCircleV(quads.TopLeft, 2f, BLUE);
-                                DrawCircleV(quads.TopRight, 2f, BLUE);
-                                DrawCircleV(quads.BottomRight, 2f, BLUE);
-                                DrawCircleV(quads.BottomLeft, 2f, BLUE);*/
+                                /*DrawCircleV(quads.TopLeft, 2f, Color.Blue);
+                                DrawCircleV(quads.TopRight, 2f, Color.Blue);
+                                DrawCircleV(quads.BottomRight, 2f, Color.Blue);
+                                DrawCircleV(quads.BottomLeft, 2f, Color.Blue);*/
                             }
                             else if (current.type == InitPropType.Long)
                             {
                                 var sides = Utils.LongSides(current.prop.Quads);
                                 
-                                DrawCircleV(sides.left, 5f, BLUE);
-                                DrawCircleV(sides.top, 5f, BLUE);
-                                DrawCircleV(sides.right, 5f, BLUE);
-                                DrawCircleV(sides.bottom, 5f, BLUE);
+                                DrawCircleV(sides.left, 5f, Color.Blue);
+                                DrawCircleV(sides.top, 5f, Color.Blue);
+                                DrawCircleV(sides.right, 5f, Color.Blue);
+                                DrawCircleV(sides.bottom, 5f, Color.Blue);
                             }
                             else
                             {
-                                DrawCircleV(quads.TopLeft, 5f, BLUE);
-                                DrawCircleV(quads.TopRight, 5f, BLUE);
-                                DrawCircleV(quads.BottomRight, 5f, BLUE);
-                                DrawCircleV(quads.BottomLeft, 5f, BLUE);
+                                DrawCircleV(quads.TopLeft, 5f, Color.Blue);
+                                DrawCircleV(quads.TopRight, 5f, Color.Blue);
+                                DrawCircleV(quads.BottomRight, 5f, Color.Blue);
+                                DrawCircleV(quads.BottomLeft, 5f, Color.Blue);
                             }
                         }
                         else if (_scalingProps)
@@ -2037,7 +2036,7 @@ internal class PropsEditorPage : IPage
                                         center with { X = -10 }, 
                                         center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
                                         2f, 
-                                        RED
+                                        Color.Red
                                     );
                                     break;
                                 case 2:
@@ -2045,7 +2044,7 @@ internal class PropsEditorPage : IPage
                                         center with { Y = -10 },
                                         center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
                                         2f,
-                                        GREEN
+                                        Color.Green
                                     );
                                     break;
                             }
@@ -2058,14 +2057,14 @@ internal class PropsEditorPage : IPage
                             {
                                 foreach (var point in current.prop.Extras.RopePoints)
                                 {
-                                    DrawCircleV(point, 3f, RED);
+                                    DrawCircleV(point, 3f, Color.Red);
                                 }
                             }
                             else
                             {
                                 foreach (var point in current.prop.Extras.RopePoints)
                                 {
-                                    DrawCircleV(point, 2f, ORANGE);
+                                    DrawCircleV(point, 2f, Color.Orange);
                                 }
                             }
 
@@ -2077,7 +2076,7 @@ internal class PropsEditorPage : IPage
 
                                 if (!model.simSwitch)
                                 {
-                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, GREEN);
+                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
                                 }
                             }
                         }
@@ -2088,7 +2087,7 @@ internal class PropsEditorPage : IPage
             #endregion
             
             // Draw the enclosing rectangle for selected props
-            // DEBUG: DrawRectangleLinesEx(_selectedPropsEncloser, 3f, WHITE);
+            // DEBUG: DrawRectangleLinesEx(_selectedPropsEncloser, 3f, Color.White);
 
             switch (_mode)
             {
@@ -2198,14 +2197,14 @@ internal class PropsEditorPage : IPage
                             break;
                         
                         case 1: // Current Rope
-                            DrawCircleV(tileMouseWorld, 3f, BLUE);
+                            DrawCircleV(tileMouseWorld, 3f, Color.Blue);
                             break;
 
                         case 2: // Current Long Prop
                         {
                             var prop = GLOBALS.LongProps[_propsMenuLongsIndex];
                             var texture = GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
-                            var height = texture.height / 2f;
+                            var height = texture.Height / 2f;
 
                             var posV = _snapMode switch
                             {
@@ -2233,7 +2232,7 @@ internal class PropsEditorPage : IPage
                         case 3: // Current Prop
                         {
                             // Since I've already seperated regular props from everything else, this can be
-                            // considered outdated
+                            // consideColor.Red outdated
                             var prop = GLOBALS.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
                             var texture = GLOBALS.Textures.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
                             
@@ -2242,15 +2241,15 @@ internal class PropsEditorPage : IPage
                                 InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings(variation:_defaultVariation)),
                                 InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
                                 InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings(variation:_defaultVariation)),
-                                InitSoftProp => (texture.width  / 2f, texture.height  / 2f, new PropSoftSettings()),
+                                InitSoftProp => (texture.Width  / 2f, texture.Height  / 2f, new PropSoftSettings()),
                                 InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings(variation:_defaultVariation)),
-                                InitSimpleDecalProp => (texture.width / 2f, texture.height / 2f, new PropSimpleDecalSettings()), 
-                                InitSoftEffectProp => (texture.width / 2f, texture.height / 2f, new PropSoftEffectSettings()), 
-                                InitAntimatterProp => (texture.width / 2f, texture.height / 2f, new PropAntimatterSettings()),
-                                InitLongProp => (texture.width / 2f, texture.height / 2f, new PropLongSettings()), 
-                                InitRopeProp => (texture.width / 2f, texture.height / 2f, new PropRopeSettings()),
+                                InitSimpleDecalProp => (texture.Width / 2f, texture.Height / 2f, new PropSimpleDecalSettings()), 
+                                InitSoftEffectProp => (texture.Width / 2f, texture.Height / 2f, new PropSoftEffectSettings()), 
+                                InitAntimatterProp => (texture.Width / 2f, texture.Height / 2f, new PropAntimatterSettings()),
+                                InitLongProp => (texture.Width / 2f, texture.Height / 2f, new PropLongSettings()), 
+                                InitRopeProp => (texture.Width / 2f, texture.Height / 2f, new PropRopeSettings()),
                                         
-                                _ => (texture.width / 2f, texture.height / 2f, new BasicPropSettings())
+                                _ => (texture.Width / 2f, texture.Height / 2f, new BasicPropSettings())
                             };
                             
                             var posV = _snapMode switch
@@ -2275,10 +2274,10 @@ internal class PropsEditorPage : IPage
                 case 0: // Select Mode
                     
                     // TODO: tweak selection cancellation
-                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT) && _clickTracker)
+                    if (IsMouseButtonDown(MouseButton.Left) && _clickTracker)
                     {
                         var mouse = GetScreenToWorld2D(GetMousePosition(), _camera);
-                        var diff = RayMath.Vector2Subtract(mouse, _selection1);
+                        var diff = Raymath.Vector2Subtract(mouse, _selection1);
                         var position = (diff.X > 0, diff.Y > 0) switch
                         {
                             (true, true) => _selection1,
@@ -2299,7 +2298,7 @@ internal class PropsEditorPage : IPage
                         DrawRectangleLinesEx(
                             _selection,
                             2f,
-                            BLUE
+                            Color.Blue
                         );
                     }
                     break;
@@ -2325,10 +2324,10 @@ internal class PropsEditorPage : IPage
                 if (inMatrixBounds)
                     DrawText(
                         $"x: {tileMatrixX}, y: {tileMatrixY}\n{GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer]}",
-                        tileMouse.X + previewScale,
-                        tileMouse.Y + previewScale,
+                        (int)tileMouse.X + previewScale,
+                        (int)tileMouse.Y + previewScale,
                         15,
-                        WHITE
+                        Color.White
                     );
             }
             else
@@ -2336,10 +2335,10 @@ internal class PropsEditorPage : IPage
                 if (inMatrixBounds)
                     DrawText(
                         $"x: {tileMatrixX}, y: {tileMatrixY}",
-                        tileMouse.X + previewScale,
-                        tileMouse.Y + previewScale,
+                        (int)tileMouse.X + previewScale,
+                        (int)tileMouse.Y + previewScale,
                         15,
-                        WHITE
+                        Color.White
                     );
             }
 
@@ -2351,19 +2350,19 @@ internal class PropsEditorPage : IPage
 
             if (layer3Hovered)
             {
-                DrawRectangleRec(layer3Rect, BLUE with { a = 100 });
+                DrawRectangleRec(layer3Rect, Color.Blue with { A = 100 });
 
-                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 0;
+                if (IsMouseButtonPressed(MouseButton.Left)) newLayer = 0;
             }
 
             DrawRectangleRec(
                 layer3Rect,
-                GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
+                GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
             );
 
-            DrawRectangleLines(10, sHeight - 50, 40, 40, GRAY);
+            DrawRectangleLines(10, sHeight - 50, 40, 40, Color.Gray);
 
-            if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
+            if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
 
             if (GLOBALS.Layer is 1 or 0)
             {
@@ -2371,19 +2370,19 @@ internal class PropsEditorPage : IPage
 
                 if (layer2Hovered)
                 {
-                    DrawRectangleRec(layer2Rect, BLUE with { a = 100 });
+                    DrawRectangleRec(layer2Rect, Color.Blue with { A = 100 });
 
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 2;
+                    if (IsMouseButtonPressed(MouseButton.Left)) newLayer = 2;
                 }
 
                 DrawRectangleRec(
                     layer2Rect,
-                    GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
                 );
 
-                DrawRectangleLines(20, sHeight - 60, 40, 40, GRAY);
+                DrawRectangleLines(20, sHeight - 60, 40, 40, Color.Gray);
 
-                if (GLOBALS.Layer == 1) DrawText("2", 35, sHeight - 50, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
+                if (GLOBALS.Layer == 1) DrawText("2", 35, sHeight - 50, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             }
 
             if (GLOBALS.Layer == 0)
@@ -2392,19 +2391,19 @@ internal class PropsEditorPage : IPage
 
                 if (layer1Hovered)
                 {
-                    DrawRectangleRec(layer1Rect, BLUE with { a = 100 });
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 1;
+                    DrawRectangleRec(layer1Rect, Color.Blue with { A = 100 });
+                    if (IsMouseButtonPressed(MouseButton.Left)) newLayer = 1;
                 }
 
                 DrawRectangleRec(
                     layer1Rect,
-                    GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
                 );
 
                 DrawRectangleLines(
-                    30, sHeight - 70, 40, 40, GRAY);
+                    30, sHeight - 70, 40, 40, Color.Gray);
 
-                DrawText("1", 48, sHeight - 60, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
+                DrawText("1", 48, sHeight - 60, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             }
 
             if (newLayer != GLOBALS.Layer)
@@ -2436,7 +2435,7 @@ internal class PropsEditorPage : IPage
                  var warpRect = new Rectangle(270, sHeight - 50, 40, 40);
                  var editPointsRect = new Rectangle(315, sHeight - 50, 40, 40);
 
-                 var rectColor = GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE;
+                 var rectColor = GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White;
 
                  DrawRectangleRec(moveRect, rectColor);
                  DrawRectangleRec(rotateRect, rectColor);
@@ -2444,51 +2443,51 @@ internal class PropsEditorPage : IPage
                  DrawRectangleRec(warpRect, rectColor);
                  DrawRectangleRec(editPointsRect, rectColor);
                  
-                 if (_movingProps) DrawRectangleRec(moveRect, BLUE);
-                 if (_rotatingProps) DrawRectangleRec(rotateRect, BLUE);
-                 if (_scalingProps) DrawRectangleRec(scaleRect, BLUE);
-                 if (_stretchingProp) DrawRectangleRec(warpRect, BLUE);
-                 if (_editingPropPoints) DrawRectangleRec(editPointsRect, BLUE);
+                 if (_movingProps) DrawRectangleRec(moveRect, Color.Blue);
+                 if (_rotatingProps) DrawRectangleRec(rotateRect, Color.Blue);
+                 if (_scalingProps) DrawRectangleRec(scaleRect, Color.Blue);
+                 if (_stretchingProp) DrawRectangleRec(warpRect, Color.Blue);
+                 if (_editingPropPoints) DrawRectangleRec(editPointsRect, Color.Blue);
 
                  DrawTexturePro(
                      moveTexture,
-                     new Rectangle(0, 0, moveTexture.width, moveTexture.height),
+                     new Rectangle(0, 0, moveTexture.Width, moveTexture.Height),
                      moveRect,
                      new Vector2(0, 0),
                      0,
-                     GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : _movingProps ? WHITE : BLACK);
+                     GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _movingProps ? Color.White : Color.Black);
 
                  DrawTexturePro(
                      rotateTexture,
-                     new Rectangle(0, 0, rotateTexture.width, rotateTexture.height),
+                     new Rectangle(0, 0, rotateTexture.Width, rotateTexture.Height),
                      rotateRect,
                      new Vector2(0, 0),
                      0,
-                     GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : _rotatingProps ? WHITE : BLACK);
+                     GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _rotatingProps ? Color.White : Color.Black);
 
                  DrawTexturePro(
                      scaleTexture,
-                     new Rectangle(0, 0, scaleTexture.width, scaleTexture.height),
+                     new Rectangle(0, 0, scaleTexture.Width, scaleTexture.Height),
                      scaleRect,
                      new Vector2(0, 0),
                      0,
-                     GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : _scalingProps ? WHITE : BLACK);
+                     GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _scalingProps ? Color.White : Color.Black);
 
                  DrawTexturePro(
                      warpTexture,
-                     new Rectangle(0, 0, warpTexture.width, warpTexture.height),
+                     new Rectangle(0, 0, warpTexture.Width, warpTexture.Height),
                      warpRect,
                      new Vector2(0, 0),
                      0,
-                     GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : _stretchingProp ? WHITE : BLACK);
+                     GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _stretchingProp ? Color.White : Color.Black);
 
                  DrawTexturePro(
                      editPointsTexture,
-                     new Rectangle(0, 0, editPointsTexture.width, editPointsTexture.height),
+                     new Rectangle(0, 0, editPointsTexture.Width, editPointsTexture.Height),
                      editPointsRect,
                      new Vector2(0, 0),
                      0,
-                     GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : _editingPropPoints ? WHITE : BLACK);
+                     GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _editingPropPoints ? Color.White : Color.Black);
             }
             //
 
@@ -2503,14 +2502,14 @@ internal class PropsEditorPage : IPage
             {
                 _isPropsWinHovered = true;
 
-                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isPropsWinDragged = true;
+                if (IsMouseButtonDown(MouseButton.Left)) _isPropsWinDragged = true;
             }
             else
             {
                 _isPropsWinHovered = false;
             }
 
-            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isPropsWinDragged) _isPropsWinDragged = false;
+            if (IsMouseButtonReleased(MouseButton.Left) && _isPropsWinDragged) _isPropsWinDragged = false;
             
             if (menuOpened)
             {
@@ -2566,11 +2565,11 @@ internal class PropsEditorPage : IPage
                                 
                                 if (selected)
                                 {
-                                    if (IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL))
+                                    if (IsKeyDown(KeyboardKey.LeftControl))
                                     {
                                         _selected[index] = !_selected[index];
                                     }
-                                    else if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+                                    else if (IsKeyDown(KeyboardKey.LeftShift))
                                     {
                                         var otherSelected = Array.IndexOf(_selected, true);
                                         
@@ -2968,14 +2967,14 @@ internal class PropsEditorPage : IPage
 
             _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
             {
-                X = navWindowRect.X - 5, width = navWindowRect.width + 10
+                X = navWindowRect.X - 5, Width = navWindowRect.Width + 10
             });
                     
-            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.Left))
             {
                 _isNavigationWinDragged = true;
             }
-            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.Left))
             {
                 _isNavigationWinDragged = false;
             }
@@ -2989,15 +2988,15 @@ internal class PropsEditorPage : IPage
                     tileMouse, 
                     shortcutWindowRect with
                     {
-                        X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
+                        X = shortcutWindowRect.X - 5, Width = shortcutWindowRect.Width + 10
                     }
                 );
 
-                if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.Left))
                 {
                     _isShortcutsWinDragged = true;
                 }
-                else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.Left))
                 {
                     _isShortcutsWinDragged = false;
                 }

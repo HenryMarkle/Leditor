@@ -3,9 +3,9 @@ namespace Leditor;
 public class TileTexturesLoader : IDisposable
 {
     private Image[][] _tempImages = [];
-    private Texture[][] _array = [];
+    private Texture2D[][] _array = [];
 
-    public Texture[][] Textures => _array;
+    public Texture2D[][] Textures => _array;
 
     public async Task<List<Action>> PrepareFromPathsAsync(string[][] paths)
     {
@@ -13,14 +13,14 @@ public class TileTexturesLoader : IDisposable
             c.Select(t => 
                 Task.Factory.StartNew(() => Raylib.LoadImage(t))).ToArray()).ToArray();
 
-        _array = new Texture[images.Length][];
+        _array = new Texture2D[images.Length][];
         _tempImages = new Image[images.Length][];
 
         List<Action> actions = [];
         
         for (var category = 0; category < images.Length; category++)
         {
-            _array[category] = new Texture[images[category].Length];
+            _array[category] = new Texture2D[images[category].Length];
             _tempImages[category] = new Image[images[category].Length];
 
             for (var image = 0; image < images[category].Length; image++)
@@ -80,13 +80,13 @@ public class PropTexturesLoader : IDisposable
     private Image[] _tempLongsImages = [];
     private Image[][] _tempOthersImages = [];
     
-    private Texture[] _ropes = [];
-    private Texture[] _longs = [];
-    private Texture[][] _others = [];
+    private Texture2D[] _ropes = [];
+    private Texture2D[] _longs = [];
+    private Texture2D[][] _others = [];
 
-    public Texture[] Ropes => _ropes;
-    public Texture[] Longs => _longs;
-    public Texture[][] Others => _others;
+    public Texture2D[] Ropes => _ropes;
+    public Texture2D[] Longs => _longs;
+    public Texture2D[][] Others => _others;
 
     public async Task<List<Action>> PrepareFromPathsAsync(
         string[] ropes,
@@ -104,9 +104,9 @@ public class PropTexturesLoader : IDisposable
         _tempLongsImages = new Image[longsImages.Length];
         _tempOthersImages = new Image[othersImages.Length][];
         
-        _ropes = new Texture[_tempRopesImages.Length];
-        _longs = new Texture[_tempLongsImages.Length];
-        _others = new Texture[_tempOthersImages.Length][];
+        _ropes = new Texture2D[_tempRopesImages.Length];
+        _longs = new Texture2D[_tempLongsImages.Length];
+        _others = new Texture2D[_tempOthersImages.Length][];
         
         List<Action> actions = [];
         
@@ -145,7 +145,7 @@ public class PropTexturesLoader : IDisposable
         for (var category = 0; category < othersImages.Length; category++)
         {
             _tempOthersImages[category] = new Image[othersImages[category].Length];
-            _others[category] = new Texture[othersImages[category].Length];
+            _others[category] = new Texture2D[othersImages[category].Length];
 
             for (var index = 0; index < othersImages[category].Length; index++)
             {
@@ -205,9 +205,9 @@ public class PropTexturesLoader : IDisposable
 public class LightTexturesLoader : IDisposable
 {
     private Image[] _images = [];
-    private Texture[] _array = [];
+    private Texture2D[] _array = [];
 
-    public Texture[] Textures => _array;
+    public Texture2D[] Textures => _array;
 
     public async Task<List<Action>> PrepareFromPathsAsync(string[] paths)
     {
@@ -216,7 +216,7 @@ public class LightTexturesLoader : IDisposable
             .ToArray();
 
         _images = new Image[images.Length];
-        _array = new Texture[images.Length];
+        _array = new Texture2D[images.Length];
 
         List<Action> actions = [];
         

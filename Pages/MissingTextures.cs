@@ -1,4 +1,4 @@
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
@@ -11,14 +11,14 @@ public class MissingTexturesPage(Serilog.Core.Logger logger) : IPage
         var width = GetScreenWidth();
 
         BeginDrawing();
-        ClearBackground(BLACK);
+        ClearBackground(Color.Black);
 
         DrawText(
             "The editor is missing tile textures",
             (width - MeasureText("The editor is missing tile textures", 50)) / 2,
             200,
             50,
-            WHITE
+            Color.White
         );
 
         DrawText(
@@ -26,7 +26,7 @@ public class MissingTexturesPage(Serilog.Core.Logger logger) : IPage
             (width - MeasureText("Check the logs for the list of missing textures; Please restore them and try again", 20)) / 2,
             400,
             20,
-            WHITE
+            Color.White
         );
         EndDrawing();
     }

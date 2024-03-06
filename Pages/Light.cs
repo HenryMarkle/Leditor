@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using ImGuiNET;
 using rlImGui_cs;
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
@@ -9,7 +9,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
 {
     readonly Serilog.Core.Logger _logger = logger;
 
-    private Camera2D _camera = camera ?? new() { zoom = 0.5f, target = new(-500, -200) };
+    private Camera2D _camera = camera ?? new() { Zoom = 0.5f, Target = new(-500, -200) };
     private int _lightBrushTextureIndex;
     private float _lightBrushWidth = 200;
     private float _lightBrushHeight = 200;
@@ -55,7 +55,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
 
     public void Draw()
     {
-        if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera with { target = GLOBALS.Camera.target + new Vector2(300, 300)};
+        if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera with { Target = GLOBALS.Camera.Target + new Vector2(300, 300)};
         var mouse = GetMousePosition();
         
         var indicatorOrigin = new Vector2(GetScreenWidth() - 100, GetScreenHeight() - 100);
@@ -67,10 +67,10 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
         
         var indHovered = CheckCollisionPointCircle(mouse, indicatorPoint, 10f);
 
-        if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isDraggingIndicator)
+        if (IsMouseButtonReleased(MouseButton.Left) && _isDraggingIndicator)
             _isDraggingIndicator = false;
 
-        if (indHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isDraggingIndicator = true;
+        if (indHovered && IsMouseButtonDown(MouseButton.Left)) _isDraggingIndicator = true;
 
         var panelHeight = GetScreenHeight() - 100;
         var brushPanel = new Rectangle(10, 50, 120, panelHeight);
@@ -84,9 +84,9 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
                        !CheckCollisionPointRec(mouse, brushPanel) && !indHovered && 
                        !_isDraggingIndicator;
         
-        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
-        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
-        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt);
 
         GLOBALS.PreviousPage = 5;
 
@@ -145,8 +145,8 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
         if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.DragLevelAlt.Check(ctrl, shift, alt, true))
         {
             var delta = GetMouseDelta();
-            delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
-            _camera.target = RayMath.Vector2Add(_camera.target, delta);
+            delta = Raymath.Vector2Scale(delta, -1.0f / _camera.Zoom);
+            _camera.Target = Raymath.Vector2Add(_camera.Target, delta);
         }
 
         // handle zoom
@@ -154,10 +154,10 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
         if (wheel2 != 0 && canPaint)
         {
             var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
-            _camera.offset = GetMousePosition();
-            _camera.target = mouseWorldPosition;
-            _camera.zoom += wheel2 * GLOBALS.ZoomIncrement;
-            if (_camera.zoom < GLOBALS.ZoomIncrement) _camera.zoom = GLOBALS.ZoomIncrement;
+            _camera.Offset = GetMousePosition();
+            _camera.Target = mouseWorldPosition;
+            _camera.Zoom += wheel2 * GLOBALS.ZoomIncrement;
+            if (_camera.Zoom < GLOBALS.ZoomIncrement) _camera.Zoom = GLOBALS.ZoomIncrement;
         }
 
         // update light brush
@@ -166,7 +166,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
             var texture = GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex];
             var lightMouse = GetScreenToWorld2D(GetMousePosition(), _camera);
 
-            _lightBrushSource = new(0, 0, texture.width, texture.height);
+            _lightBrushSource = new(0, 0, texture.Width, texture.Height);
             _lightBrushDest = new(lightMouse.X, lightMouse.Y, _lightBrushWidth, _lightBrushHeight);
             _lightBrushOrigin = new(_lightBrushWidth / 2, _lightBrushHeight / 2);
         }
@@ -296,12 +296,12 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
         }
         else _eraseShadow = false;
 
-        if (IsKeyPressed(KeyboardKey.KEY_R)) _shading = !_shading;
+        if (IsKeyPressed(KeyboardKey.R)) _shading = !_shading;
 
         BeginDrawing();
         {
             ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
-                ? BLACK 
+                ? Color.Black 
                 : GLOBALS.Settings.LightEditor.Background);
 
             BeginMode2D(_camera);
@@ -310,7 +310,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
                     0, 0,
                     GLOBALS.Level.Width * GLOBALS.Scale + 300,
                     GLOBALS.Level.Height * GLOBALS.Scale + 300,
-                    GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(200, 0, 0, 255) : WHITE
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(200, 0, 0, 255) : Color.White
                 );
 
                 if (GLOBALS.Settings.GeneralSettings.DarkTheme)
@@ -318,14 +318,14 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
                     DrawRectangleLinesEx(
                         new Rectangle(-2, -2, GLOBALS.Level.Width*GLOBALS.Scale+304, GLOBALS.Level.Height*GLOBALS.Scale+304),
                         2f,
-                        WHITE);
+                        Color.White);
                 }
 
-                Printers.DrawGeoLayer(2, GLOBALS.Scale, false, BLACK with { a = 150 }, new Vector2(300, 300));
+                Printers.DrawGeoLayer(2, GLOBALS.Scale, false, Color.Black with { A = 150 }, new Vector2(300, 300));
                 
                 if (_showTiles) Printers.DrawTileLayer(2, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new Vector2(300, 300));
                 
-                Printers.DrawGeoLayer(1, GLOBALS.Scale, false, BLACK with { a = 150 }, new Vector2(300, 300));
+                Printers.DrawGeoLayer(1, GLOBALS.Scale, false, Color.Black with { A = 150 }, new Vector2(300, 300));
                 
                 if (_showTiles) Printers.DrawTileLayer(1, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new Vector2(300, 300));
 
@@ -340,7 +340,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
                     );
                 }
 
-                Printers.DrawGeoLayer(0, GLOBALS.Scale, false, BLACK, new Vector2(300, 300));
+                Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.Black, new Vector2(300, 300));
                 if (_showTiles) Printers.DrawTileLayer(0, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new Vector2(300, 300));
 
                 if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
@@ -357,8 +357,8 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
                 // Lightmap
 
                 DrawTextureRec(
-                    GLOBALS.Textures.LightMap.texture,
-                    new Rectangle(0, 0, GLOBALS.Textures.LightMap.texture.width, -GLOBALS.Textures.LightMap.texture.height),
+                    GLOBALS.Textures.LightMap.Texture,
+                    new Rectangle(0, 0, GLOBALS.Textures.LightMap.Texture.Width, -GLOBALS.Textures.LightMap.Texture.Height),
                     new(0, 0),
                     new(255, 255, 255, 150)
                 );
@@ -380,7 +380,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
                             _lightBrushDest,
                             _lightBrushOrigin,
                             _lightBrushRotation,
-                            WHITE
+                            Color.White
                         );
                         EndShaderMode();
                     }
@@ -397,7 +397,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
                             _lightBrushDest,
                             _lightBrushOrigin,
                             _lightBrushRotation,
-                            WHITE
+                            Color.White
                         );
                         EndShaderMode();
                     }
@@ -424,9 +424,9 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
 
             if (_isDraggingIndicator)
             {
-                var radius = (int) RayMath.Vector2Distance(mouse, indicatorOrigin);
+                var radius = (int) Raymath.Vector2Distance(mouse, indicatorOrigin);
 
-                var newAngle = (int)float.RadiansToDegrees(RayMath.Vector2Angle(
+                var newAngle = (int)float.RadiansToDegrees(Raymath.Vector2Angle(
                     indicatorOrigin with { Y = indicatorOrigin.Y + 1 } - indicatorOrigin,
                     mouse - indicatorOrigin
                     )
@@ -444,7 +444,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
 
             DrawCircleV(indicatorPoint,
                 10.0f,
-                RED
+                Color.Red
             );
             
             #endregion
@@ -462,14 +462,14 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
             {
                 _isBrushesWinHovered = true;
 
-                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isBrushesWinDragged = true;
+                if (IsMouseButtonDown(MouseButton.Left)) _isBrushesWinDragged = true;
             }
             else
             {
                 _isBrushesWinHovered = false;
             }
 
-            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isBrushesWinDragged) _isBrushesWinDragged = false;
+            if (IsMouseButtonReleased(MouseButton.Left) && _isBrushesWinDragged) _isBrushesWinDragged = false;
             
             if (menuOpened)
             {
@@ -482,7 +482,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
                         
                         var selected = ImGui.ImageButton(
                             $"Brush {index}",
-                            new IntPtr(GLOBALS.Textures.LightBrushes[index].id), 
+                            new IntPtr(GLOBALS.Textures.LightBrushes[index].Id), 
                             new Vector2(60, 60));
 
                         ImGui.SameLine();
@@ -510,14 +510,14 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
 
             _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
             {
-                X = navWindowRect.X - 5, width = navWindowRect.width + 10
+                X = navWindowRect.X - 5, Width = navWindowRect.Width + 10
             });
                 
-            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.Left))
             {
                 _isNavigationWinDragged = true;
             }
-            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.Left))
             {
                 _isNavigationWinDragged = false;
             }
@@ -532,15 +532,15 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
                     mouse, 
                     shortcutWindowRect with
                     {
-                        X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
+                        X = shortcutWindowRect.X - 5, Width = shortcutWindowRect.Width + 10
                     }
                 );
 
-                if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.Left))
                 {
                     _isShortcutsWinDragged = true;
                 }
-                else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.Left))
                 {
                     _isShortcutsWinDragged = false;
                 }
@@ -550,6 +550,6 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
         }
         EndDrawing();
         
-        if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera with { target = _camera.target - new Vector2(300, 300)};
+        if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera with { Target = _camera.Target - new Vector2(300, 300)};
     }
 }

@@ -1,4 +1,4 @@
-﻿using static Raylib_CsLo.Raylib;
+﻿using static Raylib_cs.Raylib;
 
 using System.Numerics;
 using System.Text.Json;
@@ -17,26 +17,26 @@ internal static class GLOBALS
     /// </summary>
     internal class TextureService
     {
-        public Texture SplashScreen { get; set; }
+        public Texture2D SplashScreen { get; set; }
         
-        public Texture MissingTile { get; set; }
+        public Texture2D MissingTile { get; set; }
 
-        public Texture[] GeoMenu { get; set; } = [];
-        public Texture[] GeoInterface { get; set; } = [];
-        public Texture[] GeoBlocks { get; set; } = [];
-        public Texture[] GeoStackables { get; set; } = [];
-        public Texture[] LightBrushes { get; set; } = [];
-        public Texture[][] Tiles { get; set; } = [];
-        public Texture[][] Props { get; set; } = [];
-        public Texture[] LongProps { get; set; } = [];
-        public Texture[] RopeProps { get; set; } = [];
-        public Texture[] PropMenuCategories { get; set; } = [];
-        public Texture[] PropModes { get; set; } = [];
-        public Texture[] PropEditModes { get; set; } = [];
-        public Texture[] EffectsUI { get; set; } = [];
-        public Texture[] PropGenerals { get; set; } = [];
+        public Texture2D[] GeoMenu { get; set; } = [];
+        public Texture2D[] GeoInterface { get; set; } = [];
+        public Texture2D[] GeoBlocks { get; set; } = [];
+        public Texture2D[] GeoStackables { get; set; } = [];
+        public Texture2D[] LightBrushes { get; set; } = [];
+        public Texture2D[][] Tiles { get; set; } = [];
+        public Texture2D[][] Props { get; set; } = [];
+        public Texture2D[] LongProps { get; set; } = [];
+        public Texture2D[] RopeProps { get; set; } = [];
+        public Texture2D[] PropMenuCategories { get; set; } = [];
+        public Texture2D[] PropModes { get; set; } = [];
+        public Texture2D[] PropEditModes { get; set; } = [];
+        public Texture2D[] EffectsUI { get; set; } = [];
+        public Texture2D[] PropGenerals { get; set; } = [];
         
-        public RenderTexture LightMap { get; set; }
+        public RenderTexture2D LightMap { get; set; }
         
         // Might be a really bad idea
         
@@ -306,9 +306,9 @@ internal static class GLOBALS
                 {
                     for (int x = 0; x < width; x++)
                     {
-                        matrix[y, x, 0] = BLACK;
-                        matrix[y, x, 1] = BLACK;
-                        matrix[y, x, 2] = BLACK;
+                        matrix[y, x, 0] = Color.Black;
+                        matrix[y, x, 1] = Color.Black;
+                        matrix[y, x, 2] = Color.Black;
                     }
                 }
 
@@ -354,7 +354,7 @@ internal static class GLOBALS
                 MaterialColors,
                 width,
                 height,
-                [BLACK, BLACK, BLACK]
+                [Color.Black, Color.Black, Color.Black]
             );
 
             // Update Dimensions
@@ -603,13 +603,13 @@ internal static class GLOBALS
         ["Arm Growers", "Horse Tails", "Circuit Plants", "Feather Plants", "Thorn Growers", "Rollers", "Garbage Spirals"], // 7
         ["Thick Roots", "Shadow Plants"], // 2
         ["Fungi Flowers", "Lighthouse Flowers", "Fern", "Giant Mushroom", "Sprawlbush", "featherFern", "Fungus Tree"], // 7
-        ["BlackGoo", "DarkSlime"], // 2
+        ["Color.BlackGoo", "DarkSlime"], // 2
         ["Restore As Scaffolding", "Ceramic Chaos"], // 2
         ["Colored Hang Roots", "Colored Thick Roots", "Colored Shadow Plants", "Colored Lighthouse Flowers", "Colored Fungi Flowers", "Root Plants"], // 6
         ["Foliage", "Mistletoe", "High Fern", "High Grass", "Little Flowers", "Wastewater Mold"], // 6
         ["Spinets", "Small Springs", "Mini Growers", "Clovers", "Reeds", "Lavenders", "Dense Mold"], // 7
         ["Ultra Super Erode", "Impacts"], // 2
-        ["Super BlackGoo", "Stained Glass Properties"], // 2
+        ["Super Color.BlackGoo", "Stained Glass Properties"], // 2
         ["Colored Barnacles", "Colored Rubble", "Fat Slime"], // 3
         ["Assorted Trash", "Colored Wires", "Colored Chains", "Ring Chains"], // 4
         ["Left Facing Kelp", "Right Facing Kelp", "Mixed Facing Kelp", "Bubble Grower", "Moss Wall", "Club Moss"], // 6
@@ -783,7 +783,7 @@ internal static class GLOBALS
             new TileEditor(),
             new LightEditor(background: new ConColor(66, 108, 245, 255)),
             new EffectsSettings(
-                effectColorLight:GREEN,
+                effectColorLight:Color.Green,
                 effectColorDark:new(214, 187, 9, 255)),
             new PropEditor(),
             new Experimental()

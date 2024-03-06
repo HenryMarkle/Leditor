@@ -1,4 +1,4 @@
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 using System.Numerics;
 using ImGuiNET;
@@ -12,7 +12,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
     private readonly ExperimentalGeoShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts;
 
-    private Camera2D _camera = camera ?? new Camera2D() { zoom = 1.0f };
+    private Camera2D _camera = camera ?? new Camera2D() { Zoom = 1.0f };
 
     private bool _multiselect;
     private bool _hideGrid;
@@ -98,9 +98,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
         
-        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
-        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
-        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt);
         
         GLOBALS.PreviousPage = 2;
         var scale = GLOBALS.Scale;
@@ -205,8 +205,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
         if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.AltDragLevel.Check(ctrl, shift, alt, true))
         {
             var delta = GetMouseDelta();
-            delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
-            _camera.target = RayMath.Vector2Add(_camera.target, delta);
+            delta = Raymath.Vector2Scale(delta, -1.0f / _camera.Zoom);
+            _camera.Target = Raymath.Vector2Add(_camera.Target, delta);
         }
         
         // handle zoom
@@ -214,10 +214,10 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
         if (wheel != 0 && canDrawGeo)
         {
             var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
-            _camera.offset = GetMousePosition();
-            _camera.target = mouseWorldPosition;
-            _camera.zoom += wheel * GLOBALS.ZoomIncrement;
-            if (_camera.zoom < GLOBALS.ZoomIncrement) _camera.zoom = GLOBALS.ZoomIncrement;
+            _camera.Offset = GetMousePosition();
+            _camera.Target = mouseWorldPosition;
+            _camera.Zoom += wheel * GLOBALS.ZoomIncrement;
+            if (_camera.Zoom < GLOBALS.ZoomIncrement) _camera.Zoom = GLOBALS.ZoomIncrement;
         }
         
         // Undo/Redo
@@ -501,9 +501,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                         {
                                             if (
                                                 x * scale < GLOBALS.Level.Border.X ||
-                                                x * scale >= GLOBALS.Level.Border.width + GLOBALS.Level.Border.X ||
+                                                x * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
                                                 y * scale < GLOBALS.Level.Border.Y ||
-                                                y * scale >= GLOBALS.Level.Border.height + GLOBALS.Level.Border.Y) break;
+                                                y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
 
                                             if (_geoMenuIndex == 0 && GLOBALS.Layer != 0) break;
 
@@ -516,9 +516,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                         {
                                             if (
                                                 x * scale < GLOBALS.Level.Border.X ||
-                                                x * scale >= GLOBALS.Level.Border.width + GLOBALS.Level.Border.X ||
+                                                x * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
                                                 y * scale < GLOBALS.Level.Border.Y ||
-                                                y * scale >= GLOBALS.Level.Border.height + GLOBALS.Level.Border.Y) break;
+                                                y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
 
                                             if (GLOBALS.Layer != 0) break;
 
@@ -634,9 +634,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                     {
                                         if (
                                             x * scale < GLOBALS.Level.Border.X ||
-                                            x * scale >= GLOBALS.Level.Border.width + GLOBALS.Level.Border.X ||
+                                            x * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
                                             y * scale < GLOBALS.Level.Border.Y ||
-                                            y * scale >= GLOBALS.Level.Border.height + GLOBALS.Level.Border.Y) break;
+                                            y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
 
                                         if (_geoMenuIndex == 0 && GLOBALS.Layer != 0) break;
 
@@ -649,9 +649,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                     {
                                         if (
                                             x * scale < GLOBALS.Level.Border.X ||
-                                            x * scale >= GLOBALS.Level.Border.width + GLOBALS.Level.Border.X ||
+                                            x * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
                                             y * scale < GLOBALS.Level.Border.Y ||
-                                            y * scale >= GLOBALS.Level.Border.height + GLOBALS.Level.Border.Y) break;
+                                            y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
 
                                         if (GLOBALS.Layer != 0) break;
 
@@ -689,10 +689,10 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
                     _selectionRectangle.X *= scale;
                     _selectionRectangle.Y *= scale;
-                    _selectionRectangle.width = _selectionRectangle.width * scale + scale;
-                    _selectionRectangle.height = _selectionRectangle.height * scale + scale;
+                    _selectionRectangle.Width = _selectionRectangle.Width * scale + scale;
+                    _selectionRectangle.Height = _selectionRectangle.Height * scale + scale;
 
-                    _selectionSizeString = $"{_selectionRectangle.width / scale:0}w {_selectionRectangle.height / scale:0}h";
+                    _selectionSizeString = $"{_selectionRectangle.Width / scale:0}w {_selectionRectangle.Height / scale:0}h";
                 }
             }
             else
@@ -768,9 +768,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                             {
                                 if (
                                     matrixX * scale < GLOBALS.Level.Border.X ||
-                                    matrixX * scale >= GLOBALS.Level.Border.width + GLOBALS.Level.Border.X ||
+                                    matrixX * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
                                     matrixY * scale < GLOBALS.Level.Border.Y ||
-                                    matrixY * scale >= GLOBALS.Level.Border.height + GLOBALS.Level.Border.Y) break;
+                                    matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
 
                                 if (_geoMenuIndex == 0 && GLOBALS.Layer != 0) break;
 
@@ -783,9 +783,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                             {
                                 if (
                                     matrixX * scale < GLOBALS.Level.Border.X ||
-                                    matrixX * scale >= GLOBALS.Level.Border.width + GLOBALS.Level.Border.X ||
+                                    matrixX * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
                                     matrixY * scale < GLOBALS.Level.Border.Y ||
-                                    matrixY * scale >= GLOBALS.Level.Border.height + GLOBALS.Level.Border.Y) break;
+                                    matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
 
                                 if (GLOBALS.Layer != 0) break;
 
@@ -824,7 +824,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
         BeginDrawing();
         {
             ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
-                ? BLACK 
+                ? Color.Black 
                 : new Color(120, 120, 120, 255));
 
             BeginMode2D(_camera);
@@ -977,7 +977,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                                 GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], 
                                                 (matrixX + x - Utils.GetMiddle(_savedChunk.GetLength(1))) * scale, 
                                                 (matrixY + y - Utils.GetMiddle(_savedChunk.GetLength(0))) * scale, 
-                                                WHITE
+                                                Color.White
                                             ); // TODO: remove opacity from entrances
                                             break;
 
@@ -987,7 +987,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                                 GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(_savedChunk, x, y))],
                                                 (matrixX + x - Utils.GetMiddle(_savedChunk.GetLength(1))) * scale,
                                                 (matrixY + y - Utils.GetMiddle(_savedChunk.GetLength(0))) * scale,
-                                                WHITE
+                                                Color.White
                                             );
                                             break;
                                     }
@@ -1001,7 +1001,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                 DrawRectangleLinesEx(new(0, 0, GLOBALS.Level.Width * scale, GLOBALS.Level.Height * scale), 2, new(0, 0, 0, 255));
 
                 // the border
-                DrawRectangleLinesEx(GLOBALS.Level.Border, _camera.zoom < GLOBALS.ZoomIncrement ? 5 : 2, new(255, 255, 255, 255));
+                DrawRectangleLinesEx(GLOBALS.Level.Border, _camera.Zoom < GLOBALS.ZoomIncrement ? 5 : 2, new(255, 255, 255, 255));
                 
                 // a lazy way to hide the rest of the grid
                 // DrawRectangle(GLOBALS.Level.Width * -scale, -3, GLOBALS.Level.Width * scale, GLOBALS.Level.Height * 2 * scale, new(120, 120, 120, 255));
@@ -1013,7 +1013,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                 {
                     for (var x = 0; x < GLOBALS.Level.Width; x++)
                     {
-                        if (!_multiselect && _selectionRectangle is not { width: 0, height: 0 })
+                        if (!_multiselect && _selectionRectangle is not { Width: 0, Height: 0 })
                             _selectionRectangle = new Rectangle(0, 0, 0, 0);
                         
                         
@@ -1026,7 +1026,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                     _savedChunk.GetLength(1)*GLOBALS.Scale, 
                                     _savedChunk.GetLength(0)*GLOBALS.Scale), 
                                 4f, 
-                                WHITE
+                                Color.White
                             );
                         }
                         else if (_multiselect)
@@ -1035,10 +1035,10 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                 _selectionRectangle,
                                 2, 
                                 _eraseMode 
-                                    ? RED
+                                    ? Color.Red
                                     : (_memLoadMode 
                                         ? new Color(89, 7, 222, 255) 
-                                        : WHITE
+                                        : Color.White
                                     )
                             );
 
@@ -1047,7 +1047,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                 (matrixX + 1) * scale,
                                 (matrixY - 1) * scale,
                                 12,
-                                WHITE
+                                Color.White
                                 );
                         }
                         else
@@ -1061,7 +1061,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                         ? new(255, 0, 0, 255) 
                                         : (_memLoadMode 
                                             ? new Color(89, 7, 222, 255) 
-                                            : WHITE
+                                            : Color.White
                                         ));
 
                                 // Coordinates
@@ -1072,7 +1072,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                         (matrixX + 1) * scale,
                                         (matrixY - 1) * scale,
                                         12,
-                                        WHITE);
+                                        Color.White);
                             }
                         }
 
@@ -1086,7 +1086,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                 3 => GeoMenuCategory4ToStackableId[_geoMenuIndex]
                             };
                             
-                            if (_geoMenuCategory == 0) Printers.DrawTileSpec(id, new Vector2(matrixX+1, matrixY+1)*scale, 40, WHITE with { a = 100 });
+                            if (_geoMenuCategory == 0) Printers.DrawTileSpec(id, new Vector2(matrixX+1, matrixY+1)*scale, 40, Color.White with { A = 100 });
                             else
                             {
                                 if (id == 4)
@@ -1097,11 +1097,11 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                         
                                     DrawTexturePro(
                                         texture,
-                                        new(0, 0, texture.width, texture.height),
+                                        new(0, 0, texture.Width, texture.Height),
                                         new ((x+1)*scale, (y+1)*scale, 40, 40),
                                         new(0, 0),
                                         0,
-                                        WHITE with { a = 100 });
+                                        Color.White with { A = 100 });
                                 }
                                 else if (id == 11)
                                 {
@@ -1111,11 +1111,11 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                         
                                     DrawTexturePro(
                                         texture,
-                                        new(0, 0, texture.width, texture.height),
+                                        new(0, 0, texture.Width, texture.Height),
                                         new ((x+1)*scale, (y+1)*scale, 40, 40),
                                         new(0, 0),
                                         0,
-                                        WHITE with { a = 100 });
+                                        Color.White with { A = 100 });
                                 }
                                 else
                                 {
@@ -1127,11 +1127,11 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                         
                                         DrawTexturePro(
                                             texture,
-                                            new(0, 0, texture.width, texture.height),
+                                            new(0, 0, texture.Width, texture.Height),
                                             new ((x+1)*scale, (y+1)*scale, 40, 40),
                                             new(0, 0),
                                             0,
-                                            WHITE with { a = 100 });
+                                            Color.White with { A = 100 });
                                     }
                                 }
                             }
@@ -1147,10 +1147,10 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                         GLOBALS.Level.Width * scale + 4, 
                         GLOBALS.Level.Height * scale + 4), 
                     2, 
-                    GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
 
                 // the border
-                DrawRectangleLinesEx(GLOBALS.Level.Border, _camera.zoom < GLOBALS.ZoomIncrement ? 5 : 2, new(255, 255, 255, 255));
+                DrawRectangleLinesEx(GLOBALS.Level.Border, _camera.Zoom < GLOBALS.ZoomIncrement ? 5 : 2, new(255, 255, 255, 255));
 
                 // Draw Cameras
 
@@ -1161,7 +1161,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                         DrawRectangleLinesEx(
                             new(cam.Coords.X, cam.Coords.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
                             4f,
-                            PINK
+                            Color.Pink
                         );
                     }
                 }
@@ -1182,7 +1182,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             //
             // // Categories
             //
-            // DrawRectangleLinesEx(new((_geoMenuCategory * 42) + panelRect.X + 10, 80, 42, 42), 4.0f, BLUE);
+            // DrawRectangleLinesEx(new((_geoMenuCategory * 42) + panelRect.X + 10, 80, 42, 42), 4.0f, Color.Blue);
             //
             // var category1Rect = new Rectangle(panelRect.X + 10, 80, 42, 42);
             // var category2Rect = new Rectangle(42 + panelRect.X + 10, 80, 42, 42);
@@ -1196,9 +1196,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             //
             // if (category1Hovered)
             // {
-            //     DrawRectangleRec(category1Rect, BLUE with { a = 100 });
+            //     DrawRectangleRec(category1Rect, Color.Blue with { A = 100 });
             //
-            //     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+            //     if (IsMouseButtonPressed(MouseButton.Left))
             //     {
             //         _geoMenuCategory = 0;
             //         _geoMenuIndex = 0;
@@ -1207,9 +1207,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             //
             // if (category2Hovered)
             // {
-            //     DrawRectangleRec(category2Rect, BLUE with { a = 100 });
+            //     DrawRectangleRec(category2Rect, Color.Blue with { A = 100 });
             //     
-            //     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+            //     if (IsMouseButtonPressed(MouseButton.Left))
             //     {
             //         _geoMenuCategory = 1;
             //         _geoMenuIndex = 0;
@@ -1218,9 +1218,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             //
             // if (category3Hovered)
             // {
-            //     DrawRectangleRec(category3Rect, BLUE with { a = 100 });
+            //     DrawRectangleRec(category3Rect, Color.Blue with { A = 100 });
             //     
-            //     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+            //     if (IsMouseButtonPressed(MouseButton.Left))
             //     {
             //         _geoMenuCategory = 2;
             //         _geoMenuIndex = 0;
@@ -1230,19 +1230,19 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             //
             // if (category4Hovered)
             // {
-            //     DrawRectangleRec(category4Rect, BLUE with { a = 100 });
+            //     DrawRectangleRec(category4Rect, Color.Blue with { A = 100 });
             //     
-            //     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+            //     if (IsMouseButtonPressed(MouseButton.Left))
             //     {
             //         _geoMenuCategory = 3;
             //         _geoMenuIndex = 0;
             //     }
             // }
             //
-            // DrawRectangleLinesEx(category1Rect, 1.0f, BLACK);
-            // DrawRectangleLinesEx(category2Rect, 1.0f, BLACK);
-            // DrawRectangleLinesEx(category3Rect, 1.0f, BLACK);
-            // DrawRectangleLinesEx(category4Rect, 1.0f, BLACK);
+            // DrawRectangleLinesEx(category1Rect, 1.0f, Color.Black);
+            // DrawRectangleLinesEx(category2Rect, 1.0f, Color.Black);
+            // DrawRectangleLinesEx(category3Rect, 1.0f, Color.Black);
+            // DrawRectangleLinesEx(category4Rect, 1.0f, Color.Black);
             //
             //
             //
@@ -1250,19 +1250,19 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             //     new(panelRect.X + 20, 90),
             //     new(panelRect.X + 20, 112),
             //     new(panelRect.X + 42, 112),
-            //     BLACK
+            //     Color.Black
             // );
             //
             // DrawRectangleV(
             //     new(panelRect.X + 70, 85),
             //     new(5, 32),
-            //     BLACK
+            //     Color.Black
             // );
             //
             // DrawRectangleV(
             //     new(panelRect.X + 57, 100),
             //     new(32, 5),
-            //     BLACK
+            //     Color.Black
             // );
             //
             // var placeSpearTexture = GLOBALS.Textures.GeoMenu[8];
@@ -1270,20 +1270,20 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             //
             // DrawTexturePro(
             //     placeSpearTexture,
-            //     new(0, 0, placeSpearTexture.width, placeSpearTexture.height),
+            //     new(0, 0, placeSpearTexture.Width, placeSpearTexture.Height),
             //     new(panelRect.X + 99, 85, 32, 32),
             //     new(0, 0),
             //     0,
-            //     BLACK
+            //     Color.Black
             // );
             //
             // DrawTexturePro(
             //     entryTexture,
-            //     new(0, 0, entryTexture.width, entryTexture.height),
+            //     new(0, 0, entryTexture.Width, entryTexture.Height),
             //     new(panelRect.X + 141, 85, 32, 32),
             //     new(0, 0),
             //     0,
-            //     BLACK
+            //     Color.Black
             // );
             //
             // unsafe
@@ -1324,19 +1324,19 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
             if (layer3Hovered)
             {
-                DrawRectangleRec(layer3Rect, BLUE with { a = 100 });
+                DrawRectangleRec(layer3Rect, Color.Blue with { A = 100 });
 
-                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 0;
+                if (IsMouseButtonPressed(MouseButton.Left)) newLayer = 0;
             }
 
             DrawRectangleRec(
                 layer3Rect,
-                GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
+                GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
             );
 
-            DrawRectangleLines(10, sHeight - 50, 40, 40, GRAY);
+            DrawRectangleLines(10, sHeight - 50, 40, 40, Color.Gray);
 
-            if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
+            if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             
             if (GLOBALS.Layer is 1 or 0)
             {
@@ -1344,19 +1344,19 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
                 if (layer2Hovered)
                 {
-                    DrawRectangleRec(layer2Rect, BLUE with { a = 100 });
+                    DrawRectangleRec(layer2Rect, Color.Blue with { A = 100 });
 
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 2;
+                    if (IsMouseButtonPressed(MouseButton.Left)) newLayer = 2;
                 }
                 
                 DrawRectangleRec(
                     layer2Rect,
-                    GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
                 );
 
-                DrawRectangleLines(20, sHeight - 60, 40, 40, GRAY);
+                DrawRectangleLines(20, sHeight - 60, 40, 40, Color.Gray);
 
-                if (GLOBALS.Layer == 1) DrawText("2", 35, sHeight - 50, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
+                if (GLOBALS.Layer == 1) DrawText("2", 35, sHeight - 50, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             }
 
             if (GLOBALS.Layer == 0)
@@ -1365,19 +1365,19 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
                 if (layer1Hovered)
                 {
-                    DrawRectangleRec(layer1Rect, BLUE with { a = 100 });
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 1;
+                    DrawRectangleRec(layer1Rect, Color.Blue with { A = 100 });
+                    if (IsMouseButtonPressed(MouseButton.Left)) newLayer = 1;
                 }
                 
                 DrawRectangleRec(
                     layer1Rect,
-                    GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
                 );
 
                 DrawRectangleLines(
-                    30, sHeight - 70, 40, 40, GRAY);
+                    30, sHeight - 70, 40, 40, Color.Gray);
 
-                DrawText("1", 48, sHeight - 60, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
+                DrawText("1", 48, sHeight - 60, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             }
 
             if (newLayer != GLOBALS.Layer) GLOBALS.Layer = newLayer;
@@ -1386,13 +1386,13 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
             ref var toggleCameraTexture = ref GLOBALS.Textures.GeoInterface[8];
             
-            DrawRectangleRec(toggleCameraRect, WHITE);
+            DrawRectangleRec(toggleCameraRect, Color.White);
 
             if (toggleCameraHovered)
             {
-                DrawRectangleRec(toggleCameraRect, BLUE with { a = 100 });
+                DrawRectangleRec(toggleCameraRect, Color.Blue with { A = 100 });
 
-                if (toggleCameraHovered && IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                if (toggleCameraHovered && IsMouseButtonPressed(MouseButton.Left))
                 {
                     GLOBALS.Settings.GeometryEditor.ShowCameras = !GLOBALS.Settings.GeometryEditor.ShowCameras;
                 }
@@ -1400,11 +1400,11 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             
             DrawTexturePro(
                 toggleCameraTexture, 
-                new Rectangle(0, 0, toggleCameraTexture.width, toggleCameraTexture.height),
+                new Rectangle(0, 0, toggleCameraTexture.Width, toggleCameraTexture.Height),
                 toggleCameraRect,
                 new Vector2(0, 0),
                 0,
-                BLACK
+                Color.Black
             );
             
             rlImGui.Begin();
@@ -1420,14 +1420,14 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             {
                 _isMenuWinHovered = true;
 
-                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isMenuWinDragged = true;
+                if (IsMouseButtonDown(MouseButton.Left)) _isMenuWinDragged = true;
             }
             else
             {
                 _isMenuWinHovered = false;
             }
             
-            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isMenuWinDragged) _isMenuWinDragged = false;
+            if (IsMouseButtonReleased(MouseButton.Left) && _isMenuWinDragged) _isMenuWinDragged = false;
             
             if (menuOpened)
             {
@@ -1435,28 +1435,28 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
                 var blockSelected = ImGui.ImageButton(
                     "Blocks", 
-                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[4].id : GLOBALS.Textures.GeoInterface[0].id), 
+                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[4].Id : GLOBALS.Textures.GeoInterface[0].Id), 
                     new Vector2(30, 30));
                 
                 ImGui.SameLine();
 
                 var polesSelected = ImGui.ImageButton(
                     "Poles", 
-                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[5].id : GLOBALS.Textures.GeoInterface[1].id), 
+                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[5].Id : GLOBALS.Textures.GeoInterface[1].Id), 
                     new Vector2(30, 30));
                 
                 ImGui.SameLine();
 
                 var stuffSelected = ImGui.ImageButton(
                     "Stuff", 
-                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[6].id : GLOBALS.Textures.GeoInterface[2].id), 
+                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[6].Id : GLOBALS.Textures.GeoInterface[2].Id), 
                     new Vector2(30, 30));
                 
                 ImGui.SameLine();
 
                 var pathsSelected = ImGui.ImageButton(
                     "Paths", 
-                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[7].id : GLOBALS.Textures.GeoInterface[3].id), 
+                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[7].Id : GLOBALS.Textures.GeoInterface[3].Id), 
                     new Vector2(30, 30));
 
                 if (blockSelected) _geoMenuCategory = 0;
@@ -1470,92 +1470,92 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                     {
                         case 0:
                         {
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[11].id : GLOBALS.Textures.GeoInterface[8].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[11].Id : GLOBALS.Textures.GeoInterface[8].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Block", _geoMenuIndex == 0)) _geoMenuIndex = 0;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[4].id : GLOBALS.Textures.GeoInterface[0].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[4].Id : GLOBALS.Textures.GeoInterface[0].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Slope", _geoMenuIndex == 1)) _geoMenuIndex = 1;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[12].id : GLOBALS.Textures.GeoInterface[9].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[12].Id : GLOBALS.Textures.GeoInterface[9].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Platform", _geoMenuIndex == 2)) _geoMenuIndex = 2;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[13].id : GLOBALS.Textures.GeoInterface[10].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[13].Id : GLOBALS.Textures.GeoInterface[10].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Glass", _geoMenuIndex == 3)) _geoMenuIndex = 3;
                         }
                             break;
                         case 1:
                         {
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[14].id : GLOBALS.Textures.GeoInterface[17].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[14].Id : GLOBALS.Textures.GeoInterface[17].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Vertical Pole", _geoMenuIndex == 0)) _geoMenuIndex = 0;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[15].id : GLOBALS.Textures.GeoInterface[18].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[15].Id : GLOBALS.Textures.GeoInterface[18].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Horizontal Pole", _geoMenuIndex == 1)) _geoMenuIndex = 1;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[16].id : GLOBALS.Textures.GeoInterface[19].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[16].Id : GLOBALS.Textures.GeoInterface[19].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Cracked Terrain", _geoMenuIndex == 2)) _geoMenuIndex = 2;
                         }
                             break;
                         case 2:
                         {
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[20].id : GLOBALS.Textures.GeoInterface[25].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[20].Id : GLOBALS.Textures.GeoInterface[25].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Bat Hive", _geoMenuIndex == 0)) _geoMenuIndex = 0;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[21].id : GLOBALS.Textures.GeoInterface[26].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[21].Id : GLOBALS.Textures.GeoInterface[26].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Forbid Fly Chains", _geoMenuIndex == 1)) _geoMenuIndex = 1;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[22].id : GLOBALS.Textures.GeoInterface[27].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[22].Id : GLOBALS.Textures.GeoInterface[27].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Waterfall", _geoMenuIndex == 2)) _geoMenuIndex = 2;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[23].id : GLOBALS.Textures.GeoInterface[28].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[23].Id : GLOBALS.Textures.GeoInterface[28].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Worm Grass", _geoMenuIndex == 3)) _geoMenuIndex = 3;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[24].id : GLOBALS.Textures.GeoInterface[29].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[24].Id : GLOBALS.Textures.GeoInterface[29].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Place Rock", _geoMenuIndex == 4)) _geoMenuIndex = 4;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[6].id : GLOBALS.Textures.GeoInterface[2].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[6].Id : GLOBALS.Textures.GeoInterface[2].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Place Spear", _geoMenuIndex == 5)) _geoMenuIndex = 5;
                         }
                             break;
                         case 3:
                         {
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[30].id : GLOBALS.Textures.GeoInterface[37].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[30].Id : GLOBALS.Textures.GeoInterface[37].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Shortcut Entrance", _geoMenuIndex == 0)) _geoMenuIndex = 0;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[31].id : GLOBALS.Textures.GeoInterface[38].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[31].Id : GLOBALS.Textures.GeoInterface[38].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Shortcut Path", _geoMenuIndex == 1)) _geoMenuIndex = 1;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[32].id : GLOBALS.Textures.GeoInterface[39].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[32].Id : GLOBALS.Textures.GeoInterface[39].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Room Entrance", _geoMenuIndex == 2)) _geoMenuIndex = 2;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[33].id : GLOBALS.Textures.GeoInterface[40].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[33].Id : GLOBALS.Textures.GeoInterface[40].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Dragon Den", _geoMenuIndex == 3)) _geoMenuIndex = 3;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[34].id : GLOBALS.Textures.GeoInterface[41].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[34].Id : GLOBALS.Textures.GeoInterface[41].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Wack-a-mole Hole", _geoMenuIndex == 4)) _geoMenuIndex = 4;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[35].id : GLOBALS.Textures.GeoInterface[42].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[35].Id : GLOBALS.Textures.GeoInterface[42].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Scavenger Hole", _geoMenuIndex == 5)) _geoMenuIndex = 5;
                             
-                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[36].id : GLOBALS.Textures.GeoInterface[43].id), new(20, 20));
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[36].Id : GLOBALS.Textures.GeoInterface[43].Id), new(20, 20));
                             ImGui.SameLine();
                             if (ImGui.Selectable("Garbage Worm Hole", _geoMenuIndex == 6)) _geoMenuIndex = 6;
                         }
@@ -1578,14 +1578,14 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             {
                 _isSettingsWinHovered = true;
 
-                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isSettingsWinDragged = true;
+                if (IsMouseButtonDown(MouseButton.Left)) _isSettingsWinDragged = true;
             }
             else
             {
                 _isSettingsWinHovered = false;
             }
 
-            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isSettingsWinDragged) _isSettingsWinDragged = false;
+            if (IsMouseButtonReleased(MouseButton.Left) && _isSettingsWinDragged) _isSettingsWinDragged = false;
             
             if (settingsOpened)
             {
@@ -1633,7 +1633,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
                 if (resetColorsSelected)
                 {
-                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer1 = BLACK;
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer1 = Color.Black;
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 = new ConColor(0, 255, 0, 50);
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 = new ConColor(255, 0, 0, 50);
                     GLOBALS.Settings.GeometryEditor.WaterColor = new ConColor(0, 0, 255, 70);
@@ -1682,14 +1682,14 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
 
             _isNavigationWinHovered = CheckCollisionPointRec(uiMouse, navWindowRect with
             {
-                X = navWindowRect.X - 5, width = navWindowRect.width + 10
+                X = navWindowRect.X - 5, Width = navWindowRect.Width + 10
             });
                 
-            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.Left))
             {
                 _isNavigationWinDragged = true;
             }
-            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.Left))
             {
                 _isNavigationWinDragged = false;
             }
@@ -1704,15 +1704,15 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                     uiMouse, 
                     shortcutWindowRect with
                     {
-                        X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
+                        X = shortcutWindowRect.X - 5, Width = shortcutWindowRect.Width + 10
                     }
                 );
 
-                if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.Left))
                 {
                     _isShortcutsWinDragged = true;
                 }
-                else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+                else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.Left))
                 {
                     _isShortcutsWinDragged = false;
                 }

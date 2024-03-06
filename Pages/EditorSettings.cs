@@ -2,8 +2,7 @@ using System.Numerics;
 using System.Text.Json;
 using ImGuiNET;
 using rlImGui_cs;
-using static Raylib_CsLo.Raylib;
-using static Raylib_CsLo.RayGui;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
@@ -65,14 +64,14 @@ public class SettingsPage : IPage
         var categoryRect = new Rectangle(30, 60, 200, height - 200);
         var contentRect = new Rectangle(231, 60, width - 50, height - 90);
 
-        var subPanelX = (int)(categoryRect.x + categoryRect.width + 10);
-        var subPanelY = (int)(categoryRect.y + 60);
+        var subPanelX = (int)(categoryRect.X + categoryRect.Width + 10);
+        var subPanelY = (int)(categoryRect.Y + 60);
 
         #region Shortcuts
         
-        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
-        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
-        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt);
         
         if (!_assigningShortcut)
         {
@@ -96,7 +95,7 @@ public class SettingsPage : IPage
         
         BeginDrawing();
         
-        ClearBackground(GRAY);
+        ClearBackground(Color.Gray);
 
         rlImGui.Begin();
 
@@ -151,7 +150,7 @@ public class SettingsPage : IPage
                     new TileEditor(),
                     new LightEditor(background: new ConColor(66, 108, 245, 255)),
                     new EffectsSettings(
-                        effectColorLight:GREEN,
+                        effectColorLight:Color.Green,
                         effectColorDark:new(214, 187, 9, 255)),
                     new PropEditor(),
                     new Experimental()
@@ -358,20 +357,12 @@ public class SettingsPage : IPage
                             GLOBALS.Settings.Shortcuts.TileEditor = new TileShortcuts();
                         }
                         
-                        GuiGroupBox(
-                            new Rectangle(430, 130, shortcutsScrollPanelRect.width/2f - 10, 180), 
-                            "Tiles & Materials Menu"
-                        );
+                        ImGui.SeparatorText("Tiles & Materials Menu");
                         
-                        GuiLabel(new Rectangle(440, 150, 100, 30), "Move to left");
-                        GuiLabel(new Rectangle(440, 185, 100, 30), "Move to right");
-                        GuiLabel(new Rectangle(440, 220, 100, 30), "Move to top");
-                        GuiLabel(new Rectangle(440, 255, 100, 30), "Move to bottom");
-                        
-                        var assignFocusOnCategory = GuiButton(new Rectangle(550, 150, 200, 30), $"{GLOBALS.Settings.Shortcuts.TileEditor.FocusOnTileCategoryMenu}");
-                        var assignFocusOnTiles =GuiButton(new Rectangle(550, 185, 200, 30), $"{GLOBALS.Settings.Shortcuts.TileEditor.FocusOnTileMenu}");
-                        var assignMoveUp = GuiButton(new Rectangle(550, 220, 200, 30), $"{GLOBALS.Settings.Shortcuts.TileEditor.MoveUp}");
-                        var assignMoveDown = GuiButton(new Rectangle(550, 255, 200, 30), $"{GLOBALS.Settings.Shortcuts.TileEditor.MoveDown}");
+                        var assignFocusOnCategory = ImGui.Button($"Focus on Category: {GLOBALS.Settings.Shortcuts.TileEditor.FocusOnTileCategoryMenu}");
+                        var assignFocusOnTiles =ImGui.Button($"Focus on Menu: {GLOBALS.Settings.Shortcuts.TileEditor.FocusOnTileMenu}");
+                        var assignMoveUp = ImGui.Button($"Move Up: {GLOBALS.Settings.Shortcuts.TileEditor.MoveUp}");
+                        var assignMoveDown = ImGui.Button($"Move Down: {GLOBALS.Settings.Shortcuts.TileEditor.MoveDown}");
 
                         if (assignFocusOnCategory) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.FocusOnTileCategoryMenu;
                         if (assignFocusOnTiles) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.FocusOnTileMenu;
@@ -380,8 +371,6 @@ public class SettingsPage : IPage
                         
                         //
 
-                        var mouseShortcutsOffset = 430 + shortcutsScrollPanelRect.width / 2f;
-                        
                         ImGui.SeparatorText("Mouse Shortcuts");
                         
                         var assignDraw = ImGui.Button($"Draw: {GLOBALS.Settings.Shortcuts.TileEditor.Draw}");
@@ -704,9 +693,9 @@ public class SettingsPage : IPage
 
             if (key == 256)
             {
-                if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+                if (IsKeyDown(KeyboardKey.LeftShift))
                 {
-                    _shortcutToAssign.Key = KeyboardKey.KEY_NULL;
+                    _shortcutToAssign.Key = KeyboardKey.Null;
                 }
                 
                 _assigningShortcut = false;
@@ -716,9 +705,9 @@ public class SettingsPage : IPage
             if (key != 0 && key != 340 && key != 341 && key != 342 && key != 256 && key != 4)
             {
                 _shortcutToAssign.Key = (KeyboardKey)key;
-                _shortcutToAssign.Shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
-                _shortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
-                _shortcutToAssign.Alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+                _shortcutToAssign.Shift = IsKeyDown(KeyboardKey.LeftShift);
+                _shortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.LeftControl);
+                _shortcutToAssign.Alt = IsKeyDown(KeyboardKey.LeftAlt);
                 
                 _assigningShortcut = false;
                 _shortcutToAssign = null;
@@ -730,9 +719,9 @@ public class SettingsPage : IPage
             var key = GetKeyPressed();
             var button = -1;
 
-            if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) button = 0;
-            if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_MIDDLE)) button = 2;
-            if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_RIGHT)) button = 1;
+            if (IsMouseButtonPressed(MouseButton.Left)) button = 0;
+            if (IsMouseButtonPressed(MouseButton.Middle)) button = 2;
+            if (IsMouseButtonPressed(MouseButton.Right)) button = 1;
 
             if (key == 256)
             {
@@ -743,9 +732,9 @@ public class SettingsPage : IPage
             if (button != -1 && key != 340 && key != 341 && key != 342 && key != 256)
             {
                 _mouseShortcutToAssign.Button = (MouseButton)button;
-                _mouseShortcutToAssign.Shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
-                _mouseShortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
-                _mouseShortcutToAssign.Alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+                _mouseShortcutToAssign.Shift = IsKeyDown(KeyboardKey.LeftShift);
+                _mouseShortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.LeftControl);
+                _mouseShortcutToAssign.Alt = IsKeyDown(KeyboardKey.LeftAlt);
                 
                 _assigningShortcut = false;
                 _mouseShortcutToAssign = null;

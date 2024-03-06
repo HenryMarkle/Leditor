@@ -2,14 +2,14 @@
 using System.Text;
 using ImGuiNET;
 using rlImGui_cs;
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
 internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null) : IPage
 {
     readonly Serilog.Core.Logger _logger = logger;
-    Camera2D _camera = camera ?? new() { zoom = 1.0f };
+    Camera2D _camera = camera ?? new() { Zoom = 1.0f };
 
     private readonly GlobalShortcuts _gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
     private readonly TileShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.TileEditor;
@@ -296,7 +296,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             var head = Utils.GetTileHeadOrigin(tileInit);
 
             // the top-left of the tile
-            var start = RayMath.Vector2Subtract(new(mx, my), head);
+            var start = Raymath.Vector2Subtract(new(mx, my), head);
 
             for (var y = 0; y < height; y++)
             {
@@ -353,7 +353,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             var head = Utils.GetTileHeadOrigin(tileInit);
 
             // the top-left of the tile
-            var start = RayMath.Vector2Subtract(new(headX, headY), RayMath.Vector2AddValue(head, 1));
+            var start = Raymath.Vector2Subtract(new(headX, headY), Raymath.Vector2AddValue(head, 1));
 
             for (var y = 0; y < height; y++)
             {
@@ -389,7 +389,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         var head = Utils.GetTileHeadOrigin(init);
 
         // the top-left of the tile
-        var start = RayMath.Vector2Subtract(new(mx, my), head);
+        var start = Raymath.Vector2Subtract(new(mx, my), head);
         
         // First remove tile heads in the way
 
@@ -504,7 +504,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         var head = Utils.GetTileHeadOrigin(init);
 
         // the top-left of the tile
-        var start = RayMath.Vector2Subtract(new(mx, my), head);
+        var start = Raymath.Vector2Subtract(new(mx, my), head);
         
         // First remove tile heads in the way
 
@@ -604,7 +604,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         var tileMouse = GetMousePosition();
         
         var tilePanelRect = new Rectangle(teWidth - _tilePanelWidth, 0, _tilePanelWidth, teHeight);
-        var panelMenuHeight = tilePanelRect.height - 270;
+        var panelMenuHeight = tilePanelRect.Height - 270;
         var leftPanelSideStart = new Vector2(teWidth - _tilePanelWidth, 0);
         var leftPanelSideEnd = new Vector2(teWidth - _tilePanelWidth, teHeight);
         var specsRect = new Rectangle(teWidth - 200, teHeight - 200, 200, 200);
@@ -651,9 +651,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
         #region TileEditorShortcuts
         
-        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
-        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
-        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt);
         
         if (_gShortcuts.ToMainPage.Check(ctrl, shift, alt))
         {
@@ -845,8 +845,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             {
                 _clickTracker = true;
                 var delta = GetMouseDelta();
-                delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
-                _camera.target = RayMath.Vector2Add(_camera.target, delta);
+                delta = Raymath.Vector2Scale(delta, -1.0f / _camera.Zoom);
+                _camera.Target = Raymath.Vector2Add(_camera.Target, delta);
             }
 
             if (IsMouseButtonReleased(_shortcuts.DragLevel.Button)) _clickTracker = false;
@@ -892,11 +892,11 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 }
                 else
                 {
-                    var mouseWorldPosition = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), _camera);
-                    _camera.offset = Raylib.GetMousePosition();
-                    _camera.target = mouseWorldPosition;
-                    _camera.zoom += tileWheel * GLOBALS.ZoomIncrement;
-                    if (_camera.zoom < GLOBALS.ZoomIncrement) _camera.zoom = GLOBALS.ZoomIncrement;
+                    var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
+                    _camera.Offset = GetMousePosition();
+                    _camera.Target = mouseWorldPosition;
+                    _camera.Zoom += tileWheel * GLOBALS.ZoomIncrement;
+                    if (_camera.Zoom < GLOBALS.ZoomIncrement) _camera.Zoom = GLOBALS.ZoomIncrement;
                 }
             }
         }
@@ -922,7 +922,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         // handle resizing tile panel
         // TODO: remove this feature
         if (((tileMouse.X <= leftPanelSideStart.X + 5 && tileMouse.X >= leftPanelSideStart.X - 5 && tileMouse.Y >= leftPanelSideStart.Y && tileMouse.Y <= leftPanelSideEnd.Y) || _clickTracker) &&
-        IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+        IsMouseButtonDown(MouseButton.Left))
         {
             _clickTracker = true;
 
@@ -934,7 +934,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             }
         }
 
-        if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+        if (IsMouseButtonReleased(MouseButton.Left))
         {
             _clickTracker = false;
         }
@@ -1056,7 +1056,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         BeginDrawing();
 
         if (GLOBALS.Settings.GeneralSettings.DarkTheme)
-            ClearBackground(BLACK);
+            ClearBackground(Color.Black);
         else ClearBackground(new Color(170, 170, 170, 255));
 
         BeginMode2D(_camera);
@@ -1066,7 +1066,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale,
                 GLOBALS.Settings.GeneralSettings.DarkTheme
                     ? new Color(100, 100, 100, 255)
-                    : WHITE);
+                    : Color.White);
 
             #region TileEditorLayer3
             // Draw geos first
@@ -1077,7 +1077,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     2, 
                     GLOBALS.Scale, 
                     false, 
-                    BLACK
+                    Color.Black
                 );
 
                 // then draw the tiles
@@ -1103,15 +1103,15 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     0, 
                     GLOBALS.Level.Width * GLOBALS.Scale, 
                     GLOBALS.Level.Height * GLOBALS.Scale, 
-                    GRAY with { a = 130 });
+                    Color.Gray with { A = 130 });
 
                 Printers.DrawGeoLayer(
                     1, 
                     GLOBALS.Scale, 
                     false, 
                     GLOBALS.Layer < 2
-                        ? BLACK 
-                        : BLACK with { a = 80 }
+                        ? Color.Black 
+                        : Color.Black with { A = 80 }
                 );
 
                 // Draw layer 2 tiles
@@ -1139,7 +1139,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     0, 
                         GLOBALS.Level.Width * GLOBALS.Scale, 
                         GLOBALS.Level.Height * GLOBALS.Scale, 
-                        GRAY with { a = 130 }
+                        Color.Gray with { A = 130 }
                     );
 
                 Printers.DrawGeoLayer(
@@ -1147,8 +1147,8 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     GLOBALS.Scale, 
                     false, 
                     GLOBALS.Layer == 0
-                        ? BLACK 
-                        : BLACK with { a = 80 }
+                        ? Color.Black 
+                        : Color.Black with { A = 80 }
                 );
 
                 // Draw layer 1 tiles
@@ -1171,7 +1171,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
             if (GLOBALS.Settings.GeneralSettings.DarkTheme)
             {
-                DrawRectangleLines(0, 0, GLOBALS.Level.Width*GLOBALS.Scale, GLOBALS.Level.Height*GLOBALS.Scale, WHITE);
+                DrawRectangleLines(0, 0, GLOBALS.Level.Width*GLOBALS.Scale, GLOBALS.Level.Height*GLOBALS.Scale, Color.White);
             }
             
             //
@@ -1183,17 +1183,17 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     0,
                     GLOBALS.Level.Width * GLOBALS.Scale,
                     GLOBALS.Level.Height * GLOBALS.Scale,
-                    BLACK with { a = 190 });
+                    Color.Black with { A = 190 });
             }
 
-            Printers.DrawGeoLayer(0, GLOBALS.Scale, false, WHITE, false, GLOBALS.GeoPathsFilter);
+            Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.White, false, GLOBALS.GeoPathsFilter);
             
             #endregion
 
             // currently held tile
             if (_materialTileSwitch)
             {
-                var color = isTileLegal ? currentTilePreviewColor : RED;
+                var color = isTileLegal ? currentTilePreviewColor : Color.Red;
                 Printers.DrawTilePreview(ref currentTileInit, ref currentTileTexture, ref color, (tileMatrixX, tileMatrixY), GLOBALS.Scale);
 
                 EndShaderMode();
@@ -1205,7 +1205,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         (tileMatrixX - _materialBrushRadius) * GLOBALS.Scale, 
                         (tileMatrixY - _materialBrushRadius) * GLOBALS.Scale, (_materialBrushRadius*2+1)*GLOBALS.Scale, (_materialBrushRadius*2+1)*GLOBALS.Scale),
                     2f,
-                    WHITE
+                    Color.White
                 );
             }
 
@@ -1218,7 +1218,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     tileMatrixX * GLOBALS.Scale + GLOBALS.Scale,
                     tileMatrixY * GLOBALS.Scale - GLOBALS.Scale,
                     15,
-                    WHITE
+                    Color.White
                 );
             }
             else
@@ -1230,7 +1230,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         tileMatrixX * GLOBALS.Scale + GLOBALS.Scale,
                         tileMatrixY * GLOBALS.Scale - GLOBALS.Scale,
                         15,
-                        WHITE
+                        Color.White
                     );
                 }
             }
@@ -1244,7 +1244,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             
             Raylib_cs.Raylib.BeginTextureMode(GLOBALS.Textures.TileSpecs);
             {
-                ClearBackground(GRAY);
+                ClearBackground(Color.Gray);
 
                 if (_tileSpecDisplayMode)
                 {
@@ -1295,7 +1295,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                             var spec = specs[specsIndex];
                             var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
                             var specOrigin = new Vector2(
-                                (specsRect.width - newCellScale * tileWidth) / 2f + x * newCellScale, 
+                                (specsRect.Width - newCellScale * tileWidth) / 2f + x * newCellScale, 
                                 y * newCellScale
                             );
 
@@ -1324,7 +1324,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         {
                             DrawRectangleLinesEx(
                                 new(
-                                    (specsRect.width - newCellScale * tileWidth) / 2f + x * newCellScale,
+                                    (specsRect.Width - newCellScale * tileWidth) / 2f + x * newCellScale,
                                     y * newCellScale,
                                     newCellScale,
                                     newCellScale
@@ -1352,14 +1352,14 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
             _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
             {
-                X = navWindowRect.X - 5, width = navWindowRect.width + 10
+                X = navWindowRect.X - 5, Width = navWindowRect.Width + 10
             });
                 
-            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.Left))
             {
                 _isNavigationWinDragged = true;
             }
-            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.Left))
             {
                 _isNavigationWinDragged = false;
             }
@@ -1375,14 +1375,14 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             {
                 _isTilesWinHovered = true;
 
-                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isTilesWinDragged = true;
+                if (IsMouseButtonDown(MouseButton.Left)) _isTilesWinDragged = true;
             }
             else
             {
                 _isTilesWinHovered = false;
             }
 
-            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isTilesWinDragged) _isTilesWinDragged = false;
+            if (IsMouseButtonReleased(MouseButton.Left) && _isTilesWinDragged) _isTilesWinDragged = false;
             
             if (menuWinOpened)
             {
@@ -1488,14 +1488,14 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             {
                 _isSpecsWinHovered = true;
 
-                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isSpecsWinDragged = true;
+                if (IsMouseButtonDown(MouseButton.Left)) _isSpecsWinDragged = true;
             }
             else
             {
                 _isSpecsWinHovered = false;
             }
             
-            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isSpecsWinDragged) _isSpecsWinDragged = false;
+            if (IsMouseButtonReleased(MouseButton.Left) && _isSpecsWinDragged) _isSpecsWinDragged = false;
             
             if (specsWinOpened)
             {
@@ -1521,14 +1521,14 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             {
                 _isSettingsWinHovered = true;
 
-                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isSettingsWinDragged = true;
+                if (IsMouseButtonDown(MouseButton.Left)) _isSettingsWinDragged = true;
             }
             else
             {
                 _isSettingsWinHovered = false;
             }
 
-            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isSettingsWinDragged) _isSettingsWinDragged = false;
+            if (IsMouseButtonReleased(MouseButton.Left) && _isSettingsWinDragged) _isSettingsWinDragged = false;
             
             if (settingsWinOpened)
             {
@@ -1565,19 +1565,19 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
             if (layer3Hovered)
             {
-                DrawRectangleRec(layer3Rect, BLUE with { a = 100 });
+                DrawRectangleRec(layer3Rect, Color.Blue with { A = 100 });
 
-                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 0;
+                if (IsMouseButtonPressed(MouseButton.Left)) newLayer = 0;
             }
 
             DrawRectangleRec(
                 layer3Rect,
-                GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
+                GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
             );
 
-            DrawRectangleLines(10, (int)layer3Rect.Y, 40, 40, GRAY);
+            DrawRectangleLines(10, (int)layer3Rect.Y, 40, 40, Color.Gray);
 
-            if (GLOBALS.Layer == 2) DrawText("3", 26, (int)layer3Rect.Y+10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
+            if (GLOBALS.Layer == 2) DrawText("3", 26, (int)layer3Rect.Y+10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             
             if (GLOBALS.Layer is 1 or 0)
             {
@@ -1585,19 +1585,19 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
                 if (layer2Hovered)
                 {
-                    DrawRectangleRec(layer2Rect, BLUE with { a = 100 });
+                    DrawRectangleRec(layer2Rect, Color.Blue with { A = 100 });
 
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 2;
+                    if (IsMouseButtonPressed(MouseButton.Left)) newLayer = 2;
                 }
                 
                 DrawRectangleRec(
                     layer2Rect,
-                    GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
                 );
 
-                DrawRectangleLines(20, (int)layer2Rect.Y, 40, 40, GRAY);
+                DrawRectangleLines(20, (int)layer2Rect.Y, 40, 40, Color.Gray);
 
-                if (GLOBALS.Layer == 1) DrawText("2", 35, (int)layer2Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
+                if (GLOBALS.Layer == 1) DrawText("2", 35, (int)layer2Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             }
 
             if (GLOBALS.Layer == 0)
@@ -1606,19 +1606,19 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
                 if (layer1Hovered)
                 {
-                    DrawRectangleRec(layer1Rect, BLUE with { a = 100 });
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 1;
+                    DrawRectangleRec(layer1Rect, Color.Blue with { A = 100 });
+                    if (IsMouseButtonPressed(MouseButton.Left)) newLayer = 1;
                 }
                 
                 DrawRectangleRec(
                     layer1Rect,
-                    GLOBALS.Settings.GeneralSettings.DarkTheme ? BLACK with { a = 100 } : WHITE
+                    GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
                 );
 
                 DrawRectangleLines(
-                    30, (int)layer1Rect.Y, 40, 40, GRAY);
+                    30, (int)layer1Rect.Y, 40, 40, Color.Gray);
 
-                DrawText("1", 48, (int)layer1Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? WHITE : BLACK);
+                DrawText("1", 48, (int)layer1Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             }
 
             if (newLayer != GLOBALS.Layer) GLOBALS.Layer = newLayer;
@@ -1656,9 +1656,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                             DrawText(
                                 GLOBALS.Level.DefaultMaterial,
                                 0,
-                                specsRect.Y + specsRect.height - 20,
+                                (int)(specsRect.Y + specsRect.Height - 20),
                                 20,
-                                WHITE
+                                Color.White
                             );
                         }
                         else
@@ -1666,10 +1666,10 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                             DrawTextEx(
                                 GLOBALS.Font.Value,
                                 GLOBALS.Level.DefaultMaterial,
-                                new Vector2(10, specsRect.Y + specsRect.height - 30),
+                                new Vector2(10, specsRect.Y + specsRect.Height - 30),
                                 30,
                                 1,
-                                WHITE
+                                Color.White
                             );
                         }
                     }
@@ -1681,9 +1681,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                             DrawText(
                                 h.CategoryPostition is (-1, -1, _) ? $"Undefined Tile \"{h.CategoryPostition.Name}\"" : h.CategoryPostition.Name,
                                 0,
-                                specsRect.Y + specsRect.height - 20,
+                                (int)(specsRect.Y + specsRect.Height - 20),
                                 20,
-                                WHITE
+                                Color.White
                             );
                         }
                         else
@@ -1691,10 +1691,10 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                             DrawTextEx(
                                 GLOBALS.Font.Value,
                                 h.CategoryPostition is (-1, -1, _) ? $"Undefined Tile \"{h.CategoryPostition.Name}\"" : h.CategoryPostition.Name,
-                                new Vector2(10, specsRect.Y + specsRect.height - 30),
+                                new Vector2(10, specsRect.Y + specsRect.Height - 30),
                                 30,
                                 1,
-                                WHITE
+                                Color.White
                             );
                         }
                     }
@@ -1715,9 +1715,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                                         ? (h.CategoryPostition is (-1, -1, _) ? $"Undefined Tile \"{h.CategoryPostition.Name}\"" : h.CategoryPostition.Name)
                                         : "Stray Tile Fragment",
                                     0,
-                                    specsRect.Y + specsRect.height - 20,
+                                    (int)(specsRect.Y + specsRect.Height - 20),
                                     20,
-                                    WHITE
+                                    Color.White
                                 );
                                 
                             }
@@ -1729,10 +1729,10 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                                         ? (h.CategoryPostition is (-1, -1, _) ? $"Undefined Tile \"{h.CategoryPostition.Name}\"" : h.CategoryPostition.Name)
                                         : "Stray Tile Fragment",
                                     new Vector2(10,
-                                        specsRect.Y + specsRect.height - 30),
+                                        specsRect.Y + specsRect.Height - 30),
                                     30,
                                     1,
-                                    WHITE
+                                    Color.White
                                 );
                             }
                         
@@ -1742,9 +1742,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                             if (GLOBALS.Font is null) {
                                 DrawText("Stray Tile Fragment",
                                     0,
-                                    specsRect.Y + specsRect.height - 20,
+                                    (int) (specsRect.Y + specsRect.Height - 20),
                                     20,
-                                    WHITE
+                                    Color.White
                                 );
                             }
                             else
@@ -1753,10 +1753,10 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                                     GLOBALS.Font.Value,
                                     "Stray Tile Fragment",
                                     new Vector2(10,
-                                        specsRect.Y + specsRect.height - 30),
+                                        specsRect.Y + specsRect.Height - 30),
                                     30,
                                     1,
-                                    WHITE
+                                    Color.White
                                 );
                             }
                         }
@@ -1768,9 +1768,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         if (GLOBALS.Font is null) {
                             DrawText(m.Name,
                                 0,
-                                specsRect.Y + specsRect.height - 20,
+                                (int)(specsRect.Y + specsRect.Height - 20),
                                 20,
-                                WHITE
+                                Color.White
                             );
                         }
                         else
@@ -1778,10 +1778,10 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                             DrawTextEx(
                                 GLOBALS.Font.Value,
                                 m.Name,
-                                new Vector2(10, specsRect.Y + specsRect.height - 30),
+                                new Vector2(10, specsRect.Y + specsRect.Height - 30),
                                 30,
                                 1,
-                                WHITE
+                                Color.White
                             );
                         }
                     }
@@ -1800,16 +1800,16 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 tileMouse, 
                 shortcutWindowRect with
                 {
-                    Y = shortcutWindowRect.Y - 5, height = shortcutWindowRect.height + 10,
-                    X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
+                    Y = shortcutWindowRect.Y - 5, Height = shortcutWindowRect.Height + 10,
+                    X = shortcutWindowRect.X - 5, Width = shortcutWindowRect.Width + 10
                 }
             );
 
-            if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.Left))
             {
                 _isShortcutsWinDragged = true;
             }
-            else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+            else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.Left))
             {
                 _isShortcutsWinDragged = false;
             }

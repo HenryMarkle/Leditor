@@ -1,14 +1,13 @@
-﻿using System.Numerics;
-using System.Text;
+﻿using System.Text;
 using rlImGui_cs;
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
 internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null) : IPage
 {
     private readonly Serilog.Core.Logger _logger = logger;
-    private Camera2D _camera = camera ?? new() { zoom = 1.0f };
+    private Camera2D _camera = camera ?? new() { Zoom = 1.0f };
 
     private readonly GeoShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.GeoEditor;
     private readonly GlobalShortcuts _gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
@@ -168,9 +167,9 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                          !CheckCollisionPointRec(GetMousePosition(), new(GetScreenWidth() - 210, 50, 200, GetScreenHeight() - 100));
         
         
-        var ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
-        var shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
-        var alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt);
         
         if (_gShortcuts.ToMainPage.Check(ctrl, shift, alt))
         {
@@ -355,8 +354,8 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
         if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true))
         {
             var delta = GetMouseDelta();
-            delta = RayMath.Vector2Scale(delta, -1.0f / _camera.zoom);
-            _camera.target = RayMath.Vector2Add(_camera.target, delta);
+            delta = Raymath.Vector2Scale(delta, -1.0f / _camera.Zoom);
+            _camera.Target = Raymath.Vector2Add(_camera.Target, delta);
         }
 
 
@@ -365,10 +364,10 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
         if (wheel != 0)
         {
             var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
-            _camera.offset = GetMousePosition();
-            _camera.target = mouseWorldPosition;
-            _camera.zoom += wheel * GLOBALS.ZoomIncrement;
-            if (_camera.zoom < GLOBALS.ZoomIncrement) _camera.zoom = GLOBALS.ZoomIncrement;
+            _camera.Offset = GetMousePosition();
+            _camera.Target = mouseWorldPosition;
+            _camera.Zoom += wheel * GLOBALS.ZoomIncrement;
+            if (_camera.Zoom < GLOBALS.ZoomIncrement) _camera.Zoom = GLOBALS.ZoomIncrement;
         }
 
         // handle placing geo
@@ -452,9 +451,9 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                             if (
                                 !GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement &&
                                 (matrixX * scale < GLOBALS.Level.Border.X ||
-                                 matrixX * scale >= GLOBALS.Level.Border.width + GLOBALS.Level.Border.X ||
+                                 matrixX * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
                                  matrixY * scale < GLOBALS.Level.Border.Y ||
-                                 matrixY * scale >= GLOBALS.Level.Border.height + GLOBALS.Level.Border.Y)
+                                 matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y)
                                 )
                             {
                                 break;
@@ -505,9 +504,9 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
 
                             if (
                                 matrixX * scale < GLOBALS.Level.Border.X ||
-                                matrixX * scale >= GLOBALS.Level.Border.width + GLOBALS.Level.Border.X ||
+                                matrixX * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
                                 matrixY * scale < GLOBALS.Level.Border.Y ||
-                                matrixY * scale >= GLOBALS.Level.Border.height + GLOBALS.Level.Border.Y)
+                                matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y)
                             {
                                 break;
                             }
@@ -959,7 +958,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                                         case 19:    // wac
                                         case 20:    // worm
                                         case 21:    // scav
-                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], (matrixX + x) * scale, (matrixY + y) * scale, WHITE); // TODO: remove opacity from entrances
+                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], (matrixX + x) * scale, (matrixY + y) * scale, Color.White); // TODO: remove opacity from entrances
                                             break;
 
                                         
@@ -968,7 +967,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                                                 GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s, Utils.GetContext(savedChunk, x, y))],
                                                 x * scale,
                                                 y * scale,
-                                                WHITE
+                                                Color.White
                                             );
                                             break;
                                     }
@@ -984,7 +983,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                 DrawRectangleLinesEx(new(0, 0, GLOBALS.Level.Width * scale, GLOBALS.Level.Height * scale), 2, new(0, 0, 0, 255));
 
                 // the border
-                DrawRectangleLinesEx(GLOBALS.Level.Border, _camera.zoom < GLOBALS.ZoomIncrement ? 5 : 2, new(255, 255, 255, 255));
+                DrawRectangleLinesEx(GLOBALS.Level.Border, _camera.Zoom < GLOBALS.ZoomIncrement ? 5 : 2, new(255, 255, 255, 255));
                 
                 // a lazy way to hide the rest of the grid
                 DrawRectangle(GLOBALS.Level.Width * -scale, -3, GLOBALS.Level.Width * scale, GLOBALS.Level.Height * 2 * scale, new(120, 120, 120, 255));
@@ -999,7 +998,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                         DrawRectangleLinesEx(
                             new(cam.Coords.X, cam.Coords.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
                             4f,
-                            PINK
+                            Color.Pink
                         );
                     }
                 }
@@ -1056,7 +1055,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
 
             // geo menu
 
-            DrawRectangleRec(new(GetScreenWidth() - 210, 50, 200, GetScreenHeight() - 100), WHITE);
+            DrawRectangleRec(new(GetScreenWidth() - 210, 50, 200, GetScreenHeight() - 100), Color.White);
 
             for (var w = 0; w < 4; w++)
             {
@@ -1095,9 +1094,9 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
 
                                 if (toolHovered)
                                 {
-                                    DrawRectangleLinesEx(toolRect, 3f, BLUE with { a = 100 });
+                                    DrawRectangleLinesEx(toolRect, 3f, Color.Blue with { A = 100 });
 
-                                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                                    if (IsMouseButtonPressed(MouseButton.Left))
                                     {
                                         geoSelectionX = (uint)w;
                                         geoSelectionY = (uint)h;
@@ -1167,19 +1166,19 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
 
             if (layer3Hovered)
             {
-                DrawRectangleRec(layer3Rect, BLUE with { a = 100 });
+                DrawRectangleRec(layer3Rect, Color.Blue with { A = 100 });
 
-                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 0;
+                if (IsMouseButtonPressed(MouseButton.Left)) newLayer = 0;
             }
 
             DrawRectangleRec(
                 layer3Rect,
-                WHITE
+                Color.White
             );
             
-            DrawRectangleLines(10, sHeight - 50, 40, 40, GRAY);
+            DrawRectangleLines(10, sHeight - 50, 40, 40, Color.Gray);
 
-            if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, BLACK);
+            if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, Color.Black);
             
             if (GLOBALS.Layer is 1 or 0)
             {
@@ -1187,19 +1186,19 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
 
                 if (layer2Hovered)
                 {
-                    DrawRectangleRec(layer2Rect, BLUE with { a = 100 });
+                    DrawRectangleRec(layer2Rect, Color.Blue with { A = 100 });
 
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 2;
+                    if (IsMouseButtonPressed(MouseButton.Left)) newLayer = 2;
                 }
                 
                 DrawRectangleRec(
                     layer2Rect,
-                    WHITE
+                    Color.White
                 );
 
-                DrawRectangleLines(20, sHeight - 60, 40, 40, GRAY);
+                DrawRectangleLines(20, sHeight - 60, 40, 40, Color.Gray);
 
-                if (GLOBALS.Layer == 1) DrawText("2", 35, sHeight - 50, 22, BLACK);
+                if (GLOBALS.Layer == 1) DrawText("2", 35, sHeight - 50, 22, Color.Black);
             }
 
             if (GLOBALS.Layer == 0)
@@ -1208,19 +1207,19 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
 
                 if (layer1Hovered)
                 {
-                    DrawRectangleRec(layer1Rect, BLUE with { a = 100 });
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) newLayer = 1;
+                    DrawRectangleRec(layer1Rect, Color.Blue with { A = 100 });
+                    if (IsMouseButtonPressed(MouseButton.Left)) newLayer = 1;
                 }
                 
                 DrawRectangleRec(
                     layer1Rect,
-                    WHITE
+                    Color.White
                 );
 
                 DrawRectangleLines(
-                    30, sHeight - 70, 40, 40, GRAY);
+                    30, sHeight - 70, 40, 40, Color.Gray);
 
-                DrawText("1", 48, sHeight - 60, 22, BLACK);
+                DrawText("1", 48, sHeight - 60, 22, Color.Black);
             }
 
             if (newLayer != GLOBALS.Layer) GLOBALS.Layer = newLayer;
@@ -1237,15 +1236,15 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                 uiMouse, 
                 shortcutWindowRect with
                 {
-                    X = shortcutWindowRect.X - 5, width = shortcutWindowRect.width + 10
+                    X = shortcutWindowRect.X - 5, Width = shortcutWindowRect.Width + 10
                 }
             );
 
-            if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.Left))
             {
                 _isShortcutsWinDragged = true;
             }
-            else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT))
+            else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.Left))
             {
                 _isShortcutsWinDragged = false;
             }

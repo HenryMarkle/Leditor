@@ -1,8 +1,7 @@
 ﻿using System.Numerics;
-using System.Text;
 using ImGuiNET;
 using rlImGui_cs;
-using static Raylib_CsLo.Raylib;
+using static Raylib_cs.Raylib;
 
 namespace Leditor;
 
@@ -43,7 +42,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
     static void ResizeLightMap(int newWidth, int newHeight)
     {
         var scale = GLOBALS.Scale;
-        var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
+        var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);
         UnloadRenderTexture(GLOBALS.Textures.LightMap);
         var texture = LoadTextureFromImage(image);
         UnloadImage(image);
@@ -72,7 +71,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
 
         ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
             ? new Color(100, 100, 100, 255) 
-            :  GRAY
+            :  Color.Gray
         );
 
         if (GLOBALS.NewFlag && !_advanced)
@@ -104,7 +103,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                             width - 80, 
                             height - 80
                         ), 
-                        4f, WHITE
+                        4f, Color.White
                     );
 
                     if (GLOBALS.NewFlag && _createCameras)
@@ -112,7 +111,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                         DrawCircleLines(
                             (int)((GLOBALS.Textures.DimensionsVisual.Texture.Width - width*_columns)/2f + j * width + width/2f), 
                             (int)((GLOBALS.Textures.DimensionsVisual.Texture.Height - height*_rows)/2f + i * height + height/2f),
-                            50 * scale, WHITE
+                            50 * scale, Color.White
                         );
                     }
                 }
@@ -198,7 +197,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                         GLOBALS.Textures.LightMap = LoadRenderTexture((GLOBALS.Level.Width * GLOBALS.Scale) + 300, (GLOBALS.Level.Height * GLOBALS.Scale) + 300);
 
                         BeginTextureMode(GLOBALS.Textures.LightMap);
-                        ClearBackground(WHITE);
+                        ClearBackground(Color.White);
                         EndTextureMode();
 
                         GLOBALS.NewFlag = false;
@@ -275,7 +274,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                         GLOBALS.Textures.LightMap = LoadRenderTexture((GLOBALS.Level.Width * GLOBALS.Scale) + 300, (GLOBALS.Level.Height * GLOBALS.Scale) + 300);
 
                         BeginTextureMode(GLOBALS.Textures.LightMap);
-                        ClearBackground(WHITE);
+                        ClearBackground(Color.White);
                         EndTextureMode();
 
                         // create cameras

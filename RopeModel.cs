@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using static Raylib_CsLo.RayMath;
+using static Raylib_cs.Raymath;
 
 using System.Numerics;
 
