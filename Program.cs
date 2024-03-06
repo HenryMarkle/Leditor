@@ -527,7 +527,7 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.43";
+        const string version = "Henry's Leditor v0.9.44";
         const string raylibVersion = "Raylib v4.2.0.9";
         
         // Load tiles and props
@@ -790,29 +790,63 @@ class Program
 
         GLOBALS.Textures.GeoInterface =
         [
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "slope_black.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pc_black.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "spear_black.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "entry_black.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "slope.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pc.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "spear.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "entry.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "slope_black.png")),              // 0
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pc_black.png")),                 // 1
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "spear_black.png")),              // 2
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "entry_black.png")),              // 3
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "slope.png")),                    // 4
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pc.png")),                       // 5
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "spear.png")),                    // 6
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "entry.png")),                    // 7
             
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "solid_black.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "platform_black.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "glass_black.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "solid.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "platform.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "glass.png")),
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "solid_black.png")),              // 8
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "platform_black.png")),           // 9
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "glass_black.png")),              // 10
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "solid.png")),                    // 11
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "platform.png")),                 // 12
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "glass.png")),                    // 13
             
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "camera icon.png"))
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pv.png")),                       // 14
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "ph.png")),                       // 15
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "crack.png")),                    // 16
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pv_black.png")),                 // 17
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "ph_black.png")),                 // 18
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "crack_black.png")),              // 19
+            
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "bathive.png")),                  // 20
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "forbidflychains.png")),          // 21
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "waterfall.png")),                // 22
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "worm.png")),                     // 23
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "rock.png")),                     // 24
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "bathive_black.png")),            // 25
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "forbidflychains_black.png")),    // 26
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "waterfall_black.png")),          // 27
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "worm_black.png")),               // 28
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "rock_black.png")),               // 29
+            
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "looseentry.png")),               // 30
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "dot.png")),                      // 31
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "passage.png")),                  // 32
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "den.png")),                      // 33
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "wack.png")),                     // 34
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "scav.png")),                     // 35
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "garbage.png")),                  // 36
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "looseentry_black.png")),         // 37
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "dot_black.png")),                // 38
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "passage_black.png")),            // 39
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "den_black.png")),                // 40
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "wack_black.png")),               // 41
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "scav_black.png")),               // 42
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "garbage_black.png")),            // 43
+            
+            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "camera icon.png"))               // 44
         ];
 
         //
 
         GLOBALS.Textures.TileSpecs = Raylib_cs.Raylib.LoadRenderTexture(200, 200);
         GLOBALS.Textures.PropDepth = Raylib_cs.Raylib.LoadRenderTexture(290, 20);
+        GLOBALS.Textures.DimensionsVisual = Raylib_cs.Raylib.LoadRenderTexture(1400, 800);
 
         //
 
@@ -889,7 +923,7 @@ class Program
         MissingPropTexturesPage missingPropTexturesPage = new(logger);
         MissingInitFilePage missingInitFilePage = new(logger);
         ExperimentalGeometryPage experimentalGeometryPage = new(logger);
-        SettingsPage settingsPage = new(logger, settingsPreviewTextures);
+        SettingsPage settingsPage = new(logger);
         
         logger.Information("Initializing events");
         
@@ -897,9 +931,11 @@ class Program
         startPage.ProjectLoaded += propsPage.OnProjectLoaded;
         startPage.ProjectLoaded += savePage.OnProjectLoaded;
         startPage.ProjectLoaded += mainPage.OnLevelLoadedFromStart;
+        startPage.ProjectLoaded += dimensionsPage.OnProjectLoaded;
         
         mainPage.ProjectLoaded += propsPage.OnProjectLoaded;
         mainPage.ProjectLoaded += savePage.OnProjectLoaded;
+        mainPage.ProjectLoaded += dimensionsPage.OnProjectLoaded;
         
         dimensionsPage.ProjectCreated += propsPage.OnProjectCreated;
         //
@@ -916,7 +952,7 @@ class Program
         //
         rlImGui.Setup(GLOBALS.Settings.GeneralSettings.DarkTheme);
         
-        ImGui.LoadIniSettingsFromDisk(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "imgui.ini"));
+        // ImGui.LoadIniSettingsFromDisk(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "imgui.ini"));
         //
         
         // Tile & Prop Textures
@@ -1435,6 +1471,7 @@ class Program
         
         Raylib_cs.Raylib.UnloadRenderTexture(GLOBALS.Textures.TileSpecs);
         Raylib_cs.Raylib.UnloadRenderTexture(GLOBALS.Textures.PropDepth);
+        Raylib_cs.Raylib.UnloadRenderTexture(GLOBALS.Textures.DimensionsVisual);
         
         logger.Debug("Unloading shaders");
 

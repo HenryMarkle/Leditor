@@ -783,26 +783,26 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                 
                 // Applied Effects
 
-                if (ImGui.Begin("Effects##AppliedEffectsList"))
+                var effectsOpened = ImGui.Begin("Effects##AppliedEffectsList");
+
+                var effectsPos = ImGui.GetWindowPos();
+                var effectsWinSpace = ImGui.GetWindowSize();
+
+                if (CheckCollisionPointRec(GetMousePosition(), new(effectsPos.X - 5, effectsPos.Y, effectsWinSpace.X + 10, effectsWinSpace.Y)))
                 {
-                    var pos = ImGui.GetWindowPos();
-                    var winSpace = ImGui.GetWindowSize();
+                    _isEffectsWinHovered = true;
 
-                    if (CheckCollisionPointRec(GetMousePosition(), new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
-                    {
-                        _isEffectsWinHovered = true;
+                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isEffectsWinDragged = true;
+                }
+                else
+                {
+                    _isEffectsWinHovered = false;
+                }
 
-                        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isEffectsWinDragged = true;
-                    }
-                    else
-                    {
-                        _isEffectsWinHovered = false;
-                    }
-
-                    if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isEffectsWinDragged) _isEffectsWinDragged = false;
-                    
-                    //
-                    
+                if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isEffectsWinDragged) _isEffectsWinDragged = false;
+                
+                if (effectsOpened)
+                {
                     if (ImGui.Button("+")) _addNewEffectMode = true;
                     
                     if (GLOBALS.Level.Effects.Length > 0 && ImGui.Button("X"))
@@ -881,27 +881,28 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                         ? GLOBALS.Level.Effects[_currentAppliedEffect].Item2
                         : [];
 
+                    var optionsOpened = ImGui.Begin("Options");
 
-                    if (ImGui.Begin("Options"))
+                    var optionsPos = ImGui.GetWindowPos();
+                    var optionsWinSpace = ImGui.GetWindowSize();
+
+                    if (CheckCollisionPointRec(GetMousePosition(),
+                            new(optionsPos.X - 5, optionsPos.Y, optionsWinSpace.X + 10, optionsWinSpace.Y)))
                     {
-                        var pos = ImGui.GetWindowPos();
-                        var winSpace = ImGui.GetWindowSize();
+                        _isOptionsWinHovered = true;
 
-                        if (CheckCollisionPointRec(GetMousePosition(),
-                                new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
-                        {
-                            _isOptionsWinHovered = true;
+                        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isOptionsWinDragged = true;
+                    }
+                    else
+                    {
+                        _isOptionsWinHovered = false;
+                    }
 
-                            if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isOptionsWinDragged = true;
-                        }
-                        else
-                        {
-                            _isOptionsWinHovered = false;
-                        }
-
-                        if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isOptionsWinDragged)
-                            _isOptionsWinDragged = false;
-
+                    if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isOptionsWinDragged)
+                        _isOptionsWinDragged = false;
+                    
+                    if (optionsOpened)
+                    {
                         var halfWidth = ImGui.GetContentRegionAvail().X / 2f - ImGui.GetStyle().ItemSpacing.X / 2f;
                         var boxHeight = ImGui.GetContentRegionAvail().Y;
 
@@ -978,26 +979,27 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                 }
                 
                 // Settings window
-                if (ImGui.Begin("Settings##EffectsSettings"))
+
+                var settingsOpened = ImGui.Begin("Settings##EffectsSettings");
+                
+                var settingsPos = ImGui.GetWindowPos();
+                var settingsWinSpace = ImGui.GetWindowSize();
+
+                if (CheckCollisionPointRec(GetMousePosition(), new(settingsPos.X - 5, settingsPos.Y, settingsWinSpace.X + 10, settingsWinSpace.Y)))
                 {
-                    var pos = ImGui.GetWindowPos();
-                    var winSpace = ImGui.GetWindowSize();
+                    _isSettingsWinHovered = true;
 
-                    if (CheckCollisionPointRec(GetMousePosition(), new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
-                    {
-                        _isSettingsWinHovered = true;
+                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isSettingsWinDragged = true;
+                }
+                else
+                {
+                    _isSettingsWinHovered = false;
+                }
 
-                        if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isSettingsWinDragged = true;
-                    }
-                    else
-                    {
-                        _isSettingsWinHovered = false;
-                    }
-
-                    if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isSettingsWinDragged) _isSettingsWinDragged = false;
-                    
-                    //
-                    
+                if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isSettingsWinDragged) _isSettingsWinDragged = false;
+                
+                if (settingsOpened)
+                {
                     ImGui.SeparatorText("Colors");
                     var lightEffectColor = GLOBALS.Settings.EffectsSettings.EffectColorLight;
                     var darkEffectColor = GLOBALS.Settings.EffectsSettings.EffectColorDark;

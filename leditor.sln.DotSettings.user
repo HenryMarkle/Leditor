@@ -7,6 +7,7 @@
 	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=C_003A_005CUsers_005CHenry_0020Markle_005CProjects_005CLanguage_002DSpecific_005CC_0023_005Cleditor_005CrlImGui_002Dcs_002Dmain_005CrlImGui_002Dcs_002Esln/@EntryIndexedValue">True</s:Boolean>
 	<s:Int64 x:Key="/Default/Dpa/Thresholds/=AllocationLoh/@EntryIndexedValue">31457280</s:Int64>
 	<s:Int64 x:Key="/Default/Dpa/Thresholds/=AllocationTopSoh/@EntryIndexedValue">31457280</s:Int64>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=bathive/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Casteljau/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Dakras/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Encloser/@EntryIndexedValue">True</s:Boolean>

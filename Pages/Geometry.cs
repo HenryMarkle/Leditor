@@ -1056,16 +1056,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
 
             // geo menu
 
-            unsafe
-            {
-                fixed (byte* pt = _geoMenuPanelBytes)
-                {
-                    RayGui.GuiPanel(
-                        new(GetScreenWidth() - 210, 50, 200, GetScreenHeight() - 100),
-                        (sbyte*)pt
-                    );
-                }
-            }
+            DrawRectangleRec(new(GetScreenWidth() - 210, 50, 200, GetScreenHeight() - 100), WHITE);
 
             for (var w = 0; w < 4; w++)
             {
@@ -1143,29 +1134,29 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                     12,
                     new(0, 0, 0, 255));
 
-            showLayer1 = RayGui.GuiCheckBox(
-                new(sWidth - 190, 8 * GLOBALS.UiScale + 190, 20, 20),
-                "Layer 1",
-                showLayer1
-            );
-
-            showLayer2 = RayGui.GuiCheckBox(
-                new(sWidth - 190, 8 * GLOBALS.UiScale + 210, 20, 20),
-                "Layer 2",
-                showLayer2
-            );
-
-            showLayer3 = RayGui.GuiCheckBox(
-                new(sWidth - 190, 8 * GLOBALS.UiScale + 230, 20, 20),
-                "Layer 3",
-                showLayer3
-            );
-
-            GLOBALS.Settings.GeometryEditor.ShowCameras = RayGui.GuiCheckBox(
-                new (sWidth - 190, 8 * GLOBALS.UiScale + 270, 20, 20),
-                "Show Cameras",
-                GLOBALS.Settings.GeometryEditor.ShowCameras
-            );
+            // showLayer1 = RayGui.GuiCheckBox(
+            //     new(sWidth - 190, 8 * GLOBALS.UiScale + 190, 20, 20),
+            //     "Layer 1",
+            //     showLayer1
+            // );
+            //
+            // showLayer2 = RayGui.GuiCheckBox(
+            //     new(sWidth - 190, 8 * GLOBALS.UiScale + 210, 20, 20),
+            //     "Layer 2",
+            //     showLayer2
+            // );
+            //
+            // showLayer3 = RayGui.GuiCheckBox(
+            //     new(sWidth - 190, 8 * GLOBALS.UiScale + 230, 20, 20),
+            //     "Layer 3",
+            //     showLayer3
+            // );
+            //
+            // GLOBALS.Settings.GeometryEditor.ShowCameras = RayGui.GuiCheckBox(
+            //     new (sWidth - 190, 8 * GLOBALS.UiScale + 270, 20, 20),
+            //     "Show Cameras",
+            //     GLOBALS.Settings.GeometryEditor.ShowCameras
+            // );
 
             // Layer indicator
             

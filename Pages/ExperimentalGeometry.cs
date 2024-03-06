@@ -84,6 +84,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
     
     private bool _isSettingsWinHovered;
     private bool _isSettingsWinDragged;
+
+    private bool _isMenuWinHovered;
+    private bool _isMenuWinDragged;
     
     private int _lastChangingMatrixX = -1;
     private int _lastChangingMatrixY = -1;
@@ -139,6 +142,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
         Rectangle panelRect = new(sWidth - 200, 50, 188, 400);
 
         var canDrawGeo = !toggleCameraHovered &&
+                         !_isMenuWinHovered &&
+                         !_isMenuWinDragged &&
                          !_isSettingsWinHovered && 
                          !_isSettingsWinDragged &&
                          !_isShortcutsWinHovered && 
@@ -159,13 +164,14 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
         {
             _geoMenuCategory--;
             if (_geoMenuCategory < 0) _geoMenuCategory = 3;
-            _geoMenuIndex = 0;
+            Utils.Restrict(ref _geoMenuIndex, 0, GeoMenuIndexMaxCount[_geoMenuCategory]-1);
         }
 
         if (_shortcuts.ToRightGeo.Check(ctrl, shift, alt))
         {
             _geoMenuCategory = ++_geoMenuCategory % 4;
-            _geoMenuIndex = 0;
+            
+            Utils.Restrict(ref _geoMenuIndex, 0, GeoMenuIndexMaxCount[_geoMenuCategory]-1);
         }
 
         if (_shortcuts.ToTopGeo.Check(ctrl, shift, alt))
@@ -1163,241 +1169,153 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             EndMode2D();
 
             // geo menu
-            
-            // ImGui
-
-            unsafe
-            {
-               fixed (byte* pt = _geoMenuPanelBytes)
-               {
-                   RayGui.GuiPanel(panelRect, (sbyte*)pt);
-               } 
-            }
-            
-
-            // Categories
-
-            DrawRectangleLinesEx(new((_geoMenuCategory * 42) + panelRect.X + 10, 80, 42, 42), 4.0f, BLUE);
-
-            var category1Rect = new Rectangle(panelRect.X + 10, 80, 42, 42);
-            var category2Rect = new Rectangle(42 + panelRect.X + 10, 80, 42, 42);
-            var category3Rect = new Rectangle(84 + panelRect.X + 10, 80, 42, 42);
-            var category4Rect = new Rectangle(126 + panelRect.X + 10, 80, 42, 42);
-
-            var category1Hovered = CheckCollisionPointRec(uiMouse, category1Rect);
-            var category2Hovered = CheckCollisionPointRec(uiMouse, category2Rect);
-            var category3Hovered = CheckCollisionPointRec(uiMouse, category3Rect);
-            var category4Hovered = CheckCollisionPointRec(uiMouse, category4Rect);
-
-            if (category1Hovered)
-            {
-                DrawRectangleRec(category1Rect, BLUE with { a = 100 });
-
-                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                {
-                    _geoMenuCategory = 0;
-                    _geoMenuIndex = 0;
-                }
-            }
-            
-            if (category2Hovered)
-            {
-                DrawRectangleRec(category2Rect, BLUE with { a = 100 });
-                
-                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                {
-                    _geoMenuCategory = 1;
-                    _geoMenuIndex = 0;
-                }
-            }
-            
-            if (category3Hovered)
-            {
-                DrawRectangleRec(category3Rect, BLUE with { a = 100 });
-                
-                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                {
-                    _geoMenuCategory = 2;
-                    _geoMenuIndex = 0;
-                }
-
-            }
-            
-            if (category4Hovered)
-            {
-                DrawRectangleRec(category4Rect, BLUE with { a = 100 });
-                
-                if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
-                {
-                    _geoMenuCategory = 3;
-                    _geoMenuIndex = 0;
-                }
-            }
-            
-            DrawRectangleLinesEx(category1Rect, 1.0f, BLACK);
-            DrawRectangleLinesEx(category2Rect, 1.0f, BLACK);
-            DrawRectangleLinesEx(category3Rect, 1.0f, BLACK);
-            DrawRectangleLinesEx(category4Rect, 1.0f, BLACK);
-            
-            
-
-            DrawTriangle(
-                new(panelRect.X + 20, 90),
-                new(panelRect.X + 20, 112),
-                new(panelRect.X + 42, 112),
-                BLACK
-            );
-
-            DrawRectangleV(
-                new(panelRect.X + 70, 85),
-                new(5, 32),
-                BLACK
-            );
-
-            DrawRectangleV(
-                new(panelRect.X + 57, 100),
-                new(32, 5),
-                BLACK
-            );
-
-            var placeSpearTexture = GLOBALS.Textures.GeoMenu[8];
-            var entryTexture = GLOBALS.Textures.GeoMenu[14];
-
-            DrawTexturePro(
-                placeSpearTexture,
-                new(0, 0, placeSpearTexture.width, placeSpearTexture.height),
-                new(panelRect.X + 99, 85, 32, 32),
-                new(0, 0),
-                0,
-                BLACK
-            );
-
-            DrawTexturePro(
-                entryTexture,
-                new(0, 0, entryTexture.width, entryTexture.height),
-                new(panelRect.X + 141, 85, 32, 32),
-                new(0, 0),
-                0,
-                BLACK
-            );
-
-            unsafe
-            {
-                fixed (int* scrollIndex = &_geoMenuScrollIndex)
-                {
-                    var newGeoMenuIndex = RayGui.GuiListView(
-                        new(panelRect.X + 10, 150, 170, 200),
-                        _geoMenuCategory switch
-                        {
-                            0 => "Solid;Slope;Platform;Glass",
-                            1 => "Vertical Pole;Horizontal Pole;Cracked Terrain",
-                            2 => "Bat Hive;Forbid Fly Chains;Waterfall;Worm Grass;Place Rock;Place Spear",
-                            3 => "Shortcut Entrance;Shortcut Path;Room Entrance;Dragon Den;Wack-a-mole Hole;Scavenger Hole;Garbage Worm Hole",
-                            _ => ""
-                        },
-                        scrollIndex,
-                        _geoMenuIndex
-                    );
-
-                    if (newGeoMenuIndex != _geoMenuIndex && newGeoMenuIndex != -1)
-                    {
-                        #if DEBUG
-                        _logger.Debug($"New geo menu index: {newGeoMenuIndex}");
-                        #endif
-                        
-                        _geoMenuIndex = newGeoMenuIndex;
-                    }
-                }
-            }
-            
-            #region GeoIcons
-
-            /*switch (_geoMenuCategory)
-            {
-                case 0:
-                {
-                    ref var solid = ref GLOBALS.Textures.GeoBlocks[0];
-                    ref var slope = ref GLOBALS.Textures.GeoBlocks[1]; 
-                    ref var platform = ref GLOBALS.Textures.GeoBlocks[5];
-                    
-                    DrawTexturePro(
-                        solid, 
-                        new(0, 0, solid.width, solid.height), 
-                        new(panelRect.X + 20, 157, 15, 15),
-                        new(0, 0),
-                        0,    
-                        BLACK);
-                    
-                    DrawTexturePro(
-                        slope, 
-                        new(0, 0, slope.width, slope.height), 
-                        new(panelRect.X + 20, 183, 15, 15),
-                        new(0, 0),
-                        0,    
-                        BLACK);
-                    
-                    DrawTexturePro(
-                        platform, 
-                        new(0, 0, platform.width, platform.height), 
-                        new(panelRect.X + 20, 209, 15, 15),
-                        new(0, 0),
-                        0,    
-                        BLACK);
-                }
-                    break;
-
-                case 1:
-                {
-                    ref var horizontal = ref GLOBALS.Textures.GeoStackables[0];
-                    ref var vertical = ref GLOBALS.Textures.GeoStackables[1]; 
-                    ref var cracked = ref GLOBALS.Textures.GeoMenu[9];
-                    
-                    DrawTexturePro(
-                        horizontal, 
-                        new(0, 0, horizontal.width, horizontal.height), 
-                        new(panelRect.X + 20, 157, 15, 15),
-                        new(0, 0),
-                        0,    
-                        BLACK);
-                    
-                    DrawTexturePro(
-                        vertical, 
-                        new(0, 0, vertical.width, vertical.height), 
-                        new(panelRect.X + 20, 183, 15, 15),
-                        new(0, 0),
-                        0,    
-                        BLACK);
-                    
-                    DrawTexturePro(
-                        cracked, 
-                        new(0, 0, cracked.width, cracked.height), 
-                        new(panelRect.X + 20, 209, 15, 15),
-                        new(0, 0),
-                        0,    
-                        BLACK);
-                }
-                    break;
-
-                case 2:
-                {
-                    
-                }
-                    break;
-                
-                case 3:
-                    break;
-            }*/
-            
+            #region RayGuiMenu
+            //
+            // unsafe
+            // {
+            //    fixed (byte* pt = _geoMenuPanelBytes)
+            //    {
+            //        RayGui.GuiPanel(panelRect, (sbyte*)pt);
+            //    } 
+            // }
+            //
+            //
+            // // Categories
+            //
+            // DrawRectangleLinesEx(new((_geoMenuCategory * 42) + panelRect.X + 10, 80, 42, 42), 4.0f, BLUE);
+            //
+            // var category1Rect = new Rectangle(panelRect.X + 10, 80, 42, 42);
+            // var category2Rect = new Rectangle(42 + panelRect.X + 10, 80, 42, 42);
+            // var category3Rect = new Rectangle(84 + panelRect.X + 10, 80, 42, 42);
+            // var category4Rect = new Rectangle(126 + panelRect.X + 10, 80, 42, 42);
+            //
+            // var category1Hovered = CheckCollisionPointRec(uiMouse, category1Rect);
+            // var category2Hovered = CheckCollisionPointRec(uiMouse, category2Rect);
+            // var category3Hovered = CheckCollisionPointRec(uiMouse, category3Rect);
+            // var category4Hovered = CheckCollisionPointRec(uiMouse, category4Rect);
+            //
+            // if (category1Hovered)
+            // {
+            //     DrawRectangleRec(category1Rect, BLUE with { a = 100 });
+            //
+            //     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+            //     {
+            //         _geoMenuCategory = 0;
+            //         _geoMenuIndex = 0;
+            //     }
+            // }
+            //
+            // if (category2Hovered)
+            // {
+            //     DrawRectangleRec(category2Rect, BLUE with { a = 100 });
+            //     
+            //     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+            //     {
+            //         _geoMenuCategory = 1;
+            //         _geoMenuIndex = 0;
+            //     }
+            // }
+            //
+            // if (category3Hovered)
+            // {
+            //     DrawRectangleRec(category3Rect, BLUE with { a = 100 });
+            //     
+            //     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+            //     {
+            //         _geoMenuCategory = 2;
+            //         _geoMenuIndex = 0;
+            //     }
+            //
+            // }
+            //
+            // if (category4Hovered)
+            // {
+            //     DrawRectangleRec(category4Rect, BLUE with { a = 100 });
+            //     
+            //     if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+            //     {
+            //         _geoMenuCategory = 3;
+            //         _geoMenuIndex = 0;
+            //     }
+            // }
+            //
+            // DrawRectangleLinesEx(category1Rect, 1.0f, BLACK);
+            // DrawRectangleLinesEx(category2Rect, 1.0f, BLACK);
+            // DrawRectangleLinesEx(category3Rect, 1.0f, BLACK);
+            // DrawRectangleLinesEx(category4Rect, 1.0f, BLACK);
+            //
+            //
+            //
+            // DrawTriangle(
+            //     new(panelRect.X + 20, 90),
+            //     new(panelRect.X + 20, 112),
+            //     new(panelRect.X + 42, 112),
+            //     BLACK
+            // );
+            //
+            // DrawRectangleV(
+            //     new(panelRect.X + 70, 85),
+            //     new(5, 32),
+            //     BLACK
+            // );
+            //
+            // DrawRectangleV(
+            //     new(panelRect.X + 57, 100),
+            //     new(32, 5),
+            //     BLACK
+            // );
+            //
+            // var placeSpearTexture = GLOBALS.Textures.GeoMenu[8];
+            // var entryTexture = GLOBALS.Textures.GeoMenu[14];
+            //
+            // DrawTexturePro(
+            //     placeSpearTexture,
+            //     new(0, 0, placeSpearTexture.width, placeSpearTexture.height),
+            //     new(panelRect.X + 99, 85, 32, 32),
+            //     new(0, 0),
+            //     0,
+            //     BLACK
+            // );
+            //
+            // DrawTexturePro(
+            //     entryTexture,
+            //     new(0, 0, entryTexture.width, entryTexture.height),
+            //     new(panelRect.X + 141, 85, 32, 32),
+            //     new(0, 0),
+            //     0,
+            //     BLACK
+            // );
+            //
+            // unsafe
+            // {
+            //     fixed (int* scrollIndex = &_geoMenuScrollIndex)
+            //     {
+            //         var newGeoMenuIndex = RayGui.GuiListView(
+            //             new(panelRect.X + 10, 150, 170, 200),
+            //             _geoMenuCategory switch
+            //             {
+            //                 0 => "Solid;Slope;Platform;Glass",
+            //                 1 => "Vertical Pole;Horizontal Pole;Cracked Terrain",
+            //                 2 => "Bat Hive;Forbid Fly Chains;Waterfall;Worm Grass;Place Rock;Place Spear",
+            //                 3 => "Shortcut Entrance;Shortcut Path;Room Entrance;Dragon Den;Wack-a-mole Hole;Scavenger Hole;Garbage Worm Hole",
+            //                 _ => ""
+            //             },
+            //             scrollIndex,
+            //             _geoMenuIndex
+            //         );
+            //
+            //         if (newGeoMenuIndex != _geoMenuIndex && newGeoMenuIndex != -1)
+            //         {
+            //             #if DEBUG
+            //             _logger.Debug($"New geo menu index: {newGeoMenuIndex}");
+            //             #endif
+            //             
+            //             _geoMenuIndex = newGeoMenuIndex;
+            //         }
+            //     }
+            // }
             #endregion
-
-            _allowMultiSelect = RayGui.GuiCheckBox(new(panelRect.X + 10, 360, 15, 15), "Multi-Select", _allowMultiSelect);
-            _eraseAllMode = RayGui.GuiCheckBox(new(panelRect.X + 10, 380, 15, 15), "Erase Everything", _eraseAllMode);
-            GLOBALS.Settings.GeometryEditor.ShowCameras = RayGui.GuiCheckBox(new(panelRect.X + 10, 400, 15, 15), "Show Cameras", GLOBALS.Settings.GeometryEditor.ShowCameras);
-
-            _showLayer1 = RayGui.GuiCheckBox(new(panelRect.X + 145, 360, 15, 15), "L 1", _showLayer1);
-            _showLayer2 = RayGui.GuiCheckBox(new(panelRect.X + 145, 380, 15, 15), "L 2", _showLayer2);
-            _showLayer3 = RayGui.GuiCheckBox(new(panelRect.X + 145, 400, 15, 15), "L 3", _showLayer3);
-
+            
             // Current layer indicator
 
             var newLayer = GLOBALS.Layer;
@@ -1493,37 +1411,58 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             
             // Geo Menu
 
-            // TODO: Unfinished
-            if (false && ImGui.Begin("Blocks##GeoBlocks"))
+            var menuOpened = ImGui.Begin("Blocks##GeoBlocks");
+            
+            var menuPos = ImGui.GetWindowPos();
+            var menuWinSpace = ImGui.GetWindowSize();
+            
+            if (CheckCollisionPointRec(GetMousePosition(), new(menuPos.X - 5, menuPos.Y-5, menuWinSpace.X + 10, menuWinSpace.Y+10)))
+            {
+                _isMenuWinHovered = true;
+
+                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isMenuWinDragged = true;
+            }
+            else
+            {
+                _isMenuWinHovered = false;
+            }
+            
+            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isMenuWinDragged) _isMenuWinDragged = false;
+            
+            if (menuOpened)
             {
                 var availableSpace = ImGui.GetContentRegionAvail();
-                var quarterWidth = availableSpace.X / 4f;
 
-                ImGui.ImageButton(
+                var blockSelected = ImGui.ImageButton(
                     "Blocks", 
                     new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[4].id : GLOBALS.Textures.GeoInterface[0].id), 
                     new Vector2(30, 30));
                 
                 ImGui.SameLine();
 
-                ImGui.ImageButton(
+                var polesSelected = ImGui.ImageButton(
                     "Poles", 
                     new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[5].id : GLOBALS.Textures.GeoInterface[1].id), 
                     new Vector2(30, 30));
                 
                 ImGui.SameLine();
 
-                ImGui.ImageButton(
+                var stuffSelected = ImGui.ImageButton(
                     "Stuff", 
                     new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[6].id : GLOBALS.Textures.GeoInterface[2].id), 
                     new Vector2(30, 30));
                 
                 ImGui.SameLine();
 
-                ImGui.ImageButton(
+                var pathsSelected = ImGui.ImageButton(
                     "Paths", 
                     new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[7].id : GLOBALS.Textures.GeoInterface[3].id), 
                     new Vector2(30, 30));
+
+                if (blockSelected) _geoMenuCategory = 0;
+                if (polesSelected) _geoMenuCategory = 1;
+                if (stuffSelected) _geoMenuCategory = 2;
+                if (pathsSelected) _geoMenuCategory = 3;
 
                 if (ImGui.BeginListBox("##GeosList", availableSpace with { Y = availableSpace.Y - 40 }))
                 {
@@ -1533,23 +1472,93 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                         {
                             ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[11].id : GLOBALS.Textures.GeoInterface[8].id), new(20, 20));
                             ImGui.SameLine();
-                            ImGui.Selectable("Block", _geoMenuIndex == 0);
+                            if (ImGui.Selectable("Block", _geoMenuIndex == 0)) _geoMenuIndex = 0;
+                            
                             ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[4].id : GLOBALS.Textures.GeoInterface[0].id), new(20, 20));
                             ImGui.SameLine();
-                            ImGui.Selectable("Slope", _geoMenuIndex == 1);
+                            if (ImGui.Selectable("Slope", _geoMenuIndex == 1)) _geoMenuIndex = 1;
+                            
                             ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[12].id : GLOBALS.Textures.GeoInterface[9].id), new(20, 20));
                             ImGui.SameLine();
-                            ImGui.Selectable("Platform", _geoMenuIndex == 2);
+                            if (ImGui.Selectable("Platform", _geoMenuIndex == 2)) _geoMenuIndex = 2;
+                            
                             ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[13].id : GLOBALS.Textures.GeoInterface[10].id), new(20, 20));
                             ImGui.SameLine();
-                            ImGui.Selectable("Glass", _geoMenuIndex == 3);
+                            if (ImGui.Selectable("Glass", _geoMenuIndex == 3)) _geoMenuIndex = 3;
                         }
                             break;
                         case 1:
+                        {
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[14].id : GLOBALS.Textures.GeoInterface[17].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Vertical Pole", _geoMenuIndex == 0)) _geoMenuIndex = 0;
+                            
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[15].id : GLOBALS.Textures.GeoInterface[18].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Horizontal Pole", _geoMenuIndex == 1)) _geoMenuIndex = 1;
+                            
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[16].id : GLOBALS.Textures.GeoInterface[19].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Cracked Terrain", _geoMenuIndex == 2)) _geoMenuIndex = 2;
+                        }
                             break;
                         case 2:
+                        {
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[20].id : GLOBALS.Textures.GeoInterface[25].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Bat Hive", _geoMenuIndex == 0)) _geoMenuIndex = 0;
+                            
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[21].id : GLOBALS.Textures.GeoInterface[26].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Forbid Fly Chains", _geoMenuIndex == 1)) _geoMenuIndex = 1;
+                            
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[22].id : GLOBALS.Textures.GeoInterface[27].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Waterfall", _geoMenuIndex == 2)) _geoMenuIndex = 2;
+                            
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[23].id : GLOBALS.Textures.GeoInterface[28].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Worm Grass", _geoMenuIndex == 3)) _geoMenuIndex = 3;
+                            
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[24].id : GLOBALS.Textures.GeoInterface[29].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Place Rock", _geoMenuIndex == 4)) _geoMenuIndex = 4;
+                            
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[6].id : GLOBALS.Textures.GeoInterface[2].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Place Spear", _geoMenuIndex == 5)) _geoMenuIndex = 5;
+                        }
                             break;
                         case 3:
+                        {
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[30].id : GLOBALS.Textures.GeoInterface[37].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Shortcut Entrance", _geoMenuIndex == 0)) _geoMenuIndex = 0;
+                            
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[31].id : GLOBALS.Textures.GeoInterface[38].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Shortcut Path", _geoMenuIndex == 1)) _geoMenuIndex = 1;
+                            
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[32].id : GLOBALS.Textures.GeoInterface[39].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Room Entrance", _geoMenuIndex == 2)) _geoMenuIndex = 2;
+                            
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[33].id : GLOBALS.Textures.GeoInterface[40].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Dragon Den", _geoMenuIndex == 3)) _geoMenuIndex = 3;
+                            
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[34].id : GLOBALS.Textures.GeoInterface[41].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Wack-a-mole Hole", _geoMenuIndex == 4)) _geoMenuIndex = 4;
+                            
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[35].id : GLOBALS.Textures.GeoInterface[42].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Scavenger Hole", _geoMenuIndex == 5)) _geoMenuIndex = 5;
+                            
+                            ImGui.Image(new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[36].id : GLOBALS.Textures.GeoInterface[43].id), new(20, 20));
+                            ImGui.SameLine();
+                            if (ImGui.Selectable("Garbage Worm Hole", _geoMenuIndex == 6)) _geoMenuIndex = 6;
+                        }
                             break;
                     }
                     ImGui.EndListBox();
@@ -1560,26 +1569,26 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             
             // Settings Window
 
-            if (ImGui.Begin("Settings##NewGeoSettings"))
+            var settingsOpened = ImGui.Begin("Settings##NewGeoSettings");
+
+            var settingsPos = ImGui.GetWindowPos();
+            var settingsWinSpace = ImGui.GetWindowSize();
+
+            if (CheckCollisionPointRec(GetMousePosition(), new(settingsPos.X - 5, settingsPos.Y-5, settingsWinSpace.X + 10, settingsWinSpace.Y+10)))
             {
-                var pos = ImGui.GetWindowPos();
-                var winSpace = ImGui.GetWindowSize();
+                _isSettingsWinHovered = true;
 
-                if (CheckCollisionPointRec(GetMousePosition(), new(pos.X - 5, pos.Y-5, winSpace.X + 10, winSpace.Y+10)))
-                {
-                    _isSettingsWinHovered = true;
+                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isSettingsWinDragged = true;
+            }
+            else
+            {
+                _isSettingsWinHovered = false;
+            }
 
-                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isSettingsWinDragged = true;
-                }
-                else
-                {
-                    _isSettingsWinHovered = false;
-                }
-
-                if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isSettingsWinDragged) _isSettingsWinDragged = false;
-
-                //
-                
+            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isSettingsWinDragged) _isSettingsWinDragged = false;
+            
+            if (settingsOpened)
+            {
                 var availableSpace = ImGui.GetContentRegionAvail();
                 
                 ImGui.SeparatorText("Colors");

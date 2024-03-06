@@ -1,5 +1,7 @@
 using System.Numerics;
 using System.Text.Json;
+using ImGuiNET;
+using rlImGui_cs;
 using static Raylib_CsLo.Raylib;
 using static Raylib_CsLo.RayGui;
 
@@ -33,36 +35,21 @@ public class SettingsPage : IPage
     
     private byte _colorPickerLayer = 2;
 
-    private readonly Color _geoBackgroundColor = new Color(120, 120, 120, 255);
-
-    private readonly byte[] _title = "Settings"u8.ToArray();
-    private readonly byte[] _geoColorPickerTitle = "Color Picker"u8.ToArray();
-    private readonly byte[] _shortcutCategoryScrollPanelTitle = "Panel"u8.ToArray();
-
-    private readonly InitTile[] _previewTiles = [
-        new InitTile { Size = (6, 10), Repeat = [1,1,1,1,1,1,1,1,2], BufferTiles = 1, Type = InitTileType.VoxelStruct },
-        new InitTile { Size = (4, 4), Repeat = [1, 8, 1], BufferTiles = 1, Type = InitTileType.VoxelStruct },
-        new InitTile { Size = (22, 10), Repeat = [1,1,1,1,1,1,1,1,1,1], BufferTiles = 0, Type = InitTileType.VoxelStruct },
-        new InitTile { Size = (3, 3), Repeat = [1, 1, 1, 1, 1, 1, 1, 1, 2], BufferTiles = 1, Type = InitTileType.VoxelStruct },
-        new InitTile { Size = (3, 3), Repeat = [1], BufferTiles = 1, Type = InitTileType.VoxelStructRockType },
-        new InitTile { Size = (3, 3), Repeat = [1,8,1,10], BufferTiles = 1, Type = InitTileType.VoxelStruct }
+    private string[] _shortcutCategories = [
+        "Global",
+        "Old Geometry Editor",
+        "New Geometry Editor",
+        "Tile Editor",
+        "Camera Editor",
+        "Light Editor",
+        "Effects Editor",
+        "Props Editor"
     ];
+   
 
-    private readonly Color[] _previewTileColors = [
-        new Color(255, 0, 255, 255),
-        new Color(180, 255, 255, 255),
-        new Color(0, 50, 255, 255),
-        new Color(255, 0, 255, 255),
-        new Color(210, 180, 180, 255),
-        new Color(255, 160, 255, 255)
-    ];
-
-    private readonly Texture[] _previewTileTextures;
-
-    public SettingsPage(Serilog.Core.Logger logger, Texture[] previewTextures)
+    public SettingsPage(Serilog.Core.Logger logger)
     {
         _logger = logger;
-        _previewTileTextures = previewTextures;
     }
     
     public void Draw()
@@ -111,647 +98,98 @@ public class SettingsPage : IPage
         
         ClearBackground(GRAY);
 
-        unsafe
+        rlImGui.Begin();
+
+        if (ImGui.Begin("Settings##EditorSettings", ImGuiWindowFlags.NoCollapse))
         {
-           fixed (byte* t = _title)
-           {
-               GuiPanel(panelRect, (sbyte*)t);
-           }
+            ImGui.Columns(2);
+            ImGui.SetColumnWidth(0, 200);
 
-           fixed (int* scrollIndex = &_categoryScrollIndex)
-           { 
-                var newActiveCategory = GuiListView(
-                   categoryRect, 
-                   "General;Geometry Editor;Tile Editor;Camera Editor;Light Editor;Effects Editor;Props Editor;Miscellaneous;Shortcuts", 
-                   scrollIndex,
-                   _activeCategory
-                );
+            var col1Space = ImGui.GetContentRegionAvail();
 
-                if (!_assigningShortcut) _activeCategory = newActiveCategory;
-           }
+            if (ImGui.BeginListBox("##SettingsCategories", col1Space with { Y = col1Space.Y - 60 }))
+            {
+                for (var category = 0; category < _shortcutCategories.Length; category++)
+                {
+                    var selected = ImGui.Selectable(_shortcutCategories[category], category == _shortcutActiveCategory);
 
-           var saveSettings = GuiButton(new Rectangle(categoryRect.X, height - 125, 200, 40), "Save Settings");
-           var resetSettings = GuiButton(new Rectangle(categoryRect.X, height - 80, 200, 40), "Reset Settings");
+                    if (selected && !_assigningShortcut) _shortcutActiveCategory = category;
+                }
+                ImGui.EndListBox();
+            }
 
+            var resetSelected = ImGui.Button("Reset Shortcuts", col1Space with { Y = 20 });
+            var saveSelected = ImGui.Button("Save Shortcuts", col1Space with { Y = 20 });
 
-           if (saveSettings)
-           {
-               _assigningShortcut = false;
-               _shortcutToAssign = null;
-               _mouseShortcutToAssign = null;
+            if (resetSelected)
+            {
+                _assigningShortcut = false;
+                _shortcutToAssign = null;
+                _mouseShortcutToAssign = null;
                
-               try
-               {
+                GLOBALS.Settings = new Settings(
+                    new GeneralSettings(),
+                    new Shortcuts(
+                        new GlobalShortcuts(),
+                        new GeoShortcuts(),
+                        new ExperimentalGeoShortcuts(),
+                        new TileShortcuts(),
+                        new CameraShortcuts(),
+                        new LightShortcuts(),
+                        new EffectsShortcuts(),
+                        new PropsShortcuts()
+                    ),
+                    new Misc(splashScreen:false, tileImageScansPerFrame: 100),
+                    new GeoEditor(
+                        new LayerColors(
+                            layer1: new ConColor(0, 0, 0, 255),
+                            layer2: new ConColor(0, 255, 0, 50),
+                            layer3: new ConColor(255, 0, 0, 50)
+                        ),
+                        new ConColor(0, 0, 255, 70)
+                    ),
+                    new TileEditor(),
+                    new LightEditor(background: new ConColor(66, 108, 245, 255)),
+                    new EffectsSettings(
+                        effectColorLight:GREEN,
+                        effectColorDark:new(214, 187, 9, 255)),
+                    new PropEditor(),
+                    new Experimental()
+                );
+            }
+
+            if (saveSelected)
+            {
+                _assigningShortcut = false;
+                _shortcutToAssign = null;
+                _mouseShortcutToAssign = null;
+               
+                try
+                {
                     File.WriteAllText(
                         GLOBALS.Paths.SettingsPath, 
                         JsonSerializer.Serialize(GLOBALS.Settings, GLOBALS.JsonSerializerOptions)
-                        );
-               }
-               catch (Exception e)
-               {
-                   _logger.Error($"Failed to save settings: {e}");
-               }
-           }
-           
-           if (resetSettings)
-           {
-               _assigningShortcut = false;
-               _shortcutToAssign = null;
-               _mouseShortcutToAssign = null;
-               
-               GLOBALS.Settings = new Settings(
-                   new GeneralSettings(),
-                   new Shortcuts(
-                       new GlobalShortcuts(),
-                       new GeoShortcuts(),
-                       new ExperimentalGeoShortcuts(),
-                       new TileShortcuts(),
-                       new CameraShortcuts(),
-                       new LightShortcuts(),
-                       new EffectsShortcuts(),
-                       new PropsShortcuts()
-                   ),
-                   new Misc(splashScreen:false, tileImageScansPerFrame: 100),
-                   new GeoEditor(
-                       new LayerColors(
-                           layer1: new ConColor(0, 0, 0, 255),
-                           layer2: new ConColor(0, 255, 0, 50),
-                           layer3: new ConColor(255, 0, 0, 50)
-                       ),
-                       new ConColor(0, 0, 255, 70)
-                   ),
-                   new TileEditor(),
-                   new LightEditor(background: new ConColor(66, 108, 245, 255)),
-                   new EffectsSettings(
-                       effectColorLight:GREEN,
-                       effectColorDark:new(214, 187, 9, 255)),
-                   new PropEditor(),
-                   new Experimental()
-               );
-           }
-        }
-
-        switch (_activeCategory)
-        {
-            case 0: // General
-            {
-                GLOBALS.Settings.GeneralSettings.DefaultFont = GuiCheckBox(
-                    new Rectangle(subPanelX, categoryRect.Y, 20, 20), 
-                    "Default Font", 
-                    GLOBALS.Settings.GeneralSettings.DefaultFont
-                );
-
-                GLOBALS.Settings.GeneralSettings.GlobalCamera = GuiCheckBox(
-                    new Rectangle(subPanelX, categoryRect.Y + 25, 20, 20),
-                    "Global Camera",
-                    GLOBALS.Settings.GeneralSettings.GlobalCamera
-                );
-
-                GLOBALS.Settings.GeneralSettings.ShortcutWindow = GuiCheckBox(
-                    new Rectangle(subPanelX, categoryRect.Y + 50, 20, 20),
-                    "Shortcuts Window",
-                    GLOBALS.Settings.GeneralSettings.ShortcutWindow);
-
-                GLOBALS.Settings.GeneralSettings.DarkTheme = GuiCheckBox(
-                    new Rectangle(subPanelX, categoryRect.Y + 75, 20, 20),
-                    "Dark Theme",
-                    GLOBALS.Settings.GeneralSettings.DarkTheme);
+                    );
+                }
+                catch (Exception e)
+                {
+                    _logger.Error($"Failed to save settings: {e}");
+                }
             }
-                break;
-            case 1: // Geometry Editor
-                DrawText(
-                    "Layer Colors", 
-                    subPanelX, 
-                    categoryRect.y, 
-                    30, 
-                    BLACK
-                );
-                
-                DrawRectangleV(
-                    new(subPanelX, subPanelY),
-                    new(300, 300), 
-                    _geoBackgroundColor
-                );
-                
-                DrawRectangleV(
-                    new(subPanelX + 20, subPanelY + 120),
-                    new(150, 150),
-                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer1
-                );
-                
-                DrawRectangleV(
-                    new(subPanelX + 70, subPanelY + 70),
-                    new(150, 150),
-                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer2
-                );
-                
-                DrawRectangleV(
-                    new(subPanelX + 120, subPanelY + 20),
-                    new(150, 150),
-                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer3
-                );
+            
+            //
+            ImGui.NextColumn();
+            //
 
-                unsafe
-                {
-                    fixed (byte* title = _geoColorPickerTitle)
-                    {
-                        var newColor = GuiColorPicker(
-                            new Rectangle(subPanelX + 320, subPanelY, 300, 300), 
-                            (sbyte*)title,
-                            _colorPickerLayer switch
-                            {
-                                0 => GLOBALS.Settings.GeometryEditor.LayerColors.Layer1,
-                                1 => GLOBALS.Settings.GeometryEditor.LayerColors.Layer2,
-                                2 => GLOBALS.Settings.GeometryEditor.LayerColors.Layer3,
-                                _ => throw new Exception($"Invalid _colorPickerLayer value \"{_colorPickerLayer}\"")
-                            }
-                        );
+            var col2Space = ImGui.GetContentRegionAvail();
 
-                        switch (_colorPickerLayer)
-                        {
-                            case 0: 
-                                GLOBALS.Settings.GeometryEditor.LayerColors.Layer1 = newColor;
-                                break;
-                            case 1:
-                                GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 = newColor;
-                                break;
-                            case 2:
-                                GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 = newColor;
-                                break;
-                        }
-                    }
-                }
-
-                if(GuiCheckBox(
-                    new(subPanelX + 680, subPanelY, 20, 20), 
-                    "Layer 3", 
-                    _colorPickerLayer == 2
-                )) _colorPickerLayer = 2;
-                
-                if (GuiCheckBox(
-                    new(subPanelX + 680, subPanelY + 25, 20, 20), 
-                    "Layer 2", 
-                    _colorPickerLayer == 1
-                )) _colorPickerLayer = 1;
-                
-                if (GuiCheckBox(
-                    new(subPanelX + 680, subPanelY + 50, 20, 20), 
-                    "Layer 1", 
-                    _colorPickerLayer == 0
-                )) _colorPickerLayer = 0;
-
-                if (GuiButton(new(subPanelX + 680, subPanelY + 100, 100, 50), "Reset"))
-                {
-                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer1 = new();
-                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 = new(G: 255, A: 50);
-                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 = new(R: 255, A: 50);
-                }
-                
-                DrawText("Tools", subPanelX, subPanelY + 330, 30, BLACK);
-
-                GLOBALS.Settings.GeometryEditor.LegacyGeoTools = GuiCheckBox(
-                    new(subPanelX, subPanelY + 380, 20, 20), 
-                    "Legacy tools",
-                    GLOBALS.Settings.GeometryEditor.LegacyGeoTools
-                );
-
-                GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement = GuiCheckBox(
-                    new (subPanelX, subPanelY + 410, 20, 20),
-                    "Allow placing out of bounds",
-                    GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement
-                );
-                
-                GLOBALS.Settings.GeometryEditor.ShowCurrentGeoIndicator = GuiCheckBox(
-                    new (subPanelX, subPanelY + 440, 20, 20),
-                    "Currently Selected Tile Indicator",
-                    GLOBALS.Settings.GeometryEditor.ShowCurrentGeoIndicator
-                );
-                
-                GLOBALS.Settings.GeometryEditor.LegacyInterface = GuiCheckBox(
-                    new (subPanelX, subPanelY + 470, 20, 20),
-                    "Legacy Interface",
-                    GLOBALS.Settings.GeometryEditor.LegacyInterface
-                );
-                
-                break;
-            case 2: // Tile Editor
-                DrawText("Colors", subPanelX, subPanelY, 30, BLACK);
-
-                DrawRectangle(
-                    subPanelX,
-                    subPanelY + 50,
-                    (int)panelRect.width - subPanelX - 5,
-                    300,
-                    GRAY
-                );
-
-                const float scaleConst = 0.4f;
-
-                #region ExampleTiles
-
-                if (GLOBALS.Settings.TileEditor.UseTextures)
-                {
-                    {
-                        // Draw the first example tile
-                        ref var init1 = ref _previewTiles[0];
-
-                        var center1 = new Vector2(
-                            subPanelX + 100,
-                            subPanelY + 200
-                        );
-
-                        var layerHeight1 = (init1.Size.Item2 + (init1.BufferTiles * 2)) * GLOBALS.Scale;
-                        var textureCutWidth1 = (init1.Size.Item1 + (init1.BufferTiles * 2)) * GLOBALS.Scale;
-
-                        var width1 = scaleConst * textureCutWidth1;
-                        var height1 = scaleConst * layerHeight1;
-
-                        if (GLOBALS.Settings.TileEditor.TintedTiles)
-                        {
-                            Printers.DrawTileAsPropColored(
-                                ref _previewTileTextures[0],
-                                ref _previewTiles[0],
-                                ref center1,
-                                [
-                                    new(width1, -height1),
-                                    new(-width1, -height1),
-                                    new(-width1, height1),
-                                    new(width1, height1),
-                                    new(width1, -height1)
-                                ],
-                                _previewTileColors[0]
-                            );
-                        }
-                        else
-                        {
-                            Printers.DrawTileAsProp(
-                                ref _previewTileTextures[0],
-                                ref _previewTiles[0],
-                                ref center1,
-                                [
-                                    new(width1, -height1),
-                                    new(-width1, -height1),
-                                    new(-width1, height1),
-                                    new(width1, height1),
-                                    new(width1, -height1)
-                                ]
-                            );
-                        }
-
-                        
-                    }
-
-                    {
-                        // Draw the second example tile
-                        ref var init2 = ref _previewTiles[1];
-
-                        var center2 = new Vector2(
-                            subPanelX + 230,
-                            subPanelY + 200
-                        );
-
-                        var layerHeight2 = (init2.Size.Item2 + (init2.BufferTiles * 2)) * GLOBALS.Scale;
-                        var textureCutWidth2 = (init2.Size.Item1 + (init2.BufferTiles * 2)) * GLOBALS.Scale;
-
-                        var width2 = scaleConst * textureCutWidth2;
-                        var height2 = scaleConst * layerHeight2;
-
-                        if (GLOBALS.Settings.TileEditor.TintedTiles)
-                        {
-                            Printers.DrawTileAsPropColored(
-                                ref _previewTileTextures[1],
-                                ref _previewTiles[1],
-                                ref center2,
-                                [
-                                    new(width2, -height2),
-                                    new(-width2, -height2),
-                                    new(-width2, height2),
-                                    new(width2, height2),
-                                    new(width2, -height2)
-                                ],
-                                _previewTileColors[1]
-                            );
-                        }
-                        else
-                        {
-                            Printers.DrawTileAsProp(
-                                ref _previewTileTextures[1],
-                                ref _previewTiles[1],
-                                ref center2,
-                                [
-                                    new(width2, -height2),
-                                    new(-width2, -height2),
-                                    new(-width2, height2),
-                                    new(width2, height2),
-                                    new(width2, -height2)
-                                ]
-                            );
-                        }
-
-                        
-                    }
-
-                    {
-                        // Draw the third example tile
-                        ref var init3 = ref _previewTiles[2];
-
-                        var center3 = new Vector2(
-                            subPanelX + 500,
-                            subPanelY + 200
-                        );
-
-                        var layerHeight3 = (init3.Size.Item2 + (init3.BufferTiles * 2)) * GLOBALS.Scale;
-                        var textureCutWidth3 = (init3.Size.Item1 + (init3.BufferTiles * 2)) * GLOBALS.Scale;
-
-                        var width3 = scaleConst * textureCutWidth3;
-                        var height3 = scaleConst * layerHeight3;
-
-                        if (GLOBALS.Settings.TileEditor.TintedTiles)
-                        {
-                            Printers.DrawTileAsPropColored(
-                                ref _previewTileTextures[2],
-                                ref _previewTiles[2],
-                                ref center3,
-                                [
-                                    new(width3, -height3),
-                                    new(-width3, -height3),
-                                    new(-width3, height3),
-                                    new(width3, height3),
-                                    new(width3, -height3)
-                                ],
-                                _previewTileColors[2]
-                            );
-                        }
-                        else
-                        {
-                            Printers.DrawTileAsProp(
-                                ref _previewTileTextures[2],
-                                ref _previewTiles[2],
-                                ref center3,
-                                [
-                                    new(width3, -height3),
-                                    new(-width3, -height3),
-                                    new(-width3, height3),
-                                    new(width3, height3),
-                                    new(width3, -height3)
-                                ]
-                            );
-                        }
-
-                        
-                    }
-
-                    {
-                        // Draw the fourth example tile
-                        ref var init4 = ref _previewTiles[3];
-
-                        var center4 = new Vector2(
-                            subPanelX + 750,
-                            subPanelY + 200
-                        );
-
-                        var layerHeight4 = (init4.Size.Item2 + (init4.BufferTiles * 2)) * GLOBALS.Scale;
-                        var textureCutWidth4 = (init4.Size.Item1 + (init4.BufferTiles * 2)) * GLOBALS.Scale;
-
-                        var width4 = scaleConst * textureCutWidth4;
-                        var height4 = scaleConst * layerHeight4;
-
-                        if (GLOBALS.Settings.TileEditor.TintedTiles)
-                        {
-                            Printers.DrawTileAsPropColored(
-                                ref _previewTileTextures[3],
-                                ref _previewTiles[3],
-                                ref center4,
-                                [
-                                    new(width4, -height4),
-                                    new(-width4, -height4),
-                                    new(-width4, height4),
-                                    new(width4, height4),
-                                    new(width4, -height4)
-                                ],
-                                _previewTileColors[3]
-                            );
-                        }
-                        else
-                        {
-                            Printers.DrawTileAsProp(
-                                ref _previewTileTextures[3],
-                                ref _previewTiles[3],
-                                ref center4,
-                                [
-                                    new(width4, -height4),
-                                    new(-width4, -height4),
-                                    new(-width4, height4),
-                                    new(width4, height4),
-                                    new(width4, -height4)
-                                ]
-                            );
-                        }
-                    }
-
-                    {
-                        // Draw the fifth example tile
-
-                        ref var init5 = ref _previewTiles[4];
-
-                        var center5 = new Vector2(
-                            subPanelX + 850,
-                            subPanelY + 200
-                        );
-
-                        var layerHeight5 = (init5.Size.Item2 + (init5.BufferTiles * 2)) * GLOBALS.Scale;
-                        var textureCutWidth5 = (init5.Size.Item1 + (init5.BufferTiles * 2)) * GLOBALS.Scale;
-
-                        var width5 = scaleConst * textureCutWidth5;
-                        var height5 = scaleConst * layerHeight5;
-
-                        if (GLOBALS.Settings.TileEditor.TintedTiles)
-                        {
-                            Printers.DrawTileAsPropColored(
-                                ref _previewTileTextures[4],
-                                ref init5,
-                                ref center5,
-                                [
-                                    new(width5, -height5),
-                                    new(-width5, -height5),
-                                    new(-width5, height5),
-                                    new(width5, height5),
-                                    new(width5, -height5)
-                                ],
-                                _previewTileColors[4]
-                            );
-                        }
-                        else
-                        {
-                            Printers.DrawTileAsProp(
-                                ref _previewTileTextures[4],
-                                ref init5,
-                                ref center5,
-                                [
-                                    new(width5, -height5),
-                                    new(-width5, -height5),
-                                    new(-width5, height5),
-                                    new(width5, height5),
-                                    new(width5, -height5)
-                                ]
-                            );
-                        }
-                    }
-
-                    {
-                        // Draw the sixth example tile
-                        ref var init6 = ref _previewTiles[5];
-
-                        var center6 = new Vector2(
-                            subPanelX + 950,
-                            subPanelY + 200
-                        );
-
-                        var layerHeight6 = (init6.Size.Item2 + (init6.BufferTiles * 2)) * GLOBALS.Scale;
-                        var textureCutWidth6 = (init6.Size.Item1 + (init6.BufferTiles * 2)) * GLOBALS.Scale;
-
-                        var width6 = scaleConst * textureCutWidth6;
-                        var height6 = scaleConst * layerHeight6;
-
-                        if (GLOBALS.Settings.TileEditor.TintedTiles)
-                        {
-                            Printers.DrawTileAsPropColored(
-                                ref _previewTileTextures[5],
-                                ref init6,
-                                ref center6,
-                                [
-                                    new(width6, -height6),
-                                    new(-width6, -height6),
-                                    new(-width6, height6),
-                                    new(width6, height6),
-                                    new(width6, -height6)
-                                ],
-                                _previewTileColors[5]
-                            );
-                        }
-                        else
-                        {
-                            Printers.DrawTileAsProp(
-                                ref _previewTileTextures[5],
-                                ref init6,
-                                ref center6,
-                                [
-                                    new(width6, -height6),
-                                    new(-width6, -height6),
-                                    new(-width6, height6),
-                                    new(width6, height6),
-                                    new(width6, -height6)
-                                ]
-                            );
-                        }
-                    }
-                }
-                else
-                {
-                    Printers.DrawTilePreview(
-                        ref _previewTiles[0], 
-                        ref _previewTileTextures[0], 
-                        ref _previewTileColors[0], 
-                        (21, 19)
-                    );
-                    
-                    Printers.DrawTilePreview(
-                        ref _previewTiles[1], 
-                        ref _previewTileTextures[1], 
-                        ref _previewTileColors[1], 
-                        (28, 19)
-                    );
-                    
-                    Printers.DrawTilePreview(
-                        ref _previewTiles[2], 
-                        ref _previewTileTextures[2], 
-                        ref _previewTileColors[2], 
-                        (45, 19)
-                    );
-                    
-                    Printers.DrawTilePreview(
-                        ref _previewTiles[3], 
-                        ref _previewTileTextures[3], 
-                        ref _previewTileColors[3], 
-                        (61, 20)
-                    );
-                    
-                    Printers.DrawTilePreview(
-                        ref _previewTiles[4], 
-                        ref _previewTileTextures[4], 
-                        ref _previewTileColors[4], 
-                        (67, 20)
-                    );
-                    
-                    Printers.DrawTilePreview(
-                        ref _previewTiles[5], 
-                        ref _previewTileTextures[5], 
-                        ref _previewTileColors[5], 
-                        (74, 20)
-                    );
-                }
-
-                #endregion
-
-                GLOBALS.Settings.TileEditor.UseTextures = GuiToggle(
-                    new(subPanelX, subPanelY + 400, 200, 50), 
-                    GLOBALS.Settings.TileEditor.UseTextures 
-                        ? "Texture" 
-                        : "Preview", 
-                    GLOBALS.Settings.TileEditor.UseTextures
-                );
-                
-                GLOBALS.Settings.TileEditor.TintedTiles = GuiToggle(
-                    new(subPanelX + 250, subPanelY + 400, 200, 50), 
-                    GLOBALS.Settings.TileEditor.TintedTiles 
-                        ? "Tinted" 
-                        : "Original", 
-                    GLOBALS.Settings.TileEditor.TintedTiles
-                );
-
-                GLOBALS.Settings.TileEditor.AllowUndefinedTiles = GuiCheckBox(
-                    new Rectangle(subPanelX, subPanelY + 460, 20, 20),
-                    "Allow Undefined Tiles",
-                    GLOBALS.Settings.TileEditor.AllowUndefinedTiles
-                );
-                
-                break;
-            case 3: // Cameras Editor
-                break;
-            case 4: // Light Editor
-                break;
-            case 5: // Effects Editor
-                break;
-            case 6: // Props Editor
-                break;
-            case 7: // Miscellaneous
-                break;
-            case 8: // Shortcuts
+            if (ImGui.BeginChild("##ShortcutsPanel", col2Space))
             {
-                GuiLine(new Rectangle(250, 60, 160, 30), "Editor Shortcuts");
-                
-                unsafe
-                {
-                    fixed (int* scrollIndex = &_shortcutCategoryScrollIndex)
-                    {
-                        var newShortcutActiveCategory = GuiListView(
-                            new Rectangle(250, 91, 160, height - 200),
-                            "Global;Old Geometry Editor;New Geometry Editor;Tile Editor;Cameras Editor;Light Editor;Effects Editor;Props Editor",
-                            scrollIndex,
-                            _shortcutActiveCategory
-                        );
-
-                        if (!_assigningShortcut) _shortcutActiveCategory = newShortcutActiveCategory;
-                    }
-                }
-
-                var resetShortcuts = GuiButton(new Rectangle(250, height - 80, 160, 40), "Reset Shortcuts");
-
                 switch (_shortcutActiveCategory)
                 {
-                    case 0: // Global
+                    case 0: // global
                     {
-                        if (resetShortcuts)
+                        if (resetSelected)
                         {
                             _assigningShortcut = false;
                             _shortcutToAssign = null;
@@ -760,73 +198,23 @@ public class SettingsPage : IPage
                             GLOBALS.Settings.Shortcuts.GlobalShortcuts = new GlobalShortcuts();
                         }
                         
-                        unsafe
-                        {
-                            fixed (byte* pl = _shortcutCategoryScrollPanelTitle)
-                            {
-                                fixed (Vector2* sv = &_shortcutsGlobalScrollPanelScroll)
-                                {
-                                    GuiScrollPanel(
-                                        shortcutsScrollPanelRect, 
-                                        (sbyte*)pl, 
-                                        new Rectangle(), 
-                                        sv
-                                    );
-                                }
-                            }
-                        }
+                        ImGui.SeparatorText("Navigation");
                         
-                        
-                        GuiLabel(new Rectangle(430, 150, 100, 40), "Main Screen");
-                        var assignToMainPage = GuiButton(new Rectangle(540, 150, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage}");
-                        
-                        GuiLabel(new Rectangle(430, 195, 100, 40), "Geometry Editor");
-                        var assignToGeometryEditor = GuiButton(new Rectangle(540, 195, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor}"); 
-                        
-                        GuiLabel(new Rectangle(430, 240, 100, 40), "Tiles Editor");
-                        var assignToTileEditor = GuiButton(new Rectangle(540, 240, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor}"); 
-                        
-                        GuiLabel(new Rectangle(430, 285, 100, 40), "Cameras Editor");
-                        var assignToCamerasEditor = GuiButton(new Rectangle(540, 285, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor}");
-                        
-                        GuiLabel(new Rectangle(430, 330, 100, 40), "Light Editor");
-                        var assignToLightEditor = GuiButton(new Rectangle(540, 330, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor}"); 
-                        
-                        GuiLabel(new Rectangle(430, 375, 100, 40), "Dimensions Editor");
-                        var assignToDimensionsEditor = GuiButton(new Rectangle(540, 375, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor}");
-                        
-                        GuiLabel(new Rectangle(430, 420, 100, 40), "Effects Editor");
-                        var assignToEffectsEditor = GuiButton(new Rectangle(540, 420, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor}");
-                        
-                        GuiLabel(new Rectangle(430, 465, 100, 40), "Props Editor");
-                        var assignToPropsEditor = GuiButton(new Rectangle(540, 465, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor}");
-                        
-                        
-                        GuiLabel(new Rectangle(430, 510, 100, 40), "Settings");
-                        var assignToSettings = GuiButton(new Rectangle(540, 510, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage}");
-                        
+                        var assignToMainPage = ImGui.Button($"Main Page: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage}");
+                        var assignToGeometryEditor = ImGui.Button($"Geometry: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor}"); 
+                        var assignToTileEditor = ImGui.Button($"Tiles: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor}"); 
+                        var assignToCamerasEditor = ImGui.Button($"Cameras: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor}");
+                        var assignToLightEditor = ImGui.Button($"Light: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor}"); 
+                        var assignToDimensionsEditor = ImGui.Button($"Dimensions: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor}");
+                        var assignToEffectsEditor = ImGui.Button($"Effects: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor}");
+                        var assignToPropsEditor = ImGui.Button($"Props: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor}");
+                        var assignToSettings = ImGui.Button($"Shortcuts: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage}");
 
-
-                        GuiLabel(new Rectangle(430, 555, 100, 40), "Save");
-                        var assignSave = GuiButton(new Rectangle(540, 555, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave}");
-
-                        GuiLabel(new Rectangle(430, 600, 100, 40), "Save As");
-                        var assignSaveAs = GuiButton(new Rectangle(540, 600, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSaveAs}");
-
-                        GuiLabel(new Rectangle(430, 645, 100, 40), "Render");
-                        var assignRender = GuiButton(new Rectangle(540, 645, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GlobalShortcuts.Render}");
+                        ImGui.SeparatorText("Quick Actions");
+                        
+                        var assignSave = ImGui.Button($"Save: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave}");
+                        var assignSaveAs = ImGui.Button($"Save As:{GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSaveAs}");
+                        var assignRender = ImGui.Button($"Render: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.Render}");
 
                         if (assignToMainPage) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage;
                         if (assignToGeometryEditor) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor;
@@ -841,11 +229,11 @@ public class SettingsPage : IPage
                         if (assignSaveAs) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSaveAs;
                         if (assignRender) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.Render;
                     }
-                    break;
-                    
-                    case 1: // Old Geometry
+                        break;
+
+                    case 1: // old geometry
                     {
-                        if (resetShortcuts)
+                        if (resetSelected)
                         {
                             _assigningShortcut = false;
                             _shortcutToAssign = null;
@@ -854,91 +242,35 @@ public class SettingsPage : IPage
                             GLOBALS.Settings.Shortcuts.GeoEditor = new GeoShortcuts();
                         }
                         
-                        unsafe
-                        {
-                            fixed (byte* pl = _shortcutCategoryScrollPanelTitle)
-                            {
-                                fixed (Vector2* sv = &_shortcutsOldGeoScrollPanelScroll)
-                                {
-                                    GuiScrollPanel(
-                                        shortcutsScrollPanelRect, 
-                                        (sbyte*)pl, 
-                                        new Rectangle(), 
-                                        sv
-                                    );
-                                }
-                            }
-                        }
+                        ImGui.SeparatorText("Tools Menu");
                         
-                        GuiGroupBox(
-                            new Rectangle(430, 130, shortcutsScrollPanelRect.width/2f - 10, 210), 
-                            "Tools Menu"
-                        );
-                        
-                        GuiLabel(new Rectangle(440, 150, 100, 40), "Move to left");
-                        GuiLabel(new Rectangle(440, 195, 100, 40), "Move to top");
-                        GuiLabel(new Rectangle(440, 240, 100, 40), "Move to right");
-                        GuiLabel(new Rectangle(440, 285, 100, 40), "Move to bottom");
-                        
-                        var assignToLeftGeo = GuiButton(new Rectangle(550, 150, 200, 40), $"{GLOBALS.Settings.Shortcuts.GeoEditor.ToLeftGeo}");
-                        var assignToTopGeo =GuiButton(new Rectangle(550, 195, 200, 40), $"{GLOBALS.Settings.Shortcuts.GeoEditor.ToTopGeo}");
-                        var assignToRightGeo = GuiButton(new Rectangle(550, 240, 200, 40), $"{GLOBALS.Settings.Shortcuts.GeoEditor.ToRightGeo}");
-                        var assignToBottomGeo = GuiButton(new Rectangle(550, 285, 200, 40), $"{GLOBALS.Settings.Shortcuts.GeoEditor.ToBottomGeo}");
+                        var assignToLeftGeo = ImGui.Button($"To Left Geo: {GLOBALS.Settings.Shortcuts.GeoEditor.ToLeftGeo}");
+                        var assignToTopGeo = ImGui.Button($"To Top Geo: {GLOBALS.Settings.Shortcuts.GeoEditor.ToTopGeo}");
+                        var assignToRightGeo = ImGui.Button($"To Right Geo: {GLOBALS.Settings.Shortcuts.GeoEditor.ToRightGeo}");
+                        var assignToBottomGeo = ImGui.Button($"To Bottom Geo: {GLOBALS.Settings.Shortcuts.GeoEditor.ToBottomGeo}");
 
                         if (assignToLeftGeo) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GeoEditor.ToLeftGeo;
                         if (assignToTopGeo) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GeoEditor.ToTopGeo;
                         if (assignToRightGeo) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GeoEditor.ToRightGeo;
                         if (assignToBottomGeo) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GeoEditor.ToBottomGeo;
                         
-                        //
-
-                        var mouseShortcutsOffset = 430 + shortcutsScrollPanelRect.width / 2f;
+                        ImGui.SeparatorText("Mouse Shortcuts");
                         
-                        GuiGroupBox(
-                            new Rectangle(mouseShortcutsOffset, 130, shortcutsScrollPanelRect.width/2f - 20, 210), 
-                            "Mouse Shortcuts"
-                        );
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 150, 100, 40), "Draw");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 195, 100, 40), "Level Pan");
-
-                        var assignDraw = GuiButton(new Rectangle(mouseShortcutsOffset+110, 150, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GeoEditor.Draw}");
-                        var assignPan = GuiButton(new Rectangle(mouseShortcutsOffset+110, 195, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GeoEditor.DragLevel}");
+                        var assignDraw = ImGui.Button($"Draw: {GLOBALS.Settings.Shortcuts.GeoEditor.Draw}");
+                        var assignPan = ImGui.Button($"Drag: {GLOBALS.Settings.Shortcuts.GeoEditor.DragLevel}");
 
                         if (assignDraw) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.GeoEditor.Draw;
                         if (assignPan) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.GeoEditor.DragLevel;
                         
-                        //
+                        ImGui.Separator();
                         
-                        GuiLabel(new Rectangle(430, 350, 100, 40), "Cycle Layers");
-                        var assignCycleLayers = GuiButton(new Rectangle(540, 350, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GeoEditor.CycleLayers}");
-                        
-                        GuiLabel(new Rectangle(430, 395, 100, 40), "Toggle Grid");
-                        var assignToggleGrid = GuiButton(new Rectangle(540, 395, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GeoEditor.ToggleGrid}"); 
-                        
-                        GuiLabel(new Rectangle(430, 440, 100, 40), "Show/Hide Cameras");
-                        var assignToggleCameras = GuiButton(new Rectangle(540, 440, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GeoEditor.ShowCameras}"); 
-                        
-                        GuiLabel(new Rectangle(430, 485, 100, 40), "Undo");
-                        var assignUndo = GuiButton(new Rectangle(540, 485, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GeoEditor.Undo}");
-                        
-                        GuiLabel(new Rectangle(430, 530, 100, 40), "Redo");
-                        var assignRedo = GuiButton(new Rectangle(540, 530, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GeoEditor.Redo}"); 
-                        
-                        GuiLabel(new Rectangle(430, 575, 100, 40), "Draw");
-                        var assignAltDraw = GuiButton(new Rectangle(540, 575, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GeoEditor.AltDraw}");
-                        
-                        GuiLabel(new Rectangle(430, 620, 100, 40), "Level Pan");
-                        var assignAltPan = GuiButton(new Rectangle(540, 620, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GeoEditor.AltDrag}");
+                        var assignCycleLayers = ImGui.Button($"Cycle Layers: {GLOBALS.Settings.Shortcuts.GeoEditor.CycleLayers}");
+                        var assignToggleGrid = ImGui.Button($"Toggle Grid: {GLOBALS.Settings.Shortcuts.GeoEditor.ToggleGrid}"); 
+                        var assignToggleCameras = ImGui.Button($"Show/Hide Cameras: {GLOBALS.Settings.Shortcuts.GeoEditor.ShowCameras}"); 
+                        var assignUndo = ImGui.Button($"Undo: {GLOBALS.Settings.Shortcuts.GeoEditor.Undo}");
+                        var assignRedo = ImGui.Button($"Redo: {GLOBALS.Settings.Shortcuts.GeoEditor.Redo}"); 
+                        var assignAltDraw = ImGui.Button($"Draw: {GLOBALS.Settings.Shortcuts.GeoEditor.AltDraw}");
+                        var assignAltPan = ImGui.Button($"Pan: {GLOBALS.Settings.Shortcuts.GeoEditor.AltDrag}");
 
                         if (assignCycleLayers) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GeoEditor.CycleLayers;
                         if (assignToggleGrid) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GeoEditor.ToggleGrid;
@@ -949,9 +281,10 @@ public class SettingsPage : IPage
                         if (assignAltPan) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GeoEditor.AltDrag;
                     }
                         break;
-                    case 2: // New Geometry
+
+                    case 2: // new geometry
                     {
-                        if (resetShortcuts)
+                        if (resetSelected)
                         {
                             _assigningShortcut = false;
                             _shortcutToAssign = null;
@@ -960,119 +293,43 @@ public class SettingsPage : IPage
                             GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts = new ExperimentalGeoShortcuts();
                         }
                         
-                        unsafe
-                        {
-                            fixed (byte* pl = _shortcutCategoryScrollPanelTitle)
-                            {
-                                fixed (Vector2* sv = &_shortcutsNewGeoScrollPanelScroll)
-                                {
-                                    GuiScrollPanel(
-                                        shortcutsScrollPanelRect, 
-                                        (sbyte*)pl, 
-                                        new Rectangle(), 
-                                        sv
-                                    );
-                                }
-                            }
-                        }
+                        ImGui.SeparatorText("Tools Menu");
                         
-                        GuiGroupBox(
-                            new Rectangle(430, 130, shortcutsScrollPanelRect.width/2f - 10, 210), 
-                            "Tools Menu"
-                        );
-                        
-                        GuiLabel(new Rectangle(440, 150, 100, 40), "Move to left");
-                        GuiLabel(new Rectangle(440, 195, 100, 40), "Move to top");
-                        GuiLabel(new Rectangle(440, 240, 100, 40), "Move to right");
-                        GuiLabel(new Rectangle(440, 285, 100, 40), "Move to bottom");
-                        
-                        var assignToLeftGeo = GuiButton(new Rectangle(550, 150, 200, 40), $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToLeftGeo}");
-                        var assignToTopGeo =GuiButton(new Rectangle(550, 195, 200, 40), $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToTopGeo}");
-                        var assignToRightGeo = GuiButton(new Rectangle(550, 240, 200, 40), $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToRightGeo}");
-                        var assignToBottomGeo = GuiButton(new Rectangle(550, 285, 200, 40), $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToBottomGeo}");
+                        var assignToLeftGeo = ImGui.Button($"To Left Geo: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToLeftGeo}");
+                        var assignToTopGeo = ImGui.Button($"To Top Geo: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToTopGeo}");
+                        var assignToRightGeo = ImGui.Button($"To Right Geo: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToRightGeo}");
+                        var assignToBottomGeo = ImGui.Button($"To Bottom Geo: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToBottomGeo}");
 
                         if (assignToLeftGeo) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToLeftGeo;
                         if (assignToTopGeo) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToTopGeo;
                         if (assignToRightGeo) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToRightGeo;
                         if (assignToBottomGeo) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToBottomGeo;
                         
-                        //
-
-                        var mouseShortcutsOffset = 430 + shortcutsScrollPanelRect.width / 2f;
+                        ImGui.SeparatorText("Mouse Shortcuts");
                         
-                        GuiGroupBox(
-                            new Rectangle(mouseShortcutsOffset, 130, shortcutsScrollPanelRect.width/2f - 20, 210), 
-                            "Mouse Shortcuts"
-                        );
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 150, 100, 40), "Draw");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 195, 100, 40), "Level Pan");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 240, 100, 40), "Erase");
-
-                        var assignDraw = GuiButton(new Rectangle(mouseShortcutsOffset+110, 150, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.Draw}");
-                        var assignPan = GuiButton(new Rectangle(mouseShortcutsOffset+110, 195, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.DragLevel}");
-                        var assignErase = GuiButton(new Rectangle(mouseShortcutsOffset+110, 240, 200, 40), 
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.Erase}");
+                        var assignDraw = ImGui.Button($"Draw: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.Draw}");
+                        var assignPan = ImGui.Button($"Pan: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.DragLevel}");
+                        var assignErase = ImGui.Button($"Erase: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.Erase}");
 
                         if (assignDraw) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.Draw;
                         if (assignPan) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.DragLevel;
                         if (assignErase) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.Erase;
                         
-                        //
+                        ImGui.Separator();
                         
-                        GuiLabel(new Rectangle(430, 350, 100, 40), "Cycle Layers");
-                        var assignCycleLayers = GuiButton(new Rectangle(540, 350, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.CycleLayers}");
-                        
-                        GuiLabel(new Rectangle(430, 395, 100, 40), "Toggle Grid");
-                        var assignToggleGrid = GuiButton(new Rectangle(540, 395, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleGrid}"); 
-                        
-                        GuiLabel(new Rectangle(430, 440, 100, 40), "Show/Hide Cameras");
-                        var assignToggleCameras = GuiButton(new Rectangle(540, 440, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ShowCameras}"); 
-                        
-                        GuiLabel(new Rectangle(430, 485, 100, 40), "Undo");
-                        var assignUndo = GuiButton(new Rectangle(540, 485, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.Undo}");
-                        
-                        GuiLabel(new Rectangle(430, 530, 100, 40), "Redo");
-                        var assignRedo = GuiButton(new Rectangle(540, 530, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.Redo}"); 
-                        
-                        GuiLabel(new Rectangle(430, 575, 100, 40), "Draw");
-                        var assignAltDraw = GuiButton(new Rectangle(540, 575, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.AltDraw}");
-                        
-                        GuiLabel(new Rectangle(430, 620, 100, 40), "Level Pan");
-                        var assignAltPan = GuiButton(new Rectangle(540, 620, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.AltDragLevel}");
-                        
-                        GuiLabel(new Rectangle(430, 665, 100, 40), "Toggle Multi-select");
-                        var assignToggleMultiselect = GuiButton(new Rectangle(540, 665, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMultiSelect}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 350, 100, 40), "Erase Everything");
-                        var assignEraseEverything = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 350, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.EraseEverything}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 395, 100, 40), "Show/Hide Tiles");
-                        var assignToggleTileVisibility = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 395, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleTileVisibility}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 440, 100, 40), "Toggle Memory Load Mode");
-                        var assignToggleMemoryLoadMode = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 440, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMemoryLoadMode}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 485, 100, 40), "Toggle Memory Dump Mode");
-                        var assignToggleMemoryDumpMode = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 485, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMemoryDumbMode}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 530, 100, 40), "Erase");
-                        var assignAltErase = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 530, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.AltErase}");
+                        var assignCycleLayers = ImGui.Button($"Cycle Layers: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.CycleLayers}");
+                        var assignToggleGrid = ImGui.Button($"Show/Hide Grid: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleGrid}"); 
+                        var assignToggleCameras = ImGui.Button($"Show/Hide Cameras: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ShowCameras}"); 
+                        var assignUndo = ImGui.Button($"Undo: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.Undo}");
+                        var assignRedo = ImGui.Button($"Redo: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.Redo}"); 
+                        var assignAltDraw = ImGui.Button($"Draw: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.AltDraw}");
+                        var assignAltPan = ImGui.Button($"Pan: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.AltDragLevel}");
+                        var assignToggleMultiselect = ImGui.Button($"Toggle Multi-Select: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMultiSelect}");
+                        var assignEraseEverything = ImGui.Button($"Erase Everything (hold){GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.EraseEverything}");
+                        var assignToggleTileVisibility = ImGui.Button($"Show/Hide Tiles: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleTileVisibility}");
+                        var assignToggleMemoryLoadMode = ImGui.Button($"Toggle Copy: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMemoryLoadMode}");
+                        var assignToggleMemoryDumpMode = ImGui.Button($"Toggle Paste{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMemoryDumbMode}");
+                        var assignAltErase = ImGui.Button($"Erase: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.AltErase}");
 
                         if (assignCycleLayers) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.CycleLayers;
                         if (assignToggleGrid) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleGrid;
@@ -1089,31 +346,16 @@ public class SettingsPage : IPage
                         if (assignAltErase) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.AltErase;
                     }
                         break;
-                    case 3: // Tiles Editor
-                        {
-                        if (resetShortcuts)
+
+                    case 3: // tiles
+                    {
+                        if (resetSelected)
                         {
                             _assigningShortcut = false;
                             _shortcutToAssign = null;
                             _mouseShortcutToAssign = null;
 
                             GLOBALS.Settings.Shortcuts.TileEditor = new TileShortcuts();
-                        }
-                        
-                        unsafe
-                        {
-                            fixed (byte* pl = _shortcutCategoryScrollPanelTitle)
-                            {
-                                fixed (Vector2* sv = &_shortcutsTileScrollPanelScroll)
-                                {
-                                    GuiScrollPanel(
-                                        shortcutsScrollPanelRect, 
-                                        (sbyte*)pl, 
-                                        new Rectangle(), 
-                                        sv
-                                    );
-                                }
-                            }
                         }
                         
                         GuiGroupBox(
@@ -1140,104 +382,39 @@ public class SettingsPage : IPage
 
                         var mouseShortcutsOffset = 430 + shortcutsScrollPanelRect.width / 2f;
                         
-                        GuiGroupBox(
-                            new Rectangle(mouseShortcutsOffset, 130, shortcutsScrollPanelRect.width/2f - 20, 180), 
-                            "Mouse Shortcuts"
-                        );
+                        ImGui.SeparatorText("Mouse Shortcuts");
                         
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 150, 100, 30), "Draw");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 185, 100, 30), "Level Pan");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 220, 100, 30), "Erase");
-
-                        var assignDraw = GuiButton(new Rectangle(mouseShortcutsOffset+110, 150, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.Draw}");
-                        var assignPan = GuiButton(new Rectangle(mouseShortcutsOffset+110, 185, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.DragLevel}");
-                        var assignErase = GuiButton(new Rectangle(mouseShortcutsOffset+110, 220, 200, 30), 
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.Erase}");
+                        var assignDraw = ImGui.Button($"Draw: {GLOBALS.Settings.Shortcuts.TileEditor.Draw}");
+                        var assignPan = ImGui.Button($"Pan: {GLOBALS.Settings.Shortcuts.TileEditor.DragLevel}");
+                        var assignErase = ImGui.Button($"Erase: {GLOBALS.Settings.Shortcuts.TileEditor.Erase}");
 
                         if (assignDraw) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.Draw;
                         if (assignPan) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.DragLevel;
                         if (assignErase) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.Erase;
                         
                         //
+                        ImGui.SeparatorText("Keyboard Shortcuts");
+                        //
                         
-                        GuiLabel(new Rectangle(430, 320, 100, 30), "Cycle Layers");
-                        var assignCycleLayers = GuiButton(new Rectangle(610, 320, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.CycleLayers}");
-                        
-                        GuiLabel(new Rectangle(430, 355, 100, 30), "Pickup Item");
-                        var assignPickupItem = GuiButton(new Rectangle(610, 355, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.PickupItem}"); 
-                        
-                        GuiLabel(new Rectangle(430, 390, 100, 30), "Force-Place Tile With Geo");
-                        var assignForcePlaceTileWithGeo = GuiButton(new Rectangle(610, 390, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.ForcePlaceTileWithGeo}"); 
-                        
-                        GuiLabel(new Rectangle(430, 425, 100, 30), "Undo");
-                        var assignUndo = GuiButton(new Rectangle(610, 425, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.Undo}");
-                        
-                        GuiLabel(new Rectangle(430, 460, 100, 30), "Redo");
-                        var assignRedo = GuiButton(new Rectangle(610, 460, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.Redo}"); 
-                        
-                        GuiLabel(new Rectangle(430, 495, 100, 40), "Draw");
-                        var assignAltDraw = GuiButton(new Rectangle(610, 495, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.AltDraw}");
-                        
-                        GuiLabel(new Rectangle(430, 530, 100, 30), "Level Pan");
-                        var assignAltPan = GuiButton(new Rectangle(610, 530, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.AltDragLevel}");
-                        
-                        GuiLabel(new Rectangle(430, 565, 100, 30), "Force-Place Tile Without Geo");
-                        var assignForcePlaceTileWithoutGeo = GuiButton(new Rectangle(610, 565, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.ForcePlaceTileWithoutGeo}");
-                        
-                        GuiLabel(new Rectangle(430, 600, 100, 30), "Move to Next Category");
-                        var assignMoveToNextCategory = GuiButton(new Rectangle(610, 600, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.MoveToNextCategory}");
-                        
-                        GuiLabel(new Rectangle(430, 635, 100, 30), "Toggle Paths View");
-                        var assignTogglePathsView = GuiButton(new Rectangle(610, 635, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.TogglePathsView}");
-                        
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 320, 100, 30), "Tile/Material Switch");
-                        var assignTileMaterialSwitch = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 320, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.TileMaterialSwitch}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 355, 100, 30), "Toggle Hovered Item Info");
-                        var assignToggleHoveredItemInfo = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 355, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.HoveredItemInfo}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 390, 100, 30), "Show/Hide Layer 1");
-                        var assignToggleLayer1 = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 390, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer1}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 425, 100, 30), "Show/Hide Layer 2");
-                        var assignToggleLayer2 = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 425, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer2}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 460, 100, 30), "Show/Hide Layer 3");
-                        var assignToggleLayer3 = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 460, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer3}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 495, 100, 30), "Show/Hide Layer 1 Tiles");
-                        var assignToggleLayer1Tiles = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 495, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer1Tiles}");
-                            
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 530, 100, 30), "Show/Hide Layer 2 Tiles");
-                        var assignToggleLayer2Tiles = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 530, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer2Tiles}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 565, 100, 30), "Show/Hide Layer 3 Tiles");
-                        var assignToggleLayer3Tiles = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 565, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer3Tiles}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 600, 100, 30), "Move to Previous Category");
-                        var assignMoveToPreviousCategory = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 600, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.TileEditor.MoveToPreviousCategory}");
+                        var assignCycleLayers = ImGui.Button($"Cycle Layers: {GLOBALS.Settings.Shortcuts.TileEditor.CycleLayers}");
+                        var assignPickupItem = ImGui.Button($"Pickup Item: {GLOBALS.Settings.Shortcuts.TileEditor.PickupItem}"); 
+                        var assignForcePlaceTileWithGeo = ImGui.Button($"Place Tile With Geo: {GLOBALS.Settings.Shortcuts.TileEditor.ForcePlaceTileWithGeo}"); 
+                        var assignUndo = ImGui.Button($"Undo: {GLOBALS.Settings.Shortcuts.TileEditor.Undo}");
+                        var assignRedo = ImGui.Button($"Redo: {GLOBALS.Settings.Shortcuts.TileEditor.Redo}"); 
+                        var assignAltDraw = ImGui.Button($"Draw: {GLOBALS.Settings.Shortcuts.TileEditor.AltDraw}");
+                        var assignAltPan = ImGui.Button($"Pan: {GLOBALS.Settings.Shortcuts.TileEditor.AltDragLevel}");
+                        var assignForcePlaceTileWithoutGeo = ImGui.Button($"Place Without Geo{GLOBALS.Settings.Shortcuts.TileEditor.ForcePlaceTileWithoutGeo}");
+                        var assignMoveToNextCategory = ImGui.Button($"To Next Category: {GLOBALS.Settings.Shortcuts.TileEditor.MoveToNextCategory}");
+                        var assignTogglePathsView = ImGui.Button($"Show/Hide Paths: {GLOBALS.Settings.Shortcuts.TileEditor.TogglePathsView}");
+                        var assignTileMaterialSwitch = ImGui.Button($"Materials/Tiles Switch: {GLOBALS.Settings.Shortcuts.TileEditor.TileMaterialSwitch}");
+                        var assignToggleHoveredItemInfo = ImGui.Button($"Hovered Item Info: {GLOBALS.Settings.Shortcuts.TileEditor.HoveredItemInfo}");
+                        var assignToggleLayer1 = ImGui.Button($"Show/Hide Layer 1: {GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer1}");
+                        var assignToggleLayer2 = ImGui.Button($"Show/Hide Layer 2: {GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer2}");
+                        var assignToggleLayer3 = ImGui.Button($"Show/Hide Layer 3: {GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer3}");
+                        var assignToggleLayer1Tiles = ImGui.Button($"Show/Hide Layer 1 Tiles: {GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer1Tiles}");
+                        var assignToggleLayer2Tiles = ImGui.Button($"Show/Hide Layer 2 Tiles: {GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer2Tiles}");
+                        var assignToggleLayer3Tiles = ImGui.Button($"Show/Hide Layer 3 Tiles: {GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer3Tiles}");
+                        var assignMoveToPreviousCategory = ImGui.Button($"To Previous Category: {GLOBALS.Settings.Shortcuts.TileEditor.MoveToPreviousCategory}");
 
                         if (assignCycleLayers) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.CycleLayers;
                         if (assignPickupItem) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.PickupItem;
@@ -1260,9 +437,10 @@ public class SettingsPage : IPage
                         if (assignTogglePathsView) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.TogglePathsView;
                     }
                         break;
-                    case 4: // Cameras Editor
-                        {
-                        if (resetShortcuts)
+
+                    case 4: // cameras
+                    {
+                        if (resetSelected)
                         {
                             _assigningShortcut = false;
                             _shortcutToAssign = null;
@@ -1271,46 +449,12 @@ public class SettingsPage : IPage
                             GLOBALS.Settings.Shortcuts.CameraEditor = new CameraShortcuts();
                         }
                         
-                        unsafe
-                        {
-                            fixed (byte* pl = _shortcutCategoryScrollPanelTitle)
-                            {
-                                fixed (Vector2* sv = &_shortcutsCameraScrollPanelScroll)
-                                {
-                                    GuiScrollPanel(
-                                        shortcutsScrollPanelRect, 
-                                        (sbyte*)pl, 
-                                        new Rectangle(), 
-                                        sv
-                                    );
-                                }
-                            }
-                        }
+                        ImGui.SeparatorText("Mouse Shortcuts");
                         
-
-                        var mouseShortcutsOffset = 430 + shortcutsScrollPanelRect.width / 2f;
-                        
-                        GuiGroupBox(
-                            new Rectangle(mouseShortcutsOffset, 130, shortcutsScrollPanelRect.width/2f - 20, 210), 
-                            "Mouse Shortcuts"
-                        );
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 150, 100, 40), "Grab Camera");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 195, 100, 40), "Level Pan");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 240, 100, 40), "Create/Delete Camera");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 285, 100, 40), "Manipulate Camera");
-
-                        var assignGrabCamera = GuiButton(new Rectangle(mouseShortcutsOffset+140, 150, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.CameraEditor.GrabCamera}");
-                        
-                        var assignPan = GuiButton(new Rectangle(mouseShortcutsOffset+140, 195, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.CameraEditor.DragLevel}");
-                        
-                        var assignCreateAndDeleteCamera = GuiButton(new Rectangle(mouseShortcutsOffset+140, 240, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.CameraEditor.CreateAndDeleteCamera}");
-                        
-                        var assignManipulateCamera = GuiButton(new Rectangle(mouseShortcutsOffset+140, 285, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCamera}");
+                        var assignGrabCamera = ImGui.Button($"Grab Camera: {GLOBALS.Settings.Shortcuts.CameraEditor.GrabCamera}");
+                        var assignPan = ImGui.Button($"Pan: {GLOBALS.Settings.Shortcuts.CameraEditor.DragLevel}");
+                        var assignCreateAndDeleteCamera = ImGui.Button($"Create/Delete Camera: {GLOBALS.Settings.Shortcuts.CameraEditor.CreateAndDeleteCamera}");
+                        var assignManipulateCamera = ImGui.Button($"Manipulate Camera: {GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCamera}");
 
                         if (assignGrabCamera) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.CameraEditor.GrabCamera;
                         if (assignPan) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.CameraEditor.DragLevel;
@@ -1318,34 +462,14 @@ public class SettingsPage : IPage
                         if (assignManipulateCamera) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCamera;
                         
                         //
+                        ImGui.SeparatorText("Keyboard Shortcuts");
                         
-                        GuiLabel(new Rectangle(430, 350, 100, 40), "Manipulate Camera");
-                        var assignManipulateCameraKeyboard = GuiButton(new Rectangle(560, 350, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCameraAlt}");
-                        
-                        GuiLabel(new Rectangle(430, 395, 100, 40), "Level Pan");
-                        var assignPanKeyboard = GuiButton(new Rectangle(560, 395, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.CameraEditor.DragLevelAlt}"); 
-                        
-                        /*GuiLabel(new Rectangle(430, 440, 100, 40), "Show/Hide Cameras");
-                        var assignToggleCameras = GuiButton(new Rectangle(540, 440, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.GeoEditor.ShowCameras}"); */
-                        
-                        GuiLabel(new Rectangle(430, 485, 100, 40), "Grab Camera");
-                        var assignGrabCameraKeyboard = GuiButton(new Rectangle(560, 485, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.CameraEditor.GrabCameraAlt}");
-                        
-                        GuiLabel(new Rectangle(430, 530, 100, 40), "Create Camera");
-                        var assignCreateCamera = GuiButton(new Rectangle(560, 530, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.CameraEditor.CreateCamera}"); 
-                        
-                        GuiLabel(new Rectangle(430, 575, 100, 40), "Delete Camera");
-                        var assignDeleteCamera = GuiButton(new Rectangle(560, 575, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.CameraEditor.DeleteCamera}");
-                        
-                        GuiLabel(new Rectangle(430, 620, 100, 40), "Create/Delete Camera");
-                        var assignCreateAndDeleteCameraKeyboard = GuiButton(new Rectangle(560, 620, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.CameraEditor.CreateAndDeleteCameraAlt}");
+                        var assignManipulateCameraKeyboard = ImGui.Button($"Manipulate Camera: {GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCameraAlt}");
+                        var assignPanKeyboard = ImGui.Button($"Pan: {GLOBALS.Settings.Shortcuts.CameraEditor.DragLevelAlt}"); 
+                        var assignGrabCameraKeyboard = ImGui.Button($"Grab Camera: {GLOBALS.Settings.Shortcuts.CameraEditor.GrabCameraAlt}");
+                        var assignCreateCamera = ImGui.Button($"Create Camera: {GLOBALS.Settings.Shortcuts.CameraEditor.CreateCamera}"); 
+                        var assignDeleteCamera = ImGui.Button($"Delete Camera: {GLOBALS.Settings.Shortcuts.CameraEditor.DeleteCamera}");
+                        var assignCreateAndDeleteCameraKeyboard = ImGui.Button($"Create/Delete Camera: {GLOBALS.Settings.Shortcuts.CameraEditor.CreateAndDeleteCameraAlt}");
 
                         if (assignManipulateCameraKeyboard) _shortcutToAssign = GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCameraAlt;
                         if (assignPanKeyboard) _shortcutToAssign = GLOBALS.Settings.Shortcuts.CameraEditor.DragLevelAlt;
@@ -1355,9 +479,10 @@ public class SettingsPage : IPage
                         if (assignCreateAndDeleteCameraKeyboard) _shortcutToAssign = GLOBALS.Settings.Shortcuts.CameraEditor.CreateAndDeleteCameraAlt;
                     }
                         break;
-                    case 5: // Light Editor
-                        {
-                        if (resetShortcuts)
+
+                    case 5: // light
+                    {
+                        if (resetSelected)
                         {
                             _assigningShortcut = false;
                             _shortcutToAssign = null;
@@ -1366,159 +491,47 @@ public class SettingsPage : IPage
                             GLOBALS.Settings.Shortcuts.LightEditor = new LightShortcuts();
                         }
                         
-                        unsafe
-                        {
-                            fixed (byte* pl = _shortcutCategoryScrollPanelTitle)
-                            {
-                                fixed (Vector2* sv = &_shortcutsLightScrollPanelScroll)
-                                {
-                                    GuiScrollPanel(
-                                        shortcutsScrollPanelRect, 
-                                        (sbyte*)pl, 
-                                        new Rectangle(), 
-                                        sv
-                                    );
-                                }
-                            }
-                        }
+                        ImGui.SeparatorText("Mouse Shortcuts");
                         
-                        GuiGroupBox(
-                            new Rectangle(430, 130, shortcutsScrollPanelRect.width/2f - 10, 120), 
-                            "Brush Menu"
-                        );
-                        
-                        GuiLabel(new Rectangle(440, 150, 100, 40), "Next Brush");
-                        GuiLabel(new Rectangle(440, 195, 100, 40), "Previous Brush");
-                        // GuiLabel(new Rectangle(440, 240, 100, 40), "Move to right");
-                        // GuiLabel(new Rectangle(440, 285, 100, 40), "Move to bottom");
-                        
-                        var assignNextBrush = GuiButton(new Rectangle(550, 150, 200, 40), $"{GLOBALS.Settings.Shortcuts.LightEditor.NextBrush}");
-                        var assignPreviousBrush = GuiButton(new Rectangle(550, 195, 200, 40), $"{GLOBALS.Settings.Shortcuts.LightEditor.PreviousBrush}");
-                        // var assignToRightGeo = GuiButton(new Rectangle(550, 240, 200, 40), $"{GLOBALS.Settings.Shortcuts.GeoEditor.ToRightGeo}");
-                        // var assignToBottomGeo = GuiButton(new Rectangle(550, 285, 200, 40), $"{GLOBALS.Settings.Shortcuts.GeoEditor.ToBottomGeo}");
 
-                        if (assignNextBrush) _shortcutToAssign = GLOBALS.Settings.Shortcuts.LightEditor.NextBrush;
-                        if (assignPreviousBrush) _shortcutToAssign = GLOBALS.Settings.Shortcuts.LightEditor.PreviousBrush;
-                        // if (assignToRightGeo) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GeoEditor.ToRightGeo;
-                        // if (assignToBottomGeo) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GeoEditor.ToBottomGeo;
-                        
-                        //
-
-                        var mouseShortcutsOffset = 430 + shortcutsScrollPanelRect.width / 2f;
-                        
-                        GuiGroupBox(
-                            new Rectangle(mouseShortcutsOffset, 130, shortcutsScrollPanelRect.width/2f - 20, 210), 
-                            "Mouse Shortcuts"
-                        );
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 150, 100, 40), "Paint");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 195, 100, 40), "Level Pan");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 240, 100, 40), "Erase");
-
-                        var assignPaint = GuiButton(new Rectangle(mouseShortcutsOffset+110, 150, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.Paint}");
-                        
-                        var assignPan = GuiButton(new Rectangle(mouseShortcutsOffset+110, 195, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.DragLevel}");
-                        
-                        var assignErase = GuiButton(new Rectangle(mouseShortcutsOffset+110, 240, 200, 40),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.Erase}");
+                        var assignPaint = ImGui.Button($"Paint: {GLOBALS.Settings.Shortcuts.LightEditor.Paint}");
+                        var assignPan = ImGui.Button($"Pan: {GLOBALS.Settings.Shortcuts.LightEditor.DragLevel}");
+                        var assignErase = ImGui.Button($"Erase: {GLOBALS.Settings.Shortcuts.LightEditor.Erase}");
 
                         if (assignPaint) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.LightEditor.Paint;
                         if (assignPan) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.LightEditor.DragLevel;
                         if (assignErase) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.LightEditor.Erase;
                         
                         //
+                        ImGui.SeparatorText("Keyboard Shortcuts");
                         
-                        GuiLabel(new Rectangle(430, 265, 100, 30), "Paint");
-                        var assignPaintKeyboard = GuiButton(new Rectangle(580, 265, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.PaintAlt}");
+                        var assignPaintKeyboard = ImGui.Button($"Paint: {GLOBALS.Settings.Shortcuts.LightEditor.PaintAlt}");
+                        var assignPanKeyboard = ImGui.Button($"Pan: {GLOBALS.Settings.Shortcuts.LightEditor.DragLevelAlt}");
+                        var assignEraseKeyboard = ImGui.Button($"Erase: {GLOBALS.Settings.Shortcuts.LightEditor.EraseAlt}");
+                        var assignIncreaseFlatness = ImGui.Button($"Increase Flatness: {GLOBALS.Settings.Shortcuts.LightEditor.IncreaseFlatness}");
+                        var assignDecreaseFlatness = ImGui.Button($"Decrease Flatness: {GLOBALS.Settings.Shortcuts.LightEditor.DecreaseFlatness}"); 
+                        var assignIncreaseAngle = ImGui.Button($"Increase Angle: {GLOBALS.Settings.Shortcuts.LightEditor.IncreaseAngle}"); 
+                        var assignDecreaseAngle = ImGui.Button($"Decrease Angle: {GLOBALS.Settings.Shortcuts.LightEditor.DecreaseAngle}");
+                        var assignRotateBrushCcw = ImGui.Button($"Rotate Brush Counter-Clockwise: {GLOBALS.Settings.Shortcuts.LightEditor.RotateBrushCounterClockwise}"); 
+                        var assignRotateBrushCw = ImGui.Button($"Rotate Brush Clockwise: {GLOBALS.Settings.Shortcuts.LightEditor.RotateBrushClockwise}");
+                        var assignStretchBrushVertically = ImGui.Button($"Stretch Brush Vertically: {GLOBALS.Settings.Shortcuts.LightEditor.StretchBrushVertically}");
+                        var assignStretchBrushHorizontally = ImGui.Button($"Stretch Brush Horizontally: {GLOBALS.Settings.Shortcuts.LightEditor.StretchBrushHorizontally}");
+                        var assignSqueezeBrushVertically = ImGui.Button($"Squeeze Brush Vertically: {GLOBALS.Settings.Shortcuts.LightEditor.SqueezeBrushVertically}");
+                        var assignSqueezeBrushHorizontally = ImGui.Button($"Squeeze Brush Horizontally: {GLOBALS.Settings.Shortcuts.LightEditor.SqueezeBrushHorizontally}");
                         
-                        GuiLabel(new Rectangle(430, 300, 100, 30), "Level Pan");
-                        var assignPanKeyboard = GuiButton(new Rectangle(580, 300, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.DragLevelAlt}");
-                        
-                        GuiLabel(new Rectangle(430, 335, 100, 30), "Erase");
-                        var assignEraseKeyboard = GuiButton(new Rectangle(580, 335, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.EraseAlt}");
-                        
-                        GuiLabel(new Rectangle(430, 370, 100, 30), "Increase Flatness");
-                        var assignIncreaseFlatness = GuiButton(new Rectangle(580, 370, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.IncreaseFlatness}");
-                        
-                        GuiLabel(new Rectangle(430, 405, 100, 30), "Decrease Flatness");
-                        var assignDecreaseFlatness = GuiButton(new Rectangle(580, 405, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.DecreaseFlatness}"); 
-                        
-                        GuiLabel(new Rectangle(430, 440, 100, 30), "Increase Angle");
-                        var assignIncreaseAngle = GuiButton(new Rectangle(580, 440, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.IncreaseAngle}"); 
-                        
-                        GuiLabel(new Rectangle(430, 475, 100, 30), "Decrease Angle");
-                        var assignDecreaseAngle = GuiButton(new Rectangle(580, 475, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.DecreaseAngle}");
-                        
-                        GuiLabel(new Rectangle(430, 510, 100, 30), "Rotate Brush CCW");
-                        var assignRotateBrushCcw = GuiButton(new Rectangle(580, 510, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.RotateBrushCounterClockwise}"); 
-                        
-                        GuiLabel(new Rectangle(430, 545, 100, 30), "Rotate Brush CW");
-                        var assignRotateBrushCw = GuiButton(new Rectangle(580, 545, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.RotateBrushClockwise}");
-                        
-                        GuiLabel(new Rectangle(430, 580, 100, 30), "Stretch Brush Vertically");
-                        var assignStretchBrushVertically = GuiButton(new Rectangle(580, 580, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.StretchBrushVertically}");
-                        
-                        GuiLabel(new Rectangle(430, 615, 100, 30), "Stretch Brush Horizontally");
-                        var assignStretchBrushHorizontally = GuiButton(new Rectangle(580, 615, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.StretchBrushHorizontally}");
-                        
-                        GuiLabel(new Rectangle(430, 650, 100, 30), "Squeeze Brush Vertically");
-                        var assignSqueezeBrushVertically = GuiButton(new Rectangle(580, 650, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.SqueezeBrushVertically}");
-                        
-                        GuiLabel(new Rectangle(430, 685, 100, 30), "Squeeze Brush Horizontally");
-                        var assignSqueezeBrushHorizontally = GuiButton(new Rectangle(580, 685, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.SqueezeBrushHorizontally}");
-                        
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 405, 100, 30), "Show/Hide Tiles");
-                        var assignToggleTileVisibility = GuiButton(new Rectangle(mouseShortcutsOffset+190, 405, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.ToggleTileVisibility}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 440, 100, 30), "Use Tile Textures");
-                        var assignToggleTileTextures = GuiButton(new Rectangle(mouseShortcutsOffset+190, 440, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.ToggleTilePreview}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 475, 100, 30), "Toggle Tinted Tile Textures");
-                        var assignToggleRenderedTiles = GuiButton(new Rectangle(mouseShortcutsOffset+190, 475, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.ToggleTintedTileTextures}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 510, 100, 30), "Fast Rotate Brush CCW");
-                        var assignFastRotateBrushCcw = GuiButton(new Rectangle(mouseShortcutsOffset+190, 510, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.FastRotateBrushCounterClockwise}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 545, 100, 30), "Fast Rotate Brush CW");
-                        var assignFastRotateBrushCw = GuiButton(new Rectangle(mouseShortcutsOffset+190, 545, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.FastRotateBrushClockwise}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 580, 100, 30), "Fast Stretch Brush Vertically");
-                        var assignFastStretchBrushVertically = GuiButton(new Rectangle(mouseShortcutsOffset+190, 580, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.FastStretchBrushVertically}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 615, 100, 30), "Fast Stretch Brush Horizontally");
-                        var assignFastStretchBrushHorizontally = GuiButton(new Rectangle(mouseShortcutsOffset+190, 615, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.FastStretchBrushHorizontally}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 650, 100, 30), "Fast Squeeze Brush Vertically");
-                        var assignFastSqueezeBrushVertically = GuiButton(new Rectangle(mouseShortcutsOffset+190, 650, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.FastSqueezeBrushVertically}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 685, 100, 30), "Fast Squeeze Brush Horizontally");
-                        var assignFastSqueezeBrushHorizontally = GuiButton(new Rectangle(mouseShortcutsOffset+190, 685, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.LightEditor.FastSqueezeBrushHorizontally}");
+                        var assignToggleTileVisibility = ImGui.Button($"Show/Hide Tiles: {GLOBALS.Settings.Shortcuts.LightEditor.ToggleTileVisibility}");
+                        var assignToggleTileTextures = ImGui.Button($"Tile Display: {GLOBALS.Settings.Shortcuts.LightEditor.ToggleTilePreview}");
+                        var assignToggleRenderedTiles = ImGui.Button($"Tint Tiles: {GLOBALS.Settings.Shortcuts.LightEditor.ToggleTintedTileTextures}");
+                        var assignFastRotateBrushCcw = ImGui.Button($"Fast Rotate Brush Counter-Clockwise{GLOBALS.Settings.Shortcuts.LightEditor.FastRotateBrushCounterClockwise}");
+                        var assignFastRotateBrushCw = ImGui.Button($"Fast Rotate Brush Clockwise: {GLOBALS.Settings.Shortcuts.LightEditor.FastRotateBrushClockwise}");
+                        var assignFastStretchBrushVertically = ImGui.Button($"Fast Stretch Brush Vertically: {GLOBALS.Settings.Shortcuts.LightEditor.FastStretchBrushVertically}");
+                        var assignFastStretchBrushHorizontally = ImGui.Button($"Fast Stretch Brush Horizontally: {GLOBALS.Settings.Shortcuts.LightEditor.FastStretchBrushHorizontally}");
+                        var assignFastSqueezeBrushVertically = ImGui.Button($"Fast Squeeze Brush Vertically{GLOBALS.Settings.Shortcuts.LightEditor.FastSqueezeBrushVertically}");
+                        var assignFastSqueezeBrushHorizontally = ImGui.Button($"Fast Squeeze Brush Horizontally: {GLOBALS.Settings.Shortcuts.LightEditor.FastSqueezeBrushHorizontally}");
 
+                        if (assignPaintKeyboard) _shortcutToAssign = GLOBALS.Settings.Shortcuts.LightEditor.PaintAlt;
+                        if (assignPanKeyboard) _shortcutToAssign = GLOBALS.Settings.Shortcuts.LightEditor.DragLevelAlt;
+                        if (assignEraseKeyboard) _shortcutToAssign = GLOBALS.Settings.Shortcuts.LightEditor.EraseAlt;
                         if (assignIncreaseFlatness) _shortcutToAssign = GLOBALS.Settings.Shortcuts.LightEditor.IncreaseFlatness;
                         if (assignDecreaseFlatness) _shortcutToAssign = GLOBALS.Settings.Shortcuts.LightEditor.DecreaseFlatness;
                         if (assignIncreaseAngle) _shortcutToAssign = GLOBALS.Settings.Shortcuts.LightEditor.IncreaseAngle;
@@ -1540,9 +553,10 @@ public class SettingsPage : IPage
                         if (assignFastSqueezeBrushHorizontally) _shortcutToAssign = GLOBALS.Settings.Shortcuts.LightEditor.FastSqueezeBrushHorizontally;
                     }
                         break;
-                    case 6: // Effects Editor
-                        {
-                        if (resetShortcuts)
+
+                    case 6: // effects
+                    {
+                        if (resetSelected)
                         {
                             _assigningShortcut = false;
                             _shortcutToAssign = null;
@@ -1551,131 +565,36 @@ public class SettingsPage : IPage
                             GLOBALS.Settings.Shortcuts.EffectsEditor = new EffectsShortcuts();
                         }
                         
-                        unsafe
-                        {
-                            fixed (byte* pl = _shortcutCategoryScrollPanelTitle)
-                            {
-                                fixed (Vector2* sv = &_shortcutsEffectsScrollPanelScroll)
-                                {
-                                    GuiScrollPanel(
-                                        shortcutsScrollPanelRect, 
-                                        (sbyte*)pl, 
-                                        new Rectangle(), 
-                                        sv
-                                    );
-                                }
-                            }
-                        }
+                        ImGui.SeparatorText("Mouse Shortcuts");
                         
-                        GuiGroupBox(
-                            new Rectangle(430, 130, shortcutsScrollPanelRect.width/2f - 10, 220), 
-                            "New Effect Menu"
-                        );
-                        
-                        GuiLabel(new Rectangle(440, 150, 100, 30), "Category Navigation");
-                        GuiLabel(new Rectangle(440, 185, 100, 30), "Move Up");
-                        GuiLabel(new Rectangle(440, 220, 100, 30), "Move Down");
-                        GuiLabel(new Rectangle(440, 255, 100, 30), "Accept");
-                        GuiLabel(new Rectangle(440, 290, 100, 30), "Alt Accept");
-                        
-                        var assignNewEffectCategoryNavigation = GuiButton(new Rectangle(570, 150, 200, 30), "SHIFT");
-                        var assignMoveUp = GuiButton(new Rectangle(570, 185, 200, 30), $"{GLOBALS.Settings.Shortcuts.EffectsEditor.MoveUpInNewEffectMenu}");
-                        var assignMoveDown = GuiButton(new Rectangle(570, 220, 200, 30), $"{GLOBALS.Settings.Shortcuts.EffectsEditor.MoveDownInNewEffectMenu}");
-                        var assignAcceptNewEffect = GuiButton(new Rectangle(570, 255, 200, 30), $"{GLOBALS.Settings.Shortcuts.EffectsEditor.AcceptNewEffect}");
-                        var assignAcceptNewEffectAlt = GuiButton(new Rectangle(570, 290, 200, 30), $"{GLOBALS.Settings.Shortcuts.EffectsEditor.AcceptNewEffectAlt}");
-
-                        // if (assignNewEffectCategoryNavigation) GLOBALS.Settings.Shortcuts.EffectsEditor.NewEffectMenuCategoryNavigation;
-                        if (assignMoveUp) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.MoveUpInNewEffectMenu;
-                        if (assignMoveDown) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.MoveDownInNewEffectMenu;
-                        if (assignAcceptNewEffect) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.AcceptNewEffect;
-                        if (assignAcceptNewEffectAlt) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.AcceptNewEffectAlt;
-                        
-                        //
-
-                        var mouseShortcutsOffset = 430 + shortcutsScrollPanelRect.width / 2f;
-                        
-                        GuiGroupBox(
-                            new Rectangle(mouseShortcutsOffset, 130, shortcutsScrollPanelRect.width/2f - 20, 170), 
-                            "Mouse Shortcuts"
-                        );
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 150, 100, 30), "Paint");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 185, 100, 30), "Level Pan");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 220, 100, 30), "Erase");
-
-                        var assignPaint = GuiButton(new Rectangle(mouseShortcutsOffset+110, 150, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.Paint}");
-                        
-                        var assignPan = GuiButton(new Rectangle(mouseShortcutsOffset+110, 185, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.DragLevel}");
-                        
-                        var assignErase = GuiButton(new Rectangle(mouseShortcutsOffset+110, 220, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.Erase}");
+                        var assignPaint = ImGui.Button($"Paint: {GLOBALS.Settings.Shortcuts.EffectsEditor.Paint}");
+                        var assignPan = ImGui.Button($"Pan: {GLOBALS.Settings.Shortcuts.EffectsEditor.DragLevel}");
+                        var assignErase = ImGui.Button($"Erase: {GLOBALS.Settings.Shortcuts.EffectsEditor.Erase}");
 
                         if (assignPaint) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.Paint;
                         if (assignPan) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.DragLevel;
                         if (assignErase) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.Erase;
                         
                         //
+                        ImGui.SeparatorText("Keyboard Shortcuts");
                         
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 370, 100, 30), "Paint");
-                        var assignPaintKeyboard = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 370, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.PaintAlt}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 405, 100, 30), "Level Pan");
-                        var assignPanKeyboard = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 405, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.DragLevelAlt}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 440, 100, 30), "Erase");
-                        var assignEraseKeyboard = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 440, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.EraseAlt}");
+                        var assignPaintKeyboard = ImGui.Button($"Paint: {GLOBALS.Settings.Shortcuts.EffectsEditor.PaintAlt}");
+                        var assignPanKeyboard = ImGui.Button($"Pan: {GLOBALS.Settings.Shortcuts.EffectsEditor.DragLevelAlt}");
+                        var assignEraseKeyboard = ImGui.Button($"Erase: {GLOBALS.Settings.Shortcuts.EffectsEditor.EraseAlt}");
                         
                         
-                        GuiLabel(new Rectangle(430, 370, 100, 30), "Shift Applied Effect Up");
-                        var assignShiftAppliedEffectUp = GuiButton(new Rectangle(600, 370, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.ShiftAppliedEffectUp}");
+                        var assignShiftAppliedEffectUp = ImGui.Button($"Shift Effect Up: {GLOBALS.Settings.Shortcuts.EffectsEditor.ShiftAppliedEffectUp}");
+                        var assignShiftAppliedEffectDown = ImGui.Button($"Shift Effect Down: {GLOBALS.Settings.Shortcuts.EffectsEditor.ShiftAppliedEffectDown}"); 
                         
-                        GuiLabel(new Rectangle(430, 405, 100, 30), "Shift Applied Effect Down");
-                        var assignShiftAppliedEffectDown = GuiButton(new Rectangle(600, 405, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.ShiftAppliedEffectDown}"); 
+                        var assignCycleAppliedEffectUp = ImGui.Button($"To Top Effect: {GLOBALS.Settings.Shortcuts.EffectsEditor.CycleAppliedEffectUp}"); 
+                        var assignCycleAppliedEffectDown = ImGui.Button($"To Bottom Effect: {GLOBALS.Settings.Shortcuts.EffectsEditor.CycleAppliedEffectDown}");
+                        var assignDeleteAppliedEffect = ImGui.Button($"Delete Effect: {GLOBALS.Settings.Shortcuts.EffectsEditor.DeleteAppliedEffect}"); 
+                        var assignCycleEffectOptionsUp = ImGui.Button($"To Top Option: {GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionsUp}");
+                        var assignCycleEffectOptionsDown = ImGui.Button($"Top Bottom Option: {GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionsDown}");
+                        var assignToRightOptionChoice = ImGui.Button($"Next Option Choice: {GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionChoicesRight}");
+                        var assignToLeftOptionChoice = ImGui.Button($"Previous Option Choice: {GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionChoicesLeft}");
                         
-                        GuiLabel(new Rectangle(430, 440, 100, 30), "Cycle Applied Effects Up");
-                        var assignCycleAppliedEffectUp = GuiButton(new Rectangle(600, 440, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.CycleAppliedEffectUp}"); 
-                        
-                        GuiLabel(new Rectangle(430, 475, 100, 30), "Cycle Applied Effects Down");
-                        var assignCycleAppliedEffectDown = GuiButton(new Rectangle(600, 475, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.CycleAppliedEffectDown}");
-                        
-                        GuiLabel(new Rectangle(430, 510, 100, 30), "Delete Applied Effect");
-                        var assignDeleteAppliedEffect = GuiButton(new Rectangle(600, 510, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.DeleteAppliedEffect}"); 
-                        
-                        GuiLabel(new Rectangle(430, 545, 100, 30), "Cycle Effect Options Up");
-                        var assignCycleEffectOptionsUp = GuiButton(new Rectangle(600, 545, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionsUp}");
-                        
-                        GuiLabel(new Rectangle(430, 580, 100, 30), "Cycle Effect Options Down");
-                        var assignCycleEffectOptionsDown = GuiButton(new Rectangle(600, 580, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionsDown}");
-                        
-                        GuiLabel(new Rectangle(430, 615, 100, 30), "To Right Option Choice");
-                        var assignToRightOptionChoice = GuiButton(new Rectangle(600, 615, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionChoicesRight}");
-                        
-                        GuiLabel(new Rectangle(430, 650, 100, 30), "To Left Option Choice");
-                        var assignToLeftOptionChoice = GuiButton(new Rectangle(600, 650, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionChoicesLeft}");
-                        
-                        GuiLabel(new Rectangle(430, 685, 100, 30), "Show/Hide Options");
-                        var assignToggleOptionsVisibility = GuiButton(new Rectangle(600, 685, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.ToggleOptionsVisibility}");
-                        
-                        GuiLabel(new Rectangle(430, 720, 100, 30), "Strong Brush");
-                        var assignStrongBrush = GuiButton(new Rectangle(600, 720, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.EffectsEditor.StrongBrush}");
-                        
-                        
+                        var assignStrongBrush = ImGui.Button($"String Brush: {GLOBALS.Settings.Shortcuts.EffectsEditor.StrongBrush}");
 
                         if (assignPaintKeyboard) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.PaintAlt;
                         if (assignPanKeyboard) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.DragLevelAlt;
@@ -1690,13 +609,13 @@ public class SettingsPage : IPage
                         if (assignCycleEffectOptionsDown) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionsDown;
                         if (assignToRightOptionChoice) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionChoicesRight;
                         if (assignToLeftOptionChoice) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.CycleEffectOptionChoicesLeft;
-                        if (assignToggleOptionsVisibility) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.ToggleOptionsVisibility;
                         if (assignStrongBrush) _shortcutToAssign = GLOBALS.Settings.Shortcuts.EffectsEditor.StrongBrush;
                     }
                         break;
-                    case 7: // Props
+
+                    case 7: // props
                     {
-                        if (resetShortcuts)
+                        if (resetSelected)
                         {
                             _assigningShortcut = false;
                             _shortcutToAssign = null;
@@ -1705,89 +624,11 @@ public class SettingsPage : IPage
                             GLOBALS.Settings.Shortcuts.PropsEditor = new PropsShortcuts();
                         }
                         
-                        unsafe
-                        {
-                            fixed (byte* pl = _shortcutCategoryScrollPanelTitle)
-                            {
-                                fixed (Vector2* sv = &_shortcutsPropsScrollPanelScroll)
-                                {
-                                    GuiScrollPanel(
-                                        shortcutsScrollPanelRect, 
-                                        (sbyte*)pl, 
-                                        new Rectangle(), 
-                                        sv
-                                    );
-                                }
-                            }
-                        }
+                        ImGui.SeparatorText("Mouse Shortcuts");
                         
-                        GuiGroupBox(
-                            new Rectangle(430, 130, shortcutsScrollPanelRect.width/2f - 10, 100), 
-                            "Mode"
-                        );
-                        
-                        GuiLabel(new Rectangle(440, 150, 100, 30), "Cycle Mode Right");
-                        GuiLabel(new Rectangle(440, 185, 100, 30), "Cycle Mode Left");
-                        
-                        var assignCycleModeRight = GuiButton(new Rectangle(550, 150, 200, 30), $"{GLOBALS.Settings.Shortcuts.PropsEditor.CycleModeRight}");
-                        var assignCycleModeLeft = GuiButton(new Rectangle(550, 185, 200, 30), $"{GLOBALS.Settings.Shortcuts.PropsEditor.CycleModeRight}");
-
-                        if (assignCycleModeRight) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleModeRight;
-                        if (assignCycleModeLeft) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleModeLeft;
-                        
-                        //
-                        
-                        GuiGroupBox(
-                            new Rectangle(430, 250, shortcutsScrollPanelRect.width/2f - 10, 90), 
-                            "Menu"
-                        );
-                        
-                        GuiLabel(new Rectangle(440, 260, 100, 30), "Cycle Categories Right");
-                        GuiLabel(new Rectangle(440, 295, 100, 30), "Cycle Categories Left");
-
-                        var assignCycleCategoriesRight = GuiButton(new Rectangle(570, 260, 200, 30), $"{GLOBALS.Settings.Shortcuts.PropsEditor.CycleCategoriesRight}");
-                        var assignCycleCategoriesLeft = GuiButton(new Rectangle(570, 295, 200, 30), $"{GLOBALS.Settings.Shortcuts.PropsEditor.CycleCategoriesLeft}");
-
-                        if (assignCycleCategoriesRight) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleCategoriesRight;
-                        if (assignCycleCategoriesLeft) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleCategoriesLeft;
-                        
-                        //
-                        
-                        GuiGroupBox(
-                            new Rectangle(430, 350, shortcutsScrollPanelRect.width/2f - 10, 90), 
-                            "Subcategories"
-                        );
-                        
-                        GuiLabel(new Rectangle(440, 360, 100, 30), "Focus on Category");
-                        GuiLabel(new Rectangle(440, 395, 100, 30), "Focus on List");
-
-                        var assignFocusOnCategory = GuiButton(new Rectangle(550, 360, 200, 30), $"{GLOBALS.Settings.Shortcuts.PropsEditor.InnerCategoryFocusLeft}");
-                        var assignFocusOnList = GuiButton(new Rectangle(550, 395, 200, 30), $"{GLOBALS.Settings.Shortcuts.PropsEditor.InnerCategoryFocusRight}");
-
-                        if (assignFocusOnCategory) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.InnerCategoryFocusLeft;
-                        if (assignFocusOnList) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.InnerCategoryFocusRight;
-                        
-                        //
-
-                        var mouseShortcutsOffset = 430 + shortcutsScrollPanelRect.width / 2f;
-                        
-                        GuiGroupBox(
-                            new Rectangle(mouseShortcutsOffset, 130, shortcutsScrollPanelRect.width/2f - 20, 140), 
-                            "Mouse Shortcuts"
-                        );
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 150, 100, 30), "Place Prop");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 185, 100, 30), "Level Pan");
-                        GuiLabel(new Rectangle(mouseShortcutsOffset + 10, 220, 100, 30), "Select Props");
-
-                        var assignPlaceProp = GuiButton(new Rectangle(mouseShortcutsOffset+110, 150, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.PlaceProp}");
-                        
-                        var assignPan = GuiButton(new Rectangle(mouseShortcutsOffset+110, 185, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.DragLevel}");
-                        
-                        var assignSelectProps = GuiButton(new Rectangle(mouseShortcutsOffset+110, 220, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.SelectProps}");
+                        var assignPlaceProp = ImGui.Button($"Place Prop: {GLOBALS.Settings.Shortcuts.PropsEditor.PlaceProp}");
+                        var assignPan = ImGui.Button($"Pan: {GLOBALS.Settings.Shortcuts.PropsEditor.DragLevel}");
+                        var assignSelectProps = ImGui.Button($"Select Props: {GLOBALS.Settings.Shortcuts.PropsEditor.SelectProps}");
 
                         if (assignPlaceProp) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.PlaceProp;
                         if (assignPan) _mouseShortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DragLevel;
@@ -1795,94 +636,32 @@ public class SettingsPage : IPage
                         
                         //
                         
+                        var assignCycleLayers = ImGui.Button($"Cycle Layers: {GLOBALS.Settings.Shortcuts.PropsEditor.CycleLayers}");
+                        var assignCycleSnapMode = ImGui.Button($"Cycle Snap Mode: {GLOBALS.Settings.Shortcuts.PropsEditor.CycleSnapMode}"); 
+                        var assignToggleLayer1 = ImGui.Button($"Show/Hide Layer 1: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer1}");
+                        var assignToggleLayer2 = ImGui.Button($"Show/Hide Layer 2: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer2}");
+                        var assignToggleLayer3 = ImGui.Button($"Show/Hide Layer 3: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer3}");
+                        var assignToggleLayer1Tiles = ImGui.Button($"Show/Hide Layer 1 Tiles: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer1Tiles}");
+                        var assignToggleLayer2Tiles = ImGui.Button($"Show/Hide Layer 2 Tiles: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer2Tiles}");
+                        var assignToggleLayer3Tiles = ImGui.Button($"Show/Hide Layer 3 Tiles: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer3Tiles}");
                         
-                        GuiLabel(new Rectangle(430, 475, 100, 30), "Cycle Layers");
-                        var assignCycleLayers = GuiButton(new Rectangle(580, 475, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.CycleLayers}");
+                        ImGui.SeparatorText("Keyboard Shortcuts");
                         
-                        GuiLabel(new Rectangle(430, 510, 100, 30), "Cycle Snap Mode");
-                        var assignCycleSnapMode = GuiButton(new Rectangle(580, 510, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.CycleSnapMode}"); 
+                        var assignPlacePropAlt = ImGui.Button($"Place Prop: {GLOBALS.Settings.Shortcuts.PropsEditor.PlaceProp}");
+                        var assignPanAlt = ImGui.Button($"Pan: {GLOBALS.Settings.Shortcuts.PropsEditor.EscapeSpinnerControl}");
+                        var assignSelectPropsKeyboard = ImGui.Button($"Select Props: {GLOBALS.Settings.Shortcuts.PropsEditor.SelectPropsAlt}");
+                        var assignToggleNoCollisionPlacement = ImGui.Button($"Toggle No-Collision Placement: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleNoCollisionPropPlacement}");
                         
-                        GuiLabel(new Rectangle(430, 545, 100, 30), "Show/Hide Layer 1");
-                        var assignToggleLayer1 = GuiButton(new Rectangle(580, 545, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer1}");
+                        ImGui.SeparatorText("Selected Props Actions");
                         
-                        GuiLabel(new Rectangle(430, 580, 100, 30), "Show/Hide Layer 2");
-                        var assignToggleLayer2 = GuiButton(new Rectangle(580, 580, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer2}");
-                        
-                        GuiLabel(new Rectangle(430, 615, 100, 30), "Show/Hide Layer 3");
-                        var assignToggleLayer3 = GuiButton(new Rectangle(580, 615, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer3}");
-                        
-                        GuiLabel(new Rectangle(430, 650, 100, 30), "Show/Hide Layer 1 Tiles");
-                        var assignToggleLayer1Tiles = GuiButton(new Rectangle(580, 650, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer1Tiles}");
-                        
-                        GuiLabel(new Rectangle(430, 685, 100, 30), "Show/Hide Layer 2 Tiles");
-                        var assignToggleLayer2Tiles = GuiButton(new Rectangle(580, 685, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer2Tiles}");
-                        
-                        GuiLabel(new Rectangle(430, 720, 100, 30), "Show/Hide Layer 3 Tiles");
-                        var assignToggleLayer3Tiles = GuiButton(new Rectangle(580, 720, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer3Tiles}");
-                        
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 280, 100, 30), "Place Prop");
-                        var assignPlacePropAlt = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 280, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.PlaceProp}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 315, 100, 30), "Level Pan");
-                        var assignPanAlt = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 315, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.EscapeSpinnerControl}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 350, 100, 30), "Select Props");
-                        var assignSelectPropsKeyboard = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 350, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.SelectPropsAlt}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 385, 100, 30), "Escape Spinner");
-                        var assignEscapeSpinner = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 385, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.EscapeSpinnerControl}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 420, 100, 30), "Toggle No-collision Placement");
-                        var assignToggleNoCollisionPlacement = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 420, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.ToggleNoCollisionPropPlacement}");
-                         
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 455, 100, 30), "Toggle Moving Props");
-                        var assignToggleMovingProps = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 455, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.ToggleMovingPropsMode}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 490, 100, 30), "Toggle Rotating Props");
-                        var assignToggleRotatingProps = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 490, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRotatingPropsMode}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 525, 100, 30), "Toggle Scaling Props");
-                        var assignToggleScaling = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 525, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.ToggleScalingPropsMode}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 560, 100, 30), "Toggle Props Visibility");
-                        var assignToggleVisibility = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 560, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.TogglePropsVisibility}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 595, 100, 30), "Toggle Warp Props");
-                        var assignToggleWarp = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 595, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.ToggleEditingPropQuadsMode}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 630, 100, 30), "Delete Props");
-                        var assignDeleteProps = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 630, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.DeleteSelectedProps}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 665, 100, 30), "Toggle Rope Points Editing");
-                        var assignEditRopePoints = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 665, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopePointsEditingMode}");
-                        
-                        GuiLabel(new Rectangle(mouseShortcutsOffset, 700, 100, 30), "Toggle Rope Editing");
-                        var assignToggleRopeEditing = GuiButton(new Rectangle(mouseShortcutsOffset + 190, 700, 200, 30),
-                            $"{GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopeEditingMode}");
-                        
-
-                        if (assignEscapeSpinner) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.EscapeSpinnerControl;
+                        var assignToggleMovingProps = ImGui.Button($"Move: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleMovingPropsMode}");
+                        var assignToggleRotatingProps = ImGui.Button($"Rotate: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRotatingPropsMode}");
+                        var assignToggleScaling = ImGui.Button($"Scale: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleScalingPropsMode}");
+                        var assignToggleVisibility = ImGui.Button($"Show/Hide: {GLOBALS.Settings.Shortcuts.PropsEditor.TogglePropsVisibility}");
+                        var assignToggleWarp = ImGui.Button($"Warp: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleEditingPropQuadsMode}");
+                        var assignDeleteProps = ImGui.Button($"Delete: {GLOBALS.Settings.Shortcuts.PropsEditor.DeleteSelectedProps}");
+                        var assignEditRopePoints = ImGui.Button($"Edit Rope Points: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopePointsEditingMode}");
+                        var assignToggleRopeEditing = ImGui.Button($"Rope Simulation: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopeEditingMode}");
                         
                         if (assignCycleLayers) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleLayers;
                         if (assignCycleSnapMode) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleSnapMode;
@@ -1908,65 +687,70 @@ public class SettingsPage : IPage
                     }
                         break;
                 }
-                
-                if (_shortcutToAssign is not null || _mouseShortcutToAssign is not null) _assigningShortcut = true;
 
-                if (_shortcutToAssign is not null)
-                {
-                    var key = GetKeyPressed();
-
-                    if (key == 256)
-                    {
-                        if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
-                        {
-                            _shortcutToAssign.Key = KeyboardKey.KEY_NULL;
-                        }
-                        
-                        _assigningShortcut = false;
-                        _shortcutToAssign = null;
-                    }
-
-                    if (key != 0 && key != 340 && key != 341 && key != 342 && key != 256 && key != 4)
-                    {
-                        _shortcutToAssign.Key = (KeyboardKey)key;
-                        _shortcutToAssign.Shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
-                        _shortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
-                        _shortcutToAssign.Alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
-                        
-                        _assigningShortcut = false;
-                        _shortcutToAssign = null;
-                    }
-                    
-                }
-                else if (_mouseShortcutToAssign is not null)
-                {
-                    var key = GetKeyPressed();
-                    var button = -1;
-
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) button = 0;
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_MIDDLE)) button = 2;
-                    if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_RIGHT)) button = 1;
-
-                    if (key == 256)
-                    {
-                        _assigningShortcut = false;
-                        _mouseShortcutToAssign = null;
-                    }
-
-                    if (button != -1 && key != 340 && key != 341 && key != 342 && key != 256)
-                    {
-                        _mouseShortcutToAssign.Button = (MouseButton)button;
-                        _mouseShortcutToAssign.Shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
-                        _mouseShortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
-                        _mouseShortcutToAssign.Alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
-                        
-                        _assigningShortcut = false;
-                        _mouseShortcutToAssign = null;
-                    }
-                    
-                }
+                ImGui.EndChild();
             }
-                break;
+            
+            ImGui.End();
+        }
+        
+        rlImGui.End();
+        
+        if (_shortcutToAssign is not null || _mouseShortcutToAssign is not null) _assigningShortcut = true;
+
+        if (_shortcutToAssign is not null)
+        {
+            var key = GetKeyPressed();
+
+            if (key == 256)
+            {
+                if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))
+                {
+                    _shortcutToAssign.Key = KeyboardKey.KEY_NULL;
+                }
+                
+                _assigningShortcut = false;
+                _shortcutToAssign = null;
+            }
+
+            if (key != 0 && key != 340 && key != 341 && key != 342 && key != 256 && key != 4)
+            {
+                _shortcutToAssign.Key = (KeyboardKey)key;
+                _shortcutToAssign.Shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+                _shortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
+                _shortcutToAssign.Alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+                
+                _assigningShortcut = false;
+                _shortcutToAssign = null;
+            }
+            
+        }
+        else if (_mouseShortcutToAssign is not null)
+        {
+            var key = GetKeyPressed();
+            var button = -1;
+
+            if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) button = 0;
+            if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_MIDDLE)) button = 2;
+            if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_RIGHT)) button = 1;
+
+            if (key == 256)
+            {
+                _assigningShortcut = false;
+                _mouseShortcutToAssign = null;
+            }
+
+            if (button != -1 && key != 340 && key != 341 && key != 342 && key != 256)
+            {
+                _mouseShortcutToAssign.Button = (MouseButton)button;
+                _mouseShortcutToAssign.Shift = IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT);
+                _mouseShortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.KEY_LEFT_CONTROL);
+                _mouseShortcutToAssign.Alt = IsKeyDown(KeyboardKey.KEY_LEFT_ALT);
+                
+                _assigningShortcut = false;
+                _mouseShortcutToAssign = null;
+            }
+            
         }
         
         EndDrawing();

@@ -2494,26 +2494,26 @@ internal class PropsEditorPage : IPage
 
             rlImGui.Begin();
 
-            if (ImGui.Begin("Props##PropsPanel"))
+            var menuOpened = ImGui.Begin("Props##PropsPanel");
+            
+            var menuPos = ImGui.GetWindowPos();
+            var menuWinSpace = ImGui.GetWindowSize();
+
+            if (CheckCollisionPointRec(tileMouse, new(menuPos.X - 5, menuPos.Y, menuWinSpace.X + 10, menuWinSpace.Y)))
             {
-                var pos = ImGui.GetWindowPos();
-                var winSpace = ImGui.GetWindowSize();
+                _isPropsWinHovered = true;
 
-                if (CheckCollisionPointRec(tileMouse, new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
-                {
-                    _isPropsWinHovered = true;
+                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isPropsWinDragged = true;
+            }
+            else
+            {
+                _isPropsWinHovered = false;
+            }
 
-                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isPropsWinDragged = true;
-                }
-                else
-                {
-                    _isPropsWinHovered = false;
-                }
-
-                if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isPropsWinDragged) _isPropsWinDragged = false;
-                
-                //
-                
+            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isPropsWinDragged) _isPropsWinDragged = false;
+            
+            if (menuOpened)
+            {
                 var availableSpace = ImGui.GetContentRegionAvail();
 
                 var halfWidth = availableSpace.X / 2f;
@@ -2961,7 +2961,6 @@ internal class PropsEditorPage : IPage
 
                 ImGui.End();
             }
-
             
             // Navigation
                 

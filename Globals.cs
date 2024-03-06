@@ -42,6 +42,7 @@ internal static class GLOBALS
         
         public Raylib_cs.RenderTexture2D TileSpecs { get; set; }
         public Raylib_cs.RenderTexture2D PropDepth { get; set; }
+        public Raylib_cs.RenderTexture2D DimensionsVisual { get; set; }
     }
 
     /// <summary>

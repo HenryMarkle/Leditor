@@ -405,120 +405,6 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
             }
             EndMode2D();
 
-            #region BrushMenu
-
-            // {
-            //     unsafe
-            //     {
-            //         fixed (byte* pt = _lightBrushMenuPanelBytes)
-            //         {
-            //             RayGui.GuiPanel(brushPanel, (sbyte*)pt);
-            //         }
-            //     }
-            //
-            //     var totalPages = GLOBALS.Textures.LightBrushes.Length / pageSize;
-            //
-            //     var currentPage = GLOBALS.Textures.LightBrushes
-            //         .Select((texture, index) => (index, texture))
-            //         .Skip(_lightBrushTexturePage * pageSize)
-            //         .Take(pageSize)
-            //         .Select((value, index) => (index, value));
-            //
-            //     // Brush menu
-            //
-            //     foreach (var (pageIndex, (index, texture)) in currentPage)
-            //     {
-            //         var textureRect = new Rectangle(25, (textureSize + 1) * pageIndex + 80 + 5, textureSize - 10,
-            //             textureSize - 10);
-            //
-            //         var textureHovered = CheckCollisionPointRec(mouse, textureRect);
-            //         
-            //         BeginShaderMode(GLOBALS.Shaders.ApplyShadowBrush);
-            //         SetShaderValueTexture(GLOBALS.Shaders.ApplyShadowBrush, GetShaderLocation(GLOBALS.Shaders.ApplyShadowBrush, "inputTexture"), texture);
-            //         DrawTexturePro(
-            //             texture,
-            //             new(0, 0, texture.width, texture.height),
-            //             textureRect,
-            //             new(0, 0),
-            //             0,
-            //             BLACK
-            //             );
-            //         EndShaderMode();
-            //
-            //         if (index == _lightBrushTextureIndex) DrawRectangleLinesEx(
-            //             new Rectangle(
-            //                 20,
-            //                 (textureSize + 1) * pageIndex + 80,
-            //                 textureSize,
-            //                 textureSize
-            //             ),
-            //             4.0f,
-            //             BLUE
-            //         );
-            //
-            //         if (textureHovered)
-            //         {
-            //             DrawRectangleLinesEx(
-            //                 new Rectangle(
-            //                     20,
-            //                     (textureSize + 1) * pageIndex + 80,
-            //                     textureSize,
-            //                     textureSize
-            //                 ),
-            //                 4.0f,
-            //                 BLUE with { a = 100 }
-            //             );
-            //
-            //             if (IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)) _lightBrushTextureIndex = index;
-            //         }
-            //     }
-            //     
-            //     if (_lightBrushTexturePage < GLOBALS.Textures.LightBrushes.Length / pageSize)
-            //     {
-            //         var downClicked = RayGui.GuiButton(
-            //             new Rectangle(brushPanel.X + 5, brushPanel.Y + panelHeight - 60, 50, 30), 
-            //             "Down"
-            //         );
-            //
-            //         if (downClicked)
-            //         {
-            //             _lightBrushTextureIndex = (_lightBrushTextureIndex + pageSize);
-            //
-            //             if (_lightBrushTextureIndex >= GLOBALS.Textures.LightBrushes.Length)
-            //                 _lightBrushTextureIndex = GLOBALS.Textures.LightBrushes.Length - 1;
-            //                 
-            //             _lightBrushTexturePage = _lightBrushTextureIndex / pageSize;
-            //         }
-            //     }
-            //
-            //     if (_lightBrushTexturePage > 0)
-            //     {
-            //         var upClicked = RayGui.GuiButton(
-            //             new Rectangle(brushPanel.X + 59, brushPanel.Y + panelHeight - 60, 49, 30), 
-            //             "Up"
-            //         );
-            //             
-            //         if (upClicked)
-            //         {
-            //             _lightBrushTextureIndex -= pageSize;
-            //             if (_lightBrushTextureIndex < 0) _lightBrushTextureIndex = 0;
-            //                 
-            //             _lightBrushTexturePage = _lightBrushTextureIndex / pageSize;
-            //         }
-            //     }
-            //
-            //     var indexText = $"{_lightBrushTexturePage + 1}/{totalPages+1}";
-            //     
-            //     DrawText(
-            //         indexText,
-            //         (brushPanel.X + brushPanel.width - MeasureText(indexText, 20))/2f, 
-            //         brushPanel.Y + panelHeight - 23, 
-            //         20, 
-            //         BLACK
-            //     );
-            // }
-            
-            #endregion
 
             #region Indicator
 
@@ -567,26 +453,26 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
             
             // Brushes Window
 
-            if (ImGui.Begin("Brushes##LightBrushesWindow"))
+            var menuOpened = ImGui.Begin("Brushes##LightBrushesWindow");
+            
+            var menuPos = ImGui.GetWindowPos();
+            var menuWinSpace = ImGui.GetWindowSize();
+
+            if (CheckCollisionPointRec(GetMousePosition(), new(menuPos.X - 5, menuPos.Y-5, menuWinSpace.X + 10, menuWinSpace.Y+10)))
             {
-                var pos = ImGui.GetWindowPos();
-                var winSpace = ImGui.GetWindowSize();
+                _isBrushesWinHovered = true;
 
-                if (CheckCollisionPointRec(GetMousePosition(), new(pos.X - 5, pos.Y-5, winSpace.X + 10, winSpace.Y+10)))
-                {
-                    _isBrushesWinHovered = true;
+                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isBrushesWinDragged = true;
+            }
+            else
+            {
+                _isBrushesWinHovered = false;
+            }
 
-                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isBrushesWinDragged = true;
-                }
-                else
-                {
-                    _isBrushesWinHovered = false;
-                }
-
-                if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isBrushesWinDragged) _isBrushesWinDragged = false;
-                
-                //
-                
+            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isBrushesWinDragged) _isBrushesWinDragged = false;
+            
+            if (menuOpened)
+            {
                 var availableSpace = ImGui.GetContentRegionAvail();
                 
                 if (ImGui.BeginListBox("##LightBrushes", availableSpace))

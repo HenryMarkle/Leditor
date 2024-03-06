@@ -61,6 +61,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
     
     private bool _isNavigationWinHovered;
     private bool _isNavigationWinDragged;
+    
+    private bool _isSettingsWinHovered;
+    private bool _isSettingsWinDragged;
 
     private List<Gram.ISingleAction<TileCell>> _tempActions = [];
 
@@ -625,7 +628,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
         var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
 
-        var canDrawTile = !_isSpecsWinHovered &&
+        var canDrawTile = !_isSettingsWinHovered && 
+                          !_isSettingsWinDragged && 
+                          !_isSpecsWinHovered &&
                           !_isSpecsWinDragged &&
                           !_isTilesWinHovered &&
                           !_isTilesWinDragged &&
@@ -1361,24 +1366,26 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             
             // Menu
 
-            if (ImGui.Begin("Tiles & Materials", ImGuiWindowFlags.NoFocusOnAppearing))
+            var menuWinOpened = ImGui.Begin("Tiles & Materials", ImGuiWindowFlags.NoFocusOnAppearing);
+
+            var menuPos = ImGui.GetWindowPos();
+            var menuWinSpace = ImGui.GetWindowSize();
+
+            if (CheckCollisionPointRec(tileMouse, new(menuPos.X - 5, menuPos.Y, menuWinSpace.X + 10, menuWinSpace.Y)))
             {
-                var pos = ImGui.GetWindowPos();
-                var winSpace = ImGui.GetWindowSize();
+                _isTilesWinHovered = true;
 
-                if (CheckCollisionPointRec(tileMouse, new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
-                {
-                    _isTilesWinHovered = true;
+                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isTilesWinDragged = true;
+            }
+            else
+            {
+                _isTilesWinHovered = false;
+            }
 
-                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isTilesWinDragged = true;
-                }
-                else
-                {
-                    _isTilesWinHovered = false;
-                }
-
-                if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isTilesWinDragged) _isTilesWinDragged = false;
-
+            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isTilesWinDragged) _isTilesWinDragged = false;
+            
+            if (menuWinOpened)
+            {
                 if (ImGui.Button(_materialTileSwitch ? "Switch to materials" : "Switch to tiles"))
                     _materialTileSwitch = !_materialTileSwitch;
 
@@ -1472,24 +1479,26 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             
             // Tile Specs with ImGui
 
-            if (ImGui.Begin("Specs"))
+            var specsWinOpened = ImGui.Begin("Specs");
+            
+            var specsPos = ImGui.GetWindowPos();
+            var specsWinSpace = ImGui.GetWindowSize();
+            
+            if (CheckCollisionPointRec(GetMousePosition(), new(specsPos.X - 5, specsPos.Y, specsWinSpace.X + 10, specsWinSpace.Y)))
             {
-                var pos = ImGui.GetWindowPos();
-                var winSpace = ImGui.GetWindowSize();
-                
-                if (CheckCollisionPointRec(GetMousePosition(), new(pos.X - 5, pos.Y, winSpace.X + 10, winSpace.Y)))
-                {
-                    _isSpecsWinHovered = true;
+                _isSpecsWinHovered = true;
 
-                    if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isSpecsWinDragged = true;
-                }
-                else
-                {
-                    _isSpecsWinHovered = false;
-                }
-                
-                if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isSpecsWinDragged) _isSpecsWinDragged = false;
-
+                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isSpecsWinDragged = true;
+            }
+            else
+            {
+                _isSpecsWinHovered = false;
+            }
+            
+            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isSpecsWinDragged) _isSpecsWinDragged = false;
+            
+            if (specsWinOpened)
+            {
                 var displayClicked = ImGui.Button(_tileSpecDisplayMode ? "Texture" : "Geometry");
 
                 if (displayClicked) _tileSpecDisplayMode = !_tileSpecDisplayMode;
@@ -1498,6 +1507,49 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 rlImGui.ImageRenderTextureFit(GLOBALS.Textures.TileSpecs);
                 
                 // Idk where to put this
+                ImGui.End();
+            }
+            
+            // Settings
+
+            var settingsWinOpened = ImGui.Begin("Settings##TilesSettings");
+            
+            var settingsPos = ImGui.GetWindowPos();
+            var settingsWinSpace = ImGui.GetWindowSize();
+
+            if (CheckCollisionPointRec(tileMouse, new(settingsPos.X - 5, settingsPos.Y-5, settingsWinSpace.X + 10, settingsWinSpace.Y+10)))
+            {
+                _isSettingsWinHovered = true;
+
+                if (IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT)) _isSettingsWinDragged = true;
+            }
+            else
+            {
+                _isSettingsWinHovered = false;
+            }
+
+            if (IsMouseButtonReleased(MouseButton.MOUSE_BUTTON_LEFT) && _isSettingsWinDragged) _isSettingsWinDragged = false;
+            
+            if (settingsWinOpened)
+            {
+                var texture = GLOBALS.Settings.TileEditor.UseTextures;
+                var tinted = GLOBALS.Settings.TileEditor.TintedTiles;
+                
+                var cycleDisplaySelected = ImGui.Button($"Textures: {(texture, tinted) switch { (false, false) => "Preview", (true, false) => "Raw Texture", (true, true) => "Tinted Texture", _ => "Preview" }}");
+
+                if (cycleDisplaySelected)
+                {
+                    (texture, tinted) = (texture, tinted) switch
+                    {
+                        (false, false) => (true, false),
+                        (true, false) => (true, true),
+                        _ => (false, false)
+                    };
+                }
+
+                GLOBALS.Settings.TileEditor.UseTextures = texture;
+                GLOBALS.Settings.TileEditor.TintedTiles = tinted;
+                
                 ImGui.End();
             }
             
