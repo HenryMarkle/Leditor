@@ -426,13 +426,6 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             new Gram.TileAction(matrixPosition, GLOBALS.Level.TileMatrix[my, mx, mz], newTileHead)
         ];
 
-        // Place the head of the tile at matrixPosition
-        GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell()
-        {
-            Type = TileType.TileHead,
-            Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
-        };
-
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
@@ -448,38 +441,52 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     matrixY < GLOBALS.Level.GeoMatrix.GetLength(0)
                 )
                 {
-                    var specsIndex = (x * height) + y;
+                    var specsIndex = x*height + y;
 
                     var spec = specs[specsIndex];
                     var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
-
-                    if (spec != -1) GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz].Geo = spec;
-                    if (spec2 != -1 && mz != 2) GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz + 1].Geo = spec2;
                     
-                    // leave the newly placed tile head
-                    if (x == (int)head.X && y == (int)head.Y) continue;
-                    
-                    var newCell = new TileCell
+                    if (spec != -1)
                     {
-                        Type = TileType.TileBody,
-                        Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
-                    };
+                        GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz].Geo = spec;
+                        
+                        // If it's the tile head
+                        if (x == (int)head.X && y == (int)head.Y)
+                        {
+                            // Place the head of the tile at matrixPosition
+                            GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell
+                            {
+                                Type = TileType.TileHead,
+                                Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
+                            };
+                        }
+                        // If it's a tile body
+                        else
+                        {
+                            var newCell = new TileCell
+                            {
+                                Type = TileType.TileBody,
+                                Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                            };
+                            
+                            GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = newCell;
+                            
+                            actions.Add(new Gram.TileAction((matrixX, matrixY, mz), GLOBALS.Level.TileMatrix[matrixY, matrixX, mz], newCell));
+                        }
+                    }
                     
-                    actions.Add(new Gram.TileAction((matrixX, matrixY, mz), GLOBALS.Level.TileMatrix[matrixY, matrixX, mz], newCell));
-
-                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = newCell;
-
-                    if (specs2.Length > 0 && mz != 2)
+                    if (spec2 != -1 && mz != 2)
                     {
+                        GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz + 1].Geo = spec2;
+                        
                         var newerCell = new TileCell
                         {
                             Type = TileType.TileBody,
                             Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
                         };
                         
-                        actions.Add(new Gram.TileAction((matrixX, matrixY, mz+1), GLOBALS.Level.TileMatrix[matrixY, matrixX, mz], newCell));
-                        
                         GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = newerCell;
+                        actions.Add(new Gram.TileAction((matrixX, matrixY, mz+1), GLOBALS.Level.TileMatrix[matrixY, matrixX, mz], newerCell));
                     }
                 }
             }
@@ -548,9 +555,6 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         {
             for (var x = 0; x < width; x++)
             {
-                // leave the newly placed tile head
-                if (x == (int)head.X && y == (int)head.Y) continue;
-
                 var matrixX = x + (int)start.X;
                 var matrixY = y + (int)start.Y;
 
@@ -562,27 +566,52 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     matrixY < GLOBALS.Level.GeoMatrix.GetLength(0)
                 )
                 {
-                    var newCell = new TileCell
-                    {
-                        Type = TileType.TileBody,
-                        Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
-                    };
+                    var specsIndex = x*height + y;
+
+                    var spec = specs[specsIndex];
+                    var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
                     
-                    actions.Add(new Gram.TileAction((matrixX, matrixY, mz), GLOBALS.Level.TileMatrix[matrixY, matrixX, mz], newCell));
-
-                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = newCell;
-
-                    if (specs2.Length > 0 && mz != 2)
+                    if (spec != -1)
                     {
+                        // GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz].Geo = spec;
+                        
+                        // If it's the tile head
+                        if (x == (int)head.X && y == (int)head.Y)
+                        {
+                            // Place the head of the tile at matrixPosition
+                            GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell
+                            {
+                                Type = TileType.TileHead,
+                                Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
+                            };
+                        }
+                        // If it's a tile body
+                        else
+                        {
+                            var newCell = new TileCell
+                            {
+                                Type = TileType.TileBody,
+                                Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                            };
+                            
+                            GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = newCell;
+                            
+                            actions.Add(new Gram.TileAction((matrixX, matrixY, mz), GLOBALS.Level.TileMatrix[matrixY, matrixX, mz], newCell));
+                        }
+                    }
+                    
+                    if (spec2 != -1 && mz != 2)
+                    {
+                        // GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz + 1].Geo = spec2;
+                        
                         var newerCell = new TileCell
                         {
                             Type = TileType.TileBody,
                             Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
                         };
                         
-                        actions.Add(new Gram.TileAction((matrixX, matrixY, mz+1), GLOBALS.Level.TileMatrix[matrixY, matrixX, mz], newCell));
-                        
                         GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = newerCell;
+                        actions.Add(new Gram.TileAction((matrixX, matrixY, mz+1), GLOBALS.Level.TileMatrix[matrixY, matrixX, mz], newerCell));
                     }
                 }
             }
