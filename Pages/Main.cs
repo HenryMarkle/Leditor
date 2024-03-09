@@ -755,11 +755,13 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                     DrawRectangleLines(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, Color.White);
                 }
                 EndMode2D();
-
+                
+                // Menu
+                
+                rlImGui.Begin();
+                
                 if (_failedToSave)
                 {
-                    rlImGui.Begin();
-
                     if (ImGui.Begin("Error##ProjectSaveFail"))
                     {
                         
@@ -771,13 +773,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         
                         ImGui.End();
                     }
-                    
-                    rlImGui.End();
                 }
-                
-                // Menu
-                
-                rlImGui.Begin();
 
                 if (ImGui.Begin("Options##MainMenu"))
                 {
@@ -812,6 +808,17 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                     if (GLOBALS.Level.WaterAtFront != waterInFront) GLOBALS.Level.WaterAtFront = waterInFront;
                     
                     ImGui.Separator();
+                    
+                    // Light Mode
+
+                    var lightMode = GLOBALS.Level.LightMode;
+                    var terrainMode = GLOBALS.Level.DefaultTerrain;
+                    
+                    ImGui.Checkbox("Light Mode", ref lightMode);
+                    ImGui.Checkbox("Terrain Medium", ref terrainMode);
+
+                    if (lightMode != GLOBALS.Level.LightMode) GLOBALS.Level.LightMode = lightMode;
+                    if (terrainMode != GLOBALS.Level.DefaultTerrain) GLOBALS.Level.DefaultTerrain = terrainMode;
                     
                     // Buttons
 

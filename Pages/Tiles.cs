@@ -1101,7 +1101,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             // Draw geos first
             if (_showTileLayer3)
             {
-
+                if (GLOBALS.Layer == 2) DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, Color.Gray with { A = 120 });
                 Printers.DrawGeoLayer(
                     2, 
                     GLOBALS.Scale, 

@@ -705,7 +705,7 @@ public static class Importers {
             "voxelStructRandomDisplaceHorizontal" => InitTileType.VoxelStructRandomDisplaceHorizontal,
             "voxelStructRandomDisplaceVertical" => InitTileType.VoxelStructRandomDisplaceVertical,
             "voxelStructRockType" => InitTileType.VoxelStructRockType,
-            "voxelStructSandType" => InitTileType.VoxelStructSandtype,
+            "voxelStructSandType" => InitTileType.VoxelStructSandType,
 
             _ => throw new Exception("Invalid tile init tag: "+ tpString)
         };

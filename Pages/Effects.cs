@@ -214,110 +214,6 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                     new Color(0, 0, 0, 90)
                 );
 
-                // RayGui.GuiLine(
-                //     new Rectangle(
-                //         GetScreenWidth() / 2f - 390,
-                //         GetScreenHeight() / 2f - 265,
-                //         150,
-                //         10
-                //     ),
-                //     "Categories"
-                // );
-
-                // unsafe
-                // {
-                //     var panelRect = new Rectangle(
-                //         GetScreenWidth() / 2f - 400,
-                //         GetScreenHeight() / 2f - 300,
-                //         800,
-                //         600
-                //     );
-                //
-                //     fixed (byte* pt = _addNewEffectPanelBytes)
-                //     {
-                //         RayGui.GuiPanel(
-                //             panelRect,
-                //             (sbyte*)pt
-                //         );
-                //     }
-                //
-                //     // Close Button
-                //
-                //     var closeClicked = RayGui.GuiButton(new Rectangle(panelRect.X + panelRect.width - 24, panelRect.Y, 24, 24), "X");
-                //
-                //     if (closeClicked) _addNewEffectMode = false;
-                //
-                //     fixed (int* scrollIndex = &_newEffectCategoryScrollIndex)
-                //     {
-                //         fixed (int* fc = &_newEffectCategoryItemFocus)
-                //         {
-                //             var newNewEffectCategorySelectedValue = RayGui.GuiListViewEx(
-                //                 new(
-                //                     GetScreenWidth() / 2f - 390,
-                //                     GetScreenHeight() / 2f - 250,
-                //                     150,
-                //                     540
-                //                 ),
-                //                 _newEffectCategoryNames,
-                //                 _newEffectCategoryNames.Length,
-                //                 fc,
-                //                 scrollIndex,
-                //                 _newEffectCategorySelectedValue
-                //             );
-                //
-                //             if (newNewEffectCategorySelectedValue != _newEffectCategorySelectedValue &&
-                //                 newNewEffectCategorySelectedValue != -1)
-                //             {
-                //                 #if DEBUG
-                //                 _logger.Debug($"New new effect category index: {newNewEffectCategorySelectedValue}");
-                //                 #endif
-                //                 _newEffectCategorySelectedValue = newNewEffectCategorySelectedValue;
-                //             }
-                //         }
-                //     }
-                // }
-                //
-                // unsafe
-                // {
-                //     fixed (int* scrollIndex = &_newEffectScrollIndex)
-                //     {
-                //         fixed (int* fc = &_newEffectItemFocus)
-                //         {
-                //             var newNewEffectSelectedValue = RayGui.GuiListViewEx(
-                //                 new(
-                //                     GetScreenWidth() / 2f - 230,
-                //                     GetScreenHeight() / 2f - 250,
-                //                     620,
-                //                     540
-                //                 ),
-                //                 _newEffectNames[_newEffectCategorySelectedValue],
-                //                 _newEffectNames[_newEffectCategorySelectedValue].Length,
-                //                 fc,
-                //                 scrollIndex,
-                //                 _newEffectSelectedValue
-                //             );
-                //
-                //             if (newNewEffectSelectedValue == -1) {
-                //                 GLOBALS.Level.Effects = [
-                //                     .. GLOBALS.Level.Effects,
-                //                     (
-                //                         GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue],
-                //                         Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
-                //                         new double[GLOBALS.Level.Height, GLOBALS.Level.Width]
-                //                     )
-                //                 ];
-                //
-                //                 _addNewEffectMode = false;
-                //                 if (_currentAppliedEffect == -1) _currentAppliedEffect = 0;
-                //             }
-                //             else
-                //             {
-                //                 _newEffectSelectedValue = newNewEffectSelectedValue;
-                //             }
-                //         }
-                //     }
-                // }
-
                 // ImGui
                 
                 rlImGui.Begin();
@@ -385,7 +281,9 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                         ];
 
                         _addNewEffectMode = false;
-                        if (_currentAppliedEffect == -1) _currentAppliedEffect = 0;
+                        _currentAppliedEffect++;
+
+                        if (GLOBALS.Level.Effects.Length > 0) _currentAppliedEffect = GLOBALS.Level.Effects.Length - 1;
                     }
                     
                     ImGui.End();
@@ -418,16 +316,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                               !_isNavigationWinDragged &&
                               !_isEffectsWinHovered &&
                               !_isEffectsWinDragged &&
-                              !_addNewEffectMode && 
-                              !CheckCollisionPointRec(
-                                  GetMousePosition(),
-                                  new(
-                                      GetScreenWidth() - 300,
-                                      100,
-                                      280,
-                                      appliedEffectsPanelHeight
-                                  )
-                              ) && GLOBALS.Level.Effects.Length > 0;
+                              !_addNewEffectMode && GLOBALS.Level.Effects.Length > 0;
 
             // Movement
 
@@ -922,6 +811,8 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                             }
 
                             ImGui.SameLine();
+                            
+                            Utils.Restrict(ref _optionsIndex, 0, options.Length-1);
 
                             ref var currentOption = ref options[_optionsIndex];
 

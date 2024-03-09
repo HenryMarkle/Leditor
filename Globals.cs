@@ -603,13 +603,13 @@ internal static class GLOBALS
         ["Arm Growers", "Horse Tails", "Circuit Plants", "Feather Plants", "Thorn Growers", "Rollers", "Garbage Spirals"], // 7
         ["Thick Roots", "Shadow Plants"], // 2
         ["Fungi Flowers", "Lighthouse Flowers", "Fern", "Giant Mushroom", "Sprawlbush", "featherFern", "Fungus Tree"], // 7
-        ["Color.BlackGoo", "DarkSlime"], // 2
+        ["BlackGoo", "DarkSlime"], // 2
         ["Restore As Scaffolding", "Ceramic Chaos"], // 2
         ["Colored Hang Roots", "Colored Thick Roots", "Colored Shadow Plants", "Colored Lighthouse Flowers", "Colored Fungi Flowers", "Root Plants"], // 6
         ["Foliage", "Mistletoe", "High Fern", "High Grass", "Little Flowers", "Wastewater Mold"], // 6
         ["Spinets", "Small Springs", "Mini Growers", "Clovers", "Reeds", "Lavenders", "Dense Mold"], // 7
         ["Ultra Super Erode", "Impacts"], // 2
-        ["Super Color.BlackGoo", "Stained Glass Properties"], // 2
+        ["Super BlackGoo", "Stained Glass Properties"], // 2
         ["Colored Barnacles", "Colored Rubble", "Fat Slime"], // 3
         ["Assorted Trash", "Colored Wires", "Colored Chains", "Ring Chains"], // 4
         ["Left Facing Kelp", "Right Facing Kelp", "Mixed Facing Kelp", "Bubble Grower", "Moss Wall", "Club Moss"], // 6

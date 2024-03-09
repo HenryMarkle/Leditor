@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace Leditor;
 
@@ -807,7 +809,7 @@ public enum InitTileType {
     VoxelStructRandomDisplaceHorizontal,
     VoxelStructRandomDisplaceVertical,
     VoxelStructRockType,
-    VoxelStructSandtype
+    VoxelStructSandType
 }
 
 public readonly record struct InitTile(
@@ -822,6 +824,37 @@ public readonly record struct InitTile(
     int PtPos,
     string[] Tags
 );
+
+// Unused
+public record TileDefinition(
+    string Name,
+    (int Width, int Height) Size,
+    InitTileType Type,
+    int BufferTiles,
+    int Rnd,
+    int PtPos,
+    int[] Specs,
+    int[] Specs2,
+    int[] Specs3,
+    int[] Repeat,
+    string[] Tags
+);
+// {
+//     public string Name { get; set; } = name;
+//     public (int Width, int Height) Size { get; set; } = size;
+//     public InitTileType Type { get; set; } = type;
+//     public int BufferTiles { get; set; } = bufferTiles;
+//     public int Rnd { get; set; } = rnd;
+//     public int PtPos{ get; set; } = ptPos;
+//     public int[] Specs{ get; set; } = specs;
+//     public int[] Specs2{ get; set; } = specs2;
+//     public int[] Specs3 { get; set; } = specs3;
+//     public int[] Repeat { get; set; } = repeat;
+//     public string[] Tags { get; set; } = tags;
+//
+//     public static bool operator ==(TileDefinition t1, TileDefinition t2) => t1.Name == t2.Name;
+//     public static bool operator !=(TileDefinition t1, TileDefinition t2) => t1.Name != t2.Name;
+// }
 
 #region InitProp
 

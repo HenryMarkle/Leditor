@@ -234,7 +234,7 @@ class Program
             new InitTile("Missing Metal Floor", (1, 1), [6], [], InitTileType.VoxelStruct, [5, 1, 1, 1, 1, 1], 0, 1, 0, ["INTERNAL"]),
         ],
         [
-            new InitTile("Dune Sand", (1, 1), [1], [], InitTileType.VoxelStructSandtype, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
+            new InitTile("Dune Sand", (1, 1), [1], [], InitTileType.VoxelStructSandType, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
         ]
     ];
     
@@ -258,19 +258,19 @@ class Program
             var strTask = Leditor.Lingo.Exporters.ExportAsync(GLOBALS.Level);
 
             // export light map
-            var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);
-
-            unsafe
-            {
-                ImageFlipVertical(&image);
-            }
-            
-            var parent = Directory.GetParent(path)?.FullName ?? GLOBALS.ProjectPath;
-            var name = Path.GetFileNameWithoutExtension(path);
-                    
-            ExportImage(image, Path.Combine(parent, name+".png"));
-            
-            UnloadImage(image);
+            // var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);
+            //
+            // unsafe
+            // {
+            //     ImageFlipVertical(&image);
+            // }
+            //
+            // var parent = Directory.GetParent(path)?.FullName ?? GLOBALS.ProjectPath;
+            // var name = Path.GetFileNameWithoutExtension(path);
+            //         
+            // ExportImage(image, Path.Combine(parent, name+".png"));
+            //
+            // UnloadImage(image);
 
             var str = await strTask;
             
