@@ -239,13 +239,6 @@ internal static class GLOBALS
             LightFlatness = 1;
             LightAngle = 180;
 
-            /*Border = new(
-                Padding.left * Scale,
-                Padding.top * Scale,
-                (Width - (Padding.right + Padding.left)) * Scale,
-                (Height - (Padding.bottom + Padding.top)) * Scale
-            );*/
-
             Cameras = [new RenderCamera { Coords = new Vector2(20f, 30f), Quad = new(new(), new(), new(), new()) }];
 
             Effects = [];
@@ -314,6 +307,9 @@ internal static class GLOBALS
 
                 MaterialColors = matrix;
             }
+            
+            // Props
+            Props = [];
         }
 
         internal void Resize(

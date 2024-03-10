@@ -257,21 +257,6 @@ class Program
         {
             var strTask = Leditor.Lingo.Exporters.ExportAsync(GLOBALS.Level);
 
-            // export light map
-            // var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);
-            //
-            // unsafe
-            // {
-            //     ImageFlipVertical(&image);
-            // }
-            //
-            // var parent = Directory.GetParent(path)?.FullName ?? GLOBALS.ProjectPath;
-            // var name = Path.GetFileNameWithoutExtension(path);
-            //         
-            // ExportImage(image, Path.Combine(parent, name+".png"));
-            //
-            // UnloadImage(image);
-
             var str = await strTask;
             
             await File.WriteAllTextAsync(path, str);
@@ -526,7 +511,7 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.45";
+        const string version = "Henry's Leditor v0.9.46";
         const string raylibVersion = "Raylib v6.0.0";
         
         // Load tiles and props

@@ -200,6 +200,9 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                         ClearBackground(Color.White);
                         EndTextureMode();
 
+                        GLOBALS.ProjectPath = "";
+                        GLOBALS.Level.ProjectName = "New Project";
+
                         GLOBALS.NewFlag = false;
 
                         GLOBALS.Page = 1;
