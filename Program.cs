@@ -483,16 +483,6 @@ class Program
                 return;
             }
         }
-
-        // Check for Init.txt
-
-        bool initExists = File.Exists(GLOBALS.Paths.TilesInitPath);
-
-        if (!initExists)
-        {
-            logger.Fatal("Init.txt not found");
-            //throw new Exception("Init.txt not found");
-        }
         
         // Check for renderer
 
@@ -501,18 +491,10 @@ class Program
             GLOBALS.RendererExists = true;
         }
 
-        // checksum files
-
-        bool initChecksum = !initExists || CheckInit();
-
-        if (initExists) logger.Debug(initChecksum ? "Init.txt passed checksum" : "Init.txt failed checksum");
-
-        //
-
         logger.Information("initializing data");
 
         const string version = "Henry's Leditor v0.9.46";
-        const string raylibVersion = "Raylib v6.0.0";
+        const string raylibVersion = "Raylib v5.0.0";
         
         // Load tiles and props
 
@@ -520,7 +502,7 @@ class Program
 
         try
         {
-            (GLOBALS.TileCategories, GLOBALS.Tiles) = initExists ? LoadTileInit() : ([], []);
+            (GLOBALS.TileCategories, GLOBALS.Tiles) = LoadTileInit();
         }
         catch (Exception e)
         {
@@ -985,20 +967,6 @@ class Program
                         if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
                     }
 
-                    if (initialFrames > 75)
-                    {
-                        if (!initExists) DrawText("Init.txt not found", 700, 280, 16, new(252, 38, 38, 255));
-                    }
-
-                    if (initialFrames > 80)
-                    {
-                        #if DEBUG
-                        if (!initChecksum) DrawText("Init.txt failed checksum", 700, 300, 16, Color.Yellow);
-                        #else
-                        if (!initChecksum) DrawText("Tiles have been modified", 700, 300, 16, Color.Yellow);
-                        #endif
-                    }
-
                     if (initialFrames > 90)
                     {
                         if (integrityFailed) 
@@ -1047,13 +1015,6 @@ class Program
                             new(255, 255, 255, 255)
                         );
 
-                        #if DEBUG
-                        if (!initChecksum) DrawText("Init.txt failed checksum", 10, 300, 16, Color.Yellow);
-                        #else
-                        if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, Color.Yellow);
-                        #endif
-                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
-
                         DrawText(version, 700, 50, 15, Color.White);
                         DrawText(raylibVersion, 700, 70, 15, Color.White);
                         
@@ -1096,11 +1057,6 @@ class Program
                             new(255, 255, 255, 255)
                         );
 
-                        #if DEBUG
-                        if (!initChecksum) DrawText("Init.txt failed checksum", 10, 300, 16, Color.Yellow);
-                        #else
-                        if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, Color.Yellow);
-                        #endif
                         if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
 
                         DrawText(version, 700, 50, 15, Color.White);
@@ -1144,11 +1100,6 @@ class Program
                             new(255, 255, 255, 255)
                         );
 
-                        #if DEBUG
-                        if (!initChecksum) DrawText("Init.txt failed checksum", 10, 300, 16, Color.Yellow);
-                        #else
-                        if (!initChecksum) DrawText("Tiles have been modified", 10, 300, 16, Color.Yellow);
-                        #endif
                         if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
 
                         DrawText(version, 700, 50, 15, Color.White);
