@@ -446,22 +446,22 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     var spec = specs[specsIndex];
                     var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
                     
+                    // If it's the tile head
+                    if (x == (int)head.X && y == (int)head.Y)
+                    {
+                        // Place the head of the tile at matrixPosition
+                        GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell
+                        {
+                            Type = TileType.TileHead,
+                            Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
+                        };
+                    }
+                    
                     if (spec != -1)
                     {
                         GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz].Geo = spec;
-                        
-                        // If it's the tile head
-                        if (x == (int)head.X && y == (int)head.Y)
-                        {
-                            // Place the head of the tile at matrixPosition
-                            GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell
-                            {
-                                Type = TileType.TileHead,
-                                Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
-                            };
-                        }
-                        // If it's a tile body
-                        else
+        
+                        if (!(x == (int)head.X && y == (int)head.Y))
                         {
                             var newCell = new TileCell
                             {
@@ -571,22 +571,23 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     var spec = specs[specsIndex];
                     var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
                     
+                    // If it's the tile head
+                    if (x == (int)head.X && y == (int)head.Y)
+                    {
+                        // Place the head of the tile at matrixPosition
+                        GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell
+                        {
+                            Type = TileType.TileHead,
+                            Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
+                        };
+                    }
+                    
                     if (spec != -1)
                     {
                         // GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz].Geo = spec;
                         
                         // If it's the tile head
-                        if (x == (int)head.X && y == (int)head.Y)
-                        {
-                            // Place the head of the tile at matrixPosition
-                            GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell
-                            {
-                                Type = TileType.TileHead,
-                                Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
-                            };
-                        }
-                        // If it's a tile body
-                        else
+                        if (!(x == (int)head.X && y == (int)head.Y))
                         {
                             var newCell = new TileCell
                             {

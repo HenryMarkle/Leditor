@@ -1315,6 +1315,34 @@ class Program
                             _saveFileDialog = Utils.SetFilePathAsync();
                             _isGuiLocked = true;
                         }
+                        else if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.Render.Check(ctrl, shift, alt))
+                        {
+                            logger.Debug($"Rendering level \"{GLOBALS.Level.ProjectName}\"");
+
+                            var projectPath = Path.Combine(GLOBALS.ProjectPath, $"{GLOBALS.Level.ProjectName}.txt");
+                            var arguments = $"render \"{projectPath}\"";
+
+                            try
+                            {
+                                GLOBALS.RenderProcess.Kill();
+                                    
+                                GLOBALS.RenderProcess.Dispose();
+                            } catch (Exception e) {
+                                logger.Error($"Unable to kill render process: {e}");  
+                            }
+                                
+                            GLOBALS.RenderProcess = new System.Diagnostics.Process
+                            {
+                                StartInfo =
+                                {
+                                    FileName = Path.Combine(GLOBALS.Paths.RendererDirectory, "Drizzle.ConsoleApp.exe"),
+                                    WorkingDirectory = GLOBALS.Paths.ExecutableDirectory,
+                                    Arguments = arguments
+                                }
+                            };
+
+                            GLOBALS.RenderProcess.Start();
+                        }
                     }
                     
                     // page switch

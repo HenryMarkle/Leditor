@@ -55,26 +55,14 @@ public class SettingsPage : IPage
     {
         GLOBALS.PreviousPage = 9;
         
-        var width = GetScreenWidth();
-        var height = GetScreenHeight();
-        
-        var shortcutsScrollPanelRect = new Rectangle(420, 91, width - 460, height - 130);
-        
-        var panelRect = new Rectangle(20, 20, width - 40, height - 40);
-        var categoryRect = new Rectangle(30, 60, 200, height - 200);
-        var contentRect = new Rectangle(231, 60, width - 50, height - 90);
-
-        var subPanelX = (int)(categoryRect.X + categoryRect.Width + 10);
-        var subPanelY = (int)(categoryRect.Y + 60);
-
         #region Shortcuts
-        
-        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
-        var shift = IsKeyDown(KeyboardKey.LeftShift);
-        var alt = IsKeyDown(KeyboardKey.LeftAlt);
         
         if (!_assigningShortcut)
         {
+            var ctrl = IsKeyDown(KeyboardKey.LeftControl);
+            var shift = IsKeyDown(KeyboardKey.LeftShift);
+            var alt = IsKeyDown(KeyboardKey.LeftAlt);
+            
             if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
             if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 2;
             if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 3;
@@ -91,6 +79,64 @@ public class SettingsPage : IPage
             if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
             // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
         }
+        
+        if (_shortcutToAssign is not null || _mouseShortcutToAssign is not null) _assigningShortcut = true;
+
+        if (_shortcutToAssign is not null)
+        {
+            var key = GetKeyPressed();
+            
+            if (key == (int)KeyboardKey.Escape)
+            {
+                if (IsKeyDown(KeyboardKey.LeftShift))
+                {
+                    _shortcutToAssign.Key = KeyboardKey.Null;
+                }
+                
+                _assigningShortcut = false;
+                _shortcutToAssign = null;
+            }
+
+            if (key != 0 && key != 340 && key != 341 && key != 342 && key != 256 && key != 4)
+            {
+                _shortcutToAssign.Key = (KeyboardKey)key;
+                _shortcutToAssign.Shift = IsKeyDown(KeyboardKey.LeftShift);
+                _shortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.LeftControl);
+                _shortcutToAssign.Alt = IsKeyDown(KeyboardKey.LeftAlt);
+                
+                _assigningShortcut = false;
+                _shortcutToAssign = null;
+            }
+            
+        }
+        else if (_mouseShortcutToAssign is not null)
+        {
+            var key = GetKeyPressed();
+            var button = -1;
+
+            if (IsMouseButtonPressed(MouseButton.Left)) button = 0;
+            if (IsMouseButtonPressed(MouseButton.Middle)) button = 2;
+            if (IsMouseButtonPressed(MouseButton.Right)) button = 1;
+
+            if (key == 256)
+            {
+                _assigningShortcut = false;
+                _mouseShortcutToAssign = null;
+            }
+
+            if (button != -1 && key != 340 && key != 341 && key != 342 && key != 256)
+            {
+                _mouseShortcutToAssign.Button = (MouseButton)button;
+                _mouseShortcutToAssign.Shift = IsKeyDown(KeyboardKey.LeftShift);
+                _mouseShortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.LeftControl);
+                _mouseShortcutToAssign.Alt = IsKeyDown(KeyboardKey.LeftAlt);
+                
+                _assigningShortcut = false;
+                _mouseShortcutToAssign = null;
+            }
+            
+        }
+        
         #endregion
         
         BeginDrawing();
@@ -684,63 +730,6 @@ public class SettingsPage : IPage
         }
         
         rlImGui.End();
-        
-        if (_shortcutToAssign is not null || _mouseShortcutToAssign is not null) _assigningShortcut = true;
-
-        if (_shortcutToAssign is not null)
-        {
-            var key = GetKeyPressed();
-
-            if (key == 256)
-            {
-                if (IsKeyDown(KeyboardKey.LeftShift))
-                {
-                    _shortcutToAssign.Key = KeyboardKey.Null;
-                }
-                
-                _assigningShortcut = false;
-                _shortcutToAssign = null;
-            }
-
-            if (key != 0 && key != 340 && key != 341 && key != 342 && key != 256 && key != 4)
-            {
-                _shortcutToAssign.Key = (KeyboardKey)key;
-                _shortcutToAssign.Shift = IsKeyDown(KeyboardKey.LeftShift);
-                _shortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.LeftControl);
-                _shortcutToAssign.Alt = IsKeyDown(KeyboardKey.LeftAlt);
-                
-                _assigningShortcut = false;
-                _shortcutToAssign = null;
-            }
-            
-        }
-        else if (_mouseShortcutToAssign is not null)
-        {
-            var key = GetKeyPressed();
-            var button = -1;
-
-            if (IsMouseButtonPressed(MouseButton.Left)) button = 0;
-            if (IsMouseButtonPressed(MouseButton.Middle)) button = 2;
-            if (IsMouseButtonPressed(MouseButton.Right)) button = 1;
-
-            if (key == 256)
-            {
-                _assigningShortcut = false;
-                _mouseShortcutToAssign = null;
-            }
-
-            if (button != -1 && key != 340 && key != 341 && key != 342 && key != 256)
-            {
-                _mouseShortcutToAssign.Button = (MouseButton)button;
-                _mouseShortcutToAssign.Shift = IsKeyDown(KeyboardKey.LeftShift);
-                _mouseShortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.LeftControl);
-                _mouseShortcutToAssign.Alt = IsKeyDown(KeyboardKey.LeftAlt);
-                
-                _assigningShortcut = false;
-                _mouseShortcutToAssign = null;
-            }
-            
-        }
         
         EndDrawing();
     }

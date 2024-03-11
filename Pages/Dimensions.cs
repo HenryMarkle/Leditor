@@ -272,6 +272,9 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                             (6, 3, 6, 5),
                             [_simpleFillLayer1 ? 1 : 0, _simpleFillLayer2 ? 1 : 0, _simpleFillLayer3 ? 1 : 0]
                         );
+
+                        GLOBALS.Level.ProjectName = "New Level";
+                        GLOBALS.ProjectPath = "";
                         
                         UnloadRenderTexture(GLOBALS.Textures.LightMap);
                         GLOBALS.Textures.LightMap = LoadRenderTexture((GLOBALS.Level.Width * GLOBALS.Scale) + 300, (GLOBALS.Level.Height * GLOBALS.Scale) + 300);

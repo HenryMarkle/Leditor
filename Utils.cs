@@ -84,6 +84,10 @@ internal static class Utils
             {
                 path = dialog.FileName;
             }
+            else
+            {
+                path = "";
+            }
         });
             
         thread.SetApartmentState(ApartmentState.STA);

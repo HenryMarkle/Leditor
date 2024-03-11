@@ -368,6 +368,8 @@ internal static class GLOBALS
         }
     }
 
+    internal static System.Diagnostics.Process RenderProcess = default!;
+
     internal static string ProjectPath { get; set; } = "";
 
     internal static int MinScreenWidth => 1280;
