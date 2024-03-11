@@ -493,7 +493,7 @@ class Program
 
         logger.Information("initializing data");
 
-        const string version = "Henry's Leditor v0.9.46";
+        const string version = "Henry's Leditor v0.9.47";
         const string raylibVersion = "Raylib v5.0.0";
         
         // Load tiles and props

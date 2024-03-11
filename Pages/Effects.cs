@@ -294,7 +294,8 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
         }
         else
         {
-
+            Utils.Restrict(ref _currentAppliedEffect, 0, GLOBALS.Level.Effects.Length-1);
+            
             var effectsMouse = GetScreenToWorld2D(GetMousePosition(), _camera);
 
             //                        v this was done to avoid rounding errors
@@ -765,7 +766,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                 
                 // Options
                 {
-                    var options = GLOBALS.Level.Effects.Length > 0 && _currentAppliedEffect != -1
+                    var options = GLOBALS.Level.Effects.Length > 0
                         ? GLOBALS.Level.Effects[_currentAppliedEffect].Item2
                         : [];
 
