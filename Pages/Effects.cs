@@ -119,9 +119,9 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
         
-        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
-        var shift = IsKeyDown(KeyboardKey.LeftShift);
-        var alt = IsKeyDown(KeyboardKey.LeftAlt);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
         
         GLOBALS.PreviousPage = 7;
         
@@ -201,7 +201,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                 ];
 
                 _addNewEffectMode = false;
-                if (_currentAppliedEffect == -1) _currentAppliedEffect = 0;
+                if (GLOBALS.Level.Effects.Length > 0) _currentAppliedEffect = GLOBALS.Level.Effects.Length -1;
             }
 
             BeginDrawing();

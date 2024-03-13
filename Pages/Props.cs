@@ -332,9 +332,9 @@ internal class PropsEditorPage : IPage
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
         
-        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
-        var shift = IsKeyDown(KeyboardKey.LeftShift);
-        var alt = IsKeyDown(KeyboardKey.LeftAlt);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
             
         if (_selected.Length != GLOBALS.Level.Props.Length)
         {

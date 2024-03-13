@@ -98,9 +98,9 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
         
-        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
-        var shift = IsKeyDown(KeyboardKey.LeftShift);
-        var alt = IsKeyDown(KeyboardKey.LeftAlt);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
         
         GLOBALS.PreviousPage = 2;
         var scale = GLOBALS.Scale;
@@ -139,8 +139,6 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
         var toggleCameraRect = new Rectangle(90, sHeight - 60, 50, 50);
         var toggleCameraHovered = CheckCollisionPointRec(uiMouse, toggleCameraRect);
 
-        Rectangle panelRect = new(sWidth - 200, 50, 188, 400);
-
         var canDrawGeo = !toggleCameraHovered &&
                          !_isMenuWinHovered &&
                          !_isMenuWinDragged &&
@@ -150,7 +148,6 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                          !_isShortcutsWinDragged && 
                          !_isNavigationWinHovered &&
                          !_isNavigationWinDragged &&
-                         !CheckCollisionPointRec(GetMousePosition(), panelRect) &&
                          !CheckCollisionPointRec(uiMouse, layer3Rect) &&
                          (GLOBALS.Layer != 1 || !CheckCollisionPointRec(uiMouse, layer2Rect)) &&
                          (GLOBALS.Layer != 0 || !CheckCollisionPointRec(uiMouse, layer1Rect));

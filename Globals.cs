@@ -31,18 +31,16 @@ internal static class GLOBALS
         public Texture2D[] LongProps { get; set; } = [];
         public Texture2D[] RopeProps { get; set; } = [];
         public Texture2D[] PropMenuCategories { get; set; } = [];
-        public Texture2D[] PropModes { get; set; } = [];
         public Texture2D[] PropEditModes { get; set; } = [];
-        public Texture2D[] EffectsUI { get; set; } = [];
         public Texture2D[] PropGenerals { get; set; } = [];
         
         public RenderTexture2D LightMap { get; set; }
         
         // Might be a really bad idea
         
-        public Raylib_cs.RenderTexture2D TileSpecs { get; set; }
-        public Raylib_cs.RenderTexture2D PropDepth { get; set; }
-        public Raylib_cs.RenderTexture2D DimensionsVisual { get; set; }
+        public RenderTexture2D TileSpecs { get; set; }
+        public RenderTexture2D PropDepth { get; set; }
+        public RenderTexture2D DimensionsVisual { get; set; }
     }
 
     /// <summary>
@@ -756,29 +754,30 @@ internal static class GLOBALS
         false, // 20
         true  // 21 scavenger
     ];
-    
+
     internal static Settings Settings { get; set; } = new(
-            new GeneralSettings(),
-            new Shortcuts(
-                new GlobalShortcuts(),
-                new GeoShortcuts(),
-                new ExperimentalGeoShortcuts(),
-                new TileShortcuts(),
-                new CameraShortcuts(),
-                new LightShortcuts(),
-                new EffectsShortcuts(),
-                new PropsShortcuts()
+        new GeneralSettings(),
+        new Shortcuts(
+            new GlobalShortcuts(),
+            new GeoShortcuts(),
+            new ExperimentalGeoShortcuts(),
+            new TileShortcuts(),
+            new CameraShortcuts(),
+            new LightShortcuts(),
+            new EffectsShortcuts(),
+            new PropsShortcuts()
+        ),
+        new Misc(splashScreen: false, tileImageScansPerFrame: 100),
+        new GeoEditor(
+            new LayerColors(
+                layer1: new ConColor(0, 0, 0, 255),
+                layer2: new ConColor(0, 255, 0, 50),
+                layer3: new ConColor(255, 0, 0, 50)
             ),
-            new Misc(splashScreen:false, tileImageScansPerFrame: 100),
-            new GeoEditor(
-                new LayerColors(
-                    layer1: new ConColor(0, 0, 0, 255),
-                    layer2: new ConColor(0, 255, 0, 50),
-                    layer3: new ConColor(255, 0, 0, 50)
-                ),
-                new ConColor(0, 0, 255, 70)
-            ),
-            new TileEditor(),
+            new ConColor(0, 0, 255, 70)
+        ),
+        new TileEditor(),
+        new CameraEditorSettings(false, false),
             new LightEditor(background: new ConColor(66, 108, 245, 255)),
             new EffectsSettings(
                 effectColorLight:Color.Green,

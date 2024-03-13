@@ -1439,7 +1439,7 @@ internal static class Printers
         }
         else
         {
-            Raylib.DrawRectangleV(
+            DrawRectangleV(
                 origin,
                 new(GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
                 new(0, 255, 0, 70)
@@ -1448,40 +1448,40 @@ internal static class Printers
 
         if (index != -1)
         {
-            Raylib.DrawText(
+            DrawText(
                 $"{index}",
                 (int)origin.X + 10,
                 (int)origin.Y + 10,
                 20,
-                new(255, 255, 255, 255)
+                Color.White
             );
         }
 
         DrawRectangleLinesEx(
             new(origin.X, origin.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
             4f,
-            new(255, 255, 255, 255)
+            Color.White
         );
 
         DrawRectangleLinesEx(
             new(origin.X, origin.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
             2f,
-            new(0, 0, 0, 255)
+            Color.Black
         );
 
         DrawCircleLines(
             (int)(origin.X + GLOBALS.EditorCameraWidth / 2),
             (int)(origin.Y + GLOBALS.EditorCameraHeight / 2),
             50,
-            new(0, 0, 0, 255)
+            Color.Black
         );
 
         if (hover)
         {
-            Raylib.DrawCircleV(
+            DrawCircleV(
                 new(origin.X + GLOBALS.EditorCameraWidth / 2, origin.Y + GLOBALS.EditorCameraHeight / 2),
                 50,
-                new Color(255, 255, 255, 100)
+                Color.White with { A = 100 }
             );
         }
 
@@ -1489,18 +1489,18 @@ internal static class Printers
             new(origin.X + 4, origin.Y + GLOBALS.EditorCameraHeight / 2),
             new(origin.X + GLOBALS.EditorCameraWidth - 4, origin.Y + GLOBALS.EditorCameraHeight / 2),
             4f,
-            new(0, 0, 0, 255)
+            Color.Black
         );
 
         DrawRectangleLinesEx(
-            new(
+            new Rectangle(
                 origin.X + 190,
                 origin.Y + 20,
                 51 * GLOBALS.Scale,
                 40 * GLOBALS.Scale - 40
             ),
             4f,
-            new(255, 0, 0, 255)
+            Color.Red
         );
 
         var quarter1 = new Rectangle(origin.X - 150, origin.Y - 150, GLOBALS.EditorCameraWidth / 2 + 150, GLOBALS.EditorCameraHeight / 2 + 150);

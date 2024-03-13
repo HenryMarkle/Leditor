@@ -99,10 +99,10 @@ public class SettingsPage : IPage
 
             if (key != 0 && key != 340 && key != 341 && key != 342 && key != 256 && key != 4)
             {
-                _shortcutToAssign.Key = (KeyboardKey)key;
-                _shortcutToAssign.Shift = IsKeyDown(KeyboardKey.LeftShift);
-                _shortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.LeftControl);
-                _shortcutToAssign.Alt = IsKeyDown(KeyboardKey.LeftAlt);
+                _shortcutToAssign!.Key = (KeyboardKey)key;
+                _shortcutToAssign.Shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
+                _shortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
+                _shortcutToAssign.Alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
                 
                 _assigningShortcut = false;
                 _shortcutToAssign = null;
@@ -126,10 +126,10 @@ public class SettingsPage : IPage
 
             if (button != -1 && key != 340 && key != 341 && key != 342 && key != 256)
             {
-                _mouseShortcutToAssign.Button = (MouseButton)button;
-                _mouseShortcutToAssign.Shift = IsKeyDown(KeyboardKey.LeftShift);
-                _mouseShortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.LeftControl);
-                _mouseShortcutToAssign.Alt = IsKeyDown(KeyboardKey.LeftAlt);
+                _mouseShortcutToAssign!.Button = (MouseButton)button;
+                _mouseShortcutToAssign.Shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
+                _mouseShortcutToAssign.Ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
+                _mouseShortcutToAssign.Alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
                 
                 _assigningShortcut = false;
                 _mouseShortcutToAssign = null;
@@ -171,35 +171,16 @@ public class SettingsPage : IPage
                 _assigningShortcut = false;
                 _shortcutToAssign = null;
                 _mouseShortcutToAssign = null;
-               
-                GLOBALS.Settings = new Settings(
-                    new GeneralSettings(),
-                    new Shortcuts(
-                        new GlobalShortcuts(),
-                        new GeoShortcuts(),
-                        new ExperimentalGeoShortcuts(),
-                        new TileShortcuts(),
-                        new CameraShortcuts(),
-                        new LightShortcuts(),
-                        new EffectsShortcuts(),
-                        new PropsShortcuts()
-                    ),
-                    new Misc(splashScreen:false, tileImageScansPerFrame: 100),
-                    new GeoEditor(
-                        new LayerColors(
-                            layer1: new ConColor(0, 0, 0, 255),
-                            layer2: new ConColor(0, 255, 0, 50),
-                            layer3: new ConColor(255, 0, 0, 50)
-                        ),
-                        new ConColor(0, 0, 255, 70)
-                    ),
-                    new TileEditor(),
-                    new LightEditor(background: new ConColor(66, 108, 245, 255)),
-                    new EffectsSettings(
-                        effectColorLight:Color.Green,
-                        effectColorDark:new(214, 187, 9, 255)),
-                    new PropEditor(),
-                    new Experimental()
+
+                GLOBALS.Settings.Shortcuts = new Shortcuts(
+                    new GlobalShortcuts(),
+                    new GeoShortcuts(),
+                    new ExperimentalGeoShortcuts(),
+                    new TileShortcuts(),
+                    new CameraShortcuts(),
+                    new LightShortcuts(),
+                    new EffectsShortcuts(),
+                    new PropsShortcuts()
                 );
             }
 

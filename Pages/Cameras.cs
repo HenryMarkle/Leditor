@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
@@ -19,17 +20,22 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
     private bool _isNavigationWinHovered;
     private bool _isNavigationWinDragged;
 
+    private bool _alignment = GLOBALS.Settings.CameraSettings.Alignment;
+    private bool _snap = GLOBALS.Settings.CameraSettings.Snap;
+
     public void Draw()
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
         
         GLOBALS.PreviousPage = 4;
+        
+        var worldMouse = GetScreenToWorld2D(GetMousePosition(), _camera);
 
         #region CamerasInputHandlers
 
-        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
-        var shift = IsKeyDown(KeyboardKey.LeftShift);
-        var alt = IsKeyDown(KeyboardKey.LeftAlt);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
 
         if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt))
         {
@@ -67,6 +73,9 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
             GLOBALS.Page = 9;
         }
 
+        var _xAligned = false;
+        var _yAligned = false;
+
         // handle mouse drag
         if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true))
         {
@@ -91,10 +100,9 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
             clickTracker = false;
         }
 
+        // Leave dragged camera
         if (_shortcuts.ManipulateCamera.Check(ctrl, shift, alt, true) && !clickTracker && draggedCamera != -1)
         {
-            var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), _camera);
-            GLOBALS.Level.Cameras[draggedCamera].Coords = new Vector2(pos.X - (72 * GLOBALS.Scale - 40) / 2f, pos.Y - (43 * GLOBALS.Scale - 60) / 2f);
             draggedCamera = -1;
             clickTracker = true;
         }
@@ -114,12 +122,11 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
             draggedCamera = -1;
         }
 
-        if (_shortcuts.CreateAndDeleteCamera.Check(ctrl, shift, alt))
+        if (_shortcuts.CreateAndDeleteCamera.Check(ctrl, shift, alt) || _shortcuts.CreateAndDeleteCameraAlt.Check(ctrl, shift, alt))
         {
             if (draggedCamera == -1)
             {
-                var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), _camera);
-                GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = new Vector2(0, 0), Quad = new(new(), new(), new(), new()) }];
+                GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new RenderCamera() { Coords = new Vector2(0, 0), Quad = new(new(), new(), new(), new()) }];
                 GLOBALS.CamQuadLocks = [..GLOBALS.CamQuadLocks, 0];
                 draggedCamera = GLOBALS.Level.Cameras.Count - 1;
             }
@@ -180,17 +187,129 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                 {
                     if (index == draggedCamera)
                     {
-                        var pos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), _camera);
-                        Printers.DrawCameraSprite(new(pos.X - (72 * GLOBALS.Scale - 40) / 2, pos.Y - (43 * GLOBALS.Scale - 60) / 2), cam.Quad, _camera, index);
-                        continue;
-                    }
-                    var (clicked, hovered) = Printers.DrawCameraSprite(cam.Coords, cam.Quad, _camera, index);
+                        var draggedOrigin = worldMouse - new Vector2(
+                            (72 * GLOBALS.Scale - 40) / 2f,
+                            (43 * GLOBALS.Scale - 60) / 2f);
 
-                    if (clicked && !clickTracker)
-                    {
-                        draggedCamera = index;
-                        clickTracker = true;
+                        if (_snap || _alignment)
+                        {
+                            var mouseCritRect = Utils.CameraCriticalRectangle(draggedOrigin);
+
+                            if (GLOBALS.Level.Cameras.Count == 1)
+                            {
+                                cam.Coords = draggedOrigin;
+                            }
+                            else
+                            {
+                                for (var cameraIndex = 0; cameraIndex < GLOBALS.Level.Cameras.Count; cameraIndex++)
+                                {
+                                    if (cameraIndex == draggedCamera) goto skipInner;
+                                    
+                                    var camera = GLOBALS.Level.Cameras[cameraIndex];
+
+                                    if (_snap)
+                                    {
+                                        // var critRect = Utils.CameraCriticalRectangle(camera.Coords);
+                        
+                                        var distX = draggedOrigin.X - camera.Coords.X;
+                                        var distY = draggedOrigin.Y - camera.Coords.Y;
+                        
+                                        // var dist = new Vector2(distX, distY);
+                        
+                                        var absDistX = Math.Abs(distX);
+                                        var absDistY = Math.Abs(distY);
+                                        
+                                        var snapX = absDistX <= mouseCritRect.Width + 20 && absDistX >= mouseCritRect.Width - 20;
+                                        var snapY = absDistY <= mouseCritRect.Height + 20 && absDistY >= mouseCritRect.Height - 20;
+                                        
+                                        if (snapX || snapY)
+                                        {
+                                            if (snapX)
+                                            {
+                                                if (distX > 0)
+                                                {
+                                                    cam.Coords = draggedOrigin with { X = camera.Coords.X + mouseCritRect.Width };
+                                                }
+                                                else
+                                                {
+                                                    cam.Coords = draggedOrigin with { X = camera.Coords.X - mouseCritRect.Width };
+                                                }
+                                            }
+
+                                            if (snapY)
+                                            {
+                                                if (distY > 0)
+                                                {
+                                                    cam.Coords = draggedOrigin with { Y = camera.Coords.Y + mouseCritRect.Height };
+                                                }
+                                                else
+                                                {
+                                                    cam.Coords = draggedOrigin with { Y = camera.Coords.Y - mouseCritRect.Height };
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            cam.Coords = draggedOrigin;
+                                        }
+                                    }
+                                    else if (_alignment)
+                                    {
+                                        var alignX = draggedOrigin.X >= camera.Coords.X - 20 &&
+                                                     draggedOrigin.X <= camera.Coords.X + 20;
+                                        
+                                        var alignY = draggedOrigin.Y >= camera.Coords.Y - 20 &&
+                                                     draggedOrigin.Y <= camera.Coords.Y + 20;
+
+                                        if (alignX || alignY)
+                                        {
+                                            if (alignX)
+                                            {
+                                                cam.Coords = draggedOrigin with { X = camera.Coords.X };
+                                                DrawLineEx(cam.Coords + new Vector2(
+                                                    (72 * GLOBALS.Scale - 40) / 2f,
+                                                    (43 * GLOBALS.Scale - 60) / 2f), camera.Coords + new Vector2(
+                                                    (72 * GLOBALS.Scale - 40) / 2f,
+                                                    (43 * GLOBALS.Scale - 60) / 2f), 2f, Color.Red);
+                                            }
+                                            else if (alignY)
+                                            {
+                                                cam.Coords = draggedOrigin with { Y = camera.Coords.Y };
+                                                DrawLineEx(cam.Coords + new Vector2(
+                                                    (72 * GLOBALS.Scale - 40) / 2f,
+                                                    (43 * GLOBALS.Scale - 60) / 2f), camera.Coords + new Vector2(
+                                                    (72 * GLOBALS.Scale - 40) / 2f,
+                                                    (43 * GLOBALS.Scale - 60) / 2f), 2f, Color.Green);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            cam.Coords = draggedOrigin;
+                                        }
+                                    }
+                                    
+                                    skipInner: {}
+                                }
+                            }
+                        }
+                        else
+                        {
+                            cam.Coords = draggedOrigin;
+                        }
+                        
+                        Printers.DrawCameraSprite(cam.Coords, cam.Quad, _camera, index);
                     }
+                    else
+                    {
+                        var (clicked, _) = Printers.DrawCameraSprite(cam.Coords, cam.Quad, _camera, index);
+
+                        if (clicked && !clickTracker)
+                        {
+                            draggedCamera = index;
+                            clickTracker = true;
+                        }
+                    }
+                    
                 }
 
                 DrawRectangleLinesEx(
@@ -209,6 +328,36 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
             #region CameraEditorUI
 
             rlImGui.Begin();
+            
+            // Settings
+
+            if (ImGui.Begin("Settings##CameraEditorSettings"))
+            {
+                var availableSpace = ImGui.GetContentRegionAvail();
+                
+                ImGui.SeparatorText("Helpers");
+
+                var selected = ImGui.Button(_snap 
+                    ? "Snap" 
+                    : _alignment 
+                        ? "Alignment" 
+                        : "None", 
+                    availableSpace with { Y = 20 }
+                );
+
+                if (selected)
+                {
+                    (_snap, _alignment) = (_snap, _alignment) switch
+                    {
+                        (true, false) => (false, true),
+                        (false, true) => (false, false),
+                        (false, false) => (true, false),
+                        _ => (true, false)
+                    };
+                }
+                
+                ImGui.End();
+            }
             
             // Navigation
             

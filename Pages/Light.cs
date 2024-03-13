@@ -84,9 +84,9 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
                        !CheckCollisionPointRec(mouse, brushPanel) && !indHovered && 
                        !_isDraggingIndicator;
         
-        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
-        var shift = IsKeyDown(KeyboardKey.LeftShift);
-        var alt = IsKeyDown(KeyboardKey.LeftAlt);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
 
         GLOBALS.PreviousPage = 5;
 

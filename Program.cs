@@ -10,6 +10,7 @@ using System.Text.Json;
 using Serilog;
 using System.Security.Cryptography;
 using System.Threading;
+using ImGuiNET;
 
 #nullable enable
 
@@ -112,6 +113,78 @@ class Program
         LoadTexture("assets/geo/crackl.png"),         // 34
     ];
 
+    private static Texture2D[] LoadPropMenuCategoryTextures() =>
+    [
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "prop category tiles.png")),
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "prop category ropes.png")),
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "prop category longs.png")),
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "prop category other.png")),
+    ];
+
+    private static Texture2D[] LoadGeoInterfaceTextures() =>
+    [
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "slope_black.png")), // 0
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pc_black.png")), // 1
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "spear_black.png")), // 2
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "entry_black.png")), // 3
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "slope.png")), // 4
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pc.png")), // 5
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "spear.png")), // 6
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "entry.png")), // 7
+
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "solid_black.png")), // 8
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "platform_black.png")), // 9
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "glass_black.png")), // 10
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "solid.png")), // 11
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "platform.png")), // 12
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "glass.png")), // 13
+
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pv.png")), // 14
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "ph.png")), // 15
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "crack.png")), // 16
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pv_black.png")), // 17
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "ph_black.png")), // 18
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "crack_black.png")), // 19
+
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "bathive.png")), // 20
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "forbidflychains.png")), // 21
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "waterfall.png")), // 22
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "worm.png")), // 23
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "rock.png")), // 24
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "bathive_black.png")), // 25
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "forbidflychains_black.png")), // 26
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "waterfall_black.png")), // 27
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "worm_black.png")), // 28
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "rock_black.png")), // 29
+
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "looseentry.png")), // 30
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "dot.png")), // 31
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "passage.png")), // 32
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "den.png")), // 33
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "wack.png")), // 34
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "scav.png")), // 35
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "garbage.png")), // 36
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "looseentry_black.png")), // 37
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "dot_black.png")), // 38
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "passage_black.png")), // 39
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "den_black.png")), // 40
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "wack_black.png")), // 41
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "scav_black.png")), // 42
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "garbage_black.png")), // 43
+
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "camera icon.png")) // 44
+    ];
+
+    private static Texture2D[] LoadSettingsPreviewTextures() =>
+    [
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Bigger Head.png")),
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Crossbox B.png")),
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "mega chimney A.png")),
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Ball.png")),
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Stone Marked.png")),
+        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Fan.png"))
+    ];
+
     // Used to load light/shadow brush images as textures.
     private static Texture2D[] LoadLightTextures(Serilog.Core.Logger logger) => Directory
         .GetFileSystemEntries(GLOBALS.Paths.LightAssetsDirectory)
@@ -121,122 +194,6 @@ class Program
             logger.Debug($"loading light texture \"{e}\""); 
             return LoadTexture(e); })
         .ToArray();
-
-    // Embedded tiles and their categories.
-    // They probably be should externalized and turned to normal tiles.
-    // Maybe one day.
-
-    static readonly (string, Color)[] embeddedCategories = [
-        ("Drought 4Mosaic", new(227, 76, 13, 255)),
-        ("Drought Missing 3DBricks", new(255, 150, 0, 255)),
-        ("Drought Alt Grates", new(75, 75, 240, 255)),
-        ("Drought Missing Stone", new(200, 165, 135, 255)),
-        ("Drought Missing Machine", new(230, 160, 230, 255)),
-        ("Drought Metal", new(100, 185, 245, 255)),
-        ("Drought Missing Metal", new(180, 10, 10, 255)),
-        ("Dune", new(255, 255, 180, 255)),
-    ];
-
-    static readonly InitTile[][] embeddedTiles = [
-        [
-            new InitTile("4Mosaic Square", (1, 1), [1], [], InitTileType.VoxelStruct, [1, 1, 8], 0, 1, 0, ["INTERNAL"]),
-            new InitTile("4Mosaic Slope NE", (1, 1), [2], [], InitTileType.VoxelStruct, [1, 1, 8], 0, 1, 0, ["INTERNAL"]),
-            new InitTile("4Mosaic Slope NW", (1, 1), [3], [], InitTileType.VoxelStruct, [1, 1, 8], 0, 1, 0, ["INTERNAL"]),
-            new InitTile("4Mosaic Slope SW", (1, 1), [5], [], InitTileType.VoxelStruct, [1, 1, 8], 0, 1, 0, ["INTERNAL"]),
-            new InitTile("4Mosaic Slope SE", (1, 1), [4], [], InitTileType.VoxelStruct, [1, 1, 8], 0, 1, 0, ["INTERNAL"]),
-            new InitTile("4Mosaic Floor", (1, 1), [6], [], InitTileType.VoxelStruct, [1, 1, 8], 0, 1, 0, ["INTERNAL"]),
-        ],
-        [
-            new InitTile("3DBrick Square", (1, 1), [1], [], InitTileType.VoxelStruct, [1, 1, 1, 7], 0, 1, 0, ["INTERNAL"]),
-            new InitTile("3DBrick Slope NE", (1, 1), [2], [], InitTileType.VoxelStruct, [1, 1, 1, 7], 0, 1, 0, ["INTERNAL"]),
-            new InitTile("3DBrick Slope NW", (1, 1), [3], [], InitTileType.VoxelStruct, [1, 1, 1, 7], 0, 1, 0, ["INTERNAL"]),
-            new InitTile("3DBrick Slope SW", (1, 1), [5], [], InitTileType.VoxelStruct, [1, 1, 1, 7], 0, 1, 0, ["INTERNAL"]),
-            new InitTile("3DBrick Slope SE", (1, 1), [4], [], InitTileType.VoxelStruct, [1, 1, 1, 7], 0, 1, 0, ["INTERNAL"]),
-            new InitTile("3DBrick Floor", (1, 1), [6], [], InitTileType.VoxelStruct, [1, 1, 1, 7], 0, 1, 0, ["INTERNAL"]),
-        ],
-        [
-            new InitTile("AltGrateA", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateB1", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateB2", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateB3", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateB4", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateC1", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateC2", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateE1", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateE2", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateF1", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateF2", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateF3", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateF4", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateG1", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateG2", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateH", (3, 4), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-
-            new InitTile("AltGrateI", (1, 1), [0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateJ1", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateJ2", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateJ3", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateJ4", (1, 2), [0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateK1", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateK2", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateK3", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateK4", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateL", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateM", (2, 2), [0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateN", (4, 4), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-            new InitTile("AltGrateO", (5, 5), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [], InitTileType.VoxelStruct, [1, 1, 1, 6, 1], 0, 1, 0, ["notTrashProp", "notProp", "INTERNAL"]),
-        ],
-        [
-            new InitTile("Small Stone Slope NE", (1, 1), [2], [], InitTileType.VoxelStructRockType, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
-            new InitTile("Small Stone Slope NW", (1, 1), [3], [], InitTileType.VoxelStructRockType, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
-            new InitTile("Small Stone Slope SW", (1, 1), [5], [], InitTileType.VoxelStructRockType, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
-            new InitTile("Small Stone Slope SE", (1, 1), [4], [], InitTileType.VoxelStructRockType, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
-            new InitTile("Small Stone Floor", (1, 1), [6], [], InitTileType.VoxelStructRockType, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
-
-            new InitTile("Small Stone Marked", (1, 1), [1], [], InitTileType.VoxelStructRockType, [], 1, 4, 0, ["nonSolid", "chaoticStone2 : very rare", "INTERNAL"]),
-            new InitTile("Square Stone Marked", (2, 2), [1, 1, 1, 1], [], InitTileType.VoxelStructRockType, [], 1, 3, 0, ["chaoticStone2 : very rare", "INTERNAL"]),
-        ],
-        [
-            new InitTile("Small Machine Slope NE", (1, 1), [2], [], InitTileType.VoxelStruct, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1, 1, 0, ["nonSolid", "INTERNAL"]),
-            new InitTile("Small Machine Slope NW", (1, 1), [3], [], InitTileType.VoxelStruct, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1, 1, 0, ["nonSolid", "INTERNAL"]),
-            new InitTile("Small Machine Slope SW", (1, 1), [5], [], InitTileType.VoxelStruct, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1, 1, 0, ["nonSolid", "INTERNAL"]),
-            new InitTile("Small Machine Slope SE", (1, 1), [4], [], InitTileType.VoxelStruct, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1, 1, 0, ["nonSolid", "INTERNAL"]),
-            new InitTile("Small Machine Floor", (1, 1), [6], [], InitTileType.VoxelStruct, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 1, 1, 0, ["nonSolid", "INTERNAL"]),
-        ],
-        [
-            new InitTile("Small Metal Alt", (1, 1), [1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
-            new InitTile("Small Metal Marked", (1, 1), [1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
-            new InitTile("Small Metal X", (1, 1), [1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
-
-            new InitTile("Metal Floor Alt", (2, 1), [1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
-
-            new InitTile("Metal Wall", (1, 2), [1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
-            new InitTile("Metal Wall Alt", (1, 2), [1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
-
-            new InitTile("Square Metal Marked", (2, 2), [1, 1, 1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
-            new InitTile("Square Metal X", (2, 2), [1, 1, 1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
-
-            new InitTile("Wide Metal", (3, 2), [1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 1, 1, 0, ["randomMetal", "INTERNAL"]),
-
-            new InitTile("Tall Metal", (2, 3), [1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 1, 1, 0, ["randomMetal", "INTERNAL"]),
-
-            new InitTile("Big Metal X", (3, 3), [1, 1, 1, 1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 1, 1, 0, ["randomMetal", "INTERNAL"]),
-
-            new InitTile("Large Big Metal", (4, 4), [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
-            new InitTile("Large Big Metal Marked", (4, 4), [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
-            new InitTile("Large Big Metal X", (4, 4), [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [], InitTileType.Box, [], 0, 1, 0, ["randomMetal", "INTERNAL"]),
-        ],
-        [
-            new InitTile("Missing Metal Slope NE", (1, 1), [2], [], InitTileType.VoxelStruct, [1, 9], 0, 1, 0, ["INTERNAL"]),
-            new InitTile("Missing Metal Slope NW", (1, 1), [3], [], InitTileType.VoxelStruct, [1, 9], 0, 1, 0, ["INTERNAL"]),
-            new InitTile("Missing Metal Slope SW", (1, 1), [5], [], InitTileType.VoxelStruct, [1, 9], 0, 1, 0, ["INTERNAL"]),
-            new InitTile("Missing Metal Slope SE", (1, 1), [4], [], InitTileType.VoxelStruct, [1, 9], 0, 1, 0, ["INTERNAL"]),
-            new InitTile("Missing Metal Floor", (1, 1), [6], [], InitTileType.VoxelStruct, [5, 1, 1, 1, 1, 1], 0, 1, 0, ["INTERNAL"]),
-        ],
-        [
-            new InitTile("Dune Sand", (1, 1), [1], [], InitTileType.VoxelStructSandType, [], 1, 4, 0, ["nonSolid", "INTERNAL"]),
-        ]
-    ];
     
     private record struct SaveProjectResult(bool Success, Exception? Exception = null);
 
@@ -271,6 +228,7 @@ class Program
         return result;
     }
 
+    // Unused
     private static Texture2D[][] LoadPropTextures()
     {
         return GLOBALS.Props.Select(category =>
@@ -280,6 +238,7 @@ class Program
         ).ToArray();
     }
     
+    // Unused
     private static Texture2D[][] LoadPropTexturesFromRenderer()
     {
         return GLOBALS.Props.Select(category =>
@@ -307,6 +266,7 @@ class Program
         return Importers.GetTileInit(text);
     }
 
+    // Unused
     private static ((string, Color)[], InitTile[][]) LoadTileInitFromRenderer()
     {
         var path = Path.Combine(GLOBALS.Paths.RendererDirectory, "Data", "Graphics", "Init.txt");
@@ -339,6 +299,8 @@ class Program
 
         return [..inits];
     }
+    
+    // TODO: add packed props
 
     private static ((string category, Color color)[] categories, InitPropBase[][] init) LoadPropInit()
     {
@@ -346,6 +308,7 @@ class Program
         return Importers.GetPropsInit(text);
     }
     
+    // Unused
     private static ((string category, Color color)[] categories, InitPropBase[][] init) LoadPropInitFromRenderer()
     {
         var text = File.ReadAllText(Path.Combine(GLOBALS.Paths.RendererDirectory, "Data", "Props", "Init.txt")).ReplaceLineEndings();
@@ -355,6 +318,7 @@ class Program
     // This is used to check whether the Init.txt file has been altered
     private static string InitChecksum => "77-D1-5E-5F-D7-EF-80-6B-0B-12-30-C1-7E-39-A6-CD-C1-9A-8A-7B-E6-E4-F8-EA-15-3B-85-89-73-BE-9B-0B-AD-35-8C-9E-89-AE-34-42-57-1B-A6-A8-BE-8A-9B-CB-97-3E-AE-33-98-E1-51-92-74-24-2F-DF-81-E6-58-A2";
 
+    // Unused
     private static bool CheckInit()
     {
         using var stream = File.OpenRead(GLOBALS.Paths.TilesInitPath);
@@ -432,7 +396,7 @@ class Program
 
         // Import settings
 
-        logger.Information("importing settings");
+        logger.Information("Importing settings");
 
         // Default settings
 
@@ -440,32 +404,33 @@ class Program
 
         // load the settings.json file
 
+        // TODO: Improvise
         try
         {
-            if (File.Exists(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "settings.json")))
+            if (File.Exists(GLOBALS.Paths.SettingsPath))
             {
-                string settingsText = File.ReadAllText(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "settings.json"));
-                GLOBALS.Settings = JsonSerializer.Deserialize<Settings>(settingsText) ?? throw new Exception("failed to deserialize settings.json");
+                var settingsText = File.ReadAllText(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "settings.json"));
+                GLOBALS.Settings = JsonSerializer.Deserialize<Settings>(settingsText, serOptions) ?? throw new Exception("failed to deserialize settings.json");
             }
             else
             {
                 logger.Debug("settings.json file not found; exporting default settings");
                 var text = JsonSerializer.Serialize(GLOBALS.Settings, serOptions);
-                File.WriteAllText(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "settings.json"), text);
+                File.WriteAllText(GLOBALS.Paths.SettingsPath, text);
             }
         }
         catch (Exception e)
         {
-            logger.Error($"failed to import settings from settings.json: {e}\nusing default settings");
+            logger.Error($"Failed to import settings from settings.json: {e}\nUsing default settings");
 
             try
             {
                 var text = JsonSerializer.Serialize(GLOBALS.Settings, serOptions);
-                File.WriteAllText(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "settings.json"), text);
+                File.WriteAllText(GLOBALS.Paths.SettingsPath, text);
             }
-            catch
+            catch (Exception e2)
             {
-
+                logger.Error($"Failed to create default settings: {e2}");
             }
         }
 
@@ -479,7 +444,7 @@ class Program
             }
             catch (Exception e)
             {
-                logger.Fatal($"failed to create a projects folder: {e}");
+                logger.Fatal($"Failed to create a projects folder: {e}");
                 return;
             }
         }
@@ -491,14 +456,17 @@ class Program
             GLOBALS.RendererExists = true;
         }
 
-        logger.Information("initializing data");
+        logger.Information("Initializing data");
 
-        const string version = "Henry's Leditor v0.9.47";
+        const string version = "Henry's Leditor v0.9.48";
         const string raylibVersion = "Raylib v5.0.0";
+        
+        logger.Information(version);
+        logger.Information(raylibVersion);
         
         // Load tiles and props
 
-        logger.Information("indexing tiles and props");
+        logger.Information("Indexing tiles and props");
 
         try
         {
@@ -506,6 +474,7 @@ class Program
         }
         catch (Exception e)
         {
+            logger.Fatal($"Failed to load tiles init: {e}");
             throw new Exception(innerException: e, message: $"Failed to load tiles init: {e}");
         }
         
@@ -518,6 +487,7 @@ class Program
         }
         catch (Exception e)
         {
+            logger.Fatal($"Failed to load materials init: {e}");
             throw new Exception(innerException: e, message: $"Failed to load materials init: {e}");
         }
 
@@ -527,15 +497,18 @@ class Program
         }
         catch (Exception e)
         {
+            logger.Fatal($"Failed to load props init: {e}");
             throw new Exception(innerException: e, message: $"Failed to load props init: {e}");
         }
 
         //
 
         // Merge tile packages
+        
+        logger.Debug("Loading custom tiles");
 
         // List<string> tileInitLoadDirs = [GLOBALS.Paths.TilesAssetsDirectory];
-        Task<TileInitLoadInfo[]> tilePackagesTask = Task.FromResult<TileInitLoadInfo[]>([]);
+        var tilePackagesTask = Task.FromResult<TileInitLoadInfo[]>([]);
         (string name, Color color)[] loadedPackageTileCategories = [];
         InitTile[][] loadedPackageTiles = [];
         
@@ -566,14 +539,16 @@ class Program
         
         // MERGE TILES
         
+        logger.Debug("Merging custom tiles");
+        
         GLOBALS.TileCategories = [..GLOBALS.TileCategories, ..loadedPackageTileCategories];
         GLOBALS.Tiles = [..GLOBALS.Tiles, ..loadedPackageTiles];
         
         // Load Tile Textures
 
-        using var tileTextures = new TileTexturesLoader();
-        using var propTextures = new PropTexturesLoader();
-        using var lightTextures = new LightTexturesLoader();
+        var tileTextures = new TileTexturesLoader();
+        var propTextures = new PropTexturesLoader();
+        var lightTextures = new LightTexturesLoader();
         
         // 1. Get all texture paths
         
@@ -643,7 +618,7 @@ class Program
         // TODO: Change this
         SetTraceLogLevel(TraceLogLevel.Error);
         #else
-        SetTraceLogLevel(7);
+        SetTraceLogLevel(TraceLogLevel.Error);
         #endif
         
         //----------------------------------------------------------------------------
@@ -700,18 +675,8 @@ class Program
         GLOBALS.Textures.MissingTile =
             LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "other", "missing tile.png"));
 
-        GLOBALS.Textures.PropMenuCategories = [
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "prop category tiles.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "prop category ropes.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "prop category longs.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "prop category other.png")),
-        ];
+        GLOBALS.Textures.PropMenuCategories = LoadPropMenuCategoryTextures();
 
-        GLOBALS.Textures.PropModes =
-        [
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "props select mode.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "props place mode.png")),
-        ];
 
         GLOBALS.Textures.PropEditModes =
         [
@@ -727,83 +692,15 @@ class Program
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "no collision icon.png"))
         ];
 
-        Texture2D[] settingsPreviewTextures =
-        [
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Bigger Head.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Crossbox B.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "mega chimney A.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Ball.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Stone Marked.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Fan.png"))
-        ];
+        Texture2D[] settingsPreviewTextures = LoadSettingsPreviewTextures();
 
-        GLOBALS.Textures.EffectsUI =
-        [
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "plus icon.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "arrow up icon.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "arrow down icon.png")),
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "cross icon.png"))
-        ];
-
-        GLOBALS.Textures.GeoInterface =
-        [
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "slope_black.png")),              // 0
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pc_black.png")),                 // 1
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "spear_black.png")),              // 2
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "entry_black.png")),              // 3
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "slope.png")),                    // 4
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pc.png")),                       // 5
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "spear.png")),                    // 6
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "entry.png")),                    // 7
-            
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "solid_black.png")),              // 8
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "platform_black.png")),           // 9
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "glass_black.png")),              // 10
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "solid.png")),                    // 11
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "platform.png")),                 // 12
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "glass.png")),                    // 13
-            
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pv.png")),                       // 14
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "ph.png")),                       // 15
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "crack.png")),                    // 16
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "pv_black.png")),                 // 17
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "ph_black.png")),                 // 18
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "crack_black.png")),              // 19
-            
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "bathive.png")),                  // 20
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "forbidflychains.png")),          // 21
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "waterfall.png")),                // 22
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "worm.png")),                     // 23
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "rock.png")),                     // 24
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "bathive_black.png")),            // 25
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "forbidflychains_black.png")),    // 26
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "waterfall_black.png")),          // 27
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "worm_black.png")),               // 28
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "rock_black.png")),               // 29
-            
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "looseentry.png")),               // 30
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "dot.png")),                      // 31
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "passage.png")),                  // 32
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "den.png")),                      // 33
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "wack.png")),                     // 34
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "scav.png")),                     // 35
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "garbage.png")),                  // 36
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "looseentry_black.png")),         // 37
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "dot_black.png")),                // 38
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "passage_black.png")),            // 39
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "den_black.png")),                // 40
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "wack_black.png")),               // 41
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "scav_black.png")),               // 42
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "garbage_black.png")),            // 43
-            
-            LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "camera icon.png"))               // 44
-        ];
+        GLOBALS.Textures.GeoInterface = LoadGeoInterfaceTextures();
 
         //
 
-        GLOBALS.Textures.TileSpecs = Raylib_cs.Raylib.LoadRenderTexture(200, 200);
-        GLOBALS.Textures.PropDepth = Raylib_cs.Raylib.LoadRenderTexture(290, 20);
-        GLOBALS.Textures.DimensionsVisual = Raylib_cs.Raylib.LoadRenderTexture(1400, 800);
+        GLOBALS.Textures.TileSpecs = LoadRenderTexture(200, 200);
+        GLOBALS.Textures.PropDepth = LoadRenderTexture(290, 20);
+        GLOBALS.Textures.DimensionsVisual = LoadRenderTexture(1400, 800);
 
         //
 
@@ -1290,9 +1187,9 @@ class Program
                 else
                 {
                     {
-                        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
-                        var shift = IsKeyDown(KeyboardKey.LeftShift);
-                        var alt = IsKeyDown(KeyboardKey.LeftAlt);
+                        var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
+                        var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
+                        var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
 
                         if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave.Check(ctrl, shift, alt))
                         {
@@ -1314,6 +1211,7 @@ class Program
                             _askForPath = true;
                             _saveFileDialog = Utils.SetFilePathAsync();
                             _isGuiLocked = true;
+                            _globalSave = true;
                         }
                         else if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.Render.Check(ctrl, shift, alt))
                         {
@@ -1407,23 +1305,21 @@ class Program
         foreach (var texture in GLOBALS.Textures.LightBrushes) UnloadTexture(texture);
         foreach (var category in GLOBALS.Textures.Tiles) { foreach (var texture in category) UnloadTexture(texture); }
         foreach (var texture in GLOBALS.Textures.PropMenuCategories) UnloadTexture(texture);
-        foreach (var texture in GLOBALS.Textures.PropModes) UnloadTexture(texture);
         foreach (var category in GLOBALS.Textures.Props) { foreach (var texture in category) UnloadTexture(texture); }
         foreach (var texture in GLOBALS.Textures.LongProps) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.RopeProps) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.PropEditModes) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.PropGenerals) UnloadTexture(texture);
         foreach (var texture in settingsPreviewTextures) UnloadTexture(texture);
-        foreach (var texture in GLOBALS.Textures.EffectsUI) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.GeoInterface) UnloadTexture(texture);
         
         logger.Debug("Unloading light map");
 
         UnloadRenderTexture(GLOBALS.Textures.LightMap);
         
-        Raylib_cs.Raylib.UnloadRenderTexture(GLOBALS.Textures.TileSpecs);
-        Raylib_cs.Raylib.UnloadRenderTexture(GLOBALS.Textures.PropDepth);
-        Raylib_cs.Raylib.UnloadRenderTexture(GLOBALS.Textures.DimensionsVisual);
+        UnloadRenderTexture(GLOBALS.Textures.TileSpecs);
+        UnloadRenderTexture(GLOBALS.Textures.PropDepth);
+        UnloadRenderTexture(GLOBALS.Textures.DimensionsVisual);
         
         logger.Debug("Unloading shaders");
 

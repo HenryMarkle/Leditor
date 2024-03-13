@@ -1,6 +1,6 @@
 namespace Leditor;
 
-public class TileTexturesLoader : IDisposable
+public class TileTexturesLoader
 {
     private Image[][] _tempImages = [];
     private Texture2D[][] _array = [];
@@ -40,41 +40,8 @@ public class TileTexturesLoader : IDisposable
 
         return actions;
     }
-
-    private void ReleaseUnmanagedResources()
-    {
-        // TODO release unmanaged resources here
-
-        foreach (var category in _array)
-        {
-            foreach (var texture in category)
-            {
-                Raylib.UnloadTexture(texture);
-            }
-        }
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        ReleaseUnmanagedResources();
-        if (disposing)
-        {
-            // TODO release managed resources here
-        }
-    }
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    ~TileTexturesLoader()
-    {
-        Dispose(false);
-    }
 }
-public class PropTexturesLoader : IDisposable
+public class PropTexturesLoader
 {
     private Image[] _tempRopesImages = [];
     private Image[] _tempLongsImages = [];
@@ -164,45 +131,8 @@ public class PropTexturesLoader : IDisposable
 
         return actions;
     }
-
-    private void ReleaseUnmanagedResources()
-    {
-        // TODO release unmanaged resources here
-
-        foreach (var texture in _ropes) Raylib.UnloadTexture(texture);
-        foreach (var texture in _longs) Raylib.UnloadTexture(texture);
-
-        foreach (var category in _others)
-        {
-            foreach (var texture in category)
-            {
-                Raylib.UnloadTexture(texture);
-            }
-        }
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        ReleaseUnmanagedResources();
-        if (disposing)
-        {
-            // TODO release managed resources here
-        }
-    }
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    ~PropTexturesLoader()
-    {
-        Dispose(false);
-    }
 }
-
-public class LightTexturesLoader : IDisposable
+public class LightTexturesLoader
 {
     private Image[] _images = [];
     private Texture2D[] _array = [];
@@ -234,30 +164,5 @@ public class LightTexturesLoader : IDisposable
         }
 
         return actions;
-    }
-
-    private void ReleaseUnmanagedResources()
-    {
-        // TODO release unmanaged resources here
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        ReleaseUnmanagedResources();
-        if (disposing)
-        {
-            foreach (var texture in _array) Raylib.UnloadTexture(texture);
-        }
-    }
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    ~LightTexturesLoader()
-    {
-        Dispose(false);
     }
 }

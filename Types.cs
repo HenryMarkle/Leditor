@@ -1,6 +1,5 @@
-using System.Globalization;
 using System.Numerics;
-using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 namespace Leditor;
 
@@ -29,40 +28,6 @@ public enum PropCheckResult
 }
 
 
-public class DisTexture(Raylib_cs.Texture2D texture) : IDisposable
-{
-    private readonly Raylib_cs.Texture2D _texture = texture;
-
-    public Texture2D Texture => _texture;
-
-
-    private void ReleaseUnmanagedResources()
-    {
-        Raylib.UnloadTexture(_texture);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        ReleaseUnmanagedResources();
-        if (disposing)
-        {
-            // TODO release managed resources here
-        }
-    }
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    ~DisTexture()
-    {
-        Dispose(false);
-    }
-}
-
-
 public interface IVariableInit { int Variations { get; } }
 public interface IVariable { int Variation { get; set; } }
 
@@ -84,7 +49,7 @@ public class LoadFileResult
 
     public bool LightMode { get; init; }
     public bool DefaultTerrain { get; set; }
-    public string DefaultMaterial { get; set; }
+    public string DefaultMaterial { get; set; } = string.Empty;
 
     public RunCell[,,]? GeoMatrix { get; init; } = null;
     public TileCell[,,]? TileMatrix { get; init; } = null;
@@ -348,17 +313,17 @@ public class EffectsShortcuts : IEditorShortcuts
     public KeyboardShortcut NewEffect { get; set; } = KeyboardKey.N;
 
     public KeyboardShortcut NewEffectMenuCategoryNavigation { get; set; } = new(KeyboardKey.LeftShift, shift: true);    
-    public KeyboardShortcut MoveDownInNewEffectMenu { get; set; } = KeyboardKey.S;
-    public KeyboardShortcut MoveUpInNewEffectMenu { get; set; } = KeyboardKey.W;
+    public KeyboardShortcut MoveDownInNewEffectMenu { get; set; } = new(KeyboardKey.S, shift:false, alt:false, ctrl:false);
+    public KeyboardShortcut MoveUpInNewEffectMenu { get; set; } = new(KeyboardKey.W, shift:false, alt:false, ctrl:false);
 
-    public KeyboardShortcut AcceptNewEffect { get; set; } = KeyboardKey.Space;
+    public KeyboardShortcut AcceptNewEffect { get; set; } = new(KeyboardKey.Space, shift:false, alt:false, ctrl:false);
     public KeyboardShortcut AcceptNewEffectAlt { get; set; } = KeyboardKey.Enter;
 
-    public KeyboardShortcut ShiftAppliedEffectUp { get; set; } = new(KeyboardKey.W, shift: true);
-    public KeyboardShortcut ShiftAppliedEffectDown { get; set; } = new(KeyboardKey.S, shift: true);
+    public KeyboardShortcut ShiftAppliedEffectUp { get; set; } = new(KeyboardKey.W, shift: true, alt:false, ctrl:false);
+    public KeyboardShortcut ShiftAppliedEffectDown { get; set; } = new(KeyboardKey.S, shift: true, alt:false, ctrl:false);
 
-    public KeyboardShortcut CycleAppliedEffectUp { get; set; } = new(KeyboardKey.W, alt:false);
-    public KeyboardShortcut CycleAppliedEffectDown { get; set; } = new(KeyboardKey.S, alt:false);
+    public KeyboardShortcut CycleAppliedEffectUp { get; set; } = new(KeyboardKey.W, alt:false, shift:false, ctrl:false);
+    public KeyboardShortcut CycleAppliedEffectDown { get; set; } = new(KeyboardKey.S, alt:false, shift:false, ctrl:false);
 
     public KeyboardShortcut DeleteAppliedEffect { get; set; } = KeyboardKey.X;
     
@@ -591,9 +556,9 @@ public interface IShortcut {
 
 public class KeyboardShortcut(
     KeyboardKey key, 
-    bool? ctrl = null, 
-    bool? shift = null,
-    bool? alt = null
+    bool? ctrl = false, 
+    bool? shift = false,
+    bool? alt = false
 ) : IShortcut
 {
     public KeyboardKey Key { get; set; } = key;
@@ -663,6 +628,12 @@ public class PropEditor(bool tintedTextures = false)
     public bool TintedTextures { get; set; } = tintedTextures;
 }
 
+public class CameraEditorSettings(bool snap = true, bool alignment = false)
+{
+    public bool Snap { get; set; } = snap;
+    public bool Alignment { get; set; } = alignment;
+}
+
 public class EffectsSettings(
     ConColor effectColorLight,
     ConColor effectColorDark)
@@ -686,27 +657,46 @@ public class GeneralSettings(
     public bool DarkTheme { get; set; } = darkTheme;
 }
 
-public class Settings(
-    GeneralSettings generalSettings,
-    Shortcuts shortcuts,
-    Misc misc,
-    GeoEditor geometryEditor,
-    TileEditor tileEditor,
-    LightEditor lightEditor,
-    EffectsSettings effectsSettings,
-    PropEditor propEditor,
-    Experimental experimental
-)
+public class Settings
 {
-    public GeneralSettings GeneralSettings { get; set; } = generalSettings;
-    public Shortcuts Shortcuts { get; set; } = shortcuts;
-    public Misc Misc { get; set; } = misc;
-    public GeoEditor GeometryEditor { get; set; } = geometryEditor;
-    public TileEditor TileEditor { get; set; } = tileEditor;
-    public LightEditor LightEditor { get; set; } = lightEditor;
-    public EffectsSettings EffectsSettings { get; set; } = effectsSettings;
-    public PropEditor PropEditor { get; set; } = propEditor;
-    public Experimental Experimental { get; set; } = experimental;
+    public GeneralSettings GeneralSettings { get; set; }
+    public Shortcuts Shortcuts { get; set; }
+    public Misc Misc { get; set; }
+    public GeoEditor GeometryEditor { get; set; }
+    public TileEditor TileEditor { get; set; }
+    public CameraEditorSettings CameraSettings { get; set; }
+    public LightEditor LightEditor { get; set; }
+    public EffectsSettings EffectsSettings { get; set; }
+    public PropEditor PropEditor { get; set; }
+    public Experimental Experimental { get; set; }
+    
+    [JsonConstructor]
+    public Settings() { }
+    
+    public Settings(
+        GeneralSettings generalSettings,
+        Shortcuts shortcuts,
+        Misc misc,
+        GeoEditor geometryEditor,
+        TileEditor tileEditor,
+        CameraEditorSettings cameraEditorSettings,
+        LightEditor lightEditor,
+        EffectsSettings effectsSettings,
+        PropEditor propEditor,
+        Experimental experimental
+    )
+    {
+         GeneralSettings = generalSettings;
+         Shortcuts = shortcuts;
+         Misc = misc;
+         GeometryEditor = geometryEditor;
+         TileEditor = tileEditor;
+         CameraSettings = cameraEditorSettings;
+         LightEditor = lightEditor;
+         EffectsSettings = effectsSettings;
+         PropEditor = propEditor;
+         Experimental = experimental;
+    }
 }
 
 

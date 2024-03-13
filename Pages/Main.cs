@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Numerics;
+using System.Text.Json;
 using ImGuiNET;
 using Pidgin;
 using rlImGui_cs;
@@ -304,9 +305,9 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
         var width = GetScreenWidth();
         var height = GetScreenHeight();
         
-        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
-        var shift = IsKeyDown(KeyboardKey.LeftShift);
-        var alt = IsKeyDown(KeyboardKey.LeftAlt);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
 
         if (!_isGuiLocked && _spinnerLock == 0)
         {
@@ -920,7 +921,45 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                     }
                 }
                 
-                // Shortcuts window
+                // Settings Window
+
+                if (ImGui.Begin("Settings##MainSettings"))
+                {
+                    var availableSpace = ImGui.GetContentRegionAvail();
+                    
+                    // Dark Theme
+                    
+                    var darkTheme = GLOBALS.Settings.GeneralSettings.DarkTheme;
+                    ImGui.Checkbox("Dark Theme (Requires Restart)", ref darkTheme);
+                    if (darkTheme != GLOBALS.Settings.GeneralSettings.DarkTheme)
+                        GLOBALS.Settings.GeneralSettings.DarkTheme = darkTheme;
+                    
+                    // Shortcuts Window
+                    
+                    var showShortcutsWindow = GLOBALS.Settings.GeneralSettings.ShortcutWindow;
+                    ImGui.Checkbox("Shortcuts Window", ref showShortcutsWindow);
+                    if (showShortcutsWindow != GLOBALS.Settings.GeneralSettings.ShortcutWindow) 
+                        GLOBALS.Settings.GeneralSettings.ShortcutWindow = showShortcutsWindow;
+
+                    // Save Settings
+                    
+                    if (ImGui.Button("Save Changes", availableSpace with { Y = 20 }))
+                    {
+                        try
+                        {
+                            var text = JsonSerializer.Serialize(GLOBALS.Settings, new JsonSerializerOptions { WriteIndented = true });
+                            File.WriteAllText(GLOBALS.Paths.SettingsPath, text);
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.Error($"Failed to save changes: {e}");
+                        }
+                    }
+
+                    ImGui.End();
+                }
+                
+                // Shortcuts Window
                 if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
                 {
                     var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.GlobalShortcuts);

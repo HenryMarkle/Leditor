@@ -167,9 +167,9 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
                          !CheckCollisionPointRec(GetMousePosition(), new(GetScreenWidth() - 210, 50, 200, GetScreenHeight() - 100));
         
         
-        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
-        var shift = IsKeyDown(KeyboardKey.LeftShift);
-        var alt = IsKeyDown(KeyboardKey.LeftAlt);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
         
         if (_gShortcuts.ToMainPage.Check(ctrl, shift, alt))
         {

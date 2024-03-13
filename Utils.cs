@@ -36,6 +36,15 @@ internal static class Utils
         InitStandardProp s => s.Repeat.Length, 
         _ => prop.Depth
     };
+
+    internal static Rectangle CameraCriticalRectangle(int x, int y) => 
+        new(x + 190, y + 20, 51*20, 40*20 - 40);
+    
+    internal static Rectangle CameraCriticalRectangle(float x, float y) => 
+        new(x + 190, y + 20, 51*20, 40*20 - 40);
+    
+    internal static Rectangle CameraCriticalRectangle(Vector2 origin) => 
+        new(origin.X + 190, origin.Y + 20, 51*20, 40*20 - 40);
     
     internal static async Task<string> GetFilePathAsync()
     {

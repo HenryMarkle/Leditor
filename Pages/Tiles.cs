@@ -681,9 +681,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
         #region TileEditorShortcuts
         
-        var ctrl = IsKeyDown(KeyboardKey.LeftControl);
-        var shift = IsKeyDown(KeyboardKey.LeftShift);
-        var alt = IsKeyDown(KeyboardKey.LeftAlt);
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
         
         if (_gShortcuts.ToMainPage.Check(ctrl, shift, alt))
         {
@@ -1272,7 +1272,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             
             // ImGui
             
-            Raylib_cs.Raylib.BeginTextureMode(GLOBALS.Textures.TileSpecs);
+            BeginTextureMode(GLOBALS.Textures.TileSpecs);
             {
                 ClearBackground(Color.Gray);
 
@@ -1372,7 +1372,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 }
                 
             }
-            Raylib_cs.Raylib.EndTextureMode();
+            EndTextureMode();
 
             rlImGui.Begin();
             
@@ -1504,8 +1504,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     }
                     ImGui.EndListBox();
                 }
+                
+                ImGui.End();
             }
-            ImGui.End();
             
             // Tile Specs with ImGui
 
@@ -1581,6 +1582,31 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 GLOBALS.Settings.TileEditor.TintedTiles = tinted;
                 
                 ImGui.End();
+            }
+            
+            // Shortcuts window
+            
+            if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
+            {
+                var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.TileEditor);
+
+                _isShortcutsWinHovered = CheckCollisionPointRec(
+                    tileMouse, 
+                    shortcutWindowRect with
+                    {
+                        Y = shortcutWindowRect.Y - 5, Height = shortcutWindowRect.Height + 10,
+                        X = shortcutWindowRect.X - 5, Width = shortcutWindowRect.Width + 10
+                    }
+                );
+
+                if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.Left))
+                {
+                    _isShortcutsWinDragged = true;
+                }
+                else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.Left))
+                {
+                    _isShortcutsWinDragged = false;
+                }
             }
             
             rlImGui.End();
@@ -1818,34 +1844,6 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         break;
                 }
             }
-        }
-        
-        // Shortcuts window
-        if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
-        {
-            rlImGui.Begin();
-            var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.TileEditor);
-
-            _isShortcutsWinHovered = CheckCollisionPointRec(
-                tileMouse, 
-                shortcutWindowRect with
-                {
-                    Y = shortcutWindowRect.Y - 5, Height = shortcutWindowRect.Height + 10,
-                    X = shortcutWindowRect.X - 5, Width = shortcutWindowRect.Width + 10
-                }
-            );
-
-            if (_isShortcutsWinHovered && IsMouseButtonDown(MouseButton.Left))
-            {
-                _isShortcutsWinDragged = true;
-            }
-            else if (_isShortcutsWinDragged && IsMouseButtonReleased(MouseButton.Left))
-            {
-                _isShortcutsWinDragged = false;
-            }
-
-
-            rlImGui.End();
         }
         #endregion
 
