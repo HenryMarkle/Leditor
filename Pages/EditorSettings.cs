@@ -10,20 +10,7 @@ public class SettingsPage : IPage
 {
     private readonly Serilog.Core.Logger _logger;
 
-    private int _categoryScrollIndex;
-    private int _activeCategory;
-
-    private int _shortcutCategoryScrollIndex;
     private int _shortcutActiveCategory;
-
-    private Vector2 _shortcutsOldGeoScrollPanelScroll;
-    private Vector2 _shortcutsNewGeoScrollPanelScroll;
-    private Vector2 _shortcutsTileScrollPanelScroll;
-    private Vector2 _shortcutsCameraScrollPanelScroll;
-    private Vector2 _shortcutsLightScrollPanelScroll;
-    private Vector2 _shortcutsEffectsScrollPanelScroll;
-    private Vector2 _shortcutsPropsScrollPanelScroll;
-    private Vector2 _shortcutsGlobalScrollPanelScroll;
 
     private bool _assigningShortcut;
 
@@ -32,9 +19,7 @@ public class SettingsPage : IPage
     private MouseShortcut? _mouseShortcutToAssign;
     #nullable disable
     
-    private byte _colorPickerLayer = 2;
-
-    private string[] _shortcutCategories = [
+    private readonly string[] _shortcutCategories = [
         "Global",
         "Old Geometry Editor",
         "New Geometry Editor",
@@ -42,7 +27,8 @@ public class SettingsPage : IPage
         "Camera Editor",
         "Light Editor",
         "Effects Editor",
-        "Props Editor"
+        "Props Editor",
+        "Style"
     ];
    
 
@@ -700,6 +686,11 @@ public class SettingsPage : IPage
                         if (assignDeleteProps) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DeleteSelectedProps;
                         if (assignEditRopePoints) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopePointsEditingMode;
                         if (assignToggleRopeEditing) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopeEditingMode;
+                    }
+                        break;
+                    case 8: // Style
+                    {
+                        ImGui.ShowStyleEditor();
                     }
                         break;
                 }

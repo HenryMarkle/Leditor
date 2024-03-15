@@ -502,7 +502,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                                 y * scale < GLOBALS.Level.Border.Y ||
                                                 y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
 
-                                            if (_geoMenuIndex == 0 && GLOBALS.Layer != 0) break;
+                                            if (_geoMenuIndex == 0 && GLOBALS.Layer != 0 && GLOBALS.Layer != 1) break;
 
                                             var id = GeoMenuCategory3ToStackableId[_geoMenuIndex];
                                             cell.Stackables[id] = true;
@@ -635,7 +635,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                             y * scale < GLOBALS.Level.Border.Y ||
                                             y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
 
-                                        if (_geoMenuIndex == 0 && GLOBALS.Layer != 0) break;
+                                        // if (_geoMenuIndex == 0 && GLOBALS.Layer != 0) break;
 
                                         var id = GeoMenuCategory3ToStackableId[_geoMenuIndex];
                                         cell.Stackables[id] = false;
@@ -769,7 +769,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                     matrixY * scale < GLOBALS.Level.Border.Y ||
                                     matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
 
-                                if (_geoMenuIndex == 0 && GLOBALS.Layer != 0) break;
+                                if (_geoMenuIndex == 0 && GLOBALS.Layer != 0 && GLOBALS.Layer != 1) break;
 
                                 var id = GeoMenuCategory3ToStackableId[_geoMenuIndex];
                                 GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer].Stackables[id] = !_eraseMode;
@@ -1405,6 +1405,8 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             );
             
             rlImGui.Begin();
+            
+            ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
             
             // Geo Menu
 

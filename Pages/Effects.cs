@@ -217,6 +217,9 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                 // ImGui
                 
                 rlImGui.Begin();
+                
+                ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
+                
                 if (ImGui.Begin("New Effect##NewEffectMenu", ImGuiWindowFlags.NoCollapse))
                 {
                     var availableSpace = ImGui.GetContentRegionAvail();
@@ -669,6 +672,8 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                 // UI
 
                 rlImGui.Begin();
+                
+                ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
                 
                 // Applied Effects
 

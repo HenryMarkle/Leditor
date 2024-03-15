@@ -189,10 +189,10 @@ public class ExperimentalGeoShortcuts : IEditorShortcuts
 
 public record TileShortcuts : IEditorShortcuts
 {
-    public KeyboardShortcut FocusOnTileMenu { get; set; } = new(KeyboardKey.D);
-    public KeyboardShortcut FocusOnTileCategoryMenu { get; set; } = new(KeyboardKey.A);
-    public KeyboardShortcut MoveToNextCategory { get; set; } = new(KeyboardKey.Null);
-    public KeyboardShortcut MoveToPreviousCategory { get; set; } = new(KeyboardKey.Null);
+    public KeyboardShortcut FocusOnTileMenu { get; set; } = new(KeyboardKey.Null);
+    public KeyboardShortcut FocusOnTileCategoryMenu { get; set; } = new(KeyboardKey.Null);
+    public KeyboardShortcut MoveToNextCategory { get; set; } = new(KeyboardKey.D);
+    public KeyboardShortcut MoveToPreviousCategory { get; set; } = new(KeyboardKey.A);
     
     public KeyboardShortcut MoveDown { get; set; } = new(KeyboardKey.S);
     public KeyboardShortcut MoveUp { get; set; } = new(KeyboardKey.W);
@@ -206,13 +206,17 @@ public record TileShortcuts : IEditorShortcuts
     public KeyboardShortcut Undo { get; set; } = new(KeyboardKey.Z, ctrl:true, shift:false);
     public KeyboardShortcut Redo { get; set; } = new(KeyboardKey.Z, ctrl:true, shift: true);
 
-    public KeyboardShortcut ToggleLayer1 { get; set; } = new(KeyboardKey.Z);
-    public KeyboardShortcut ToggleLayer2 { get; set; } = new(KeyboardKey.X);
-    public KeyboardShortcut ToggleLayer3 { get; set; } = new(KeyboardKey.C);
+    public KeyboardShortcut CopyTiles { get; set; } = new(KeyboardKey.C, ctrl: true, shift: false);
+    public KeyboardShortcut PasteTilesWithGeo { get; set; } = new(KeyboardKey.V, ctrl: true, shift: true);
+    public KeyboardShortcut PasteTilesWithoutGeo { get; set; } = new(KeyboardKey.V, ctrl: true);
 
-    public KeyboardShortcut ToggleLayer1Tiles { get; set; } = new(KeyboardKey.Z, shift:true);
-    public KeyboardShortcut ToggleLayer2Tiles { get; set; } = new(KeyboardKey.X, shift:true);
-    public KeyboardShortcut ToggleLayer3Tiles { get; set; } = new(KeyboardKey.C, shift:true);
+    public KeyboardShortcut ToggleLayer1 { get; set; } = new(KeyboardKey.Null, shift:false, ctrl: false);
+    public KeyboardShortcut ToggleLayer2 { get; set; } = new(KeyboardKey.Null, shift:false, ctrl: false);
+    public KeyboardShortcut ToggleLayer3 { get; set; } = new(KeyboardKey.Null, shift:false, ctrl: false);
+
+    public KeyboardShortcut ToggleLayer1Tiles { get; set; } = new(KeyboardKey.Null, shift:true, ctrl: false);
+    public KeyboardShortcut ToggleLayer2Tiles { get; set; } = new(KeyboardKey.Null, shift:true, ctrl: false);
+    public KeyboardShortcut ToggleLayer3Tiles { get; set; } = new(KeyboardKey.Null, shift:true, ctrl: false);
 
     public KeyboardShortcut ResizeMaterialBrush { get; set; } = KeyboardKey.LeftAlt;
 

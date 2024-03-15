@@ -329,6 +329,8 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
 
             rlImGui.Begin();
             
+            ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
+            
             // Settings
 
             if (ImGui.Begin("Settings##CameraEditorSettings"))

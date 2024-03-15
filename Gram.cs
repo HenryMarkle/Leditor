@@ -108,10 +108,21 @@ public class Gram(int limit)
 {
     public interface IAction { }
 
-    public interface ISingleAction<out T> : IAction
+    public interface IMatrixCoords
     {
         Coords Position { get; }
-        
+    }
+    
+    public interface IMatrixAction : IAction, IMatrixCoords { }
+
+    public interface ISingleAction<out T> : IAction
+    {
+        T Old { get; }
+        T New { get; }
+    }
+    
+    public interface ISingleMatrixAction<out T> : IMatrixAction, ISingleAction<T>
+    {
         T Old { get; }
         T New { get; }
     }
@@ -121,6 +132,10 @@ public class Gram(int limit)
         IEnumerable<ISingleAction<T>> Actions { get; }
     }
 
+    public interface IVariableGroupAction : IAction
+    {
+        IEnumerable<ISingleAction<object>> Actions { get; }
+    }
     
     private LinkedList<IAction> Actions { get; init; } = [];
 
@@ -159,7 +174,10 @@ public class Gram(int limit)
     
     //
 
-    public record struct TileAction(Coords Position, TileCell Old, TileCell New) : ISingleAction<TileCell>;
+    public record struct TileAction(Coords Position, TileCell Old, TileCell New) : ISingleMatrixAction<TileCell>;
+
+    public record struct TileGeoAction(Coords Position, (TileCell, RunCell) Old, (TileCell, RunCell) New)
+        : ISingleMatrixAction<(TileCell, RunCell)>;
     public record struct GroupAction<TG>(IEnumerable<ISingleAction<TG>> Actions) : IGroupAction<TG>;
 
 }

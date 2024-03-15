@@ -11,7 +11,6 @@ namespace Leditor;
 /// </summary>
 internal static class GLOBALS
 {
-    
     /// <summary>
     /// Do not access before InitWindow() is called in the Main function.
     /// </summary>
@@ -398,7 +397,7 @@ internal static class GLOBALS
     internal static int PreviousPage { get; set; } = 0;
 
     /// ResizeFlag and NewFlag are used when moving to page 6 (dimensions page)
-    /// to indicate whether you want to resize the levels or over override it.
+    /// to indicate whether you want to resize the levels or override it.
     internal static bool ResizeFlag { get; set; } = false;
     internal static bool NewFlag { get; set; } = false;
     //

@@ -451,6 +451,8 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
             
             rlImGui.Begin();
             
+            ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
+            
             // Brushes Window
 
             var menuOpened = ImGui.Begin("Brushes##LightBrushesWindow");

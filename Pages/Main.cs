@@ -761,6 +761,8 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                 
                 rlImGui.Begin();
                 
+                ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
+                
                 if (_failedToSave)
                 {
                     if (ImGui.Begin("Error##ProjectSaveFail"))

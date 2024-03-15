@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
@@ -1230,6 +1231,9 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
         if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
         {
             rlImGui.Begin();
+            
+            ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
+            
             var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.GeoEditor);
             
             _isShortcutsWinHovered = CheckCollisionPointRec(

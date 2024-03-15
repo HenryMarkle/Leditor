@@ -2492,6 +2492,8 @@ internal class PropsEditorPage : IPage
             //
 
             rlImGui.Begin();
+            
+            ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
 
             var menuOpened = ImGui.Begin("Props##PropsPanel");
             

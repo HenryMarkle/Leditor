@@ -802,7 +802,12 @@ class Program
         Task<(bool success, Exception? exception)>? quickSaveTask = null;
         
         //
-        rlImGui.Setup(GLOBALS.Settings.GeneralSettings.DarkTheme);
+        rlImGui.Setup(GLOBALS.Settings.GeneralSettings.DarkTheme, true);
+
+        ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+        ImGui.GetIO().ConfigDockingWithShift = true;
+        ImGui.GetIO().ConfigDockingTransparentPayload = true;
+        
         
         // ImGui.LoadIniSettingsFromDisk(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "imgui.ini"));
         //

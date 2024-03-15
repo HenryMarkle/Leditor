@@ -29,6 +29,12 @@ internal static class Utils
         if (value < min) value = min;
     }
 
+    internal static RunCell CopyGeoCell(in RunCell cell) => new()
+    {
+        Geo = cell.Geo,
+        Stackables = [..cell.Stackables]
+    };
+
     internal static int GetPropDepth(in InitTile tile) => tile.Repeat.Sum();
     internal static int GetPropDepth(in InitPropBase prop) => prop switch
     {
