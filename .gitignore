@@ -1,0 +1,12 @@
+/Drizzle
+
+**/.vs
+**/.vscode
+**/.idea
+Leditor/index
+Leditor/assets
+
+**/bin
+**/obj
+
+/dist/Data
