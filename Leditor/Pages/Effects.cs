@@ -389,7 +389,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                         throw new IndexOutOfRangeException(innerException: e, message: $"Failed to fetch current applied effect from {nameof(GLOBALS.Level.Effects)} (L:{GLOBALS.Level.Effects.Length}): {nameof(_currentAppliedEffect)} ({_currentAppliedEffect}) was out of bounds");
                     }
                     #else
-                    mtx = GLOBALS.Level.Effects[currentAppliedEffect];
+                    mtx = GLOBALS.Level.Effects[_currentAppliedEffect];
                     #endif
 
                     var strength = Utils.GetEffectBrushStrength(mtx.Item1);
@@ -433,7 +433,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                         throw new IndexOutOfRangeException(innerException: e, message: $"Failed to fetch current applied effect from {nameof(GLOBALS.Level.Effects)} (L:{GLOBALS.Level.Effects.Length}): {nameof(_currentAppliedEffect)} ({_currentAppliedEffect}) was out of bounds");
                     }
                     #else
-                    mtx = GLOBALS.Level.Effects[currentAppliedEffect];
+                    mtx = GLOBALS.Level.Effects[_currentAppliedEffect];
                     #endif
                     
                     var strength = -Utils.GetEffectBrushStrength(mtx.Item1);

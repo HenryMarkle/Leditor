@@ -10,6 +10,7 @@ using System.Text.Json;
 using Serilog;
 using System.Security.Cryptography;
 using System.Threading;
+using Drizzle.Lingo.Runtime;
 using ImGuiNET;
 using Leditor.Renderer;
 
@@ -612,7 +613,7 @@ class Program
 
         logger.Information("Initializing window");
 
-        var icon = LoadImage("icon.png");
+        var icon = LoadImage(GLOBALS.Paths.IconPath);
 
         SetConfigFlags(ConfigFlags.ResizableWindow);
         SetConfigFlags(ConfigFlags.Msaa4xHint);
@@ -640,7 +641,7 @@ class Program
         SetExitKey(KeyboardKey.Null);
 
         // The splashscreen
-        GLOBALS.Textures.SplashScreen = LoadTexture(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "splashscreen.png"));
+        GLOBALS.Textures.SplashScreen = LoadTexture(GLOBALS.Paths.SplashScreenPath);
 
         // This is the level's light map, which will be used to draw textures on called "light/shadow brushes"
         GLOBALS.Textures.LightMap = LoadRenderTexture(
@@ -779,6 +780,16 @@ class Program
         MissingInitFilePage missingInitFilePage = new(logger);
         ExperimentalGeometryPage experimentalGeometryPage = new(logger);
         SettingsPage settingsPage = new(logger);
+        
+        // Lingo runtime assets path
+        
+        LingoRuntime.MovieBasePath = Path.Combine(GLOBALS.Paths.ExecutableDirectory, "renderer") + Path.DirectorySeparatorChar;
+        LingoRuntime.CastPath = Path.Combine(LingoRuntime.MovieBasePath, "Cast");
+        
+        //
+        Task lingoRuntimeInitTask = default!;
+        bool isLingoRuntimeInit = false;
+        //
         
         logger.Information("Initializing events");
         
@@ -1033,6 +1044,85 @@ class Program
 
                     isLoadingTexturesDone = true;
                 }
+                // else if (false)
+                // {
+                //     if (!isLingoRuntimeInit)
+                //     {
+                //         lingoRuntimeInitTask = Task.Factory.StartNew(() =>
+                //         {
+                //             SixLabors.ImageSharp.Configuration.Default.PreferContiguousImageBuffers = true;
+                //             GLOBALS.LingoRuntime.Init();
+                //         });
+                //     
+                //         isLingoRuntimeInit = true;
+                //         
+                //         var width = GetScreenWidth();
+                //         var height = GetScreenHeight();
+                //         
+                //         BeginDrawing();
+                //         ClearBackground(new(0, 0, 0, 255));
+                //     
+                //         DrawTexturePro(
+                //             GLOBALS.Textures.SplashScreen,
+                //             new(0, 0, GLOBALS.Textures.SplashScreen.Width, GLOBALS.Textures.SplashScreen.Height),
+                //             new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
+                //             new(0, 0),
+                //             0,
+                //             new(255, 255, 255, 255)
+                //         );
+                //     
+                //         DrawText(version, 700, 50, 15, Color.White);
+                //         DrawText(raylibVersion, 700, 70, 15, Color.White);
+                //             
+                //         if (GLOBALS.Font is null)
+                //             DrawText("Loading tile textures", 100, height - 120, 20, Color.White);
+                //         else
+                //             DrawTextEx(GLOBALS.Font.Value, "Initializing Renderer Runtime", new Vector2(100, height - 120), 20, 1, Color.White);
+                //     
+                //     
+                //         //Raylib_CsLo.RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", tileTexturesLoadProgress, 0, totalTileTexturesLoadProgress);
+                //         EndDrawing();
+                //         continue;
+                //     }
+                //     else if (!lingoRuntimeInitTask.IsCompletedSuccessfully)
+                //     {
+                //         var faulted = lingoRuntimeInitTask.IsFaulted;
+                //         
+                //         var width = GetScreenWidth();
+                //         var height = GetScreenHeight();
+                //         
+                //         BeginDrawing();
+                //         ClearBackground(new(0, 0, 0, 255));
+                //     
+                //         DrawTexturePro(
+                //             GLOBALS.Textures.SplashScreen,
+                //             new(0, 0, GLOBALS.Textures.SplashScreen.Width, GLOBALS.Textures.SplashScreen.Height),
+                //             new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
+                //             new(0, 0),
+                //             0,
+                //             new(255, 255, 255, 255)
+                //         );
+                //     
+                //         DrawText(version, 700, 50, 15, Color.White);
+                //         DrawText(raylibVersion, 700, 70, 15, Color.White);
+                //             
+                //         if (GLOBALS.Font is null)
+                //             DrawText("Loading tile textures", 100, height - 120, 20, Color.White);
+                //         else
+                //             DrawTextEx(GLOBALS.Font.Value, faulted ? "Failed to initialize renderer runtime" : "Initializing Renderer Runtime", new Vector2(100, height - 120), 20, 1, Color.White);
+                //     
+                //     
+                //         //Raylib_CsLo.RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", tileTexturesLoadProgress, 0, totalTileTexturesLoadProgress);
+                //         EndDrawing();
+                //     
+                //         if (faulted)
+                //         {
+                //             Console.WriteLine(lingoRuntimeInitTask.Exception);
+                //             break;
+                //         }
+                //         continue;
+                //     }
+                // }
 
                 // page preprocessing
 

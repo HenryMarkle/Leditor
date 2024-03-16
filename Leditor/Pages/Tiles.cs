@@ -2045,13 +2045,26 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 {
                     if (_materialTileSwitch)
                     {
+                        // Thanks to Chromosoze
+                        var drawList = ImGui.GetWindowDrawList();
+                        var textHeight = ImGui.GetTextLineHeight();
+                        //
+                        
                         for (var categoryIndex = 0; categoryIndex < _tileCategoryNames.Length; categoryIndex++)
                         {
                             ref var category = ref GLOBALS.TileCategories[categoryIndex];
                             
+                            // Thanks to Chromosoze
+                            var cursor = ImGui.GetCursorScreenPos();
+                            drawList.AddRectFilled(
+                                p_min: cursor,
+                                p_max: cursor + new Vector2(10f, textHeight),
+                                ImGui.ColorConvertFloat4ToU32(new Vector4(category.Item2.R / 255f, category.Item2.G / 255f, category.Item2.B / 255, 1f))
+                            );
+                            //
                             
                             var selected = ImGui.Selectable(
-                                category.Item1, 
+                                "  "+category.Item1, 
                                 _tileCategoryIndex == categoryIndex);
                             
                             if (selected)
@@ -2094,12 +2107,28 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     }
                     else
                     {
+                        // Thanks to Chromosoze
+                        var drawList = ImGui.GetWindowDrawList();
+                        var textHeight = ImGui.GetTextLineHeight();
+                        //
+                        
                         for (var materialIndex = 0; materialIndex < GLOBALS.Materials[_materialCategoryIndex].Length; materialIndex++)
                         {
                             ref var material = ref GLOBALS.Materials[_materialCategoryIndex][materialIndex];
                             
+                            
+                            
+                            // Thanks to Chromosoze
+                            var cursor = ImGui.GetCursorScreenPos();
+                            drawList.AddRectFilled(
+                                p_min: cursor,
+                                p_max: cursor + new Vector2(10f, textHeight),
+                                ImGui.ColorConvertFloat4ToU32(new Vector4(material.Item2.R / 255f, material.Item2.G / 255f, material.Item2.B / 255, 1f))
+                            );
+                            //
+                            
                             var selected = ImGui.Selectable(
-                                material.Item1,
+                                "  "+material.Item1,
                                 _materialIndex == materialIndex
                             );
 

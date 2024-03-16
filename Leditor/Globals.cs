@@ -2,6 +2,8 @@
 
 using System.Numerics;
 using System.Text.Json;
+using Drizzle.Lingo.Runtime;
+using Drizzle.Ported;
 
 namespace Leditor;
 
@@ -72,8 +74,8 @@ internal static class GLOBALS
         internal static string ExecutableDirectory => Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? throw new Exception("unable to retreive current executable's path");
 
         internal static string ProjectsDirectory => Path.Combine(ExecutableDirectory, "projects");
-        internal static string IndexDirectory => Path.Combine(ExecutableDirectory, "index");
         internal static string AssetsDirectory => Path.Combine(ExecutableDirectory, "assets");
+        internal static string IndexDirectory => Path.Combine(AssetsDirectory, "index");
         internal static string TilesAssetsDirectory => Path.Combine(AssetsDirectory, "tiles");
         internal static string GeoAssetsDirectory => Path.Combine(AssetsDirectory, "geo");
         internal static string LightAssetsDirectory => Path.Combine(AssetsDirectory, "light");
@@ -93,6 +95,9 @@ internal static class GLOBALS
         internal static string PropsInitPath => Path.Combine(IndexDirectory, "props.txt");
         
         internal static string SettingsPath => Path.Combine(ExecutableDirectory, "settings.json");
+
+        internal static string IconPath => Path.Combine(AssetsDirectory, "other", "icon.png");
+        internal static string SplashScreenPath => Path.Combine(AssetsDirectory, "other", "splashscreen.png");
 
 
 
@@ -362,8 +367,9 @@ internal static class GLOBALS
         }
     }
 
-    internal static System.Diagnostics.Process RenderProcess = default!;
 
+    // internal static LingoRuntime LingoRuntime { get; set; } = new(typeof(MovieScript).Assembly);
+    
     internal static string ProjectPath { get; set; } = "";
 
     internal static int MinScreenWidth => 1280;

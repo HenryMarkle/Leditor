@@ -73,6 +73,7 @@ internal class DrizzleRender : IDisposable
             }
             catch (Exception e)
             {
+                Console.WriteLine(e);
                 Queue.Enqueue(new MessageRenderFailed(e));
             }
         }
@@ -304,13 +305,13 @@ internal class DrizzleRender : IDisposable
             case RenderPreviewLights lights:
             {
                 // TODO: light stage uses a differently sized image buffer
-                ProcessLingoLightImageLayers(lights.Layers);
+                // ProcessLingoLightImageLayers(lights.Layers);
                 break;
             }
 
             case RenderPreviewProps props:
             {
-                
+                ProcessLingoImageLayers(props.Layers);
             }
                 break;
         }
@@ -320,8 +321,8 @@ internal class DrizzleRender : IDisposable
 
     private void ProcessLingoImageLayers(LingoImage[] layers)
     {
-        Console.WriteLine($"Source: {layers[0].Width} * {layers[0].Height} * {layers[0].Depth}");
-        Console.WriteLine($"Dest: {RenderLayerPreviews[0].Width} * {RenderLayerPreviews[0].Height} * 4");
+        // Console.WriteLine($"Source: {layers[0].Width} * {layers[0].Height} * {layers[0].Depth}");
+        // Console.WriteLine($"Dest: {RenderLayerPreviews[0].Width} * {RenderLayerPreviews[0].Height} * 4");
         
         // Lingo Image:
         // 2000, 1200
@@ -344,8 +345,8 @@ internal class DrizzleRender : IDisposable
     
     private void ProcessLingoLightImageLayers(LingoImage[] layers)
     {
-        Console.WriteLine($"Source: {layers[0].Width} * {layers[0].Height} * {layers[0].Depth}");
-        Console.WriteLine($"Dest: {RenderLayerPreviews[0].Width} * {RenderLayerPreviews[0].Height} * 4");
+        // Console.WriteLine($"Source: {layers[0].Width} * {layers[0].Height} * {layers[0].Depth}");
+        // Console.WriteLine($"Dest: {RenderLayerPreviews[0].Width} * {RenderLayerPreviews[0].Height} * 4");
         
         // Lingo Image:
         // 2300, 1500

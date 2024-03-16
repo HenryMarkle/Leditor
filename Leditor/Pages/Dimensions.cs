@@ -228,8 +228,8 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                     ImGui.SetNextItemWidth(100);
                     ImGui.InputInt("Columns", ref _columns);
                     
-                    Utils.Restrict(ref _rows, 1, 5);
-                    Utils.Restrict(ref _columns, 1, 5);
+                    Utils.Restrict(ref _rows, 1);
+                    Utils.Restrict(ref _columns, 1);
                     
                     ImGui.Spacing();
 
