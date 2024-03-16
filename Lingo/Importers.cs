@@ -206,10 +206,11 @@ public static class Importers {
             "simpleDecal"       => InitPropType.SimpleDecal,
             "variedDecal"       => InitPropType.VariedDecal,
             "antimatter"        => InitPropType.Antimatter,
-            "softeffect"        => InitPropType.SoftEffect,
+            "softEffect"        => InitPropType.SoftEffect,
             "long"              => InitPropType.Long,
+            "coloredSoft"       => InitPropType.ColoredSoft,
 
-            _ => throw new InvalidPropTypeException("", StringifyBase(@base), typeStr)
+            _ => throw new InvalidPropTypeException(typeStr, StringifyBase(@base), typeStr)
         };
 
         InitPropBase init = type switch
@@ -302,6 +303,20 @@ public static class Importers {
             ),
             InitPropType.Antimatter => new InitAntimatterProp(name, type, depth is null ? 0 :  getIntProperty(depth), getFloatProperty(contourExp)),
             InitPropType.Long => new InitLongProp(name, type, depth is null ? 0 : getIntProperty(depth)),
+            InitPropType.ColoredSoft => new InitColoredSoftProp(name, type, 
+                depth is null ? 0 : getIntProperty(depth), 
+                pxlSize is null
+                ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(pxlSize))
+                : (NumberToInteger((AstNode.Number)pxlSize.Arguments[0]), 
+                    NumberToInteger((AstNode.Number)pxlSize.Arguments[1])), 
+                round is null ? 0 : getIntProperty(round), 
+                getFloatProperty(contourExp),
+                getIntProperty(selfShade),
+                getFloatProperty(highLightBorder),
+                getFloatProperty(depthAffectHilites),
+                getFloatProperty(shadowBorder),
+                getIntProperty(smoothShading),
+                getIntProperty(colorize)),
             _ => throw new InvalidPropTypeException("", StringifyBase(@base), typeStr)
         };
 

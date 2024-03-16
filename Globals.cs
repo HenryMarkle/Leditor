@@ -81,7 +81,7 @@ internal static class GLOBALS
         internal static string ShadersAssetsDirectory => Path.Combine(AssetsDirectory, "shaders");
         internal static string CacheDirectory => Path.Combine(ExecutableDirectory, "cache");
         internal static string UiAssetsDirectory => Path.Combine(AssetsDirectory, "interface");
-        internal static string PackagesDirectory => Path.Combine(ExecutableDirectory, "packs");
+        internal static string PackagesDirectory => Path.Combine(AssetsDirectory, "packs");
         internal static string TilePackagesDirectory => Path.Combine(PackagesDirectory, "tiles");
         internal static string FontsDirectory => Path.Combine(AssetsDirectory, "fonts");
         internal static string RendererDirectory => Path.Combine(ExecutableDirectory, "renderer");

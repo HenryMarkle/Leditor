@@ -11,6 +11,7 @@ using Serilog;
 using System.Security.Cryptography;
 using System.Threading;
 using ImGuiNET;
+using Leditor.Renderer;
 
 #nullable enable
 
@@ -205,6 +206,8 @@ class Program
     private static bool _failedToSave;
 
     private static bool _isGuiLocked;
+
+    private static DrizzleRenderWindow? _renderWindow;
     
     private static async Task<SaveProjectResult> SaveProjectAsync(string path)
     {
@@ -269,7 +272,7 @@ class Program
     // Unused
     private static ((string, Color)[], InitTile[][]) LoadTileInitFromRenderer()
     {
-        var path = Path.Combine(GLOBALS.Paths.RendererDirectory, "Data", "Graphics", "Init.txt");
+        var path = Path.Combine(GLOBALS.Paths.RendererDirectory, "Graphics", "Init.txt");
 
         var text = File.ReadAllText(path).ReplaceLineEndings();
 
@@ -311,7 +314,7 @@ class Program
     // Unused
     private static ((string category, Color color)[] categories, InitPropBase[][] init) LoadPropInitFromRenderer()
     {
-        var text = File.ReadAllText(Path.Combine(GLOBALS.Paths.RendererDirectory, "Data", "Props", "Init.txt")).ReplaceLineEndings();
+        var text = File.ReadAllText(Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", "Init.txt")).ReplaceLineEndings();
         return Importers.GetPropsInit(text);
     }
 
@@ -470,7 +473,7 @@ class Program
 
         try
         {
-            (GLOBALS.TileCategories, GLOBALS.Tiles) = LoadTileInit();
+            (GLOBALS.TileCategories, GLOBALS.Tiles) = LoadTileInitFromRenderer();
         }
         catch (Exception e)
         {
@@ -493,7 +496,7 @@ class Program
 
         try
         {
-            (GLOBALS.PropCategories, GLOBALS.Props) = LoadPropInit();
+            (GLOBALS.PropCategories, GLOBALS.Props) = LoadPropInitFromRenderer();
         }
         catch (Exception e)
         {
@@ -555,7 +558,7 @@ class Program
         var tileImagePaths = GLOBALS.Tiles
             .Select((category, index) =>
                 category.Select(tile => 
-                        Path.Combine(GLOBALS.Paths.TilesAssetsDirectory, $"{tile.Name}.png"))
+                        Path.Combine(GLOBALS.Paths.RendererDirectory, "Graphics", $"{tile.Name}.png"))
                     .ToArray()
             )
             .ToArray();
@@ -575,15 +578,15 @@ class Program
             ).ToArray();
         
         var ropePropImagePaths = GLOBALS.RopeProps
-            .Select(r => Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, r.Name + ".png"))
+            .Select(r => Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", r.Name + ".png"))
             .ToArray();
         
         var longPropImagePaths = GLOBALS.LongProps
-            .Select(l => Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, l.Name + ".png"))
+            .Select(l => Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", l.Name + ".png"))
             .ToArray();
         
         var otherPropImagePaths = GLOBALS.Props.Select(category =>
-            category.Select(prop => Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, prop.Name + ".png")
+            category.Select(prop => Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png")
             ).ToArray()
         ).ToArray();
         
@@ -1189,6 +1192,29 @@ class Program
                         EndDrawing();
                     }
                 }
+                else if (_renderWindow is not null)
+                {
+                    BeginDrawing();
+                    
+                    ClearBackground(Color.Black);
+                    
+                    rlImGui.Begin();
+                    
+                    // True == window is closed
+                    if (_renderWindow.DrawWindow())
+                    {
+                        _renderWindow.Dispose();
+                        _renderWindow = null;
+                        
+                        // Freeing as much memory as possible
+                        GC.Collect(2, GCCollectionMode.Aggressive, true, true);
+                        GC.WaitForFullGCComplete();
+                    }
+
+                    rlImGui.End();
+                    
+                    EndDrawing();
+                }
                 else
                 {
                     {
@@ -1222,29 +1248,7 @@ class Program
                         {
                             logger.Debug($"Rendering level \"{GLOBALS.Level.ProjectName}\"");
 
-                            var projectPath = Path.Combine(GLOBALS.ProjectPath, $"{GLOBALS.Level.ProjectName}.txt");
-                            var arguments = $"render \"{projectPath}\"";
-
-                            try
-                            {
-                                GLOBALS.RenderProcess.Kill();
-                                    
-                                GLOBALS.RenderProcess.Dispose();
-                            } catch (Exception e) {
-                                logger.Error($"Unable to kill render process: {e}");  
-                            }
-                                
-                            GLOBALS.RenderProcess = new System.Diagnostics.Process
-                            {
-                                StartInfo =
-                                {
-                                    FileName = Path.Combine(GLOBALS.Paths.RendererDirectory, "Drizzle.ConsoleApp.exe"),
-                                    WorkingDirectory = GLOBALS.Paths.ExecutableDirectory,
-                                    Arguments = arguments
-                                }
-                            };
-
-                            GLOBALS.RenderProcess.Start();
+                            _renderWindow = new DrizzleRenderWindow();
                         }
                     }
                     

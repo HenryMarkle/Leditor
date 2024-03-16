@@ -862,6 +862,7 @@ public enum InitPropType
     SoftEffect,
     SimpleDecal,
     Antimatter,
+    ColoredSoft,
     Rope,
     Long,
     Tile
@@ -1056,6 +1057,32 @@ public class InitRopeProp(
 }
 
 public class InitLongProp(string name, InitPropType type, int depth) : InitPropBase(name, type, depth);
+
+public class InitColoredSoftProp(
+    string name, 
+    InitPropType type, 
+    int depth,
+    (int x, int y) sizeInPixels,
+    int round,
+    float contourExp,
+    int selfShade,
+    float highlightBorder,
+    float depthAffectHilites,
+    float shadowBorder,
+    int smoothShading,
+    int colorize
+    ) : InitPropBase(name, type, depth)
+{
+    public (int x, int y) SizeInPixels { get; init; } = sizeInPixels;
+    public int Round { get; init; } = round;
+    public float ContourExp { get; init; } = contourExp;
+    public int SelfShade { get; init; } = selfShade;
+    public float HighlightBorder { get; init; } = highlightBorder;
+    public float DepthAffectHilites { get; init; } = depthAffectHilites;
+    public float ShadowBorder { get; init; } = shadowBorder;
+    public int SmoothShading { get; init; } = smoothShading;
+    public int Colorize { get; init; } = colorize;
+}
 #endregion
 
 public struct PropQuads(

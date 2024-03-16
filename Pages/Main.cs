@@ -4,6 +4,7 @@ using System.Text.Json;
 using ImGuiNET;
 using Pidgin;
 using rlImGui_cs;
+using Leditor.Renderer;
 using static Raylib_cs.Raylib;
 
 namespace Leditor;
@@ -45,6 +46,8 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
     
     private bool _isNavigationWinHovered;
     private bool _isNavigationWinDragged;
+
+    private DrizzleRenderWindow? _renderWindow;
 
     public void OnLevelLoadedFromStart(object? sender, EventArgs e)
     {
@@ -763,6 +766,24 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                 
                 ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
                 
+                // render window
+
+                if (_renderWindow is not null)
+                {
+                    // True == window is closed
+                    if (_renderWindow.DrawWindow())
+                    {
+                        _renderWindow.Dispose();
+                        _renderWindow = null;
+                        
+                        // Freeing as much memory as possible
+                        GC.Collect(2, GCCollectionMode.Aggressive, true, true);
+                        GC.WaitForFullGCComplete();
+                    }
+                }
+                
+                //
+                
                 if (_failedToSave)
                 {
                     if (ImGui.Begin("Error##ProjectSaveFail"))
@@ -830,7 +851,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                     var loadSelected = ImGui.Button("Load Project..");
                     var newSelected = ImGui.Button("New Project");
 
-                    if (GLOBALS.RendererExists)
+                    if (true)
                     {
                         var renderSelected = ImGui.Button("RENDER");
                         
@@ -838,29 +859,7 @@ internal class MainPage(Serilog.Core.Logger logger, Camera2D? camera = null) : I
                         {
                             _logger.Debug($"Rendering level \"{GLOBALS.Level.ProjectName}\"");
 
-                            var projectPath = Path.Combine(GLOBALS.ProjectPath, $"{GLOBALS.Level.ProjectName}.txt");
-                            var arguments = $"render \"{projectPath}\"";
-
-                            try
-                            {
-                                _renderProcess.Kill();
-                                    
-                                _renderProcess.Dispose();
-                            } catch (Exception e) {
-                                _logger.Error($"Unable to kill render process: {e}");  
-                            }
-                                
-                            _renderProcess = new Process
-                            {
-                                StartInfo =
-                                {
-                                    FileName = Path.Combine(GLOBALS.Paths.RendererDirectory, "Drizzle.ConsoleApp.exe"),
-                                    WorkingDirectory = GLOBALS.Paths.ExecutableDirectory,
-                                    Arguments = arguments
-                                }
-                            };
-
-                            _renderProcess.Start();
+                            _renderWindow = new DrizzleRenderWindow();
                         }
                     }
                     
