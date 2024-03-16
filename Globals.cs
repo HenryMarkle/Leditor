@@ -100,20 +100,17 @@ internal static class GLOBALS
         [
             IndexDirectory, 
             AssetsDirectory, 
-            TilesAssetsDirectory, 
             GeoAssetsDirectory, 
             LightAssetsDirectory,
-            PropsAssetsDirectory, 
             ShadersAssetsDirectory,
-            UiAssetsDirectory
+            UiAssetsDirectory,
+            RendererDirectory
         ];
 
         private static IEnumerable<string> EssentialFiles =>
         [
-            TilesInitPath,
             MaterialsInitPath,
             EffectsInitPath,
-            PropsInitPath
         ];
         
         internal static readonly IEnumerable<(string, bool)> DirectoryIntegrity =

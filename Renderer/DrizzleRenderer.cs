@@ -304,9 +304,15 @@ internal class DrizzleRender : IDisposable
             case RenderPreviewLights lights:
             {
                 // TODO: light stage uses a differently sized image buffer
-                // ProcessLingoImageLayers(lights.Layers);
+                ProcessLingoLightImageLayers(lights.Layers);
                 break;
             }
+
+            case RenderPreviewProps props:
+            {
+                
+            }
+                break;
         }
 
         PreviewUpdated?.Invoke();
@@ -314,16 +320,9 @@ internal class DrizzleRender : IDisposable
 
     private void ProcessLingoImageLayers(LingoImage[] layers)
     {
-        var srcImage = layers[0];
-
-        /*
-        Console.WriteLine(srcImage.width);
-        Console.WriteLine(PreviewImage.Width);
-
-        Console.WriteLine(srcImage.height);
-        Console.WriteLine(PreviewImage.Height);
-        */
-
+        Console.WriteLine($"Source: {layers[0].Width} * {layers[0].Height} * {layers[0].Depth}");
+        Console.WriteLine($"Dest: {RenderLayerPreviews[0].Width} * {RenderLayerPreviews[0].Height} * 4");
+        
         // Lingo Image:
         // 2000, 1200
         // Output:
@@ -331,7 +330,7 @@ internal class DrizzleRender : IDisposable
         if (layers.Length != 30)
             throw new Exception("Count of layers is not 30");
         
-        for (int i = 0; i < layers.Length; i++)
+        for (var i = 0; i < layers.Length; i++)
         {
             var img = layers[i];
             var dstImage = RenderLayerPreviews[i];
@@ -339,6 +338,34 @@ internal class DrizzleRender : IDisposable
             unsafe
             {
                 Marshal.Copy(img.ImageBuffer, 0, (nint) dstImage.Data, dstImage.Width * dstImage.Height * 4);
+            }
+        }
+    }
+    
+    private void ProcessLingoLightImageLayers(LingoImage[] layers)
+    {
+        Console.WriteLine($"Source: {layers[0].Width} * {layers[0].Height} * {layers[0].Depth}");
+        Console.WriteLine($"Dest: {RenderLayerPreviews[0].Width} * {RenderLayerPreviews[0].Height} * 4");
+        
+        // Lingo Image:
+        // 2300, 1500
+        // Output:
+        // 1400, 800
+        if (layers.Length != 30)
+            throw new Exception("Count of layers is not 30");
+        
+        for (var i = 0; i < layers.Length; i++)
+        {
+            var img = layers[i];
+            var dstImage = RenderLayerPreviews[i];
+
+            unsafe
+            {
+                Marshal.Copy(
+                    img.ImageBuffer, 
+                    0, 
+                    (nint) dstImage.Data, 
+                    dstImage.Width * dstImage.Height);
             }
         }
     }
