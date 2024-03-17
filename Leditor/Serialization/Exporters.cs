@@ -258,7 +258,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    internal static async Task<string> ExportAsync(GLOBALS.LevelState level, char newLine = '\r')
+    internal static async Task<string> ExportAsync(LevelState level, char newLine = '\r')
     {
         var geoTask = Task.Factory.StartNew(() => Export(level.GeoMatrix));
         var tileTask = Task.Factory.StartNew(() => Export(level.TileMatrix, level.DefaultMaterial));

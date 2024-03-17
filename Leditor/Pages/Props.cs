@@ -153,7 +153,7 @@ internal class PropsEditorPage : EditorPage
     private bool _isPropsWinHovered;
     private bool _isPropsWinDragged;
 
-    internal PropsEditorPage()
+    public PropsEditorPage()
     {
         _camera = new() { Zoom = 0.8f };
 

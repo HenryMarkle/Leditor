@@ -778,6 +778,28 @@ class Program
         MissingInitFilePage missingInitFilePage = new() { Logger = logger };
         ExperimentalGeometryPage experimentalGeometryPage = new() { Logger = logger };
         SettingsPage settingsPage = new() { Logger = logger };
+
+        // Pager pager = new(logger, new Context());
+
+        // pager
+        //     .RegisterDefault<StartPage>("start")
+        //     .RegisterFatal<DeathScreen>()
+        //     .Register<MainPage>("main")
+        //     .Register<SettingsPage>("settings")
+        //     .Register<MissingInitFilePage>("missingInitFilePage")
+        //     .Register<MissingPropTexturesPage>("missingPropTexturesPage")
+        //     .Register<MissingTexturesPage>("missingTexturesPage")
+        //     .Register<MissingAssetsPage>("missingAssetsPage")
+        //     .Register<AssetsNukedPage>("assetsNukedPage")
+        //     .Register<FailedTileCheckOnLoadPage>("failedTileCheckOnLoadPage")
+        //     .Register<GeoEditorPage>("oldGeo")
+        //     .Register<ExperimentalGeometryPage>("newGeo")
+        //     .Register<TileEditorPage>("tiles")
+        //     .Register<CamerasEditorPage>("cameras")
+        //     .Register<LightEditorPage>("light")
+        //     .Register<DimensionsEditorPage>("dimensions")
+        //     .Register<EffectsEditorPage>("effects")
+        //     .Register<PropsEditorPage>("props");
         
         // Lingo runtime assets path
         
@@ -937,8 +959,7 @@ class Program
                         else
                             DrawTextEx(GLOBALS.Font.Value, "Loading tile textures", new Vector2(100, height - 120), 20, 1, Color.White);
 
-
-                        //Raylib_CsLo.RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", tileTexturesLoadProgress, 0, totalTileTexturesLoadProgress);
+                        Printers.DrawProgressBar(new Rectangle(100, height - 100, width - 200, 30), tileTexturesLoadProgress, totalTileTexturesLoadProgress, false, Color.White);
                         EndDrawing();
 
                         if (tileTexturesLoadProgress % loadRate != 0) goto loadLoop;
@@ -983,7 +1004,8 @@ class Program
                             DrawTextEx(GLOBALS.Font.Value, "Loading prop textures", new Vector2(100, height - 120), 20, 1, Color.White);
 
 
-                        //Raylib_CsLo.RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", propTexturesLoadProgress, 0, totalPropTexturesLoadProgress);
+                        Printers.DrawProgressBar(new Rectangle(100, height - 100, width - 200, 30), propTexturesLoadProgress, totalPropTexturesLoadProgress, false, Color.White);
+
                         EndDrawing();
                         
                         continue;
@@ -1025,6 +1047,8 @@ class Program
                             DrawTextEx(GLOBALS.Font.Value, "Loading light brushes", new Vector2(100, height - 120), 20, 1, Color.White);
 
                         //Raylib_CsLo.RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", lightTexturesLoadProgress, 0, totalLightTexturesLoadProgress);
+                        Printers.DrawProgressBar(new Rectangle(100, height - 100, width - 200, 30), lightTexturesLoadProgress, totalLightTexturesLoadProgress, false, Color.White);
+                        
                         EndDrawing();
                         
                         continue;
@@ -1042,6 +1066,7 @@ class Program
 
                     isLoadingTexturesDone = true;
                 }
+                // Initialize Renderer Runtime
                 else if (GLOBALS.Settings.GeneralSettings.CacheRendererRuntime)
                 {
                     if (!isLingoRuntimeInit)
@@ -1391,6 +1416,8 @@ class Program
                     Exception = e,
                     Logger = logger
                 };
+                
+                
 
                 GLOBALS.Page = 99; // game over
             }

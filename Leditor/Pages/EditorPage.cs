@@ -6,7 +6,7 @@ internal abstract class EditorPage : IDrawable
 {
     public abstract void Draw();
     
-    public Serilog.ILogger Logger { get; init; }
+    public Serilog.ILogger Logger { get; set; }
     public Context Context { get; set; }
 
     internal EditorPage()
@@ -19,4 +19,9 @@ internal abstract class EditorPage : IDrawable
         Logger = logger;
         Context = context;
     }
+}
+
+internal abstract class ExceptionPage : EditorPage
+{
+    public Exception Exception { get; set; }
 }

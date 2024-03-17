@@ -2,15 +2,10 @@
 
 public sealed class Texture2D : IDisposable
 {
-    private bool _disposed;
+    public bool Disposed { get; private set; }
 
     // ReSharper disable once MemberCanBePrivate.Global
     public Raylib_cs.Texture2D Raw;
-
-    public Texture2D()
-    {
-        
-    }
 
     public Texture2D(string path)
     {
@@ -26,13 +21,16 @@ public sealed class Texture2D : IDisposable
 
     private void Dispose(bool fromConsumer)
     {
-        if (_disposed) return;
-        
-        if (fromConsumer) {}
-        
-        Raylib.UnloadTexture(Raw);
+        if (Disposed) return;
 
-        _disposed = true;
+        if (fromConsumer)
+        {
+            // Was moved here to prevent GC from unloading on a separate thread
+            Raylib.UnloadTexture(Raw);
+        }
+        
+
+        Disposed = true;
     }
 
     public void Dispose()
@@ -43,6 +41,7 @@ public sealed class Texture2D : IDisposable
 
     ~Texture2D()
     {
+        if (!Disposed) throw new InvalidOperationException("Texture2D was not disposed by the consumer");
         Dispose(false);
     }
 }

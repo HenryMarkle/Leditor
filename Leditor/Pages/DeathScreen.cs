@@ -6,10 +6,9 @@ namespace Leditor.Pages;
 
 #nullable enable
 
-internal class DeathScreen : EditorPage
+internal class DeathScreen : ExceptionPage
 {
     public Texture2D? Screenshot { get; set; }
-    public Exception? Exception { get; set; }
 
     ~DeathScreen()
     {

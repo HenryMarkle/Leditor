@@ -8,6 +8,13 @@ namespace Leditor;
 /// </summary>
 internal static class Printers
 {
+    internal static void DrawProgressBar(Rectangle rect, int progress, int total, bool outline, Color color)
+    {
+        if (outline) DrawRectangleLinesEx(rect, 2, color);
+
+        DrawRectangleRec(rect with { Width = progress*rect.Width / total }, color);
+    }
+    
     internal static void DrawSlope(int id, int scale, Vector2 position, Color color)
     {
         switch (id)
@@ -800,10 +807,16 @@ internal static class Printers
                                 );
                             }
                         }
-                        else DrawTilePreview(initTile, tileTexture, color with { A = (byte)(deepTileOpacity &&
-                            layer == GLOBALS.Layer - 1 && initTile.Specs2.Length > 0
+                        else DrawTilePreview(
+                            initTile, 
+                            tileTexture, 
+                            color with { A = (byte)(deepTileOpacity && layer == GLOBALS.Layer - 1 && initTile.Specs2.Length > 0
                                 ? 255
-                                : opacity) }, new Vector2(x, y), scale);
+                                : opacity) }, 
+                            new Vector2(x, y),
+                            -Utils.GetTileHeadOrigin(initTile),
+                            scale
+                        );
                     }
                 }
                 else if (tileCell.Type == TileType.TileBody)
@@ -1024,7 +1037,14 @@ internal static class Printers
                                 );
                             }
                         }
-                        else DrawTilePreview(initTile, tileTexture, color, new Vector2(x, y)+offsetPixels/scale, scale);
+                        else DrawTilePreview(
+                            initTile, 
+                            tileTexture, 
+                            color, 
+                            new Vector2(x, y)+offsetPixels/scale,
+                            -Utils.GetTileHeadOrigin(initTile),
+                            scale
+                        );
                     }
                 }
                 else if (tileCell.Type == TileType.Material)
@@ -1250,42 +1270,6 @@ internal static class Printers
         ref InitTile init, 
         ref Texture2D texture, 
         ref Color color, 
-        (int x, int y) position
-    )
-    {
-        var uniformLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "inputTexture");
-        var colorLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "highlightColor");
-        var heightStartLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "heightStart");
-        var heightLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "height");
-        var widthLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "width");
-
-        var startingTextureHeight = Utils.GetTilePreviewStartingHeight(init);
-        float calcStartingTextureHeight = (float)startingTextureHeight / (float)texture.Height;
-        float calcTextureHeight = (float)(init.Size.Item2 * GLOBALS.PreviewScale) / (float)texture.Height;
-        float calcTextureWidth = (float)(init.Size.Item1 * GLOBALS.PreviewScale) / (float)texture.Width;
-
-        BeginShaderMode(GLOBALS.Shaders.TilePreview);
-        SetShaderValueTexture(GLOBALS.Shaders.TilePreview, uniformLoc, texture);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, colorLoc, new System.Numerics.Vector4(color.R, color.G, color.B, color.A), ShaderUniformDataType.Vec4);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, heightStartLoc, calcStartingTextureHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, heightLoc, calcTextureHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, widthLoc, calcTextureWidth, ShaderUniformDataType.Float);
-
-        DrawTexturePro(
-            texture,
-            new(0, 0, texture.Width, texture.Height),
-            new(position.x * GLOBALS.PreviewScale, position.y * GLOBALS.PreviewScale, init.Size.Item1 * GLOBALS.PreviewScale, init.Size.Item2 * GLOBALS.PreviewScale),
-            Raymath.Vector2Scale(Utils.GetTileHeadOrigin(ref init), GLOBALS.PreviewScale),
-            0,
-            Color.White
-        );
-        EndShaderMode();
-    }
-    
-    internal static void DrawTilePreview(
-        ref InitTile init, 
-        ref Texture2D texture, 
-        ref Color color, 
         (int x, int y) position,
         int scale
     )
@@ -1357,6 +1341,14 @@ internal static class Printers
         EndShaderMode();
     }
     
+    /// <summary>
+    /// Draws tile preview texture
+    /// </summary>
+    /// <param name="init"></param>
+    /// <param name="texture"></param>
+    /// <param name="color"></param>
+    /// <param name="position"></param>
+    /// <param name="scale"></param>
     internal static void DrawTilePreview(
         in InitTile init, 
         in Texture2D texture, 
@@ -1385,10 +1377,53 @@ internal static class Printers
 
         var quads = new PropQuads
         {
-            TopLeft = (position - Utils.GetTileHeadOrigin(init)) * scale,
-            TopRight = (position + new Vector2(init.Size.Item1, 0) - Utils.GetTileHeadOrigin(init)) * scale,
-            BottomRight = (position + new Vector2(init.Size.Item1, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale,
-            BottomLeft = (position + new Vector2(0, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale
+            TopLeft = position * scale,
+            TopRight = (position + new Vector2(init.Size.Item1, 0)) * scale,
+            BottomRight = (position + new Vector2(init.Size.Item1, init.Size.Item2)) * scale,
+            BottomLeft = (position + new Vector2(0, init.Size.Item2)) * scale
+        };
+        
+        DrawTextureQuads(
+            texture, 
+            quads
+        );
+        
+        EndShaderMode();
+    }
+    
+    internal static void DrawTilePreview(
+        in InitTile init, 
+        in Texture2D texture, 
+        in Color color, 
+        in Vector2 position,
+        in Vector2 offset,
+        in int scale
+    )
+    {
+        var uniformLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "inputTexture");
+        var colorLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "highlightColor");
+        var heightStartLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "heightStart");
+        var heightLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "height");
+        var widthLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "width");
+
+        var startingTextureHeight = Utils.GetTilePreviewStartingHeight(init);
+        var calcStartingTextureHeight = (float)startingTextureHeight / (float)texture.Height;
+        var calcTextureHeight = (float)(init.Size.Item2 * 16) / (float)texture.Height;
+        var calcTextureWidth = (float)(init.Size.Item1 * 16) / (float)texture.Width;
+
+        BeginShaderMode(GLOBALS.Shaders.TilePreview);
+        SetShaderValueTexture(GLOBALS.Shaders.TilePreview, uniformLoc, texture);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, colorLoc, new Vector4(color.R, color.G, color.B, color.A), ShaderUniformDataType.Vec4);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, heightStartLoc, calcStartingTextureHeight, ShaderUniformDataType.Float);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, heightLoc, calcTextureHeight, ShaderUniformDataType.Float);
+        SetShaderValue(GLOBALS.Shaders.TilePreview, widthLoc, calcTextureWidth, ShaderUniformDataType.Float);
+
+        var quads = new PropQuads
+        {
+            TopLeft = (position + offset) * scale,
+            TopRight = (position + new Vector2(init.Size.Item1, 0) + offset) * scale,
+            BottomRight = (position + new Vector2(init.Size.Item1, init.Size.Item2) + offset) * scale,
+            BottomLeft = (position + new Vector2(0, init.Size.Item2) + offset) * scale
         };
         
         DrawTextureQuads(
@@ -2673,6 +2708,12 @@ internal static class Printers
         EndShaderMode();
     }
 
+    internal static void DrawCross(Vector2 origin, Vector2 size, float thickness, Color color)
+    {
+        DrawLineEx(origin, origin + size, thickness, color);
+        DrawLineEx(origin with { Y = origin.Y + size.Y }, origin with { X = origin.X + size.X }, thickness, color);
+    }
+
     /// <summary>
     /// Draws an individual tile geo-spec based on the ID.
     /// </summary>
@@ -2686,21 +2727,24 @@ internal static class Printers
         {
             // air
             case 0:
-                DrawRectangleLinesEx(
-                    new(origin.X + 10, origin.Y + 10, scale - 20, scale - 20),
-                    2,
-                    color
-                );
+                // DrawRectangleLinesEx(
+                //     new(origin.X + 10, origin.Y + 10, scale - 20, scale - 20),
+                //     2,
+                //     color
+                // );
+                
+                DrawCross(origin, new Vector2(scale, scale), 5, color);
                 break;
 
             // solid
             case 1:
-                DrawRectangleV(origin, Raymath.Vector2Scale(new(1, 1), scale), color);
+                // DrawRectangleV(origin, Raymath.Vector2Scale(new(1, 1), scale), color);
+                DrawRectangleLinesEx(new Rectangle(origin.X + 10, origin.Y + 10,  scale - 20,  scale - 20), 5, color);
                 break;
 
             // slopes
             case 2:
-                DrawTriangle(
+                DrawTriangleLines(
                     origin,
                     new(origin.X, origin.Y + scale),
                     new(origin.X + scale, origin.Y + scale),
@@ -2709,7 +2753,7 @@ internal static class Printers
                 break;
 
             case 3:
-                DrawTriangle(
+                DrawTriangleLines(
                     new(origin.X + scale, origin.Y),
                     new(origin.X, origin.Y + scale),
                     new(origin.X + scale, origin.Y + scale),
@@ -2718,7 +2762,7 @@ internal static class Printers
                 break;
 
             case 4:
-                DrawTriangle(
+                DrawTriangleLines(
                     origin,
                     new(origin.X, origin.Y + scale),
                     new(origin.X + scale, origin.Y),
@@ -2726,7 +2770,7 @@ internal static class Printers
                 );
                 break;
             case 5:
-                DrawTriangle(
+                DrawTriangleLines(
                     origin,
                     new(origin.X + scale, origin.Y + scale),
                     new(origin.X + scale, origin.Y),
@@ -2736,9 +2780,9 @@ internal static class Printers
 
             // platform
             case 6:
-                DrawRectangleV(
-                    origin,
-                    new(scale, scale / 2),
+                DrawRectangleLinesEx(
+                    new Rectangle(origin.X + 10, origin.Y + 10, scale - 20, scale/2f - 20),
+                    5,
                     color
                 );
                 break;

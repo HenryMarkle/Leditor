@@ -2,15 +2,10 @@
 
 public class Shader : IDisposable
 {
-    private bool _disposed;
+    public bool Disposed { get; private set; }
 
     // ReSharper disable once MemberCanBePrivate.Global
     public Raylib_cs.Shader Raw;
-
-    public Shader()
-    {
-        
-    }
 
     public Shader(string vertexPath, string fragmentPath)
     {
@@ -26,13 +21,16 @@ public class Shader : IDisposable
 
     private void Dispose(bool fromConsumer)
     {
-        if (_disposed) return;
-        
-        if (fromConsumer) {}
-        
-        Raylib.UnloadShader(Raw);
+        if (Disposed) return;
 
-        _disposed = false;
+        if (fromConsumer)
+        {
+            // Was moved here to prevent GC from unloading on a separate thread        
+            Raylib.UnloadShader(Raw);
+        }
+        
+
+        Disposed = false;
     }
 
     public void Dispose()
@@ -43,6 +41,7 @@ public class Shader : IDisposable
 
     ~Shader()
     {
+        if (!Disposed) throw new InvalidOperationException("Shader was not disposed by the consumer");
         Dispose(false);
     }
 }

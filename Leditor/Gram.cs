@@ -25,7 +25,7 @@ public readonly record struct Coords(int X, int Y, int Z)
 /// General Reversible Action Manager
 public class GeoGram(int limit)
 {
-    public interface IAction { Coords Position { get; } }
+    public interface IAction;
 
     public record CellAction(Coords Position, RunCell Previous, RunCell Next) : IAction;
 

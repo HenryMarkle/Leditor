@@ -1,7 +1,5 @@
 ﻿using System.Numerics;
-using System.Text;
 using ImGuiNET;
-using Leditor.Pages;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
@@ -27,9 +25,12 @@ internal class TileEditorPage : EditorPage
     
     private int _materialCategorySearchIndex;
     private int _materialSearchIndex;
+
+    private int _hoveredTileCategoryIndex = -1;
+    private int _hoveredTileIndex = -1;
     
     private bool _clickTracker;
-    private bool _tileCategoryFocus = true;
+    private bool _tileCategoryFocus;
     private int _tileCategoryScrollIndex;
     private int _tileScrollIndex;
     private int _materialCategoryScrollIndex;
@@ -51,6 +52,8 @@ internal class TileEditorPage : EditorPage
 
     private int _copySecondX = -1;
     private int _copySecondY = -1;
+
+    private bool _tooltip = true;
 
     private bool _showLayer1Tiles = true;
     private bool _showLayer2Tiles = true;
@@ -80,6 +83,8 @@ internal class TileEditorPage : EditorPage
 
     private (int category, int[] tiles)[] _tileIndices = [];
     private (int category, int[] materials)[] _materialIndices = [];
+
+    private RL.Managed.RenderTexture2D _previewTooltipRT = new(0, 0);
     
     private bool _tileSpecDisplayMode;
     
@@ -977,6 +982,35 @@ internal class TileEditorPage : EditorPage
         }
     };
 
+    private void UpdatePreviewToolTip()
+    {
+
+        if (_hoveredTileCategoryIndex != -1 && _hoveredTileIndex != -1)
+        {
+            ref var hoveredTile = ref GLOBALS.Tiles[_hoveredTileCategoryIndex][_hoveredTileIndex];
+            ref var hoveredTexture = ref GLOBALS.Textures.Tiles[_hoveredTileCategoryIndex][_hoveredTileIndex];
+            
+            if (_previewTooltipRT.Raw.Id != 0) _previewTooltipRT.Dispose();
+                
+            _previewTooltipRT = new(
+                hoveredTile.Size.Item1*16, 
+                hoveredTile.Size.Item2*16
+            );
+                
+            BeginTextureMode(_previewTooltipRT);
+            ClearBackground(Color.Black with { A = 0 });
+                                        
+            Printers.DrawTilePreview(
+                hoveredTile,
+                hoveredTexture,
+                GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black,
+                new Vector2(0, 0),
+                16
+            );
+            EndTextureMode();
+        }
+    }
+
     public override void Draw()
     {
         GLOBALS.Page = 3;
@@ -1822,11 +1856,12 @@ internal class TileEditorPage : EditorPage
                     {
                         var hoverRect = GetSingleTileRect(tileMatrixX, tileMatrixY, GLOBALS.Layer, GLOBALS.Scale);
                         
-                        DrawRectangleLinesEx(
-                            hoverRect,
-                            2f,
-                            Color.White
-                        );
+                        if (hoverRect is not { Width: 20, Height: 20 } || !_materialTileSwitch) 
+                            DrawRectangleLinesEx(
+                                hoverRect,
+                                2f,
+                                Color.White
+                            );
                         
                         if (_materialTileSwitch)
                         {
@@ -1979,6 +2014,7 @@ internal class TileEditorPage : EditorPage
             
             // ImGui
             
+            // Tile Specs Panel
             BeginTextureMode(GLOBALS.Textures.TileSpecs);
             {
                 ClearBackground(Color.Gray);
@@ -2038,18 +2074,18 @@ internal class TileEditorPage : EditorPage
 
                             if (spec is >= 0 and < 9 and not 8)
                             {
+                                if (spec2 is >= 0 and < 9 and not 8) Printers.DrawTileSpec(
+                                    spec2,
+                                    specOrigin + new Vector2(5, 5),
+                                    newCellScale,
+                                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 with { A = 255 }
+                                );
+                                
                                 Printers.DrawTileSpec(
                                     spec,
                                     specOrigin,
                                     newCellScale,
                                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer1
-                                );
-                                
-                                Printers.DrawTileSpec(
-                                    spec2,
-                                    specOrigin,
-                                    newCellScale,
-                                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 with { A = 100 } // this can be optimized
                                 );
                             }
                         }
@@ -2166,6 +2202,11 @@ internal class TileEditorPage : EditorPage
                     _searchTask = Task.Factory.StartNew(Search);
                 }
                 
+                // Reset hovered index
+                _hoveredTileCategoryIndex = -1;
+                _hoveredTileIndex = -1;
+                //
+                
                 if (ImGui.BeginListBox("##Groups", new Vector2(halfWidth, boxHeight)))
                 {
                     if (_materialTileSwitch)
@@ -2190,6 +2231,7 @@ internal class TileEditorPage : EditorPage
                                 );
                                 //
                                 
+                                // TODO: performance issue
                                 var selected = ImGui.Selectable(
                                     "  "+category.Item1, 
                                     _tileCategoryIndex == categoryIndex);
@@ -2273,14 +2315,41 @@ internal class TileEditorPage : EditorPage
                     {
                         if (string.IsNullOrEmpty(_searchText))
                         {
-                            for (var tile = 0; tile < GLOBALS.Tiles[_tileCategoryIndex].Length; tile++)
+                            for (var tileIndex = 0; tileIndex < GLOBALS.Tiles[_tileCategoryIndex].Length; tileIndex++)
                             {
+                                ref var currentTile = ref GLOBALS.Tiles[_tileCategoryIndex][tileIndex];
+                                
                                 var selected = ImGui.Selectable(
-                                    GLOBALS.Tiles[_tileCategoryIndex][tile].Name, 
-                                    _tileIndex == tile
+                                    currentTile.Name, 
+                                    _tileIndex == tileIndex
                                 );
 
-                                if (selected) _tileIndex = tile;
+                                var hovered = ImGui.IsItemHovered();
+
+                                if (hovered)
+                                {
+                                    if (_hoveredTileCategoryIndex != _tileCategoryIndex ||
+                                        _hoveredTileIndex != tileIndex)
+                                    {
+                                        _hoveredTileCategoryIndex = _tileCategoryIndex;
+                                        _hoveredTileIndex = tileIndex;
+                                        
+                                        if (_tooltip) UpdatePreviewToolTip();
+                                    }
+                                    
+                                    if (_tooltip && _previewTooltipRT.Raw.Id != 0)
+                                    {
+                                        _hoveredTileCategoryIndex = _tileCategoryIndex;
+                                        _hoveredTileIndex = tileIndex;
+                                        
+                                        ImGui.BeginTooltip();
+                                        rlImGui.ImageRenderTexture(_previewTooltipRT);
+                                        ImGui.EndTooltip();
+                                    }
+                                }
+
+
+                                if (selected) _tileIndex = tileIndex;
                             }
                         }
                         // When searching
@@ -2445,6 +2514,8 @@ internal class TileEditorPage : EditorPage
                 GLOBALS.Settings.TileEditor.TintedTiles = tinted;
                 
                 //
+
+                ImGui.Checkbox("Tooltip", ref _tooltip);
                 
                 ImGui.Checkbox("Deep Tile Copy", ref _deepTileCopy);
 

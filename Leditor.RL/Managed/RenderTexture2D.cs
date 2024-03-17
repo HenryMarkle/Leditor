@@ -2,32 +2,34 @@
 
 public class RenderTexture2D : IDisposable
 {
-    private bool _disposed;
+    public bool Disposed { get; private set; }
 
     // ReSharper disable once MemberCanBePrivate.Global
     public Raylib_cs.RenderTexture2D Raw { get; set; }
-
-    public RenderTexture2D()
-    {
-        
-    }
 
     public RenderTexture2D(int width, int height)
     {
         Raw = Raylib.LoadRenderTexture(width, height);
     }
 
+    public RenderTexture2D(Raylib_cs.RenderTexture2D texture)
+    {
+        Raw = texture;
+    }
+
     public static implicit operator Raylib_cs.RenderTexture2D(RenderTexture2D r) => r.Raw;
 
     private void Dispose(bool fromConsumer)
     {
-        if (_disposed) return;
-        
-        if (fromConsumer) {}
-        
-        Raylib.UnloadRenderTexture(Raw);
+        if (Disposed) return;
 
-        _disposed = true;
+        if (fromConsumer)
+        {
+            // Was moved here to stop GC from unloading on a separate thread
+            Raylib.UnloadRenderTexture(Raw);
+        }
+
+        Disposed = true;
     }
 
     public void Dispose()
@@ -38,6 +40,7 @@ public class RenderTexture2D : IDisposable
 
     ~RenderTexture2D()
     {
+        if (!Disposed) throw new InvalidOperationException("RenderTexture2D was not disposed by the consumer");
         Dispose(false);
     }
 }

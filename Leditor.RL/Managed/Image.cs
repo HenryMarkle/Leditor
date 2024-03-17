@@ -2,13 +2,11 @@
 
 public sealed class Image : IDisposable
 {
-    private bool _disposed;
-    
+    public bool Disposed { get; private set; }
+
     // ReSharper disable once MemberCanBePrivate.Global
     public Raylib_cs.Image Raw { get; set; }
 
-    public Image() { }
-    
     public Image(string path)
     {
         Raw = Raylib.LoadImage(path);
@@ -23,13 +21,15 @@ public sealed class Image : IDisposable
 
     private void Dispose(bool fromConsumer)
     {
-        if (_disposed) return;
-        
-        if (fromConsumer) {}
-        
-        Raylib.UnloadImage(Raw);
+        if (Disposed) return;
 
-        _disposed = true;
+        if (fromConsumer)
+        {
+            // Was moved here to prevent GC from unloading on a separate thread
+            Raylib.UnloadImage(Raw);
+        }
+        
+        Disposed = true;
     }
     
     public void Dispose()
@@ -40,6 +40,7 @@ public sealed class Image : IDisposable
 
     ~Image()
     {
+        if (!Disposed) throw new InvalidOperationException("Image was not disposed by the consumer");
         Dispose(false);
     }
 }
