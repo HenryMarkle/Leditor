@@ -3,13 +3,11 @@ using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
-internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null) : IPage
+internal class LightEditorPage : EditorPage
 {
-    readonly Serilog.Core.Logger _logger = logger;
-
-    private Camera2D _camera = camera ?? new() { Zoom = 0.5f, Target = new(-500, -200) };
+    private Camera2D _camera = new() { Zoom = 0.5f, Target = new(-500, -200) };
     private int _lightBrushTextureIndex;
     private float _lightBrushWidth = 200;
     private float _lightBrushHeight = 200;
@@ -53,7 +51,7 @@ internal class LightEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nu
     private bool _isBrushesWinHovered;
     private bool _isBrushesWinDragged;
 
-    public void Draw()
+    public override void Draw()
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera with { Target = GLOBALS.Camera.Target + new Vector2(300, 300)};
         var mouse = GetMousePosition();

@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Windows.Forms;
 using System.Threading;
+using Pidgin;
 
 namespace Leditor;
 
@@ -80,6 +81,108 @@ internal static class Utils
         thread.Join();
 
         return path;
+    }
+    
+    internal static async Task<LoadFileResult> LoadProjectAsync(string filePath)
+    {
+        try
+        {
+            var text = (await File.ReadAllTextAsync(filePath)).ReplaceLineEndings().Split(Environment.NewLine);
+
+            var lightMapFileName = Path.Combine(Path.GetDirectoryName(filePath)!, Path.GetFileNameWithoutExtension(filePath) + ".png");
+
+            if (!File.Exists(lightMapFileName)) return new();
+
+            var lightMap = Raylib.LoadImage(lightMapFileName);
+
+            if (text.Length < 7) return new LoadFileResult();
+
+            var objTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[0]));
+            var tilesObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[1]));
+            var terrainObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[4]));
+            var obj2Task = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[5]));
+            var effObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[2]));
+            var lightObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[3]));
+            var camsObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[6]));
+            var waterObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[7]));
+            var propsObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[8]));
+
+            var obj = await objTask;
+            var tilesObj = await tilesObjTask;
+            var terrainModeObj = await terrainObjTask;
+            var obj2 = await obj2Task;
+            var effObj = await effObjTask;
+            var lightObj = await lightObjTask;
+            var camsObj = await camsObjTask;
+            var waterObj = await waterObjTask;
+            var propsObj = await propsObjTask;
+
+            var mtx = Serialization.Importers.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
+            var tlMtx = Serialization.Importers.GetTileMatrix(tilesObj, out _, out _);
+            var defaultMaterial = Serialization.Importers.GetDefaultMaterial(tilesObj);
+            var buffers = Serialization.Importers.GetBufferTiles(obj2);
+            var terrain = Serialization.Importers.GetTerrainMedium(terrainModeObj);
+            var lightMode = Serialization.Importers.GetLightMode(obj2);
+            var seed = Serialization.Importers.GetSeed(obj2);
+            var waterData = Serialization.Importers.GetWaterData(waterObj);
+            var effects = Serialization.Importers.GetEffects(effObj, givenWidth, givenHeight);
+            var cams = Serialization.Importers.GetCameras(camsObj);
+            
+            // TODO: catch PropNotFoundException
+            var props = Serialization.Importers.GetProps(propsObj);
+            var lightSettings = Serialization.Importers.GetLightSettings(lightObj);
+
+            // map material colors
+
+            Color[,,] materialColors = Utils.NewMaterialColorMatrix(givenWidth, givenHeight, new(0, 0, 0, 255));
+
+            for (int y = 0; y < givenHeight; y++)
+            {
+                for (int x = 0; x < givenWidth; x++)
+                {
+                    for (int z = 0; z < 3; z++)
+                    {
+                        var cell = tlMtx[y, x, z];
+
+                        if (cell.Type != TileType.Material) continue;
+
+                        var materialName = ((TileMaterial)cell.Data).Name;
+
+                        if (GLOBALS.MaterialColors.TryGetValue(materialName, out Color color)) materialColors[y, x, z] = color;
+                    }
+                }
+            }
+
+            //
+
+            return new LoadFileResult
+            {
+                Success = true,
+                Seed = seed,
+                WaterLevel = waterData.waterLevel,
+                WaterInFront = waterData.waterInFront,
+                Width = givenWidth,
+                Height = givenHeight,
+                DefaultMaterial = defaultMaterial,
+                BufferTiles = buffers,
+                GeoMatrix = mtx,
+                TileMatrix = tlMtx,
+                LightMode = lightMode,
+                DefaultTerrain = terrain,
+                MaterialColorMatrix = materialColors,
+                Effects = effects,
+                LightMapImage = lightMap,
+                Cameras = cams,
+                PropsArray = props.ToArray(),
+                LightSettings = lightSettings,
+                Name = Path.GetFileNameWithoutExtension(filePath)
+            };
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return new();
+        }
     }
 
     internal static async Task<string> SetFilePathAsync()
@@ -2157,7 +2260,7 @@ internal static class Utils
         
         try
         {
-            var strTask = Leditor.Lingo.Exporters.ExportAsync(GLOBALS.Level);
+            var strTask = Leditor.Serialization.Exporters.ExportAsync(GLOBALS.Level);
 
             // export light map
             var image = Raylib.LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);

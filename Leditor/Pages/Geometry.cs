@@ -3,12 +3,11 @@ using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
-internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null) : IPage
+internal class GeoEditorPage : EditorPage
 {
-    private readonly Serilog.Core.Logger _logger = logger;
-    private Camera2D _camera = camera ?? new() { Zoom = 1.0f };
+    private Camera2D _camera = new() { Zoom = 1.0f };
 
     private readonly GeoShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.GeoEditor;
     private readonly GlobalShortcuts _gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
@@ -135,7 +134,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
     private bool _isShortcutsWinDragged;
 
 
-    public void Draw()
+    public override void Draw()
     {
         GLOBALS.PreviousPage = 2;
         
@@ -175,7 +174,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
         if (_gShortcuts.ToMainPage.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 1");
+            Logger.Debug($"Going to page 1");
             #endif
             GLOBALS.Page = 1;
         }
@@ -183,21 +182,21 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
         if (_gShortcuts.ToTileEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 3");
+            Logger.Debug($"Going to page 3");
             #endif
             GLOBALS.Page = 3;
         }
         if (_gShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 4");
+            Logger.Debug($"Going to page 4");
             #endif
             GLOBALS.Page = 4;
         }
         if (_gShortcuts.ToLightEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 5");
+            Logger.Debug($"Going to page 5");
             #endif
             GLOBALS.Page = 5;
         }
@@ -205,7 +204,7 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
         if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 6");
+            Logger.Debug($"Going to page 6");
             #endif
             GLOBALS.NewFlag = false;
             GLOBALS.ResizeFlag = true; 
@@ -214,21 +213,21 @@ internal class GeoEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null
         if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 7");
+            Logger.Debug($"Going to page 7");
             #endif
             GLOBALS.Page = 7;
         }
         if (_gShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 8");
+            Logger.Debug($"Going to page 8");
             #endif
             GLOBALS.Page = 8;
         }
         if (_gShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 9");
+            Logger.Debug($"Going to page 9");
             #endif
             GLOBALS.Page = 9;
         }

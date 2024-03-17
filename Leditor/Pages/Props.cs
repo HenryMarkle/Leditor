@@ -3,12 +3,10 @@ using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
-internal class PropsEditorPage : IPage
+internal class PropsEditorPage : EditorPage
 {
-    private readonly Serilog.Core.Logger _logger;
-
     private Camera2D _camera;
 
     private readonly PropsShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.PropsEditor;
@@ -155,10 +153,9 @@ internal class PropsEditorPage : IPage
     private bool _isPropsWinHovered;
     private bool _isPropsWinDragged;
 
-    internal PropsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null)
+    internal PropsEditorPage()
     {
-        _logger = logger;
-        _camera = camera ?? new() { Zoom = 0.8f };
+        _camera = new() { Zoom = 0.8f };
 
         for (var c = 0; c < GLOBALS.Tiles.Length; c++)
         {
@@ -328,7 +325,7 @@ internal class PropsEditorPage : IPage
         }
     }
 
-    public void Draw()
+    public override void Draw()
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
         
@@ -393,7 +390,7 @@ internal class PropsEditorPage : IPage
                 GLOBALS.ResizeFlag = true;
                 GLOBALS.NewFlag = false;
                 GLOBALS.Page = 6;
-                _logger.Debug("go from GLOBALS.Page 8 to GLOBALS.Page 6");
+                Logger.Debug("go from GLOBALS.Page 8 to GLOBALS.Page 6");
             }
             if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 7;
             // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
@@ -2099,21 +2096,21 @@ internal class PropsEditorPage : IPage
                                 #if DEBUG
                                 if (_propsMenuTilesCategoryIndex >= _tilesAsPropsIndices.Length)
                                 {
-                                    _logger.Fatal($"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices.Length}]: {nameof(_propsMenuTilesCategoryIndex)} ({_propsMenuTilesCategoryIndex} was out of bounds)");
+                                    Logger.Fatal($"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices.Length}]: {nameof(_propsMenuTilesCategoryIndex)} ({_propsMenuTilesCategoryIndex} was out of bounds)");
                                     throw new IndexOutOfRangeException(message: $"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices.Length}]: {nameof(_propsMenuTilesCategoryIndex)} ({_propsMenuTilesCategoryIndex} was out of bounds)");
                                 }
 
                                 if (_propsMenuTilesIndex >=
                                     _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length)
                                 {
-                                    _logger.Fatal($"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length}]: {nameof(_propsMenuTilesIndex)} ({_propsMenuTilesIndex} was out of bounds)");
+                                    Logger.Fatal($"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length}]: {nameof(_propsMenuTilesIndex)} ({_propsMenuTilesIndex} was out of bounds)");
                                     throw new IndexOutOfRangeException(message: $"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length}]: {nameof(_propsMenuTilesIndex)} ({_propsMenuTilesIndex} was out of bounds)");
                                 }
 
                                 {
                                     if (currentTileAsPropCategory.index >= GLOBALS.Textures.Tiles.Length)
                                     {
-                                        _logger.Fatal($"failed to fetch tile-as-prop texture from {nameof(GLOBALS.Textures.Tiles)}[{GLOBALS.Textures.Tiles.Length}]: {nameof(currentTileAsPropCategory)}.length ({currentTileAsPropCategory.index}) was outside the bounds of the array.");
+                                        Logger.Fatal($"failed to fetch tile-as-prop texture from {nameof(GLOBALS.Textures.Tiles)}[{GLOBALS.Textures.Tiles.Length}]: {nameof(currentTileAsPropCategory)}.length ({currentTileAsPropCategory.index}) was outside the bounds of the array.");
                                         throw new IndexOutOfRangeException($"failed to fetch tile-as-prop texture from {nameof(GLOBALS.Textures.Tiles)}[{GLOBALS.Textures.Tiles.Length}]: {nameof(currentTileAsPropCategory)}.length ({currentTileAsPropCategory.index}) was outside the bounds of the array.");
                                     }
                                     
@@ -2121,7 +2118,7 @@ internal class PropsEditorPage : IPage
 
                                     if (ind.index >= GLOBALS.Textures.Tiles[currentTileAsPropCategory.index].Length)
                                     {
-                                        _logger.Fatal($"failed to fetch tile-as-prop texture from {nameof(GLOBALS.Textures.Tiles)}[{nameof(currentTileAsPropCategory)}][Length: {GLOBALS.Textures.Tiles[currentTileAsPropCategory.index].Length}]: {nameof(_tilesAsPropsIndices)}][{_propsMenuTilesCategoryIndex}][{_propsMenuTilesIndex}] ({ind.index}) was outside of the bounds of the array.");
+                                        Logger.Fatal($"failed to fetch tile-as-prop texture from {nameof(GLOBALS.Textures.Tiles)}[{nameof(currentTileAsPropCategory)}][Length: {GLOBALS.Textures.Tiles[currentTileAsPropCategory.index].Length}]: {nameof(_tilesAsPropsIndices)}][{_propsMenuTilesCategoryIndex}][{_propsMenuTilesIndex}] ({ind.index}) was outside of the bounds of the array.");
                                         throw new IndexOutOfRangeException(
                                             $"failed to fetch tile-as-prop texture from {nameof(GLOBALS.Textures.Tiles)}[{nameof(currentTileAsPropCategory)}][{GLOBALS.Textures.Tiles[currentTileAsPropCategory.index].Length}]: {nameof(_tilesAsPropsIndices)}][{_propsMenuTilesCategoryIndex}][{_propsMenuTilesIndex}] ({ind.index}) was outside of the bounds of the array.");
                                     }
@@ -2685,7 +2682,7 @@ internal class PropsEditorPage : IPage
                                 if (modelIndex == -1)
                                 {
 #if DEBUG
-                                    _logger.Fatal(
+                                    Logger.Fatal(
                                         $"failed to fetch selected rope from {nameof(_models)}: no element with index [{fetchedSelected[0].index}] was found");
                                     throw new Exception(
                                         message:

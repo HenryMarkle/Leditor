@@ -1,11 +1,9 @@
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
-public class MissingPropTexturesPage(Serilog.Core.Logger logger) : IPage
+internal class MissingPropTexturesPage : EditorPage
 {
-    private readonly Serilog.Core.Logger _logger = logger;
-
     private const string Title = "The project contains missing textures";
     private const string Subtitle = "The editor cannot render them without their proper textures\n" +
                                     "Check the logs to view the missing textures";
@@ -13,7 +11,7 @@ public class MissingPropTexturesPage(Serilog.Core.Logger logger) : IPage
     private readonly int _titleWidth = MeasureText(Title, 50);
     private readonly int _subtitleWidth = MeasureText(Subtitle, 20);
     
-    public void Draw()
+    public override void Draw()
     {
         var width = GetScreenWidth();
         

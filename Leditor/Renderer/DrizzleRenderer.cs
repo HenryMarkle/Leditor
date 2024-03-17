@@ -43,15 +43,21 @@ internal class DrizzleRender : IDisposable
         {
             try
             {
-                LingoRuntime.MovieBasePath = Path.Combine(GLOBALS.Paths.ExecutableDirectory, "renderer") + Path.DirectorySeparatorChar;
-                LingoRuntime.CastPath = Path.Combine(LingoRuntime.MovieBasePath, "Cast");
-                
-                var runtime = new LingoRuntime(typeof(MovieScript).Assembly);
-                runtime.Init();
-                EditorRuntimeHelpers.RunStartup(runtime);
-                EditorRuntimeHelpers.RunLoadLevel(runtime, filePath);
+                if (GLOBALS.Settings.GeneralSettings.CacheRendererRuntime)
+                {
+                    if (!GLOBALS.LingoRuntimeInitTask.IsCompleted) GLOBALS.LingoRuntimeInitTask.Wait();
+                    EditorRuntimeHelpers.RunLoadLevel(GLOBALS.LingoRuntime, filePath);
+                    Renderer = new LevelRenderer(GLOBALS.LingoRuntime, null);
+                }
+                else
+                {
+                    var runtime = new LingoRuntime(typeof(MovieScript).Assembly);
+                    runtime.Init();
+                    EditorRuntimeHelpers.RunStartup(runtime);
+                    EditorRuntimeHelpers.RunLoadLevel(runtime, filePath);
+                    Renderer = new LevelRenderer(runtime, null);
+                }
 
-                Renderer = new LevelRenderer(runtime, null);
                 Renderer.StatusChanged += StatusChanged;
                 Renderer.PreviewSnapshot += PreviewSnapshot;
                 Queue.Enqueue(new MessageRenderStarted());

@@ -3,15 +3,13 @@ using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
-internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null) : IPage
+internal class EffectsEditorPage : EditorPage
 {
-    private readonly Serilog.Core.Logger _logger = logger;
-
     private readonly EffectsShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.EffectsEditor;
 
-    private Camera2D _camera = camera ?? new() { Zoom = 1.0f };
+    private Camera2D _camera = new() { Zoom = 1.0f };
 
     private bool _addNewEffectMode;
 
@@ -115,7 +113,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
 
     private bool _isOptionsInputActive;
 
-    public void Draw()
+    public override void Draw()
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
         
@@ -137,7 +135,7 @@ internal class EffectsEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
                 GLOBALS.ResizeFlag = true;
                 GLOBALS.NewFlag = false;
                 GLOBALS.Page = 6;
-                _logger.Debug("go from GLOBALS.Page 7 to GLOBALS.Page 6");
+                Logger.Debug("go from GLOBALS.Page 7 to GLOBALS.Page 6");
             }
             // if (IsKeyReleased(KeyboardKey.KEY_SEVEN)) GLOBALS.Page = 7;
             if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;

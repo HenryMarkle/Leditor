@@ -1,4 +1,4 @@
-namespace Leditor.Leditor.Lingo;
+namespace Leditor.Serialization;
 
 public static class Exporters
 {

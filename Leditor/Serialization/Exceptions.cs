@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Leditor.Leditor.Lingo;
+﻿namespace Leditor.Serialization;
 
 public abstract class ParseException(string message) : Exception(message);
 

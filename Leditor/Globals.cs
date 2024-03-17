@@ -368,7 +368,8 @@ internal static class GLOBALS
     }
 
 
-    // internal static LingoRuntime LingoRuntime { get; set; } = new(typeof(MovieScript).Assembly);
+    internal static LingoRuntime LingoRuntime { get; set; } = new(typeof(MovieScript).Assembly);
+    internal static Task LingoRuntimeInitTask { get; set; } = default!;
     
     internal static string ProjectPath { get; set; } = "";
 

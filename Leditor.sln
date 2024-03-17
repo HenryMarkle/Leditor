@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Leditor", "Leditor\Leditor.csproj", "{99085254-6DE7-48B1-8345-EAA3E1830163}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Leditor.RL", "Leditor.RL\Leditor.RL.csproj", "{265D591D-6EED-467D-A690-8FE8ADF3CC30}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,6 +14,10 @@ Global
 		{99085254-6DE7-48B1-8345-EAA3E1830163}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99085254-6DE7-48B1-8345-EAA3E1830163}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{99085254-6DE7-48B1-8345-EAA3E1830163}.Release|Any CPU.Build.0 = Release|Any CPU
+		{265D591D-6EED-467D-A690-8FE8ADF3CC30}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{265D591D-6EED-467D-A690-8FE8ADF3CC30}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{265D591D-6EED-467D-A690-8FE8ADF3CC30}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{265D591D-6EED-467D-A690-8FE8ADF3CC30}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

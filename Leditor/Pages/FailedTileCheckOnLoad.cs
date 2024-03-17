@@ -1,11 +1,9 @@
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
-public class FailedTileCheckOnLoadPage(Serilog.Core.Logger logger) : IPage
+internal class FailedTileCheckOnLoadPage : EditorPage
 {
-    private readonly Serilog.Core.Logger _logger = logger;
-    
     private const string MissingTileWarnTitleText = "Your project seems to contain undefined tiles";
     private const string MissingTileWarnSubtitleText = "If you used custom tiles on this project from a different level editor, please use its Init.txt";
     
@@ -18,7 +16,7 @@ public class FailedTileCheckOnLoadPage(Serilog.Core.Logger logger) : IPage
     private const string MissingMaterialWarnSubtitleText = "Please update the materials init.txt file before loading this project";
 
     
-    public void Draw()
+    public override void Draw()
     {
         var width = GetScreenWidth();
         var height = GetScreenHeight();

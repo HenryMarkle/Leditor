@@ -4,12 +4,10 @@ using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
-public class SettingsPage : IPage
+internal class SettingsPage : EditorPage
 {
-    private readonly Serilog.Core.Logger _logger;
-
     private int _shortcutActiveCategory;
 
     private bool _assigningShortcut;
@@ -30,14 +28,8 @@ public class SettingsPage : IPage
         "Props Editor",
         "Style"
     ];
-   
-
-    public SettingsPage(Serilog.Core.Logger logger)
-    {
-        _logger = logger;
-    }
     
-    public void Draw()
+    public override void Draw()
     {
         GLOBALS.PreviousPage = 9;
         
@@ -59,7 +51,7 @@ public class SettingsPage : IPage
                 GLOBALS.ResizeFlag = true;
                 GLOBALS.NewFlag = false;
                 GLOBALS.Page = 6;
-                _logger.Debug("go from GLOBALS.Page 2 to GLOBALS.Page 6");
+                Logger.Debug("go from GLOBALS.Page 2 to GLOBALS.Page 6");
             }
             if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 7;
             if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
@@ -138,7 +130,7 @@ public class SettingsPage : IPage
 
             var col1Space = ImGui.GetContentRegionAvail();
 
-            if (ImGui.BeginListBox("##SettingsCategories", col1Space with { Y = col1Space.Y - 60 }))
+            if (ImGui.BeginListBox("##SettingsCategories", col1Space with { Y = col1Space.Y - 120 }))
             {
                 for (var category = 0; category < _shortcutCategories.Length; category++)
                 {
@@ -149,8 +141,35 @@ public class SettingsPage : IPage
                 ImGui.EndListBox();
             }
 
+            var resetAllSelected = ImGui.Button("Reset Settings", col1Space with { Y = 20 });
+            var saveAllSelected = ImGui.Button("Save Settings", col1Space with { Y = 20 });
+            
+            ImGui.Spacing();
+
             var resetSelected = ImGui.Button("Reset Shortcuts", col1Space with { Y = 20 });
             var saveSelected = ImGui.Button("Save Shortcuts", col1Space with { Y = 20 });
+
+            if (resetAllSelected)
+            {
+                _assigningShortcut = false;
+                _shortcutToAssign = null;
+                _mouseShortcutToAssign = null;
+
+                GLOBALS.Settings = new Settings();
+            }
+
+            if (saveAllSelected)
+            {
+                try
+                {
+                    File.WriteAllText(GLOBALS.Paths.SettingsPath,
+                        JsonSerializer.Serialize(GLOBALS.Settings, GLOBALS.JsonSerializerOptions));
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"Failed to save settings: {e}");
+                }
+            }
 
             if (resetSelected)
             {
@@ -158,16 +177,7 @@ public class SettingsPage : IPage
                 _shortcutToAssign = null;
                 _mouseShortcutToAssign = null;
 
-                GLOBALS.Settings.Shortcuts = new Shortcuts(
-                    new GlobalShortcuts(),
-                    new GeoShortcuts(),
-                    new ExperimentalGeoShortcuts(),
-                    new TileShortcuts(),
-                    new CameraShortcuts(),
-                    new LightShortcuts(),
-                    new EffectsShortcuts(),
-                    new PropsShortcuts()
-                );
+                GLOBALS.Settings.Shortcuts = new Shortcuts();
             }
 
             if (saveSelected)
@@ -185,7 +195,7 @@ public class SettingsPage : IPage
                 }
                 catch (Exception e)
                 {
-                    _logger.Error($"Failed to save settings: {e}");
+                    Logger.Error($"Failed to save settings: {e}");
                 }
             }
             
@@ -240,6 +250,18 @@ public class SettingsPage : IPage
                         if (assignSave) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave;
                         if (assignSaveAs) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSaveAs;
                         if (assignRender) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.Render;
+                        
+                        ImGui.SeparatorText("Misc");
+
+                        var cacheRendererRuntime = GLOBALS.Settings.GeneralSettings.CacheRendererRuntime;
+                        ImGui.Checkbox("Cache Renderer Runtime at Startup", ref cacheRendererRuntime);
+                        if (cacheRendererRuntime != GLOBALS.Settings.GeneralSettings.CacheRendererRuntime)
+                             GLOBALS.Settings.GeneralSettings.CacheRendererRuntime = cacheRendererRuntime;
+
+                        var globalCamera = GLOBALS.Settings.GeneralSettings.GlobalCamera;
+                        ImGui.Checkbox("Global Camera", ref globalCamera);
+                        if (globalCamera != GLOBALS.Settings.GeneralSettings.GlobalCamera)
+                            GLOBALS.Settings.GeneralSettings.GlobalCamera = globalCamera;
                     }
                         break;
 

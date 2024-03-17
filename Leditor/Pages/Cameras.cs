@@ -3,13 +3,11 @@ using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
-internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null) : IPage
+internal class CamerasEditorPage : EditorPage
 {
-    private readonly Serilog.Core.Logger _logger = logger;
-
-    Camera2D _camera = camera ?? new() { Zoom = 0.8f, Target = new(-100, -100) };
+    Camera2D _camera = new() { Zoom = 0.8f, Target = new(-100, -100) };
     bool clickTracker;
     int draggedCamera = -1;
     private readonly CameraShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.CameraEditor;
@@ -23,7 +21,7 @@ internal class CamerasEditorPage(Serilog.Core.Logger logger, Camera2D? camera = 
     private bool _alignment = GLOBALS.Settings.CameraSettings.Alignment;
     private bool _snap = GLOBALS.Settings.CameraSettings.Snap;
 
-    public void Draw()
+    public override void Draw()
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
         

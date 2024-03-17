@@ -1,24 +1,33 @@
 ﻿using System.Numerics;
 using System.Text;
 using ImGuiNET;
+using Leditor.Pages;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
-internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = null) : IPage
+internal class TileEditorPage : EditorPage
 {
-    readonly Serilog.Core.Logger _logger = logger;
-    Camera2D _camera = camera ?? new() { Zoom = 1.0f };
+    Camera2D _camera = new() { Zoom = 1.0f };
 
     private readonly GlobalShortcuts _gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
     private readonly TileShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.TileEditor;
     
     private bool _materialTileSwitch;
+    
     private int _tileCategoryIndex;
     private int _tileIndex;
+    
     private int _materialCategoryIndex;
     private int _materialIndex;
+
+    private int _tileCategorySearchIndex;
+    private int _tileSearchIndex;
+    
+    private int _materialCategorySearchIndex;
+    private int _materialSearchIndex;
+    
     private bool _clickTracker;
     private bool _tileCategoryFocus = true;
     private int _tileCategoryScrollIndex;
@@ -50,6 +59,10 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
     private bool _showTileLayer1 = true;
     private bool _showTileLayer2 = true;
     private bool _showTileLayer3 = true;
+    
+    private string _searchText = string.Empty;
+    private bool _isSearching;
+    private Task _searchTask = default!;
 
     /// <summary>
     /// 0 - none
@@ -65,9 +78,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
     private TileCell[,,] _copyBuffer = new TileCell[0,0,0];
     private RunCell[,,] _copyGeoBuffer = new RunCell[0, 0, 0];
 
-    private readonly string[] _tileCategoryNames = [..GLOBALS.TileCategories.Select(t => t.Item1)];
-    private readonly string[] _materialCategoryNames = [..GLOBALS.MaterialCategories];
-
+    private (int category, int[] tiles)[] _tileIndices = [];
+    private (int category, int[] materials)[] _materialIndices = [];
+    
     private bool _tileSpecDisplayMode;
     
     private int _tilePanelWidth = 400;
@@ -87,6 +100,86 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
     
     private bool _isSettingsWinHovered;
     private bool _isSettingsWinDragged;
+
+    private void Search()
+    {
+        List<(int category, int[] indices)> indices = [];
+        
+        // Search tiles
+        if (_materialTileSwitch)
+        {
+            if (string.IsNullOrEmpty(_searchText))
+            {
+                _tileIndices = [];
+                return;
+            }
+            
+            for (var categoryIndex = 0; categoryIndex < GLOBALS.Tiles.Length; categoryIndex++)
+            {
+                List<int> matchedTiles = [];
+                
+                for (var tileIndex = 0; tileIndex < GLOBALS.Tiles[categoryIndex].Length; tileIndex++)
+                {
+                    ref var tile = ref GLOBALS.Tiles[categoryIndex][tileIndex];
+
+                    if (tile.Name.Contains(_searchText, StringComparison.InvariantCultureIgnoreCase)) 
+                        matchedTiles.Add(tileIndex);
+
+                    if (tileIndex == GLOBALS.Tiles[categoryIndex].Length - 1 && matchedTiles.Count > 0)
+                    {
+                        indices.Add((categoryIndex, [..matchedTiles]));
+                    }
+                }
+            }
+            
+            _tileIndices = [..indices];
+
+            if (_tileIndices.Length > 0)
+            {
+                _tileCategorySearchIndex = _tileSearchIndex = 0;
+
+                _tileCategoryIndex = _tileIndices[0].category;
+                _tileIndex = _tileIndices[0].tiles[0];
+            }
+        }
+        // Search materials
+        else
+        {
+            if (string.IsNullOrEmpty(_searchText))
+            {
+                _materialIndices = [];
+                return;
+            }
+            
+            for (var categoryIndex = 0; categoryIndex < GLOBALS.Materials.Length; categoryIndex++)
+            {
+                List<int> matchedMaterials = [];
+                
+                for (var materialIndex = 0; materialIndex < GLOBALS.Materials[categoryIndex].Length; materialIndex++)
+                {
+                    var (material, _) =  GLOBALS.Materials[categoryIndex][materialIndex];
+                    
+                    if (material.Contains(_searchText, StringComparison.InvariantCultureIgnoreCase)) matchedMaterials.Add(materialIndex);
+
+                    if (materialIndex == GLOBALS.Materials[categoryIndex].Length - 1 &&
+                        matchedMaterials.Count > 0)
+                    {
+                        indices.Add((categoryIndex, [..matchedMaterials]));
+                    }
+                }
+            }
+
+            _materialIndices = [..indices];
+
+            if (_materialIndices.Length > 0)
+            {
+                _materialCategorySearchIndex = _materialSearchIndex = 0;
+                
+                _materialCategoryIndex = _materialIndices[0].category;
+                _materialIndex = _materialIndices[0].materials[0];
+            }
+        }
+    }
 
     private readonly List<Gram.ISingleMatrixAction<TileCell>> _tempActions = [];
 
@@ -884,7 +977,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         }
     };
 
-    public void Draw()
+    public override void Draw()
     {
         GLOBALS.Page = 3;
 
@@ -938,27 +1031,78 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         var categoriesPageSize = (int)panelMenuHeight / 26;
 
         // TODO: fetch init only when menu indices change
+        // var currentTileInit = _tileIndices is [] 
+        //     ? GLOBALS.Tiles[_tileCategoryIndex][_tileIndex]
+        //     : GLOBALS.Tiles[_tileIndices[_tileCategorySearchIndex].category][_tileIndices[_tileCategorySearchIndex].tiles[_tileSearchIndex]];
+        //
+        // var currentMaterialInit = _materialIndices is [] 
+        //     ? GLOBALS.Materials[_materialCategoryIndex][_materialIndex]
+
         var currentTileInit = GLOBALS.Tiles[_tileCategoryIndex][_tileIndex];
         var currentMaterialInit = GLOBALS.Materials[_materialCategoryIndex][_materialIndex];
 
+        var isTileLegal = Utils.IsTileLegal(ref currentTileInit, new Vector2(tileMatrixX, tileMatrixY));
 
+        var currentTilePreviewColor = GLOBALS.TileCategories[_tileCategoryIndex].Item2;
+        var currentTileTexture = GLOBALS.Textures.Tiles[_tileCategoryIndex][_tileIndex];
+        
+        
         #region TileEditorShortcuts
         
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
         
+        // Handle wheel event
+        
+        // handle zoom
+        
+        if (canDrawTile || _clickTracker)
+        {
+            // handle mouse drag
+            if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true))
+            {
+                _clickTracker = true;
+                var delta = GetMouseDelta();
+                delta = Raymath.Vector2Scale(delta, -1.0f / _camera.Zoom);
+                _camera.Target = Raymath.Vector2Add(_camera.Target, delta);
+            }
+
+            if (IsMouseButtonReleased(_shortcuts.DragLevel.Button)) _clickTracker = false;
+       
+            var tileWheel = GetMouseWheelMove();
+            if (tileWheel != 0)
+            {
+                if (IsKeyDown(_shortcuts.ResizeMaterialBrush.Key))
+                {
+                    _materialBrushRadius += tileWheel > 0 ? 1 : -1;
+                }
+                else
+                {
+                    var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
+                    _camera.Offset = GetMousePosition();
+                    _camera.Target = mouseWorldPosition;
+                    _camera.Zoom += tileWheel * GLOBALS.ZoomIncrement;
+                    if (_camera.Zoom < GLOBALS.ZoomIncrement) _camera.Zoom = GLOBALS.ZoomIncrement;
+                }
+            }
+        }
+        
+        
+        // Skip the rest of the shortcuts when searching
+        if (_isSearching) goto skipShortcuts;
+        
         if (_gShortcuts.ToMainPage.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 1");
+            Logger.Debug($"Going to page 1");
             #endif
             GLOBALS.Page = 1;
         }
         if (_gShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 2");
+            Logger.Debug($"Going to page 2");
             #endif
             GLOBALS.Page = 2;
         }
@@ -966,14 +1110,14 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         if (_gShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 4");
+            Logger.Debug($"Going to page 4");
             #endif
             GLOBALS.Page = 4;
         }
         if (_gShortcuts.ToLightEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 5");
+            Logger.Debug($"Going to page 5");
             #endif
             GLOBALS.Page = 5;
         }
@@ -981,7 +1125,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 6");
+            Logger.Debug($"Going to page 6");
             #endif
             GLOBALS.ResizeFlag = true; 
             GLOBALS.NewFlag = false; 
@@ -990,21 +1134,21 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
         if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 7");
+            Logger.Debug($"Going to page 7");
             #endif
             GLOBALS.Page = 7;
         }
         if (_gShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 8");
+            Logger.Debug($"Going to page 8");
             #endif
             GLOBALS.Page = 8;
         }
         if (_gShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
         {
             #if DEBUG
-            _logger.Debug($"Going to page 9");
+            Logger.Debug($"Going to page 9");
             #endif
             GLOBALS.Page = 9;
         }
@@ -1053,14 +1197,13 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             }
         }
 
-        var isTileLegal = Utils.IsTileLegal(ref currentTileInit, new(tileMatrixX, tileMatrixY));
         
         // handle mouse drag and brush resize
 
         if (canDrawTile || _clickTracker)
         {
             // handle mouse drag
-            if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true))
+            if (_shortcuts.AltDragLevel.Check(ctrl, shift, alt, true))
             {
                 _clickTracker = true;
                 var delta = GetMouseDelta();
@@ -1068,25 +1211,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 _camera.Target = Raymath.Vector2Add(_camera.Target, delta);
             }
 
-            if (IsMouseButtonReleased(_shortcuts.DragLevel.Button)) _clickTracker = false;
-            
-            // handle zoom
-            var tileWheel = GetMouseWheelMove();
-            if (tileWheel != 0)
-            {
-                if (IsKeyDown(_shortcuts.ResizeMaterialBrush.Key))
-                {
-                    _materialBrushRadius += tileWheel > 0 ? 1 : -1;
-                }
-                else
-                {
-                    var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
-                    _camera.Offset = GetMousePosition();
-                    _camera.Target = mouseWorldPosition;
-                    _camera.Zoom += tileWheel * GLOBALS.ZoomIncrement;
-                    if (_camera.Zoom < GLOBALS.ZoomIncrement) _camera.Zoom = GLOBALS.ZoomIncrement;
-                }
-            }
+            if (IsKeyReleased(_shortcuts.AltDragLevel.Key)) _clickTracker = false;
         }
 
         // handle placing/removing tiles
@@ -1438,36 +1563,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
             if (GLOBALS.Layer > 2) GLOBALS.Layer = 0;
         }
 
-        // handle resizing tile panel
-        // TODO: remove this feature
-        if (((tileMouse.X <= leftPanelSideStart.X + 5 && tileMouse.X >= leftPanelSideStart.X - 5 && tileMouse.Y >= leftPanelSideStart.Y && tileMouse.Y <= leftPanelSideEnd.Y) || _clickTracker) &&
-        IsMouseButtonDown(MouseButton.Left))
-        {
-            _clickTracker = true;
-
-            var delta = GetMouseDelta();
-
-            if (_tilePanelWidth - (int)delta.X >= 400 && _tilePanelWidth - (int)delta.X <= 700)
-            {
-                _tilePanelWidth -= (int)delta.X;
-            }
-        }
-
         if (IsMouseButtonReleased(MouseButton.Left))
         {
             _clickTracker = false;
-        }
-
-        // change focus
-
-        if (_shortcuts.FocusOnTileMenu.Check(ctrl, shift, alt))
-        {
-            _tileCategoryFocus = false;
-        }
-
-        if (_shortcuts.FocusOnTileCategoryMenu.Check(ctrl, shift, alt))
-        {
-            _tileCategoryFocus = true;
         }
 
         // change tile category
@@ -1493,12 +1591,20 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 }
                 else
                 {
-                    _tileIndex = ++_tileIndex % GLOBALS.Tiles[_tileCategoryIndex].Length;
-                    if (
-                        _tileIndex % (categoriesPageSize + _tileScrollIndex) == categoriesPageSize + _tileScrollIndex - 1 &&
-                        _tileIndex != GLOBALS.Tiles[_tileCategoryIndex].Length - 1) _tileScrollIndex++;
+                    if (_tileIndices is [])
+                    {
+                        _tileIndex = ++_tileIndex % GLOBALS.Tiles[_tileCategoryIndex].Length;
+                        if (
+                            _tileIndex % (categoriesPageSize + _tileScrollIndex) == categoriesPageSize + _tileScrollIndex - 1 &&
+                            _tileIndex != GLOBALS.Tiles[_tileCategoryIndex].Length - 1) _tileScrollIndex++;
 
-                    if (_tileIndex == 0) _tileScrollIndex = 0;
+                        if (_tileIndex == 0) _tileScrollIndex = 0;
+                    }
+                    // When searching
+                    else
+                    {
+                        
+                    }
                 }
             }
             else
@@ -1567,10 +1673,9 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
 
         if (_shortcuts.TogglePathsView.Check(ctrl, shift, alt)) _highlightPaths = !_highlightPaths;
 
-        var currentTilePreviewColor = GLOBALS.TileCategories[_tileCategoryIndex].Item2;
-        var currentTileTexture = GLOBALS.Textures.Tiles[_tileCategoryIndex][_tileIndex];
-
         #endregion
+        
+        skipShortcuts:
 
         BeginDrawing();
 
@@ -1913,7 +2018,7 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                     }
                     catch (IndexOutOfRangeException ie)
                     {
-                        _logger.Fatal($"Failed to fetch tile specs(2) from {nameof(GLOBALS.Tiles)} (L:{GLOBALS.Tiles.Length}): {nameof(_tileCategoryIndex)} or {_tileIndex} were out of bounds");
+                        Logger.Fatal($"Failed to fetch tile specs(2) from {nameof(GLOBALS.Tiles)} (L:{GLOBALS.Tiles.Length}): {nameof(_tileCategoryIndex)} or {_tileIndex} were out of bounds");
                         throw new IndexOutOfRangeException(innerException: ie,
                             message:
                             $"Failed to fetch tile specs(2) from {nameof(GLOBALS.Tiles)} (L:{GLOBALS.Tiles.Length}): {nameof(_tileCategoryIndex)} or {_tileIndex} were out of bounds");
@@ -2037,9 +2142,29 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         }
                     }
                 }
+
+                var availableSpace = ImGui.GetContentRegionAvail();
                 
-                var halfWidth = ImGui.GetContentRegionAvail().X / 2f - ImGui.GetStyle().ItemSpacing.X / 2f;
-                var boxHeight = ImGui.GetContentRegionAvail().Y;
+                var halfWidth = availableSpace.X / 2f - ImGui.GetStyle().ItemSpacing.X / 2f;
+                var boxHeight = availableSpace.Y - 30;
+
+                ImGui.SetNextItemWidth(availableSpace.X);
+
+                var textUpdated = ImGui.InputTextWithHint(
+                    "##TilesSearch", 
+                    "Search..", 
+                    ref _searchText, 
+                    120, 
+                    ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EscapeClearsAll
+                );
+                
+                _isSearching = ImGui.IsItemActive();
+                
+                if (textUpdated)
+                {
+                    _searchTask?.Dispose();
+                    _searchTask = Task.Factory.StartNew(Search);
+                }
                 
                 if (ImGui.BeginListBox("##Groups", new Vector2(halfWidth, boxHeight)))
                 {
@@ -2049,40 +2174,91 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         var drawList = ImGui.GetWindowDrawList();
                         var textHeight = ImGui.GetTextLineHeight();
                         //
-                        
-                        for (var categoryIndex = 0; categoryIndex < _tileCategoryNames.Length; categoryIndex++)
+
+                        if (string.IsNullOrEmpty(_searchText))
                         {
-                            ref var category = ref GLOBALS.TileCategories[categoryIndex];
-                            
-                            // Thanks to Chromosoze
-                            var cursor = ImGui.GetCursorScreenPos();
-                            drawList.AddRectFilled(
-                                p_min: cursor,
-                                p_max: cursor + new Vector2(10f, textHeight),
-                                ImGui.ColorConvertFloat4ToU32(new Vector4(category.Item2.R / 255f, category.Item2.G / 255f, category.Item2.B / 255, 1f))
-                            );
-                            //
-                            
-                            var selected = ImGui.Selectable(
-                                "  "+category.Item1, 
-                                _tileCategoryIndex == categoryIndex);
-                            
-                            if (selected)
+                            for (var categoryIndex = 0; categoryIndex < GLOBALS.TileCategories.Length; categoryIndex++)
                             {
-                                _tileCategoryIndex = categoryIndex;
-                                _tileIndex = 0;
+                                ref var category = ref GLOBALS.TileCategories[categoryIndex];
+                                
+                                // Thanks to Chromosoze
+                                var cursor = ImGui.GetCursorScreenPos();
+                                drawList.AddRectFilled(
+                                    p_min: cursor,
+                                    p_max: cursor + new Vector2(10f, textHeight),
+                                    ImGui.ColorConvertFloat4ToU32(new Vector4(category.Item2.R / 255f, category.Item2.G / 255f, category.Item2.B / 255, 1f))
+                                );
+                                //
+                                
+                                var selected = ImGui.Selectable(
+                                    "  "+category.Item1, 
+                                    _tileCategoryIndex == categoryIndex);
+                                
+                                if (selected)
+                                {
+                                    _tileCategoryIndex = categoryIndex;
+                                    _tileIndex = 0;
+                                }
                             }
                         }
+                        // When searching
+                        else
+                        {
+                            for (var c = 0; c < _tileIndices.Length; c++)
+                            {
+                                var searchIndex = _tileIndices[c];
+                                
+                                ref var category = ref GLOBALS.TileCategories[searchIndex.category];
+                                
+                                // Thanks to Chromosoze
+                                var cursor = ImGui.GetCursorScreenPos();
+                                drawList.AddRectFilled(
+                                    p_min: cursor,
+                                    p_max: cursor + new Vector2(10f, textHeight),
+                                    ImGui.ColorConvertFloat4ToU32(new Vector4(category.Item2.R / 255f, category.Item2.G / 255f, category.Item2.B / 255, 1f))
+                                );
+                                //
+                                
+                                var selected = ImGui.Selectable(
+                                    "  "+category.Item1, 
+                                    _tileCategorySearchIndex == c);
+                                
+                                if (selected)
+                                {
+                                    _tileCategorySearchIndex = c;
+                                    _tileSearchIndex = 0;
+                                }
+                            }
+                        }
+                        
                     }
                     else
                     {
-                        for (var category = 0; category < _materialCategoryNames.Length; category++)
+                        if (string.IsNullOrEmpty(_searchText))
                         {
-                            var selected = ImGui.Selectable(_materialCategoryNames[category], _materialCategoryIndex == category);
-                            if (selected)
+                            for (var category = 0; category < GLOBALS.MaterialCategories.Length; category++)
                             {
-                                _materialCategoryIndex = category;
-                                _materialIndex = 0;
+                                var selected = ImGui.Selectable(GLOBALS.MaterialCategories[category], _materialCategoryIndex == category);
+                                if (selected)
+                                {
+                                    _materialCategoryIndex = category;
+                                    _materialIndex = 0;
+                                }
+                            }
+                        }
+                        // When searching
+                        else
+                        {
+                            for (var c = 0; c < _materialIndices.Length; c++)
+                            {
+                                var searchIndex = _materialIndices[c];
+                                
+                                var selected = ImGui.Selectable(GLOBALS.MaterialCategories[searchIndex.category], _materialCategorySearchIndex == c);
+                                if (selected)
+                                {
+                                    _materialCategorySearchIndex = c;
+                                    if (searchIndex.materials.Length > 0)_materialSearchIndex = 0;
+                                }
                             }
                         }
                     }
@@ -2095,14 +2271,36 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                 {
                     if (_materialTileSwitch)
                     {
-                        for (var tile = 0; tile < GLOBALS.Tiles[_tileCategoryIndex].Length; tile++)
+                        if (string.IsNullOrEmpty(_searchText))
                         {
-                            var selected = ImGui.Selectable(
-                                GLOBALS.Tiles[_tileCategoryIndex][tile].Name, 
-                                _tileIndex == tile
-                            );
+                            for (var tile = 0; tile < GLOBALS.Tiles[_tileCategoryIndex].Length; tile++)
+                            {
+                                var selected = ImGui.Selectable(
+                                    GLOBALS.Tiles[_tileCategoryIndex][tile].Name, 
+                                    _tileIndex == tile
+                                );
 
-                            if (selected) _tileIndex = tile;
+                                if (selected) _tileIndex = tile;
+                            }
+                        }
+                        // When searching
+                        else if (_tileIndices.Length > 0)
+                        {
+                            for (var t = 0; t < _tileIndices[_tileCategorySearchIndex].tiles.Length; t++)
+                            {
+                                var selected = ImGui.Selectable(
+                                    GLOBALS.Tiles[_tileIndices[_tileCategorySearchIndex].category][_tileIndices[_tileCategorySearchIndex].tiles[t]].Name, 
+                                    _tileSearchIndex == t
+                                );
+
+                                if (selected)
+                                {
+                                    _tileSearchIndex = t;
+                                    
+                                    _tileCategoryIndex = _tileIndices[_tileCategorySearchIndex].category;
+                                    _tileIndex = _tileIndices[_tileCategorySearchIndex].tiles[_tileSearchIndex];
+                                }
+                            }
                         }
                     }
                     else
@@ -2111,28 +2309,60 @@ internal class TileEditorPage(Serilog.Core.Logger logger, Camera2D? camera = nul
                         var drawList = ImGui.GetWindowDrawList();
                         var textHeight = ImGui.GetTextLineHeight();
                         //
-                        
-                        for (var materialIndex = 0; materialIndex < GLOBALS.Materials[_materialCategoryIndex].Length; materialIndex++)
-                        {
-                            ref var material = ref GLOBALS.Materials[_materialCategoryIndex][materialIndex];
-                            
-                            
-                            
-                            // Thanks to Chromosoze
-                            var cursor = ImGui.GetCursorScreenPos();
-                            drawList.AddRectFilled(
-                                p_min: cursor,
-                                p_max: cursor + new Vector2(10f, textHeight),
-                                ImGui.ColorConvertFloat4ToU32(new Vector4(material.Item2.R / 255f, material.Item2.G / 255f, material.Item2.B / 255, 1f))
-                            );
-                            //
-                            
-                            var selected = ImGui.Selectable(
-                                "  "+material.Item1,
-                                _materialIndex == materialIndex
-                            );
 
-                            if (selected) _materialIndex = materialIndex;
+                        if (string.IsNullOrEmpty(_searchText))
+                        {
+                            for (var materialIndex = 0; materialIndex < GLOBALS.Materials[_materialCategoryIndex].Length; materialIndex++)
+                            {
+                                ref var material = ref GLOBALS.Materials[_materialCategoryIndex][materialIndex];
+                                
+                                // Thanks to Chromosoze
+                                var cursor = ImGui.GetCursorScreenPos();
+                                drawList.AddRectFilled(
+                                    p_min: cursor,
+                                    p_max: cursor + new Vector2(10f, textHeight),
+                                    ImGui.ColorConvertFloat4ToU32(new Vector4(material.Item2.R / 255f, material.Item2.G / 255f, material.Item2.B / 255, 1f))
+                                );
+                                //
+                                
+                                var selected = ImGui.Selectable(
+                                    "  "+material.Item1,
+                                    _materialIndex == materialIndex
+                                );
+
+                                if (selected) _materialIndex = materialIndex;
+                            }
+                        }
+                        // When searching
+                        else if (_materialIndices.Length > 0)
+                        {
+                            for (var m = 0; m < _materialIndices[_materialCategorySearchIndex].materials.Length; m++)
+                            {
+                                ref var material =
+                                    ref GLOBALS.Materials[_materialIndices[_materialCategorySearchIndex].category][_materialIndices[_materialCategorySearchIndex].materials[m]];
+                                
+                                // Thanks to Chromosoze
+                                var cursor = ImGui.GetCursorScreenPos();
+                                drawList.AddRectFilled(
+                                    p_min: cursor,
+                                    p_max: cursor + new Vector2(10f, textHeight),
+                                    ImGui.ColorConvertFloat4ToU32(new Vector4(material.Item2.R / 255f, material.Item2.G / 255f, material.Item2.B / 255, 1f))
+                                );
+                                //
+                                
+                                var selected = ImGui.Selectable(
+                                    "  "+material.Item1,
+                                    _materialSearchIndex == m
+                                );
+
+                                if (selected)
+                                {
+                                    _materialSearchIndex = m;
+
+                                    _materialCategoryIndex = _materialIndices[_materialCategorySearchIndex].category;
+                                    _materialIndex = _materialIndices[_materialCategorySearchIndex].materials[m];
+                                }
+                            }
                         }
                     }
                     ImGui.EndListBox();

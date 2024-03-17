@@ -5,20 +5,20 @@ using static Raylib_cs.Raylib;
 using rlImGui_cs;
 
 using System.Numerics;
-using Leditor.Lingo;
+using Leditor.Serialization;
 using System.Text.Json;
 using Serilog;
 using System.Security.Cryptography;
 using System.Threading;
 using Drizzle.Lingo.Runtime;
+using Drizzle.Logic;
 using ImGuiNET;
+using Leditor.Pages;
 using Leditor.Renderer;
 
 #nullable enable
 
 namespace Leditor;
-
-public interface IPage { void Draw(); }
 
 class Program
 {
@@ -216,7 +216,7 @@ class Program
         
         try
         {
-            var strTask = Leditor.Lingo.Exporters.ExportAsync(GLOBALS.Level);
+            var strTask = Leditor.Serialization.Exporters.ExportAsync(GLOBALS.Level);
 
             var str = await strTask;
             
@@ -462,7 +462,7 @@ class Program
 
         logger.Information("Initializing data");
 
-        const string version = "Henry's Leditor v0.9.49";
+        const string version = "Henry's Leditor v0.9.50";
         const string raylibVersion = "Raylib v5.0.0";
         
         logger.Information(version);
@@ -696,8 +696,6 @@ class Program
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "no collision icon.png"))
         ];
 
-        Texture2D[] settingsPreviewTextures = LoadSettingsPreviewTextures();
-
         GLOBALS.Textures.GeoInterface = LoadGeoInterfaceTextures();
 
         //
@@ -762,24 +760,24 @@ class Program
         
         // Initialize pages
 
-        GeoEditorPage geoPage = new(logger);
-        TileEditorPage tilePage = new(logger);
-        CamerasEditorPage camerasPage = new(logger);
-        LightEditorPage lightPage = new(logger);
-        DimensionsEditorPage dimensionsPage = new(logger);
-        DeathScreen deathScreen = new(logger, null, null);
-        EffectsEditorPage effectsPage = new(logger);
-        PropsEditorPage propsPage = new(logger);
-        MainPage mainPage = new(logger);
-        StartPage startPage = new(logger);
-        FailedTileCheckOnLoadPage failedTileCheckOnLoadPage = new(logger);
-        AssetsNukedPage assetsNukedPage = new(logger);
-        MissingAssetsPage missingAssetsPage = new(logger);
-        MissingTexturesPage missingTexturesPage = new(logger);
-        MissingPropTexturesPage missingPropTexturesPage = new(logger);
-        MissingInitFilePage missingInitFilePage = new(logger);
-        ExperimentalGeometryPage experimentalGeometryPage = new(logger);
-        SettingsPage settingsPage = new(logger);
+        GeoEditorPage geoPage = new() { Logger = logger };
+        TileEditorPage tilePage = new() { Logger = logger };
+        CamerasEditorPage camerasPage = new() { Logger = logger };
+        LightEditorPage lightPage = new() { Logger = logger };
+        DimensionsEditorPage dimensionsPage = new() { Logger = logger };
+        DeathScreen deathScreen = new() { Logger = logger };
+        EffectsEditorPage effectsPage = new() { Logger = logger };
+        PropsEditorPage propsPage = new() { Logger = logger };
+        MainPage mainPage = new() { Logger = logger };
+        StartPage startPage = new() { Logger = logger };
+        FailedTileCheckOnLoadPage failedTileCheckOnLoadPage = new() { Logger = logger };
+        AssetsNukedPage assetsNukedPage = new() { Logger = logger };
+        MissingAssetsPage missingAssetsPage = new() { Logger = logger };
+        MissingTexturesPage missingTexturesPage = new() { Logger = logger };
+        MissingPropTexturesPage missingPropTexturesPage = new() { Logger = logger };
+        MissingInitFilePage missingInitFilePage = new() { Logger = logger };
+        ExperimentalGeometryPage experimentalGeometryPage = new() { Logger = logger };
+        SettingsPage settingsPage = new() { Logger = logger };
         
         // Lingo runtime assets path
         
@@ -1044,85 +1042,87 @@ class Program
 
                     isLoadingTexturesDone = true;
                 }
-                // else if (false)
-                // {
-                //     if (!isLingoRuntimeInit)
-                //     {
-                //         lingoRuntimeInitTask = Task.Factory.StartNew(() =>
-                //         {
-                //             SixLabors.ImageSharp.Configuration.Default.PreferContiguousImageBuffers = true;
-                //             GLOBALS.LingoRuntime.Init();
-                //         });
-                //     
-                //         isLingoRuntimeInit = true;
-                //         
-                //         var width = GetScreenWidth();
-                //         var height = GetScreenHeight();
-                //         
-                //         BeginDrawing();
-                //         ClearBackground(new(0, 0, 0, 255));
-                //     
-                //         DrawTexturePro(
-                //             GLOBALS.Textures.SplashScreen,
-                //             new(0, 0, GLOBALS.Textures.SplashScreen.Width, GLOBALS.Textures.SplashScreen.Height),
-                //             new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
-                //             new(0, 0),
-                //             0,
-                //             new(255, 255, 255, 255)
-                //         );
-                //     
-                //         DrawText(version, 700, 50, 15, Color.White);
-                //         DrawText(raylibVersion, 700, 70, 15, Color.White);
-                //             
-                //         if (GLOBALS.Font is null)
-                //             DrawText("Loading tile textures", 100, height - 120, 20, Color.White);
-                //         else
-                //             DrawTextEx(GLOBALS.Font.Value, "Initializing Renderer Runtime", new Vector2(100, height - 120), 20, 1, Color.White);
-                //     
-                //     
-                //         //Raylib_CsLo.RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", tileTexturesLoadProgress, 0, totalTileTexturesLoadProgress);
-                //         EndDrawing();
-                //         continue;
-                //     }
-                //     else if (!lingoRuntimeInitTask.IsCompletedSuccessfully)
-                //     {
-                //         var faulted = lingoRuntimeInitTask.IsFaulted;
-                //         
-                //         var width = GetScreenWidth();
-                //         var height = GetScreenHeight();
-                //         
-                //         BeginDrawing();
-                //         ClearBackground(new(0, 0, 0, 255));
-                //     
-                //         DrawTexturePro(
-                //             GLOBALS.Textures.SplashScreen,
-                //             new(0, 0, GLOBALS.Textures.SplashScreen.Width, GLOBALS.Textures.SplashScreen.Height),
-                //             new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
-                //             new(0, 0),
-                //             0,
-                //             new(255, 255, 255, 255)
-                //         );
-                //     
-                //         DrawText(version, 700, 50, 15, Color.White);
-                //         DrawText(raylibVersion, 700, 70, 15, Color.White);
-                //             
-                //         if (GLOBALS.Font is null)
-                //             DrawText("Loading tile textures", 100, height - 120, 20, Color.White);
-                //         else
-                //             DrawTextEx(GLOBALS.Font.Value, faulted ? "Failed to initialize renderer runtime" : "Initializing Renderer Runtime", new Vector2(100, height - 120), 20, 1, Color.White);
-                //     
-                //     
-                //         //Raylib_CsLo.RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", tileTexturesLoadProgress, 0, totalTileTexturesLoadProgress);
-                //         EndDrawing();
-                //     
-                //         if (faulted)
-                //         {
-                //             Console.WriteLine(lingoRuntimeInitTask.Exception);
-                //             break;
-                //         }
-                //         continue;
-                //     }
-                // }
+                else if (GLOBALS.Settings.GeneralSettings.CacheRendererRuntime)
+                {
+                    if (!isLingoRuntimeInit)
+                    {
+                        GLOBALS.LingoRuntimeInitTask = Task.Factory.StartNew(() =>
+                        {
+                            SixLabors.ImageSharp.Configuration.Default.PreferContiguousImageBuffers = true;
+                            GLOBALS.LingoRuntime.Init();
+                            EditorRuntimeHelpers.RunStartup(GLOBALS.LingoRuntime);
+                        });
+                    
+                        isLingoRuntimeInit = true;
+                        
+                        var width = GetScreenWidth();
+                        var height = GetScreenHeight();
+                        
+                        BeginDrawing();
+                        ClearBackground(new(0, 0, 0, 255));
+                    
+                        DrawTexturePro(
+                            GLOBALS.Textures.SplashScreen,
+                            new(0, 0, GLOBALS.Textures.SplashScreen.Width, GLOBALS.Textures.SplashScreen.Height),
+                            new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
+                            new(0, 0),
+                            0,
+                            new(255, 255, 255, 255)
+                        );
+                    
+                        DrawText(version, 700, 50, 15, Color.White);
+                        DrawText(raylibVersion, 700, 70, 15, Color.White);
+                            
+                        if (GLOBALS.Font is null)
+                            DrawText("Loading tile textures", 100, height - 120, 20, Color.White);
+                        else
+                            DrawTextEx(GLOBALS.Font.Value, "Initializing Renderer Runtime", new Vector2(100, height - 120), 20, 1, Color.White);
+                    
+                    
+                        //Raylib_CsLo.RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", tileTexturesLoadProgress, 0, totalTileTexturesLoadProgress);
+                        EndDrawing();
+                        continue;
+                    }
+                    
+                    if (!lingoRuntimeInitTask.IsCompletedSuccessfully)
+                    {
+                        var faulted = lingoRuntimeInitTask.IsFaulted;
+                        
+                        var width = GetScreenWidth();
+                        var height = GetScreenHeight();
+                        
+                        BeginDrawing();
+                        ClearBackground(new(0, 0, 0, 255));
+                    
+                        DrawTexturePro(
+                            GLOBALS.Textures.SplashScreen,
+                            new(0, 0, GLOBALS.Textures.SplashScreen.Width, GLOBALS.Textures.SplashScreen.Height),
+                            new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
+                            new(0, 0),
+                            0,
+                            new(255, 255, 255, 255)
+                        );
+                    
+                        DrawText(version, 700, 50, 15, Color.White);
+                        DrawText(raylibVersion, 700, 70, 15, Color.White);
+                            
+                        if (GLOBALS.Font is null)
+                            DrawText("Loading tile textures", 100, height - 120, 20, Color.White);
+                        else
+                            DrawTextEx(GLOBALS.Font.Value, faulted ? "Failed to initialize renderer runtime" : "Initializing Renderer Runtime", new Vector2(100, height - 120), 20, 1, Color.White);
+                    
+                    
+                        //Raylib_CsLo.RayGui.GuiProgressBar(new(100, height - 100, width - 200, 30), "", "", tileTexturesLoadProgress, 0, totalTileTexturesLoadProgress);
+                        EndDrawing();
+                    
+                        if (faulted)
+                        {
+                            Console.WriteLine(lingoRuntimeInitTask.Exception);
+                            break;
+                        }
+                        continue;
+                    }
+                }
 
                 // page preprocessing
 
@@ -1385,7 +1385,12 @@ class Program
                     UnloadImage(screenshot);
                 }
 
-                deathScreen = new(logger, screenshotTexture, e);
+                deathScreen = new()
+                {
+                    Screenshot = screenshotTexture,
+                    Exception = e,
+                    Logger = logger
+                };
 
                 GLOBALS.Page = 99; // game over
             }
@@ -1409,7 +1414,6 @@ class Program
         foreach (var texture in GLOBALS.Textures.RopeProps) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.PropEditModes) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.PropGenerals) UnloadTexture(texture);
-        foreach (var texture in settingsPreviewTextures) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.GeoInterface) UnloadTexture(texture);
         
         logger.Debug("Unloading light map");

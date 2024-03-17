@@ -446,26 +446,52 @@ public class GlobalShortcuts : IEditorShortcuts
     }
 }
 
-public class Shortcuts(
-    GlobalShortcuts globalShortcuts,
-    GeoShortcuts geoEditor,
-    ExperimentalGeoShortcuts experimentalGeoShortcuts,
-    TileShortcuts tileEditor,
-    CameraShortcuts cameraEditor,
-    LightShortcuts lightEditor,
-    EffectsShortcuts effectsEditor,
-    PropsShortcuts propsEditor
-)
+public class Shortcuts
 {
-    public GlobalShortcuts GlobalShortcuts { get; set; } = globalShortcuts;
-    public GeoShortcuts GeoEditor { get; set; } = geoEditor;
+    public Shortcuts()
+    {
+        GlobalShortcuts = new GlobalShortcuts();
+        GeoEditor = new GeoShortcuts();
+        
+        ExperimentalGeoShortcuts = new ExperimentalGeoShortcuts();
+        TileEditor = new TileShortcuts();
+        CameraEditor = new CameraShortcuts();
+        LightEditor = new LightShortcuts();
+        EffectsEditor = new EffectsShortcuts();
+        PropsEditor = new PropsShortcuts();
+    }
     
-    public ExperimentalGeoShortcuts ExperimentalGeoShortcuts { get; set; } = experimentalGeoShortcuts;
-    public TileShortcuts TileEditor { get; set; } = tileEditor;
-    public CameraShortcuts CameraEditor { get; set; } = cameraEditor;
-    public LightShortcuts LightEditor { get; set; } = lightEditor;
-    public EffectsShortcuts EffectsEditor { get; set; } = effectsEditor;
-    public PropsShortcuts PropsEditor { get; set; } = propsEditor;
+    public Shortcuts(
+        GlobalShortcuts globalShortcuts,
+        GeoShortcuts geoEditor,
+        ExperimentalGeoShortcuts experimentalGeoShortcuts,
+        TileShortcuts tileEditor,
+        CameraShortcuts cameraEditor,
+        LightShortcuts lightEditor,
+        EffectsShortcuts effectsEditor,
+        PropsShortcuts propsEditor
+    )
+    {
+        GlobalShortcuts = globalShortcuts;
+        GeoEditor = geoEditor;
+        
+        ExperimentalGeoShortcuts = experimentalGeoShortcuts;
+        TileEditor = tileEditor;
+        CameraEditor = cameraEditor;
+        LightEditor = lightEditor;
+        EffectsEditor = effectsEditor;
+        PropsEditor = propsEditor;
+    }
+    
+    public GlobalShortcuts GlobalShortcuts { get; set; }
+    public GeoShortcuts GeoEditor { get; set; }
+    
+    public ExperimentalGeoShortcuts ExperimentalGeoShortcuts { get; set; }
+    public TileShortcuts TileEditor { get; set; }
+    public CameraShortcuts CameraEditor { get; set; }
+    public LightShortcuts LightEditor { get; set; }
+    public EffectsShortcuts EffectsEditor { get; set; }
+    public PropsShortcuts PropsEditor { get; set; }
 }
 
 public class Misc(
@@ -509,25 +535,53 @@ public class LayerColors(ConColor layer1, ConColor layer2, ConColor layer3)
     public ConColor Layer3 { get; set; } = layer3;
 }
 
-public class GeoEditor(
-    LayerColors layerColors,
-    ConColor waterColor,
-    bool legacyGeoTools = false,
-    bool allowOutboundsPlacement = false,
-    bool showCameras = false,
-    bool showTiles = false,
-    bool showCurrentGeoIndicator = true,
-    bool legacyInterface = false
-)
+public class GeoEditor
 {
-    public LayerColors LayerColors { get; set; } = layerColors;
-    public ConColor WaterColor { get; set; } = waterColor;
-    public bool LegacyGeoTools { get; set; } = legacyGeoTools;
-    public bool ShowCameras { get; set; } = showCameras;
-    public bool ShowTiles { get; set; } = showTiles;
-    public bool AllowOutboundsPlacement { get; set; } = allowOutboundsPlacement;
-    public bool ShowCurrentGeoIndicator { get; set; } = showCurrentGeoIndicator;
-    public bool LegacyInterface { get; set; } = legacyInterface;
+    public GeoEditor()
+    {
+        LayerColors = new LayerColors(Color.Black, Color.Green, Color.Red);
+        WaterColor = Color.Blue;
+        LegacyGeoTools = false;
+        ShowCameras = false;
+        ShowTiles = false;
+        AllowOutboundsPlacement = false;
+        ShowCurrentGeoIndicator = true;
+        LegacyInterface = false;
+        PasteAir = false;
+    }
+
+    public GeoEditor(
+        LayerColors layerColors,
+        ConColor waterColor,
+        bool legacyGeoTools = false,
+        bool allowOutboundsPlacement = false,
+        bool showCameras = false,
+        bool showTiles = false,
+        bool showCurrentGeoIndicator = true,
+        bool legacyInterface = false,
+        bool pasteAir = false
+    )
+    {
+        LayerColors = layerColors;
+        WaterColor = waterColor;
+        LegacyGeoTools = legacyGeoTools;
+        ShowCameras = showCameras;
+        ShowTiles = showTiles;
+        AllowOutboundsPlacement = allowOutboundsPlacement;
+        ShowCurrentGeoIndicator = showCurrentGeoIndicator;
+        LegacyInterface = legacyInterface;
+        PasteAir = pasteAir;
+    }
+    
+    public LayerColors LayerColors { get; set; }
+    public ConColor WaterColor { get; set; }
+    public bool LegacyGeoTools { get; set; }
+    public bool ShowCameras { get; set; }
+    public bool ShowTiles { get; set; }
+    public bool AllowOutboundsPlacement { get; set; }
+    public bool ShowCurrentGeoIndicator { get; set; }
+    public bool LegacyInterface { get; set; }
+    public bool PasteAir { get; set; }
 }
 
 public class TileEditor(
@@ -651,7 +705,8 @@ public class GeneralSettings(
     bool defaultFont = false, 
     bool globalCamera = true,
     bool shortcutWindow = true,
-    bool darkTheme = false
+    bool darkTheme = false,
+    bool cacheRendererRuntime = false
     )
 {
     public bool DeveloperMode { get; set; } = developerMode;
@@ -659,6 +714,7 @@ public class GeneralSettings(
     public bool GlobalCamera { get; set; } = globalCamera;
     public bool ShortcutWindow { get; set; } = shortcutWindow;
     public bool DarkTheme { get; set; } = darkTheme;
+    public bool CacheRendererRuntime { get; set; } = cacheRendererRuntime;
 }
 
 public class Settings
@@ -673,9 +729,21 @@ public class Settings
     public EffectsSettings EffectsSettings { get; set; }
     public PropEditor PropEditor { get; set; }
     public Experimental Experimental { get; set; }
-    
+
     [JsonConstructor]
-    public Settings() { }
+    public Settings()
+    {
+        GeneralSettings = new();
+        Shortcuts = new();
+        Misc = new();
+        GeometryEditor = new(new LayerColors(Color.Black, Color.Green, Color.Red), Color.Blue);
+        TileEditor = new();
+        CameraSettings = new();
+        LightEditor = new(Color.Blue);
+        EffectsSettings = new(Color.Green, Color.Yellow);
+        PropEditor = new();
+        Experimental = new();
+    }
     
     public Settings(
         GeneralSettings generalSettings,

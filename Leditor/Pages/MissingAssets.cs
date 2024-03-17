@@ -1,15 +1,13 @@
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
-public class MissingAssetsPage(Serilog.Core.Logger logger) : IPage
+internal class MissingAssetsPage : EditorPage
 {
-    private readonly Serilog.Core.Logger _logger = logger;
-    
     private const string MissingAssetsSubfoldersWarnTitleText = "The editor is missing some essential assets";
     private const string MissingAssetsSubfoldersWarnSubtitleText = "The program cannot function without them; Please restore them before trying again.";
 
-    public void Draw()
+    public override void Draw()
     {
         var sWidth = GetScreenWidth();
         var sHeight = GetScreenHeight();

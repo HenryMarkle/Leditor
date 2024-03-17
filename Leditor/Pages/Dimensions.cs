@@ -3,13 +3,12 @@ using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
-internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
+internal class DimensionsEditorPage : EditorPage
 {
     internal event EventHandler ProjectCreated;
     
-    private readonly Serilog.Core.Logger _logger = logger;
     private readonly byte[] _panelBytes = "Configuring Dimensions"u8.ToArray();
 
     private int _matrixWidthValue = GLOBALS.InitialMatrixWidth;
@@ -65,7 +64,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
     }
     #nullable disable
 
-    public void Draw()
+    public override void Draw()
     {
         BeginDrawing();
 
@@ -167,7 +166,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
 
                     if (ImGui.Button("Cancel", col1Space with { Y = 20 }))
                     {
-                        _logger.Debug("page 6: Cancel button clicked");
+                        Logger.Debug("page 6: Cancel button clicked");
 
                         _leftPadding = GLOBALS.Level.Padding.left;
                         _rightPadding = GLOBALS.Level.Padding.right;
@@ -182,9 +181,9 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                     }
                     if (ImGui.Button("Create", col1Space with { Y = 20 }))
                     {
-                        _logger.Debug("page 6: Ok button clicked");
+                        Logger.Debug("page 6: Ok button clicked");
 
-                        _logger.Debug("new flag detected; creating a new level");
+                        Logger.Debug("new flag detected; creating a new level");
                         
                         GLOBALS.Level.New(
                             _matrixWidthValue,
@@ -247,7 +246,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
 
                     if (ImGui.Button("Cancel", col1Space with { Y = 20}))
                     {
-                        _logger.Debug("page 6: Cancel button clicked");
+                        Logger.Debug("page 6: Cancel button clicked");
 
                         _leftPadding = GLOBALS.Level.Padding.left;
                         _rightPadding = GLOBALS.Level.Padding.right;
@@ -264,7 +263,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                     {
                         _advanced = true;
                         
-                        _logger.Debug("new flag detected; creating a new level");
+                        Logger.Debug("new flag detected; creating a new level");
 
                         GLOBALS.Level.New(
                             _columns * 52 + 20,
@@ -364,7 +363,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
 
                 if (ImGui.Button("Cancel", col1Space with { Y = 20 }))
                 {
-                    _logger.Debug("page 6: Cancel button clicked");
+                    Logger.Debug("page 6: Cancel button clicked");
 
                     _leftPadding = GLOBALS.Level.Padding.left;
                     _rightPadding = GLOBALS.Level.Padding.right;
@@ -380,17 +379,17 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                 
                 if (ImGui.Button("Resize", col1Space with { Y = 20 }))
                 {
-                    _logger.Debug("page 6: Ok button clicked");
+                    Logger.Debug("page 6: Ok button clicked");
 
-                    _logger.Debug("resize flag detected");
+                    Logger.Debug("resize flag detected");
 
                     if (
                         GLOBALS.Level.Height != _matrixHeightValue ||
                         GLOBALS.Level.Width != _matrixWidthValue)
                     {
-                        _logger.Debug("dimensions don't match; resizing");
+                        Logger.Debug("dimensions don't match; resizing");
 
-                        _logger.Debug("resizing geometry matrix");
+                        Logger.Debug("resizing geometry matrix");
                         
                         // I know this can be simplified, but I'm keeping it in case 
                         // it becomes useful in the future
@@ -418,7 +417,7 @@ internal class DimensionsEditorPage(Serilog.Core.Logger logger) : IPage
                         }
 
 
-                        _logger.Debug("resizing light map");
+                        Logger.Debug("resizing light map");
 
                         ResizeLightMap(_matrixWidthValue, _matrixHeightValue);
                     }

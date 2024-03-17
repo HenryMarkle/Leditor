@@ -2,23 +2,21 @@
 using System.Numerics;
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
 #nullable enable
 
-internal class DeathScreen(Serilog.Core.Logger logger, Texture2D? screenshot, Exception? exception) : IPage
+internal class DeathScreen : EditorPage
 {
-    readonly Serilog.Core.Logger logger = logger;
-
-    readonly Texture2D? screenshot = screenshot;
-    readonly Exception? exception = exception;
+    public Texture2D? Screenshot { get; set; }
+    public Exception? Exception { get; set; }
 
     ~DeathScreen()
     {
-        if (screenshot is not null) UnloadTexture((Texture2D)screenshot);
+        if (Screenshot is not null) UnloadTexture((Texture2D)Screenshot);
     }
 
-    public void Draw()
+    public override void Draw()
     {
         var sWidth = GetScreenWidth();
 
@@ -27,11 +25,11 @@ internal class DeathScreen(Serilog.Core.Logger logger, Texture2D? screenshot, Ex
             BeginDrawing();
             ClearBackground(Color.Black);
 
-            if (screenshot is not null) {
+            if (Screenshot is not null) {
                 DrawTexturePro(
-                    (Texture2D)screenshot,
-                    new(0, 0, screenshot?.Width ?? 0, screenshot?.Height ?? 0),
-                    new(screenshot?.Width * 0.2f ?? 0, 50, screenshot?.Width * 0.6f ?? 0, screenshot?.Height * 0.6f ?? 0),
+                    (Texture2D)Screenshot,
+                    new(0, 0, Screenshot?.Width ?? 0, Screenshot?.Height ?? 0),
+                    new(Screenshot?.Width * 0.2f ?? 0, 50, Screenshot?.Width * 0.6f ?? 0, Screenshot?.Height * 0.6f ?? 0),
                     new(0, 0),
                     0,
                     Color.White
@@ -39,19 +37,19 @@ internal class DeathScreen(Serilog.Core.Logger logger, Texture2D? screenshot, Ex
             }
 
             DrawRectangleLinesEx(
-                new((screenshot?.Width * 0.2f ?? 0) - 20, 30, (screenshot?.Width * 0.6f ?? 0) + 40, (screenshot?.Height * 0.6f ?? 0) + 40),
+                new((Screenshot?.Width * 0.2f ?? 0) - 20, 30, (Screenshot?.Width * 0.6f ?? 0) + 40, (Screenshot?.Height * 0.6f ?? 0) + 40),
                 4.0f,
                 Color.White
             );
 
             if (GLOBALS.Font is null) {
-                DrawText("The Editor Crashed", (sWidth - MeasureText("The Editor Crashed", 40)) / 2, (int) (screenshot?.Height * 0.6f ?? 0) + 100, 40, Color.White);
+                DrawText("The Editor Crashed", (sWidth - MeasureText("The Editor Crashed", 40)) / 2, (int) (Screenshot?.Height * 0.6f ?? 0) + 100, 40, Color.White);
             }
             else {
                 DrawTextEx(
                     GLOBALS.Font.Value, 
                     "The Editor Crashed", 
-                    new Vector2((sWidth - MeasureText("The Editor Crashed", 40)) / 2, (screenshot?.Height * 0.6f ?? 0) + 100),
+                    new Vector2((sWidth - MeasureText("The Editor Crashed", 40)) / 2, (Screenshot?.Height * 0.6f ?? 0) + 100),
                     40f,
                     1f,
                     Color.White
@@ -80,7 +78,7 @@ internal class DeathScreen(Serilog.Core.Logger logger, Texture2D? screenshot, Ex
             }
 
 
-            if (exception is null)
+            if (Exception is null)
             {
                 if (GLOBALS.Font is null) {
                     DrawText("There's no information to display unfortunately", (sWidth - MeasureText("There's no information to display unfortunately", 40)), 200, 40, Color.White);
@@ -98,9 +96,9 @@ internal class DeathScreen(Serilog.Core.Logger logger, Texture2D? screenshot, Ex
             else
             {
                 if (GLOBALS.Font is null) {
-                    DrawText($"{exception}", 50, 200, 16, Color.White);
+                    DrawText($"{Exception}", 50, 200, 16, Color.White);
                 } else {
-                    DrawTextEx(GLOBALS.Font.Value, $"{exception}", new(50, 200), 22, 1, Color.White);
+                    DrawTextEx(GLOBALS.Font.Value, $"{Exception}", new(50, 200), 22, 1, Color.White);
                 }
             }
             EndDrawing();

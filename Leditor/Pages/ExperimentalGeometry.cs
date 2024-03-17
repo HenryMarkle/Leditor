@@ -4,15 +4,13 @@ using System.Numerics;
 using ImGuiNET;
 using rlImGui_cs;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
-public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? camera = null) : IPage
+internal class ExperimentalGeometryPage : EditorPage
 {
-    private readonly Serilog.Core.Logger _logger = logger;
-
     private readonly ExperimentalGeoShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts;
 
-    private Camera2D _camera = camera ?? new Camera2D() { Zoom = 1.0f };
+    private Camera2D _camera = new() { Zoom = 1.0f };
 
     private bool _multiselect;
     private bool _hideGrid;
@@ -94,7 +92,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
     private string _selectionSizeString = "";
     private Rectangle _selectionRectangle = new(0, 0, 0, 0);
     
-    public void Draw()
+    public override void Draw()
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
         
@@ -116,7 +114,7 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
             GLOBALS.ResizeFlag = true;
             GLOBALS.NewFlag = false;
             GLOBALS.Page = 6;
-            _logger.Debug("go from GLOBALS.Page 2 to GLOBALS.Page 6");
+            Logger.Debug("go from GLOBALS.Page 2 to GLOBALS.Page 6");
         }
         if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 7;
         if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
@@ -412,14 +410,14 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                                 var oldCell = new RunCell { Geo = mtxCell.Geo, Stackables = [..mtxCell.Stackables]};
                                     
                                 // Copy memory to new state
-                                newCopy[y, x] = new RunCell { Geo = cell.Geo == 0 ? mtxCell.Geo : cell.Geo, Stackables = [..cell.Stackables] };
+                                newCopy[y, x] = new RunCell { Geo = GLOBALS.Settings.GeometryEditor.PasteAir ? cell.Geo : cell.Geo == 0 ? mtxCell.Geo : cell.Geo, Stackables = [..cell.Stackables] };
                                 // Copy level to old state
                                 oldCopy[y, x] = new RunCell { Geo = oldCell.Geo, Stackables = [..oldCell.Stackables] };
                                     
                                 bool[] newStackables = [..cell.Stackables];
                                 cell.Stackables = newStackables;
 
-                                if (cell.Geo != 0) mtxCell.Geo = cell.Geo;
+                                if (GLOBALS.Settings.GeometryEditor.PasteAir || cell.Geo != 0) mtxCell.Geo = cell.Geo;
                                 mtxCell.Stackables = cell.Stackables;
                             }
                         }
@@ -1671,6 +1669,11 @@ public class ExperimentalGeometryPage(Serilog.Core.Logger logger, Camera2D? came
                 ImGui.Checkbox("Multi-Select", ref multiSelect);
 
                 _allowMultiSelect = multiSelect;
+
+                var pasteAir = GLOBALS.Settings.GeometryEditor.PasteAir;
+                ImGui.Checkbox("Paste Air", ref pasteAir);
+                if (pasteAir != GLOBALS.Settings.GeometryEditor.PasteAir)
+                    GLOBALS.Settings.GeometryEditor.PasteAir = pasteAir;
                 
                 ImGui.End();
             }

@@ -1,9 +1,8 @@
-using Leditor.Lingo.Drizzle;
 using Pidgin;
 using System.Numerics;
-using Leditor.Leditor.Lingo;
+using Drizzle.Lingo.Runtime.Parser;
 
-namespace Leditor.Lingo;
+namespace Leditor.Serialization;
 
 public static class Importers {
     /// Meaningless name; this function turns a sequel of stackable IDs to an array that can be used at leditor runtime

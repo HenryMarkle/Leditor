@@ -1,15 +1,14 @@
 using System.Numerics;
+using Leditor.Pages;
 using Pidgin;
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
 #nullable enable
 
-internal class StartPage(Serilog.Core.Logger logger) : IPage
+internal class StartPage : EditorPage
 {
-    private readonly Serilog.Core.Logger _logger = logger;
-    
     internal event EventHandler? ProjectLoaded;
 
     private bool _uiLocked;
@@ -47,7 +46,7 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                                     }
                                     catch
                                     {
-                                        _logger.Warning($"missing tile texture detected: matrix index: ({x}, {y}, {z}); category {category}, position: {position}, name: \"{name}\"");
+                                        Logger.Warning($"missing tile texture detected: matrix index: ({x}, {y}, {z}); category {category}, position: {position}, name: \"{name}\"");
                                         return TileCheckResult.MissingTexture;
                                     }
 
@@ -71,7 +70,7 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
 
                         if (!GLOBALS.MaterialColors.ContainsKey(materialName))
                         {
-                            _logger.Warning($"missing material: matrix index: ({x}, {y}, {z}); Name: \"{materialName}\"");
+                            Logger.Warning($"missing material: matrix index: ({x}, {y}, {z}); Name: \"{materialName}\"");
                             return TileCheckResult.MissingMaterial;
                         }
                     }
@@ -82,7 +81,7 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
             }
         }
 
-        _logger.Debug("tile check passed");
+        Logger.Debug("tile check passed");
 
         return TileCheckResult.Ok;
     }
@@ -113,7 +112,7 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                     ? Path.Combine(GLOBALS.Paths.TilesAssetsDirectory, prop.prop.Name+".png")
                     : Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, prop.prop.Name + ".png");
                 
-                _logger.Error($"prop texture \"{path}\"");
+                Logger.Error($"prop texture \"{path}\"");
                 return PropCheckResult.MissingTexture;
             }
         }
@@ -131,19 +130,19 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
 
             if (!File.Exists(lightMapFileName)) return new();
 
-            var lightMap = Raylib.LoadImage(lightMapFileName);
+            var lightMap = LoadImage(lightMapFileName);
 
             if (text.Length < 7) return new LoadFileResult();
 
-            var objTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[0]));
-            var tilesObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[1]));
-            var terrainObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[4]));
-            var obj2Task = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[5]));
-            var effObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[2]));
-            var lightObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[3]));
-            var camsObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[6]));
-            var waterObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[7]));
-            var propsObjTask = Task.Factory.StartNew(() => Lingo.Drizzle.LingoParser.Expression.ParseOrThrow(text[8]));
+            var objTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[0]));
+            var tilesObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[1]));
+            var terrainObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[4]));
+            var obj2Task = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[5]));
+            var effObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[2]));
+            var lightObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[3]));
+            var camsObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[6]));
+            var waterObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[7]));
+            var propsObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[8]));
 
             var obj = await objTask;
             var tilesObj = await tilesObjTask;
@@ -155,20 +154,20 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
             var waterObj = await waterObjTask;
             var propsObj = await propsObjTask;
 
-            var mtx = Lingo.Importers.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
-            var tlMtx = Lingo.Importers.GetTileMatrix(tilesObj, out _, out _);
-            var defaultMaterial = Lingo.Importers.GetDefaultMaterial(tilesObj);
-            var buffers = Lingo.Importers.GetBufferTiles(obj2);
-            var terrain = Lingo.Importers.GetTerrainMedium(terrainModeObj);
-            var lightMode = Lingo.Importers.GetLightMode(obj2);
-            var seed = Lingo.Importers.GetSeed(obj2);
-            var waterData = Lingo.Importers.GetWaterData(waterObj);
-            var effects = Lingo.Importers.GetEffects(effObj, givenWidth, givenHeight);
-            var cams = Lingo.Importers.GetCameras(camsObj);
+            var mtx = Serialization.Importers.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
+            var tlMtx = Serialization.Importers.GetTileMatrix(tilesObj, out _, out _);
+            var defaultMaterial = Serialization.Importers.GetDefaultMaterial(tilesObj);
+            var buffers = Serialization.Importers.GetBufferTiles(obj2);
+            var terrain = Serialization.Importers.GetTerrainMedium(terrainModeObj);
+            var lightMode = Serialization.Importers.GetLightMode(obj2);
+            var seed = Serialization.Importers.GetSeed(obj2);
+            var waterData = Serialization.Importers.GetWaterData(waterObj);
+            var effects = Serialization.Importers.GetEffects(effObj, givenWidth, givenHeight);
+            var cams = Serialization.Importers.GetCameras(camsObj);
             
             // TODO: catch PropNotFoundException
-            var props = Lingo.Importers.GetProps(propsObj);
-            var lightSettings = Lingo.Importers.GetLightSettings(lightObj);
+            var props = Serialization.Importers.GetProps(propsObj);
+            var lightSettings = Serialization.Importers.GetLightSettings(lightObj);
 
             // map material colors
 
@@ -223,7 +222,7 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
         }
     }
     
-    public void Draw()
+    public override void Draw()
     {
         GLOBALS.PreviousPage = 0;
 
@@ -249,7 +248,7 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                 }
                 if (_loadFileTask is null)
                 {
-                    _loadFileTask = LoadProjectAsync(_openFileDialog.Result);
+                    _loadFileTask = Utils.LoadProjectAsync(_openFileDialog.Result);
                     EndDrawing();
                     return;
                 }
@@ -323,7 +322,7 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                     return;
                 }
                 
-                _logger.Debug("Globals.Level.Import()");
+                Logger.Debug("Globals.Level.Import()");
                 
                 GLOBALS.Level.Import(
                     result.Width, 
@@ -346,13 +345,13 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                 );
                 
                 #if DEBUG
-                _logger.Debug($"Adjusting {nameof(GLOBALS.CamQuadLocks)}");
+                Logger.Debug($"Adjusting {nameof(GLOBALS.CamQuadLocks)}");
                 #endif
 
                 GLOBALS.CamQuadLocks = new int[result.Cameras.Count];
 
                 #if DEBUG
-                _logger.Debug($"Importing lightmap texture");
+                Logger.Debug($"Importing lightmap texture");
                 #endif
                 
                 var lightMapTexture = LoadTextureFromImage(result.LightMapImage);
@@ -379,7 +378,7 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                 UnloadTexture(lightMapTexture);
                 
                 #if DEBUG
-                _logger.Debug($"Updating project name");
+                Logger.Debug($"Updating project name");
                 #endif
 
                 GLOBALS.Level.ProjectName = result.Name;
@@ -392,7 +391,7 @@ internal class StartPage(Serilog.Core.Logger logger) : IPage
                 _loadFileTask = null;
                 
                 #if DEBUG
-                _logger.Debug($"Invoking {nameof(ProjectLoaded)} event");
+                Logger.Debug($"Invoking {nameof(ProjectLoaded)} event");
                 #endif
                 
                 var parent = Directory.GetParent(_openFileDialog.Result)?.FullName;

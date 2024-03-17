@@ -1,12 +1,10 @@
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
-public class MissingInitFilePage(Serilog.Core.Logger logger) : IPage
+internal class MissingInitFilePage : EditorPage
 {
-    private readonly Serilog.Core.Logger _logger = logger;
-
-    public void Draw()
+    public override void Draw()
     {
         var width = GetScreenWidth();
 

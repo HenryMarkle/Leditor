@@ -1,15 +1,13 @@
 using static Raylib_cs.Raylib;
 
-namespace Leditor;
+namespace Leditor.Pages;
 
-public class AssetsNukedPage(Serilog.Core.Logger logger) : IPage
+internal class AssetsNukedPage : EditorPage
 {
-    private readonly Serilog.Core.Logger _logger = logger;
-    
     private const string MissingAssetsFolderWarnTitleText = "The assets folder is missing";
     private const string MissingAssetsFolderWarnSubtitleText = "The program cannot work without it; Please restore it before trying again.";
     
-    public void Draw()
+    public override void Draw()
     {
         var width = GetScreenWidth();
 
