@@ -71,6 +71,34 @@ internal class DrizzleRender : IDisposable
                 }
 
                 Renderer.DoRender();
+                
+                //
+                try
+                {
+                    if (!Directory.Exists(GLOBALS.Paths.LevelsDirectory))
+                        Directory.CreateDirectory(GLOBALS.Paths.LevelsDirectory);
+
+                    var files = Directory.GetFiles(Path.Combine(GLOBALS.Paths.RendererDirectory, "Levels"));
+
+                    foreach (var file in files)
+                    {
+                        var name = Path.GetFileName(file);
+
+                        if (name.StartsWith(GLOBALS.Level.ProjectName))
+                        {
+                            File.Move(file, Path.Combine(GLOBALS.Paths.LevelsDirectory, name), true);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    // TODO: Report the exception
+                    Console.WriteLine(e);
+                }
+                
+                
+                //
+                
                 Queue.Enqueue(new MessageRenderFinished());
             }
             catch (RenderCancelledException)

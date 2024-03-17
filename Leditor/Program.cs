@@ -462,7 +462,7 @@ class Program
 
         logger.Information("Initializing data");
 
-        const string version = "Henry's Leditor v0.9.50";
+        const string version = "Henry's Leditor v0.9.51";
         const string raylibVersion = "Raylib v5.0.0";
         
         logger.Information(version);
@@ -803,7 +803,7 @@ class Program
         
         // Lingo runtime assets path
         
-        LingoRuntime.MovieBasePath = Path.Combine(GLOBALS.Paths.ExecutableDirectory, "renderer") + Path.DirectorySeparatorChar;
+        LingoRuntime.MovieBasePath = GLOBALS.Paths.RendererDirectory + Path.DirectorySeparatorChar;
         LingoRuntime.CastPath = Path.Combine(LingoRuntime.MovieBasePath, "Cast");
         
         //

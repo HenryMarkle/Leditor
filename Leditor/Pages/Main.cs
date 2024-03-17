@@ -17,8 +17,6 @@ internal class MainPage : EditorPage
 
     private Camera2D _camera = new() { Zoom = 0.5f };
 
-    private readonly byte[] _previewPanelBytes = "Level Options"u8.ToArray();
-    
     private record struct SaveProjectResult(bool Success, Exception? Exception = null);
 
     private Task<string>? _saveFileDialog;
@@ -30,8 +28,6 @@ internal class MainPage : EditorPage
 
     private bool _isGuiLocked;
 
-    private int _spinnerLock;
-    
     private Task<string>? _openFileDialog;
     private Task<LoadFileResult>? _loadFileTask;
     
@@ -310,7 +306,7 @@ internal class MainPage : EditorPage
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
 
-        if (!_isGuiLocked && _spinnerLock == 0)
+        if (!_isGuiLocked)
         {
             
             if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
@@ -859,6 +855,13 @@ internal class MainPage : EditorPage
 
                             _renderWindow = new DrizzleRenderWindow();
                         }
+
+                        if (ImGui.IsItemHovered())
+                        {
+                            ImGui.BeginTooltip();
+                            ImGui.Text("Requires saving the project to render the new changes");
+                            ImGui.EndTooltip();
+                        }
                     }
                     
                     if (saveSelected)
@@ -929,7 +932,7 @@ internal class MainPage : EditorPage
                     // Dark Theme
                     
                     var darkTheme = GLOBALS.Settings.GeneralSettings.DarkTheme;
-                    ImGui.Checkbox("Dark Theme (Requires Restart)", ref darkTheme);
+                    ImGui.Checkbox("Dark Theme", ref darkTheme);
                     if (darkTheme != GLOBALS.Settings.GeneralSettings.DarkTheme)
                         GLOBALS.Settings.GeneralSettings.DarkTheme = darkTheme;
                     

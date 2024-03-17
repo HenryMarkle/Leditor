@@ -86,7 +86,9 @@ internal static class GLOBALS
         internal static string PackagesDirectory => Path.Combine(AssetsDirectory, "packs");
         internal static string TilePackagesDirectory => Path.Combine(PackagesDirectory, "tiles");
         internal static string FontsDirectory => Path.Combine(AssetsDirectory, "fonts");
-        internal static string RendererDirectory => Path.Combine(ExecutableDirectory, "renderer");
+        internal static string RendererDirectory => Path.Combine(AssetsDirectory, "renderer");
+
+        internal static string LevelsDirectory => Path.Combine(ExecutableDirectory, "levels");
         
         
         internal static string TilesInitPath => Path.Combine(IndexDirectory, "tiles.txt");

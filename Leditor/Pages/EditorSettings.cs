@@ -258,6 +258,13 @@ internal class SettingsPage : EditorPage
                         if (cacheRendererRuntime != GLOBALS.Settings.GeneralSettings.CacheRendererRuntime)
                              GLOBALS.Settings.GeneralSettings.CacheRendererRuntime = cacheRendererRuntime;
 
+                        if (ImGui.IsItemHovered())
+                        {
+                            ImGui.BeginTooltip();
+                            ImGui.Text("Initializes the renderer ahead of time for faster rendering, at the cost of longer program startup time.");
+                            ImGui.EndTooltip();
+                        }
+
                         var globalCamera = GLOBALS.Settings.GeneralSettings.GlobalCamera;
                         ImGui.Checkbox("Global Camera", ref globalCamera);
                         if (globalCamera != GLOBALS.Settings.GeneralSettings.GlobalCamera)
