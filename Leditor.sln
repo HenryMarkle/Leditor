@@ -4,6 +4,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Leditor", "Leditor\Leditor.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Leditor.RL", "Leditor.RL\Leditor.RL.csproj", "{265D591D-6EED-467D-A690-8FE8ADF3CC30}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Leditor.Data", "Leditor.Data\Leditor.Data.csproj", "{6DA4BD27-E60D-4518-BEE2-02E55CE7BF37}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Leditor.Serialization", "Leditor.Serialization\Leditor.Serialization.csproj", "{1E43BF44-159C-42A4-90E5-42044E0E6E4D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,6 +22,14 @@ Global
 		{265D591D-6EED-467D-A690-8FE8ADF3CC30}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{265D591D-6EED-467D-A690-8FE8ADF3CC30}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{265D591D-6EED-467D-A690-8FE8ADF3CC30}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6DA4BD27-E60D-4518-BEE2-02E55CE7BF37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6DA4BD27-E60D-4518-BEE2-02E55CE7BF37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6DA4BD27-E60D-4518-BEE2-02E55CE7BF37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6DA4BD27-E60D-4518-BEE2-02E55CE7BF37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E43BF44-159C-42A4-90E5-42044E0E6E4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E43BF44-159C-42A4-90E5-42044E0E6E4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E43BF44-159C-42A4-90E5-42044E0E6E4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E43BF44-159C-42A4-90E5-42044E0E6E4D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

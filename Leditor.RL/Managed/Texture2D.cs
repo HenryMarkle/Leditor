@@ -1,4 +1,6 @@
-﻿namespace Leditor.RL.Managed;
+﻿using Leditor.RL.Exceptions;
+
+namespace Leditor.RL.Managed;
 
 public sealed class Texture2D : IDisposable
 {
@@ -7,14 +9,31 @@ public sealed class Texture2D : IDisposable
     // ReSharper disable once MemberCanBePrivate.Global
     public Raylib_cs.Texture2D Raw;
 
+    /// <summary>
+    /// Loads a managed texture from a file path
+    /// </summary>
+    /// <param name="path">The file path</param>
+    /// <exception cref="TextureLoadException">Failure to load the texture</exception>
     public Texture2D(string path)
     {
         Raw = Raylib.LoadTexture(path);
+
+        if (!Raylib.IsTextureReady(Raw)) throw new TextureLoadException(path);
     }
 
     public Texture2D(Raylib_cs.Texture2D texture)
     {
         Raw = texture;
+    }
+
+    public Texture2D(Raylib_cs.Image image)
+    {
+        Raw = Raylib.LoadTextureFromImage(image);
+    }
+    
+    public Texture2D(Image image)
+    {
+        Raw = Raylib.LoadTextureFromImage(image);
     }
 
     public static implicit operator Raylib_cs.Texture2D(Texture2D t) => t.Raw;
