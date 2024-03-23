@@ -71,9 +71,6 @@ internal class CamerasEditorPage : EditorPage
             GLOBALS.Page = 9;
         }
 
-        var _xAligned = false;
-        var _yAligned = false;
-
         // handle mouse drag
         if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true))
         {
@@ -90,7 +87,7 @@ internal class CamerasEditorPage : EditorPage
             _camera.Offset = GetMousePosition();
             _camera.Target = mouseWorldPosition;
             _camera.Zoom += cameraWheel * GLOBALS.ZoomIncrement;
-            if (_camera.Zoom < GLOBALS.ZoomIncrement) _camera.Zoom = GLOBALS.ZoomIncrement;
+            if (!GLOBALS.Settings.GeneralSettings.LinearZooming && _camera.Zoom < GLOBALS.ZoomIncrement) _camera.Zoom = GLOBALS.ZoomIncrement;
         }
 
         if (IsMouseButtonReleased(_shortcuts.DragLevel.Button) || IsMouseButtonReleased(_shortcuts.ManipulateCamera.Button) && clickTracker)

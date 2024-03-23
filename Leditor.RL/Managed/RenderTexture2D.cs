@@ -35,7 +35,6 @@ public class RenderTexture2D : IDisposable
     public void Dispose()
     {
         Dispose(true);
-        GC.SuppressFinalize(this);
     }
 
     ~RenderTexture2D()

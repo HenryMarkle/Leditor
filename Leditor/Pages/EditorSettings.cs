@@ -269,6 +269,19 @@ internal class SettingsPage : EditorPage
                         ImGui.Checkbox("Global Camera", ref globalCamera);
                         if (globalCamera != GLOBALS.Settings.GeneralSettings.GlobalCamera)
                             GLOBALS.Settings.GeneralSettings.GlobalCamera = globalCamera;
+
+                        ImGui.BeginDisabled();
+                        var linearZooming = GLOBALS.Settings.GeneralSettings.LinearZooming;
+                        ImGui.Checkbox("Linear Zooming", ref linearZooming);
+                        if (linearZooming != GLOBALS.Settings.GeneralSettings.LinearZooming)
+                            GLOBALS.Settings.GeneralSettings.LinearZooming = linearZooming;
+                        ImGui.EndDisabled();
+                        
+                        ImGui.SetNextItemWidth(150);
+
+                        var defaultZoom = GLOBALS.Settings.GeneralSettings.DefaultZoom;
+                        ImGui.InputFloat("Default Zoom", ref defaultZoom, 1f);
+                        GLOBALS.Settings.GeneralSettings.DefaultZoom = defaultZoom;
                     }
                         break;
 

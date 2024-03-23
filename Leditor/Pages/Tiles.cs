@@ -2,11 +2,14 @@
 using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
+using RenderTexture2D = Leditor.RL.Managed.RenderTexture2D;
 
 namespace Leditor.Pages;
 
-internal class TileEditorPage : EditorPage
+internal class TileEditorPage : EditorPage, IDisposable
 {
+    public bool Disposed { get; private set; }
+    
     Camera2D _camera = new() { Zoom = 1.0f };
 
     private readonly GlobalShortcuts _gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
@@ -84,7 +87,9 @@ internal class TileEditorPage : EditorPage
     private (int category, int[] tiles)[] _tileIndices = [];
     private (int category, int[] materials)[] _materialIndices = [];
 
-    private RL.Managed.RenderTexture2D _previewTooltipRT = new(0, 0);
+    private RenderTexture2D _previewTooltipRT = new(0, 0);
+    private RenderTexture2D _tileSpecsPanelRT = new(0, 0);
+    private RenderTexture2D _tileTexturePanelRT = new(0, 0);
     
     private bool _tileSpecDisplayMode;
     
@@ -105,6 +110,16 @@ internal class TileEditorPage : EditorPage
     
     private bool _isSettingsWinHovered;
     private bool _isSettingsWinDragged;
+
+    public void Dispose()
+    {
+        if (Disposed) return;
+        Disposed = true;
+        
+        _tileSpecsPanelRT.Dispose();
+        _tileTexturePanelRT.Dispose();
+        _previewTooltipRT.Dispose();
+    }
 
     private void Search()
     {
@@ -620,6 +635,8 @@ internal class TileEditorPage : EditorPage
             var data = h;
             var tileInit = GLOBALS.Tiles[data.CategoryPostition.Item1][data.CategoryPostition.Item2];
             var (width, height) = tileInit.Size;
+            var specs = tileInit.Specs;
+            var specs2 = tileInit.Specs2;
 
             var isThick = tileInit.Specs2.Length > 0;
 
@@ -636,16 +653,28 @@ internal class TileEditorPage : EditorPage
                     var matrixX = x + (int)start.X;
                     var matrixY = y + (int)start.Y;
 
-                    if (matrixX < 0 || matrixX >= GLOBALS.Level.Width || matrixY < 0 || matrixY >=GLOBALS.Level.Height) continue;
-
-                    var oldCell = GLOBALS.Level.TileMatrix[matrixY, matrixX, mz];
-                    var newCell = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                    if (
+                        matrixX < 0 || 
+                        matrixX >= GLOBALS.Level.Width || 
+                        matrixY < 0 || 
+                        matrixY >=GLOBALS.Level.Height) continue;
                     
-                    actions.Add(new Gram.TileAction((matrixX, matrixY, mz), oldCell, newCell));
+                    var specsIndex = x*height + y;
 
-                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = newCell;
+                    var spec = specs[specsIndex];
+                    var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
+
+                    if (spec != -1)
+                    {
+                        var oldCell = GLOBALS.Level.TileMatrix[matrixY, matrixX, mz];
+                        var newCell = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                        
+                        actions.Add(new Gram.TileAction((matrixX, matrixY, mz), oldCell, newCell));
+
+                        GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = newCell;
+                    }
                     
-                    if (isThick && mz != 2)
+                    if (isThick && mz != 2 && spec2 != -1)
                     {
                         var oldCell2 = GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1];
                         var newCell2 = new TileCell
@@ -733,7 +762,9 @@ internal class TileEditorPage : EditorPage
         // the top-left of the tile
         var start = Raymath.Vector2Subtract(new(mx, my), head);
         
-        // First remove tile heads in the way
+        List<Gram.ISingleMatrixAction<TileCell>> actions = [];
+        
+        // remove pre-existing tiles in the way
 
         for (var y = 0; y < height; y++)
         {
@@ -741,21 +772,34 @@ internal class TileEditorPage : EditorPage
             {
                 var matrixX = x + (int)start.X;
                 var matrixY = y + (int)start.Y;
-
+                
                 if (
                     !(matrixX >= 0 &&
-                      matrixX < GLOBALS.Level.GeoMatrix.GetLength(1) &&
-                      matrixY >= 0 &&
-                      matrixY < GLOBALS.Level.GeoMatrix.GetLength(0))
+                     matrixX < GLOBALS.Level.GeoMatrix.GetLength(1) &&
+                     matrixY >= 0 &&
+                     matrixY < GLOBALS.Level.GeoMatrix.GetLength(0))
                 ) continue;
+                
+                var specsIndex = x*height + y;
 
-                ref var cell = ref GLOBALS.Level.TileMatrix[matrixY, matrixX, mz];
+                var spec = specs[specsIndex];
+                var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
 
-                if (cell.Data is TileHead) RemoveTile(matrixX, matrixY, mz);
+                if (spec != -1)
+                {
+                    if (GLOBALS.Level.TileMatrix[matrixY, matrixX, mz].Data is TileHead)
+                        actions.AddRange(RemoveTile(matrixX, matrixY, mz));
+                }
+
+                if (spec2 != -1 && mz != 2)
+                {
+                    if (GLOBALS.Level.TileMatrix[matrixY, matrixX, mz+1].Data is TileHead)
+                        actions.AddRange(RemoveTile(matrixX, matrixY, mz+1));
+                }
             }
         }
         
-        List<Gram.ISingleMatrixAction<TileCell>> actions = [];
+        // Place new tile
 
         for (var y = 0; y < height; y++)
         {
@@ -788,7 +832,7 @@ internal class TileEditorPage : EditorPage
                         };
                         
                         actions.Add(new Gram.TileAction(matrixPosition, CopyTileCell(GLOBALS.Level.TileMatrix[my, mx, mz]), CopyTileCell(newHead)));
-
+                        
                         GLOBALS.Level.TileMatrix[my, mx, mz] = newHead;
                     }
                     
@@ -851,28 +895,42 @@ internal class TileEditorPage : EditorPage
         // the top-left of the tile
         var start = Raymath.Vector2Subtract(new(mx, my), head);
         
-        // First remove tile heads in the way
-
+        List<Gram.ISingleMatrixAction<TileCell>> actions = [];
+        
+        // Remove pre-existing tile in the way
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
             {
                 var matrixX = x + (int)start.X;
                 var matrixY = y + (int)start.Y;
-
+                
                 if (
                     !(matrixX >= 0 &&
                       matrixX < GLOBALS.Level.GeoMatrix.GetLength(1) &&
                       matrixY >= 0 &&
                       matrixY < GLOBALS.Level.GeoMatrix.GetLength(0))
                 ) continue;
+                
+                var specsIndex = x*height + y;
 
-                ref var cell = ref GLOBALS.Level.TileMatrix[matrixY, matrixX, mz];
+                var spec = specs[specsIndex];
+                var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
 
-                if (cell.Data is TileHead) RemoveTile(matrixX, matrixY, mz);
+                if (spec != -1)
+                {
+                    if (GLOBALS.Level.TileMatrix[matrixY, matrixX, mz].Data is TileHead)
+                        actions.AddRange(RemoveTile(matrixX, matrixY, mz));
+                }
+
+                if (spec2 != -1 && mz != 2)
+                {
+                    if (GLOBALS.Level.TileMatrix[matrixY, matrixX, mz+1].Data is TileHead)
+                        actions.AddRange(RemoveTile(matrixX, matrixY, mz+1));
+                }
             }
         }
-        
+
         // Record the action
 
         var newTileHead = new TileCell
@@ -881,16 +939,13 @@ internal class TileEditorPage : EditorPage
             Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
         };
         
-        List<Gram.ISingleMatrixAction<TileCell>> actions =
-        [
-            new Gram.TileAction(
-                matrixPosition, 
-                CopyTileCell(GLOBALS.Level.TileMatrix[my, mx, mz]),
-                CopyTileCell(newTileHead))
-        ];
-
         // Place the head of the tile at matrixPosition
         GLOBALS.Level.TileMatrix[my, mx, mz] = newTileHead;
+
+        actions.Add(new Gram.TileAction(
+            matrixPosition,
+            CopyTileCell(GLOBALS.Level.TileMatrix[my, mx, mz]),
+            CopyTileCell(newTileHead)));
 
         for (var y = 0; y < height; y++)
         {
@@ -916,17 +971,19 @@ internal class TileEditorPage : EditorPage
                     if (x == (int)head.X && y == (int)head.Y)
                     {
                         // Place the head of the tile at matrixPosition
-                        GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell
+                        var newHead = new TileCell
                         {
                             Type = TileType.TileHead,
                             Data = new TileHead(tileCategoryIndex, tileIndex, init.Name)
                         };
+                        
+                        actions.Add(new Gram.TileAction(matrixPosition, CopyTileCell(GLOBALS.Level.TileMatrix[my, mx, mz]), CopyTileCell(newHead)));
+                        
+                        GLOBALS.Level.TileMatrix[my, mx, mz] = newHead;
                     }
                     
                     if (spec != -1)
                     {
-                        // GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz].Geo = spec;
-                        
                         // If it's the tile head
                         if (!(x == (int)head.X && y == (int)head.Y))
                         {
@@ -947,8 +1004,6 @@ internal class TileEditorPage : EditorPage
                     
                     if (spec2 != -1 && mz != 2)
                     {
-                        // GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz + 1].Geo = spec2;
-                        
                         var newerCell = new TileCell
                         {
                             Type = TileType.TileBody,
@@ -990,7 +1045,7 @@ internal class TileEditorPage : EditorPage
             ref var hoveredTile = ref GLOBALS.Tiles[_hoveredTileCategoryIndex][_hoveredTileIndex];
             ref var hoveredTexture = ref GLOBALS.Textures.Tiles[_hoveredTileCategoryIndex][_hoveredTileIndex];
             
-            if (_previewTooltipRT.Raw.Id != 0) _previewTooltipRT.Dispose();
+            _previewTooltipRT.Dispose();
                 
             _previewTooltipRT = new(
                 hoveredTile.Size.Item1*16, 
@@ -1009,6 +1064,121 @@ internal class TileEditorPage : EditorPage
             );
             EndTextureMode();
         }
+    }
+
+    private void UpdateTileSpecsPanel()
+    {
+        ref var tile = ref GLOBALS.Tiles[_tileCategoryIndex][_tileIndex];
+
+        var (width, height) = tile.Size;
+        
+        const int scale = 20;
+        
+        _tileSpecsPanelRT.Dispose();
+
+        _tileSpecsPanelRT = new(scale*width + 10, scale*height + 10);
+        
+        BeginTextureMode(_tileSpecsPanelRT);
+        ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 0 } : Color.Gray);
+        
+        int[] specs;
+        int[] specs2;
+        
+        try
+        {
+            specs = GLOBALS.Tiles[_tileCategoryIndex][_tileIndex].Specs;
+            specs2 = GLOBALS.Tiles[_tileCategoryIndex][_tileIndex].Specs2;
+        }
+        catch (IndexOutOfRangeException ie)
+        {
+            Logger.Fatal($"Failed to fetch tile specs(2) from {nameof(GLOBALS.Tiles)} (L:{GLOBALS.Tiles.Length}): {nameof(_tileCategoryIndex)} or {_tileIndex} were out of bounds");
+            throw new IndexOutOfRangeException(innerException: ie,
+                message:
+                $"Failed to fetch tile specs(2) from {nameof(GLOBALS.Tiles)} (L:{GLOBALS.Tiles.Length}): {nameof(_tileCategoryIndex)} or {_tileIndex} were out of bounds");
+        }
+        
+        for (var x = 0; x < width; x++)
+        {
+            for (var y = 0; y < height; y++)
+            {
+                var specsIndex = (x * height) + y;
+                var spec = specs[specsIndex];
+                var spec2 = specs2.Length > 0 ? specs2[specsIndex] : -1;
+                var specOrigin = new Vector2(scale*x + 5, scale*y + 5);
+
+                if (spec is >= 0 and < 9 and not 8)
+                {
+                    if (spec2 is >= 0 and < 9 and not 8) Printers.DrawTileSpec(
+                        spec2,
+                        specOrigin + new Vector2(5, 5),
+                        scale,
+                        GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 with { A = 255 }
+                    );
+                    
+                    Printers.DrawTileSpec(
+                        spec,
+                        specOrigin,
+                        scale,
+                        GLOBALS.Settings.GeneralSettings.DarkTheme 
+                            ? Color.White 
+                            : GLOBALS.Settings.GeometryEditor.LayerColors.Layer1
+                    );
+                }
+            }
+        }
+
+        // for (var x = 0; x < width; x++)
+        // {
+        //     for (var y = 0; y < height; y++)
+        //     {
+        //         DrawRectangleLinesEx(
+        //             new(
+        //                 x * scale,
+        //                 y * scale,
+        //                 scale,
+        //                 scale
+        //             ),
+        //             Math.Max(width, height) switch
+        //             {
+        //                 > 25 => 0.3f,
+        //                 > 10 => 0.5f,
+        //                 _ => 0.7f
+        //             },
+        //             Color.White
+        //         );
+        //     }
+        // }
+        
+        EndTextureMode();
+    }
+
+    private void UpdateTileTexturePanel()
+    {
+        ref var tile = ref GLOBALS.Tiles[_tileCategoryIndex][_tileIndex];
+        ref var texture = ref GLOBALS.Textures.Tiles[_tileCategoryIndex][_tileIndex];
+        ref var color = ref GLOBALS.TileCategories[_tileCategoryIndex].Item2;
+
+        var (width, height) = tile.Size;
+        
+        _tileTexturePanelRT.Dispose();
+        _tileTexturePanelRT = new RenderTexture2D(
+            (width + 2*(tile.BufferTiles))*20, 
+            (height + 2*(tile.BufferTiles))*20);
+                    
+        BeginTextureMode(_tileTexturePanelRT);
+        ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 0 } : Color.Gray);
+
+        Printers.DrawTileAsPropColored(
+            texture, 
+            tile, 
+            new Vector2(0, 0), 
+            new  Vector2(0, 0), 
+            color, 
+            0, 
+            20
+        );
+
+        EndTextureMode();
     }
 
     public override void Draw()
@@ -1064,14 +1234,6 @@ internal class TileEditorPage : EditorPage
         
         var categoriesPageSize = (int)panelMenuHeight / 26;
 
-        // TODO: fetch init only when menu indices change
-        // var currentTileInit = _tileIndices is [] 
-        //     ? GLOBALS.Tiles[_tileCategoryIndex][_tileIndex]
-        //     : GLOBALS.Tiles[_tileIndices[_tileCategorySearchIndex].category][_tileIndices[_tileCategorySearchIndex].tiles[_tileSearchIndex]];
-        //
-        // var currentMaterialInit = _materialIndices is [] 
-        //     ? GLOBALS.Materials[_materialCategoryIndex][_materialIndex]
-
         var currentTileInit = GLOBALS.Tiles[_tileCategoryIndex][_tileIndex];
         var currentMaterialInit = GLOBALS.Materials[_materialCategoryIndex][_materialIndex];
 
@@ -1110,6 +1272,8 @@ internal class TileEditorPage : EditorPage
                 if (IsKeyDown(_shortcuts.ResizeMaterialBrush.Key))
                 {
                     _materialBrushRadius += tileWheel > 0 ? 1 : -1;
+
+                    if (_materialBrushRadius < 1) _materialBrushRadius = 1;
                 }
                 else
                 {
@@ -1582,6 +1746,7 @@ internal class TileEditorPage : EditorPage
         }
         if (IsMouseButtonReleased(_shortcuts.Erase.Button) && _eraseClickTracker)
         {
+            GLOBALS.Gram.Proceed(new Gram.GroupAction<TileCell>([.._tempActions]));
             _tempActions.Clear();
                         
             _prevPosX = -1;
@@ -1608,11 +1773,21 @@ internal class TileEditorPage : EditorPage
         {
             if (_materialTileSwitch) ToNextTileCategory(categoriesPageSize);
             else ToNextMaterialCategory(categoriesPageSize);
+
+            if (_tileSpecDisplayMode) 
+                UpdateTileTexturePanel();
+            else 
+                UpdateTileSpecsPanel();
         }
         else if (_shortcuts.MoveToPreviousCategory.Check(ctrl, shift, alt))
         {
             if (_materialTileSwitch) ToPreviousCategory(categoriesPageSize);
             else ToPreviousMaterialCategory(categoriesPageSize);
+            
+            if (_tileSpecDisplayMode) 
+                UpdateTileTexturePanel();
+            else 
+                UpdateTileSpecsPanel();
         }
 
         if (_shortcuts.MoveDown.Check(ctrl, shift, alt))
@@ -1658,6 +1833,11 @@ internal class TileEditorPage : EditorPage
                     if (_materialIndex == 0) _materialScrollIndex = 0;
                 }
             }
+            
+            if (_tileSpecDisplayMode) 
+                UpdateTileTexturePanel();
+            else 
+                UpdateTileSpecsPanel();
         }
 
         if (_shortcuts.MoveUp.Check(ctrl, shift, alt))
@@ -1692,9 +1872,22 @@ internal class TileEditorPage : EditorPage
                     if (_materialIndex == GLOBALS.Materials[_materialCategoryIndex].Length - 1) _materialScrollIndex += GLOBALS.Materials[_materialCategoryIndex].Length - categoriesPageSize;
                 }
             }
+            
+            if (_tileSpecDisplayMode) 
+                UpdateTileTexturePanel();
+            else 
+                UpdateTileSpecsPanel();
         }
 
-        if (_shortcuts.TileMaterialSwitch.Check(ctrl, shift, alt)) _materialTileSwitch = !_materialTileSwitch;
+        if (_shortcuts.TileMaterialSwitch.Check(ctrl, shift, alt))
+        {
+            _materialTileSwitch = !_materialTileSwitch;
+            
+            if (_tileSpecDisplayMode) 
+                UpdateTileTexturePanel();
+            else 
+                UpdateTileSpecsPanel();
+        }
 
         if (_shortcuts.HoveredItemInfo.Check(ctrl, shift, alt)) GLOBALS.Settings.TileEditor.HoveredTileInfo = !GLOBALS.Settings.TileEditor.HoveredTileInfo;
 
@@ -2240,6 +2433,11 @@ internal class TileEditorPage : EditorPage
                                 {
                                     _tileCategoryIndex = categoryIndex;
                                     _tileIndex = 0;
+                                    
+                                    if (_tileSpecDisplayMode) 
+                                        UpdateTileTexturePanel();
+                                    else 
+                                        UpdateTileSpecsPanel();
                                 }
                             }
                         }
@@ -2269,6 +2467,11 @@ internal class TileEditorPage : EditorPage
                                 {
                                     _tileCategorySearchIndex = c;
                                     _tileSearchIndex = 0;
+                                    
+                                    if (_tileSpecDisplayMode) 
+                                        UpdateTileTexturePanel();
+                                    else 
+                                        UpdateTileSpecsPanel();
                                 }
                             }
                         }
@@ -2349,7 +2552,14 @@ internal class TileEditorPage : EditorPage
                                 }
 
 
-                                if (selected) _tileIndex = tileIndex;
+                                if (selected)
+                                {
+                                    _tileIndex = tileIndex;
+                                    if (_tileSpecDisplayMode) 
+                                        UpdateTileTexturePanel();
+                                    else 
+                                        UpdateTileSpecsPanel();
+                                }
                             }
                         }
                         // When searching
@@ -2368,6 +2578,11 @@ internal class TileEditorPage : EditorPage
                                     
                                     _tileCategoryIndex = _tileIndices[_tileCategorySearchIndex].category;
                                     _tileIndex = _tileIndices[_tileCategorySearchIndex].tiles[_tileSearchIndex];
+                                    
+                                    if (_tileSpecDisplayMode) 
+                                        UpdateTileTexturePanel();
+                                    else 
+                                        UpdateTileSpecsPanel();
                                 }
                             }
                         }
@@ -2466,8 +2681,7 @@ internal class TileEditorPage : EditorPage
 
                 if (displayClicked) _tileSpecDisplayMode = !_tileSpecDisplayMode;
                 
-                // rlImGui.ImageRenderTexture(GLOBALS.Textures.TileSpecs);
-                rlImGui.ImageRenderTextureFit(GLOBALS.Textures.TileSpecs);
+                rlImGui.ImageRenderTextureFit(_tileSpecDisplayMode ? _tileTexturePanelRT : _tileSpecsPanelRT);
                 
                 // Idk where to put this
                 ImGui.End();

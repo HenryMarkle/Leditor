@@ -1844,22 +1844,13 @@ internal static class Printers
     /// <param name="init">a reference to the tile definition</param>
     /// <param name="quads">target placement quads</param>
     internal static void DrawTileAsProp(
-        ref Texture2D texture,
-        ref InitTile init,
-        Vector2 position,
-        int depth = 0,
-        int alpha = 255,
-        int scale = 20
+        in Texture2D texture,
+        in InitTile init,
+        in Vector2 position,
+        in int depth = 0,
+        in int alpha = 255
     )
     {
-        var scaledQuads = new PropQuads
-        {
-            TopLeft = (position - Utils.GetTileHeadOrigin(init)) * scale,
-            TopRight = (position + new Vector2(init.Size.Item1, 0) - Utils.GetTileHeadOrigin(init)) * scale,
-            BottomRight = (position + new Vector2(init.Size.Item1, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale,
-            BottomLeft = (position + new Vector2(0, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale
-        };
-        
         var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * 20;
         var calLayerHeight = (float)layerHeight / (float)texture.Height;
         var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * 20;
@@ -1881,7 +1872,7 @@ internal static class Printers
         SetShaderValue(GLOBALS.Shaders.Prop, depthLoc, depth, ShaderUniformDataType.Int);
         SetShaderValue(GLOBALS.Shaders.Prop, alphaLoc, alpha/255f, ShaderUniformDataType.Float);
         
-        DrawTextureQuads(texture, scaledQuads);
+        DrawTextureV(texture, position, Color.White);
         
         EndShaderMode();
     }
@@ -2067,20 +2058,21 @@ internal static class Printers
     
     /// Same as DrawTileAsProp() except it applies a tint to the base texture
     internal static void DrawTileAsPropColored(
-        ref Texture2D texture, 
-        ref InitTile init, 
-        Vector2 position,
-        Color tint,
-        int depth,
-        int scale
+        in Texture2D texture, 
+        in InitTile init, 
+        in Vector2 position,
+        in Vector2 originOffset,
+        in Color tint,
+        in int depth,
+        in int scale
     )
     {
         var scaledQuads = new PropQuads
         {
-            TopLeft = (position - Utils.GetTileHeadOrigin(init)) * scale,
-            TopRight = (position + new Vector2(init.Size.Item1, 0) - Utils.GetTileHeadOrigin(init)) * scale,
-            BottomRight = (position + new Vector2(init.Size.Item1, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale,
-            BottomLeft = (position + new Vector2(0, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale
+            TopLeft = position*scale - originOffset,
+            TopRight = (position + new Vector2(init.Size.Item1, 0) * scale) - originOffset,
+            BottomRight = (position + new Vector2(init.Size.Item1, init.Size.Item2) - originOffset) * scale,
+            BottomLeft = (position + new Vector2(0, init.Size.Item2) - originOffset) * scale
         };
         
         if (init.Type == InitTileType.Box)
@@ -2721,7 +2713,115 @@ internal static class Printers
     /// <param name="origin">the top-left corner to start drawing</param>
     /// <param name="scale">the scale of the drawing</param>
     /// <param name="color">the color of the sprite</param>
-    internal static void DrawTileSpec(int id, Vector2 origin, int scale, Color color)
+    internal static void DrawTileSpec2(int id, Vector2 origin, int scale, Color color)
+    {
+        switch (id)
+        {
+            // air
+            case 0:
+                DrawRectangleLinesEx(
+                    new(origin.X + 10, origin.Y + 10, scale - 20, scale - 20),
+                    2,
+                    color
+                );
+                
+                break;
+
+            // solid
+            case 1:
+                DrawRectangleV(origin, Raymath.Vector2Scale(new(1, 1), scale), color);
+                break;
+
+            // slopes
+            case 2:
+                DrawTriangle(
+                    origin,
+                    new(origin.X, origin.Y + scale),
+                    new(origin.X + scale, origin.Y + scale),
+                    color
+                );
+                break;
+
+            case 3:
+                DrawTriangle(
+                    new(origin.X + scale, origin.Y),
+                    new(origin.X, origin.Y + scale),
+                    new(origin.X + scale, origin.Y + scale),
+                    color
+                );
+                break;
+
+            case 4:
+                DrawTriangle(
+                    origin,
+                    new(origin.X, origin.Y + scale),
+                    new(origin.X + scale, origin.Y),
+                    color
+                );
+                break;
+            case 5:
+                DrawTriangle(
+                    origin,
+                    new(origin.X + scale, origin.Y + scale),
+                    new(origin.X + scale, origin.Y),
+                    color
+                );
+                break;
+
+            // platform
+            case 6:
+                DrawRectangleRec(
+                    new Rectangle(origin.X, origin.Y, scale, scale/2f),
+                    color
+                );
+                break;
+
+            // shortcut entrance
+            case 7:
+                var entryTexture = GLOBALS.Textures.GeoBlocks[6];
+                
+                DrawTexturePro(
+                    entryTexture, 
+                    new(0, 0, entryTexture.Width, entryTexture.Height),
+                    new (origin.X, origin.Y, scale, scale),
+                    new(0, 0),
+                    0,
+                    color
+                );
+                break;
+
+            // glass
+            case 9: 
+                var glassTexture = GLOBALS.Textures.GeoBlocks[7];
+                
+                DrawTexturePro(
+                    glassTexture, 
+                    new(0, 0, glassTexture.Width, glassTexture.Height),
+                    new (origin.X, origin.Y, scale, scale),
+                    new(0, 0),
+                    0,
+                    color
+                );
+                break;
+        }
+    }
+
+    internal static void DrawTriangleLines(in Vector2 v1, in Vector2 v2, in Vector2 v3, float thickness, in Color color)
+    {
+        DrawLineEx(v1, v2, thickness, color);
+        DrawLineEx(v2, v3, thickness, color);
+        DrawLineEx(v3, v1, thickness, color);
+    }
+
+    /// <summary>
+    /// Draws an individual tile geo-spec based on the ID.
+    /// </summary>
+    /// <param name="id">geo-tile ID</param>
+    /// <param name="origin">the top-left corner to start drawing</param>
+    /// <param name="scale">the scale of the drawing</param>
+    /// <param name="color">the color of the sprite</param>
+    /// <param name="thickness">the line thickness</param>
+    internal static void DrawTileSpec(int id, Vector2 origin, int scale, Color color, float thickness = 1)
     {
         switch (id)
         {
@@ -2733,13 +2833,13 @@ internal static class Printers
                 //     color
                 // );
                 
-                DrawCross(origin, new Vector2(scale, scale), 5, color);
+                DrawCross(origin, new Vector2(scale, scale), thickness, color);
                 break;
 
             // solid
             case 1:
                 // DrawRectangleV(origin, Raymath.Vector2Scale(new(1, 1), scale), color);
-                DrawRectangleLinesEx(new Rectangle(origin.X + 10, origin.Y + 10,  scale - 20,  scale - 20), 5, color);
+                DrawRectangleLinesEx(new Rectangle(origin.X, origin.Y,  scale,  scale), thickness, color);
                 break;
 
             // slopes
@@ -2748,32 +2848,37 @@ internal static class Printers
                     origin,
                     new(origin.X, origin.Y + scale),
                     new(origin.X + scale, origin.Y + scale),
+                    thickness,
                     color
                 );
                 break;
 
             case 3:
                 DrawTriangleLines(
-                    new(origin.X + scale, origin.Y),
-                    new(origin.X, origin.Y + scale),
-                    new(origin.X + scale, origin.Y + scale),
+                    new Vector2(origin.X + scale, origin.Y), 
+                    new Vector2(origin.X, origin.Y + scale), 
+                    new Vector2(origin.X + scale, origin.Y + scale), 
+                    thickness, 
                     color
                 );
                 break;
 
             case 4:
                 DrawTriangleLines(
-                    origin,
-                    new(origin.X, origin.Y + scale),
-                    new(origin.X + scale, origin.Y),
+                    origin, 
+                    new Vector2(origin.X , origin.Y + scale), 
+                    new Vector2(origin.X + scale, origin.Y), 
+                    thickness, 
                     color
                 );
                 break;
+            
             case 5:
                 DrawTriangleLines(
                     origin,
-                    new(origin.X + scale, origin.Y + scale),
-                    new(origin.X + scale, origin.Y),
+                    new Vector2(origin.X + scale, origin.Y + scale),
+                    new Vector2(origin.X + scale, origin.Y),
+                    thickness,
                     color
                 );
                 break;
@@ -2781,8 +2886,8 @@ internal static class Printers
             // platform
             case 6:
                 DrawRectangleLinesEx(
-                    new Rectangle(origin.X + 10, origin.Y + 10, scale - 20, scale/2f - 20),
-                    5,
+                    new Rectangle(origin.X, origin.Y, scale, scale/2f),
+                    thickness,
                     color
                 );
                 break;

@@ -897,6 +897,8 @@ public class MouseShortcut(MouseButton button, bool? ctrl = null, bool? shift = 
         MouseButton.Left => "Left",
         MouseButton.Middle => "Middle",
         MouseButton.Right => "Right",
+        MouseButton.Side => "Side",
+        MouseButton.Back => "Back",
         _ => "UNKNOWN"
     };
     
@@ -944,7 +946,9 @@ public class GeneralSettings(
     bool globalCamera = true,
     bool shortcutWindow = true,
     bool darkTheme = false,
-    bool cacheRendererRuntime = false
+    bool cacheRendererRuntime = false,
+    bool linearZooming = false,
+    float defaultZoom = 1
     )
 {
     public bool DeveloperMode { get; set; } = developerMode;
@@ -953,6 +957,8 @@ public class GeneralSettings(
     public bool ShortcutWindow { get; set; } = shortcutWindow;
     public bool DarkTheme { get; set; } = darkTheme;
     public bool CacheRendererRuntime { get; set; } = cacheRendererRuntime;
+    public bool LinearZooming { get; set; } = linearZooming;
+    public float DefaultZoom { get; set; } = defaultZoom;
 }
 
 public class Settings

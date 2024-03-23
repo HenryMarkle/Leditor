@@ -462,7 +462,7 @@ class Program
 
         logger.Information("Initializing data");
 
-        const string version = "Henry's Leditor v0.9.51";
+        const string version = "Henry's Leditor v0.9.52";
         const string raylibVersion = "Raylib v5.0.0";
         
         logger.Information(version);
@@ -475,6 +475,14 @@ class Program
         try
         {
             (GLOBALS.TileCategories, GLOBALS.Tiles) = LoadTileInitFromRenderer();
+
+            // foreach (var c in GLOBALS.Tiles)
+            // {
+            //     foreach (var t in c)
+            //     {
+            //         if (t.Name == "3DBrick Slope SW") Console.WriteLine($"Imported Tile: {t.Name}");
+            //     }
+            // }
         }
         catch (Exception e)
         {
@@ -511,13 +519,14 @@ class Program
         
         logger.Debug("Loading custom tiles");
 
-        // List<string> tileInitLoadDirs = [GLOBALS.Paths.TilesAssetsDirectory];
         var tilePackagesTask = Task.FromResult<TileInitLoadInfo[]>([]);
         (string name, Color color)[] loadedPackageTileCategories = [];
         InitTile[][] loadedPackageTiles = [];
         
         if (Directory.Exists(GLOBALS.Paths.TilePackagesDirectory))
         {
+            logger.Debug("Loading pack tiles");
+            
             try
             {
                 tilePackagesTask = LoadTileInitPackages();
@@ -531,8 +540,6 @@ class Program
                     loadedPackageTileCategories = packages.SelectMany(p => p.Categories).ToArray();
                     
                     loadedPackageTiles = packages.SelectMany(p => p.Tiles).ToArray();
-
-                    // tileInitLoadDirs = [..tileInitLoadDirs, ..packages.Select(p => p.LoadDirectory)];
                 }
             }
             catch (Exception e)
@@ -540,13 +547,6 @@ class Program
                 logger.Error($"Failed to load tile packages: {e}"); 
             }
         }
-        
-        // MERGE TILES
-        
-        logger.Debug("Merging custom tiles");
-        
-        GLOBALS.TileCategories = [..GLOBALS.TileCategories, ..loadedPackageTileCategories];
-        GLOBALS.Tiles = [..GLOBALS.Tiles, ..loadedPackageTiles];
         
         // Load Tile Textures
 
@@ -601,13 +601,20 @@ class Program
             })
             .ToArray();
         
-        // 2. Load the images
+        // 2. MERGE TILES
+        
+        logger.Debug("Merging custom tiles");
+        
+        GLOBALS.TileCategories = [..GLOBALS.TileCategories, ..loadedPackageTileCategories];
+        GLOBALS.Tiles = [..GLOBALS.Tiles, ..loadedPackageTiles];
+        
+        // 3. Load the images
 
         var loadTileImagesTask = tileTextures.PrepareFromPathsAsync([..tileImagePaths, ..packTileImagePaths]);
         var loadPropImagesTask = propTextures.PrepareFromPathsAsync(ropePropImagePaths, longPropImagePaths, otherPropImagePaths);
         var loadLightImagesTask = lightTextures.PrepareFromPathsAsync(lightImagePaths);
         
-        // 3. Await loading in later stages
+        // 4. Await loading in later stages
         
         //
 
@@ -620,7 +627,7 @@ class Program
         
         #if DEBUG
         // TODO: Change this
-        SetTraceLogLevel(TraceLogLevel.Error);
+        SetTraceLogLevel(TraceLogLevel.Info);
         #else
         SetTraceLogLevel(TraceLogLevel.Error);
         #endif
@@ -750,7 +757,7 @@ class Program
 
         SetTargetFPS(GLOBALS.Settings.Misc.FPS);
 
-        GLOBALS.Camera = new Camera2D { Zoom = 1f };
+        GLOBALS.Camera = new Camera2D { Zoom = GLOBALS.Settings.GeneralSettings.DefaultZoom };
 
         float initialFrames = 0;
 
@@ -1468,6 +1475,11 @@ class Program
         UnloadShader(GLOBALS.Shaders.ColoredTileProp);
         UnloadShader(GLOBALS.Shaders.ColoredBoxTileProp);
         UnloadShader(GLOBALS.Shaders.LongProp);
+        
+        // Unloading Pages
+        logger.Debug("Unloading Pages");
+        
+        tilePage.Dispose();
 
         // unloadTileImages?.Wait();
         

@@ -1081,7 +1081,7 @@ internal class ExperimentalGeometryPage : EditorPage
                                 3 => GeoMenuCategory4ToStackableId[_geoMenuIndex]
                             };
                             
-                            if (_geoMenuCategory == 0) Printers.DrawTileSpec(id, new Vector2(matrixX+1, matrixY+1)*scale, 40, Color.White with { A = 100 });
+                            if (_geoMenuCategory == 0) Printers.DrawTileSpec2(id, new Vector2(matrixX+1, matrixY+1)*scale, 40, Color.White with { A = 100 });
                             else
                             {
                                 if (id == 4)
