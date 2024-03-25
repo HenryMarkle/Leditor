@@ -577,16 +577,14 @@ internal class EffectsEditorPage : EditorPage
                     Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
                     Printers.DrawTileLayer(1, GLOBALS.Scale, false, true, true);
                     
-                    if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
+                    if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel > -1)
                     {
                         DrawRectangle(
                             (-1) * GLOBALS.Scale,
-                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
+                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                             (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                            GLOBALS.Level.WaterLevel * GLOBALS.Scale,
-                            GLOBALS.Settings.GeneralSettings.DarkTheme 
-                                ? GLOBALS.DarkThemeWaterColor 
-                                : GLOBALS.LightThemeWaterColor
+                            (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
+                            new Color(0, 0, 255, 110)
                         );
                     }
                     

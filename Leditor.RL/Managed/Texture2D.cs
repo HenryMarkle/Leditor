@@ -36,6 +36,11 @@ public sealed class Texture2D : IDisposable
         Raw = Raylib.LoadTextureFromImage(image);
     }
 
+    public unsafe void Update(Image image)
+    {
+        Raylib.UpdateTexture(Raw, image.Raw.Data);
+    }
+
     public static implicit operator Raylib_cs.Texture2D(Texture2D t) => t.Raw;
 
     private void Dispose(bool fromConsumer)

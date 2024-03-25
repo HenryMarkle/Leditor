@@ -886,9 +886,9 @@ internal class ExperimentalGeometryPage : EditorPage
                 {
                     DrawRectangle(
                         0,
-                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                         GLOBALS.Level.Width*GLOBALS.Scale,
-                        GLOBALS.Level.WaterLevel*GLOBALS.Scale,
+                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                         GLOBALS.Settings.GeometryEditor.WaterColor
                     );
                 }
@@ -1674,6 +1674,11 @@ internal class ExperimentalGeometryPage : EditorPage
                 ImGui.Checkbox("Paste Air", ref pasteAir);
                 if (pasteAir != GLOBALS.Settings.GeometryEditor.PasteAir)
                     GLOBALS.Settings.GeometryEditor.PasteAir = pasteAir;
+
+                var geoIndicator = GLOBALS.Settings.GeometryEditor.ShowCurrentGeoIndicator;
+                ImGui.Checkbox("Geo Indicator", ref geoIndicator);
+                if (GLOBALS.Settings.GeometryEditor.ShowCurrentGeoIndicator != geoIndicator)
+                    GLOBALS.Settings.GeometryEditor.ShowCurrentGeoIndicator = geoIndicator;
                 
                 ImGui.End();
             }

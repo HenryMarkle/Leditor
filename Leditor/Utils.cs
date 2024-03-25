@@ -52,6 +52,14 @@ internal static class Utils
     
     internal static Rectangle CameraCriticalRectangle(Vector2 origin) => 
         new(origin.X + 190, origin.Y + 20, 51*20, 40*20 - 40);
+
+    internal static void AppendRecentProjectPath(string path)
+    {
+        GLOBALS.RecentProjects.AddLast((path, Path.GetFileNameWithoutExtension(path)));
+        
+        if (GLOBALS.RecentProjects.Count > GLOBALS.RecentProjectsLimit)
+            GLOBALS.RecentProjects.RemoveFirst();
+    }
     
     internal static async Task<string> GetFilePathAsync()
     {

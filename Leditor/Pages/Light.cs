@@ -331,9 +331,9 @@ internal class LightEditorPage : EditorPage
                 {
                     DrawRectangle(
                         (-1) * GLOBALS.Scale + 300,
-                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale + 300,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale + 300,
                         (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                        GLOBALS.Level.WaterLevel * GLOBALS.Scale,
+                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                         new(0, 0, 255, 255)
                     );
                 }
@@ -344,11 +344,11 @@ internal class LightEditorPage : EditorPage
                 if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                 {
                     DrawRectangle(
-                        (-1) * GLOBALS.Scale,
-                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale + 300,
-                        (GLOBALS.Level.Width + 2) * GLOBALS.Scale + 300,
-                        GLOBALS.Level.WaterLevel * GLOBALS.Scale,
-                        new(0, 0, 255, 110)
+                        (-1) * GLOBALS.Scale + 300,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale + 300,
+                        (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
+                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
+                        new(0, 0, 255, 255)
                     );
                 }
                 

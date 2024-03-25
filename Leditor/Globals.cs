@@ -101,6 +101,8 @@ internal static class GLOBALS
         internal static string IconPath => Path.Combine(AssetsDirectory, "other", "icon.png");
         internal static string SplashScreenPath => Path.Combine(AssetsDirectory, "other", "splashscreen.png");
 
+        internal static string RecentProjectsPath => Path.Combine(CacheDirectory, "recentProjects.txt");
+
 
 
         private static IEnumerable<string> EssentialDirectories =>
@@ -165,12 +167,15 @@ internal static class GLOBALS
 
     /// ResizeFlag and NewFlag are used when moving to page 6 (dimensions page)
     /// to indicate whether you want to resize the levels or override it.
-    internal static bool ResizeFlag { get; set; } = false;
-    internal static bool NewFlag { get; set; } = false;
+    internal static bool ResizeFlag { get; set; }
+    internal static bool NewFlag { get; set; }
     //
 
     /// Current working layer
-    internal static int Layer { get; set; } = 0;
+    internal static int Layer { get; set; }
+
+    internal static int RecentProjectsLimit { get; set; } = 10;
+    internal static LinkedList<(string path, string name)> RecentProjects { get; set; } = [];
     
 
     /// The current loaded level

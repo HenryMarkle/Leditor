@@ -1273,7 +1273,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 {
                     _materialBrushRadius += tileWheel > 0 ? 1 : -1;
 
-                    if (_materialBrushRadius < 1) _materialBrushRadius = 1;
+                    if (_materialBrushRadius < 0) _materialBrushRadius = 0;
                 }
                 else
                 {

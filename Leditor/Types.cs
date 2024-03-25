@@ -190,6 +190,10 @@ public sealed class LevelState
         
         // Props
         Props = [];
+
+        WaterLevel = -1;
+        WaterAtFront = false;
+        Seed = new Random().Next(10000);
     }
 
     internal void Resize(

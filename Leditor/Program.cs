@@ -9,6 +9,7 @@ using Leditor.Serialization;
 using System.Text.Json;
 using Serilog;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using Drizzle.Lingo.Runtime;
 using Drizzle.Logic;
@@ -462,11 +463,30 @@ class Program
 
         logger.Information("Initializing data");
 
-        const string version = "Henry's Leditor v0.9.52";
+        const string version = "Henry's Leditor v0.9.53";
         const string raylibVersion = "Raylib v5.0.0";
         
         logger.Information(version);
         logger.Information(raylibVersion);
+        
+        // Load Cache
+
+        var loadRecentProjectsTask = Task.Factory.StartNew(() =>
+        {
+            if (!File.Exists(GLOBALS.Paths.RecentProjectsPath)) return;
+            
+            var lines = File.ReadAllLines(GLOBALS.Paths.RecentProjectsPath);
+
+            foreach (var path in lines)
+            {
+                GLOBALS.RecentProjects.AddLast((path, Path.GetFileNameWithoutExtension(path)));
+                
+                if (GLOBALS.RecentProjects.Count > GLOBALS.RecentProjectsLimit) 
+                    GLOBALS.RecentProjects.RemoveFirst();
+            }
+        });
+
+        var allCacheTasks = Task.WhenAll([loadRecentProjectsTask]);
         
         // Load tiles and props
 
@@ -475,14 +495,6 @@ class Program
         try
         {
             (GLOBALS.TileCategories, GLOBALS.Tiles) = LoadTileInitFromRenderer();
-
-            // foreach (var c in GLOBALS.Tiles)
-            // {
-            //     foreach (var t in c)
-            //     {
-            //         if (t.Name == "3DBrick Slope SW") Console.WriteLine($"Imported Tile: {t.Name}");
-            //     }
-            // }
         }
         catch (Exception e)
         {
@@ -814,8 +826,7 @@ class Program
         LingoRuntime.CastPath = Path.Combine(LingoRuntime.MovieBasePath, "Cast");
         
         //
-        Task lingoRuntimeInitTask = default!;
-        bool isLingoRuntimeInit = false;
+        var isLingoRuntimeInit = false;
         //
         
         logger.Information("Initializing events");
@@ -1073,6 +1084,35 @@ class Program
 
                     isLoadingTexturesDone = true;
                 }
+                else if (!allCacheTasks.IsCompleted)
+                {
+                    var width = GetScreenWidth();
+                    var height = GetScreenHeight();
+
+                    BeginDrawing();
+                    ClearBackground(new(0, 0, 0, 255));
+
+                    DrawTexturePro(
+                        GLOBALS.Textures.SplashScreen,
+                        new(0, 0, GLOBALS.Textures.SplashScreen.Width, GLOBALS.Textures.SplashScreen.Height),
+                        new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
+                        new(0, 0),
+                        0,
+                        new(255, 255, 255, 255)
+                    );
+
+                    DrawText(version, 700, 50, 15, Color.White);
+                    DrawText(raylibVersion, 700, 70, 15, Color.White);
+                        
+                    if (GLOBALS.Font is null)
+                        DrawText("Loading cache", 100, height - 120, 20, Color.White);
+                    else
+                        DrawTextEx(GLOBALS.Font.Value, "Loading cache", new Vector2(100, height - 120), 20, 1, Color.White);
+
+                    EndDrawing();
+                    
+                    continue;
+                }
                 // Initialize Renderer Runtime
                 else if (GLOBALS.Settings.GeneralSettings.CacheRendererRuntime)
                 {
@@ -1116,9 +1156,9 @@ class Program
                         continue;
                     }
                     
-                    if (!lingoRuntimeInitTask.IsCompletedSuccessfully)
+                    if (!GLOBALS.LingoRuntimeInitTask.IsCompletedSuccessfully)
                     {
-                        var faulted = lingoRuntimeInitTask.IsFaulted;
+                        var faulted = GLOBALS.LingoRuntimeInitTask.IsFaulted;
                         
                         var width = GetScreenWidth();
                         var height = GetScreenHeight();
@@ -1149,7 +1189,7 @@ class Program
                     
                         if (faulted)
                         {
-                            Console.WriteLine(lingoRuntimeInitTask.Exception);
+                            Console.WriteLine(GLOBALS.LingoRuntimeInitTask.Exception);
                             break;
                         }
                         continue;
@@ -1486,6 +1526,15 @@ class Program
         //
         rlImGui.Shutdown();
         //
+
+        {
+            StringBuilder builder = new();
+
+            foreach (var (path, _) in GLOBALS.RecentProjects)
+                builder.AppendLine(path);
+            
+            File.WriteAllText(GLOBALS.Paths.RecentProjectsPath, builder.ToString());
+        }
 
         CloseWindow();
 

@@ -37,13 +37,13 @@
   <ItemGroup>
     
     <Reference Include="Drizzle.Lingo.Runtime">
-      <HintPath>..\Drizzle\Drizzle.Lingo.Runtime\obj\Debug\net8.0\Drizzle.Lingo.Runtime.dll</HintPath>
+      <HintPath>..\Drizzle\Drizzle.Lingo.Runtime\obj\Release\net8.0\Drizzle.Lingo.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Drizzle.Logic">
-      <HintPath>..\Drizzle\Drizzle.Logic\obj\Debug\net8.0\Drizzle.Logic.dll</HintPath>
+      <HintPath>..\Drizzle\Drizzle.Logic\obj\Release\net8.0\Drizzle.Logic.dll</HintPath>
     </Reference>
     <Reference Include="Drizzle.Ported">
-      <HintPath>..\Drizzle\Drizzle.Ported\obj\Debug\net8.0\Drizzle.Ported.dll</HintPath>
+      <HintPath>..\Drizzle\Drizzle.Ported\obj\Release\net8.0\Drizzle.Ported.dll</HintPath>
     </Reference>
   </ItemGroup>
 

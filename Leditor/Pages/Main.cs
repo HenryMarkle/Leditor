@@ -556,6 +556,8 @@ internal class MainPage : EditorPage
                             return;
                         }
                         
+                        Utils.AppendRecentProjectPath(_openFileDialog.Result);
+                        
                         // Validate if tiles are defined in Init.txt
                         if (GLOBALS.TileCheck is null)
                         {
@@ -722,13 +724,13 @@ internal class MainPage : EditorPage
                     Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : Color.Black with { A = 150 });
                     Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : Color.Black with { A = 150 });
                     
-                    if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
+                    if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel > -1)
                     {
                         DrawRectangle(
                             (-1) * GLOBALS.Scale,
-                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
+                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                             (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                            GLOBALS.Level.WaterLevel * GLOBALS.Scale,
+                            (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                             GLOBALS.Settings.GeneralSettings.DarkTheme 
                                 ? GLOBALS.DarkThemeWaterColor 
                                 : GLOBALS.LightThemeWaterColor
@@ -741,9 +743,9 @@ internal class MainPage : EditorPage
                     {
                         DrawRectangle(
                             (-1) * GLOBALS.Scale,
-                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
+                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                             (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                            GLOBALS.Level.WaterLevel * GLOBALS.Scale,
+                            (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                             GLOBALS.Settings.GeneralSettings.DarkTheme 
                                 ? GLOBALS.DarkThemeWaterColor 
                                 : GLOBALS.LightThemeWaterColor
@@ -795,6 +797,8 @@ internal class MainPage : EditorPage
 
                 if (ImGui.Begin("Options##MainMenu"))
                 {
+                    var availableSpace = ImGui.GetContentRegionAvail();
+                    
                     ImGui.Text($"{GLOBALS.Level.ProjectName}");
                     
                     ImGui.SameLine();
@@ -840,14 +844,14 @@ internal class MainPage : EditorPage
                     
                     // Buttons
 
-                    var saveSelected = ImGui.Button("Save");
-                    var saveAsSelected = ImGui.Button("Save as..");
-                    var loadSelected = ImGui.Button("Load Project..");
-                    var newSelected = ImGui.Button("New Project");
+                    var saveSelected = ImGui.Button("Save", availableSpace with { Y = 20 });
+                    var saveAsSelected = ImGui.Button("Save as..", availableSpace with { Y = 20 });
+                    var loadSelected = ImGui.Button("Load Project..", availableSpace with { Y = 20 });
+                    var newSelected = ImGui.Button("New Project", availableSpace with { Y = 20 });
 
                     if (true)
                     {
-                        var renderSelected = ImGui.Button("RENDER");
+                        var renderSelected = ImGui.Button("RENDER", availableSpace with { Y = 20 });
                         
                         if (renderSelected)
                         {
@@ -899,6 +903,30 @@ internal class MainPage : EditorPage
                     {
                         GLOBALS.NewFlag = true;
                         GLOBALS.Page = 6;
+                    }
+                    ImGui.End();
+                }
+
+                if (ImGui.Begin("Recently Opened Projects##MainRecentProjects"))
+                {
+                    var availableSpace = ImGui.GetContentRegionAvail();
+                    
+                    if (ImGui.BeginListBox("##RecentProjectsList", availableSpace))
+                    {
+                        var counter = 0;
+                        
+                        foreach (var (path, name) in GLOBALS.RecentProjects)
+                        {
+                            counter++;
+                            
+                            var selected = ImGui.Selectable($"{counter}. {name}");
+
+                            if (selected)
+                            {
+                                // TODO: Load Project Protocol
+                            }
+                        }
+                        ImGui.EndListBox();
                     }
                     ImGui.End();
                 }

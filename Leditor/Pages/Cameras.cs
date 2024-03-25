@@ -156,23 +156,23 @@ internal class CamerasEditorPage : EditorPage
                 {
                     DrawRectangle(
                         (-1) * GLOBALS.Scale,
-                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                         (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                        GLOBALS.Level.WaterLevel * GLOBALS.Scale,
-                        new(0, 0, 255, 110)
+                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
+                        new Color(0, 0, 255, 110)
                     );
                 }
                     
                 Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.Black);
 
-                if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
+                if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel > -1)
                 {
                     DrawRectangle(
                         (-1) * GLOBALS.Scale,
-                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                         (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                        GLOBALS.Level.WaterLevel * GLOBALS.Scale,
-                        new(0, 0, 255, 110)
+                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
+                        new Color(0, 0, 255, 110)
                     );
                 }
 

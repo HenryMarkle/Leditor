@@ -5,59 +5,14 @@ using rlImGui_cs;
 using RenderState = Leditor.Renderer.DrizzleRender.RenderState;
 namespace Leditor.Renderer;
 
-internal class Camera
-{
-    // camera size is 70x39 tiles
-    // camera red border is 52.5x35
-    // left black inner border is 1 tile away
-    // game resolution is 1040x800 
-    // render scales up pixels by 1.25 (each tile is 16 pixels) (me smort. i was already aware tiles were 20 px large)
-    // quad save format: [A, O]
-    //  A: clockwise angle in degrees, where 0 is up
-    //  O: offset number from 0 to 1 (1.0 translate to 4 tiles) 
-    // corner order is: TL, TR, BR, BL
-    public Vector2 Position;
-    public float[] CornerOffsets = new float[4];
-    public float[] CornerAngles = new float[4];
-
-    public readonly static Vector2 WidescreenSize = new(70f, 40f);
-    public readonly static Vector2 StandardSize = new(52.5f, 40f);
-
-    public Camera(Vector2 position)
-    {
-        Position = position;
-    }
-
-    public Camera() : this(new(1f, 1f))
-    {}
-
-
-    public Vector2 GetCornerOffset(int cornerIndex)
-    {
-        return new Vector2(
-            MathF.Sin(CornerAngles[cornerIndex]),
-            -MathF.Cos(CornerAngles[cornerIndex])
-        ) * CornerOffsets[cornerIndex] * 4f;
-    }
-
-    public Vector2 GetCornerPosition(int cornerIndex, bool offset)
-    {
-        int x = (cornerIndex == 1 || cornerIndex == 2) ? 1 : 0;
-        int y = (cornerIndex & 2) >> 1;
-        
-        return offset ?
-            Position + new Vector2(WidescreenSize.X * x, WidescreenSize.Y * y) + GetCornerOffset(cornerIndex)
-            :
-            Position + new Vector2(WidescreenSize.X * x, WidescreenSize.Y * y);
-    }
-}
-
 class DrizzleRenderWindow : IDisposable
 {
     public readonly DrizzleRender? drizzleRenderer;
     private bool isOpen = false;
-    private readonly Texture2D[]? previewTextures = null;
-    private readonly RenderTexture2D previewComposite;
+    private readonly RL.Managed.Texture2D?[]? previewLayers = null;
+    private RL.Managed.Texture2D? previewBlackout1 = null;
+    private RL.Managed.Texture2D? previewBlackout2 = null;
+    private readonly RL.Managed.RenderTexture2D previewComposite;
     private bool needUpdateTextures = false;
 
     private const string LayerPreviewShaderSource = @"
@@ -78,13 +33,38 @@ class DrizzleRenderWindow : IDisposable
             vec3 correctColor = texelColor.bgr;
             
             finalColor = vec4(
-                mix(correctColor, vec3(1.0, 1.0, 1.0), fragColor.r * 0.8),
+                mix(correctColor, vec3(1.0), fragColor.r * 0.8),
                 1.0 - float(isWhite)
             ) * colDiffuse;
         }    
     ";
 
-    private Shader layerPreviewShader;
+    private const string LayerPreviewLightShaderSource = @"
+        #version 330
+
+        in vec2 fragTexCoord;
+        in vec4 fragColor;
+
+        uniform sampler2D texture0;
+        uniform vec4 colDiffuse;
+
+        out vec4 finalColor;
+
+        void main()
+        {
+            vec4 texelColor = texture(texture0, fragTexCoord);
+            bool isWhite = texelColor.r == 1.0 && texelColor.g == 1.0 && texelColor.b == 1.0;
+            vec3 correctColor = texelColor.bgr;
+            
+            finalColor = vec4(
+                vec3(1.0, 0.0, 0.0),
+                1.0 - float(isWhite)
+            ) * colDiffuse;
+        }    
+    ";
+
+    private RL.Managed.Shader layerPreviewShader;
+    private RL.Managed.Shader layerPreviewLightShader;
 
     public DrizzleRenderWindow()
     {
@@ -96,24 +76,17 @@ class DrizzleRenderWindow : IDisposable
                 needUpdateTextures = true;
             };
 
-            previewTextures = new Texture2D[30];
-
-            for (int i = 0; i < 30; i++)
-            {
-                previewTextures[i] = Raylib.LoadTextureFromImage(drizzleRenderer.RenderLayerPreviews[i]);
-            }
+            previewLayers = new RL.Managed.Texture2D[30];
         }
         catch (Exception e)
         {
-            // TODO: report the problem
+            // RainEd.Logger.Error("Error occured when initializing render:\n{ErrorMessage}", e);
         }
 
-        layerPreviewShader = Raylib.LoadShaderFromMemory(null, LayerPreviewShaderSource);
+        layerPreviewShader = new RL.Managed.Shader(Raylib.LoadShaderFromMemory(null, LayerPreviewShaderSource));
+        layerPreviewLightShader = new RL.Managed.Shader(Raylib.LoadShaderFromMemory(null, LayerPreviewLightShaderSource));
 
-        previewComposite = Raylib.LoadRenderTexture(
-            (int)Camera.WidescreenSize.X * 20,
-            (int)Camera.WidescreenSize.Y * 20
-        );
+        previewComposite = new RL.Managed.RenderTexture2D(70 * 20, 40 * 20);
 
         Raylib.BeginTextureMode(previewComposite);
         Raylib.ClearBackground(Color.White);
@@ -123,20 +96,119 @@ class DrizzleRenderWindow : IDisposable
     public void Dispose()
     {
         drizzleRenderer?.Dispose();
-        
-        Raylib.UnloadRenderTexture(previewComposite);
+        previewComposite.Dispose();
 
-        if (previewTextures is not null)
+        if (previewLayers is not null)
         {
-            for (var i = 0; i < previewTextures.Length; i++)
+            for (int i = 0; i < previewLayers.Length; i++)
             {
-                // previewTextures[i].Dispose();
-                
-                Raylib.UnloadTexture(previewTextures[i]);
+                previewLayers[i]?.Dispose();
             }
         }
 
-        Raylib.UnloadShader(layerPreviewShader);
+        previewBlackout1?.Dispose();
+        previewBlackout2?.Dispose();
+
+        layerPreviewShader.Dispose();
+        layerPreviewLightShader.Dispose();
+    }
+
+    private void ShowControlButtons(ref bool doClose)
+    {
+        bool cancelDisabled = true;
+        bool closeDisabled = false;
+        bool revealDisabled = true;
+
+        if (drizzleRenderer is not null)
+        {
+            // yes i know this code is a bit iffy
+            cancelDisabled =
+                drizzleRenderer.State == RenderState.Cancelling ||
+                drizzleRenderer.State == RenderState.Errored || drizzleRenderer.IsDone;
+            
+            closeDisabled = !drizzleRenderer.IsDone && drizzleRenderer.State != RenderState.Errored;
+            revealDisabled = !drizzleRenderer.IsDone || drizzleRenderer.State == RenderState.Canceled;
+        }
+
+        // cancel button (disabled if cancelling/canceled)
+        if (cancelDisabled)
+            ImGui.BeginDisabled();
+        
+        if (ImGui.Button("Cancel"))
+            drizzleRenderer?.Cancel();
+        
+        if (cancelDisabled)
+            ImGui.EndDisabled();
+
+        // close button (disabled if render process is not done)
+        if (closeDisabled)
+            ImGui.BeginDisabled();
+        
+        ImGui.SameLine();
+        if (ImGui.Button("Close"))
+        {
+            doClose = true;
+            ImGui.CloseCurrentPopup();
+        }
+
+        if (closeDisabled)
+            ImGui.EndDisabled();
+
+        // show in file browser button
+        if (revealDisabled)
+            ImGui.BeginDisabled();
+        
+        // ImGui.SameLine();
+        // if (ImGui.Button("Show In File Browser"))
+        //     RainEd.Instance.ShowPathInSystemBrowser(Path.Combine(
+        //         RainEd.Instance.AssetDataPath,
+        //         "Levels",
+        //         Path.GetFileNameWithoutExtension(RainEd.Instance.CurrentFilePath) + ".txt"
+        //     ), true);
+        
+        if (revealDisabled)
+            ImGui.EndDisabled();
+    }
+
+    private void ShowStatusText()
+    {
+        // status sidebar
+        if (drizzleRenderer is null || drizzleRenderer.State == RenderState.Errored)
+        {
+            ImGui.Text("An error occured!\nCheck the logs for more info.");
+        }
+        else if (drizzleRenderer.State == RenderState.Cancelling)
+        {
+            ImGui.Text("Cancelling...");
+        }
+        else if (drizzleRenderer.State == RenderState.Canceled)
+        {
+            ImGui.Text("Canceled");
+        }
+        else if (drizzleRenderer.State == RenderState.Errored)
+        {
+        }
+        else
+        {
+            if (drizzleRenderer.State == RenderState.Finished)
+            {
+                ImGui.Text("Done!");
+            }
+            else if (drizzleRenderer.State == RenderState.Initializing)
+            {
+                ImGui.Text("Initializing Zygote runtime...");
+            }
+            else if (drizzleRenderer.State == RenderState.Loading)
+            {
+                ImGui.Text("Loading level...");
+            }
+            else
+            {
+                ImGui.Text($"Rendering {drizzleRenderer.CamerasDone+1} of {drizzleRenderer.CameraCount} cameras...");
+            }
+
+            ImGui.TextUnformatted(drizzleRenderer.DisplayString);
+        }
     }
 
     public bool DrawWindow()
@@ -151,131 +223,67 @@ class DrizzleRenderWindow : IDisposable
 
         drizzleRenderer?.Update();
 
-        if (ImGui.BeginPopupModal("Render"))
+        ImGuiExt.CenterNextWindow(ImGuiCond.Appearing);
+        ImGui.SetNextWindowSizeConstraints(new Vector2(0f, ImGui.GetTextLineHeight() * 30.0f), Vector2.One * 9999f);
+        if (ImGuiExt.BeginPopupModal("Render", ImGuiWindowFlags.AlwaysAutoResize))
         {
-            bool cancelDisabled = true;
-            bool closeDisabled = false;
-            bool revealDisabled = true;
+            bool isPreviewEnabled = drizzleRenderer!.PreviewImages is not null;
             float renderProgress = 0f;
 
             if (drizzleRenderer is not null)
-            {
-                // yes i know this code is a bit iffy
-                cancelDisabled =
-                    drizzleRenderer.State == RenderState.Cancelling ||
-                    drizzleRenderer.State == RenderState.Errored || drizzleRenderer.IsDone;
-                
-                closeDisabled = !drizzleRenderer.IsDone && drizzleRenderer.State != RenderState.Errored;
-                revealDisabled = !drizzleRenderer.IsDone || drizzleRenderer.State == RenderState.Canceled;
                 renderProgress = drizzleRenderer.RenderProgress;
-            }
 
-            // cancel button (disabled if cancelling/canceled)
-            if (cancelDisabled)
-                ImGui.BeginDisabled();
-            
-            if (ImGui.Button("Cancel"))
-                drizzleRenderer?.Cancel();
-            
-            if (cancelDisabled)
-                ImGui.EndDisabled();
-
-            // close button (disabled if render process is not done)
-            if (closeDisabled)
-                ImGui.BeginDisabled();
-            
-            ImGui.SameLine();
-            if (ImGui.Button("Close"))
+            // if preview is enabled, show the progress bar above the preview image
+            // otherwise show it below the button line and above the status text
+            if (isPreviewEnabled)
             {
-                doClose = true;
-                ImGui.CloseCurrentPopup();
-            }
+                ImGui.BeginGroup();
+                ShowControlButtons(ref doClose);
+                ShowStatusText();
+                ImGui.EndGroup();
 
-            if (closeDisabled)
-                ImGui.EndDisabled();
-
-            // show in file browser button
-            if (revealDisabled)
-                ImGui.BeginDisabled();
-            
-            ImGui.SameLine();
-            // if (ImGui.Button("Show In File Browser"))
-            //     RainEd.Instance.ShowPathInSystemBrowser(Path.Combine(
-            //         Boot.AppDataPath,
-            //         "Data", "Levels",
-            //         Path.GetFileNameWithoutExtension(RainEd.Instance.CurrentFilePath) + ".txt"
-            //     ), true);
-            
-            if (revealDisabled)
-                ImGui.EndDisabled();
-            
-            ImGui.SameLine();
-            ImGui.ProgressBar(renderProgress, new Vector2(-1.0f, 0.0f));
-
-            // status sidebar
-            if (ImGui.BeginChild("##status", new Vector2(ImGui.GetTextLineHeight() * 20.0f, ImGui.GetContentRegionAvail().Y)))
-            {
-                if (drizzleRenderer is null || drizzleRenderer.State == RenderState.Errored)
-                {
-                    ImGui.Text("An error occured!\nCheck the logs for more info.");
-                }
-                else if (drizzleRenderer.State == RenderState.Cancelling)
-                {
-                    ImGui.Text("Cancelling...");
-                }
-                else if (drizzleRenderer.State == RenderState.Canceled)
-                {
-                    ImGui.Text("Canceled");
-                }
-                else if (drizzleRenderer.State == RenderState.Errored)
-                {
-                }
-                else
-                {
-                    if (drizzleRenderer.State == RenderState.Finished)
-                    {
-                        ImGui.Text("Done!");
-                    }
-                    else if (drizzleRenderer.State == RenderState.Initializing)
-                    {
-                        ImGui.Text("Initializing Zygote runtime...");
-                    }
-                    else
-                    {
-                        ImGui.Text($"Rendering {drizzleRenderer.CamerasDone+1} of {drizzleRenderer.CameraCount} cameras...");
-                    }
-
-                    ImGui.TextUnformatted(drizzleRenderer.DisplayString);
-                }
-            } ImGui.EndChild();
-
-            // preview image
-            ImGui.SameLine();
-
-            if (needUpdateTextures && previewTextures is not null)
-            {
-                needUpdateTextures = false;
-
-                for (int i = 0; i < 30; i++)
-                {
-                    // drizzleRenderer!.RenderLayerPreviews[i].UpdateTexture(previewTextures[i]);
-
-                    unsafe
-                    {
-                        Raylib.UpdateTexture(previewTextures[i], drizzleRenderer!.RenderLayerPreviews[i].Data);
-                    }
-                }
+                ImGui.SameLine();
+                ImGui.BeginGroup();
+                ImGui.ProgressBar(renderProgress, new Vector2(-0.000001f, 0.0f));
                 
-                UpdateComposite();
-            }
+                // update the preview texture
+                var previewImages = drizzleRenderer!.PreviewImages;
+                if (needUpdateTextures && previewImages is not null)
+                {
+                    if (previewLayers is null)
+                        throw new NullReferenceException("previewLayers is null");
 
-            int cWidth = previewComposite.Texture.Width;
-            int cHeight = previewComposite.Texture.Height;
-            rlImGui.ImageRect(
-                previewComposite.Texture,
-                (int)(cWidth / 1.25f), (int)(cHeight / 1.25f),
-                new Rectangle(0, cHeight, cWidth, -cHeight)
-            );
+                    needUpdateTextures = false;
+
+                    drizzleRenderer.UpdatePreviewImages();
+
+                    // update preview images
+                    for (int i = 0; i < 30; i++)
+                    {
+                        var img = previewImages.Layers[i];
+                        UpdateTexture(img, ref previewLayers[i]);
+                    }
+                    UpdateTexture(previewImages.BlackOut1, ref previewBlackout1);
+                    UpdateTexture(previewImages.BlackOut2, ref previewBlackout2);
+                    UpdateComposite();
+                }
+
+                int cWidth = previewComposite.Raw.Texture.Width;
+                int cHeight = previewComposite.Raw.Texture.Height;
+                rlImGui.ImageRect(
+                    previewComposite.Raw.Texture,
+                    (int)(cWidth / 1.25f), (int)(cHeight / 1.25f),
+                    new Rectangle(0, cHeight, cWidth, -cHeight)
+                );
+                ImGui.EndGroup();
+            }
+            else
+            {
+                ShowControlButtons(ref doClose);
+
+                ImGui.ProgressBar(renderProgress, new Vector2(ImGui.GetContentRegionAvail().X, 0.0f));
+                ShowStatusText();
+            }
             
             ImGui.EndPopup();
         }
@@ -283,19 +291,75 @@ class DrizzleRenderWindow : IDisposable
         return doClose;
     }
 
+    private static void UpdateTexture(RL.Managed.Image? img, ref RL.Managed.Texture2D? tex)
+    {
+        if (img == null)
+        {
+            tex?.Dispose();
+            tex = null;
+            return;
+        }
+
+        if (tex == null || img.Raw.Width != tex.Raw.Width || img.Raw.Height != tex.Raw.Height)
+        {
+            tex?.Dispose();
+            tex = new RL.Managed.Texture2D(img);
+        }
+        else
+        {
+            tex.Update(img);
+        }
+    }
+
     private void UpdateComposite()
     {
         Raylib.BeginTextureMode(previewComposite);
         Raylib.ClearBackground(Color.White);
 
-        Raylib.BeginShaderMode(layerPreviewShader);
+        var previewStatus = drizzleRenderer!.PreviewImages!;
+        var renderStage = previewStatus.Stage;
 
-        for (int i = 29; i >= 0; i--)
+        if (renderStage != RenderPreviewStage.Setup)
         {
-            float fadeValue = i / 30f;
-            Raylib.DrawTexture(previewTextures![i], -300, -200, new Color((int)(fadeValue * 255f), 0, 0, 255));
+            var shader = layerPreviewShader;
+            if (renderStage == RenderPreviewStage.Lights)
+            {
+                shader = layerPreviewLightShader;
+                Raylib.ClearBackground(Color.Black);
+            }
+
+            Raylib.BeginShaderMode(shader);
+
+            for (int i = 29; i >= 0; i--)
+            {
+                var tex = previewLayers![i];
+
+                if (tex is not null)
+                {
+                    var ox = (previewComposite.Raw.Texture.Width - tex.Raw.Width) / 2f;
+                    var oy = (previewComposite.Raw.Texture.Height - tex.Raw.Height) / 2f;
+
+                    float fadeValue = i / 30f;
+                    Raylib.DrawTextureV(tex, new Vector2(ox - i, oy - i), new Color((int)(fadeValue * 255f), 0, 0, 255));
+                }
+            }
+
+            if (previewBlackout1 is not null && previewStatus.RenderBlackOut1)
+            {
+                var ox = (previewComposite.Raw.Texture.Width - previewBlackout1.Raw.Width) / 2f;
+                var oy = (previewComposite.Raw.Texture.Height - previewBlackout1.Raw.Height) / 2f;
+                Raylib.DrawTexture(previewBlackout1, (int)ox, (int)oy, new Color(0, 0, 0, 255));
+            }
+
+            if (previewBlackout2 is not null && previewStatus.RenderBlackOut2)
+            {
+                var ox = (previewComposite.Raw.Texture.Width - previewBlackout2.Raw.Width) / 2f;
+                var oy = (previewComposite.Raw.Texture.Height - previewBlackout2.Raw.Height) / 2f;
+                Raylib.DrawTexture(previewBlackout2, (int)ox, (int)oy, new Color(0, 0, 0, 255));
+            }
+
+            Raylib.EndShaderMode();
         }
-        Raylib.EndShaderMode();
 
         Raylib.EndTextureMode();
     }

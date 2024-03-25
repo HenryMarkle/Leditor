@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -7,21 +8,138 @@ using Drizzle.Logic;
 using Drizzle.Logic.Rendering;
 using Drizzle.Ported;
 using SixLabors.ImageSharp;
-using Image = Raylib_cs.Image;
 
 namespace Leditor.Renderer;
 
-internal class DrizzleRender : IDisposable
+#nullable enable
+
+enum RenderPreviewStage 
+{
+    Setup,
+    Props,
+    Effects,
+    Lights,
+}
+
+/// <summary>
+/// The collection of render preview images
+/// </summary>
+class RenderPreviewImages : IDisposable
+{
+    public RL.Managed.Image[] Layers;
+    
+    // this is used for the effects stage
+    public RL.Managed.Image? BlackOut1;
+    public RL.Managed.Image? BlackOut2;
+
+    public bool RenderBlackOut1;
+    public bool RenderBlackOut2;
+
+    public RenderPreviewStage Stage;
+
+    private int lastWidth = -1;
+    private int lastHeight = -1;
+    private PixelFormat oldPixelFormat;
+
+    public RenderPreviewImages()
+    {
+        Stage = RenderPreviewStage.Setup;
+        Layers = new RL.Managed.Image[30];
+        oldPixelFormat = PixelFormat.UncompressedR8G8B8A8;
+    }
+
+    public void SetSize(int newWidth, int newHeight, PixelFormat format)
+    {
+        if (lastWidth == newWidth && lastHeight == newHeight)
+        {
+            if (format != oldPixelFormat)
+            {
+                for (var i = 0; i < 30; i++)
+                {
+                    Layers[i]?.Format(format);
+                }
+            }
+
+            oldPixelFormat = format;
+            return;
+        }
+
+        lastWidth = newWidth;
+        lastHeight = newHeight;
+
+        for (var i = 0; i < 30; i++)
+        {
+            Layers[i]?.Dispose();
+            Layers[i] = new RL.Managed.Image(newWidth, newHeight, Raylib_cs.Color.Black);
+            Layers[i].Format(format);
+        }
+        
+        if (BlackOut1 is not null)
+        {
+            BlackOut1.Dispose();
+            BlackOut1 = new RL.Managed.Image(newWidth, newHeight, Raylib_cs.Color.Black);
+            //BlackOut1.Format(PixelFormat.UncompressedGrayscale);
+        }
+
+        if (BlackOut2 is not null)
+        {
+            BlackOut2.Dispose();
+            BlackOut2 = new RL.Managed.Image(newWidth, newHeight, Raylib_cs.Color.Black);
+            //BlackOut2.Format(PixelFormat.UncompressedGrayscale);
+        }
+    }
+
+    public void EnableBlackOut()
+    {
+        BlackOut1 ??= new RL.Managed.Image(lastWidth, lastHeight, Raylib_cs.Color.Black);
+        BlackOut2 ??= new RL.Managed.Image(lastWidth, lastHeight, Raylib_cs.Color.Black);
+
+        if (BlackOut1.Raw.Format != PixelFormat.UncompressedGrayscale)
+        {
+            //BlackOut1.Format(PixelFormat.UncompressedGrayscale);
+        }
+
+        if (BlackOut2.Raw.Format != PixelFormat.UncompressedGrayscale)
+        {
+            //BlackOut2.Format(PixelFormat.UncompressedGrayscale);
+        }
+    }
+
+    public void DisableBlackOut()
+    {
+        BlackOut1?.Dispose();
+        BlackOut2?.Dispose();
+
+        BlackOut1 = null;
+        BlackOut2 = null;
+    }
+
+    public void Dispose()
+    {
+        for (var i = 0; i < 30; i++)
+        {
+            Layers[i]?.Dispose();
+        }
+
+        BlackOut1?.Dispose();
+        BlackOut2?.Dispose();
+    }
+}
+
+class DrizzleRender : IDisposable
 {
     private abstract record ThreadMessage;
 
     private record MessageRenderStarted : ThreadMessage;
+    private record MessageLevelLoading : ThreadMessage;
     private record MessageRenderFailed(Exception Exception) : ThreadMessage;
     private record MessageRenderCancelled : ThreadMessage;
     private record MessageRenderFinished : ThreadMessage;
     private record MessageRenderProgress(float Percentage) : ThreadMessage;
     private record MessageDoCancel : ThreadMessage;
-    private record MessageReceivePreview(RenderPreview Preview) : ThreadMessage;
+    private record MessageReceievePreview(RenderPreview Preview) : ThreadMessage;
+
+    private static LingoRuntime? staticRuntime = null; 
 
     private class RenderThread
     {
@@ -46,8 +164,10 @@ internal class DrizzleRender : IDisposable
                 if (GLOBALS.Settings.GeneralSettings.CacheRendererRuntime)
                 {
                     if (!GLOBALS.LingoRuntimeInitTask.IsCompleted) GLOBALS.LingoRuntimeInitTask.Wait();
-                    EditorRuntimeHelpers.RunLoadLevel(GLOBALS.LingoRuntime, filePath);
-                    Renderer = new LevelRenderer(GLOBALS.LingoRuntime, null);
+                    
+                    var runtime = GLOBALS.LingoRuntime.Clone();
+                    EditorRuntimeHelpers.RunLoadLevel(runtime, filePath);
+                    Renderer = new LevelRenderer(runtime, null);
                 }
                 else
                 {
@@ -58,10 +178,6 @@ internal class DrizzleRender : IDisposable
                     Renderer = new LevelRenderer(runtime, null);
                 }
 
-                Renderer.StatusChanged += StatusChanged;
-                Renderer.PreviewSnapshot += PreviewSnapshot;
-                Queue.Enqueue(new MessageRenderStarted());
-
                 // process user cancel if cancelled while init
                 // zygote runtime
                 if (InQueue.TryDequeue(out ThreadMessage? msg))
@@ -70,9 +186,25 @@ internal class DrizzleRender : IDisposable
                         throw new RenderCancelledException();
                 }
 
+                Queue.Enqueue(new MessageLevelLoading());
+                // RainEd.Logger.Information("RENDER: Loading {LevelName}", Path.GetFileNameWithoutExtension(filePath));
+
+                Renderer.StatusChanged += StatusChanged;
+                Renderer.PreviewSnapshot += PreviewSnapshot;
+                
+                // process user cancel if cancelled while init
+                // zygote runtime
+                if (InQueue.TryDequeue(out msg))
+                {
+                    if (msg is MessageDoCancel)
+                        throw new RenderCancelledException();
+                }
+                Queue.Enqueue(new MessageRenderStarted());
+
+                // RainEd.Logger.Information("RENDER: Begin");
                 Renderer.DoRender();
                 
-                //
+                // Move rendered level to /levels
                 try
                 {
                     if (!Directory.Exists(GLOBALS.Paths.LevelsDirectory))
@@ -96,25 +228,23 @@ internal class DrizzleRender : IDisposable
                     Console.WriteLine(e);
                 }
                 
-                
-                //
-                
+                // RainEd.Logger.Information("Render successful!");
                 Queue.Enqueue(new MessageRenderFinished());
             }
             catch (RenderCancelledException)
             {
+                // RainEd.Logger.Information("Render was cancelled");
                 Queue.Enqueue(new MessageRenderCancelled());
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
                 Queue.Enqueue(new MessageRenderFailed(e));
             }
         }
 
         private void PreviewSnapshot(RenderPreview renderPreview)
         {
-            Queue.Enqueue(new MessageReceivePreview(renderPreview));
+            Queue.Enqueue(new MessageReceievePreview(renderPreview));
         }
     }
 
@@ -124,6 +254,7 @@ internal class DrizzleRender : IDisposable
     public enum RenderState
     {
         Initializing,
+        Loading,
         Rendering,
         Finished,
         Cancelling,
@@ -146,7 +277,7 @@ internal class DrizzleRender : IDisposable
     public int CameraCount { get => cameraCount; }
     public int CamerasDone { get => camsDone; }
 
-    public readonly Image[] RenderLayerPreviews;
+    public RenderPreviewImages? PreviewImages;
     public Action? PreviewUpdated;
 
     public DrizzleRender()
@@ -154,22 +285,13 @@ internal class DrizzleRender : IDisposable
         cameraCount = GLOBALS.Level.Cameras.Count;
 
         state = RenderState.Initializing;
+
         var filePath = Path.Combine(GLOBALS.ProjectPath, GLOBALS.Level.ProjectName+".txt");
+        
         if (string.IsNullOrEmpty(filePath)) throw new Exception("Render called but level wasn't saved");
-
+        
         // create render layer preview images
-        var renderW = 2000;
-        var renderH = 1200;
-        RenderLayerPreviews = new Image[30];
-
-        for (int i = 0; i < 30; i++)
-        {
-            RenderLayerPreviews[i] = Raylib.GenImageColor((int)renderW, (int)renderH, Raylib_cs.Color.Black);
-        } 
-
-        //
-        // TODO: Save level here
-        //
+        PreviewImages = new RenderPreviewImages();
 
         threadState = new RenderThread(filePath);
         threadState.StatusChanged += StatusChanged;
@@ -183,23 +305,25 @@ internal class DrizzleRender : IDisposable
 
     public void Dispose()
     {
-        foreach (var image in RenderLayerPreviews)
-            Raylib.UnloadImage(image);
+        PreviewImages?.Dispose();
     }
 
     private void StatusChanged(RenderStatus status)
     {
-        var renderer = threadState.Renderer!;
+        // RainEd.Logger.Debug("Status changed");
 
-        var camIndex = status.CameraIndex;
         var stageEnum = status.Stage.Stage;
 
         camsDone = status.CountCamerasDone;
+
+        // from 0 to 1
+        float stageProgress = 0f;
 
         switch (status.Stage)
         {
             case RenderStageStatusLayers layers:
             {
+                stageProgress = (3 - layers.CurrentLayer) / 3f;
                 DisplayString = $"Rendering tiles...\nLayer: {layers.CurrentLayer}";
                 break;
             }
@@ -212,6 +336,7 @@ internal class DrizzleRender : IDisposable
 
             case RenderStageStatusLight light:
             {
+                stageProgress = light.CurrentLayer / 30f;
                 DisplayString = $"Rendering light...\nLayer: {light.CurrentLayer}";
                 break;
             }
@@ -235,7 +360,7 @@ internal class DrizzleRender : IDisposable
                 
                 for (int i = 0; i < effects.EffectNames.Count; i++)
                 {
-                    if (i == effects.CurrentEffect)
+                    if (i == effects.CurrentEffect - 1)
                         builder.Append("> ");
                     else
                         builder.Append("  ");
@@ -244,6 +369,8 @@ internal class DrizzleRender : IDisposable
                     builder.Append('\n');
                 }
 
+                stageProgress = Math.Clamp((effects.CurrentEffect - 1f) / effects.EffectNames.Count, 0f, 1f);
+
                 DisplayString = builder.ToString();
                 break;
             }
@@ -251,23 +378,28 @@ internal class DrizzleRender : IDisposable
 
         // send progress
         currentStage = stageEnum;
-        var renderProgress = status.CountCamerasDone * 10 + stageEnum switch
+        float renderProgress = status.CountCamerasDone * 10 + stageEnum switch
         {
-            RenderStage.Start => 0,
-            RenderStage.CameraSetup => 0,
-            RenderStage.RenderLayers => 1,
-            RenderStage.RenderPropsPreEffects => 2,
-            RenderStage.RenderEffects => 3,
-            RenderStage.RenderPropsPostEffects => 4,
-            RenderStage.RenderLight => 5,
-            RenderStage.Finalize => 6,
-            RenderStage.RenderColors => 7,
-            RenderStage.Finished => 8,
-            RenderStage.SaveFile => 9,
+            RenderStage.Start => 0f,
+            RenderStage.CameraSetup => 0f,
+            RenderStage.RenderLayers => 1f,
+            RenderStage.RenderPropsPreEffects => 2f,
+            RenderStage.RenderEffects => 3f,
+            RenderStage.RenderPropsPostEffects => 4f,
+            RenderStage.RenderLight => 5f,
+            RenderStage.Finalize => 6f,
+            RenderStage.RenderColors => 7f,
+            RenderStage.Finished => 8f,
+            RenderStage.SaveFile => 9f,
             _ => throw new ArgumentOutOfRangeException()
         };
 
-        progress = renderProgress / (cameraCount * 10f);
+        progress = (renderProgress + Math.Clamp(stageProgress, 0f, 1f)) / (cameraCount * 10f);
+
+        if (stageEnum == RenderStage.Start && PreviewImages is not null)
+        {
+            PreviewImages.Stage = RenderPreviewStage.Setup;
+        }
     }
 
     public void Cancel()
@@ -298,9 +430,14 @@ internal class DrizzleRender : IDisposable
                 
                 case MessageRenderFinished:
                     state = RenderState.Finished;
+                    // RainEd.Logger.Debug("Close render thread");
                     progress = 1f;
                     DisplayString = "";
                     thread.Join();
+                    break;
+
+                case MessageLevelLoading:
+                    state = RenderState.Loading;
                     break;
                 
                 case MessageRenderStarted:
@@ -308,6 +445,7 @@ internal class DrizzleRender : IDisposable
                     break;
                 
                 case MessageRenderFailed msgFail:
+                    // RainEd.Logger.Error("Error occured when rendering level:\n{ErrorMessage}", msgFail.Exception);
                     thread.Join();
                     state = RenderState.Errored;
                     break;
@@ -317,7 +455,7 @@ internal class DrizzleRender : IDisposable
                     thread.Join();
                     break;
                 
-                case MessageReceivePreview preview:
+                case MessageReceievePreview preview:
                     ProcessPreview(preview.Preview);
                     break;
             }
@@ -326,82 +464,115 @@ internal class DrizzleRender : IDisposable
         }
     }
 
+    private RenderPreview? lastRenderPreview;
+
     private void ProcessPreview(RenderPreview renderPreview)
     {
-        switch (renderPreview)
+        if (PreviewImages is null) return;
+
+        // RainEd.Logger.Verbose("Receive preview");
+        
+        lastRenderPreview = renderPreview;
+        PreviewUpdated?.Invoke();
+    }
+
+    public void UpdatePreviewImages()
+    {
+        if (PreviewImages is null) return;
+
+        switch (lastRenderPreview)
         {
+            case RenderPreviewProps props:
+                PreviewImages.Stage = RenderPreviewStage.Props;
+                PreviewImages.SetSize(2000, 1200, PixelFormat.UncompressedR8G8B8A8);
+                PreviewImages.DisableBlackOut();
+
+                for (var i = 0; i < 30; i++)
+                {
+                    CopyLingoImage(props.Layers[i], PreviewImages.Layers[i]);
+                }
+
+                break;
+            
             case RenderPreviewEffects effects:
             {
-                ProcessLingoImageLayers(effects.Layers);
+                PreviewImages.Stage = RenderPreviewStage.Effects;
+                PreviewImages.SetSize(2000, 1200, PixelFormat.UncompressedR8G8B8A8);
+                PreviewImages.EnableBlackOut();
+
+                for (var i = 0; i < 30; i++)
+                {
+                    CopyLingoImage(effects.Layers[i], PreviewImages.Layers[i]);
+                }
+
+                CopyLingoImage(effects.BlackOut1, PreviewImages.BlackOut1!);
+                CopyLingoImage(effects.BlackOut2, PreviewImages.BlackOut2!);
+
+                PreviewImages.RenderBlackOut1 = effects.BlackOut1.Width != 1;
+                PreviewImages.RenderBlackOut2 = effects.BlackOut2.Width != 1;
+                
                 break;
             }
 
             case RenderPreviewLights lights:
             {
-                // TODO: light stage uses a differently sized image buffer
-                // ProcessLingoLightImageLayers(lights.Layers);
+                PreviewImages.Stage = RenderPreviewStage.Lights;
+                PreviewImages.SetSize(2300, 1500, PixelFormat.UncompressedGrayscale);
+                PreviewImages.DisableBlackOut();
+
+                for (var i = 0; i < 30; i++)
+                {
+                    CopyLingoImage(lights.Layers[i], PreviewImages.Layers[i]);
+                }
+                
                 break;
-            }
-
-            case RenderPreviewProps props:
-            {
-                ProcessLingoImageLayers(props.Layers);
-            }
-                break;
-        }
-
-        PreviewUpdated?.Invoke();
-    }
-
-    private void ProcessLingoImageLayers(LingoImage[] layers)
-    {
-        // Console.WriteLine($"Source: {layers[0].Width} * {layers[0].Height} * {layers[0].Depth}");
-        // Console.WriteLine($"Dest: {RenderLayerPreviews[0].Width} * {RenderLayerPreviews[0].Height} * 4");
-        
-        // Lingo Image:
-        // 2000, 1200
-        // Output:
-        // 1400, 800
-        if (layers.Length != 30)
-            throw new Exception("Count of layers is not 30");
-        
-        for (var i = 0; i < layers.Length; i++)
-        {
-            var img = layers[i];
-            var dstImage = RenderLayerPreviews[i];
-
-            unsafe
-            {
-                Marshal.Copy(img.ImageBuffer, 0, (nint) dstImage.Data, dstImage.Width * dstImage.Height * 4);
             }
         }
     }
-    
-    private void ProcessLingoLightImageLayers(LingoImage[] layers)
-    {
-        // Console.WriteLine($"Source: {layers[0].Width} * {layers[0].Height} * {layers[0].Depth}");
-        // Console.WriteLine($"Dest: {RenderLayerPreviews[0].Width} * {RenderLayerPreviews[0].Height} * 4");
-        
-        // Lingo Image:
-        // 2300, 1500
-        // Output:
-        // 1400, 800
-        if (layers.Length != 30)
-            throw new Exception("Count of layers is not 30");
-        
-        for (var i = 0; i < layers.Length; i++)
-        {
-            var img = layers[i];
-            var dstImage = RenderLayerPreviews[i];
 
-            unsafe
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)] // hopefully this is a good idea...
+    private unsafe static void CopyLingoImage(LingoImage srcImg, Raylib_cs.Image dstImg)
+    {
+        if (srcImg.Width != dstImg.Width || srcImg.Height != dstImg.Height)
+        {
+            // RainEd.Logger.Warning("Mismatched image sizes");
+            return;
+        }
+        
+        if (srcImg.Depth == 1)
+        {
+            if (dstImg.Format != PixelFormat.UncompressedGrayscale)
+                throw new Exception("Mismatched image formats");
+
+            // convert 1 bit per pixel bitmap to
+            // 8 bits per pixel grayscale image
+            byte* dstData = (byte*) dstImg.Data;
+            
+            int k = 0;
+            for (int i = 0; i < (dstImg.Width * dstImg.Height) / 8; i++)
             {
-                Marshal.Copy(
-                    img.ImageBuffer, 
-                    0, 
-                    (nint) dstImage.Data, 
-                    dstImage.Width * dstImage.Height);
-            }
+                var v = srcImg.ImageBuffer[i];
+                dstData[k++] = (byte)(255 * (v & 1));
+                dstData[k++] = (byte)(255 * ((v >> 1) & 1));
+                dstData[k++] = (byte)(255 * ((v >> 2) & 1));
+                dstData[k++] = (byte)(255 * ((v >> 3) & 1));
+                dstData[k++] = (byte)(255 * ((v >> 4) & 1));
+                dstData[k++] = (byte)(255 * ((v >> 5) & 1));
+                dstData[k++] = (byte)(255 * ((v >> 6) & 1));
+                dstData[k++] = (byte)(255 * ((v >> 7) & 1));
+            } 
+        }
+        else if (srcImg.Depth == 32)
+        {
+            if (dstImg.Format != PixelFormat.UncompressedR8G8B8A8)
+                throw new Exception("Mismatched image formats");
+            
+            // note: BGR format - is converted to RGB in the shader
+            Marshal.Copy(srcImg.ImageBuffer, 0, (nint)dstImg.Data, dstImg.Width * dstImg.Height * 4);
+        }
+        else
+        {
+            throw new Exception("Unknown image depth " + srcImg.Depth);
         }
     }
 }

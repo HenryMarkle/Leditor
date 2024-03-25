@@ -900,9 +900,9 @@ internal class GeoEditorPage : EditorPage
                 {
                     DrawRectangle(
                         0,
-                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                         GLOBALS.Level.Width*GLOBALS.Scale,
-                        GLOBALS.Level.WaterLevel*GLOBALS.Scale,
+                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                         GLOBALS.Settings.GeometryEditor.WaterColor
                     );
                 }
