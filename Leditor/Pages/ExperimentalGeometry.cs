@@ -1073,12 +1073,22 @@ internal class ExperimentalGeometryPage : EditorPage
 
                         if (GLOBALS.Settings.GeometryEditor.ShowCurrentGeoIndicator && matrixX == x && matrixY == y)
                         {
+                            Utils.Restrict(ref _geoMenuIndex, 0, _geoMenuCategory switch
+                            {
+                                0 => GeoMenuIndexToBlockId.Length-1,
+                                1 => GeoMenuCategory2ToStackableId.Length-1,
+                                2 => GeoMenuCategory3ToStackableId.Length-1,
+                                3 => GeoMenuCategory4ToStackableId.Length,
+                                _ => 0
+                            });
+                            
                             var id = _geoMenuCategory switch
                             {
                                 0 => GeoMenuIndexToBlockId[_geoMenuIndex],
                                 1 => GeoMenuCategory2ToStackableId[_geoMenuIndex],
                                 2 => GeoMenuCategory3ToStackableId[_geoMenuIndex],
-                                3 => GeoMenuCategory4ToStackableId[_geoMenuIndex]
+                                3 => GeoMenuCategory4ToStackableId[_geoMenuIndex],
+                                _ => 0
                             };
                             
                             if (_geoMenuCategory == 0) Printers.DrawTileSpec2(id, new Vector2(matrixX+1, matrixY+1)*scale, 40, Color.White with { A = 100 });
