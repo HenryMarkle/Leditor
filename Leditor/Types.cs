@@ -194,6 +194,7 @@ public sealed class LevelState
         WaterLevel = -1;
         WaterAtFront = false;
         Seed = new Random().Next(10000);
+        DefaultMaterial = "Concrete";
     }
 
     internal void Resize(
@@ -644,6 +645,9 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut ToggleRopePointsEditingMode { get; set; } = new(KeyboardKey.P, ctrl: false, shift: false, alt: false);
     public KeyboardShortcut ToggleRopeEditingMode { get; set; } = new(KeyboardKey.B, ctrl: false, shift: false, alt: false);
 
+    public KeyboardShortcut DeepenSelectedProps { get; } = new(KeyboardKey.Null);
+    public KeyboardShortcut UndeepenSelectedProps { get; } = new(KeyboardKey.Null);
+    
     public KeyboardShortcut ToggleNoCollisionPropPlacement { get; set; } = KeyboardKey.Null;
 
     public KeyboardShortcut PropSelectionModifier { get; set; } = new(KeyboardKey.LeftControl, ctrl: true);

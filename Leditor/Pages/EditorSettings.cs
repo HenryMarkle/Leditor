@@ -706,6 +706,8 @@ internal class SettingsPage : EditorPage
                         var assignDeleteProps = ImGui.Button($"Delete: {GLOBALS.Settings.Shortcuts.PropsEditor.DeleteSelectedProps}");
                         var assignEditRopePoints = ImGui.Button($"Edit Rope Points: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopePointsEditingMode}");
                         var assignToggleRopeEditing = ImGui.Button($"Rope Simulation: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopeEditingMode}");
+                        var assignDeepenProps = ImGui.Button($"Deepen Prop: {GLOBALS.Settings.Shortcuts.PropsEditor.DeepenSelectedProps}");
+                        var assignUndeepenProps = ImGui.Button($"Undeepen Prop: {GLOBALS.Settings.Shortcuts.PropsEditor.UndeepenSelectedProps}");
                         
                         if (assignCycleLayers) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleLayers;
                         if (assignCycleSnapMode) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleSnapMode;
@@ -728,6 +730,8 @@ internal class SettingsPage : EditorPage
                         if (assignDeleteProps) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DeleteSelectedProps;
                         if (assignEditRopePoints) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopePointsEditingMode;
                         if (assignToggleRopeEditing) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopeEditingMode;
+                        if (assignDeepenProps) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DeepenSelectedProps;
+                        if (assignUndeepenProps) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.UndeepenSelectedProps;
                     }
                         break;
                     case 8: // Style

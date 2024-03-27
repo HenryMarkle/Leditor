@@ -1545,6 +1545,28 @@ internal class PropsEditorPage : EditorPage
                 }
                 else if (!_ropeMode)
                 {
+                    if (anySelected)
+                    {
+                        if (_shortcuts.DeepenSelectedProps.Check(ctrl, shift, alt))
+                        {
+                            foreach (var selected in fetchedSelected)
+                            {
+                                selected.prop.prop.Depth--;
+
+                                if (selected.prop.prop.Depth < -29) selected.prop.prop.Depth = 29;
+                            }
+                        }
+                        else if (_shortcuts.UndeepenSelectedProps.Check(ctrl, shift, alt))
+                        {
+                            foreach (var selected in fetchedSelected)
+                            {
+                                selected.prop.prop.Depth++;
+
+                                if (selected.prop.prop.Depth > 0) selected.prop.prop.Depth = 0;
+                            }
+                        }
+                    }
+                    
                     if ((_shortcuts.SelectProps.Check(ctrl, shift, alt, true) || _shortcuts.SelectPropsAlt.Check(ctrl, shift, alt, true)) && !_clickTracker && canDrawTile)
                     {
                         _selection1 = GetScreenToWorld2D(GetMousePosition(), _camera);
@@ -2412,10 +2434,10 @@ internal class PropsEditorPage : EditorPage
             // Update prop depth render texture
             if (fetchedSelected.Length == 1)
             {
-                Raylib_cs.Raylib.BeginTextureMode(GLOBALS.Textures.PropDepth);
-                Raylib_cs.Raylib.ClearBackground(Raylib_cs.Color.Green);
+                BeginTextureMode(GLOBALS.Textures.PropDepth);
+                ClearBackground(Color.Green);
                 Printers.DrawDepthIndicator(fetchedSelected[0].prop);
-                Raylib_cs.Raylib.EndTextureMode();
+                EndTextureMode();
             }
 
             // Edit Mode Indicators
@@ -2534,12 +2556,16 @@ internal class PropsEditorPage : EditorPage
                         ImGuiSelectableFlags.None, 
                         halfSize)
                 ) _mode = 1;
+                
+                ImGui.Spacing();
 
                 var precisionSelected = ImGui.Button(
                     $"Precision: {_snapMode switch { 0 => "Free", 1 => "Grid", 2 => "Precise", _ => "?" }}",
                     availableSpace with { Y = 20 });
 
                 if (precisionSelected) _snapMode = ++_snapMode % 3;
+                
+                ImGui.Spacing();
                 
                 switch (_mode)
                 {
@@ -2552,7 +2578,7 @@ internal class PropsEditorPage : EditorPage
                             for (var i = 0; i < _selected.Length; i++) _selected[i] = true;
                         }
 
-                        if (ImGui.BeginListBox("Props", availableSpace with { Y = availableSpace.Y - 400 }))
+                        if (ImGui.BeginListBox("Props", availableSpace with { Y = availableSpace.Y - 420 }))
                         {
                             for (var index = 0; index < GLOBALS.Level.Props.Length; index++)
                             {
@@ -2786,6 +2812,11 @@ internal class PropsEditorPage : EditorPage
 
                     case 1: // Placement
                     {
+                        if (ImGui.Button($"Continuous Placement: {_noCollisionPropPlacement}", availableSpace with { Y = 20 }))
+                            _noCollisionPropPlacement = !_noCollisionPropPlacement;
+                        
+                        ImGui.Spacing();
+                        
                         ImGui.SeparatorText("Categories");
 
                         var quarterSpace = availableSpace with { X = availableSpace.X / 4f, Y = 20 };
@@ -2803,7 +2834,7 @@ internal class PropsEditorPage : EditorPage
                         if (longsSelected) _menuRootCategoryIndex = 2;
                         if (othersSelected) _menuRootCategoryIndex = 3;
 
-                        var listSize = new Vector2(halfWidth, availableSpace.Y - 230);
+                        var listSize = new Vector2(halfWidth, availableSpace.Y - 250);
                         
                         switch (_menuRootCategoryIndex)
                         {

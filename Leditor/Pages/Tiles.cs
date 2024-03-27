@@ -724,9 +724,10 @@ internal class TileEditorPage : EditorPage, IDisposable
                     if (matrixX < 0 || matrixX >= GLOBALS.Level.Width || matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
 
                     GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                    
                     if (isThick)
                     {
-                        if (headZ - 1 == mz)
+                        if (headZ - 1 == mz && mz != 2)
                         {
                             GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = new TileCell
                                 { Type = TileType.Default, Data = new TileDefault() };
