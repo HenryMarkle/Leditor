@@ -20,12 +20,14 @@ And inside the solution, clone the renderer submodule
 git clone --branch embedded https://github.com/pkhead/Drizzle
 ```
 
+Note: Make sure the build is in `release` mode.
+
 ### Step Two: Build the renderer
 
 Inside the /Drizzle directory, run the two commands in sequence:
 
 ```bash
-dotnet build --project Drizzle.Transpiler
+dotnet run --project Drizzle.Transpiler
 ```
 ```bash
 dotnet build
@@ -33,12 +35,9 @@ dotnet build
 
 ### Step Three: Build the entire solution
 
-Run the command at the top level:
+Run the command at the top level of the solution:
 ```bash
 dotnet build
 ```
 
-### Step Four: Add the assets
-
-The program requires assets to function properly.
-Download the latest `assets.zip` file releases channel, unzip and paste the content into the newly-built executable's root directory.
+Note: If you want to build the project in `release` mode, you need to copy the `assets` folder to the build folder.
