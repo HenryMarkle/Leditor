@@ -50,6 +50,9 @@ internal class LightEditorPage : EditorPage
     
     private bool _isBrushesWinHovered;
     private bool _isBrushesWinDragged;
+    
+    private bool _isSettingsWinHovered;
+    private bool _isSettingsWinDragged;
 
     public override void Draw()
     {
@@ -304,6 +307,7 @@ internal class LightEditorPage : EditorPage
 
             BeginMode2D(_camera);
             {
+                #region Level
                 DrawRectangle(
                     0, 0,
                     GLOBALS.Level.Width * GLOBALS.Scale + 300,
@@ -351,6 +355,7 @@ internal class LightEditorPage : EditorPage
                         new(0, 0, 255, 255)
                     );
                 }
+                #endregion
                 
                 // Lightmap
 
@@ -451,59 +456,95 @@ internal class LightEditorPage : EditorPage
             
             ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
             
-            // Brushes Window
-
-            var menuOpened = ImGui.Begin("Brushes##LightBrushesWindow");
-            
-            var menuPos = ImGui.GetWindowPos();
-            var menuWinSpace = ImGui.GetWindowSize();
-
-            if (CheckCollisionPointRec(GetMousePosition(), new(menuPos.X - 5, menuPos.Y-5, menuWinSpace.X + 10, menuWinSpace.Y+10)))
+            #region Brushes
             {
-                _isBrushesWinHovered = true;
+                // Brushes Window
 
-                if (IsMouseButtonDown(MouseButton.Left)) _isBrushesWinDragged = true;
-            }
-            else
-            {
-                _isBrushesWinHovered = false;
-            }
-
-            if (IsMouseButtonReleased(MouseButton.Left) && _isBrushesWinDragged) _isBrushesWinDragged = false;
-            
-            if (menuOpened)
-            {
-                var availableSpace = ImGui.GetContentRegionAvail();
+                var menuOpened = ImGui.Begin("Brushes##LightBrushesWindow");
                 
-                if (ImGui.BeginListBox("##LightBrushes", availableSpace))
-                {
-                    for (var index = 0; index < GLOBALS.Textures.LightBrushes.Length; index++)
-                    {
-                        
-                        var selected = ImGui.ImageButton(
-                            $"Brush {index}",
-                            new IntPtr(GLOBALS.Textures.LightBrushes[index].Id), 
-                            new Vector2(60, 60));
+                var menuPos = ImGui.GetWindowPos();
+                var menuWinSpace = ImGui.GetWindowSize();
 
-                        ImGui.SameLine();
-                        
-                        var selected2 = ImGui.Selectable(
-                            $"#{index}", 
-                            _lightBrushTextureIndex == index, 
-                            ImGuiSelectableFlags.None | ImGuiSelectableFlags.AllowOverlap, 
-                            new Vector2(60, 60)
-                        );
-                        
-                        if (selected || selected2)
+                if (CheckCollisionPointRec(GetMousePosition(), new(menuPos.X - 5, menuPos.Y-5, menuWinSpace.X + 10, menuWinSpace.Y+10)))
+                {
+                    _isBrushesWinHovered = true;
+
+                    if (IsMouseButtonDown(MouseButton.Left)) _isBrushesWinDragged = true;
+                }
+                else
+                {
+                    _isBrushesWinHovered = false;
+                }
+
+                if (IsMouseButtonReleased(MouseButton.Left) && _isBrushesWinDragged) _isBrushesWinDragged = false;
+                
+                if (menuOpened)
+                {
+                    var availableSpace = ImGui.GetContentRegionAvail();
+                    
+                    if (ImGui.BeginListBox("##LightBrushes", availableSpace))
+                    {
+                        for (var index = 0; index < GLOBALS.Textures.LightBrushes.Length; index++)
                         {
-                            _lightBrushTextureIndex = index;
+                            
+                            var selected = ImGui.ImageButton(
+                                $"Brush {index}",
+                                new IntPtr(GLOBALS.Textures.LightBrushes[index].Id), 
+                                new Vector2(60, 60));
+
+                            ImGui.SameLine();
+                            
+                            var selected2 = ImGui.Selectable(
+                                $"#{index}", 
+                                _lightBrushTextureIndex == index, 
+                                ImGuiSelectableFlags.None | ImGuiSelectableFlags.AllowOverlap, 
+                                new Vector2(60, 60)
+                            );
+                            
+                            if (selected || selected2)
+                            {
+                                _lightBrushTextureIndex = index;
+                            }
                         }
+                        ImGui.End();
                     }
                     ImGui.End();
                 }
-                ImGui.End();
             }
+            #endregion
             
+            #region Settings
+            {
+                var settingsOpened = ImGui.Begin("Settings##LightSettings");
+                
+                var menuPos = ImGui.GetWindowPos();
+                var menuWinSpace = ImGui.GetWindowSize();
+                
+                if (CheckCollisionPointRec(GetMousePosition(), new(menuPos.X - 5, menuPos.Y-5, menuWinSpace.X + 10, menuWinSpace.Y+10)))
+                {
+                    _isSettingsWinHovered = true;
+
+                    if (IsMouseButtonDown(MouseButton.Left)) _isSettingsWinDragged = true;
+                }
+                else
+                {
+                    _isBrushesWinHovered = false;
+                }
+
+                if (IsMouseButtonReleased(MouseButton.Left) && _isSettingsWinDragged) _isSettingsWinDragged = false;
+
+                if (settingsOpened)
+                {
+                    Vector3 bgColorVec = GLOBALS.Settings.LightEditor.Background;
+                    var bgColorUpdated = ImGui.ColorEdit3("Background Color##LightBackgroundColor", ref bgColorVec);
+                    if (bgColorUpdated) GLOBALS.Settings.LightEditor.Background = bgColorVec;
+                    
+                    ImGui.End();
+                }
+            }
+            #endregion
+            
+            #region Navigation
             // Navigation
             
             var navWindowRect = Printers.ImGui.NavigationWindow();
@@ -521,7 +562,9 @@ internal class LightEditorPage : EditorPage
             {
                 _isNavigationWinDragged = false;
             }
+            #endregion
             
+            #region Shortcuts
             // Shortcuts window
             
             if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
@@ -545,6 +588,7 @@ internal class LightEditorPage : EditorPage
                     _isShortcutsWinDragged = false;
                 }
             }
+            #endregion
             
             rlImGui.End();
         }

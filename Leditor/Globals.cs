@@ -74,7 +74,15 @@ internal static class GLOBALS
         internal static string ExecutableDirectory => Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? throw new Exception("unable to retreive current executable's path");
 
         internal static string ProjectsDirectory => Path.Combine(ExecutableDirectory, "projects");
-        internal static string AssetsDirectory => Path.Combine(ExecutableDirectory, "assets");
+        internal static string AssetsDirectory { 
+            get {
+                #if DEBUG
+                return Path.Combine("..", "..", "..", "assets");
+                #else
+                return Path.Combine(ExecutableDirectory, "assets");
+                #endif
+            }
+        }
         internal static string IndexDirectory => Path.Combine(AssetsDirectory, "index");
         internal static string TilesAssetsDirectory => Path.Combine(AssetsDirectory, "tiles");
         internal static string GeoAssetsDirectory => Path.Combine(AssetsDirectory, "geo");

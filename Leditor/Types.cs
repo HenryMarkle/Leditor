@@ -769,8 +769,11 @@ public record ConColor(
         a = A;
     }
 
-    public static implicit operator ConColor(Raylib_cs.Color c) => new(c.R, c.G, c.B, c.A);
-    public static implicit operator Raylib_cs.Color(ConColor c) => new(c.R, c.G, c.B, c.A);
+    public static implicit operator ConColor(Color c) => new(c.R, c.G, c.B, c.A);
+    public static implicit operator Color(ConColor c) => new(c.R, c.G, c.B, c.A);
+
+    public static implicit operator Vector3(ConColor c) => new(c.R, c.G, c.B);
+    public static implicit operator ConColor(Vector3 c) => new((byte)c.X, (byte)c.Y, (byte)c.Z);
 
 }
 
