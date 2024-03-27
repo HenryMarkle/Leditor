@@ -17,7 +17,7 @@ git clone https://github.com/HenryMarkle/Leditor.git
 And inside the solution, clone the renderer submodule
 
 ```bash
-git clone --branch embedded https://github.com/pkhead/Drizzle
+git clone --branch embedded https://github.com/HenryMarkle/Drizzle
 ```
 
 Note: Make sure the build is in `release` mode.
