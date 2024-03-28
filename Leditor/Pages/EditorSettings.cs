@@ -709,6 +709,7 @@ internal class SettingsPage : EditorPage
                         var assignDeepenProps = ImGui.Button($"Deepen Prop: {GLOBALS.Settings.Shortcuts.PropsEditor.DeepenSelectedProps}");
                         var assignUndeepenProps = ImGui.Button($"Undeepen Prop: {GLOBALS.Settings.Shortcuts.PropsEditor.UndeepenSelectedProps}");
                         var assignDuplicate = ImGui.Button($"Duplicate: {GLOBALS.Settings.Shortcuts.PropsEditor.DuplicateProps}");
+                        var assignCycleSelected = ImGui.Button($"Cycle Selected: {GLOBALS.Settings.Shortcuts.PropsEditor.CycleSelected}");
                         
                         if (assignCycleLayers) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleLayers;
                         if (assignCycleSnapMode) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleSnapMode;
@@ -734,6 +735,7 @@ internal class SettingsPage : EditorPage
                         if (assignDeepenProps) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DeepenSelectedProps;
                         if (assignUndeepenProps) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.UndeepenSelectedProps;
                         if (assignDuplicate) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DuplicateProps;
+                        if (assignCycleSelected) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleSelected;
                     }
                         break;
                     case 8: // Style

@@ -30,6 +30,24 @@ internal static class Utils
         if (value < min) value = min;
     }
 
+    internal static void Cycle(ref int value, int min, int max)
+    {
+        if (value > max) value = min;
+        if (value < min) value = max;
+    }
+    
+    internal static void Cycle(ref float value, float min, float max)
+    {
+        if (value > max) value = min;
+        if (value < min) value = max;
+    }
+
+    internal static bool AllEqual(int[] list) => list.All(i => i == list[0]);
+
+    internal static bool AllEqual(IEnumerable<int> list, int item) => list.All(i => i == item);
+    
+    internal static bool AllEqual(int a, int b, int c) => a == b && b == c && a == c;
+
     internal static RunCell CopyGeoCell(in RunCell cell) => new()
     {
         Geo = cell.Geo,

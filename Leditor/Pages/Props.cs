@@ -84,6 +84,9 @@ internal class PropsEditorPage : EditorPage
     private bool[] _selected = [];
     private bool[] _hidden = [];
 
+    private int[] _selectedCycleIndices = [];
+    private int _selectedCycleCursor;
+
     private readonly (string name, Color color)[] _propCategoriesOnly = GLOBALS.PropCategories[..^2]; // a risky move..
 
     private readonly (int index, string category)[] _tilesAsPropsCategoryIndices = [];
@@ -1020,9 +1023,18 @@ internal class PropsEditorPage : EditorPage
                     _selectedPropsCenter.X = 0;
                     _selectedPropsCenter.Y = 0;
                 }
-                
+
+                // Cycle selected
+                if (_shortcuts.CycleSelected.Check(ctrl, shift, alt) && anySelected && _selectedCycleIndices.Length > 0)
+                {
+                    _selectedCycleCursor++;
+                    Utils.Cycle(ref _selectedCycleCursor, 0, _selectedCycleIndices.Length - 1);
+
+                    _selected = new bool[GLOBALS.Level.Props.Length];
+                    _selected[_selectedCycleIndices[_selectedCycleCursor]] = true;
+                }
                 // Move
-                if (_shortcuts.ToggleMovingPropsMode.Check(ctrl, shift, alt) && anySelected)
+                else if (_shortcuts.ToggleMovingPropsMode.Check(ctrl, shift, alt) && anySelected)
                 {
                     _scalingProps = false;
                     _movingProps = !_movingProps;
@@ -1669,12 +1681,9 @@ internal class PropsEditorPage : EditorPage
                     if ((IsMouseButtonReleased(_shortcuts.SelectProps.Button) || IsKeyReleased(_shortcuts.SelectPropsAlt.Key)) && _clickTracker && !(_isPropsWinHovered || _isPropsWinDragged))
                     {
                         _clickTracker = false;
+
+                        List<int> selectedI = [];
                     
-                        // Selection rectangle should be now updated
-
-                        // If selection rectangle is too small, it's treated
-                        // like a point
-
                         for (var i = 0; i < GLOBALS.Level.Props.Length; i++)
                         {
                             var current = GLOBALS.Level.Props[i];
@@ -1691,6 +1700,7 @@ internal class PropsEditorPage : EditorPage
                                 if (CheckCollisionRecs(propSelectRect, _selection) && !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10))
                                 {
                                     _selected[i] = true;
+                                    selectedI.Add(i);
                                 }
                                 else
                                 {
@@ -1698,6 +1708,9 @@ internal class PropsEditorPage : EditorPage
                                 }
                             }
                         }
+
+                        _selectedCycleIndices = [..selectedI];
+                        _selectedCycleCursor = -1;
                     }   
                 }
                 
@@ -2525,7 +2538,10 @@ internal class PropsEditorPage : EditorPage
             }
 
             // Update prop depth render texture
-            if (fetchedSelected.Length == 1)
+            if (fetchedSelected.Length == 1 || 
+                (fetchedSelected.Length > 1 && 
+                                                Utils.AllEqual(fetchedSelected.Select(f => f.prop.prop.Depth),
+                    fetchedSelected[0].prop.prop.Depth)))
             {
                 BeginTextureMode(GLOBALS.Textures.PropDepth);
                 ClearBackground(Color.Green);
@@ -2900,6 +2916,22 @@ internal class PropsEditorPage : EditorPage
                                 {
                                 }
                             }
+                        }
+                        else if (fetchedSelected.Length > 1 && 
+                                 Utils.AllEqual(fetchedSelected.Select(f => f.prop.prop.Depth),
+                                     fetchedSelected[0].prop.prop.Depth))
+                        {
+                            ImGui.Image(new IntPtr(GLOBALS.Textures.PropDepth.Texture.Id), new Vector2(290, 20));
+
+                            var depth = fetchedSelected[0].prop.prop.Depth;
+                    
+                            ImGui.SetNextItemWidth(100);
+                            ImGui.InputInt("Depth", ref depth);
+                    
+                            Utils.Restrict(ref depth, -29, 0);
+                    
+                            foreach (var selected in fetchedSelected)
+                                selected.prop.prop.Depth = depth;
                         }
                         
                     }

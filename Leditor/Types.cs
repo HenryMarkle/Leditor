@@ -644,7 +644,7 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut DeleteSelectedProps { get; set; } = new(KeyboardKey.D, ctrl: false, shift: false, alt: false);
     public KeyboardShortcut ToggleRopePointsEditingMode { get; set; } = new(KeyboardKey.P, ctrl: false, shift: false, alt: false);
     public KeyboardShortcut ToggleRopeEditingMode { get; set; } = new(KeyboardKey.B, ctrl: false, shift: false, alt: false);
-
+    public KeyboardShortcut CycleSelected { get; set; } = new(KeyboardKey.Null);
     public KeyboardShortcut DuplicateProps { get; set; } = new(KeyboardKey.Null);
     
     public KeyboardShortcut DeepenSelectedProps { get; } = new(KeyboardKey.Null);
