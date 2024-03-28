@@ -534,36 +534,7 @@ internal static class GLOBALS
         true  // 21 scavenger
     ];
 
-    internal static Settings Settings { get; set; } = new(
-        new GeneralSettings(),
-        new Shortcuts(
-            new GlobalShortcuts(),
-            new GeoShortcuts(),
-            new ExperimentalGeoShortcuts(),
-            new TileShortcuts(),
-            new CameraShortcuts(),
-            new LightShortcuts(),
-            new EffectsShortcuts(),
-            new PropsShortcuts()
-        ),
-        new Misc(splashScreen: false, tileImageScansPerFrame: 100),
-        new GeoEditor(
-            new LayerColors(
-                layer1: new ConColor(0, 0, 0, 255),
-                layer2: new ConColor(0, 255, 0, 50),
-                layer3: new ConColor(255, 0, 0, 50)
-            ),
-            new ConColor(0, 0, 255, 70)
-        ),
-        new TileEditor(),
-        new CameraEditorSettings(false, false),
-            new LightEditor(background: new ConColor(66, 108, 245, 255)),
-            new EffectsSettings(
-                effectColorLight:Color.Green,
-                effectColorDark:new(214, 187, 9, 255)),
-            new PropEditor(),
-            new Experimental()
-    );
+    internal static Settings Settings { get; set; } = new();
     
     #nullable enable
     

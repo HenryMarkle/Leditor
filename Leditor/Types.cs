@@ -645,6 +645,8 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut ToggleRopePointsEditingMode { get; set; } = new(KeyboardKey.P, ctrl: false, shift: false, alt: false);
     public KeyboardShortcut ToggleRopeEditingMode { get; set; } = new(KeyboardKey.B, ctrl: false, shift: false, alt: false);
 
+    public KeyboardShortcut DuplicateProps { get; set; } = new(KeyboardKey.Null);
+    
     public KeyboardShortcut DeepenSelectedProps { get; } = new(KeyboardKey.Null);
     public KeyboardShortcut UndeepenSelectedProps { get; } = new(KeyboardKey.Null);
     
@@ -753,7 +755,7 @@ public class Misc(
     public bool FunnyDeathScreen { get; set; } = funnyDeathScreen;
 }
 
-public record ConColor(
+public record struct ConColor(
     byte R = 0,
     byte G = 0,
     byte B = 0,
@@ -774,6 +776,10 @@ public record ConColor(
 
     public static implicit operator Vector3(ConColor c) => new(c.R, c.G, c.B);
     public static implicit operator ConColor(Vector3 c) => new((byte)c.X, (byte)c.Y, (byte)c.Z);
+
+    public static ConColor operator *(ConColor c, int i) => new(R: (byte)(c.R * i), G: (byte)(c.G * i), B: (byte)(c.B * i), A: (byte)(c.A * i));
+    public static ConColor operator +(ConColor c, int i) => new(R: (byte)(c.R + i), G: (byte)(c.G + i), B: (byte)(c.B + i), A: (byte)(c.A + i));
+    public static ConColor operator -(ConColor c, int i) => new(R: (byte)(c.R - i), G: (byte)(c.G - i), B: (byte)(c.B - i), A: (byte)(c.A - i));
 
 }
 
@@ -846,10 +852,15 @@ public class TileEditor(
     public bool AllowUndefinedTiles { get; set; } = allowUndefinedTiles;
 }
 
-public class LightEditor(ConColor background, bool accelerateWarpSpeed = false)
+public class LightEditor(
+    ConColor background, 
+    ConColor levelBackgroundLight, 
+    ConColor levelBackgroundDark
+)
 {
     public ConColor Background { get; set; } = background;
-    public bool AccelerateWarpSpeed { get; set; } = accelerateWarpSpeed;
+    public ConColor LevelBackgroundLight { get; set; } = levelBackgroundLight;
+    public ConColor LevelBackgroundDark { get; set; } = levelBackgroundDark;
 }
 
 #region ShortcutSystem
@@ -994,7 +1005,10 @@ public class Settings
         GeometryEditor = new(new LayerColors(Color.Black, Color.Green, Color.Red), Color.Blue);
         TileEditor = new();
         CameraSettings = new();
-        LightEditor = new(Color.Blue);
+        LightEditor = new LightEditor(
+            background: new ConColor(66, 108, 245, 255),
+            levelBackgroundLight: Color.White,
+            levelBackgroundDark: new Color(200, 0, 0, 255));
         EffectsSettings = new(Color.Green, Color.Yellow);
         PropEditor = new();
         Experimental = new();
@@ -1443,6 +1457,11 @@ public class BasicPropSettings(int renderOrder = 0, int seed = 0, int renderTime
     public int RenderOrder { get; set; } = renderOrder;
     public int Seed { get; set; } = seed;
     public int RenderTime { get; set; } = renderTime;
+
+    public virtual BasicPropSettings Clone()
+    {
+        return new BasicPropSettings(RenderOrder, Seed, RenderTime);
+    }
 }
 
 public class PropLongSettings(int renderOrder = 0, int seed = 0, int renderTime = 0) : BasicPropSettings(renderOrder, seed, renderTime);
@@ -1450,6 +1469,11 @@ public class PropLongSettings(int renderOrder = 0, int seed = 0, int renderTime 
 public class PropVariedSettings(int renderOrder = 0, int seed = 200, int renderTime = 0, int variation = 0) : BasicPropSettings(renderOrder, seed, renderTime), IVariable
 {
     public int Variation { get; set; } = variation;
+
+    public override PropVariedSettings Clone()
+    {
+        return new PropVariedSettings(RenderOrder, Seed, RenderTime, Variation);
+    }
 }
 
 public enum PropRopeRelease { Left, Right, None }
@@ -1459,37 +1483,72 @@ public class PropRopeSettings(int renderOrder = 0, int seed = 0, int renderTime 
     public PropRopeRelease Release { get; set; } = release;
     public float? Thickness { get; set; } = thickness;
     public int? ApplyColor { get; set; } = applyColor;
+
+    public override PropRopeSettings Clone()
+    {
+        return new PropRopeSettings(RenderOrder, Seed, RenderTime, Release, Thickness, ApplyColor);
+    }
 }
 
 public class PropVariedDecalSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime), IVariable
 {
     public int Variation { get; set; } = variation;
     public int CustomDepth { get; set; } = customDepth;
+
+    public override PropVariedDecalSettings Clone()
+    {
+        return new PropVariedDecalSettings(RenderOrder, Seed, RenderTime, Variation, CustomDepth);
+    }
 }
 public class PropVariedSoftSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0, int? applyColor = null) : BasicPropSettings(renderOrder, seed, renderTime), IVariable
 {
     public int Variation { get; set; } = variation;
     public int CustomDepth { get; set; } = customDepth;
     public int? ApplyColor { get; set; } = applyColor;
+
+    public override PropVariedSoftSettings Clone()
+    {
+        return new PropVariedSoftSettings(RenderOrder, Seed, RenderTime, Variation, CustomDepth, ApplyColor);
+    }
 }
 
 public class PropSimpleDecalSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime)
 {
     public int CustomDepth { get; set; } = customDepth;
+
+    public override PropSimpleDecalSettings Clone()
+    {
+        return new PropSimpleDecalSettings(RenderOrder, Seed, RenderTime, CustomDepth);
+    }
 }
 
 public class PropSoftSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime)
 {
     public int CustomDepth { get; set; } = customDepth;
+    
+    public override PropSoftSettings Clone()
+    {
+        return new PropSoftSettings(RenderOrder, Seed, RenderTime, CustomDepth);
+    }
 }
 public class PropSoftEffectSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime)
 {
     public int CustomDepth { get; set; } = customDepth;
+    
+    public override PropSoftEffectSettings Clone()
+    {
+        return new PropSoftEffectSettings(RenderOrder, Seed, RenderTime, CustomDepth);
+    }
 }
 
 public class PropAntimatterSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime)
 {
     public int CustomDepth { get; set; } = customDepth;
+    
+    public override PropAntimatterSettings Clone()
+    {
+        return new PropAntimatterSettings(RenderOrder, Seed, RenderTime, CustomDepth);
+    }
 }
 #endregion
 

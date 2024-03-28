@@ -138,9 +138,9 @@ internal class PropsEditorPage : EditorPage
         true
     ];
 
-    private readonly string[] _menuCategoryNames = [ "Tiles", "Ropes", "Long Props", "Other" ];
-
-    private readonly byte[] _menuPanelBytes = "Menu"u8.ToArray();
+    private Vector2? _propsMoveMouseAnchor;
+    private Vector2? _propsMoveMousePos;
+    private Vector2 _propsMoveMouseDelta = new(0, 0);
     
     private (int index, bool simSwitch, RopeModel model, Vector2[] bezierHandles)[] _models;
     
@@ -1030,6 +1030,8 @@ internal class PropsEditorPage : EditorPage
                     _stretchingProp = false;
                     _editingPropPoints = false;
                     // _ropeMode = false;
+
+                    _propsMoveMousePos = _propsMoveMouseAnchor = GetScreenToWorld2D(GetMousePosition(), _camera);
                 }
                 // Rotate
                 else if (_shortcuts.ToggleRotatingPropsMode.Check(ctrl, shift, alt) && anySelected)
@@ -1089,6 +1091,8 @@ internal class PropsEditorPage : EditorPage
                         .ToArray();
                     
                     _selected = new bool[GLOBALS.Level.Props.Length]; // Update selected
+                    _hidden = new bool[GLOBALS.Level.Props.Length]; // Update hidden
+
                     
                     fetchedSelected = GLOBALS.Level.Props
                         .Select((prop, index) => (prop, index))
@@ -1124,6 +1128,52 @@ internal class PropsEditorPage : EditorPage
                         // _editingPropPoints = false;
                         _ropeMode = !_ropeMode;
                     }
+                }
+                // Duplicate
+                else if (_shortcuts.DuplicateProps.Check(ctrl, shift, alt) && anySelected)
+                {
+                    List<(InitPropType, (int, int), Prop)> dProps = [];
+                    
+                    foreach (var (prop, _) in fetchedSelected)
+                    {
+                        dProps.Add((prop.type, prop.position, new Prop(
+                                prop.prop.Depth,
+                                prop.prop.Name,
+                                prop.prop.IsTile,
+                                new PropQuads(
+                                    prop.prop.Quads.TopLeft,
+                                    prop.prop.Quads.TopRight,
+                                    prop.prop.Quads.BottomRight,
+                                    prop.prop.Quads.BottomLeft
+                                ))
+                            {
+                                Extras = new PropExtras(
+                                    prop.prop.Extras.Settings.Clone(),
+                                    [..prop.prop.Extras.RopePoints])
+                            })
+                        );
+
+                    }
+                    
+                    GLOBALS.Level.Props = [..GLOBALS.Level.Props, ..dProps];
+
+                    var newSelected = new bool[GLOBALS.Level.Props.Length]; // Update selected
+                    var newHidden = new bool[GLOBALS.Level.Props.Length]; // Update hidden
+
+                    for (var i = 0; i < _selected.Length; i++)
+                    {
+                        newSelected[i] = _selected[i];
+                        newHidden[i] = _hidden[i];
+                    }
+
+                    _selected = newSelected;
+                    _hidden = newHidden;
+                
+                    fetchedSelected = GLOBALS.Level.Props
+                        .Select((prop, index) => (prop, index))
+                        .Where(p => _selected[p.index])
+                        .Select(p => p)
+                        .ToArray();
                 }
                 else SetMouseCursor(MouseCursor.Default);
 
@@ -1169,26 +1219,69 @@ internal class PropsEditorPage : EditorPage
                 }
                 
                 // TODO: switch on enums instead
-                if (_movingProps && anySelected)
+                if (_movingProps && anySelected && _propsMoveMouseAnchor is not null && _propsMoveMousePos is not null)
                 {
                     if (IsMouseButtonPressed(MouseButton.Left)) _movingProps = false;
-                    var delta = GetMouseDelta(); // TODO: Scale to world2D
+                    
+                    // update mouse delta
+                    
+                    var newMousePos = GetScreenToWorld2D(GetMousePosition(), _camera);
+                    
+                    _propsMoveMouseDelta = newMousePos - _propsMoveMousePos.Value;
+                    _propsMoveMousePos = newMousePos;
+
+                    
+                    // Fix delta when level panning
+                    
                     if (IsMouseButtonDown(_shortcuts.DragLevel.Button))
-                    {
-                        delta.X = 0;
-                        delta.Y = 0;
-                    }
+                        _propsMoveMouseDelta = new Vector2(0, 0);
 
                     for (var s = 0; s < _selected.Length; s++)
                     {
                         if (!_selected[s]) continue;
                         
                         var quads = GLOBALS.Level.Props[s].prop.Quads;
+                        var center = Utils.QuadsCenter(ref quads);
 
-                        quads.TopLeft = Raymath.Vector2Add(quads.TopLeft, delta);
-                        quads.TopRight = Raymath.Vector2Add(quads.TopRight, delta);
-                        quads.BottomRight = Raymath.Vector2Add(quads.BottomRight, delta);
-                        quads.BottomLeft = Raymath.Vector2Add(quads.BottomLeft, delta);
+                        switch (_snapMode)
+                        {
+                            case 0: // Free
+                            {
+                                quads.TopLeft = Raymath.Vector2Add(quads.TopLeft, _propsMoveMouseDelta);
+                                quads.TopRight = Raymath.Vector2Add(quads.TopRight, _propsMoveMouseDelta);
+                                quads.BottomRight = Raymath.Vector2Add(quads.BottomRight, _propsMoveMouseDelta);
+                                quads.BottomLeft = Raymath.Vector2Add(quads.BottomLeft, _propsMoveMouseDelta);
+                            }
+                                break;
+
+                            case 1: // Grid
+                            {
+                                var gridScaled = new Vector2((int)(_propsMoveMousePos.Value.X / 16), (int)(_propsMoveMousePos.Value.Y/16));
+                                var gridScaledBack = gridScaled * 16;
+
+                                var centerDelta = gridScaledBack - center;
+                                
+                                quads.TopLeft = Raymath.Vector2Add(quads.TopLeft, centerDelta);
+                                quads.TopRight = Raymath.Vector2Add(quads.TopRight, centerDelta);
+                                quads.BottomRight = Raymath.Vector2Add(quads.BottomRight, centerDelta);
+                                quads.BottomLeft = Raymath.Vector2Add(quads.BottomLeft, centerDelta);
+                            }
+                                break;
+
+                            case 2: // Precise
+                            {
+                                var gridScaled = new Vector2((int)(_propsMoveMousePos.Value.X / 8), (int)(_propsMoveMousePos.Value.Y / 8));
+                                var gridScaledBack = gridScaled * 8;
+
+                                var centerDelta = gridScaledBack - center;
+                                
+                                quads.TopLeft = Raymath.Vector2Add(quads.TopLeft, centerDelta);
+                                quads.TopRight = Raymath.Vector2Add(quads.TopRight, centerDelta);
+                                quads.BottomRight = Raymath.Vector2Add(quads.BottomRight, centerDelta);
+                                quads.BottomLeft = Raymath.Vector2Add(quads.BottomLeft, centerDelta);
+                            }
+                                break;
+                        }
 
                         GLOBALS.Level.Props[s].prop.Quads = quads;
 
@@ -1198,7 +1291,7 @@ internal class PropsEditorPage : EditorPage
                             {
                                 for (var p = 0; p < GLOBALS.Level.Props[s].prop.Extras.RopePoints.Length; p++)
                                 {
-                                    GLOBALS.Level.Props[s].prop.Extras.RopePoints[p] = Raymath.Vector2Add(GLOBALS.Level.Props[s].prop.Extras.RopePoints[p], delta);
+                                    GLOBALS.Level.Props[s].prop.Extras.RopePoints[p] = Raymath.Vector2Add(GLOBALS.Level.Props[s].prop.Extras.RopePoints[p], _propsMoveMouseDelta);
                                 }
                             }
 
@@ -1208,7 +1301,7 @@ internal class PropsEditorPage : EditorPage
                                 {
                                     for (var h = 0; h < _models[r].bezierHandles.Length; h++)
                                     {
-                                        _models[r].bezierHandles[h] += delta;
+                                        _models[r].bezierHandles[h] += _propsMoveMouseDelta;
                                     }
                                 }
                             }
@@ -2639,6 +2732,8 @@ internal class PropsEditorPage : EditorPage
                                 .ToArray();
 
                             _selected = new bool [GLOBALS.Level.Props.Length];
+                            _hidden = new bool[GLOBALS.Level.Props.Length]; // Update hidden
+
 
                             fetchedSelected = GLOBALS.Level.Props
                                 .Select((prop, index) => (prop, index))

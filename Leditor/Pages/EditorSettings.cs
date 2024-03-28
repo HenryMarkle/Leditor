@@ -708,6 +708,7 @@ internal class SettingsPage : EditorPage
                         var assignToggleRopeEditing = ImGui.Button($"Rope Simulation: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopeEditingMode}");
                         var assignDeepenProps = ImGui.Button($"Deepen Prop: {GLOBALS.Settings.Shortcuts.PropsEditor.DeepenSelectedProps}");
                         var assignUndeepenProps = ImGui.Button($"Undeepen Prop: {GLOBALS.Settings.Shortcuts.PropsEditor.UndeepenSelectedProps}");
+                        var assignDuplicate = ImGui.Button($"Duplicate: {GLOBALS.Settings.Shortcuts.PropsEditor.DuplicateProps}");
                         
                         if (assignCycleLayers) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleLayers;
                         if (assignCycleSnapMode) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleSnapMode;
@@ -732,6 +733,7 @@ internal class SettingsPage : EditorPage
                         if (assignToggleRopeEditing) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopeEditingMode;
                         if (assignDeepenProps) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DeepenSelectedProps;
                         if (assignUndeepenProps) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.UndeepenSelectedProps;
+                        if (assignDuplicate) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DuplicateProps;
                     }
                         break;
                     case 8: // Style

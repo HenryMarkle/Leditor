@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Text.Json;
 using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
@@ -8,13 +9,12 @@ namespace Leditor.Pages;
 internal class LightEditorPage : EditorPage
 {
     private Camera2D _camera = new() { Zoom = 0.5f, Target = new(-500, -200) };
+    
     private int _lightBrushTextureIndex;
     private float _lightBrushWidth = 200;
     private float _lightBrushHeight = 200;
-    private int _lightBrushTexturePage;
     private float _lightBrushRotation;
     private bool _eraseShadow;
-    private bool _slowGrowth = true;
     private bool _shading = true;
     private bool _showTiles;
     private bool _tilePreview = true;
@@ -38,8 +38,6 @@ internal class LightEditorPage : EditorPage
     private Rectangle _lightBrushDest;
     private Vector2 _lightBrushOrigin;
 
-    readonly byte[] _lightBrushMenuPanelBytes = "Brushes"u8.ToArray();
-
     private readonly LightShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.LightEditor;
     
     private bool _isShortcutsWinHovered;
@@ -59,7 +57,7 @@ internal class LightEditorPage : EditorPage
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera with { Target = GLOBALS.Camera.Target + new Vector2(300, 300)};
         var mouse = GetMousePosition();
         
-        var indicatorOrigin = new Vector2(GetScreenWidth() - 100, GetScreenHeight() - 100);
+        var indicatorOrigin = new Vector2(100, GetScreenHeight() - 100);
 
         var indicatorPoint = new Vector2(
             indicatorOrigin.X + (float)((15 + GLOBALS.Level.LightFlatness * 7) * Math.Cos(float.DegreesToRadians(GLOBALS.Level.LightAngle + 90))),
@@ -76,7 +74,9 @@ internal class LightEditorPage : EditorPage
         var panelHeight = GetScreenHeight() - 100;
         var brushPanel = new Rectangle(10, 50, 120, panelHeight);
 
-        var canPaint = !_isBrushesWinHovered && 
+        var canPaint = !_isSettingsWinHovered && 
+                       !_isSettingsWinDragged && 
+                       !_isBrushesWinHovered && 
                        !_isBrushesWinDragged && 
                        !_isShortcutsWinHovered && 
                        !_isShortcutsWinDragged && 
@@ -126,11 +126,6 @@ internal class LightEditorPage : EditorPage
         if (_shortcuts.IncreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness < 10) GLOBALS.Level.LightFlatness++;
         if (_shortcuts.DecreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness > 1) GLOBALS.Level.LightFlatness--;
 
-        const int textureSize = 100;
-
-
-        var pageSize = (panelHeight - 100) / textureSize;
-
         if (_shortcuts.IncreaseAngle.Check(ctrl, shift, alt, true))
         {
             GLOBALS.Level.LightAngle--;
@@ -175,16 +170,12 @@ internal class LightEditorPage : EditorPage
         if (_shortcuts.NextBrush.Check(ctrl, shift, alt))
         {
             _lightBrushTextureIndex = ++_lightBrushTextureIndex % GLOBALS.Textures.LightBrushes.Length;
-
-            _lightBrushTexturePage = _lightBrushTextureIndex / pageSize;
         }
         else if (_shortcuts.PreviousBrush.Check(ctrl, shift, alt))
         {
             _lightBrushTextureIndex--;
 
             if (_lightBrushTextureIndex < 0) _lightBrushTextureIndex = GLOBALS.Textures.LightBrushes.Length - 1;
-
-            _lightBrushTexturePage = _lightBrushTextureIndex / pageSize;
         }
         
         if (_shortcuts.RotateBrushCounterClockwise.Check(ctrl, shift, alt, true))
@@ -265,11 +256,11 @@ internal class LightEditorPage : EditorPage
                     _lightBrushDest,
                     _lightBrushOrigin,
                     _lightBrushRotation,
-                    new(0, 0, 0, 255)
+                    Color.Black
                 );
                 EndShaderMode();
             }
-            Raylib.EndTextureMode();
+            EndTextureMode();
         }
 
         if (canPaint && (_shortcuts.Erase.Check(ctrl, shift, alt, true) ||
@@ -289,7 +280,7 @@ internal class LightEditorPage : EditorPage
                     _lightBrushDest,
                     _lightBrushOrigin,
                     _lightBrushRotation,
-                    new Color(255, 255, 255, 255)
+                    Color.White
                 );
                 EndShaderMode();
             }
@@ -312,7 +303,9 @@ internal class LightEditorPage : EditorPage
                     0, 0,
                     GLOBALS.Level.Width * GLOBALS.Scale + 300,
                     GLOBALS.Level.Height * GLOBALS.Scale + 300,
-                    GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(200, 0, 0, 255) : Color.White
+                    GLOBALS.Settings.GeneralSettings.DarkTheme 
+                        ? GLOBALS.Settings.LightEditor.LevelBackgroundDark 
+                        : GLOBALS.Settings.LightEditor.LevelBackgroundLight
                 );
 
                 if (GLOBALS.Settings.GeneralSettings.DarkTheme)
@@ -412,14 +405,14 @@ internal class LightEditorPage : EditorPage
             #region Indicator
 
             DrawCircleLines(
-                GetScreenWidth() - 100,
+                100,
                 GetScreenHeight() - 100,
                 50.0f,
                 new(255, 0, 0, 255)
             );
 
             DrawCircleLines(
-                GetScreenWidth() - 100,
+                100,
                 GetScreenHeight() - 100,
                 15 + (GLOBALS.Level.LightFlatness * 7),
                 new(255, 0, 0, 255)
@@ -528,16 +521,86 @@ internal class LightEditorPage : EditorPage
                 }
                 else
                 {
-                    _isBrushesWinHovered = false;
+                    _isSettingsWinHovered = false;
                 }
 
                 if (IsMouseButtonReleased(MouseButton.Left) && _isSettingsWinDragged) _isSettingsWinDragged = false;
 
                 if (settingsOpened)
                 {
+                    var availableSpace = ImGui.GetContentRegionAvail();
+                    
                     Vector3 bgColorVec = GLOBALS.Settings.LightEditor.Background;
-                    var bgColorUpdated = ImGui.ColorEdit3("Background Color##LightBackgroundColor", ref bgColorVec);
-                    if (bgColorUpdated) GLOBALS.Settings.LightEditor.Background = bgColorVec;
+                    
+                    bgColorVec /= 255;
+                    
+                    ImGui.SetNextItemWidth(200);
+                    
+                    var bgColorUpdated = ImGui.ColorEdit3(
+                        "Background Color##LightBackgroundColor", 
+                        ref bgColorVec);
+                    if (bgColorUpdated) GLOBALS.Settings.LightEditor.Background = bgColorVec*255;
+                    
+                    // Level background color
+                    
+                    ImGui.SeparatorText("Level Background Colors");
+
+                    Vector3 levelBgColorLight = GLOBALS.Settings.LightEditor.LevelBackgroundLight;
+
+                    levelBgColorLight /= 255;
+
+                    ImGui.SetNextItemWidth(200);
+
+                    var levelLightUpdated = ImGui.ColorEdit3("Light Mode", ref levelBgColorLight);
+
+                    if (levelLightUpdated) GLOBALS.Settings.LightEditor.LevelBackgroundLight = levelBgColorLight*255;
+                    
+                    
+                    
+                    Vector3 levelBgColorDark = GLOBALS.Settings.LightEditor.LevelBackgroundDark;
+
+                    levelBgColorDark /= 255;
+
+                    ImGui.SetNextItemWidth(200);
+
+                    var levelDarkUpdated = ImGui.ColorEdit3("Dark Mode", ref levelBgColorDark);
+
+                    if (levelDarkUpdated) GLOBALS.Settings.LightEditor.LevelBackgroundDark = levelBgColorDark*255;
+                    
+                    ImGui.Spacing();
+
+                    var clicked = ImGui.Button((_showTiles, _tilePreview, _tintedTileTextures) switch
+                    {
+                        (true, true, false) => "Tiles: Review",
+                        (true, false, false) => "Tiles: Textures",
+                        (true, false, true) => "Tiles: Tinted Textures",
+                        _ => "Tiles: Disabled"
+                    }, availableSpace with { Y = 20 });
+
+                    if (clicked)
+                    {
+                        (_showTiles, _tilePreview, _tintedTileTextures) = (_showTiles, _tilePreview, _tintedTileTextures) switch
+                        {
+                            (false, true, false) => (true, true, false),
+                            (true, true, false) => (true, false, false),
+                            (true, false, false) => (true, false, true),
+                            (true, false, true) => (false, true, false),
+                            _ => (true, true, false)
+                        };
+                    }
+
+                    if (ImGui.Button("Save Settings", availableSpace with { Y = 20 }))
+                    {
+                        try
+                        {
+                            var text = JsonSerializer.Serialize(GLOBALS.Settings, GLOBALS.JsonSerializerOptions);
+                            File.WriteAllText(GLOBALS.Paths.SettingsPath, text);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error($"Failed to save settings: {e}");
+                        }
+                    }
                     
                     ImGui.End();
                 }
