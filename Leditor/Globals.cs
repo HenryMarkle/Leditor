@@ -64,6 +64,7 @@ internal static class GLOBALS
         internal Shader SimpleDecalProp { get; set; }
         internal Shader VariedDecalProp { get; set; }
         internal Shader LongProp { get; set; }
+        internal Shader PreviewColoredTileProp { get; set; }
     }
 
     /// <summary>
@@ -170,8 +171,8 @@ internal static class GLOBALS
     internal static int InitialMatrixWidth => 72;
     internal static int InitialMatrixHeight => 43;
 
-    internal static int Page { get; set; } = 0;
-    internal static int PreviousPage { get; set; } = 0;
+    internal static int Page { get; set; }
+    internal static int PreviousPage { get; set; }
 
     /// ResizeFlag and NewFlag are used when moving to page 6 (dimensions page)
     /// to indicate whether you want to resize the levels or override it.
@@ -541,17 +542,15 @@ internal static class GLOBALS
     internal static Font? Font { get; set; }
     
     /// Used when loading a level
-    internal static Task<TileCheckResult>? TileCheck { get; set; } = null;
+    internal static Task<TileCheckResult>? TileCheck { get; set; }
     
     /// Used when loading a level
-    internal static Task<PropCheckResult>? PropCheck { get; set; } = null;
+    internal static Task<PropCheckResult>? PropCheck { get; set; }
     
     public static Serilog.Core.Logger? Logger { get; set; }
 
-    public static JsonSerializerOptions JsonSerializerOptions { get; set; } =
-        new JsonSerializerOptions { WriteIndented = true };
-    
-    public static bool RendererExists { get; set; }
+    public static JsonSerializerOptions JsonSerializerOptions { get; } =
+        new() { WriteIndented = true };
     
     public static Camera2D Camera { get; set; }
 

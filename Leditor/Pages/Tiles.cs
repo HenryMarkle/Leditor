@@ -1163,8 +1163,8 @@ internal class TileEditorPage : EditorPage, IDisposable
         
         _tileTexturePanelRT.Dispose();
         _tileTexturePanelRT = new RenderTexture2D(
-            (width + 2*(tile.BufferTiles))*20, 
-            (height + 2*(tile.BufferTiles))*20);
+            (width)*20 + 20, 
+            (height)*20 + 20);
                     
         BeginTextureMode(_tileTexturePanelRT);
         ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 0 } : Color.Gray);
@@ -1173,7 +1173,7 @@ internal class TileEditorPage : EditorPage, IDisposable
             texture, 
             tile, 
             new Vector2(0, 0), 
-            new  Vector2(0, 0), 
+            new  Vector2(-10, -10), 
             color, 
             0, 
             20
@@ -2678,9 +2678,26 @@ internal class TileEditorPage : EditorPage, IDisposable
             
             if (specsWinOpened)
             {
-                var displayClicked = ImGui.Button(_tileSpecDisplayMode ? "Texture" : "Geometry");
+                var availableSpace = ImGui.GetContentRegionAvail();
+                
+                var displayClicked = ImGui.Button(
+                    _tileSpecDisplayMode ? "Texture" : "Geometry", 
+                    availableSpace with { Y = 20 }
+                );
 
-                if (displayClicked) _tileSpecDisplayMode = !_tileSpecDisplayMode;
+                if (displayClicked)
+                {
+                    _tileSpecDisplayMode = !_tileSpecDisplayMode;
+
+                    if (_tileSpecDisplayMode)
+                    {
+                        UpdateTileTexturePanel();
+                    }
+                    else
+                    {
+                        UpdateTileSpecsPanel();
+                    }
+                }
                 
                 rlImGui.ImageRenderTextureFit(_tileSpecDisplayMode ? _tileTexturePanelRT : _tileSpecsPanelRT);
                 

@@ -253,6 +253,11 @@ internal class SettingsPage : EditorPage
                         
                         ImGui.SeparatorText("Misc");
 
+                        var defaultFont = GLOBALS.Settings.GeneralSettings.DefaultFont;
+                        if (ImGui.Checkbox("Use Default Fonts (requires restart)", ref defaultFont))
+                            GLOBALS.Settings.GeneralSettings.DefaultFont = defaultFont;
+                        
+
                         var cacheRendererRuntime = GLOBALS.Settings.GeneralSettings.CacheRendererRuntime;
                         ImGui.Checkbox("Cache Renderer Runtime at Startup", ref cacheRendererRuntime);
                         if (cacheRendererRuntime != GLOBALS.Settings.GeneralSettings.CacheRendererRuntime)

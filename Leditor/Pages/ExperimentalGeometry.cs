@@ -1172,154 +1172,6 @@ internal class ExperimentalGeometryPage : EditorPage
                 }
             }
             EndMode2D();
-
-            // geo menu
-            #region RayGuiMenu
-            //
-            // unsafe
-            // {
-            //    fixed (byte* pt = _geoMenuPanelBytes)
-            //    {
-            //        RayGui.GuiPanel(panelRect, (sbyte*)pt);
-            //    } 
-            // }
-            //
-            //
-            // // Categories
-            //
-            // DrawRectangleLinesEx(new((_geoMenuCategory * 42) + panelRect.X + 10, 80, 42, 42), 4.0f, Color.Blue);
-            //
-            // var category1Rect = new Rectangle(panelRect.X + 10, 80, 42, 42);
-            // var category2Rect = new Rectangle(42 + panelRect.X + 10, 80, 42, 42);
-            // var category3Rect = new Rectangle(84 + panelRect.X + 10, 80, 42, 42);
-            // var category4Rect = new Rectangle(126 + panelRect.X + 10, 80, 42, 42);
-            //
-            // var category1Hovered = CheckCollisionPointRec(uiMouse, category1Rect);
-            // var category2Hovered = CheckCollisionPointRec(uiMouse, category2Rect);
-            // var category3Hovered = CheckCollisionPointRec(uiMouse, category3Rect);
-            // var category4Hovered = CheckCollisionPointRec(uiMouse, category4Rect);
-            //
-            // if (category1Hovered)
-            // {
-            //     DrawRectangleRec(category1Rect, Color.Blue with { A = 100 });
-            //
-            //     if (IsMouseButtonPressed(MouseButton.Left))
-            //     {
-            //         _geoMenuCategory = 0;
-            //         _geoMenuIndex = 0;
-            //     }
-            // }
-            //
-            // if (category2Hovered)
-            // {
-            //     DrawRectangleRec(category2Rect, Color.Blue with { A = 100 });
-            //     
-            //     if (IsMouseButtonPressed(MouseButton.Left))
-            //     {
-            //         _geoMenuCategory = 1;
-            //         _geoMenuIndex = 0;
-            //     }
-            // }
-            //
-            // if (category3Hovered)
-            // {
-            //     DrawRectangleRec(category3Rect, Color.Blue with { A = 100 });
-            //     
-            //     if (IsMouseButtonPressed(MouseButton.Left))
-            //     {
-            //         _geoMenuCategory = 2;
-            //         _geoMenuIndex = 0;
-            //     }
-            //
-            // }
-            //
-            // if (category4Hovered)
-            // {
-            //     DrawRectangleRec(category4Rect, Color.Blue with { A = 100 });
-            //     
-            //     if (IsMouseButtonPressed(MouseButton.Left))
-            //     {
-            //         _geoMenuCategory = 3;
-            //         _geoMenuIndex = 0;
-            //     }
-            // }
-            //
-            // DrawRectangleLinesEx(category1Rect, 1.0f, Color.Black);
-            // DrawRectangleLinesEx(category2Rect, 1.0f, Color.Black);
-            // DrawRectangleLinesEx(category3Rect, 1.0f, Color.Black);
-            // DrawRectangleLinesEx(category4Rect, 1.0f, Color.Black);
-            //
-            //
-            //
-            // DrawTriangle(
-            //     new(panelRect.X + 20, 90),
-            //     new(panelRect.X + 20, 112),
-            //     new(panelRect.X + 42, 112),
-            //     Color.Black
-            // );
-            //
-            // DrawRectangleV(
-            //     new(panelRect.X + 70, 85),
-            //     new(5, 32),
-            //     Color.Black
-            // );
-            //
-            // DrawRectangleV(
-            //     new(panelRect.X + 57, 100),
-            //     new(32, 5),
-            //     Color.Black
-            // );
-            //
-            // var placeSpearTexture = GLOBALS.Textures.GeoMenu[8];
-            // var entryTexture = GLOBALS.Textures.GeoMenu[14];
-            //
-            // DrawTexturePro(
-            //     placeSpearTexture,
-            //     new(0, 0, placeSpearTexture.Width, placeSpearTexture.Height),
-            //     new(panelRect.X + 99, 85, 32, 32),
-            //     new(0, 0),
-            //     0,
-            //     Color.Black
-            // );
-            //
-            // DrawTexturePro(
-            //     entryTexture,
-            //     new(0, 0, entryTexture.Width, entryTexture.Height),
-            //     new(panelRect.X + 141, 85, 32, 32),
-            //     new(0, 0),
-            //     0,
-            //     Color.Black
-            // );
-            //
-            // unsafe
-            // {
-            //     fixed (int* scrollIndex = &_geoMenuScrollIndex)
-            //     {
-            //         var newGeoMenuIndex = RayGui.GuiListView(
-            //             new(panelRect.X + 10, 150, 170, 200),
-            //             _geoMenuCategory switch
-            //             {
-            //                 0 => "Solid;Slope;Platform;Glass",
-            //                 1 => "Vertical Pole;Horizontal Pole;Cracked Terrain",
-            //                 2 => "Bat Hive;Forbid Fly Chains;Waterfall;Worm Grass;Place Rock;Place Spear",
-            //                 3 => "Shortcut Entrance;Shortcut Path;Room Entrance;Dragon Den;Wack-a-mole Hole;Scavenger Hole;Garbage Worm Hole",
-            //                 _ => ""
-            //             },
-            //             scrollIndex,
-            //             _geoMenuIndex
-            //         );
-            //
-            //         if (newGeoMenuIndex != _geoMenuIndex && newGeoMenuIndex != -1)
-            //         {
-            //             #if DEBUG
-            //             _logger.Debug($"New geo menu index: {newGeoMenuIndex}");
-            //             #endif
-            //             
-            //             _geoMenuIndex = newGeoMenuIndex;
-            //         }
-            //     }
-            // }
-            #endregion
             
             // Current layer indicator
 
@@ -1669,6 +1521,12 @@ internal class ExperimentalGeometryPage : EditorPage
                 ImGui.Checkbox("Cameras", ref showCameras);
 
                 GLOBALS.Settings.GeometryEditor.ShowCameras = showCameras;
+
+                var showTiles = GLOBALS.Settings.GeometryEditor.ShowTiles;
+                if (ImGui.Checkbox("Show Tiles", ref showTiles))
+                {
+                    GLOBALS.Settings.GeometryEditor.ShowTiles = showTiles;
+                }
                 
                 // Controls
                 

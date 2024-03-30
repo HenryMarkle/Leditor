@@ -1746,8 +1746,8 @@ internal class PropsEditorPage : EditorPage
                         2, 
                         GLOBALS.PreviewScale, 
                         false, 
-                        !GLOBALS.Settings.TileEditor.UseTextures,
-                        GLOBALS.Settings.TileEditor.TintedTiles
+                        true,
+                        false
                     );
                 }
                 
@@ -1905,8 +1905,8 @@ internal class PropsEditorPage : EditorPage
                         1, 
                         GLOBALS.PreviewScale, 
                         false, 
-                        !GLOBALS.Settings.TileEditor.UseTextures,
-                        GLOBALS.Settings.TileEditor.TintedTiles,
+                        true,
+                        false,
                         (byte)(GLOBALS.Layer < 2 ? 255 : 80)
                     );
                 }
@@ -2068,8 +2068,8 @@ internal class PropsEditorPage : EditorPage
                         0, 
                         GLOBALS.PreviewScale, 
                         false, 
-                        !GLOBALS.Settings.TileEditor.UseTextures,
-                        GLOBALS.Settings.TileEditor.TintedTiles,
+                        true,
+                        false,
                         (byte)(GLOBALS.Layer == 0 ? 255 : 80)
                     );
                 }

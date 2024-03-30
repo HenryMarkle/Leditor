@@ -454,16 +454,9 @@ class Program
             }
         }
         
-        // Check for renderer
-
-        if (File.Exists(Path.Combine(GLOBALS.Paths.RendererDirectory, "Drizzle.ConsoleApp.exe")))
-        {
-            GLOBALS.RendererExists = true;
-        }
-
         logger.Information("Initializing data");
 
-        const string version = "Henry's Leditor v0.9.54";
+        const string version = "Henry's Leditor v0.9.55";
         const string raylibVersion = "Raylib v5.0.0";
         
         logger.Information(version);
@@ -650,11 +643,6 @@ class Program
         InitWindow(GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight, "Henry's Leditor");
         //
         
-        if (!GLOBALS.Settings.GeneralSettings.DefaultFont)
-        {
-            GLOBALS.Font = LoadFont(Path.Combine(GLOBALS.Paths.FontsDirectory, "oswald", "Oswald-Regular.ttf"));
-        }
-        
         SetWindowIcon(icon);
         SetWindowMinSize(GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight);
         SetExitKey(KeyboardKey.Null);
@@ -765,6 +753,9 @@ class Program
 
         GLOBALS.Shaders.LongProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_long.frag"));
+
+        GLOBALS.Shaders.PreviewColoredTileProp = LoadShader(null,
+            Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_colored_preview.frag"));
         //
 
         SetTargetFPS(GLOBALS.Settings.Misc.FPS);
@@ -863,6 +854,35 @@ class Program
         
         // ImGui.LoadIniSettingsFromDisk(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "imgui.ini"));
         //
+        
+        // Load fonts
+
+        if (!GLOBALS.Settings.GeneralSettings.DefaultFont)
+        {
+            logger.Debug("Loading fonts");
+            try
+            {
+                var fontPaths = Directory
+                    .GetFiles(GLOBALS.Paths.FontsDirectory)
+                    .Where(p => p.EndsWith(".ttf"))
+                    .ToList();
+
+                var io = ImGui.GetIO();
+                foreach (var fontPath in fontPaths)
+                    io.Fonts.AddFontFromFileTTF(fontPath, 13);
+                
+                rlImGui.ReloadFonts();
+
+                var firstFont = fontPaths.FirstOrDefault();
+                
+                
+                GLOBALS.Font = LoadFont(firstFont);
+            }
+            catch (Exception e)
+            {
+                logger.Error($"Failed to load custom fonts: {e}");
+            }
+        }
         
         // Tile & Prop Textures
 
@@ -1515,6 +1535,7 @@ class Program
         UnloadShader(GLOBALS.Shaders.ColoredTileProp);
         UnloadShader(GLOBALS.Shaders.ColoredBoxTileProp);
         UnloadShader(GLOBALS.Shaders.LongProp);
+        UnloadShader(GLOBALS.Shaders.PreviewColoredTileProp);
         
         // Unloading Pages
         logger.Debug("Unloading Pages");
