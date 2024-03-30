@@ -7,6 +7,11 @@ namespace Leditor.Pages;
 
 internal class PropsEditorPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+
     private Camera2D _camera;
 
     private readonly PropsShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.PropsEditor;

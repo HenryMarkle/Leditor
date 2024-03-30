@@ -4,6 +4,11 @@ namespace Leditor.Pages;
 
 internal class MissingPropTexturesPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+
     private const string Title = "The project contains missing textures";
     private const string Subtitle = "The editor cannot render them without their proper textures\n" +
                                     "Check the logs to view the missing textures";

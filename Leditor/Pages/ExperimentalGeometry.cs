@@ -8,6 +8,11 @@ namespace Leditor.Pages;
 
 internal class ExperimentalGeometryPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+    
     private readonly ExperimentalGeoShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts;
 
     private Camera2D _camera = new() { Zoom = 1.0f };

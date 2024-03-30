@@ -7,6 +7,11 @@ namespace Leditor.Pages;
 
 internal class EffectsEditorPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+    
     private readonly EffectsShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.EffectsEditor;
 
     private Camera2D _camera = new() { Zoom = 1.0f };

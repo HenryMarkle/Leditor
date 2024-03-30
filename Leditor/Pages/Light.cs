@@ -8,6 +8,11 @@ namespace Leditor.Pages;
 
 internal class LightEditorPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+    
     private Camera2D _camera = new() { Zoom = 0.5f, Target = new(-500, -200) };
     
     private int _lightBrushTextureIndex;

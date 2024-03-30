@@ -8,6 +8,11 @@ namespace Leditor.Pages;
 
 internal class DeathScreen : ExceptionPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+    
     public Texture2D? Screenshot { get; set; }
 
     ~DeathScreen()

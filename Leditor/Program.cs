@@ -791,25 +791,24 @@ class Program
 
         // Pager pager = new(logger, new Context());
 
-        // pager
-        //     .RegisterDefault<StartPage>("start")
-        //     .RegisterFatal<DeathScreen>()
-        //     .Register<MainPage>("main")
-        //     .Register<SettingsPage>("settings")
-        //     .Register<MissingInitFilePage>("missingInitFilePage")
-        //     .Register<MissingPropTexturesPage>("missingPropTexturesPage")
-        //     .Register<MissingTexturesPage>("missingTexturesPage")
-        //     .Register<MissingAssetsPage>("missingAssetsPage")
-        //     .Register<AssetsNukedPage>("assetsNukedPage")
-        //     .Register<FailedTileCheckOnLoadPage>("failedTileCheckOnLoadPage")
-        //     .Register<GeoEditorPage>("oldGeo")
-        //     .Register<ExperimentalGeometryPage>("newGeo")
-        //     .Register<TileEditorPage>("tiles")
-        //     .Register<CamerasEditorPage>("cameras")
-        //     .Register<LightEditorPage>("light")
-        //     .Register<DimensionsEditorPage>("dimensions")
-        //     .Register<EffectsEditorPage>("effects")
-        //     .Register<PropsEditorPage>("props");
+        // pager.RegisterDefault<StartPage>("start");
+        // pager.RegisterException<DeathScreen>();
+        // pager.Register<MainPage>("main");
+        // pager.Register<SettingsPage>("settings");
+        // pager.Register<MissingInitFilePage>("missingInitFilePage");
+        // pager.Register<MissingPropTexturesPage>("missingPropTexturesPage");
+        // pager.Register<MissingTexturesPage>("missingTexturesPage");
+        // pager.Register<MissingAssetsPage>("missingAssetsPage");
+        // pager.Register<AssetsNukedPage>("assetsNukedPage");
+        // pager.Register<FailedTileCheckOnLoadPage>("failedTileCheckOnLoadPage");
+        // pager.Register<GeoEditorPage>("oldGeo");
+        // pager.Register<ExperimentalGeometryPage>("newGeo");
+        // pager.Register<TileEditorPage>("tiles");
+        // pager.Register<CamerasEditorPage>("cameras");
+        // pager.Register<LightEditorPage>("light");
+        // pager.Register<DimensionsEditorPage>("dimensions");
+        // pager.Register<EffectsEditorPage>("effects");
+        // pager.Register<PropsEditorPage>("props");
         
         // Lingo runtime assets path
         
@@ -1540,10 +1539,27 @@ class Program
         // Unloading Pages
         logger.Debug("Unloading Pages");
         
-        tilePage.Dispose();
-
-        // unloadTileImages?.Wait();
+        // pager.Dispose();
         
+        geoPage.Dispose();
+        tilePage.Dispose();
+        camerasPage.Dispose();
+        lightPage.Dispose();
+        dimensionsPage.Dispose();
+        deathScreen.Dispose();
+        effectsPage.Dispose();
+        propsPage.Dispose();
+        mainPage.Dispose();
+        startPage.Dispose();
+        failedTileCheckOnLoadPage.Dispose();
+        assetsNukedPage.Dispose();
+        missingAssetsPage.Dispose();
+        missingTexturesPage.Dispose();
+        missingPropTexturesPage.Dispose();
+        missingInitFilePage.Dispose();
+        experimentalGeometryPage.Dispose();
+        settingsPage.Dispose();
+
         //
         rlImGui.Shutdown();
         //

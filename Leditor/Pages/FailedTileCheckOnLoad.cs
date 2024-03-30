@@ -4,6 +4,11 @@ namespace Leditor.Pages;
 
 internal class FailedTileCheckOnLoadPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+    
     private const string MissingTileWarnTitleText = "Your project seems to contain undefined tiles";
     private const string MissingTileWarnSubtitleText = "If you used custom tiles on this project from a different level editor, please use its Init.txt";
     

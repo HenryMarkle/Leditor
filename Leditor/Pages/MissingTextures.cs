@@ -4,6 +4,11 @@ namespace Leditor.Pages;
 
 internal class MissingTexturesPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+
     public override void Draw() 
     {
         var width = GetScreenWidth();

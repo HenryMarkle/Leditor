@@ -8,6 +8,11 @@ namespace Leditor.Pages;
 
 internal class SettingsPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+    
     private int _shortcutActiveCategory;
 
     private bool _assigningShortcut;

@@ -9,6 +9,11 @@ namespace Leditor.Pages;
 
 internal class StartPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+
     internal event EventHandler? ProjectLoaded;
 
     private bool _uiLocked;

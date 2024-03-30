@@ -7,6 +7,11 @@ namespace Leditor.Pages;
 
 internal class GeoEditorPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+    
     private Camera2D _camera = new() { Zoom = 1.0f };
 
     private readonly GeoShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.GeoEditor;

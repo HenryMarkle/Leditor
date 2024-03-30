@@ -7,6 +7,11 @@ namespace Leditor.Pages;
 
 internal class CamerasEditorPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+    
     Camera2D _camera = new() { Zoom = 0.8f, Target = new(-100, -100) };
     bool clickTracker;
     int draggedCamera = -1;

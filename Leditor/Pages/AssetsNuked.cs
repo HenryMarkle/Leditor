@@ -4,6 +4,11 @@ namespace Leditor.Pages;
 
 internal class AssetsNukedPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+    
     private const string MissingAssetsFolderWarnTitleText = "The assets folder is missing";
     private const string MissingAssetsFolderWarnSubtitleText = "The program cannot work without it; Please restore it before trying again.";
     

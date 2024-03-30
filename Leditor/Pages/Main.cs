@@ -13,6 +13,11 @@ namespace Leditor.Pages;
 
 internal class MainPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+    
     internal event EventHandler? ProjectLoaded;
 
     private Camera2D _camera = new() { Zoom = 0.5f };

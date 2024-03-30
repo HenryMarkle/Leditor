@@ -4,6 +4,11 @@ namespace Leditor.Pages;
 
 internal class MissingAssetsPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+    
     private const string MissingAssetsSubfoldersWarnTitleText = "The editor is missing some essential assets";
     private const string MissingAssetsSubfoldersWarnSubtitleText = "The program cannot function without them; Please restore them before trying again.";
 

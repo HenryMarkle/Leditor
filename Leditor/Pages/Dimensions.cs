@@ -7,6 +7,11 @@ namespace Leditor.Pages;
 
 internal class DimensionsEditorPage : EditorPage
 {
+    public override void Dispose()
+    {
+        Disposed = true;
+    }
+    
     internal event EventHandler ProjectCreated;
     
     private readonly byte[] _panelBytes = "Configuring Dimensions"u8.ToArray();

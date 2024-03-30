@@ -8,9 +8,7 @@ namespace Leditor.Pages;
 
 internal class TileEditorPage : EditorPage, IDisposable
 {
-    public bool Disposed { get; private set; }
-    
-    Camera2D _camera = new() { Zoom = 1.0f };
+    private Camera2D _camera = new() { Zoom = 1.0f };
 
     private readonly GlobalShortcuts _gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
     private readonly TileShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.TileEditor;
@@ -111,7 +109,7 @@ internal class TileEditorPage : EditorPage, IDisposable
     private bool _isSettingsWinHovered;
     private bool _isSettingsWinDragged;
 
-    public void Dispose()
+    public override void Dispose()
     {
         if (Disposed) return;
         Disposed = true;
@@ -119,6 +117,11 @@ internal class TileEditorPage : EditorPage, IDisposable
         _tileSpecsPanelRT.Dispose();
         _tileTexturePanelRT.Dispose();
         _previewTooltipRT.Dispose();
+    }
+
+    ~TileEditorPage()
+    {
+        if (!Disposed) throw new InvalidOperationException("Page not disposed by consumer");
     }
 
     private void Search()
