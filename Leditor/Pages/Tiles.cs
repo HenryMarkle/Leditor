@@ -1294,66 +1294,64 @@ internal class TileEditorPage : EditorPage, IDisposable
         // Skip the rest of the shortcuts when searching
         if (_isSearching) goto skipShortcuts;
         
-        if (_gShortcuts.ToMainPage.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 1");
-            #endif
-            GLOBALS.Page = 1;
-        }
-        if (_gShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 2");
-            #endif
-            GLOBALS.Page = 2;
-        }
-        // if (_gShortcuts.ToTileEditor.Check(ctrl, shift)) GLOBALS.Page = 3;
-        if (_gShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 4");
-            #endif
-            GLOBALS.Page = 4;
-        }
-        if (_gShortcuts.ToLightEditor.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 5");
-            #endif
-            GLOBALS.Page = 5;
-        }
-
-        if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 6");
-            #endif
-            GLOBALS.ResizeFlag = true; 
-            GLOBALS.NewFlag = false; 
-            GLOBALS.Page = 6;
-        }
-        if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 7");
-            #endif
-            GLOBALS.Page = 7;
-        }
-        if (_gShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 8");
-            #endif
-            GLOBALS.Page = 8;
-        }
-        if (_gShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 9");
-            #endif
-            GLOBALS.Page = 9;
-        }
+        // if (_gShortcuts.ToMainPage.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug("Going to page 1");
+        //     #endif
+        //     GLOBALS.Page = 1;
+        // }
+        // if (_gShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug("Going to page 2");
+        //     #endif
+        //     GLOBALS.Page = 2;
+        // }
+        // // if (_gShortcuts.ToTileEditor.Check(ctrl, shift)) GLOBALS.Page = 3;
+        // if (_gShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug("Going to page 4");
+        //     #endif
+        //     GLOBALS.Page = 4;
+        // }
+        // if (_gShortcuts.ToLightEditor.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug("Going to page 5");
+        //     #endif
+        //     GLOBALS.Page = 5;
+        // }
+        //
+        // if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug("Going to page 6");
+        //     #endif
+        //     GLOBALS.Page = 6;
+        // }
+        // if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug("Going to page 7");
+        //     #endif
+        //     GLOBALS.Page = 7;
+        // }
+        // if (_gShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug("Going to page 8");
+        //     #endif
+        //     GLOBALS.Page = 8;
+        // }
+        // if (_gShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug("Going to page 9");
+        //     #endif
+        //     GLOBALS.Page = 9;
+        // }
         
         // Undo
 
@@ -2318,23 +2316,9 @@ internal class TileEditorPage : EditorPage, IDisposable
 
             ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
             
-            // Navigation
-            
-            var navWindowRect = Printers.ImGui.NavigationWindow();
-
-            _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
-            {
-                X = navWindowRect.X - 5, Width = navWindowRect.Width + 10
-            });
+            // Navigation bar
                 
-            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.Left))
-            {
-                _isNavigationWinDragged = true;
-            }
-            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.Left))
-            {
-                _isNavigationWinDragged = false;
-            }
+            GLOBALS.NavSignal = Printers.ImGui.Nav();
             
             // Menu
 

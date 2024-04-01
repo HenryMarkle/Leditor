@@ -456,7 +456,7 @@ class Program
         
         logger.Information("Initializing data");
 
-        const string version = "Henry's Leditor v0.9.55";
+        const string version = "Henry's Leditor v0.9.56";
         const string raylibVersion = "Raylib v5.0.0";
         
         logger.Information(version);
@@ -775,6 +775,7 @@ class Program
         CamerasEditorPage camerasPage = new() { Logger = logger };
         LightEditorPage lightPage = new() { Logger = logger };
         DimensionsEditorPage dimensionsPage = new() { Logger = logger };
+        NewLevelPage newLevelPage = new() { Logger = logger };
         DeathScreen deathScreen = new() { Logger = logger };
         EffectsEditorPage effectsPage = new() { Logger = logger };
         PropsEditorPage propsPage = new() { Logger = logger };
@@ -789,26 +790,26 @@ class Program
         ExperimentalGeometryPage experimentalGeometryPage = new() { Logger = logger };
         SettingsPage settingsPage = new() { Logger = logger };
 
-        // Pager pager = new(logger, new Context());
-
-        // pager.RegisterDefault<StartPage>("start");
-        // pager.RegisterException<DeathScreen>();
-        // pager.Register<MainPage>("main");
-        // pager.Register<SettingsPage>("settings");
-        // pager.Register<MissingInitFilePage>("missingInitFilePage");
-        // pager.Register<MissingPropTexturesPage>("missingPropTexturesPage");
-        // pager.Register<MissingTexturesPage>("missingTexturesPage");
-        // pager.Register<MissingAssetsPage>("missingAssetsPage");
-        // pager.Register<AssetsNukedPage>("assetsNukedPage");
-        // pager.Register<FailedTileCheckOnLoadPage>("failedTileCheckOnLoadPage");
-        // pager.Register<GeoEditorPage>("oldGeo");
-        // pager.Register<ExperimentalGeometryPage>("newGeo");
-        // pager.Register<TileEditorPage>("tiles");
-        // pager.Register<CamerasEditorPage>("cameras");
-        // pager.Register<LightEditorPage>("light");
-        // pager.Register<DimensionsEditorPage>("dimensions");
-        // pager.Register<EffectsEditorPage>("effects");
-        // pager.Register<PropsEditorPage>("props");
+        // GLOBALS.Pager = new Pager(logger, new Context());
+        //
+        // GLOBALS.Pager.RegisterDefault<StartPage>(0);
+        // GLOBALS.Pager.RegisterException<DeathScreen>();
+        // GLOBALS.Pager.Register<MainPage>(1);
+        // GLOBALS.Pager.Register<SettingsPage>(9);
+        // GLOBALS.Pager.Register<MissingInitFilePage>(17);
+        // GLOBALS.Pager.Register<MissingPropTexturesPage>(19);
+        // GLOBALS.Pager.Register<MissingTexturesPage>(16);
+        // GLOBALS.Pager.Register<MissingAssetsPage>(15);
+        // GLOBALS.Pager.Register<AssetsNukedPage>(14);
+        // GLOBALS.Pager.Register<FailedTileCheckOnLoadPage>(13);
+        // GLOBALS.Pager.Register<GeoEditorPage>(18);
+        // GLOBALS.Pager.Register<ExperimentalGeometryPage>(2);
+        // GLOBALS.Pager.Register<TileEditorPage>(3);
+        // GLOBALS.Pager.Register<CamerasEditorPage>(4);
+        // GLOBALS.Pager.Register<LightEditorPage>(5);
+        // GLOBALS.Pager.Register<DimensionsEditorPage>(6);
+        // GLOBALS.Pager.Register<EffectsEditorPage>(7);
+        // GLOBALS.Pager.Register<PropsEditorPage>(8);
         
         // Lingo runtime assets path
         
@@ -823,15 +824,13 @@ class Program
         
         // Page event handlers
         startPage.ProjectLoaded += propsPage.OnProjectLoaded;
-        // startPage.ProjectLoaded += savePage.OnProjectLoaded;
         startPage.ProjectLoaded += mainPage.OnLevelLoadedFromStart;
         startPage.ProjectLoaded += dimensionsPage.OnProjectLoaded;
         
         mainPage.ProjectLoaded += propsPage.OnProjectLoaded;
-        // mainPage.ProjectLoaded += savePage.OnProjectLoaded;
         mainPage.ProjectLoaded += dimensionsPage.OnProjectLoaded;
         
-        dimensionsPage.ProjectCreated += propsPage.OnProjectCreated;
+        newLevelPage.ProjectCreated += propsPage.OnProjectCreated;
         //
 
         unsafe
@@ -908,6 +907,8 @@ class Program
         var isLoadingTexturesDone = false;
         
         logger.Information("Begin main loop");
+
+        var gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
         
         while (!WindowShouldClose())
         {
@@ -1398,12 +1399,89 @@ class Program
                 }
                 else
                 {
+                    #region GlobalShortcuts
                     {
                         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
                         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
                         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
 
-                        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave.Check(ctrl, shift, alt))
+                        // TODO: Move to using Pager
+                        
+                        if (!GLOBALS.LockNavigation) {
+                            if (gShortcuts.ToMainPage.Check(ctrl, shift, alt))
+                            {
+#if DEBUG
+                                logger.Debug("Going to page 1");
+#endif
+                                GLOBALS.Page = 1;
+                            }
+
+                            if (gShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
+                            {
+#if DEBUG
+                                logger.Debug("Going to page 2");
+#endif
+                                GLOBALS.Page = 2;
+                            }
+
+                            if (gShortcuts.ToTileEditor.Check(ctrl, shift, alt))
+                            {
+#if DEBUG
+                                logger.Debug("Going to page 3");
+#endif
+                                GLOBALS.Page = 3;
+                            }
+
+                            if (gShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
+                            {
+#if DEBUG
+                                logger.Debug("Going to page 4");
+#endif
+                                GLOBALS.Page = 4;
+                            }
+
+                            if (gShortcuts.ToLightEditor.Check(ctrl, shift, alt))
+                            {
+#if DEBUG
+                                logger.Debug("Going to page 5");
+#endif
+                                GLOBALS.Page = 5;
+                            }
+
+                            if (gShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
+                            {
+#if DEBUG
+                                logger.Debug("Going to page 6");
+#endif
+                                GLOBALS.Page = 6;
+                            }
+
+                            if (gShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
+                            {
+#if DEBUG
+                                logger.Debug("Going to page 7");
+#endif
+                                GLOBALS.Page = 7;
+                            }
+
+                            if (gShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
+                            {
+#if DEBUG
+                                logger.Debug("Going to page 8");
+#endif
+                                GLOBALS.Page = 8;
+                            }
+
+                            if (gShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
+                            {
+#if DEBUG
+                                logger.Debug("Going to page 9");
+#endif
+                                GLOBALS.Page = 9;
+                            }
+                        }
+                        
+                        if (gShortcuts.QuickSave.Check(ctrl, shift, alt) || GLOBALS.NavSignal == 1)
                         {
                             if (string.IsNullOrEmpty(GLOBALS.ProjectPath))
                             {
@@ -1417,21 +1495,25 @@ class Program
 
                             _globalSave = true;
                             _isGuiLocked = true;
+                            GLOBALS.NavSignal = 0;
                         }
-                        else if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSaveAs.Check(ctrl, shift, alt))
+                        else if (gShortcuts.QuickSaveAs.Check(ctrl, shift, alt) || GLOBALS.NavSignal == 2)
                         {
                             _askForPath = true;
                             _saveFileDialog = Utils.SetFilePathAsync();
                             _isGuiLocked = true;
                             _globalSave = true;
+                            GLOBALS.NavSignal = 0;
                         }
-                        else if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.Render.Check(ctrl, shift, alt))
+                        else if (gShortcuts.Render.Check(ctrl, shift, alt) || GLOBALS.NavSignal == 3)
                         {
                             logger.Debug($"Rendering level \"{GLOBALS.Level.ProjectName}\"");
 
                             _renderWindow = new DrizzleRenderWindow();
+                            GLOBALS.NavSignal = 0;
                         }
                     }
+                    #endregion
                     
                     // page switch
 
@@ -1448,7 +1530,7 @@ class Program
                         case 7: effectsPage.Draw(); break;
                         case 8: propsPage.Draw(); break;
                         case 9: settingsPage.Draw(); break;
-                        // case 11: loadPage.Draw(); break;
+                        case 11: newLevelPage.Draw(); break;
                         // case 12: savePage.Draw(); break;
                         case 13: failedTileCheckOnLoadPage.Draw(); break;
                         case 14: assetsNukedPage.Draw(); break;
@@ -1537,9 +1619,10 @@ class Program
         UnloadShader(GLOBALS.Shaders.PreviewColoredTileProp);
         
         // Unloading Pages
+        
         logger.Debug("Unloading Pages");
         
-        // pager.Dispose();
+        // GLOBALS.Pager.Dispose();
         
         geoPage.Dispose();
         tilePage.Dispose();

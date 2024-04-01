@@ -314,40 +314,38 @@ internal class MainPage : EditorPage
         if (!_isGuiLocked)
         {
             
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
-            {
-                GLOBALS.Page = 2;
-            }
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt))
-            {
-                GLOBALS.Page = 3;
-            }
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
-            {
-                GLOBALS.Page = 4;
-            }
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt))
-            {
-                GLOBALS.Page = 5;
-            }
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
-            {
-                GLOBALS.ResizeFlag = true;
-                GLOBALS.NewFlag = false;
-                GLOBALS.Page = 6;
-            }
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
-            {
-                GLOBALS.Page = 7;
-            }
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
-            {
-                GLOBALS.Page = 8;
-            }
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
-            {
-                GLOBALS.Page = 9;
-            }
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
+            // {
+            //     GLOBALS.Page = 2;
+            // }
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt))
+            // {
+            //     GLOBALS.Page = 3;
+            // }
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
+            // {
+            //     GLOBALS.Page = 4;
+            // }
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt))
+            // {
+            //     GLOBALS.Page = 5;
+            // }
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
+            // {
+            //     GLOBALS.Page = 6;
+            // }
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
+            // {
+            //     GLOBALS.Page = 7;
+            // }
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
+            // {
+            //     GLOBALS.Page = 8;
+            // }
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
+            // {
+            //     GLOBALS.Page = 9;
+            // }
 
             // handle zoom
             var mainPageWheel = GetMouseWheelMove();
@@ -388,6 +386,7 @@ internal class MainPage : EditorPage
                                 {
                                     GLOBALS.Page = 1;
                                     _isGuiLocked = false;
+                                    GLOBALS.LockNavigation = false;
                                 }
                             }
                             else
@@ -400,6 +399,7 @@ internal class MainPage : EditorPage
                                 if (string.IsNullOrEmpty(_saveFileDialog.Result))
                                 {
                                     _isGuiLocked = false;
+                                    GLOBALS.LockNavigation = false;
                                     EndDrawing();
                                     return;
                                 }
@@ -424,6 +424,7 @@ internal class MainPage : EditorPage
                                 {
                                     _failedToSave = true;
                                     _isGuiLocked = false;
+                                    GLOBALS.LockNavigation = false;
                                     EndDrawing();
                                     #if DEBUG
                                     if (result.Exception is not null) Logger.Error($"Failed to save project: {result.Exception}");
@@ -460,6 +461,7 @@ internal class MainPage : EditorPage
                                     _saveFileDialog = null;
                                     _saveResult = null;
                                     _isGuiLocked = false;
+                                    GLOBALS.LockNavigation = false;
                                     EndDrawing();
                                 }
                             }
@@ -486,6 +488,7 @@ internal class MainPage : EditorPage
                             {
                                 _failedToSave = true;
                                 _isGuiLocked = false;
+                                GLOBALS.LockNavigation = false;
                                 EndDrawing();
                                 #if DEBUG
                                 if (result.Exception is not null) Logger.Error($"Failed to save project: {result.Exception}");
@@ -515,6 +518,7 @@ internal class MainPage : EditorPage
                             _saveFileDialog = null;
                             _saveResult = null;
                             _isGuiLocked = false;
+                            GLOBALS.LockNavigation = false;
                             EndDrawing();
                         }
                     }
@@ -533,6 +537,7 @@ internal class MainPage : EditorPage
                         {
                             _openFileDialog = null;
                             _isGuiLocked = false;
+                            GLOBALS.LockNavigation = false;
                             EndDrawing();
                             return;
                         }
@@ -557,6 +562,7 @@ internal class MainPage : EditorPage
                             _loadFileTask = null;
                             _openFileDialog = null;
                             _isGuiLocked = false;
+                            GLOBALS.LockNavigation = false;
                             EndDrawing();
                             return;
                         }
@@ -598,6 +604,7 @@ internal class MainPage : EditorPage
                             {
                                 GLOBALS.Page = 13;
                                 _isGuiLocked = false;
+                                GLOBALS.LockNavigation = false;
                                 
                                 EndDrawing();
                                 return;
@@ -609,6 +616,7 @@ internal class MainPage : EditorPage
                         {
                             GLOBALS.Page = 19;
                             _isGuiLocked = false;
+                            GLOBALS.LockNavigation = false;
                             
                             EndDrawing();
                             return;
@@ -695,11 +703,13 @@ internal class MainPage : EditorPage
                         GLOBALS.Level.ProjectName = Path.GetFileNameWithoutExtension(_openFileDialog.Result);
 
                         _isGuiLocked = false;
+                        GLOBALS.LockNavigation = false;
                     }
                         break;
                     
                     default:
                         _isGuiLocked = false;
+                        GLOBALS.LockNavigation = false;
                         break;
                 }
                 
@@ -766,6 +776,10 @@ internal class MainPage : EditorPage
                 rlImGui.Begin();
                 
                 ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
+                
+                // Navigation bar
+                
+                GLOBALS.NavSignal = Printers.ImGui.Nav();
                 
                 // render window
 
@@ -887,6 +901,7 @@ internal class MainPage : EditorPage
                         }
 
                         _isGuiLocked = true;
+                        GLOBALS.LockNavigation = true;
                     }
 
                     if (saveAsSelected)
@@ -895,6 +910,7 @@ internal class MainPage : EditorPage
                         _askForPath = true;
                         _saveFileDialog = Utils.SetFilePathAsync();
                         _isGuiLocked = true;
+                        GLOBALS.LockNavigation = true;
                     }
                     
                     if (loadSelected)
@@ -902,12 +918,12 @@ internal class MainPage : EditorPage
                         _fileDialogMode = 1;
                         _openFileDialog = Utils.GetFilePathAsync();
                         _isGuiLocked = true;
+                        GLOBALS.LockNavigation = true;
                     }
                     
                     if (newSelected)
                     {
-                        GLOBALS.NewFlag = true;
-                        GLOBALS.Page = 6;
+                        GLOBALS.Page = 11;
                     }
                     ImGui.End();
                 }
@@ -1015,22 +1031,6 @@ internal class MainPage : EditorPage
                     {
                         _isShortcutsWinDragged = false;
                     }
-                }
-
-                var navWindowRect = Printers.ImGui.NavigationWindow();
-
-                _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
-                {
-                    X = navWindowRect.X - 5, Width = navWindowRect.Width + 10
-                });
-                
-                if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.Left))
-                {
-                    _isNavigationWinDragged = true;
-                }
-                else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.Left))
-                {
-                    _isNavigationWinDragged = false;
                 }
                 
                 rlImGui.End();

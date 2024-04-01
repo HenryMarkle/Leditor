@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Text.Json;
 using Drizzle.Lingo.Runtime;
 using Drizzle.Ported;
+using Leditor.Pages;
 
 namespace Leditor;
 
@@ -174,14 +175,12 @@ internal static class GLOBALS
     internal static int Page { get; set; }
     internal static int PreviousPage { get; set; }
 
-    /// ResizeFlag and NewFlag are used when moving to page 6 (dimensions page)
-    /// to indicate whether you want to resize the levels or override it.
-    internal static bool ResizeFlag { get; set; }
-    internal static bool NewFlag { get; set; }
-    //
-
     /// Current working layer
     internal static int Layer { get; set; }
+    
+    internal static Pager Pager { get; set; }
+    internal static int NavSignal { get; set; }
+    internal static bool LockNavigation { get; set; }
 
     internal static int RecentProjectsLimit { get; set; } = 10;
     internal static LinkedList<(string path, string name)> RecentProjects { get; set; } = [];
@@ -554,12 +553,6 @@ internal static class GLOBALS
     
     public static Camera2D Camera { get; set; }
 
-    internal static void OnLevelLoaded(object? sender, EventArgs e)
-    {
-        NewFlag = false;
-        ResizeFlag = false;
-    }
-    
     internal static IntPtr WindowHandle { get; set; }
 
     internal static Color DarkThemeWaterColor { get; set; } = new(80, 80, 255, 110);

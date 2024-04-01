@@ -40,41 +40,39 @@ internal class CamerasEditorPage : EditorPage
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
 
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt))
-        {
-            GLOBALS.Page = 1;
-        }
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
-        {
-            GLOBALS.Page = 2;
-        }
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt))
-        {
-            GLOBALS.Page = 3;
-        }
-        //if (Raylib.IsKeyReleased(KeyboardKey.KEY_FOUR)) page = 4;
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt))
-        {
-            GLOBALS.Page = 5;
-        }
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
-        {
-            GLOBALS.ResizeFlag = true;
-            GLOBALS.NewFlag = false;
-            GLOBALS.Page = 6;
-        }
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
-        {
-            GLOBALS.Page = 7;
-        }
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
-        {
-            GLOBALS.Page = 8;
-        }
-        if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
-        {
-            GLOBALS.Page = 9;
-        }
+        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt))
+        // {
+        //     GLOBALS.Page = 1;
+        // }
+        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
+        // {
+        //     GLOBALS.Page = 2;
+        // }
+        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt))
+        // {
+        //     GLOBALS.Page = 3;
+        // }
+        // //if (Raylib.IsKeyReleased(KeyboardKey.KEY_FOUR)) page = 4;
+        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt))
+        // {
+        //     GLOBALS.Page = 5;
+        // }
+        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
+        // {
+        //     GLOBALS.Page = 6;
+        // }
+        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
+        // {
+        //     GLOBALS.Page = 7;
+        // }
+        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
+        // {
+        //     GLOBALS.Page = 8;
+        // }
+        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
+        // {
+        //     GLOBALS.Page = 9;
+        // }
 
         // handle mouse drag
         if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true))
@@ -331,6 +329,10 @@ internal class CamerasEditorPage : EditorPage
             
             ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
             
+            // Navigation bar
+                
+            GLOBALS.NavSignal = Printers.ImGui.Nav();
+            
             // Settings
 
             if (ImGui.Begin("Settings##CameraEditorSettings"))
@@ -359,24 +361,6 @@ internal class CamerasEditorPage : EditorPage
                 }
                 
                 ImGui.End();
-            }
-            
-            // Navigation
-            
-            var navWindowRect = Printers.ImGui.NavigationWindow();
-
-            _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
-            {
-                X = navWindowRect.X - 5, Width = navWindowRect.Width + 10
-            });
-                
-            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.Left))
-            {
-                _isNavigationWinDragged = true;
-            }
-            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.Left))
-            {
-                _isNavigationWinDragged = false;
             }
             
             // Shortcuts window

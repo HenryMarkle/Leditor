@@ -42,28 +42,30 @@ internal class SettingsPage : EditorPage
         
         if (!_assigningShortcut)
         {
-            var ctrl = IsKeyDown(KeyboardKey.LeftControl);
-            var shift = IsKeyDown(KeyboardKey.LeftShift);
-            var alt = IsKeyDown(KeyboardKey.LeftAlt);
-            
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 2;
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 3;
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 4;
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 5;
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
-            {
-                GLOBALS.ResizeFlag = true;
-                GLOBALS.NewFlag = false;
-                GLOBALS.Page = 6;
-                Logger.Debug("go from GLOBALS.Page 2 to GLOBALS.Page 6");
-            }
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 7;
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
+            // var ctrl = IsKeyDown(KeyboardKey.LeftControl);
+            // var shift = IsKeyDown(KeyboardKey.LeftShift);
+            // var alt = IsKeyDown(KeyboardKey.LeftAlt);
+            //
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 2;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 3;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 4;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 5;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
+            // {
+            //     GLOBALS.Page = 6;
+            //     Logger.Debug("go from GLOBALS.Page 2 to GLOBALS.Page 6");
+            // }
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 7;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
             // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
         }
         
-        if (_shortcutToAssign is not null || _mouseShortcutToAssign is not null) _assigningShortcut = true;
+        if (_shortcutToAssign is not null || _mouseShortcutToAssign is not null)
+        {
+            _assigningShortcut = true;
+            GLOBALS.LockNavigation = true;
+        }
 
         if (_shortcutToAssign is not null)
         {
@@ -77,6 +79,7 @@ internal class SettingsPage : EditorPage
                 }
                 
                 _assigningShortcut = false;
+                GLOBALS.LockNavigation = false;
                 _shortcutToAssign = null;
             }
 
@@ -88,6 +91,7 @@ internal class SettingsPage : EditorPage
                 _shortcutToAssign.Alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
                 
                 _assigningShortcut = false;
+                GLOBALS.LockNavigation = false;
                 _shortcutToAssign = null;
             }
             
@@ -104,6 +108,7 @@ internal class SettingsPage : EditorPage
             if (key == 256)
             {
                 _assigningShortcut = false;
+                GLOBALS.LockNavigation = false;
                 _mouseShortcutToAssign = null;
             }
 
@@ -115,6 +120,7 @@ internal class SettingsPage : EditorPage
                 _mouseShortcutToAssign.Alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
                 
                 _assigningShortcut = false;
+                GLOBALS.LockNavigation = false;
                 _mouseShortcutToAssign = null;
             }
             
@@ -127,6 +133,10 @@ internal class SettingsPage : EditorPage
         ClearBackground(Color.Gray);
 
         rlImGui.Begin();
+        
+        // Navigation bar
+                
+        GLOBALS.NavSignal = Printers.ImGui.Nav();
 
         if (ImGui.Begin("Settings##EditorSettings", ImGuiWindowFlags.NoCollapse))
         {
@@ -157,6 +167,7 @@ internal class SettingsPage : EditorPage
             if (resetAllSelected)
             {
                 _assigningShortcut = false;
+                GLOBALS.LockNavigation = false;
                 _shortcutToAssign = null;
                 _mouseShortcutToAssign = null;
 
@@ -179,6 +190,7 @@ internal class SettingsPage : EditorPage
             if (resetSelected)
             {
                 _assigningShortcut = false;
+                GLOBALS.LockNavigation = false;
                 _shortcutToAssign = null;
                 _mouseShortcutToAssign = null;
 
@@ -188,6 +200,7 @@ internal class SettingsPage : EditorPage
             if (saveSelected)
             {
                 _assigningShortcut = false;
+                GLOBALS.LockNavigation = false;
                 _shortcutToAssign = null;
                 _mouseShortcutToAssign = null;
                
@@ -219,6 +232,7 @@ internal class SettingsPage : EditorPage
                         if (resetSelected)
                         {
                             _assigningShortcut = false;
+                            GLOBALS.LockNavigation = false;
                             _shortcutToAssign = null;
                             _mouseShortcutToAssign = null;
 
@@ -300,6 +314,7 @@ internal class SettingsPage : EditorPage
                         if (resetSelected)
                         {
                             _assigningShortcut = false;
+                            GLOBALS.LockNavigation = false;
                             _shortcutToAssign = null;
                             _mouseShortcutToAssign = null;
 
@@ -351,6 +366,7 @@ internal class SettingsPage : EditorPage
                         if (resetSelected)
                         {
                             _assigningShortcut = false;
+                            GLOBALS.LockNavigation = false;
                             _shortcutToAssign = null;
                             _mouseShortcutToAssign = null;
 
@@ -416,6 +432,7 @@ internal class SettingsPage : EditorPage
                         if (resetSelected)
                         {
                             _assigningShortcut = false;
+                            GLOBALS.LockNavigation = false;
                             _shortcutToAssign = null;
                             _mouseShortcutToAssign = null;
 
@@ -497,6 +514,7 @@ internal class SettingsPage : EditorPage
                         if (resetSelected)
                         {
                             _assigningShortcut = false;
+                            GLOBALS.LockNavigation = false;
                             _shortcutToAssign = null;
                             _mouseShortcutToAssign = null;
 
@@ -539,6 +557,7 @@ internal class SettingsPage : EditorPage
                         if (resetSelected)
                         {
                             _assigningShortcut = false;
+                            GLOBALS.LockNavigation = false;
                             _shortcutToAssign = null;
                             _mouseShortcutToAssign = null;
 
@@ -613,6 +632,7 @@ internal class SettingsPage : EditorPage
                         if (resetSelected)
                         {
                             _assigningShortcut = false;
+                            GLOBALS.LockNavigation = false;
                             _shortcutToAssign = null;
                             _mouseShortcutToAssign = null;
 
@@ -672,6 +692,7 @@ internal class SettingsPage : EditorPage
                         if (resetSelected)
                         {
                             _assigningShortcut = false;
+                            GLOBALS.LockNavigation = false;
                             _shortcutToAssign = null;
                             _mouseShortcutToAssign = null;
 

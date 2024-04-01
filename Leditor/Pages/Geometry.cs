@@ -176,66 +176,64 @@ internal class GeoEditorPage : EditorPage
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
         
-        if (_gShortcuts.ToMainPage.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 1");
-            #endif
-            GLOBALS.Page = 1;
-        }
-        // if (_gShortcuts.ToGeometryEditor.Check(ctrl, shift)) GLOBALS.Page = 2;
-        if (_gShortcuts.ToTileEditor.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 3");
-            #endif
-            GLOBALS.Page = 3;
-        }
-        if (_gShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 4");
-            #endif
-            GLOBALS.Page = 4;
-        }
-        if (_gShortcuts.ToLightEditor.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 5");
-            #endif
-            GLOBALS.Page = 5;
-        }
-
-        if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 6");
-            #endif
-            GLOBALS.NewFlag = false;
-            GLOBALS.ResizeFlag = true; 
-            GLOBALS.Page = 6;
-        }
-        if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 7");
-            #endif
-            GLOBALS.Page = 7;
-        }
-        if (_gShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 8");
-            #endif
-            GLOBALS.Page = 8;
-        }
-        if (_gShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
-        {
-            #if DEBUG
-            Logger.Debug($"Going to page 9");
-            #endif
-            GLOBALS.Page = 9;
-        }
+        // if (_gShortcuts.ToMainPage.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug($"Going to page 1");
+        //     #endif
+        //     GLOBALS.Page = 1;
+        // }
+        // // if (_gShortcuts.ToGeometryEditor.Check(ctrl, shift)) GLOBALS.Page = 2;
+        // if (_gShortcuts.ToTileEditor.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug($"Going to page 3");
+        //     #endif
+        //     GLOBALS.Page = 3;
+        // }
+        // if (_gShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug($"Going to page 4");
+        //     #endif
+        //     GLOBALS.Page = 4;
+        // }
+        // if (_gShortcuts.ToLightEditor.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug($"Going to page 5");
+        //     #endif
+        //     GLOBALS.Page = 5;
+        // }
+        //
+        // if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug($"Going to page 6");
+        //     #endif
+        //     GLOBALS.Page = 6;
+        // }
+        // if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug($"Going to page 7");
+        //     #endif
+        //     GLOBALS.Page = 7;
+        // }
+        // if (_gShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug($"Going to page 8");
+        //     #endif
+        //     GLOBALS.Page = 8;
+        // }
+        // if (_gShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
+        // {
+        //     #if DEBUG
+        //     Logger.Debug($"Going to page 9");
+        //     #endif
+        //     GLOBALS.Page = 9;
+        // }
 
         if (_shortcuts.CycleLayers.Check(ctrl, shift, alt)) GLOBALS.Layer = ++GLOBALS.Layer % 3;
         if (_shortcuts.ToggleGrid.Check(ctrl, shift, alt)) gridContrast = !gridContrast;
@@ -1237,6 +1235,8 @@ internal class GeoEditorPage : EditorPage
             rlImGui.Begin();
             
             ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
+
+            GLOBALS.NavSignal = Printers.ImGui.Nav();
             
             var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.GeoEditor);
             

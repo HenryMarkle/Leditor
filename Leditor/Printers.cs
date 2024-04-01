@@ -3371,5 +3371,61 @@ internal static class Printers
             
             return new Rectangle(pos.X, pos.Y, size.X, size.Y);
         }
+
+        /// <summary>
+        /// Draws the navigation bar
+        /// </summary>
+        /// <returns>
+        /// <para>0 - none selected</para>
+        /// <para>1 - save selected</para>
+        /// <para>2 - save as selected</para>
+        /// <para>3 - render selected</para>
+        /// </returns>
+        internal static int Nav()
+        {
+            if (!ImGuiNET.ImGui.BeginMainMenuBar()) return 0;
+
+            var gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
+
+            var isMain = GLOBALS.Page == 1;
+            var isGeo = GLOBALS.Page == 2;
+            var isTile = GLOBALS.Page == 3;
+            var isCamera = GLOBALS.Page == 4;
+            var isLight = GLOBALS.Page == 5;
+            var isDimensions = GLOBALS.Page == 6;
+            var isEffects = GLOBALS.Page == 7;
+            var isProps = GLOBALS.Page == 8;
+            var isSettings = GLOBALS.Page == 9;
+            
+            if (ImGuiNET.ImGui.MenuItem("Main", string.Empty, ref isMain)) GLOBALS.Page = 1;
+            if (ImGuiNET.ImGui.MenuItem("Geometry", string.Empty, ref isGeo)) GLOBALS.Page = 2;
+            if (ImGuiNET.ImGui.MenuItem("Tiles", string.Empty, ref isTile)) GLOBALS.Page = 3;
+            if (ImGuiNET.ImGui.MenuItem("Cameras", string.Empty, ref isCamera)) GLOBALS.Page = 4;
+            if (ImGuiNET.ImGui.MenuItem("Light", string.Empty, ref isLight)) GLOBALS.Page = 5;
+            if (ImGuiNET.ImGui.MenuItem("Dimensions", string.Empty, ref isDimensions)) GLOBALS.Page = 6;
+            if (ImGuiNET.ImGui.MenuItem("Effects", string.Empty, ref isEffects)) GLOBALS.Page = 7;
+            if (ImGuiNET.ImGui.MenuItem("Props", string.Empty, ref isProps)) GLOBALS.Page = 8;
+            if (ImGuiNET.ImGui.MenuItem("Settings", string.Empty, ref isSettings)) GLOBALS.Page = 9;
+
+            var selected = 0;
+            
+            if (ImGuiNET.ImGui.BeginMenu("Options"))
+            {
+                if (ImGuiNET.ImGui.MenuItem("Save", gShortcuts.QuickSave.ToString()))
+                    selected = 1;
+
+                if (ImGuiNET.ImGui.MenuItem("Save as..", gShortcuts.QuickSaveAs.ToString()))
+                    selected = 2;
+
+                if (ImGuiNET.ImGui.MenuItem("Render", gShortcuts.Render.ToString()))
+                    selected = 3;
+                
+                ImGuiNET.ImGui.EndMenu();
+            }
+            
+            ImGuiNET.ImGui.EndMainMenuBar();
+
+            return selected;
+        }
     }
 }

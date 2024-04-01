@@ -388,21 +388,19 @@ internal class PropsEditorPage : EditorPage
 
         if (_spinnerLock == 0)
         {
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 2;
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 3;
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 4;
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 5;
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
-            {
-                GLOBALS.ResizeFlag = true;
-                GLOBALS.NewFlag = false;
-                GLOBALS.Page = 6;
-                Logger.Debug("go from GLOBALS.Page 8 to GLOBALS.Page 6");
-            }
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 7;
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
-            if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 2;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 3;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 4;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 5;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
+            // {
+            //     GLOBALS.Page = 6;
+            //     Logger.Debug("go from GLOBALS.Page 8 to GLOBALS.Page 6");
+            // }
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 7;
+            // // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
+            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
         }
         else
         {
@@ -2627,6 +2625,10 @@ internal class PropsEditorPage : EditorPage
             rlImGui.Begin();
             
             ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
+            
+            // Navigation bar
+                
+            GLOBALS.NavSignal = Printers.ImGui.Nav();
 
             var menuOpened = ImGui.Begin("Props##PropsPanel");
             
@@ -3121,24 +3123,6 @@ internal class PropsEditorPage : EditorPage
                 }
 
                 ImGui.End();
-            }
-            
-            // Navigation
-                
-            var navWindowRect = Printers.ImGui.NavigationWindow();
-
-            _isNavigationWinHovered = CheckCollisionPointRec(GetMousePosition(), navWindowRect with
-            {
-                X = navWindowRect.X - 5, Width = navWindowRect.Width + 10
-            });
-                    
-            if (_isNavigationWinHovered && IsMouseButtonDown(MouseButton.Left))
-            {
-                _isNavigationWinDragged = true;
-            }
-            else if (_isNavigationWinDragged && IsMouseButtonReleased(MouseButton.Left))
-            {
-                _isNavigationWinDragged = false;
             }
             
             // Shortcuts window
