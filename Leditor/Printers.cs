@@ -3422,6 +3422,9 @@ internal static class Printers
                 
                 ImGuiNET.ImGui.EndMenu();
             }
+
+            if (ImGuiNET.ImGui.MenuItem("About"))
+                selected = 4;
             
             ImGuiNET.ImGui.EndMainMenuBar();
 

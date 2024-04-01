@@ -178,16 +178,6 @@ class Program
         LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "camera icon.png")) // 44
     ];
 
-    private static Texture2D[] LoadSettingsPreviewTextures() =>
-    [
-        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Bigger Head.png")),
-        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Crossbox B.png")),
-        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "mega chimney A.png")),
-        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Ball.png")),
-        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Stone Marked.png")),
-        LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "Big Fan.png"))
-    ];
-
     // Used to load light/shadow brush images as textures.
     private static Texture2D[] LoadLightTextures(Serilog.Core.Logger logger) => Directory
         .GetFileSystemEntries(GLOBALS.Paths.LightAssetsDirectory)
@@ -217,7 +207,7 @@ class Program
         
         try
         {
-            var strTask = Leditor.Serialization.Exporters.ExportAsync(GLOBALS.Level);
+            var strTask = Exporters.ExportAsync(GLOBALS.Level);
 
             var str = await strTask;
             
@@ -320,20 +310,6 @@ class Program
         return Importers.GetPropsInit(text);
     }
 
-    // This is used to check whether the Init.txt file has been altered
-    private static string InitChecksum => "77-D1-5E-5F-D7-EF-80-6B-0B-12-30-C1-7E-39-A6-CD-C1-9A-8A-7B-E6-E4-F8-EA-15-3B-85-89-73-BE-9B-0B-AD-35-8C-9E-89-AE-34-42-57-1B-A6-A8-BE-8A-9B-CB-97-3E-AE-33-98-E1-51-92-74-24-2F-DF-81-E6-58-A2";
-
-    // Unused
-    private static bool CheckInit()
-    {
-        using var stream = File.OpenRead(GLOBALS.Paths.TilesInitPath);
-        using SHA512 sha = SHA512.Create();
-
-        var hash = sha.ComputeHash(stream);
-
-        return BitConverter.ToString(hash) == InitChecksum;
-    }
-    
     // MAIN FUNCTION
     private static void Main()
     {
@@ -1395,6 +1371,77 @@ class Program
 
                     rlImGui.End();
                     
+                    EndDrawing();
+                }
+                else if (GLOBALS.NavSignal == 4)
+                {
+                    BeginDrawing();
+                    ClearBackground(Color.Gray);
+                    rlImGui.Begin();
+                    
+                    if (!ImGui.Begin("About##AboutLeditor", 
+                            ImGuiWindowFlags.NoCollapse | 
+                            ImGuiWindowFlags.NoDocking | 
+                            ImGuiWindowFlags.NoMove)) 
+                        GLOBALS.NavSignal = 0;
+
+                    ImGui.SetWindowPos((new Vector2(GetScreenWidth(), GetScreenHeight()) - ImGui.GetWindowSize())/2);
+                    
+                    var availableSpace = ImGui.GetContentRegionAvail();
+                    
+                    ImGui.Text("Created By: Henry Markle");
+                    ImGui.Text("Renderer: Drizzle - embedded with the help of pkhead (chromosoze)");
+                    
+                    ImGui.Spacing();
+                    
+                    ImGui.Text(version);
+                    ImGui.Text(raylibVersion);
+                    
+                    ImGui.Spacing();
+
+                    if (ImGui.Button("Henry's Leditor", availableSpace with { Y = 20 }))
+                        OpenURL("https://github.com/HenryMarkle/Leditor");
+
+                    if (ImGui.IsItemHovered())
+                    {
+                        if (ImGui.BeginTooltip())
+                        {
+                            ImGui.Text("https://github.com/HenryMarkle/Leditor");
+                            ImGui.EndTooltip();
+                        }
+                    }
+                    
+                    if (ImGui.Button("Drizzle", availableSpace with { Y = 20 }))
+                        OpenURL("https://github.com/HenryMarkle/Drizzle");
+                    
+                    if (ImGui.IsItemHovered())
+                    {
+                        if (ImGui.BeginTooltip())
+                        {
+                            ImGui.Text("https://github.com/HenryMarkle/Drizzle");
+                            ImGui.EndTooltip();
+                        }
+                    }
+                    
+                    if (ImGui.Button("pkhead", availableSpace with { Y = 20 }))
+                        OpenURL("https://github.com/pkhead");
+                    
+                    if (ImGui.IsItemHovered())
+                    {
+                        if (ImGui.BeginTooltip())
+                        {
+                            ImGui.Text("https://github.com/pkhead");
+                            ImGui.EndTooltip();
+                        }
+                    }
+                    
+                    ImGui.Spacing();
+                    
+                    if (ImGui.Button("Close", availableSpace with { Y = 20 })) 
+                        GLOBALS.NavSignal = 0;
+                    ImGui.End();
+                    
+                    rlImGui.End();
                     EndDrawing();
                 }
                 else
