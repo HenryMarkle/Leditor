@@ -10,6 +10,50 @@ public class LevelLoadedEventArgs(bool undefinedTiles) : EventArgs
     public bool UndefinedTiles { get; set; } = undefinedTiles;
 }
 
+public sealed class QuadVectors
+{
+    public Vector2 TopLeft { get; set; }
+    public Vector2 TopRight { get; set; }
+    public Vector2 BottomRight { get; set; }
+    public Vector2 BottomLeft { get; set; }
+
+    public void Deconstruct(
+        out Vector2 topLeft, 
+        out Vector2 topRight, 
+        out Vector2 bottomRight, 
+        out Vector2 bottomLeft)
+    {
+        topLeft = TopLeft;
+        topRight = TopRight;
+        bottomRight = BottomRight;
+        bottomLeft = BottomLeft;
+    }
+
+    public QuadVectors()
+    {
+        TopLeft = new Vector2(0, 0);
+        TopRight = new Vector2(0, 0);
+        BottomRight = new Vector2(0, 0);
+        BottomLeft = new Vector2(0, 0);
+    }
+
+    public QuadVectors(Vector2 topLeft, Vector2 topRight, Vector2 bottomRight, Vector2 bottomLeft)
+    {
+        TopLeft = topLeft;
+        TopRight = topRight;
+        BottomRight = bottomRight;
+        BottomLeft = bottomLeft;
+    }
+
+    public QuadVectors(QuadVectors quadVectors)
+    {
+        TopLeft = quadVectors.TopLeft;
+        TopRight = quadVectors.TopRight;
+        BottomRight = quadVectors.BottomRight;
+        BottomLeft = quadVectors.BottomLeft;
+    }
+}
+
 /// <summary>
 /// Stores common data for the current loaded level.
 /// </summary>
@@ -843,13 +887,15 @@ public class TileEditor(
     bool hoveredTileInfo = false, 
     bool tintedTiles = false, 
     bool useTextures = false,
-    bool allowUndefinedTiles = true
+    bool allowUndefinedTiles = true,
+    bool grid = false
     )
 {
     public bool HoveredTileInfo { get; set; } = hoveredTileInfo;
     public bool TintedTiles { get; set; } = tintedTiles;
     public bool UseTextures { get; set; } = useTextures;
     public bool AllowUndefinedTiles { get; set; } = allowUndefinedTiles;
+    public bool Grid { get; set; } = grid;
 }
 
 public class LightEditor(

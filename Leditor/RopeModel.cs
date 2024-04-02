@@ -256,7 +256,8 @@ public class RopeModel
                         }
                         else
                         {
-                            a.loc.Y = a.loc.Y - a.velocity.Y*.8f /*(q - 1) * 16f - a.sizePnt.Y*/;
+                            // Push back against solid surface
+                            a.loc.Y = a.loc.Y - a.velocity.Y*.9f /*(q - 1) * 16f - a.sizePnt.Y*/;
                             a.frc.X *= friction;
                             a.frc.Y = -a.frc.Y * bounce;
                             return;

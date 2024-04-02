@@ -1,5 +1,6 @@
 using static Raylib_cs.Raylib;
 using System.Numerics;
+using System.Transactions;
 
 namespace Leditor;
 
@@ -1192,7 +1193,7 @@ internal static class Printers
         Rlgl.SetTexture(0);
     }
     
-    internal static void DrawTextureQuads(
+    internal static void DrawTextureQuad(
         in Texture2D texture, 
         in PropQuads quads
     )
@@ -1221,7 +1222,101 @@ internal static class Printers
         Rlgl.SetTexture(0);
     }
     
-    internal static void DrawTextureQuads(
+    internal static void DrawTextureQuad(
+        in Texture2D texture, 
+        in QuadVectors quads
+    )
+    {
+        Rlgl.SetTexture(texture.Id);
+
+        Rlgl.Begin(0x0007);
+        Rlgl.Color4ub(Color.White.R, Color.White.G, Color.White.B, Color.White.A);
+
+        Rlgl.TexCoord2f(1.0f, 0.0f);
+        Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
+        
+        Rlgl.TexCoord2f(0.0f, 0.0f);
+        Rlgl.Vertex2f(quads.TopLeft.X, quads.TopLeft.Y);
+        
+        Rlgl.TexCoord2f(0.0f, 1.0f);
+        Rlgl.Vertex2f(quads.BottomLeft.X, quads.BottomLeft.Y);
+        
+        Rlgl.TexCoord2f(1.0f, 1.0f);
+        Rlgl.Vertex2f(quads.BottomRight.X, quads.BottomRight.Y);
+        
+        Rlgl.TexCoord2f(1.0f, 0.0f);
+        Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
+        Rlgl.End();
+
+        Rlgl.SetTexture(0);
+    }
+    
+    internal static void DrawTextureQuad(
+        in Texture2D texture, 
+        in QuadVectors quads,
+        in Color tint
+    )
+    {
+        Rlgl.SetTexture(texture.Id);
+        
+        Rlgl.Begin(0x0007);
+        Rlgl.Color4ub(tint.R, tint.G, tint.B, tint.A);
+
+        Rlgl.TexCoord2f(1.0f, 0.0f);
+        Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
+        
+        Rlgl.TexCoord2f(0.0f, 0.0f);
+        Rlgl.Vertex2f(quads.TopLeft.X, quads.TopLeft.Y);
+        
+        Rlgl.TexCoord2f(0.0f, 1.0f);
+        Rlgl.Vertex2f(quads.BottomLeft.X, quads.BottomLeft.Y);
+        
+        Rlgl.TexCoord2f(1.0f, 1.0f);
+        Rlgl.Vertex2f(quads.BottomRight.X, quads.BottomRight.Y);
+        
+        Rlgl.TexCoord2f(1.0f, 0.0f);
+        Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
+        Rlgl.End();
+
+        Rlgl.SetTexture(0);
+    }
+    
+    // TODO: Unfinished
+    internal static unsafe void DrawTextureSmoothQuad(
+        in Texture2D texture, 
+        in QuadVectors quads,
+        in Color tint
+    )
+    {
+        Rlgl.SetTexture(texture.Id);
+     
+        Rlgl.TextureParameters(texture.Id, Rlgl.TEXTURE_MIN_FILTER, Rlgl.TEXTURE_FILTER_MIP_LINEAR);
+        Rlgl.TextureParameters(texture.Id, Rlgl.TEXTURE_MAG_FILTER, Rlgl.TEXTURE_FILTER_LINEAR);
+        
+        Rlgl.Begin(0x0007);
+        Rlgl.Color4ub(tint.R, tint.G, tint.B, tint.A);
+
+        Rlgl.TexCoord2f(1.0f, 0.0f);
+        Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
+        
+        Rlgl.TexCoord2f(0.0f, 0.0f);
+        Rlgl.Vertex2f(quads.TopLeft.X, quads.TopLeft.Y);
+        
+        Rlgl.TexCoord2f(0.0f, 1.0f);
+        Rlgl.Vertex2f(quads.BottomLeft.X, quads.BottomLeft.Y);
+        
+        Rlgl.TexCoord2f(1.0f, 1.0f);
+        Rlgl.Vertex2f(quads.BottomRight.X, quads.BottomRight.Y);
+        
+        Rlgl.TexCoord2f(1.0f, 0.0f);
+        Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
+        Rlgl.End();
+        
+
+        Rlgl.SetTexture(0);
+    }
+    
+    internal static void DrawTextureQuad(
         in Texture2D texture, 
         in PropQuads quads,
         bool flipX,
@@ -1385,7 +1480,7 @@ internal static class Printers
             BottomLeft = (position + new Vector2(0, init.Size.Item2)) * scale
         };
         
-        DrawTextureQuads(
+        DrawTextureQuad(
             texture, 
             quads
         );
@@ -1428,7 +1523,7 @@ internal static class Printers
             BottomLeft = (position + new Vector2(0, init.Size.Item2) + offset) * scale
         };
         
-        DrawTextureQuads(
+        DrawTextureQuad(
             texture, 
             quads
         );
@@ -1755,6 +1850,55 @@ internal static class Printers
     /// <param name="texture">a reference to the tile texture</param>
     /// <param name="init">a reference to the tile definition</param>
     /// <param name="center">the center origin of the target position to draw on</param>
+    /// <param name="rotation">rotation angle</param>
+    internal static void DrawTileAsProp(
+        in Texture2D texture,
+        in InitTile init,
+        in Vector2 center,
+        int rotation
+    )
+    {
+        var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * 20;
+        var calLayerHeight = (float)layerHeight / (float)texture.Height;
+        var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * 20;
+        var calTextureCutWidth = (float)textureCutWidth / (float)texture.Width;
+
+        var textureLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "inputTexture");
+        var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerNum");
+        var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerHeight");
+        var layerWidthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerWidth");
+        var alphaLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "alpha");
+
+        BeginShaderMode(GLOBALS.Shaders.Prop);
+
+        SetShaderValueTexture(GLOBALS.Shaders.Prop, textureLoc, texture);
+        SetShaderValue(GLOBALS.Shaders.Prop, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.Int);
+        SetShaderValue(GLOBALS.Shaders.Prop, layerHeightLoc, calLayerHeight, ShaderUniformDataType.Float);
+        SetShaderValue(GLOBALS.Shaders.Prop, layerWidthLoc, calTextureCutWidth, ShaderUniformDataType.Float);
+        SetShaderValue(GLOBALS.Shaders.Prop, alphaLoc, 1.0f, ShaderUniformDataType.Float);
+
+        var size = new Vector2(init.Size.Item1+init.BufferTiles*2, init.Size.Item2+init.BufferTiles*2)*8;
+        
+        var quads = new PropQuads(
+            center - size,
+            new Vector2(center.X + size.X, center.Y - size.Y),
+            center + size,
+            new Vector2(center.X - size.X, center.Y + size.Y)
+        );
+
+        quads = Utils.RotatePropQuads(quads, rotation, center);
+        
+        DrawTextureQuad(texture, quads);
+        
+        EndShaderMode();
+    }
+    
+    /// <summary>
+    /// Draws the texture of the tile, layer by layer, from the bottom up.
+    /// </summary>
+    /// <param name="texture">a reference to the tile texture</param>
+    /// <param name="init">a reference to the tile definition</param>
+    /// <param name="center">the center origin of the target position to draw on</param>
     /// <param name="quads">target placement quads</param>
     /// <param name="alpha">opacity, from 0 to 255</param>
     internal static void DrawTileAsProp(
@@ -1792,7 +1936,7 @@ internal static class Printers
             BottomLeft = (center + new Vector2(0, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale
         };
         
-        DrawTextureQuads(texture, scaledQuads);
+        DrawTextureQuad(texture, scaledQuads);
         
         EndShaderMode();
     }
@@ -1834,7 +1978,7 @@ internal static class Printers
         SetShaderValue(GLOBALS.Shaders.Prop, depthLoc, depth, ShaderUniformDataType.Int);
         SetShaderValue(GLOBALS.Shaders.Prop, alphaLoc, alpha/255f, ShaderUniformDataType.Float);
         
-        DrawTextureQuads(texture, quads);
+        DrawTextureQuad(texture, quads);
         
         EndShaderMode();
     }
@@ -2027,7 +2171,7 @@ internal static class Printers
             
             SetShaderValue(GLOBALS.Shaders.ColoredBoxTileProp, depthLoc, depth, ShaderUniformDataType.Int);
 
-            DrawTextureQuads(texture, quads);
+            DrawTextureQuad(texture, quads);
             EndShaderMode();
         }
         else
@@ -2058,7 +2202,7 @@ internal static class Printers
                 ShaderUniformDataType.Vec4);
             SetShaderValue(GLOBALS.Shaders.ColoredTileProp, depthLoc, depth, ShaderUniformDataType.Int);
 
-            DrawTextureQuads(texture, quads);
+            DrawTextureQuad(texture, quads);
             EndShaderMode();
         }
     }
@@ -2122,7 +2266,7 @@ internal static class Printers
             
             SetShaderValue(GLOBALS.Shaders.ColoredBoxTileProp, depthLoc, depth, ShaderUniformDataType.Int);
             
-            DrawTextureQuads(texture, scaledQuads);
+            DrawTextureQuad(texture, scaledQuads);
             EndShaderMode();
         }
         else
@@ -2163,7 +2307,7 @@ internal static class Printers
 
             SetShaderValue(shader, offsetLoc, calcOffset, ShaderUniformDataType.Vec2);
             
-            DrawTextureQuads(texture, scaledQuads);
+            DrawTextureQuad(texture, scaledQuads);
             EndShaderMode();
         }
     }
@@ -2225,7 +2369,7 @@ internal static class Printers
             case InitPropType.Long:
             {
                 var texture = GLOBALS.Textures.LongProps[index];
-                DrawLongProp(texture, prop.Quads, depth);
+                DrawLongProp(texture, prop.Quads, depth, 0);
             }
                 break;
 
@@ -2302,12 +2446,52 @@ internal static class Printers
                 break;
             
             case InitLongProp:
-                DrawLongProp(texture, quads, depth);
+                DrawLongProp(texture, quads, depth, 0);
+                break;
+        }
+    }
+    
+    internal static void DrawProp(
+        BasicPropSettings settings, 
+        InitPropBase init, 
+        in Texture2D texture, 
+        in PropQuads quads,
+        int depth,
+        int rotation)
+    {
+        switch (init)
+        {
+            case InitVariedStandardProp variedStandard:
+                DrawVariedStandardProp(variedStandard, texture, quads, ((PropVariedSettings)settings).Variation, depth, rotation);
+                break;
+
+            case InitStandardProp standard:
+                DrawStandardProp(standard, texture, quads, depth, rotation);
+                break;
+
+            case InitVariedSoftProp variedSoft:
+                DrawVariedSoftProp(variedSoft, texture, quads,  ((PropVariedSoftSettings)settings).Variation, depth, rotation);
+                break;
+
+            case InitSoftProp:
+                DrawSoftProp(texture, quads, depth, rotation);
+                break;
+
+            case InitVariedDecalProp variedDecal:
+                DrawVariedDecalProp(variedDecal, texture, quads, ((PropVariedDecalSettings)settings).Variation, depth, rotation);
+                break;
+
+            case InitSimpleDecalProp:
+                DrawSimpleDecalProp(texture, quads, depth, rotation);
+                break;
+            
+            case InitLongProp:
+                DrawLongProp(texture, quads, depth, rotation);
                 break;
         }
     }
 
-    internal static void DrawLongProp(in Texture2D texture, in PropQuads quads, int depth = 0)
+    internal static void DrawLongProp(in Texture2D texture, in PropQuads quads, int depth, int rotation)
     {
         var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
         var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
@@ -2320,7 +2504,7 @@ internal static class Printers
         SetShaderValueTexture(GLOBALS.Shaders.LongProp, textureLoc, texture);
         SetShaderValue(GLOBALS.Shaders.LongProp, depthLoc, depth, ShaderUniformDataType.Int);
         
-        DrawTextureQuads(texture, quads, flippedX, flippedY);
+        DrawTextureQuad(texture, Utils.RotatePropQuads(quads, rotation), flippedX, flippedY);
         EndShaderMode();
     }
     
@@ -2390,11 +2574,47 @@ internal static class Printers
         SetShaderValue(GLOBALS.Shaders.StandardProp, widthLoc, calcWidth, ShaderUniformDataType.Float);
         SetShaderValue(GLOBALS.Shaders.StandardProp, depthLoc, depth, ShaderUniformDataType.Int);
         
-        DrawTextureQuads(texture, quads, flippedX, flippedY);
+        DrawTextureQuad(texture, quads, flippedX, flippedY);
 
         EndShaderMode();
     }
 
+    internal static void DrawStandardProp(
+        InitStandardProp init, 
+        in Texture2D texture, 
+        PropQuads quads,
+        int depth,
+        int rotation
+    )
+    {
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+        
+        var layerHeight = (float)texture.Height / (float)init.Repeat.Length;
+        var calcLayerHeight = layerHeight / texture.Height;
+        var calcWidth = (float) init.Size.x * GLOBALS.Scale / texture.Width;
+
+        calcWidth = calcWidth > 1.00000f ? 1.0f : calcWidth;
+        
+        var textureLoc = GetShaderLocation(GLOBALS.Shaders.StandardProp, "inputTexture");
+        var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.StandardProp, "layerNum");
+        var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.StandardProp, "layerHeight");
+        var widthLoc = GetShaderLocation(GLOBALS.Shaders.StandardProp, "width");
+        var depthLoc = GetShaderLocation(GLOBALS.Shaders.StandardProp, "depth");
+
+        BeginShaderMode(GLOBALS.Shaders.StandardProp);
+        
+        SetShaderValueTexture(GLOBALS.Shaders.StandardProp, textureLoc, texture);
+        SetShaderValue(GLOBALS.Shaders.StandardProp, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.Int);
+        SetShaderValue(GLOBALS.Shaders.StandardProp, layerHeightLoc, calcLayerHeight, ShaderUniformDataType.Float);
+        SetShaderValue(GLOBALS.Shaders.StandardProp, widthLoc, calcWidth, ShaderUniformDataType.Float);
+        SetShaderValue(GLOBALS.Shaders.StandardProp, depthLoc, depth, ShaderUniformDataType.Int);
+        
+        DrawTextureQuad(texture, Utils.RotatePropQuads(quads, rotation), flippedX, flippedY);
+
+        EndShaderMode();
+    }
+    
     internal static void DrawVariedStandardProp(
         InitVariedStandardProp init, 
         ref Texture2D texture, 
@@ -2471,10 +2691,50 @@ internal static class Printers
         SetShaderValue(GLOBALS.Shaders.VariedStandardProp, variationLoc, variation, ShaderUniformDataType.Int);
         SetShaderValue(GLOBALS.Shaders.VariedStandardProp, depthLoc, depth, ShaderUniformDataType.Int);
         
-        DrawTextureQuads(texture, quads, flippedX, flippedY);
+        DrawTextureQuad(texture, quads, flippedX, flippedY);
         EndShaderMode();
     }
 
+    internal static void DrawVariedStandardProp(
+        InitVariedStandardProp init, 
+        in Texture2D texture, 
+        PropQuads quads,
+        int variation,
+        int depth,
+        int rotation
+    )
+    {
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+        
+        var layerHeight = (float) init.Size.y * GLOBALS.Scale;
+        var variationWidth = (float) init.Size.x * GLOBALS.Scale;
+        
+        var calcLayerHeight = layerHeight / texture.Height;
+        var calcVariationWidth = variationWidth / texture.Width;
+        
+        var textureLoc = GetShaderLocation(GLOBALS.Shaders.VariedStandardProp, "inputTexture");
+        
+        var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.VariedStandardProp, "layerNum");
+        var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.VariedStandardProp, "layerHeight");
+        var variationWidthLoc = GetShaderLocation(GLOBALS.Shaders.VariedStandardProp, "varWidth");
+        var variationLoc = GetShaderLocation(GLOBALS.Shaders.VariedStandardProp, "variation");
+        var depthLoc = GetShaderLocation(GLOBALS.Shaders.VariedStandardProp, "depth");
+
+        BeginShaderMode(GLOBALS.Shaders.VariedStandardProp);
+
+        SetShaderValueTexture(GLOBALS.Shaders.VariedStandardProp, textureLoc, texture);
+       
+        SetShaderValue(GLOBALS.Shaders.VariedStandardProp, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.Int);
+        SetShaderValue(GLOBALS.Shaders.VariedStandardProp, layerHeightLoc, calcLayerHeight, ShaderUniformDataType.Float);
+        SetShaderValue(GLOBALS.Shaders.VariedStandardProp, variationWidthLoc, calcVariationWidth, ShaderUniformDataType.Float);
+        SetShaderValue(GLOBALS.Shaders.VariedStandardProp, variationLoc, variation, ShaderUniformDataType.Int);
+        SetShaderValue(GLOBALS.Shaders.VariedStandardProp, depthLoc, depth, ShaderUniformDataType.Int);
+        
+        DrawTextureQuad(texture, Utils.RotatePropQuads(quads, rotation), flippedX, flippedY);
+        EndShaderMode();
+    }
+    
     internal static void DrawSoftProp(
         InitSoftProp init, 
         ref Texture2D texture, 
@@ -2512,7 +2772,24 @@ internal static class Printers
         SetShaderValueTexture(GLOBALS.Shaders.SoftProp, textureLoc, texture);
         SetShaderValue(GLOBALS.Shaders.SoftProp, depthLoc, depth, ShaderUniformDataType.Int);
         
-        DrawTextureQuads(texture, quads, flippedX, flippedY);
+        DrawTextureQuad(texture, quads, flippedX, flippedY);
+        EndShaderMode();
+    }
+    
+    internal static void DrawSoftProp(in Texture2D texture, in PropQuads quads, int depth, int rotation)
+    {
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+        
+        var textureLoc = GetShaderLocation(GLOBALS.Shaders.SoftProp, "inputTexture");
+        var depthLoc = GetShaderLocation(GLOBALS.Shaders.SoftProp, "depth");
+
+        BeginShaderMode(GLOBALS.Shaders.SoftProp);
+
+        SetShaderValueTexture(GLOBALS.Shaders.SoftProp, textureLoc, texture);
+        SetShaderValue(GLOBALS.Shaders.SoftProp, depthLoc, depth, ShaderUniformDataType.Int);
+        
+        DrawTextureQuad(texture, Utils.RotatePropQuads(quads, rotation), flippedX, flippedY);
         EndShaderMode();
     }
     
@@ -2599,7 +2876,43 @@ internal static class Printers
         SetShaderValue(GLOBALS.Shaders.VariedSoftProp, variationLoc, variation, ShaderUniformDataType.Int);
         SetShaderValue(GLOBALS.Shaders.VariedSoftProp, depthLoc, depth, ShaderUniformDataType.Int);
         
-        DrawTextureQuads(texture, quads, flippedX, flippedY);
+        DrawTextureQuad(texture, quads, flippedX, flippedY);
+        EndShaderMode();
+    }
+    
+    internal static void DrawVariedSoftProp(
+        InitVariedSoftProp init, 
+        in Texture2D texture, 
+        PropQuads quads,
+        int variation,
+        int depth,
+        int rotation
+    )
+    {
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+        
+        var calcHeight = (float) init.SizeInPixels.y / texture.Height;
+        var calcVariationWidth = (float) init.SizeInPixels.x / texture.Width;
+
+        var textureLoc = GetShaderLocation(GLOBALS.Shaders.VariedSoftProp, "inputTexture");
+
+        var heightLoc = GetShaderLocation(GLOBALS.Shaders.VariedSoftProp, "height");
+        var variationWidthLoc = GetShaderLocation(GLOBALS.Shaders.VariedSoftProp, "varWidth");
+        var variationLoc = GetShaderLocation(GLOBALS.Shaders.VariedSoftProp, "variation");
+        var depthLoc = GetShaderLocation(GLOBALS.Shaders.VariedSoftProp, "depth");
+
+        BeginShaderMode(GLOBALS.Shaders.VariedSoftProp);
+
+        SetShaderValueTexture(GLOBALS.Shaders.VariedSoftProp, textureLoc, texture);
+
+        SetShaderValue(GLOBALS.Shaders.VariedSoftProp, variationWidthLoc, calcVariationWidth,
+            ShaderUniformDataType.Float);
+        SetShaderValue(GLOBALS.Shaders.VariedSoftProp, heightLoc, calcHeight, ShaderUniformDataType.Float);
+        SetShaderValue(GLOBALS.Shaders.VariedSoftProp, variationLoc, variation, ShaderUniformDataType.Int);
+        SetShaderValue(GLOBALS.Shaders.VariedSoftProp, depthLoc, depth, ShaderUniformDataType.Int);
+        
+        DrawTextureQuad(texture, Utils.RotatePropQuads(quads, rotation), flippedX, flippedY);
         EndShaderMode();
     }
     
@@ -2639,7 +2952,24 @@ internal static class Printers
         SetShaderValueTexture(GLOBALS.Shaders.SimpleDecalProp, textureLoc, texture);
         SetShaderValue(GLOBALS.Shaders.SimpleDecalProp, depthLoc, depth, ShaderUniformDataType.Int);
         
-        DrawTextureQuads(texture, quads, flippedX, flippedY);
+        DrawTextureQuad(texture, quads, flippedX, flippedY);
+        EndShaderMode();
+    }
+    
+    internal static void DrawSimpleDecalProp(in Texture2D texture, in PropQuads quads, int depth, int rotation)
+    {
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+        
+        var textureLoc = GetShaderLocation(GLOBALS.Shaders.SimpleDecalProp, "inputTexture");
+        var depthLoc = GetShaderLocation(GLOBALS.Shaders.SimpleDecalProp, "depth");
+
+        BeginShaderMode(GLOBALS.Shaders.SimpleDecalProp);
+
+        SetShaderValueTexture(GLOBALS.Shaders.SimpleDecalProp, textureLoc, texture);
+        SetShaderValue(GLOBALS.Shaders.SimpleDecalProp, depthLoc, depth, ShaderUniformDataType.Int);
+        
+        DrawTextureQuad(texture, Utils.RotatePropQuads(quads, rotation), flippedX, flippedY);
         EndShaderMode();
     }
     
@@ -2718,10 +3048,46 @@ internal static class Printers
         SetShaderValue(GLOBALS.Shaders.VariedDecalProp, variationLoc, variation, ShaderUniformDataType.Int);
         SetShaderValue(GLOBALS.Shaders.VariedDecalProp, depthLoc, depth, ShaderUniformDataType.Int);
         
-        DrawTextureQuads(texture, quads, flippedX, flippedY);
+        DrawTextureQuad(texture, quads, flippedX, flippedY);
         EndShaderMode();
     }
 
+    internal static void DrawVariedDecalProp(
+        InitVariedDecalProp init, 
+        in Texture2D texture, 
+        in PropQuads quads,
+        int variation,
+        int depth,
+        int rotation
+    )
+    {
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+        
+        var calcHeight = (float) init.SizeInPixels.y / texture.Height;
+        var calcVariationWidth = (float) init.SizeInPixels.x / texture.Width;
+
+        var textureLoc = GetShaderLocation(GLOBALS.Shaders.VariedDecalProp, "inputTexture");
+
+        var heightLoc = GetShaderLocation(GLOBALS.Shaders.VariedDecalProp, "height");
+        var variationWidthLoc = GetShaderLocation(GLOBALS.Shaders.VariedDecalProp, "varWidth");
+        var variationLoc = GetShaderLocation(GLOBALS.Shaders.VariedDecalProp, "variation");
+        var depthLoc = GetShaderLocation(GLOBALS.Shaders.VariedDecalProp, "depth");
+
+        BeginShaderMode(GLOBALS.Shaders.VariedDecalProp);
+
+        SetShaderValueTexture(GLOBALS.Shaders.VariedDecalProp, textureLoc, texture);
+
+        SetShaderValue(GLOBALS.Shaders.VariedDecalProp, variationWidthLoc, calcVariationWidth,
+            ShaderUniformDataType.Float);
+        SetShaderValue(GLOBALS.Shaders.VariedDecalProp, heightLoc, calcHeight, ShaderUniformDataType.Float);
+        SetShaderValue(GLOBALS.Shaders.VariedDecalProp, variationLoc, variation, ShaderUniformDataType.Int);
+        SetShaderValue(GLOBALS.Shaders.VariedDecalProp, depthLoc, depth, ShaderUniformDataType.Int);
+        
+        DrawTextureQuad(texture, Utils.RotatePropQuads(quads, rotation), flippedX, flippedY);
+        EndShaderMode();
+    }
+    
     internal static void DrawCross(Vector2 origin, Vector2 size, float thickness, Color color)
     {
         DrawLineEx(origin, origin + size, thickness, color);

@@ -78,6 +78,11 @@ internal class PropsEditorPage : EditorPage
 
     private byte _stretchAxes;
 
+    // 0 - 360
+    private int _placementRotation;
+
+    private int _placementRotationSteps = 1;
+
     private int _ropeSimulationFrameCut = 1;
     private int _ropeSimulationFrame;
     
@@ -109,6 +114,8 @@ internal class PropsEditorPage : EditorPage
     private int _copiedDepth;
     private bool _copiedIsTileAsProp;
     private bool _newlyCopied; // to signify that the copied properties should be used
+
+    private bool _showGrid;
 
     private int _defaultDepth;
     private int _defaultVariation;
@@ -727,6 +734,15 @@ internal class PropsEditorPage : EditorPage
                                 {
                                     settings = new();
                                 }
+
+                                var quads = new PropQuads(
+                                    new Vector2(posV.X - width, posV.Y - height),
+                                    new Vector2(posV.X + width, posV.Y - height),
+                                    new Vector2(posV.X + width, posV.Y + height),
+                                    new Vector2(posV.X - width, posV.Y + height)
+                                );
+
+                                quads = Utils.RotatePropQuads(quads, _placementRotation * _placementRotationSteps, tileMouseWorld);
                                 
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
                                     (
@@ -736,12 +752,7 @@ internal class PropsEditorPage : EditorPage
                                             _defaultDepth, 
                                             currentTileAsProp.init.Name, 
                                             true, 
-                                            new PropQuads(
-                                            new Vector2(posV.X - width, posV.Y - height), 
-                                            new  Vector2(posV.X + width, posV.Y - height), 
-                                            new Vector2(posV.X + width, posV.Y + height), 
-                                            new Vector2(posV.X - width, posV.Y + height)
-                                            )
+                                            quads
                                         )
                                         {
                                             Extras = new(settings, [])
@@ -882,6 +893,14 @@ internal class PropsEditorPage : EditorPage
                                     settings = _copiedPropSettings;
                                     _defaultDepth = _copiedDepth;
                                 }
+
+                                var quads = new PropQuads(
+                                    new(posV.X - width, posV.Y - height),
+                                    new(posV.X + width, posV.Y - height),
+                                    new(posV.X + width, posV.Y + height),
+                                    new(posV.X - width, posV.Y + height));
+
+                                quads = Utils.RotatePropQuads(quads, _placementRotation * _placementRotationSteps, tileMouseWorld);
                                 
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
                                     (
@@ -891,12 +910,7 @@ internal class PropsEditorPage : EditorPage
                                             _defaultDepth, 
                                             init.Name, 
                                             false, 
-                                            new PropQuads(
-                                            new(posV.X - width, posV.Y - height), 
-                                            new(posV.X + width, posV.Y - height), 
-                                            new(posV.X + width, posV.Y + height), 
-                                            new(posV.X - width, posV.Y + height))
-                                        )
+                                            quads)
                                         {
                                             Extras = new PropExtras(settings, [])
                                         }
@@ -1723,7 +1737,9 @@ internal class PropsEditorPage : EditorPage
         #region TileEditorDrawing
         BeginDrawing();
 
-        ClearBackground(Color.Gray);
+        ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
+            ? Color.Black 
+            : new Color(170, 170, 170, 255));
 
         BeginMode2D(_camera);
         {
@@ -2214,6 +2230,18 @@ internal class PropsEditorPage : EditorPage
             }
             #endregion
             
+            // Grid
+
+            if (_showGrid)
+            {
+                Printers.DrawGrid(16);
+            }
+            
+            if (GLOBALS.Settings.GeneralSettings.DarkTheme)
+            {
+                DrawRectangleLines(0, 0, GLOBALS.Level.Width*16, GLOBALS.Level.Height*16, Color.White);
+            }
+            
             // Draw the enclosing rectangle for selected props
             // DEBUG: DrawRectangleLinesEx(_selectedPropsEncloser, 3f, Color.White);
 
@@ -2259,27 +2287,14 @@ internal class PropsEditorPage : EditorPage
                                 var currentTileAsProp = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
                                 var currentTileAsPropTexture = GLOBALS.Textures.Tiles[currentTileAsPropCategory.index][currentTileAsProp.index];
                                 
-                                var layerHeight = (currentTileAsProp.init.Size.Item2 + (currentTileAsProp.init.BufferTiles * 2)) * scale;
-                                var textureCutWidth = (currentTileAsProp.init.Size.Item1 + (currentTileAsProp.init.BufferTiles * 2)) * scale;
-                                const float scaleConst = 0.4f;
-
-                                var width = scaleConst * textureCutWidth;
-                                var height = scaleConst * layerHeight;
-
                                 switch (_snapMode)
                                 {
                                     case 0: // free
                                         Printers.DrawTileAsProp(
-                                            ref currentTileAsPropTexture,
-                                            ref currentTileAsProp.init,
-                                            ref tileMouseWorld,
-                                            [
-                                                new Vector2(width, -height),
-                                                new Vector2(-width, -height),
-                                                new Vector2(-width, height),
-                                                new Vector2(width, height),
-                                                new Vector2(width, -height)
-                                            ]
+                                            currentTileAsPropTexture,
+                                            currentTileAsProp.init,
+                                            tileMouseWorld,
+                                            _placementRotation * _placementRotationSteps
                                         );
                                         break;
 
@@ -2288,16 +2303,10 @@ internal class PropsEditorPage : EditorPage
                                         var posV = new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale;
                                         
                                         Printers.DrawTileAsProp(
-                                            ref currentTileAsPropTexture,
-                                            ref currentTileAsProp.init,
-                                            ref posV,
-                                            [
-                                                new Vector2(width, -height),
-                                                new Vector2(-width, -height),
-                                                new Vector2(-width, height),
-                                                new Vector2(width, height),
-                                                new Vector2(width, -height)
-                                            ]
+                                            currentTileAsPropTexture,
+                                            currentTileAsProp.init,
+                                            posV,
+                                            _placementRotation * _placementRotationSteps
                                         );
                                     }
                                         break;
@@ -2307,16 +2316,10 @@ internal class PropsEditorPage : EditorPage
                                         var posV = new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f;
                                         
                                         Printers.DrawTileAsProp(
-                                            ref currentTileAsPropTexture,
-                                            ref currentTileAsProp.init,
-                                            ref posV,
-                                            [
-                                                new Vector2(width, -height),
-                                                new Vector2(-width, -height),
-                                                new Vector2(-width, height),
-                                                new Vector2(width, height),
-                                                new Vector2(width, -height)
-                                            ]
+                                            currentTileAsPropTexture,
+                                            currentTileAsProp.init,
+                                            posV,
+                                            _placementRotation * _placementRotationSteps
                                         );
                                     }
                                         break;
@@ -2392,7 +2395,8 @@ internal class PropsEditorPage : EditorPage
                                 new Vector2(posV.X + width, posV.Y - height), 
                                 new Vector2(posV.X + width, posV.Y + height), 
                                 new Vector2(posV.X - width, posV.Y + height)),
-                                0
+                                0,
+                                _placementRotation * _placementRotationSteps
                             );
                         }
                             break;
@@ -2675,9 +2679,14 @@ internal class PropsEditorPage : EditorPage
                 
                 ImGui.Spacing();
 
+                if (ImGui.Button($"Grid: {_showGrid}",
+                        availableSpace with { X = availableSpace.X / 2, Y = 20 })) _showGrid = !_showGrid;
+                        
+                ImGui.SameLine();
+                
                 var precisionSelected = ImGui.Button(
                     $"Precision: {_snapMode switch { 0 => "Free", 1 => "Grid", 2 => "Precise", _ => "?" }}",
-                    availableSpace with { Y = 20 });
+                    availableSpace with { X = availableSpace.X / 2, Y = 20 });
 
                 if (precisionSelected) _snapMode = ++_snapMode % 3;
                 
@@ -2694,7 +2703,7 @@ internal class PropsEditorPage : EditorPage
                             for (var i = 0; i < _selected.Length; i++) _selected[i] = true;
                         }
 
-                        if (ImGui.BeginListBox("Props", availableSpace with { Y = availableSpace.Y - 420 }))
+                        if (ImGui.BeginListBox("Props", availableSpace with { Y = availableSpace.Y - 440 }))
                         {
                             for (var index = 0; index < GLOBALS.Level.Props.Length; index++)
                             {
@@ -2772,6 +2781,13 @@ internal class PropsEditorPage : EditorPage
                         if (fetchedSelected.Length == 1)
                         {
                             var (selectedProp, _) = fetchedSelected[0];
+                            
+                            // Render Order
+
+                            var renderOrder = selectedProp.prop.Extras.Settings.RenderOrder;
+                            ImGui.SetNextItemWidth(100);
+                            if (ImGui.InputInt("Render Order", ref renderOrder))
+                                selectedProp.prop.Extras.Settings.RenderOrder = renderOrder;
                     
                             // Seed
 
@@ -2946,7 +2962,7 @@ internal class PropsEditorPage : EditorPage
 
                     case 1: // Placement
                     {
-                        if (ImGui.Button($"Continuous Placement: {_noCollisionPropPlacement}", availableSpace with { Y = 20 }))
+                        if (ImGui.Button($"{(_noCollisionPropPlacement? "Continuous Placement" : "Single Placement")}", availableSpace with { Y = 20 }))
                             _noCollisionPropPlacement = !_noCollisionPropPlacement;
                         
                         ImGui.Spacing();
@@ -2968,7 +2984,7 @@ internal class PropsEditorPage : EditorPage
                         if (longsSelected) _menuRootCategoryIndex = 2;
                         if (othersSelected) _menuRootCategoryIndex = 3;
 
-                        var listSize = new Vector2(halfWidth, availableSpace.Y - 250);
+                        var listSize = new Vector2(halfWidth, availableSpace.Y - 290);
                         
                         switch (_menuRootCategoryIndex)
                         {
@@ -3070,12 +3086,16 @@ internal class PropsEditorPage : EditorPage
                         
                         // Seed
 
-                        var seed = _defaultSeed;
-
                         ImGui.SetNextItemWidth(100);
-                        ImGui.InputInt("Seed", ref seed);
-
-                        _defaultSeed = seed;
+                        ImGui.InputInt("Seed", ref _defaultSeed);
+                        
+                        // Rotation
+                        
+                        ImGui.SetNextItemWidth(100);
+                        ImGui.InputInt("Rotation", ref _placementRotation);
+                        
+                        ImGui.SetNextItemWidth(100);
+                        ImGui.SliderInt("Rotation Steps", ref _placementRotationSteps, 1, 10);
                 
                         // Depth
                 

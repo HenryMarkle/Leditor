@@ -2,6 +2,10 @@
 
 No guarantees. No promises.
 
+## Next Update
+
+- Fix geometry editor placement inconsistencies between multi-select and single-select
+
 ## Near Future
 
 - Add a third layer `specs` property support for tiles
@@ -18,5 +22,4 @@ No guarantees. No promises.
 - Upscale props editor to 20px per unit
 - Add undo actions for props editor
 - Implement a better way to place ropes
-- Add stretch map to light editor
 - Add `Move Level` tool to geometry editor

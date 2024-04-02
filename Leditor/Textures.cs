@@ -102,7 +102,7 @@ public class PropTexturesLoader
                 
             actions.Add(() =>
             {
-                _ropes[indexCopy] = Raylib.LoadTextureFromImage(_tempLongsImages[indexCopy]);
+                _longs[indexCopy] = Raylib.LoadTextureFromImage(_tempLongsImages[indexCopy]);
                 Raylib.UnloadImage(_tempLongsImages[indexCopy]);
             });
         }

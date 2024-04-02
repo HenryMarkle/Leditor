@@ -1954,7 +1954,6 @@ internal static class Utils
         return new Rectangle(minX, minY, maxX - minX, maxY - minY);
     }
 
-    //TODO: change to ref
     internal static PropQuads RotatePropQuads(PropQuads quads, float angle)
     {
         // Convert angle to radians
@@ -1980,8 +1979,8 @@ internal static class Utils
             var x = quads.TopLeft.X;
             var y = quads.TopLeft.Y;
 
-            var dx = center.X - x;
-            var dy = center.Y - y;
+            var dx = x - center.X;
+            var dy = y - center.Y;
 
             newTopLeft = new Vector2(
                 center.X + dx * cosRotation - dy * sinRotation, 
@@ -1993,8 +1992,8 @@ internal static class Utils
             var x = quads.TopRight.X;
             var y = quads.TopRight.Y;
 
-            var dx = center.X - x;
-            var dy = center.Y - y;
+            var dx = x - center.X;
+            var dy = y - center.Y;
 
             newTopRight = new Vector2(center.X + dx * cosRotation - dy * sinRotation, center.Y + dx * sinRotation + dy * cosRotation);
         }
@@ -2003,8 +2002,8 @@ internal static class Utils
             var x = quads.BottomRight.X;
             var y = quads.BottomRight.Y;
 
-            var dx = center.X - x;
-            var dy = center.Y - y;
+            var dx = x - center.X;
+            var dy = y - center.Y;
 
             newBottomRight = new Vector2(center.X + dx * cosRotation - dy * sinRotation, center.Y + dx * sinRotation + dy * cosRotation);
         }
@@ -2013,8 +2012,8 @@ internal static class Utils
             var x = quads.BottomLeft.X;
             var y = quads.BottomLeft.Y;
 
-            var dx = center.X - x;
-            var dy = center.Y - y;
+            var dx = x - center.X;
+            var dy = y - center.Y;
 
             newBottomLeft = new Vector2(center.X + dx * cosRotation - dy * sinRotation, center.Y + dx * sinRotation + dy * cosRotation);
         }

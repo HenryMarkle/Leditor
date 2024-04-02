@@ -732,6 +732,10 @@ class Program
 
         GLOBALS.Shaders.PreviewColoredTileProp = LoadShader(null,
             Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_colored_preview.frag"));
+
+        GLOBALS.Shaders.LightMapStretch =
+            LoadShader(null,
+                Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "lightmap_stretch.frag"));
         //
 
         SetTargetFPS(GLOBALS.Settings.Misc.FPS);
@@ -1664,6 +1668,7 @@ class Program
         UnloadShader(GLOBALS.Shaders.ColoredBoxTileProp);
         UnloadShader(GLOBALS.Shaders.LongProp);
         UnloadShader(GLOBALS.Shaders.PreviewColoredTileProp);
+        UnloadShader(GLOBALS.Shaders.LightMapStretch);
         
         // Unloading Pages
         

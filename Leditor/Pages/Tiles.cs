@@ -45,6 +45,8 @@ internal class TileEditorPage : EditorPage, IDisposable
 
     private bool _deepTileCopy = true;
 
+    private bool _showGrid;
+
     private int _prevPosX = -1;
     private int _prevPosY = -1;
 
@@ -1037,7 +1039,7 @@ internal class TileEditorPage : EditorPage, IDisposable
             TileHead h => new TileHead(h.CategoryPostition.Category, h.CategoryPostition.Index, h.CategoryPostition.Name),
             TileBody b => new TileBody(b.HeadPosition.x, b.HeadPosition.y, b.HeadPosition.z),
                                             
-            _ => throw new Exception("Invalid tile data")
+            _ => new TileDefault()
         }
     };
 
@@ -1892,7 +1894,7 @@ internal class TileEditorPage : EditorPage, IDisposable
         }
 
         if (_shortcuts.HoveredItemInfo.Check(ctrl, shift, alt)) GLOBALS.Settings.TileEditor.HoveredTileInfo = !GLOBALS.Settings.TileEditor.HoveredTileInfo;
-
+        
         if (_shortcuts.ToggleLayer1Tiles.Check(ctrl, shift, alt)) _showLayer1Tiles = !_showLayer1Tiles;
         if (_shortcuts.ToggleLayer2Tiles.Check(ctrl, shift, alt)) _showLayer2Tiles = !_showLayer2Tiles;
         if (_shortcuts.ToggleLayer3Tiles.Check(ctrl, shift, alt)) _showLayer3Tiles = !_showLayer3Tiles;
@@ -2019,6 +2021,10 @@ internal class TileEditorPage : EditorPage, IDisposable
                 }
             }
             #endregion
+
+            // Grid
+            
+            if (GLOBALS.Settings.TileEditor.Grid) Printers.DrawGrid(GLOBALS.Scale);
             
             // Dark Theme
 
@@ -2742,6 +2748,9 @@ internal class TileEditorPage : EditorPage, IDisposable
                 ImGui.Checkbox("Hovered Item Info", ref hoveredInfo);
                 if (GLOBALS.Settings.TileEditor.HoveredTileInfo != hoveredInfo) 
                     GLOBALS.Settings.TileEditor.HoveredTileInfo = hoveredInfo;
+
+                var grid = GLOBALS.Settings.TileEditor.Grid;
+                if (ImGui.Checkbox("Grid", ref grid)) GLOBALS.Settings.TileEditor.Grid = grid;
                 
                 ImGui.End();
             }

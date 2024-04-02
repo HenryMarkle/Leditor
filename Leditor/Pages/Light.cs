@@ -10,7 +10,9 @@ internal class LightEditorPage : EditorPage
 {
     public override void Dispose()
     {
+        if (Disposed) return;
         Disposed = true;
+        _stretchTexture?.Dispose();
     }
     
     private Camera2D _camera = new() { Zoom = 0.5f, Target = new(-500, -200) };
@@ -25,10 +27,44 @@ internal class LightEditorPage : EditorPage
     private bool _tilePreview = true;
     private bool _tintedTileTextures = true;
 
+    private int _quadLock;
+    private readonly QuadVectors _quadPoints = new();
+
+    private bool _stretchMode;
+
     private bool _isDraggingIndicator;
 
     private const float InitialGrowthFactor = 0.01f;
     private float _growthFactor = InitialGrowthFactor;
+
+    private RL.Managed.Texture2D _stretchTexture;
+    
+    private void ResetQuadPoints()
+    {
+        var width = GLOBALS.Level.Width * GLOBALS.Scale + 300;
+        var height = GLOBALS.Level.Height * GLOBALS.Scale + 300;
+        
+        _quadPoints.TopLeft = new Vector2(0, 0);
+        _quadPoints.TopRight = new Vector2(width, 0);
+        _quadPoints.BottomRight = new Vector2(width, height);;
+        _quadPoints.BottomLeft = new Vector2(0, height);
+        
+        _stretchTexture?.Dispose();
+
+        var img = LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);
+        ImageFlipVertical(ref img);
+        
+        _stretchTexture = new RL.Managed.Texture2D(img);
+        
+        UnloadImage(img);
+    }
+
+    private void SwitchStretchMode()
+    {
+        _stretchMode = !_stretchMode;
+        
+        ResetQuadPoints();
+    }
 
     private void ResetGrowthFactor()
     {
@@ -47,9 +83,9 @@ internal class LightEditorPage : EditorPage
     
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
-    
-    private bool _isNavigationWinHovered;
-    private bool _isNavigationWinDragged;
+
+    private bool _isStretchWinHovered;
+    private bool _isStretchWinDragged;
     
     private bool _isBrushesWinHovered;
     private bool _isBrushesWinDragged;
@@ -61,6 +97,7 @@ internal class LightEditorPage : EditorPage
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera with { Target = GLOBALS.Camera.Target + new Vector2(300, 300)};
         var mouse = GetMousePosition();
+        var worldMouse = GetScreenToWorld2D(mouse, _camera);
         
         var indicatorOrigin = new Vector2(100, GetScreenHeight() - 100);
 
@@ -85,8 +122,8 @@ internal class LightEditorPage : EditorPage
                        !_isBrushesWinDragged && 
                        !_isShortcutsWinHovered && 
                        !_isShortcutsWinDragged && 
-                       !_isNavigationWinHovered &&
-                       !_isNavigationWinDragged &&
+                       !_isStretchWinHovered &&
+                       !_isStretchWinDragged &&
                        !CheckCollisionPointRec(mouse, brushPanel) && !indHovered && 
                        !_isDraggingIndicator;
         
@@ -245,7 +282,7 @@ internal class LightEditorPage : EditorPage
 
         //
 
-        if (canPaint && (_shortcuts.Paint.Check(ctrl, shift, alt, true) || _shortcuts.PaintAlt.Check(ctrl, shift, alt, true)))
+        if (canPaint && !_stretchMode && (_shortcuts.Paint.Check(ctrl, shift, alt, true) || _shortcuts.PaintAlt.Check(ctrl, shift, alt, true)))
         {
             BeginTextureMode(GLOBALS.Textures.LightMap);
             {
@@ -264,7 +301,7 @@ internal class LightEditorPage : EditorPage
             EndTextureMode();
         }
 
-        if (canPaint && (_shortcuts.Erase.Check(ctrl, shift, alt, true) ||
+        if (canPaint && !_stretchMode && (_shortcuts.Erase.Check(ctrl, shift, alt, true) ||
                          _shortcuts.EraseAlt.Check(ctrl, shift, alt, true)))
         {
             _eraseShadow = true;
@@ -289,8 +326,48 @@ internal class LightEditorPage : EditorPage
         }
         else _eraseShadow = false;
 
-        if (IsKeyPressed(KeyboardKey.R)) _shading = !_shading;
+        // if (IsKeyPressed(KeyboardKey.R)) _shading = !_shading;
 
+        if (_stretchMode)
+        {
+            if (_quadLock == 0)
+            {
+                if (CheckCollisionPointCircle(worldMouse, _quadPoints.TopLeft, 10) &&
+                    IsMouseButtonDown(MouseButton.Left))
+                {
+                    _quadLock = 1;
+                }
+                
+                if (CheckCollisionPointCircle(worldMouse, _quadPoints.TopRight, 10) &&
+                    IsMouseButtonDown(MouseButton.Left))
+                {
+                    _quadLock = 2;
+                }
+                
+                if (CheckCollisionPointCircle(worldMouse, _quadPoints.BottomRight, 10) &&
+                    IsMouseButtonDown(MouseButton.Left))
+                {
+                    _quadLock = 3;
+                }
+                
+                if (CheckCollisionPointCircle(worldMouse, _quadPoints.BottomLeft, 10) &&
+                    IsMouseButtonDown(MouseButton.Left))
+                {
+                    _quadLock = 4;
+                }
+            }
+
+            if (IsMouseButtonReleased(MouseButton.Left)) _quadLock = 0;
+
+            switch (_quadLock)
+            {
+                case 1: _quadPoints.TopLeft = worldMouse; break;
+                case 2: _quadPoints.TopRight = worldMouse; break;
+                case 3: _quadPoints.BottomRight = worldMouse; break;
+                case 4: _quadPoints.BottomLeft = worldMouse; break;
+            }
+        }
+        
         BeginDrawing();
         {
             ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
@@ -353,16 +430,35 @@ internal class LightEditorPage : EditorPage
                 
                 // Lightmap
 
-                DrawTextureRec(
-                    GLOBALS.Textures.LightMap.Texture,
-                    new Rectangle(0, 0, GLOBALS.Textures.LightMap.Texture.Width, -GLOBALS.Textures.LightMap.Texture.Height),
-                    new(0, 0),
-                    new(255, 255, 255, 150)
-                );
+                if (_stretchMode)
+                {
+                    BeginShaderMode(GLOBALS.Shaders.LightMapStretch);
+                    SetShaderValueTexture(GLOBALS.Shaders.LightMapStretch, GetShaderLocation(GLOBALS.Shaders.LightMapStretch, "textureSampler"), _stretchTexture);
+                    Printers.DrawTextureQuad(_stretchTexture, _quadPoints, Color.White with { A = 150 });
+                    // DrawTextureRec(_stretchTexture, new(0, 0, GLOBALS.Level.Width*20+300, GLOBALS.Level.Height*20+300), new(0, 0), Color.White with { A = 150 });
+                    EndShaderMode();
+                }
+                else
+                {
+                    DrawTextureRec(
+                        GLOBALS.Textures.LightMap.Texture,
+                        new Rectangle(0, 0, GLOBALS.Textures.LightMap.Texture.Width, -GLOBALS.Textures.LightMap.Texture.Height),
+                        new Vector2(0, 0),
+                        Color.White with { A = 150 }
+                    );
+                }
+                
+                if (_stretchMode)
+                {
+                    DrawCircleV(_quadPoints.TopLeft, 7f, Color.Blue);
+                    DrawCircleV(_quadPoints.TopRight, 7f, Color.Blue);
+                    DrawCircleV(_quadPoints.BottomRight, 7f, Color.Blue);
+                    DrawCircleV(_quadPoints.BottomLeft, 7f, Color.Blue);
+                }
 
                 // The brush
 
-                if (!indHovered && !_isDraggingIndicator)
+                if (!indHovered && !_isDraggingIndicator && !_stretchMode)
                 {
                     if (_eraseShadow)
                     {
@@ -506,6 +602,57 @@ internal class LightEditorPage : EditorPage
                         }
                         ImGui.End();
                     }
+                    ImGui.End();
+                }
+            }
+            #endregion
+            
+            #region StretchMode
+            {
+                var stretchModeWinOpened = ImGui.Begin("Stretch Mode");
+                
+                var menuPos = ImGui.GetWindowPos();
+                var menuWinSpace = ImGui.GetWindowSize();
+
+                if (CheckCollisionPointRec(GetMousePosition(), new(menuPos.X - 5, menuPos.Y-5, menuWinSpace.X + 10, menuWinSpace.Y+10)))
+                {
+                    _isStretchWinHovered = true;
+
+                    if (IsMouseButtonDown(MouseButton.Left)) _isStretchWinDragged = true;
+                }
+                else
+                {
+                    _isStretchWinHovered = false;
+                }
+
+                if (IsMouseButtonReleased(MouseButton.Left) && _isStretchWinDragged) _isStretchWinDragged = false;
+                
+                if (stretchModeWinOpened)
+                {
+                    var availableSpace = ImGui.GetContentRegionAvail();
+
+                    var stretchSwitchClicked = ImGui.Button($"{(_stretchMode ? "Cancel" : "Enable")}", availableSpace with { Y = 20 });
+
+                    if (stretchSwitchClicked)
+                    {
+                        SwitchStretchMode();
+                    }
+
+                    if (_stretchMode)
+                    {
+                        var applyClicked = ImGui.Button("Apply", availableSpace with { Y = 20 });
+
+                        if (applyClicked)
+                        {
+                            BeginTextureMode(GLOBALS.Textures.LightMap);
+                            ClearBackground(Color.White);
+                            Printers.DrawTextureQuad(_stretchTexture, _quadPoints);
+                            EndTextureMode();
+                            
+                            ResetQuadPoints();
+                        }
+                    }
+                    
                     ImGui.End();
                 }
             }
