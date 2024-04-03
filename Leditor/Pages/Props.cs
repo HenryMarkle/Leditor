@@ -256,41 +256,83 @@ internal class PropsEditorPage : EditorPage
         switch (_menuRootCategoryIndex)
         {
             case 0: // tiles as props
-                if (_propCategoryFocus)
-                {
-                    _propsMenuTilesCategoryIndex--;
-                    if (_propsMenuTilesCategoryIndex < 0) _propsMenuTilesCategoryIndex = _tilesAsPropsCategoryIndices.Length - 1;
-                    _propsMenuTilesIndex = 0;
-                }
-                else
-                {
-                    _propsMenuTilesIndex--;
-                    if (_propsMenuTilesIndex < 0) _propsMenuTilesIndex = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length - 1;
-                }
+                _propsMenuTilesIndex--;
+                
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuTilesIndex, 0, _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length - 1);
+                else Utils.Restrict(ref _propsMenuTilesIndex, 0, _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length - 1);
                 break;
                     
             case 1: // Ropes
                 _propsMenuRopesIndex--;
-                if (_propsMenuRopesIndex < 0) _propsMenuRopesIndex = GLOBALS.RopeProps.Length - 1;
+                
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuRopesIndex, 0, GLOBALS.RopeProps.Length - 1);
+                else Utils.Restrict(ref _propsMenuRopesIndex, 0, GLOBALS.RopeProps.Length - 1);
                 break;
             
             case 2: // Longs 
                 _propsMenuLongsIndex--;
-                if (_propsMenuLongsIndex < 0) _propsMenuLongsIndex = GLOBALS.LongProps.Length - 1;
+
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuLongsIndex, 0, GLOBALS.LongProps.Length - 1);
+                else Utils.Restrict(ref _propsMenuLongsIndex, 0, GLOBALS.LongProps.Length - 1);
                 break;
                     
             case 3: // props
-                if (_propCategoryFocus)
-                {
-                    _propsMenuOthersCategoryIndex--;
-                    if (_propsMenuOthersCategoryIndex < 0) _propsMenuOthersCategoryIndex = GLOBALS.Props.Length - 1;
-                    _propsMenuOthersIndex = 0;
-                }
-                else
-                {
-                    _propsMenuOthersIndex--;
-                    if (_propsMenuOthersIndex < 0) _propsMenuOthersIndex = GLOBALS.Props[_propsMenuOthersCategoryIndex].Length - 1;
-                }
+                _propsMenuOthersIndex--;
+
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuOthersIndex, 0, GLOBALS.Props[_propsMenuOthersCategoryIndex].Length - 1);
+                else Utils.Restrict(ref _propsMenuOthersIndex, 0, GLOBALS.Props[_propsMenuOthersCategoryIndex].Length - 1);
+                break;
+        }
+    }
+
+    private void ToNextInnerCategory()
+    {
+        switch (_menuRootCategoryIndex)
+        {
+            case 0: // Tiles-As-Props
+                _propsMenuTilesCategoryIndex++;
+
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuTilesCategoryIndex, 0, _tilesAsPropsCategoryIndices.Length - 1);
+                else Utils.Restrict(ref _propsMenuTilesCategoryIndex, 0, _tilesAsPropsCategoryIndices.Length - 1);
+                
+                if (GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex) _propsMenuTilesIndex = 0;
+                else Utils.Restrict(ref _propsMenuTilesIndex, 0, _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length - 1);
+                break;
+            
+            case 3: // Other
+                _propsMenuOthersCategoryIndex++;
+                
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuOthersCategoryIndex, 0, GLOBALS.Props.Length - 1);
+                else Utils.Restrict(ref _propsMenuOthersCategoryIndex, 0, GLOBALS.Props.Length - 1);;
+                
+                if (GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex) _propsMenuOthersIndex = 0;
+                else Utils.Restrict(ref _propsMenuOthersIndex, 0, GLOBALS.Props[_propsMenuOthersCategoryIndex].Length - 1);
+                break;
+        }
+    }
+
+    private void ToPreviousInnerCategory()
+    {
+        switch (_menuRootCategoryIndex)
+        {
+            case 0: // Tiles-As-Props
+                _propsMenuTilesCategoryIndex--;
+
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuTilesCategoryIndex, 0, _tilesAsPropsCategoryIndices.Length - 1);
+                else Utils.Restrict(ref _propsMenuTilesCategoryIndex, 0, _tilesAsPropsCategoryIndices.Length - 1);
+
+                if (GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex) _propsMenuTilesIndex = 0;
+                else Utils.Restrict(ref _propsMenuTilesIndex, 0, _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length - 1);
+                break;
+            
+            case 3: // Other
+                _propsMenuOthersCategoryIndex--;
+                
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuOthersCategoryIndex, 0, GLOBALS.Props.Length - 1);
+                else Utils.Restrict(ref _propsMenuOthersCategoryIndex, 0, GLOBALS.Props.Length - 1);;
+                
+                if (GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex) _propsMenuOthersIndex = 0;
+                else Utils.Restrict(ref _propsMenuOthersIndex, 0, GLOBALS.Props[_propsMenuOthersCategoryIndex].Length - 1);
                 break;
         }
     }
@@ -300,42 +342,31 @@ internal class PropsEditorPage : EditorPage
         switch (_menuRootCategoryIndex)
         {
             case 0: // Tiles as props
-                if (_propCategoryFocus)
-                {
-                    _propsMenuTilesCategoryIndex = ++_propsMenuTilesCategoryIndex % _tilesAsPropsCategoryIndices.Length;
+                _propsMenuTilesIndex++;
 
-                    if (_propsMenuTilesCategoryIndex == 0) _propsMenuTilesCategoryScrollIndex = 0;
-
-                    _propsMenuTilesIndex = 0;
-                }
-                else
-                {
-                    _propsMenuTilesIndex = ++_propsMenuTilesIndex % _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length;
-
-                    if (_propsMenuTilesIndex == 0) _propsMenuTilesScrollIndex = 0;
-                }
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuTilesIndex, 0, _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length - 1);
+                else Utils.Restrict(ref _propsMenuTilesIndex, 0, _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length - 1);
                 break;
             
             case 1: // Ropes
-                _propsMenuRopesIndex = ++_propsMenuRopesIndex % GLOBALS.RopeProps.Length;
+                _propsMenuRopesIndex++;
+
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuRopesIndex, 0, GLOBALS.RopeProps.Length - 1);
+                else Utils.Restrict(ref _propsMenuRopesIndex, 0, GLOBALS.RopeProps.Length - 1);
                 break;
             
             case 2: // Longs 
-                _propsMenuLongsIndex = ++_propsMenuLongsIndex % GLOBALS.LongProps.Length;
+                _propsMenuLongsIndex++;
+
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuLongsIndex, 0, GLOBALS.LongProps.Length - 1);
+                else Utils.Restrict(ref _propsMenuLongsIndex, 0, GLOBALS.LongProps.Length - 1);
                 break;
             
             case 3: // Props
-                if (_propCategoryFocus)
-                {
-                    _propsMenuOthersCategoryIndex++;
-                    if (_propsMenuOthersCategoryIndex > GLOBALS.Props.Length - 1) _propsMenuOthersCategoryIndex = 0;
-                    _propsMenuOthersIndex = 0;
-                }
-                else
-                {
-                    _propsMenuOthersIndex++;
-                    if (_propsMenuOthersIndex > GLOBALS.Props[_propsMenuOthersCategoryIndex].Length - 1) _propsMenuOthersIndex = 0;
-                }
+                _propsMenuOthersIndex++;
+                
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuOthersIndex, 0, GLOBALS.Props[_propsMenuOthersCategoryIndex].Length - 1);
+                else Utils.Restrict(ref _propsMenuOthersIndex, 0, GLOBALS.Props[_propsMenuOthersCategoryIndex].Length - 1);
                 break;
         }
     }
@@ -939,19 +970,21 @@ internal class PropsEditorPage : EditorPage
                     if (_menuRootCategoryIndex < 0) _menuRootCategoryIndex = 3;
                 }
                 
-                // Navigate menu
-                if (_shortcuts.InnerCategoryFocusRight.Check(ctrl, shift, alt))
+                // Navigate categories menu
+                if (_shortcuts.ToNextInnerCategory.Check(ctrl, shift, alt))
                 {
-                    _propCategoryFocus = false;
+                    ToNextInnerCategory();
                 }
-                else if (_shortcuts.InnerCategoryFocusLeft.Check(ctrl, shift, alt))
+                else if (_shortcuts.ToPreviousInnerCategory.Check(ctrl, shift, alt))
                 {
-                    _propCategoryFocus = true;
+                    ToPreviousInnerCategory();
                 }
                 
                 if (_shortcuts.NavigateMenuDown.Check(ctrl, shift, alt))
                 {
                     IncrementMenuIndex();
+                        
+                    // I don't remember what this is for
                     currentTileAsPropCategory = _tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex];
                 }
                 else if (_shortcuts.NavigateMenuUp.Check(ctrl, shift, alt))
@@ -1257,8 +1290,32 @@ internal class PropsEditorPage : EditorPage
                     var newMousePos = GetScreenToWorld2D(GetMousePosition(), _camera);
                     
                     _propsMoveMouseDelta = newMousePos - _propsMoveMousePos.Value;
-                    _propsMoveMousePos = newMousePos;
 
+                    Vector2 gridDelta, preciseDelta;
+
+                    // Grid delta
+                    {
+                        var gridScaled = new Vector2((int)(_propsMoveMousePos.Value.X / 16), (int)(_propsMoveMousePos.Value.Y / 16));
+                        var gridScaledBack = gridScaled * 16;
+                        
+                        var newGridScaled = new Vector2((int)(newMousePos.X / 16), (int)(newMousePos.Y / 16));
+                        var newGridScaledBack = newGridScaled * 16;
+
+                        gridDelta = newGridScaledBack - gridScaledBack;
+                    }
+                    
+                    // Precise delta
+                    {
+                        var gridScaled = new Vector2((int)(_propsMoveMousePos.Value.X / 8), (int)(_propsMoveMousePos.Value.Y / 8));
+                        var gridScaledBack = gridScaled * 8;
+                        
+                        var newGridScaled = new Vector2((int)(newMousePos.X / 8), (int)(newMousePos.Y / 8));
+                        var newGridScaledBack = newGridScaled * 8;
+
+                        preciseDelta = newGridScaledBack - gridScaledBack;
+                    }
+
+                    _propsMoveMousePos = newMousePos;
                     
                     // Fix delta when level panning
                     
@@ -1285,15 +1342,10 @@ internal class PropsEditorPage : EditorPage
 
                             case 1: // Grid
                             {
-                                var gridScaled = new Vector2((int)(_propsMoveMousePos.Value.X / 16), (int)(_propsMoveMousePos.Value.Y/16));
-                                var gridScaledBack = gridScaled * 16;
-
-                                var centerDelta = gridScaledBack - center;
-                                
-                                quads.TopLeft = Raymath.Vector2Add(quads.TopLeft, centerDelta);
-                                quads.TopRight = Raymath.Vector2Add(quads.TopRight, centerDelta);
-                                quads.BottomRight = Raymath.Vector2Add(quads.BottomRight, centerDelta);
-                                quads.BottomLeft = Raymath.Vector2Add(quads.BottomLeft, centerDelta);
+                                quads.TopLeft = Raymath.Vector2Add(quads.TopLeft, gridDelta);
+                                quads.TopRight = Raymath.Vector2Add(quads.TopRight, gridDelta);
+                                quads.BottomRight = Raymath.Vector2Add(quads.BottomRight, gridDelta);
+                                quads.BottomLeft = Raymath.Vector2Add(quads.BottomLeft, gridDelta);
                             }
                                 break;
 
@@ -1304,10 +1356,10 @@ internal class PropsEditorPage : EditorPage
 
                                 var centerDelta = gridScaledBack - center;
                                 
-                                quads.TopLeft = Raymath.Vector2Add(quads.TopLeft, centerDelta);
-                                quads.TopRight = Raymath.Vector2Add(quads.TopRight, centerDelta);
-                                quads.BottomRight = Raymath.Vector2Add(quads.BottomRight, centerDelta);
-                                quads.BottomLeft = Raymath.Vector2Add(quads.BottomLeft, centerDelta);
+                                quads.TopLeft = Raymath.Vector2Add(quads.TopLeft, preciseDelta);
+                                quads.TopRight = Raymath.Vector2Add(quads.TopRight, preciseDelta);
+                                quads.BottomRight = Raymath.Vector2Add(quads.BottomRight, preciseDelta);
+                                quads.BottomLeft = Raymath.Vector2Add(quads.BottomLeft, preciseDelta);
                             }
                                 break;
                         }

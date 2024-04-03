@@ -306,6 +306,16 @@ internal class SettingsPage : EditorPage
                         var defaultZoom = GLOBALS.Settings.GeneralSettings.DefaultZoom;
                         ImGui.InputFloat("Default Zoom", ref defaultZoom, 1f);
                         GLOBALS.Settings.GeneralSettings.DefaultZoom = defaultZoom;
+                        
+                        ImGui.SeparatorText("Menus");
+
+                        var cycleMenus = GLOBALS.Settings.GeneralSettings.CycleMenus;
+                        if (ImGui.Checkbox("Cycle Menus", ref cycleMenus))
+                            GLOBALS.Settings.GeneralSettings.CycleMenus = cycleMenus;
+
+                        var resetsIndex = GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex;
+                        if (ImGui.Checkbox("Changing Categories Resets Index", ref resetsIndex))
+                            GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex = resetsIndex;
                     }
                         break;
 
@@ -711,6 +721,8 @@ internal class SettingsPage : EditorPage
                         
                         //
                         
+                        ImGui.Separator();
+                        
                         var assignCycleLayers = ImGui.Button($"Cycle Layers: {GLOBALS.Settings.Shortcuts.PropsEditor.CycleLayers}");
                         var assignCycleSnapMode = ImGui.Button($"Cycle Snap Mode: {GLOBALS.Settings.Shortcuts.PropsEditor.CycleSnapMode}"); 
                         var assignToggleLayer1 = ImGui.Button($"Show/Hide Layer 1: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer1}");
@@ -719,6 +731,8 @@ internal class SettingsPage : EditorPage
                         var assignToggleLayer1Tiles = ImGui.Button($"Show/Hide Layer 1 Tiles: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer1Tiles}");
                         var assignToggleLayer2Tiles = ImGui.Button($"Show/Hide Layer 2 Tiles: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer2Tiles}");
                         var assignToggleLayer3Tiles = ImGui.Button($"Show/Hide Layer 3 Tiles: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer3Tiles}");
+                        var assignToNextInnerCategory = ImGui.Button($"To Next Inner Category {GLOBALS.Settings.Shortcuts.PropsEditor.ToNextInnerCategory}");
+                        var assignToPreviousInnerCategory = ImGui.Button($"To Previous Inner Category {GLOBALS.Settings.Shortcuts.PropsEditor.ToPreviousInnerCategory}");
                         
                         ImGui.SeparatorText("Keyboard Shortcuts");
                         
@@ -750,6 +764,8 @@ internal class SettingsPage : EditorPage
                         if (assignToggleLayer1Tiles) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer1Tiles;
                         if (assignToggleLayer2Tiles) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer2Tiles;
                         if (assignToggleLayer3Tiles) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer3Tiles;
+                        if (assignToNextInnerCategory) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToNextInnerCategory;
+                        if (assignToPreviousInnerCategory) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToPreviousInnerCategory;
                         
                         if (assignPlacePropAlt) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.PlacePropAlt;
                         if (assignPanAlt) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DragLevelAlt;

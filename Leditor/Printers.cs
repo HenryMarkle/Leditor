@@ -2381,6 +2381,7 @@ internal static class Printers
                 var texture = GLOBALS.Textures.Props[category][index];
                 var init = GLOBALS.Props[category][index];
 
+                // TODO: Could be simplified
                 switch (init)
                 {
                     case InitVariedStandardProp variedStandard:
@@ -2405,6 +2406,14 @@ internal static class Printers
 
                     case InitSimpleDecalProp:
                         DrawSimpleDecalProp(texture, prop.Quads, depth);
+                        break;
+                    
+                    case InitAntimatterProp:
+                        DrawAntimatterProp(texture, prop.Quads, depth, 0);
+                        break;
+                    
+                    default:
+                        DrawPropDefault(texture, prop.Quads, depth, 0);
                         break;
                 }
             }
@@ -2488,7 +2497,53 @@ internal static class Printers
             case InitLongProp:
                 DrawLongProp(texture, quads, depth, rotation);
                 break;
+            
+            case InitAntimatterProp:
+                DrawAntimatterProp(texture, quads, depth, rotation);
+                break;
+            
+            default:
+                DrawPropDefault(texture, quads, depth, rotation);
+                break;
         }
+    }
+
+    internal static void DrawPropDefault(in Texture2D texture, in PropQuads quads, int depth, int rotation)
+    {
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+
+        var shader = GLOBALS.Shaders.DefaultProp;
+        
+        var textureLoc = GetShaderLocation(shader, "inputTexture");
+        var depthLoc = GetShaderLocation(shader, "depth");
+
+        BeginShaderMode(shader);
+
+        SetShaderValueTexture(shader, textureLoc, texture);
+        SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
+        
+        DrawTextureQuad(texture, Utils.RotatePropQuads(quads, rotation), flippedX, flippedY);
+        EndShaderMode();
+    }
+
+    internal static void DrawAntimatterProp(in Texture2D texture, in PropQuads quads, int depth, int rotation)
+    {
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+
+        var shader = GLOBALS.Shaders.DefaultProp;
+        
+        var textureLoc = GetShaderLocation(shader, "inputTexture");
+        var depthLoc = GetShaderLocation(shader, "depth");
+
+        BeginShaderMode(shader);
+
+        SetShaderValueTexture(shader, textureLoc, texture);
+        SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
+        
+        DrawTextureQuad(texture, Utils.RotatePropQuads(quads, rotation), flippedX, flippedY);
+        EndShaderMode();
     }
 
     internal static void DrawLongProp(in Texture2D texture, in PropQuads quads, int depth, int rotation)

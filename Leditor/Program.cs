@@ -432,7 +432,7 @@ class Program
         
         logger.Information("Initializing data");
 
-        const string version = "Henry's Leditor v0.9.56";
+        const string version = "Henry's Leditor v0.9.57";
         const string raylibVersion = "Raylib v5.0.0";
         
         logger.Information(version);
@@ -729,6 +729,9 @@ class Program
 
         GLOBALS.Shaders.LongProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_long.frag"));
+
+        GLOBALS.Shaders.DefaultProp =
+            LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_default.frag"));
 
         GLOBALS.Shaders.PreviewColoredTileProp = LoadShader(null,
             Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_colored_preview.frag"));
@@ -1667,6 +1670,7 @@ class Program
         UnloadShader(GLOBALS.Shaders.ColoredTileProp);
         UnloadShader(GLOBALS.Shaders.ColoredBoxTileProp);
         UnloadShader(GLOBALS.Shaders.LongProp);
+        UnloadShader(GLOBALS.Shaders.DefaultProp);
         UnloadShader(GLOBALS.Shaders.PreviewColoredTileProp);
         UnloadShader(GLOBALS.Shaders.LightMapStretch);
         

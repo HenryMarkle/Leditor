@@ -667,9 +667,9 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut CycleCategoriesRight { get; set; } = new(KeyboardKey.D, shift: true);
     public KeyboardShortcut CycleCategoriesLeft { get; set; } = new(KeyboardKey.A, shift: true);
 
-    public KeyboardShortcut InnerCategoryFocusRight { get; set; } = new(KeyboardKey.D, ctrl: false, shift: false, alt: false);
-    public KeyboardShortcut InnerCategoryFocusLeft { get; set; } = new(KeyboardKey.A, ctrl: false, shift: false, alt: false);
-
+    public KeyboardShortcut ToNextInnerCategory { get; set; } = new(KeyboardKey.D, ctrl: false, shift: false, alt: false);
+    public KeyboardShortcut ToPreviousInnerCategory { get; set; } = new(KeyboardKey.A, ctrl: false, shift: false, alt: false);
+    
     public KeyboardShortcut NavigateMenuUp { get; set; } = new(KeyboardKey.W, ctrl: false, shift: false, alt: false);
     public KeyboardShortcut NavigateMenuDown { get; set; } = new(KeyboardKey.S, ctrl: false, shift: false, alt: false);
 
@@ -1016,7 +1016,9 @@ public class GeneralSettings(
     bool darkTheme = false,
     bool cacheRendererRuntime = false,
     bool linearZooming = false,
-    float defaultZoom = 1
+    float defaultZoom = 1,
+    bool cycleMenus = true,
+    bool changingCategoriesResetsIndex = true
     )
 {
     public bool DeveloperMode { get; set; } = developerMode;
@@ -1027,6 +1029,8 @@ public class GeneralSettings(
     public bool CacheRendererRuntime { get; set; } = cacheRendererRuntime;
     public bool LinearZooming { get; set; } = linearZooming;
     public float DefaultZoom { get; set; } = defaultZoom;
+    public bool CycleMenus { get; set; } = cycleMenus;
+    public bool ChangingCategoriesResetsIndex { get; set; } = changingCategoriesResetsIndex;
 }
 
 public class Settings

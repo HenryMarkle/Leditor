@@ -65,6 +65,7 @@ internal static class GLOBALS
         internal Shader SimpleDecalProp { get; set; }
         internal Shader VariedDecalProp { get; set; }
         internal Shader LongProp { get; set; }
+        internal Shader DefaultProp { get; set; }
         internal Shader PreviewColoredTileProp { get; set; }
         internal Shader LightMapStretch { get; set; }
     }

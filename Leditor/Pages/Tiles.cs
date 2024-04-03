@@ -396,65 +396,48 @@ internal class TileEditorPage : EditorPage, IDisposable
         }
     }
 
-    private void ToNextTileCategory(int pageSize)
+    private void ToNextTileCategory()
     {
-        _tileCategoryIndex = ++_tileCategoryIndex % GLOBALS.TileCategories.Length;
-
-        if (_tileCategoryIndex % (pageSize + _tileCategoryScrollIndex) == pageSize + _tileCategoryScrollIndex - 1
-            && _tileCategoryIndex != GLOBALS.TileCategories.Length - 1)
-            _tileCategoryScrollIndex++;
-
-        if (_tileCategoryIndex == 0)
-        {
-            _tileCategoryScrollIndex = 0;
-        }
-
-        _tileIndex = 0;
+        _tileCategoryIndex++;
+        
+        if (GLOBALS.Settings.GeneralSettings.CycleMenus) _tileCategoryIndex %= GLOBALS.TileCategories.Length;
+        else Utils.Restrict(ref _tileCategoryIndex, 0, GLOBALS.TileCategories.Length-1);
+        
+        if (GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex) _tileIndex = 0;
+        else Utils.Restrict(ref _tileIndex, 0, GLOBALS.Tiles[_tileCategoryIndex].Length-1);
     }
 
-    private void ToPreviousCategory(int pageSize)
+    private void ToPreviousCategory()
     {
         _tileCategoryIndex--;
 
-        if (_tileCategoryIndex < 0)
-        {
-            _tileCategoryIndex = GLOBALS.Tiles.Length - 1;
-        }
-
-        if (_tileCategoryIndex == (_tileCategoryScrollIndex + 1) && _tileCategoryIndex != 1) _tileCategoryScrollIndex--;
-        if (_tileCategoryIndex == GLOBALS.Tiles.Length - 1) _tileCategoryScrollIndex += Math.Abs(GLOBALS.Tiles.Length - pageSize);
-        _tileIndex = 0;
+        if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _tileCategoryIndex, 0, GLOBALS.Tiles.Length - 1);
+        else Utils.Restrict(ref _tileCategoryIndex, 0, GLOBALS.Tiles.Length - 1);
+        
+        if (GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex) _tileIndex = 0;
+        else Utils.Restrict(ref _tileIndex, 0, GLOBALS.Tiles[_tileCategoryIndex].Length-1);
     }
 
-    private void ToNextMaterialCategory(int pageSize)
+    private void ToNextMaterialCategory()
     {
-        _materialCategoryIndex = ++_materialCategoryIndex % GLOBALS.MaterialCategories.Length;
+        _materialCategoryIndex++;
 
-        if (_materialCategoryIndex % (pageSize + _materialCategoryScrollIndex) == pageSize + _materialCategoryScrollIndex - 1
-            && _materialCategoryIndex != GLOBALS.MaterialCategories.Length - 1)
-            _materialCategoryScrollIndex++;
-
-        if (_materialCategoryIndex == 0)
-        {
-            _materialCategoryScrollIndex = 0;
-        }
-
-        _materialIndex = 0;
+        if (GLOBALS.Settings.GeneralSettings.CycleMenus) _materialCategoryIndex %= GLOBALS.MaterialCategories.Length;
+        else Utils.Restrict(ref _materialCategoryIndex, 0, GLOBALS.MaterialCategories.Length - 1);
+        
+        if (GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex) _materialIndex = 0;
+        else Utils.Restrict(ref _materialIndex, 0, GLOBALS.Materials[_materialCategoryIndex].Length-1);
     }
     
-    private void ToPreviousMaterialCategory(int pageSize)
+    private void ToPreviousMaterialCategory()
     {
         _materialCategoryIndex--;
 
-        if (_materialCategoryIndex < 0)
-        {
-            _materialCategoryIndex = GLOBALS.MaterialCategories.Length - 1;
-
-            if (_materialCategoryIndex == (_materialCategoryScrollIndex + 1) && _materialCategoryIndex != 1) _materialCategoryScrollIndex--;
-            if (_materialCategoryScrollIndex == GLOBALS.MaterialCategories.Length - 1) _materialCategoryScrollIndex = Math.Abs(GLOBALS.MaterialCategories.Length - pageSize);
-
-            _materialIndex = 0;
-        }
+        if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _materialCategoryIndex, 0, GLOBALS.MaterialCategories.Length - 1);
+        else Utils.Restrict(ref _materialCategoryIndex, 0, GLOBALS.MaterialCategories.Length - 1);
+        
+        if (GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex) _materialIndex = 0;
+        else Utils.Restrict(ref _materialIndex, 0, GLOBALS.Materials[_materialCategoryIndex].Length-1);
     }
 
     private static bool IsCoordsInBounds(Coords position)
@@ -1082,10 +1065,10 @@ internal class TileEditorPage : EditorPage, IDisposable
         
         _tileSpecsPanelRT.Dispose();
 
-        _tileSpecsPanelRT = new(scale*width + 10, scale*height + 10);
+        _tileSpecsPanelRT = new RenderTexture2D(scale*width + 10, scale*height + 10);
         
         BeginTextureMode(_tileSpecsPanelRT);
-        ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 0 } : Color.Gray);
+        ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 0 } : Color.White);
         
         int[] specs;
         int[] specs2;
@@ -1201,8 +1184,6 @@ internal class TileEditorPage : EditorPage, IDisposable
         
         var tilePanelRect = new Rectangle(teWidth - _tilePanelWidth, 0, _tilePanelWidth, teHeight);
         var panelMenuHeight = tilePanelRect.Height - 270;
-        var leftPanelSideStart = new Vector2(teWidth - _tilePanelWidth, 0);
-        var leftPanelSideEnd = new Vector2(teWidth - _tilePanelWidth, teHeight);
         var specsRect = new Rectangle(teWidth - 200, teHeight - 200, 200, 200);
         
         var layer3Rect = new Rectangle(10, teHeight - 80, 40, 40);
@@ -1232,8 +1213,6 @@ internal class TileEditorPage : EditorPage, IDisposable
                           !_isTilesWinDragged &&
                           !_isShortcutsWinHovered &&
                           !_isShortcutsWinDragged &&
-                          !_isNavigationWinHovered &&
-                          !_isNavigationWinDragged &&
                           !CheckCollisionPointRec(tileMouse, layer3Rect) &&
                           (GLOBALS.Layer != 1 || !CheckCollisionPointRec(tileMouse, layer2Rect)) &&
                           (GLOBALS.Layer != 0 || !CheckCollisionPointRec(tileMouse, layer1Rect));
@@ -1247,7 +1226,6 @@ internal class TileEditorPage : EditorPage, IDisposable
 
         var currentTilePreviewColor = GLOBALS.TileCategories[_tileCategoryIndex].Item2;
         var currentTileTexture = GLOBALS.Textures.Tiles[_tileCategoryIndex][_tileIndex];
-        
         
         #region TileEditorShortcuts
         
@@ -1775,8 +1753,8 @@ internal class TileEditorPage : EditorPage, IDisposable
 
         if (_shortcuts.MoveToNextCategory.Check(ctrl, shift, alt))
         {
-            if (_materialTileSwitch) ToNextTileCategory(categoriesPageSize);
-            else ToNextMaterialCategory(categoriesPageSize);
+            if (_materialTileSwitch) ToNextTileCategory();
+            else ToNextMaterialCategory();
 
             if (_tileSpecDisplayMode) 
                 UpdateTileTexturePanel();
@@ -1785,8 +1763,8 @@ internal class TileEditorPage : EditorPage, IDisposable
         }
         else if (_shortcuts.MoveToPreviousCategory.Check(ctrl, shift, alt))
         {
-            if (_materialTileSwitch) ToPreviousCategory(categoriesPageSize);
-            else ToPreviousMaterialCategory(categoriesPageSize);
+            if (_materialTileSwitch) ToPreviousCategory();
+            else ToPreviousMaterialCategory();
             
             if (_tileSpecDisplayMode) 
                 UpdateTileTexturePanel();
@@ -1800,7 +1778,7 @@ internal class TileEditorPage : EditorPage, IDisposable
             {
                 if (_tileCategoryFocus)
                 {
-                    ToNextTileCategory(categoriesPageSize);
+                    ToNextTileCategory();
                 }
                 else
                 {
@@ -1814,6 +1792,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                         if (_tileIndex == 0) _tileScrollIndex = 0;
                     }
                     // When searching
+                    // Why did I leave this empty?
                     else
                     {
                         
@@ -1824,7 +1803,7 @@ internal class TileEditorPage : EditorPage, IDisposable
             {
                 if (_tileCategoryFocus)
                 {
-                    ToNextMaterialCategory(categoriesPageSize);
+                    ToNextMaterialCategory();
                 }
                 else
                 {
@@ -1850,30 +1829,26 @@ internal class TileEditorPage : EditorPage, IDisposable
             {
                 if (_tileCategoryFocus)
                 {
-                    ToPreviousCategory(categoriesPageSize);
+                    ToPreviousCategory();
                 }
                 else
                 {
-                    if (_tileIndex == (_tileScrollIndex) && _tileIndex != 1) _tileScrollIndex--;
-
                     _tileIndex--;
-                    if (_tileIndex < 0) _tileIndex = GLOBALS.Tiles[_tileCategoryIndex].Length - 1;
-
-                    if (_tileIndex == GLOBALS.Tiles[_tileCategoryIndex].Length - 1) _tileScrollIndex += GLOBALS.Tiles[_tileCategoryIndex].Length - categoriesPageSize;
+                    if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _tileIndex, 0, GLOBALS.Tiles[_tileCategoryIndex].Length - 1);
+                    else Utils.Restrict(ref _tileIndex, 0, GLOBALS.Tiles[_tileCategoryIndex].Length - 1);
                 }
             }
             else
             {
                 if (_tileCategoryFocus)
                 {
-                    ToPreviousMaterialCategory(categoriesPageSize);
+                    ToPreviousMaterialCategory();
                 }
                 else
                 {
-                    if (_materialIndex == (_materialScrollIndex) && _materialIndex != 1) _materialScrollIndex--;
                     _materialIndex--;
-                    if (_materialIndex < 0) _materialIndex = GLOBALS.Materials[_materialCategoryIndex].Length - 1;
-                    if (_materialIndex == GLOBALS.Materials[_materialCategoryIndex].Length - 1) _materialScrollIndex += GLOBALS.Materials[_materialCategoryIndex].Length - categoriesPageSize;
+                    if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _materialIndex, 0, GLOBALS.Materials[_materialCategoryIndex].Length - 1);
+                    else Utils.Restrict(ref _materialIndex, 0, GLOBALS.Materials[_materialCategoryIndex].Length - 1);
                 }
             }
             
