@@ -2379,6 +2379,14 @@ internal static class Printers
             case InitSimpleDecalProp:
                 DrawSimpleDecalProp(texture, quad);
                 break;
+            
+            case InitAntimatterProp:
+                DrawAntimatterProp(texture, quad, depth, 0);
+                break;
+            
+            default:
+                DrawPropDefault(texture, quad, depth, 0);
+                break;
         }
     }
 
