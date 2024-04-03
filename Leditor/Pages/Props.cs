@@ -30,6 +30,8 @@ internal class PropsEditorPage : EditorPage
     private int _hoveredCategoryIndex = -1;
     private int _hoveredIndex = -1;
     private int _previousRootCategory;
+
+    private bool _tooltip = true;
     
     private RenderTexture2D _propTooltip = new(0, 0);
 
@@ -3116,7 +3118,7 @@ internal class PropsEditorPage : EditorPage
                         if (longsSelected) _menuRootCategoryIndex = 2;
                         if (othersSelected) _menuRootCategoryIndex = 3;
 
-                        var listSize = new Vector2(halfWidth, availableSpace.Y - 290);
+                        var listSize = new Vector2(halfWidth, availableSpace.Y - 340);
                         
                         switch (_menuRootCategoryIndex)
                         {
@@ -3342,6 +3344,12 @@ internal class PropsEditorPage : EditorPage
 
                             _defaultVariation = variation;
                         }
+                        
+                        // Misc
+                        
+                        ImGui.SeparatorText("Misc");
+
+                        ImGui.Checkbox("Tooltip", ref _tooltip);
                     }
                         break;
                 }
