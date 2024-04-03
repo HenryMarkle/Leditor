@@ -2245,6 +2245,18 @@ internal static class Utils
         return [..points];
     }
 
+    internal static (int width, int height) GetPropSize(in InitPropBase prop)
+    {
+        return prop switch
+        {
+            InitVariedStandardProp variedStandard => (variedStandard.Size.x * 20, variedStandard.Size.y * 20),
+            InitStandardProp standard => (standard.Size.x * 20, standard.Size.y * 20),
+            InitVariedSoftProp variedSoft => variedSoft.SizeInPixels,
+            InitVariedDecalProp variedDecal => variedDecal.SizeInPixels,
+            _ => (-1, -1)
+        };
+    }
+
     internal static Vector2[] Casteljau(int steps, Vector2[] points) {
         Vector2 GetCasteljauPoint(int r, int i, double t) { 
             if(r == 0) return points[i];

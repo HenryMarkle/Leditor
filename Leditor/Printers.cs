@@ -2346,6 +2346,41 @@ internal static class Printers
                 break;
         }
     }
+    
+    internal static void DrawProp(
+        in InitPropBase init, 
+        in Texture2D texture, 
+        in PropQuads quad,
+        int variation = 0,
+        int depth = 0)
+    {
+        switch (init)
+        {
+            case InitVariedStandardProp variedStandard:
+                DrawVariedStandardProp(variedStandard, texture, quad, variation, depth);
+                break;
+            
+            case InitStandardProp standard:
+                DrawStandardProp(standard, texture, quad, depth,  0);
+                break;
+            
+            case InitVariedSoftProp variedSoft:
+                DrawVariedSoftProp(variedSoft, texture, quad, variation, depth);
+                break;
+            
+            case InitSoftProp soft:
+                DrawSoftProp(texture, quad, depth);
+                break;
+            
+            case InitVariedDecalProp variedDecal:
+                DrawVariedDecalProp(variedDecal, texture, quad, variation, 0);
+                break;
+            
+            case InitSimpleDecalProp:
+                DrawSimpleDecalProp(texture, quad);
+                break;
+        }
+    }
 
     internal static void DrawProp(InitPropType type, int category, int index, Prop prop, bool tintedTiles = true)
     {

@@ -1267,6 +1267,8 @@ public abstract class InitPropBase(string name, InitPropType type, int depth)
     public override string ToString() => 
         $"({Type}) - {Name}\n" +
         $"Depth: {Depth}";
+
+    public abstract BasicPropSettings NewSettings();
 }
 
 public class InitStandardProp(
@@ -1289,6 +1291,9 @@ public class InitStandardProp(
         $"Bevel: {Bevel}\n" +
         $"Size: ({Size.x}, {Size.y})\n" +
         $"RepeatL: [ {string.Join(", ", Repeat)} ]";
+
+    public override BasicPropSettings NewSettings()
+        => new();
 }
 
 public class InitVariedStandardProp(
@@ -1308,6 +1313,9 @@ public class InitVariedStandardProp(
     public override string ToString() => base.ToString() +
         $"\nVariations: {Variations}\n" +
         $"Random: {Random}";
+    
+    public override BasicPropSettings NewSettings()
+        => new PropVariedSettings();
 }
 
 public class InitSoftProp(
@@ -1338,12 +1346,19 @@ public class InitSoftProp(
         $"DepthAffectHilites: {DepthAffectHilites}\n" +
         $"ShadowBorder: {ShadowBorder}\n" +
         $"SmoothShading: {SmoothShading}";
+    
+    public override BasicPropSettings NewSettings()
+        => new PropSoftSettings();
 }
 
 public class InitSoftEffectProp(
     string name,
     InitPropType type,
-    int depth) : InitPropBase(name, type, depth);
+    int depth) : InitPropBase(name, type, depth)
+{
+    public override BasicPropSettings NewSettings()
+        => new PropSoftEffectSettings();
+}
 
 public class InitVariedSoftProp(
     string name,
@@ -1371,9 +1386,16 @@ public class InitVariedSoftProp(
                                          $"Variations: {Variations}\n" +
                                          $"Random: {Random}\n" +
                                          $"Colorize: {Colorize}";
+    
+    public override BasicPropSettings NewSettings()
+        => new PropVariedSoftSettings();
 }
 
-public class InitSimpleDecalProp(string name, InitPropType type, int depth) : InitPropBase(name, type, depth);
+public class InitSimpleDecalProp(string name, InitPropType type, int depth) : InitPropBase(name, type, depth)
+{
+    public override BasicPropSettings NewSettings()
+        => new PropSimpleDecalSettings();
+}
 
 public class InitVariedDecalProp(string name, InitPropType type, int depth, (int x, int y) sizeInPixels, int variations, int random) : InitSimpleDecalProp(name, type, depth), IVariableInit
 {
@@ -1385,6 +1407,9 @@ public class InitVariedDecalProp(string name, InitPropType type, int depth, (int
         $"\nSize in Pixels: ({SizeInPixels.x}, {SizeInPixels.y})\n" +
         $"Variations: {Variations}\n" +
         $"Random: {Random}";
+    
+    public override BasicPropSettings NewSettings()
+        => new PropVariedDecalSettings();
 }
 
 public class InitAntimatterProp(string name, InitPropType type, int depth, float contourExp) : InitPropBase(name, type, depth)
@@ -1393,6 +1418,9 @@ public class InitAntimatterProp(string name, InitPropType type, int depth, float
 
     public override string ToString() => base.ToString() +
         $"\nContourExp: {ContourExp}";
+    
+    public override BasicPropSettings NewSettings()
+        => new PropAntimatterSettings();
 }
 
 public class InitRopeProp(
@@ -1441,9 +1469,16 @@ public class InitRopeProp(
                                          $"Rigid: {Rigid}\n" +
                                          $"Self Push: {SelfPush}\n" +
                                          $"Source Push: {SourcePush}";
+    
+    public override BasicPropSettings NewSettings()
+        => new PropRopeSettings();
 }
 
-public class InitLongProp(string name, InitPropType type, int depth) : InitPropBase(name, type, depth);
+public class InitLongProp(string name, InitPropType type, int depth) : InitPropBase(name, type, depth)
+{
+    public override BasicPropSettings NewSettings()
+        => new PropLongSettings();
+}
 
 public class InitColoredSoftProp(
     string name, 
@@ -1469,6 +1504,9 @@ public class InitColoredSoftProp(
     public float ShadowBorder { get; init; } = shadowBorder;
     public int SmoothShading { get; init; } = smoothShading;
     public int Colorize { get; init; } = colorize;
+    
+    public override BasicPropSettings NewSettings()
+        => new();
 }
 #endregion
 

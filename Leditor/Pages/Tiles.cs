@@ -1151,8 +1151,8 @@ internal class TileEditorPage : EditorPage, IDisposable
         
         _tileTexturePanelRT.Dispose();
         _tileTexturePanelRT = new RenderTexture2D(
-            (width)*20 + 20, 
-            (height)*20 + 20);
+            width*20 + 20, 
+            height*20 + 20);
                     
         BeginTextureMode(_tileTexturePanelRT);
         ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 0 } : Color.Gray);

@@ -2,6 +2,7 @@
 using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
+using RenderTexture2D = Leditor.RL.Managed.RenderTexture2D;
 
 namespace Leditor.Pages;
 
@@ -9,12 +10,110 @@ internal class PropsEditorPage : EditorPage
 {
     public override void Dispose()
     {
+        if (Disposed) return;
+        
         Disposed = true;
+        
+        _propTooltip.Dispose();
+    }
+
+    ~PropsEditorPage()
+    {
+        if (!Disposed) throw new InvalidOperationException("PropsEditorPage was not disposed by consumer");
     }
 
     private Camera2D _camera;
 
     private readonly PropsShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.PropsEditor;
+
+
+    private int _hoveredCategoryIndex = -1;
+    private int _hoveredIndex = -1;
+    private int _previousRootCategory;
+    
+    private RenderTexture2D _propTooltip = new(0, 0);
+
+    private void UpdatePropTooltip()
+    {
+        _propTooltip.Dispose();
+
+        var tint = GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.LightGray : Color.Gray;
+
+        // TODO: This should really be made into an enum
+        switch (_menuRootCategoryIndex)
+        {
+            case 0: // Tile-As-Prop
+            {
+                var currentTileAsProp = _tilesAsPropsIndices[_hoveredCategoryIndex][_hoveredIndex];
+                var texture = GLOBALS.Textures.Tiles[_tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex].index][currentTileAsProp.index];
+
+                var (width, height) = currentTileAsProp.init.Size;
+                
+                _propTooltip = new RenderTexture2D(20 * width + 20, 20 * height + 20);
+                
+                BeginTextureMode(_propTooltip);
+                ClearBackground(Color.White with { A = 0 });
+                    
+                Printers.DrawTileAsPropColored(
+                    texture, 
+                    currentTileAsProp.init, 
+                    new Vector2(0, 0), 
+                    new  Vector2(-10, -10), 
+                    tint, 
+                    0, 
+                    20
+                );
+                EndTextureMode();
+            }
+                break;
+            
+            case 1: // Ropes
+                break;
+            
+            case 2: // Longs
+                break;
+
+            case 3: // Others
+            {
+                var prop = GLOBALS.Props[_hoveredCategoryIndex][_hoveredIndex];
+                var texture = GLOBALS.Textures.Props[_hoveredCategoryIndex][_hoveredIndex];
+
+                var (width, height) = Utils.GetPropSize(prop);
+
+                if (width == -1 && height == -1)
+                {
+                    _propTooltip = new RenderTexture2D(texture.Width, texture.Height);
+                }
+                else
+                {
+                    _propTooltip = new RenderTexture2D(width, height);
+                }
+                
+                BeginTextureMode(_propTooltip);
+                ClearBackground(Color.White with { A = 0 });
+
+                var quad = (width, height) is (-1, -1) 
+                    ? new PropQuads(
+                        new Vector2(0, 0),
+                        new Vector2(texture.Width, 0),
+                        new Vector2(texture.Width, texture.Height),
+                        new Vector2(0, texture.Height)
+                    )
+                    : new PropQuads(
+                    new Vector2(0, 0),
+                    new Vector2(width, 0),
+                    new Vector2(width, height),
+                    new Vector2(0, height)
+                    );
+                
+                Printers.DrawProp(prop, texture, quad);
+                
+                EndTextureMode();
+                
+            }
+                break;
+        }
+    }
     
     private bool _showLayer1Tiles = true;
     private bool _showLayer2Tiles = true;
@@ -24,40 +123,21 @@ internal class PropsEditorPage : EditorPage
     private bool _showTileLayer2 = true;
     private bool _showTileLayer3 = true;
 
-    private bool _propCategoryFocus = true;
-
     private int _menuRootCategoryIndex;
     
-    private int _propsMenuTilesCategoryScrollIndex;
     private int _propsMenuTilesCategoryIndex;
-    private int _propsMenuTilesScrollIndex;
     private int _propsMenuTilesIndex;
 
-    private int _propsMenuRopesScrollIndex;
     private int _propsMenuRopesIndex;
 
-    private int _propsMenuLongsScrollIndex;
     private int _propsMenuLongsIndex;
 
-    private int _propsMenuOthersCategoryScrollIndex;
-    private int _propsMenuOthersScrollIndex;
     private int _propsMenuOthersCategoryIndex;
     private int _propsMenuOthersIndex;
 
-    private int _propsMenuTilesItemFocus;
-    private int _propsMenuTilesCategoryItemFocus;
-
-    private int _propsMenuRopesItemFocus;
-    private int _propsMenuLongItemFocus;
-    
-    private int _propsMenuOtherItemFocus;
-    private int _propsMenuOtherCategoryItemFocus;
-    
     private int _spinnerLock;
     
     private int _snapMode;
-
-    private int _selectedListPage;
 
     private int _quadLock;
     private int _pointLock = -1;
@@ -3067,6 +3147,25 @@ internal class PropsEditorPage : EditorPage
                                     for (var index = 0; index < array.Length; index++)
                                     {
                                         var selected = ImGui.Selectable(array[index], index == _propsMenuTilesIndex);
+
+                                        if (ImGui.IsItemHovered())
+                                        {
+                                            if (_hoveredCategoryIndex != _propsMenuTilesCategoryIndex ||
+                                                _hoveredIndex != index ||
+                                                _previousRootCategory != _menuRootCategoryIndex)
+                                            {
+                                                _hoveredCategoryIndex = _propsMenuTilesCategoryIndex;
+                                                _hoveredIndex = index;
+                                                _previousRootCategory = _menuRootCategoryIndex;
+                                                
+                                                UpdatePropTooltip();
+                                            }
+                                            
+                                            ImGui.BeginTooltip();
+                                            rlImGui.ImageRenderTexture(_propTooltip);
+                                            ImGui.EndTooltip();
+                                        }
+                                        
                                         if (selected) _propsMenuTilesIndex = index;
                                     }
                                     ImGui.EndListBox();
@@ -3080,6 +3179,23 @@ internal class PropsEditorPage : EditorPage
                                     for (var index = 0; index < _ropeNames.Length; index++)
                                     {
                                         var selected = ImGui.Selectable(_ropeNames[index], index == _propsMenuRopesIndex);
+                                        
+                                        // if (ImGui.IsItemHovered())
+                                        // {
+                                        //     if (_hoveredIndex != _propsMenuRopesIndex ||
+                                        //         _previousRootCategory != _menuRootCategoryIndex)
+                                        //     {
+                                        //         _hoveredIndex = index;
+                                        //         _previousRootCategory = _menuRootCategoryIndex;
+                                        //         
+                                        //         UpdatePropTooltip();
+                                        //     }
+                                        //     
+                                        //     ImGui.BeginTooltip();
+                                        //     rlImGui.ImageRenderTexture(_propTooltip);
+                                        //     ImGui.EndTooltip();
+                                        // }
+                                        
                                         if (selected) _propsMenuRopesIndex = index;
                                     }
                                     ImGui.EndListBox();
@@ -3093,6 +3209,23 @@ internal class PropsEditorPage : EditorPage
                                     for (var index = 0; index < _longNames.Length; index++)
                                     {
                                         var selected = ImGui.Selectable(_longNames[index], index == _propsMenuLongsIndex);
+                                        
+                                        // if (ImGui.IsItemHovered())
+                                        // {
+                                        //     if (_hoveredIndex != index ||
+                                        //         _previousRootCategory != _menuRootCategoryIndex)
+                                        //     {
+                                        //         _hoveredIndex = index;
+                                        //         _previousRootCategory = _menuRootCategoryIndex;
+                                        //         
+                                        //         UpdatePropTooltip();
+                                        //     }
+                                        //     
+                                        //     ImGui.BeginTooltip();
+                                        //     rlImGui.ImageRenderTexture(_propTooltip);
+                                        //     ImGui.EndTooltip();
+                                        // }
+                                        
                                         if (selected) _propsMenuLongsIndex = index;
                                     }
                                     ImGui.EndListBox();
@@ -3126,6 +3259,25 @@ internal class PropsEditorPage : EditorPage
                                     for (var index = 0; index < array.Length; index++)
                                     {
                                         var selected = ImGui.Selectable(array[index], index == _propsMenuOthersIndex);
+                                        
+                                        if (ImGui.IsItemHovered())
+                                        {
+                                            if (_hoveredCategoryIndex != _propsMenuOthersCategoryIndex ||
+                                                _hoveredIndex != index ||
+                                                _previousRootCategory != _menuRootCategoryIndex)
+                                            {
+                                                _hoveredCategoryIndex = _propsMenuOthersCategoryIndex;
+                                                _hoveredIndex = index;
+                                                _previousRootCategory = _menuRootCategoryIndex;
+                                                
+                                                UpdatePropTooltip();
+                                            }
+
+                                            ImGui.BeginTooltip();
+                                            rlImGui.ImageRenderTexture(_propTooltip);
+                                            ImGui.EndTooltip();
+                                        }
+                                        
                                         if (selected) _propsMenuOthersIndex = index;
                                     }
                                     ImGui.EndListBox();
@@ -3196,7 +3348,7 @@ internal class PropsEditorPage : EditorPage
 
                 ImGui.End();
             }
-            
+
             // Shortcuts window
             if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
             {
