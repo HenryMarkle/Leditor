@@ -693,6 +693,10 @@ public static class Importers {
         }).ToArray();
         var specs2Extracted = propList.Values.First(p => ((AstNode.Symbol)p.Key).Value == "specs2").Value;
 
+        #nullable enable
+        AstNode.Base? specs3Extracted = propList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "specs3").Value;
+        #nullable disable
+        
         int[] specs2;
 
         if (specs2Extracted is AstNode.List specs2List) {
@@ -711,9 +715,33 @@ public static class Importers {
         }).ToArray();
         } else { specs2 = []; }
 
-        string tpString = ((AstNode.String)propList.Values.First(p => ((AstNode.Symbol)p.Key).Value == "tp").Value).Value;
+        int[] specs3;
 
-        InitTileType tp = tpString switch {
+        if (specs3Extracted is AstNode.List specs3List)
+        {
+            specs3 = specs3List.Values.Select(n =>
+            {
+                switch (n)
+                {
+                    case AstNode.Number number: return number.Value.IntValue;
+
+                    case AstNode.UnaryOperator op:
+                        if (op.Type == AstNode.UnaryOperatorType.Negate)
+                        {
+                            return ((AstNode.Number)op.Expression).Value.IntValue * -1;
+                        }
+                        else throw new Exception("Invalid number operator");
+
+                    default:
+                        throw new Exception("Invalid specs value");
+                }
+            }).ToArray();
+        }
+        else { specs3 = []; }
+
+        var tpString = ((AstNode.String)propList.Values.First(p => ((AstNode.Symbol)p.Key).Value == "tp").Value).Value;
+
+        var tp = tpString switch {
             "box" => InitTileType.Box,
             "voxelStruct" => InitTileType.VoxelStruct,
             "voxelStructRandomDisplaceHorizontal" => InitTileType.VoxelStructRandomDisplaceHorizontal,
@@ -749,7 +777,7 @@ public static class Importers {
     
         int rnd = ((AstNode.Number) propList.Values.Single(p => ((AstNode.Symbol)p.Key).Value == "rnd").Value).Value.IntValue;
     
-        return new InitTile(name, size, specs, specs2, tp, repeatL, bfTiles, rnd, 0, tags);
+        return new InitTile(name, size, specs, specs2, specs3, tp, repeatL, bfTiles, rnd, 0, tags);
     }
 
     public static ((string, Color)[], InitTile[][]) GetTileInit(string text) {

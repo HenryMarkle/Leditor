@@ -1125,6 +1125,74 @@ internal static class Printers
         }
     }
 
+    internal static void DrawPropLayer(int layer, bool tinted)
+    {
+        var scopeNear = -layer * 10;
+        var scopeFar = -(layer*10 + 9);
+        
+        foreach (var current in GLOBALS.Level.Props)
+        {
+            // Filter based on depth
+            if (current.prop.Depth > scopeNear || current.prop.Depth < scopeFar) continue;
+
+            var (category, index) = current.position;
+            
+            DrawProp(current.type, category, index, current.prop, tinted);
+            
+            // Draw Rope Point
+            if (current.type != InitPropType.Rope) continue;
+            
+            foreach (var point in current.prop.Extras.RopePoints)
+                DrawCircleV(point, 3f, Color.White);
+        }
+    }
+    
+    internal static void DrawPropLayer(int layer, bool tinted, int scale)
+    {
+        var scopeNear = -layer * 10;
+        var scopeFar = -(layer*10 + 9);
+        
+        foreach (var current in GLOBALS.Level.Props)
+        {
+            // Filter based on depth
+            if (current.prop.Depth > scopeNear || current.prop.Depth < scopeFar) continue;
+
+            var (category, index) = current.position;
+            
+             
+            
+            DrawProp(current.type, category, index, current.prop, scale, tinted);
+            
+            // Draw Rope Point
+            if (current.type != InitPropType.Rope) continue;
+            
+            foreach (var point in current.prop.Extras.RopePoints)
+                DrawCircleV(point * (scale / 16f), 3f, Color.White);
+        }
+    }
+    
+    internal static void DrawPropLayer(int layer, bool tinted, int scale, Vector2 offsetPixels)
+    {
+        var scopeNear = -layer * 10;
+        var scopeFar = -(layer*10 + 9);
+        
+        foreach (var current in GLOBALS.Level.Props)
+        {
+            // Filter based on depth
+            if (current.prop.Depth > scopeNear || current.prop.Depth < scopeFar) continue;
+
+            var (category, index) = current.position;
+            
+            DrawProp(current.type, category, index, current.prop, scale, offsetPixels, tinted);
+            
+            // Draw Rope Point
+            if (current.type != InitPropType.Rope) continue;
+            
+            foreach (var point in current.prop.Extras.RopePoints)
+                DrawCircleV(point * (scale / 16f) + offsetPixels, 3f, Color.White);
+        }
+    }
+    
     internal static void DrawTexturePoly(
         Texture2D texture, 
         Vector2 center, 
@@ -2457,6 +2525,173 @@ internal static class Printers
                     
                     default:
                         DrawPropDefault(texture, prop.Quads, depth, 0);
+                        break;
+                }
+            }
+                break;
+        }
+    }
+    
+    internal static void DrawProp(InitPropType type, int category, int index, Prop prop, int scale, bool tintedTiles = true)
+    {
+        var depth = -prop.Depth - GLOBALS.Layer*10;
+
+        var quads = prop.Quads;
+
+        quads.TopLeft *= scale / 16f;
+        quads.TopRight *= scale / 16f;
+        quads.BottomRight *= scale / 16f;
+        quads.BottomLeft *= scale / 16f;
+
+        switch (type)
+        {
+            case InitPropType.Tile:
+            {
+                var texture = GLOBALS.Textures.Tiles[category][index];
+                var init = GLOBALS.Tiles[category][index];
+                var color = GLOBALS.TileCategories[category].Item2;
+            
+                if (tintedTiles)
+                    DrawTileAsPropColored(ref texture, ref init, quads, color, depth);
+                else
+                    DrawTileAsProp(ref texture, ref init, quads, depth);
+            }
+                break;
+
+            case InitPropType.Long:
+            {
+                var texture = GLOBALS.Textures.LongProps[index];
+                DrawLongProp(texture, quads, depth, 0);
+            }
+                break;
+
+            case InitPropType.Rope:
+                break;
+
+            default:
+            {
+                var texture = GLOBALS.Textures.Props[category][index];
+                var init = GLOBALS.Props[category][index];
+
+                // TODO: Could be simplified
+                switch (init)
+                {
+                    case InitVariedStandardProp variedStandard:
+                        DrawVariedStandardProp(variedStandard, texture, quads, ((PropVariedSettings)prop.Extras.Settings).Variation, depth);
+                        break;
+
+                    case InitStandardProp standard:
+                        DrawStandardProp(standard, texture, quads, depth);
+                        break;
+
+                    case InitVariedSoftProp variedSoft:
+                        DrawVariedSoftProp(variedSoft, texture, quads,  ((PropVariedSoftSettings)prop.Extras.Settings).Variation, depth);
+                        break;
+
+                    case InitSoftProp:
+                        DrawSoftProp(texture, quads, depth);
+                        break;
+
+                    case InitVariedDecalProp variedDecal:
+                        DrawVariedDecalProp(variedDecal, texture, quads, ((PropVariedDecalSettings)prop.Extras.Settings).Variation, depth);
+                        break;
+
+                    case InitSimpleDecalProp:
+                        DrawSimpleDecalProp(texture, quads, depth);
+                        break;
+                    
+                    case InitAntimatterProp:
+                        DrawAntimatterProp(texture, quads, depth, 0);
+                        break;
+                    
+                    default:
+                        DrawPropDefault(texture, quads, depth, 0);
+                        break;
+                }
+            }
+                break;
+        }
+    } 
+    
+    internal static void DrawProp(InitPropType type, int category, int index, Prop prop, int scale, Vector2 offset, bool tintedTiles = true)
+    {
+        var depth = -prop.Depth - GLOBALS.Layer*10;
+
+        var quads = prop.Quads;
+
+        quads.TopLeft *= scale / 16f;
+        quads.TopRight *= scale / 16f;
+        quads.BottomRight *= scale / 16f;
+        quads.BottomLeft *= scale / 16f;
+        
+        quads.TopLeft += offset;
+        quads.TopRight += offset;
+        quads.BottomRight += offset;
+        quads.BottomLeft += offset;
+
+        switch (type)
+        {
+            case InitPropType.Tile:
+            {
+                var texture = GLOBALS.Textures.Tiles[category][index];
+                var init = GLOBALS.Tiles[category][index];
+                var color = GLOBALS.TileCategories[category].Item2;
+            
+                if (tintedTiles)
+                    DrawTileAsPropColored(ref texture, ref init, quads, color, depth);
+                else
+                    DrawTileAsProp(ref texture, ref init, quads, depth);
+            }
+                break;
+
+            case InitPropType.Long:
+            {
+                var texture = GLOBALS.Textures.LongProps[index];
+                DrawLongProp(texture, quads, depth, 0);
+            }
+                break;
+
+            case InitPropType.Rope:
+                break;
+
+            default:
+            {
+                var texture = GLOBALS.Textures.Props[category][index];
+                var init = GLOBALS.Props[category][index];
+
+                // TODO: Could be simplified
+                switch (init)
+                {
+                    case InitVariedStandardProp variedStandard:
+                        DrawVariedStandardProp(variedStandard, texture, quads, ((PropVariedSettings)prop.Extras.Settings).Variation, depth);
+                        break;
+
+                    case InitStandardProp standard:
+                        DrawStandardProp(standard, texture, quads, depth);
+                        break;
+
+                    case InitVariedSoftProp variedSoft:
+                        DrawVariedSoftProp(variedSoft, texture, quads,  ((PropVariedSoftSettings)prop.Extras.Settings).Variation, depth);
+                        break;
+
+                    case InitSoftProp:
+                        DrawSoftProp(texture, quads, depth);
+                        break;
+
+                    case InitVariedDecalProp variedDecal:
+                        DrawVariedDecalProp(variedDecal, texture, quads, ((PropVariedDecalSettings)prop.Extras.Settings).Variation, depth);
+                        break;
+
+                    case InitSimpleDecalProp:
+                        DrawSimpleDecalProp(texture, quads, depth);
+                        break;
+                    
+                    case InitAntimatterProp:
+                        DrawAntimatterProp(texture, quads, depth, 0);
+                        break;
+                    
+                    default:
+                        DrawPropDefault(texture, quads, depth, 0);
                         break;
                 }
             }

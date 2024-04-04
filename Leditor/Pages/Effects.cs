@@ -16,20 +16,19 @@ internal class EffectsEditorPage : EditorPage
 
     private Camera2D _camera = new() { Zoom = 1.0f };
 
+    private bool _showTiles = true;
+    private bool _showProps = true;
+    private bool _tintedProps;
+    
     private bool _addNewEffectMode;
 
-    private int _newEffectScrollIndex;
     private int _newEffectSelectedValue;
 
-    private int _newEffectCategoryScrollIndex;
     private int _newEffectCategorySelectedValue;
 
     private int _currentAppliedEffect;
     private int _currentAppliedEffectPage;
 
-    private int _newEffectCategoryItemFocus;
-    private int _newEffectItemFocus;
-    
     private readonly string[] _newEffectCategoryNames = [..GLOBALS.EffectCategories];
     private readonly string[][] _newEffectNames = GLOBALS.Effects.Select(c => c.Select(e => e).ToArray()).ToArray();
 
@@ -575,10 +574,12 @@ internal class EffectsEditorPage : EditorPage
                             : Color.White);
 
                     Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
-                    Printers.DrawTileLayer(2, GLOBALS.Scale, false, true, true);
+                    if (_showTiles) Printers.DrawTileLayer(2, GLOBALS.Scale, false, true, true);
+                    if(_showProps) Printers.DrawPropLayer(2, _tintedProps, GLOBALS.Scale);
                     
                     Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
-                    Printers.DrawTileLayer(1, GLOBALS.Scale, false, true, true);
+                    if (_showTiles) Printers.DrawTileLayer(1, GLOBALS.Scale, false, true, true);
+                    if(_showProps) Printers.DrawPropLayer(1, _tintedProps, GLOBALS.Scale);
                     
                     if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel > -1)
                     {
@@ -592,7 +593,8 @@ internal class EffectsEditorPage : EditorPage
                     }
                     
                     Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.Black with { A = 255 });
-                    Printers.DrawTileLayer(0, GLOBALS.Scale, false, true, true);
+                    if (_showTiles) Printers.DrawTileLayer(0, GLOBALS.Scale, false, true, true);
+                    if(_showProps) Printers.DrawPropLayer(0, _tintedProps, GLOBALS.Scale);
                     
                     if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                     {
@@ -614,7 +616,9 @@ internal class EffectsEditorPage : EditorPage
                         _currentAppliedEffect < GLOBALS.Level.Effects.Length)
                     {
 
-                        if (!GLOBALS.Settings.GeneralSettings.DarkTheme) DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, new(215, 66, 245, 100));
+                        if (GLOBALS.Settings.GeneralSettings.DarkTheme) 
+                            DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, GLOBALS.Settings.EffectsSettings.EffectsCanvasColorDark);
+                        else DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, GLOBALS.Settings.EffectsSettings.EffectsCanvasColorLight);
 
                         var brushColor = GLOBALS.Settings.GeneralSettings.DarkTheme
                             ? GLOBALS.Settings.EffectsSettings.EffectColorDark
@@ -881,7 +885,7 @@ internal class EffectsEditorPage : EditorPage
                 
                 if (settingsOpened)
                 {
-                    ImGui.SeparatorText("Colors");
+                    ImGui.SeparatorText("Effect Colors");
                     var lightEffectColor = GLOBALS.Settings.EffectsSettings.EffectColorLight;
                     var darkEffectColor = GLOBALS.Settings.EffectsSettings.EffectColorDark;
 
@@ -898,6 +902,30 @@ internal class EffectsEditorPage : EditorPage
                     
                     GLOBALS.Settings.EffectsSettings.EffectColorDark = new ConColor((byte)(darkColor.X * 255), (byte)
                         (darkColor.Y * 255), (byte)(darkColor.Z * 255), 255);
+                    
+                    ImGui.SeparatorText("Effects Canvas Colors");
+
+                    Vector4 lightCanvasColor = GLOBALS.Settings.EffectsSettings.EffectsCanvasColorLight;
+                    Vector4 darkCanvasColor = GLOBALS.Settings.EffectsSettings.EffectsCanvasColorDark;
+
+                    lightCanvasColor /= 255f;
+                    darkCanvasColor /= 255f;
+                    
+                    ImGui.SetNextItemWidth(250);
+                    ImGui.ColorEdit4("Light-mode canvas", ref lightCanvasColor);
+                    
+                    ImGui.SetNextItemWidth(250);
+                    ImGui.ColorEdit4("Dark-mode canvas", ref darkCanvasColor);
+
+                    GLOBALS.Settings.EffectsSettings.EffectsCanvasColorLight = lightCanvasColor*255;
+                    GLOBALS.Settings.EffectsSettings.EffectsCanvasColorDark = darkCanvasColor*255;
+
+                    ImGui.Spacing();
+                    
+                    ImGui.Checkbox("Tiles", ref _showTiles);
+                    ImGui.Checkbox("Props", ref _showProps);
+
+                    if (_showProps) ImGui.Checkbox("Tinted Props", ref _tintedProps);
                     
                     ImGui.End();
                 }

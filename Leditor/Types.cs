@@ -820,6 +820,9 @@ public record struct ConColor(
 
     public static implicit operator Vector3(ConColor c) => new(c.R, c.G, c.B);
     public static implicit operator ConColor(Vector3 c) => new((byte)c.X, (byte)c.Y, (byte)c.Z);
+    
+    public static implicit operator Vector4(ConColor c) => new(c.R, c.G, c.B, c.A);
+    public static implicit operator ConColor(Vector4 c) => new((byte)c.X, (byte)c.Y, (byte)c.Z, (byte)c.W);
 
     public static ConColor operator *(ConColor c, int i) => new(R: (byte)(c.R * i), G: (byte)(c.G * i), B: (byte)(c.B * i), A: (byte)(c.A * i));
     public static ConColor operator +(ConColor c, int i) => new(R: (byte)(c.R + i), G: (byte)(c.G + i), B: (byte)(c.B + i), A: (byte)(c.A + i));
@@ -1000,12 +1003,33 @@ public class CameraEditorSettings(bool snap = true, bool alignment = false)
     public bool Alignment { get; set; } = alignment;
 }
 
-public class EffectsSettings(
-    ConColor effectColorLight,
-    ConColor effectColorDark)
+public class EffectsSettings
 {
-    public ConColor EffectColorLight { get; set; } = effectColorLight;
-    public ConColor EffectColorDark { get; set; } = effectColorDark;
+    public EffectsSettings(
+        ConColor effectColorLight,
+        ConColor effectColorDark,
+        ConColor effectCanvasColorLight,
+        ConColor effectCanvasColorDark)
+    {
+        EffectColorLight = effectColorLight;
+        EffectColorDark = effectColorDark;
+    
+        EffectsCanvasColorLight = effectCanvasColorLight;
+        EffectsCanvasColorDark = effectCanvasColorDark;    
+    }
+    
+    public EffectsSettings()
+    {
+        EffectColorLight = new ConColor(0, 255, 0, 255);
+        EffectColorDark = Color.Yellow;
+        EffectsCanvasColorLight = new ConColor(215, 66, 245, 100);
+        EffectsCanvasColorDark = new ConColor(0, 0, 0, 0);
+    }
+    
+    public ConColor EffectColorLight { get; set; }
+    public ConColor EffectColorDark { get; set; }
+    public ConColor EffectsCanvasColorLight { get; set; }
+    public ConColor EffectsCanvasColorDark { get; set; }
 }
 
 public class GeneralSettings(
@@ -1059,7 +1083,12 @@ public class Settings
             background: new ConColor(66, 108, 245, 255),
             levelBackgroundLight: Color.White,
             levelBackgroundDark: new Color(200, 0, 0, 255));
-        EffectsSettings = new(Color.Green, Color.Yellow);
+        EffectsSettings = new(
+            Color.Green, 
+            Color.Yellow, 
+            new ConColor(215, 66, 245, 100), 
+            new ConColor(0, 0, 0, 0)
+        );
         PropEditor = new();
         Experimental = new();
     }
@@ -1198,6 +1227,7 @@ public readonly record struct InitTile(
     (int, int) Size,
     int[] Specs,
     int[] Specs2,
+    int[] Specs3,
     InitTileType Type,
     int[] Repeat,
     int BufferTiles,

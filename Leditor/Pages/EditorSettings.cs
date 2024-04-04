@@ -289,6 +289,10 @@ internal class SettingsPage : EditorPage
                             ImGui.EndTooltip();
                         }
 
+                        var legacyGeo = GLOBALS.Settings.GeometryEditor.LegacyInterface;
+                        if (ImGui.Checkbox("Legacy Geometry Editor", ref legacyGeo))
+                            GLOBALS.Settings.GeometryEditor.LegacyInterface = legacyGeo;
+
                         var globalCamera = GLOBALS.Settings.GeneralSettings.GlobalCamera;
                         ImGui.Checkbox("Global Camera", ref globalCamera);
                         if (globalCamera != GLOBALS.Settings.GeneralSettings.GlobalCamera)

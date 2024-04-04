@@ -96,6 +96,8 @@ internal class MainPage : EditorPage
        
     private TileCheckResult CheckTileIntegrity(in LoadFileResult res)
     {
+        var result = TileCheckResult.Ok;
+        
         for (int y = 0; y < res.Height; y++)
         {
             for (int x = 0; x < res.Width; x++)
@@ -140,7 +142,7 @@ internal class MainPage : EditorPage
                         res.TileMatrix![y, x, z] = cell with { Data = data };
                         
                         // Tile not found
-                        return TileCheckResult.Missing;
+                        result = TileCheckResult.Missing;
                     }
                     else if (cell.Type == TileType.Material)
                     {
@@ -149,7 +151,7 @@ internal class MainPage : EditorPage
                         if (!GLOBALS.MaterialColors.ContainsKey(materialName))
                         {
                             Logger.Warning($"missing material: matrix index: ({x}, {y}, {z}); Name: \"{materialName}\"");
-                            return TileCheckResult.MissingMaterial;
+                            result = TileCheckResult.MissingMaterial;
                         }
                     }
 
@@ -161,11 +163,13 @@ internal class MainPage : EditorPage
 
         Logger.Debug("tile check passed");
 
-        return TileCheckResult.Ok;
+        return result;
     }
 
     private PropCheckResult CheckPropIntegrity(in LoadFileResult res)
     {
+        var result = PropCheckResult.Ok;
+        
         for (var p = 0; p < res.PropsArray!.Length; p++)
         {
             var prop = res.PropsArray[p];
@@ -191,11 +195,11 @@ internal class MainPage : EditorPage
                     : Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, prop.prop.Name + ".png");
                 
                 Logger.Error($"prop texture \"{path}\"");
-                return PropCheckResult.MissingTexture;
+                result = PropCheckResult.MissingTexture;
             }
         }
-        
-        return PropCheckResult.Ok;
+
+        return result;
     }
     
     private async Task<LoadFileResult> LoadProjectAsync(string filePath)

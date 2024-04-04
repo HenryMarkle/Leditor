@@ -432,7 +432,7 @@ class Program
         
         logger.Information("Initializing data");
 
-        const string version = "Henry's Leditor v0.9.57";
+        const string version = "Henry's Leditor v0.9.58";
         const string raylibVersion = "Raylib v5.0.0";
         
         logger.Information(version);

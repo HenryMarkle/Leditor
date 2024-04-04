@@ -24,6 +24,8 @@ internal class LightEditorPage : EditorPage
     private bool _eraseShadow;
     private bool _shading = true;
     private bool _showTiles;
+    private bool _showProps;
+    private bool _tintedProps;
     private bool _tilePreview = true;
     private bool _tintedTileTextures = true;
 
@@ -397,11 +399,13 @@ internal class LightEditorPage : EditorPage
                 Printers.DrawGeoLayer(2, GLOBALS.Scale, false, Color.Black with { A = 150 }, new Vector2(300, 300));
                 
                 if (_showTiles) Printers.DrawTileLayer(2, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new Vector2(300, 300));
-                
+                if (_showProps) Printers.DrawPropLayer(2, _tintedProps, GLOBALS.Scale, new Vector2(300, 300));
+
                 Printers.DrawGeoLayer(1, GLOBALS.Scale, false, Color.Black with { A = 150 }, new Vector2(300, 300));
                 
                 if (_showTiles) Printers.DrawTileLayer(1, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new Vector2(300, 300));
-
+                if (_showProps) Printers.DrawPropLayer(1, _tintedProps, GLOBALS.Scale, new Vector2(300, 300));
+                
                 if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                 {
                     DrawRectangle(
@@ -415,7 +419,8 @@ internal class LightEditorPage : EditorPage
 
                 Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.Black, new Vector2(300, 300));
                 if (_showTiles) Printers.DrawTileLayer(0, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new Vector2(300, 300));
-
+                if (_showProps) Printers.DrawPropLayer(0, _tintedProps, GLOBALS.Scale, new Vector2(300, 300));
+                
                 if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                 {
                     DrawRectangle(
@@ -435,7 +440,6 @@ internal class LightEditorPage : EditorPage
                     BeginShaderMode(GLOBALS.Shaders.LightMapStretch);
                     SetShaderValueTexture(GLOBALS.Shaders.LightMapStretch, GetShaderLocation(GLOBALS.Shaders.LightMapStretch, "textureSampler"), _stretchTexture);
                     Printers.DrawTextureQuad(_stretchTexture, _quadPoints, Color.White with { A = 150 });
-                    // DrawTextureRec(_stretchTexture, new(0, 0, GLOBALS.Level.Width*20+300, GLOBALS.Level.Height*20+300), new(0, 0), Color.White with { A = 150 });
                     EndShaderMode();
                 }
                 else
@@ -740,6 +744,26 @@ internal class LightEditorPage : EditorPage
                             _ => (true, true, false)
                         };
                     }
+
+                    var switchPropClicked = ImGui.Button((_showProps, _tintedProps) switch
+                    {
+                        (false, _) => "Props: Off",
+                        (true, false) => "Props: Unfiltered",
+                        (true, true) => "Props: Colored"
+                    }, availableSpace with { Y = 20 });
+
+                    if (switchPropClicked)
+                    {
+                        (_showProps, _tintedProps) = (_showProps, _tintedProps) switch
+                        {
+                            (false, false) => (true, false),
+                            (true, false) => (true, true),
+                            (true, true) => (false, false),
+                            _ => (false, false)
+                        };
+                    }
+                    
+                    ImGui.Spacing();
 
                     if (ImGui.Button("Save Settings", availableSpace with { Y = 20 }))
                     {

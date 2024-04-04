@@ -15,14 +15,14 @@ internal class CamerasEditorPage : EditorPage
     Camera2D _camera = new() { Zoom = 0.8f, Target = new(-100, -100) };
     bool clickTracker;
     int draggedCamera = -1;
+
+    private bool _showTiles;
+    
     private readonly CameraShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.CameraEditor;
     
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
     
-    private bool _isNavigationWinHovered;
-    private bool _isNavigationWinDragged;
-
     private bool _alignment = GLOBALS.Settings.CameraSettings.Alignment;
     private bool _snap = GLOBALS.Settings.CameraSettings.Snap;
 
@@ -153,8 +153,13 @@ internal class CamerasEditorPage : EditorPage
                 #region CamerasLevelBackground
 
                 Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : Color.Black with { A = 150 });
+                
+                if (_showTiles) Printers.DrawTileLayer(2, GLOBALS.Scale, false, true, false);
+                
                 Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : Color.Black with { A = 150 });
                     
+                if (_showTiles) Printers.DrawTileLayer(1, GLOBALS.Scale, false, true, false);
+
                 if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                 {
                     DrawRectangle(
@@ -167,6 +172,8 @@ internal class CamerasEditorPage : EditorPage
                 }
                     
                 Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.Black);
+                
+                if (_showTiles) Printers.DrawTileLayer(0, GLOBALS.Scale, false, true, false);
 
                 if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel > -1)
                 {
@@ -359,6 +366,10 @@ internal class CamerasEditorPage : EditorPage
                         _ => (true, false)
                     };
                 }
+                
+                ImGui.Spacing();
+
+                ImGui.Checkbox("Tiles", ref _showTiles);
                 
                 ImGui.End();
             }

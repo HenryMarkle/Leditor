@@ -2,14 +2,11 @@
 
 No guarantees. No promises.
 
-## Next Update
-
-- Fix geometry editor placement inconsistencies between multi-select and single-select
-
 ## Near Future
 
-- Add a third layer `specs` property support for tiles
-- Add show/hide tiles in cameras editor
+- Fix geometry editor placement inconsistencies between multi-select and single-select
+- ~~Add a third layer `specs` property support for tiles~~
+- ~~Add show/hide tiles in cameras editor~~
 - Add multi-level support
 - Add a tool to rebind tile bodies after moving the level
 - Make a better start screen

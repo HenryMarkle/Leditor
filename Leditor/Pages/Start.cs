@@ -23,6 +23,8 @@ internal class StartPage : EditorPage
     
     private TileCheckResult CheckTileIntegrity(in LoadFileResult res)
     {
+        var result = TileCheckResult.Ok;
+        
         for (int y = 0; y < res.Height; y++)
         {
             for (int x = 0; x < res.Width; x++)
@@ -41,7 +43,7 @@ internal class StartPage : EditorPage
                         {
                             for (var i = 0; i < GLOBALS.Tiles[c].Length; i++)
                             {
-                                if (GLOBALS.Tiles[c][i].Name == name)
+                                if (string.Equals(GLOBALS.Tiles[c][i].Name, name, StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     res.TileMatrix![y, x, z].Data.CategoryPostition = (c, i, name);
 
@@ -67,7 +69,7 @@ internal class StartPage : EditorPage
                         res.TileMatrix![y, x, z] = cell with { Data = data };
                         
                         // Tile not found
-                        return TileCheckResult.Missing;
+                        result = TileCheckResult.Missing;
                     }
                     else if (cell.Type == TileType.Material)
                     {
@@ -76,7 +78,7 @@ internal class StartPage : EditorPage
                         if (!GLOBALS.MaterialColors.ContainsKey(materialName))
                         {
                             Logger.Warning($"missing material: matrix index: ({x}, {y}, {z}); Name: \"{materialName}\"");
-                            return TileCheckResult.MissingMaterial;
+                            result = TileCheckResult.MissingMaterial;
                         }
                     }
 
@@ -88,11 +90,13 @@ internal class StartPage : EditorPage
 
         Logger.Debug("tile check passed");
 
-        return TileCheckResult.Ok;
+        return result;
     }
 
     private PropCheckResult CheckPropIntegrity(in LoadFileResult res)
     {
+        var result = PropCheckResult.Ok;
+        
         for (var p = 0; p < res.PropsArray!.Length; p++)
         {
             var prop = res.PropsArray[p];
@@ -118,11 +122,11 @@ internal class StartPage : EditorPage
                     : Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, prop.prop.Name + ".png");
                 
                 Logger.Error($"prop texture \"{path}\"");
-                return PropCheckResult.MissingTexture;
+                result = PropCheckResult.MissingTexture;
             }
         }
         
-        return PropCheckResult.Ok;
+        return result;
     }
     
     public override void Draw()

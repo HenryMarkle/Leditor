@@ -672,7 +672,7 @@ internal static class Utils
     public static int GetEffectBrushStrength(string effect) => effect switch
     {
         "BlackGoo" or "Fungi Flowers" or "Lighthouse Flowers" or
-            "Fern" or "Giant Mushroom" or "Sprawlbush" or
+            "Fern" or "Giant Mushroom" or "Sprawlbush" or "Feather Plants" or
             "featherFern" or "Fungus Tree" or "Restore As Scaffolding" or "Restore As Pipes" or "Super BlackGoo" => 100,
 
         _ => 10
@@ -681,7 +681,7 @@ internal static class Utils
     public static bool IsEffectBruhConstrained(string effect) => effect switch
     {
         "Fungi Flowers" or "Lighthouse Flowers" or "Fern" or "Giant Mushroom" or 
-            "Sprawlbush" or "featherFern" or "Fungus Tree" => true,
+            "Sprawlbush" or "featherFern" or "Feather Plants" or "Fungus Tree" => true,
         _ => false
     };
 
@@ -1623,6 +1623,39 @@ internal static class Utils
         }
 
         return matrix;
+    }
+
+    internal static void ReassignTileDefinitions(TileCell[,,] matrix)
+    {
+        for (var y = 0; y < matrix.GetLength(0); y++)
+        {
+            for (var x = 0; x < matrix.GetLength(1); x++)
+            {
+                for (var z = 0; z < 3; z++)
+                {
+                    ref var cell = ref matrix[y, x, z];
+
+                    if (cell.Data is not TileHead h) continue;
+
+                    for (var category = 0; category < GLOBALS.Tiles.Length; category++)
+                    {
+                        for (var tile = 0; tile < GLOBALS.Tiles[category].Length; tile++)
+                        {
+                            if (!string.Equals(h.CategoryPostition.Name, GLOBALS.Tiles[category][tile].Name,
+                                    StringComparison.InvariantCultureIgnoreCase)) continue;
+
+                            h.CategoryPostition = (category, tile, h.CategoryPostition.Name);
+                            cell.Data = h;
+                            goto found;
+                        }
+                    }
+
+                    h.CategoryPostition = (-1, -1, h.CategoryPostition.Name);
+                    cell.Data = h;
+                    found: {}
+                }
+            }
+        }
     }
 
     internal static Color[,,] NewMaterialColorMatrix(int width, int height, Color @default)
