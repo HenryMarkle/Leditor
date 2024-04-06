@@ -190,6 +190,10 @@ internal class DimensionsEditorPage : EditorPage
                     Logger.Debug("resizing light map");
 
                     ResizeLightMap(_matrixWidthValue, _matrixHeightValue);
+                    
+                    UnloadRenderTexture(GLOBALS.Textures.GeneralLevel);
+                    GLOBALS.Textures.GeneralLevel =
+                        LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20);
                 }
                 
                 GLOBALS.Level.Padding = (_leftPadding, _topPadding, _rightPadding, _bottomPadding);

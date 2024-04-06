@@ -43,6 +43,10 @@ internal static class GLOBALS
         public RenderTexture2D TileSpecs { get; set; }
         public RenderTexture2D PropDepth { get; set; }
         public RenderTexture2D DimensionsVisual { get; set; }
+        
+        //
+        
+        public RenderTexture2D GeneralLevel { get; set; }
     }
 
     /// <summary>
@@ -68,6 +72,10 @@ internal static class GLOBALS
         internal Shader DefaultProp { get; set; }
         internal Shader PreviewColoredTileProp { get; set; }
         internal Shader LightMapStretch { get; set; }
+        
+        //
+        
+        internal Shader VFlip { get; set; }
     }
 
     /// <summary>

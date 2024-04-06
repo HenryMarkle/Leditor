@@ -293,6 +293,9 @@ internal class StartPage : EditorPage
                 GLOBALS.Level.ProjectName = result.Name;
                 GLOBALS.Page = 1;
                 
+                GLOBALS.Textures.GeneralLevel =
+                    LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20);
+                
                 ProjectLoaded?.Invoke(this, new LevelLoadedEventArgs(GLOBALS.TileCheck.Result == TileCheckResult.Missing));
 
                 GLOBALS.TileCheck = null;

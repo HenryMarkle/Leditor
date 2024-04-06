@@ -4,11 +4,11 @@ using static Raylib_cs.Raylib;
 
 using rlImGui_cs;
 
+using ImGuiNET;
 using System.Numerics;
 using Leditor.Serialization;
 using System.Text.Json;
 using Serilog;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using Drizzle.Lingo.Runtime;
@@ -739,6 +739,19 @@ class Program
         GLOBALS.Shaders.LightMapStretch =
             LoadShader(null,
                 Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "lightmap_stretch.frag"));
+
+        GLOBALS.Shaders.VFlip = LoadShaderFromMemory(null, @"#version 330
+in vec2 fragTexCoord;
+in vec4 fragColor;
+
+uniform sampler2D inputTexture;
+
+out vec4 FragColor;
+
+void main() {
+    vec2 op = vec2(fragTexCoord.x, 1 - fragTexCoord.y);
+    FragColor = texture(inputTexture, op);
+}");
         //
 
         SetTargetFPS(GLOBALS.Settings.Misc.FPS);
@@ -1673,6 +1686,10 @@ class Program
         UnloadShader(GLOBALS.Shaders.DefaultProp);
         UnloadShader(GLOBALS.Shaders.PreviewColoredTileProp);
         UnloadShader(GLOBALS.Shaders.LightMapStretch);
+        
+        UnloadShader(GLOBALS.Shaders.VFlip);
+        
+        UnloadRenderTexture(GLOBALS.Textures.GeneralLevel);
         
         // Unloading Pages
         

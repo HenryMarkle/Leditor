@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Text.Json;
 using ImGuiNET;
+using Leditor.FileExplorer;
 using Pidgin;
 using rlImGui_cs;
 using Leditor.Renderer;
@@ -17,6 +18,8 @@ internal class MainPage : EditorPage
     {
         Disposed = true;
     }
+
+    private FileX _explorer = new();
     
     internal event EventHandler? ProjectLoaded;
 
@@ -42,10 +45,14 @@ internal class MainPage : EditorPage
     
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
-    
-    private bool _isNavigationWinHovered;
-    private bool _isNavigationWinDragged;
 
+    private bool _showWater = true;
+    private bool _showTiles = true;
+    private bool _showProps = true;
+    
+    private bool _shouldRedrawLevel = true;
+    
+    
     private DrizzleRenderWindow? _renderWindow;
 
     public void OnLevelLoadedFromStart(object? sender, EventArgs e)
@@ -306,6 +313,11 @@ internal class MainPage : EditorPage
 
     public override void Draw()
     {
+        if (GLOBALS.PreviousPage != 1)
+        {
+            _shouldRedrawLevel = true;
+        }
+        
         GLOBALS.PreviousPage = 1;
 
         var width = GetScreenWidth();
@@ -690,6 +702,9 @@ internal class MainPage : EditorPage
 
                         var undefinedTiles = GLOBALS.TileCheck.Result == TileCheckResult.Missing;
                         _undefinedTilesAlert = undefinedTiles;
+                        
+                        GLOBALS.Textures.GeneralLevel =
+                            LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20);
 
                         ProjectLoaded?.Invoke(this, new LevelLoadedEventArgs(undefinedTiles));
                         
@@ -735,43 +750,33 @@ internal class MainPage : EditorPage
 
                 BeginMode2D(_camera);
                 {
-                    DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale,
-                        GLOBALS.Settings.GeneralSettings.DarkTheme
-                            ? new Color(50, 50, 50, 255)
-                            : Color.White);
-
-                    Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : Color.Black with { A = 150 });
-                    Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : Color.Black with { A = 150 });
-                    
-                    if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel > -1)
+                    if (_shouldRedrawLevel)
                     {
-                        DrawRectangle(
-                            (-1) * GLOBALS.Scale,
-                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                            (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                            (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                            GLOBALS.Settings.GeneralSettings.DarkTheme 
-                                ? GLOBALS.DarkThemeWaterColor 
-                                : GLOBALS.LightThemeWaterColor
-                        );
+                        Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
+                        {
+                            Water = _showWater,
+                            WaterAtFront = GLOBALS.Level.WaterAtFront,
+                            TintedTiles = GLOBALS.Settings.GeneralSettings.FancyTiles,
+                            TintedProps = GLOBALS.Settings.GeneralSettings.FancyProps,
+                            TilesLayer1 = _showTiles,
+                            TilesLayer2 = _showTiles,
+                            TilesLayer3 = _showTiles,
+                            PropsLayer1 = _showProps,
+                            PropsLayer2 = _showProps,
+                            PropsLayer3 = _showProps,
+                        });
+                        _shouldRedrawLevel = false;
                     }
                     
-                    Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.Black);
-
-                    if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
-                    {
-                        DrawRectangle(
-                            (-1) * GLOBALS.Scale,
-                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                            (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                            (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                            GLOBALS.Settings.GeneralSettings.DarkTheme 
-                                ? GLOBALS.DarkThemeWaterColor 
-                                : GLOBALS.LightThemeWaterColor
-                        );
-                    }
-                    
-                    DrawRectangleLines(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, Color.White);
+                    DrawRectangleLinesEx(new Rectangle(-3, 37, GLOBALS.Level.Width * 20 + 6, GLOBALS.Level.Height * 20 + 6), 3, Color.White);
+            
+                    BeginShaderMode(GLOBALS.Shaders.VFlip);
+                    SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), GLOBALS.Textures.GeneralLevel.Texture);
+                    DrawTexture(GLOBALS.Textures.GeneralLevel.Texture, 
+                        0, 
+                        40,
+                        Color.White);
+                    EndShaderMode();
                 }
                 EndMode2D();
                 
@@ -842,15 +847,21 @@ internal class MainPage : EditorPage
                     
                     var waterLevel = GLOBALS.Level.WaterLevel;
                     ImGui.SetNextItemWidth(100);
-                    ImGui.InputInt("Water Level", ref waterLevel);
-                    if (waterLevel < -1) waterLevel = -1;
-                    if (GLOBALS.Level.WaterLevel != waterLevel) GLOBALS.Level.WaterLevel = waterLevel;
+                    if (ImGui.InputInt("Water Level", ref waterLevel))
+                    {
+                        _shouldRedrawLevel = true;
+                        if (waterLevel < -1) waterLevel = -1;
+                        GLOBALS.Level.WaterLevel = waterLevel;
+                    }
                     
                     // Water Position
                     
                     var waterInFront = GLOBALS.Level.WaterAtFront;
-                    ImGui.Checkbox("Water In Front", ref waterInFront);
-                    if (GLOBALS.Level.WaterAtFront != waterInFront) GLOBALS.Level.WaterAtFront = waterInFront;
+                    if (ImGui.Checkbox("Water In Front", ref waterInFront))
+                    {
+                        _shouldRedrawLevel = true;
+                        GLOBALS.Level.WaterAtFront = waterInFront;
+                    }
                     
                     ImGui.Separator();
                     
@@ -976,6 +987,8 @@ internal class MainPage : EditorPage
                     }
                 }
                 
+                //
+                
                 // Settings Window
 
                 if (ImGui.Begin("Settings##MainSettings"))
@@ -995,6 +1008,44 @@ internal class MainPage : EditorPage
                     ImGui.Checkbox("Shortcuts Window", ref showShortcutsWindow);
                     if (showShortcutsWindow != GLOBALS.Settings.GeneralSettings.ShortcutWindow) 
                         GLOBALS.Settings.GeneralSettings.ShortcutWindow = showShortcutsWindow;
+                    
+                    ImGui.SeparatorText("Visibility");
+
+                    if (ImGui.Checkbox("Water", ref _showWater))
+                    {
+                        _shouldRedrawLevel = true;
+                    }
+                    
+                    if (ImGui.Checkbox("Tiles", ref _showTiles))
+                    {
+                        _shouldRedrawLevel = true;
+                    }
+
+                    if (_showTiles)
+                    {
+                        var fancyTiles = GLOBALS.Settings.GeneralSettings.FancyTiles;
+                        if (ImGui.Checkbox("Fancy Tiles", ref fancyTiles))
+                        {
+                            _shouldRedrawLevel = true;
+                            GLOBALS.Settings.GeneralSettings.FancyTiles = fancyTiles;
+                        }
+                    }
+
+                    if (ImGui.Checkbox("Props", ref _showProps))
+                    {
+                        _shouldRedrawLevel = true;
+                    }
+
+                    if (_showProps)
+                    {
+                        var fancyProps = GLOBALS.Settings.GeneralSettings.FancyProps;
+                        if (ImGui.Checkbox("Fancy Props", ref fancyProps))
+                        {
+                            _shouldRedrawLevel = true;
+                            GLOBALS.Settings.GeneralSettings.FancyProps = fancyProps;
+                        }
+                    }
+                    
 
                     // Save Settings
                     

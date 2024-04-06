@@ -17,7 +17,7 @@ internal class EffectsEditorPage : EditorPage
     private Camera2D _camera = new() { Zoom = 1.0f };
 
     private bool _showTiles = true;
-    private bool _showProps = true;
+    private bool _showProps;
     private bool _tintedProps;
     
     private bool _addNewEffectMode;
@@ -39,6 +39,8 @@ internal class EffectsEditorPage : EditorPage
 
     private bool _clickTracker;
     private bool _brushEraseMode;
+
+    private bool _shouldRedrawLevel = true;
 
     private int _optionsIndex = 1;
 
@@ -117,6 +119,53 @@ internal class EffectsEditorPage : EditorPage
 
     private bool _isOptionsInputActive;
 
+    private void RedrawLevel()
+    {
+        BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+        ClearBackground(
+            GLOBALS.Settings.GeneralSettings.DarkTheme
+                ? new Color(50, 50, 50, 255)
+                : Color.White);
+
+        Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
+        if (_showTiles) Printers.DrawTileLayer(2, GLOBALS.Scale, false, true, true);
+        if(_showProps) Printers.DrawPropLayer(2, _tintedProps, GLOBALS.Scale);
+        
+        Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
+        if (_showTiles) Printers.DrawTileLayer(1, GLOBALS.Scale, false, true, true);
+        if(_showProps) Printers.DrawPropLayer(1, _tintedProps, GLOBALS.Scale);
+        
+        if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel > -1)
+        {
+            DrawRectangle(
+                (-1) * GLOBALS.Scale,
+                (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
+                (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
+                (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
+                new Color(0, 0, 255, 110)
+            );
+        }
+        
+        Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.Black with { A = 255 });
+        if (_showTiles) Printers.DrawTileLayer(0, GLOBALS.Scale, false, true, true);
+        if(_showProps) Printers.DrawPropLayer(0, _tintedProps, GLOBALS.Scale);
+        
+        if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
+        {
+            DrawRectangle(
+                (-1) * GLOBALS.Scale,
+                (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
+                (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
+                GLOBALS.Level.WaterLevel * GLOBALS.Scale,
+                GLOBALS.Settings.GeneralSettings.DarkTheme 
+                    ? GLOBALS.DarkThemeWaterColor 
+                    : GLOBALS.LightThemeWaterColor
+            );
+        }
+        
+        EndTextureMode();
+    }
+
     public override void Draw()
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
@@ -124,6 +173,8 @@ internal class EffectsEditorPage : EditorPage
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
+
+        if (GLOBALS.PreviousPage != 7) _shouldRedrawLevel = true;
         
         GLOBALS.PreviousPage = 7;
         
@@ -548,6 +599,23 @@ internal class EffectsEditorPage : EditorPage
 
             BeginDrawing();
             {
+                if (_shouldRedrawLevel)
+                {
+                    Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
+                    {
+                        Water = true,
+                        WaterAtFront = GLOBALS.Level.WaterAtFront,
+                        DarkTheme = GLOBALS.Settings.GeneralSettings.DarkTheme,
+                        TilesLayer1 = _showTiles,
+                        TilesLayer2 = _showTiles,
+                        TilesLayer3 = _showTiles,
+                        PropsLayer1 = _showProps,
+                        PropsLayer2 = _showProps,
+                        PropsLayer3 = _showProps,
+                        TintedProps = _tintedProps
+                    });
+                    _shouldRedrawLevel = false;
+                }
 
                 ClearBackground(new Color(0, 0, 0, 255));
 
@@ -556,58 +624,18 @@ internal class EffectsEditorPage : EditorPage
                     // Outer level border
                     DrawRectangleLinesEx(
                         new Rectangle(
-                            -2, -2,
-                            (GLOBALS.Level.Width * GLOBALS.Scale) + 4,
-                            (GLOBALS.Level.Height * GLOBALS.Scale) + 4
+                            -3, -3,
+                            (GLOBALS.Level.Width * GLOBALS.Scale) + 6,
+                            (GLOBALS.Level.Height * GLOBALS.Scale) + 6
                         ),
-                        2f,
+                        3f,
                         Color.White
                     );
                     
-                    DrawRectangle(
-                        0, 
-                        0, 
-                        GLOBALS.Level.Width * GLOBALS.Scale, 
-                        GLOBALS.Level.Height * GLOBALS.Scale, 
-                        GLOBALS.Settings.GeneralSettings.DarkTheme
-                            ? new Color(50, 50, 50, 255)
-                            : Color.White);
-
-                    Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
-                    if (_showTiles) Printers.DrawTileLayer(2, GLOBALS.Scale, false, true, true);
-                    if(_showProps) Printers.DrawPropLayer(2, _tintedProps, GLOBALS.Scale);
-                    
-                    Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
-                    if (_showTiles) Printers.DrawTileLayer(1, GLOBALS.Scale, false, true, true);
-                    if(_showProps) Printers.DrawPropLayer(1, _tintedProps, GLOBALS.Scale);
-                    
-                    if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel > -1)
-                    {
-                        DrawRectangle(
-                            (-1) * GLOBALS.Scale,
-                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                            (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                            (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                            new Color(0, 0, 255, 110)
-                        );
-                    }
-                    
-                    Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.Black with { A = 255 });
-                    if (_showTiles) Printers.DrawTileLayer(0, GLOBALS.Scale, false, true, true);
-                    if(_showProps) Printers.DrawPropLayer(0, _tintedProps, GLOBALS.Scale);
-                    
-                    if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
-                    {
-                        DrawRectangle(
-                            (-1) * GLOBALS.Scale,
-                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel) * GLOBALS.Scale,
-                            (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                            GLOBALS.Level.WaterLevel * GLOBALS.Scale,
-                            GLOBALS.Settings.GeneralSettings.DarkTheme 
-                                ? GLOBALS.DarkThemeWaterColor 
-                                : GLOBALS.LightThemeWaterColor
-                        );
-                    }
+                    BeginShaderMode(GLOBALS.Shaders.VFlip);
+                    SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), GLOBALS.Textures.GeneralLevel.Texture);
+                    DrawTexture(GLOBALS.Textures.GeneralLevel.Texture, 0, 0, Color.White);
+                    EndShaderMode();
 
                     // Effect matrix
 
@@ -921,11 +949,20 @@ internal class EffectsEditorPage : EditorPage
                     GLOBALS.Settings.EffectsSettings.EffectsCanvasColorDark = darkCanvasColor*255;
 
                     ImGui.Spacing();
-                    
-                    ImGui.Checkbox("Tiles", ref _showTiles);
-                    ImGui.Checkbox("Props", ref _showProps);
 
-                    if (_showProps) ImGui.Checkbox("Tinted Props", ref _tintedProps);
+                    if (ImGui.Checkbox("Tiles", ref _showTiles)) _shouldRedrawLevel = true;
+                    if (ImGui.Checkbox("Props", ref _showProps)) _shouldRedrawLevel = true;
+                    
+                    if (ImGui.IsItemHovered() && ImGui.BeginTooltip())
+                    {
+                        ImGui.Text("Performance Penalty");
+                        ImGui.EndTooltip();    
+                    }
+
+                    if (_showProps)
+                    {
+                        if (ImGui.Checkbox("Tinted Props", ref _tintedProps)) _shouldRedrawLevel = true;
+                    };
                     
                     ImGui.End();
                 }

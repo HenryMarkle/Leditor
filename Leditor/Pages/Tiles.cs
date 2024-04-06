@@ -3,6 +3,7 @@ using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 using RenderTexture2D = Leditor.RL.Managed.RenderTexture2D;
+using Shader = Leditor.RL.Managed.Shader;
 
 namespace Leditor.Pages;
 
@@ -91,6 +92,133 @@ internal class TileEditorPage : EditorPage, IDisposable
     private RenderTexture2D _tileSpecsPanelRT = new(0, 0);
     private RenderTexture2D _tileTexturePanelRT = new(0, 0);
     
+    private bool _shouldRedrawLevel = true;
+
+    private void RedrawLevel()
+    {
+        BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+        ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme
+                ? new Color(50, 50, 50, 255)
+                : Color.White);
+
+        #region TileEditorLayer3
+        // Draw geos first
+        if (_showTileLayer3)
+        {
+            if (GLOBALS.Layer == 2) DrawRectangle(
+                0, 
+                0, 
+                GLOBALS.Level.Width * GLOBALS.Scale, 
+                GLOBALS.Level.Height * GLOBALS.Scale, 
+                Color.Gray with { A = 120 });
+            
+            Printers.DrawGeoLayer(
+                2, 
+                GLOBALS.Scale, 
+                false, 
+                Color.Black
+            );
+
+            // then draw the tiles
+
+            if (_showLayer3Tiles)
+            {
+                Printers.DrawTileLayer(
+                    2, 
+                    GLOBALS.Scale, 
+                    false, 
+                    !GLOBALS.Settings.TileEditor.UseTextures,
+                    GLOBALS.Settings.TileEditor.TintedTiles
+                );
+            }
+        }
+        #endregion
+
+        #region TileEditorLayer2
+        if (_showTileLayer2)
+        {
+            if (GLOBALS.Layer != 2) DrawRectangle(
+                0, 
+                0, 
+                GLOBALS.Level.Width * GLOBALS.Scale, 
+                GLOBALS.Level.Height * GLOBALS.Scale, 
+                Color.Gray with { A = 130 });
+
+            Printers.DrawGeoLayer(
+                1, 
+                GLOBALS.Scale, 
+                false, 
+                GLOBALS.Layer < 2
+                    ? Color.Black 
+                    : Color.Black with { A = 80 }
+            );
+
+            // Draw layer 2 tiles
+
+            if (_showLayer2Tiles)
+            {
+                Printers.DrawTileLayer(
+                    1, 
+                    GLOBALS.Scale, 
+                    false, 
+                    !GLOBALS.Settings.TileEditor.UseTextures,
+                    GLOBALS.Settings.TileEditor.TintedTiles,
+                    (byte)(GLOBALS.Layer < 2 ? 255 : 80)
+                );
+            }
+        }
+        #endregion
+
+        #region TileEditorLayer1
+        if (_showTileLayer1)
+        {
+            if (GLOBALS.Layer != 1 && GLOBALS.Layer!= 2) 
+                DrawRectangle(
+                    0, 
+                0, 
+                    GLOBALS.Level.Width * GLOBALS.Scale, 
+                    GLOBALS.Level.Height * GLOBALS.Scale, 
+                    Color.Gray with { A = 130 }
+                );
+
+            Printers.DrawGeoLayer(
+                0, 
+                GLOBALS.Scale, 
+                false, 
+                GLOBALS.Layer == 0
+                    ? Color.Black 
+                    : Color.Black with { A = 80 }
+            );
+
+            // Draw layer 1 tiles
+
+            if (_showLayer1Tiles)
+            {
+                Printers.DrawTileLayer(
+                    0, 
+                    GLOBALS.Scale, 
+                    false, 
+                    !GLOBALS.Settings.TileEditor.UseTextures,
+                    GLOBALS.Settings.TileEditor.TintedTiles,
+                    (byte)(GLOBALS.Layer == 0 ? 255 : 80)
+                );
+            }
+        }
+        #endregion
+
+        // Grid
+        
+        if (GLOBALS.Settings.TileEditor.Grid) Printers.DrawGrid(GLOBALS.Scale);
+        
+        // Dark Theme
+
+        if (GLOBALS.Settings.GeneralSettings.DarkTheme)
+        {
+            DrawRectangleLines(0, 0, GLOBALS.Level.Width*GLOBALS.Scale, GLOBALS.Level.Height*GLOBALS.Scale, Color.White);
+        }
+        EndTextureMode();
+    }
+
     private bool _tileSpecDisplayMode;
     
     private int _tilePanelWidth = 400;
@@ -110,7 +238,7 @@ internal class TileEditorPage : EditorPage, IDisposable
     
     private bool _isSettingsWinHovered;
     private bool _isSettingsWinDragged;
-
+    
     public override void Dispose()
     {
         if (Disposed) return;
@@ -1175,7 +1303,9 @@ internal class TileEditorPage : EditorPage, IDisposable
 
     public override void Draw()
     {
-        GLOBALS.Page = 3;
+        if (GLOBALS.PreviousPage != 3) _shouldRedrawLevel = true;
+
+        GLOBALS.PreviousPage = 3;
 
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
 
@@ -1476,6 +1606,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                         _prevPosY = tileMatrixY;
                         
                         _drawClickTracker = true;
+                        _shouldRedrawLevel = true;
                     }
                     if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw.Key)) && _drawClickTracker)
                     {
@@ -1628,6 +1759,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                         }
                         
                         GLOBALS.Gram.Proceed(new Gram.GroupAction<(TileCell, RunCell)>(actions));
+                        _shouldRedrawLevel = true;
                     }
                 }
                     break;
@@ -1690,6 +1822,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                         }
                         
                         GLOBALS.Gram.Proceed(new Gram.GroupAction<TileCell>(actions));
+                        _shouldRedrawLevel = true;
                     }
                 }
                     break;
@@ -1727,6 +1860,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 _prevPosY = tileMatrixY;
                         
                 _eraseClickTracker = true;
+                _shouldRedrawLevel = true;
             }
         }
         if (IsMouseButtonReleased(_shortcuts.Erase.Button) && _eraseClickTracker)
@@ -1745,6 +1879,7 @@ internal class TileEditorPage : EditorPage, IDisposable
             GLOBALS.Layer++;
 
             if (GLOBALS.Layer > 2) GLOBALS.Layer = 0;
+            _shouldRedrawLevel = true;
         }
 
         if (IsMouseButtonReleased(MouseButton.Left))
@@ -1873,14 +2008,42 @@ internal class TileEditorPage : EditorPage, IDisposable
 
         if (_shortcuts.HoveredItemInfo.Check(ctrl, shift, alt)) GLOBALS.Settings.TileEditor.HoveredTileInfo = !GLOBALS.Settings.TileEditor.HoveredTileInfo;
         
-        if (_shortcuts.ToggleLayer1Tiles.Check(ctrl, shift, alt)) _showLayer1Tiles = !_showLayer1Tiles;
-        if (_shortcuts.ToggleLayer2Tiles.Check(ctrl, shift, alt)) _showLayer2Tiles = !_showLayer2Tiles;
-        if (_shortcuts.ToggleLayer3Tiles.Check(ctrl, shift, alt)) _showLayer3Tiles = !_showLayer3Tiles;
-        if (_shortcuts.ToggleLayer1.Check(ctrl, shift, alt)) _showTileLayer1 = !_showTileLayer1;
-        if (_shortcuts.ToggleLayer2.Check(ctrl, shift, alt)) _showTileLayer2 = !_showTileLayer2;
-        if (_shortcuts.ToggleLayer3.Check(ctrl, shift, alt)) _showTileLayer3 = !_showTileLayer3;
+        if (_shortcuts.ToggleLayer1Tiles.Check(ctrl, shift, alt))
+        {
+            _showLayer1Tiles = !_showLayer1Tiles;
+            _shouldRedrawLevel = true;
+        }
+        if (_shortcuts.ToggleLayer2Tiles.Check(ctrl, shift, alt))
+        {
+            _showLayer2Tiles = !_showLayer2Tiles;
+            _shouldRedrawLevel = true;
+        }
+        if (_shortcuts.ToggleLayer3Tiles.Check(ctrl, shift, alt))
+        {
+            _showLayer3Tiles = !_showLayer3Tiles;
+            _shouldRedrawLevel = true;
+        }
+        if (_shortcuts.ToggleLayer1.Check(ctrl, shift, alt))
+        {
+            _showTileLayer1 = !_showTileLayer1;
+            _shouldRedrawLevel = true;
+        }
+        if (_shortcuts.ToggleLayer2.Check(ctrl, shift, alt))
+        {
+            _showTileLayer2 = !_showTileLayer2;
+            _shouldRedrawLevel = true;
+        }
+        if (_shortcuts.ToggleLayer3.Check(ctrl, shift, alt))
+        {
+            _showTileLayer3 = !_showTileLayer3;
+            _shouldRedrawLevel = true;
+        }
 
-        if (_shortcuts.TogglePathsView.Check(ctrl, shift, alt)) _highlightPaths = !_highlightPaths;
+        if (_shortcuts.TogglePathsView.Check(ctrl, shift, alt))
+        {
+            _highlightPaths = !_highlightPaths;
+            _shouldRedrawLevel = true;
+        }
 
         #endregion
         
@@ -1891,125 +2054,34 @@ internal class TileEditorPage : EditorPage, IDisposable
         ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
             ? Color.Black 
             : new Color(170, 170, 170, 255));
+        
+        if (_shouldRedrawLevel)
+        {
+            // RedrawLevel();
+            Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
+            {
+                DarkTheme = GLOBALS.Settings.GeneralSettings.DarkTheme,
+                CurrentLayer = GLOBALS.Layer,
+                PropsLayer1 = false,
+                PropsLayer2 = false,
+                PropsLayer3 = false,
+                Water = false,
+                TintedTiles = GLOBALS.Settings.TileEditor.TintedTiles,
+                Grid = GLOBALS.Settings.TileEditor.Grid
+            });
+            _shouldRedrawLevel = false;
+        }
 
         BeginMode2D(_camera);
         {
             #region Matrix
             
-            DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale,
-                GLOBALS.Settings.GeneralSettings.DarkTheme
-                    ? new Color(100, 100, 100, 255)
-                    : Color.White);
-
-            #region TileEditorLayer3
-            // Draw geos first
-            if (_showTileLayer3)
-            {
-                if (GLOBALS.Layer == 2) DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale, Color.Gray with { A = 120 });
-                Printers.DrawGeoLayer(
-                    2, 
-                    GLOBALS.Scale, 
-                    false, 
-                    Color.Black
-                );
-
-                // then draw the tiles
-
-                if (_showLayer3Tiles)
-                {
-                    Printers.DrawTileLayer(
-                        2, 
-                        GLOBALS.Scale, 
-                        false, 
-                        !GLOBALS.Settings.TileEditor.UseTextures,
-                        GLOBALS.Settings.TileEditor.TintedTiles
-                    );
-                }
-            }
-            #endregion
-
-            #region TileEditorLayer2
-            if (_showTileLayer2)
-            {
-                if (GLOBALS.Layer != 2) DrawRectangle(
-                    0, 
-                    0, 
-                    GLOBALS.Level.Width * GLOBALS.Scale, 
-                    GLOBALS.Level.Height * GLOBALS.Scale, 
-                    Color.Gray with { A = 130 });
-
-                Printers.DrawGeoLayer(
-                    1, 
-                    GLOBALS.Scale, 
-                    false, 
-                    GLOBALS.Layer < 2
-                        ? Color.Black 
-                        : Color.Black with { A = 80 }
-                );
-
-                // Draw layer 2 tiles
-
-                if (_showLayer2Tiles)
-                {
-                    Printers.DrawTileLayer(
-                        1, 
-                        GLOBALS.Scale, 
-                        false, 
-                        !GLOBALS.Settings.TileEditor.UseTextures,
-                        GLOBALS.Settings.TileEditor.TintedTiles,
-                        (byte)(GLOBALS.Layer < 2 ? 255 : 80)
-                    );
-                }
-            }
-            #endregion
-
-            #region TileEditorLayer1
-            if (_showTileLayer1)
-            {
-                if (GLOBALS.Layer != 1 && GLOBALS.Layer!= 2) 
-                    DrawRectangle(
-                        0, 
-                    0, 
-                        GLOBALS.Level.Width * GLOBALS.Scale, 
-                        GLOBALS.Level.Height * GLOBALS.Scale, 
-                        Color.Gray with { A = 130 }
-                    );
-
-                Printers.DrawGeoLayer(
-                    0, 
-                    GLOBALS.Scale, 
-                    false, 
-                    GLOBALS.Layer == 0
-                        ? Color.Black 
-                        : Color.Black with { A = 80 }
-                );
-
-                // Draw layer 1 tiles
-
-                if (_showLayer1Tiles)
-                {
-                    Printers.DrawTileLayer(
-                        0, 
-                        GLOBALS.Scale, 
-                        false, 
-                        !GLOBALS.Settings.TileEditor.UseTextures,
-                        GLOBALS.Settings.TileEditor.TintedTiles,
-                        (byte)(GLOBALS.Layer == 0 ? 255 : 80)
-                    );
-                }
-            }
-            #endregion
-
-            // Grid
+            DrawRectangleLinesEx(new Rectangle(-3, -3, GLOBALS.Level.Width * 20 + 6, GLOBALS.Level.Height * 20 + 6), 3, Color.White);
             
-            if (GLOBALS.Settings.TileEditor.Grid) Printers.DrawGrid(GLOBALS.Scale);
-            
-            // Dark Theme
-
-            if (GLOBALS.Settings.GeneralSettings.DarkTheme)
-            {
-                DrawRectangleLines(0, 0, GLOBALS.Level.Width*GLOBALS.Scale, GLOBALS.Level.Height*GLOBALS.Scale, Color.White);
-            }
+            BeginShaderMode(GLOBALS.Shaders.VFlip);
+            SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), GLOBALS.Textures.GeneralLevel.Texture);
+            DrawTexture(GLOBALS.Textures.GeneralLevel.Texture, 0, 0, Color.White);
+            EndShaderMode();
             
             //
 
@@ -2712,23 +2784,14 @@ internal class TileEditorPage : EditorPage, IDisposable
             
             if (settingsWinOpened)
             {
-                var texture = GLOBALS.Settings.TileEditor.UseTextures;
+                // TODO: Globalize this option
                 var tinted = GLOBALS.Settings.TileEditor.TintedTiles;
-                
-                var cycleDisplaySelected = ImGui.Button($"Textures: {(texture, tinted) switch { (false, false) => "Preview", (true, false) => "Raw Texture", (true, true) => "Tinted Texture", _ => "Preview" }}");
-
-                if (cycleDisplaySelected)
+                var texturedTiles = ImGui.Checkbox("Use Textures Instead of Previews", ref tinted);
+                if (texturedTiles)
                 {
-                    (texture, tinted) = (texture, tinted) switch
-                    {
-                        (false, false) => (true, false),
-                        (true, false) => (true, true),
-                        _ => (false, false)
-                    };
+                    GLOBALS.Settings.TileEditor.TintedTiles = tinted;
+                    _shouldRedrawLevel = true;
                 }
-
-                GLOBALS.Settings.TileEditor.UseTextures = texture;
-                GLOBALS.Settings.TileEditor.TintedTiles = tinted;
                 
                 //
 
@@ -2742,7 +2805,11 @@ internal class TileEditorPage : EditorPage, IDisposable
                     GLOBALS.Settings.TileEditor.HoveredTileInfo = hoveredInfo;
 
                 var grid = GLOBALS.Settings.TileEditor.Grid;
-                if (ImGui.Checkbox("Grid", ref grid)) GLOBALS.Settings.TileEditor.Grid = grid;
+                if (ImGui.Checkbox("Grid", ref grid))
+                {
+                    GLOBALS.Settings.TileEditor.Grid = grid;
+                    _shouldRedrawLevel = true;
+                }
                 
                 ImGui.End();
             }
@@ -3011,7 +3078,7 @@ internal class TileEditorPage : EditorPage, IDisposable
         #endregion
 
         EndDrawing();
-
+        
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera;
     }
 }

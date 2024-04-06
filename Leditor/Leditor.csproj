@@ -5,9 +5,13 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <IsPublishable>False</IsPublishable>
+    <IsPublishable>true</IsPublishable>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>icon.ico</ApplicationIcon>
+    <!-- <StripSymbols>false</StripSymbols> -->
+    <!-- <IsTrimmable>false</IsTrimmable> -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <PublishAot>false</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1192,6 +1192,177 @@ internal static class Printers
                 DrawCircleV(point * (scale / 16f) + offsetPixels, 3f, Color.White);
         }
     }
+
+    internal readonly struct DrawLevelParams()
+    {
+        internal int CurrentLayer { get; init; }
+        internal bool GeometryLayer1 { get; init; } = true;
+        internal bool GeometryLayer2 { get; init; } = true;
+        internal bool GeometryLayer3 { get; init; } = true;
+        internal bool TilesLayer1 { get; init; } = true;
+        internal bool TilesLayer2 { get; init; } = true;
+        internal bool TilesLayer3 { get; init; } = true;
+        internal bool PropsLayer1 { get; init; } = true;
+        internal bool PropsLayer2 { get; init; } = true;
+        internal bool PropsLayer3 { get; init; } = true;
+        internal bool TintedTiles { get; init; } = false;
+        internal bool TintedProps { get; init; } = false;
+        internal int Scale { get; init; } = 20;
+        internal bool DarkTheme { get; init; } = false;
+        internal bool Water { get; init; } = false;
+        internal bool WaterAtFront { get; init; } = true;
+        internal bool Grid { get; init; } = false;
+    }
+    
+    internal static void DrawLevelIntoBuffer(in RenderTexture2D texture, DrawLevelParams parameters)
+    {
+        var lWidth = GLOBALS.Level.Width * 20;
+        var lHeight = GLOBALS.Level.Height * 20;
+        
+        BeginTextureMode(texture);
+
+        ClearBackground(Color.White);
+            
+        if (parameters.GeometryLayer3)
+        {
+            if (parameters.CurrentLayer == 2) DrawRectangle(0, 0, lWidth, lHeight, Color.Gray with { A = 120 });
+            
+            DrawGeoLayer(
+                2, 
+                parameters.Scale, 
+                false, 
+                parameters.CurrentLayer switch
+                {
+                    0 => Color.Gray,
+                    1 => Color.Gray,
+                    2 => Color.Black
+                }
+            );
+        }
+        
+        if (parameters.TilesLayer3)
+        {
+            DrawTileLayer(
+                2, 
+                parameters.Scale, 
+                false, 
+                !parameters.TintedTiles,
+                parameters.TintedTiles
+            );
+        }
+        
+        if (parameters.PropsLayer3)
+        {
+            DrawPropLayer(2, parameters.TintedProps, parameters.Scale);
+        }
+        
+        //
+        
+        if (parameters.GeometryLayer2)
+        {
+            if (parameters.CurrentLayer == 1) DrawRectangle(0, 0, lWidth, lHeight, Color.Gray with { A = 120 });
+            
+            DrawGeoLayer(
+                1, 
+                parameters.Scale, 
+                false, 
+                parameters.CurrentLayer < 2
+                    ? Color.Black 
+                    : Color.Black with { A = 80 }
+            );
+        }
+        
+        if (parameters.TilesLayer2)
+        {
+            DrawTileLayer(
+                1, 
+                parameters.Scale, 
+                false, 
+                !parameters.TintedTiles,
+                parameters.TintedTiles,
+                (byte)(parameters.CurrentLayer < 2 ? 255 : 80)
+            );
+        }
+        
+        if (parameters.PropsLayer2)
+        {
+            DrawPropLayer(1, parameters.TintedProps, parameters.Scale);
+        }
+        
+        //
+
+        if (parameters.Water)
+        {
+            if (!parameters.WaterAtFront && GLOBALS.Level.WaterLevel > -1)
+            {
+                DrawRectangle(
+                    (-1) * GLOBALS.Scale,
+                    (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
+                    (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
+                    (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
+                    new Color(0, 0, 255, 110)
+                );
+            }
+        }
+        
+        if (parameters.GeometryLayer1)
+        {
+            if (parameters.CurrentLayer == 0) 
+                DrawRectangle(
+                    0, 
+                    0, 
+                    lWidth, 
+                    lHeight, 
+                    Color.Gray with { A = 130 }
+                );
+
+            DrawGeoLayer(
+                0, 
+                parameters.Scale, 
+                false, 
+                parameters.CurrentLayer == 0
+                    ? Color.Black 
+                    : Color.Black with { A = 80 }
+            );
+        }
+        
+        if (parameters.TilesLayer1)
+        {
+            DrawTileLayer(
+                0, 
+                parameters.Scale, 
+                false, 
+                !parameters.TintedTiles,
+                parameters.TintedTiles,
+                (byte)(parameters.CurrentLayer == 0 ? 255 : 80)
+            );
+        }
+        
+        if (parameters.PropsLayer1)
+        {
+            DrawPropLayer(0, parameters.TintedProps, parameters.Scale);
+        }
+
+        if (parameters.Water)
+        {
+            if (parameters.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
+            {
+                DrawRectangle(
+                    (-1) * GLOBALS.Scale,
+                    (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
+                    (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
+                    (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
+                    GLOBALS.Settings.GeneralSettings.DarkTheme 
+                        ? GLOBALS.DarkThemeWaterColor 
+                        : GLOBALS.LightThemeWaterColor
+                );
+            }
+        }
+
+        if (parameters.Grid) DrawGrid(parameters.Scale);
+        
+        EndTextureMode();
+    }
     
     internal static void DrawTexturePoly(
         Texture2D texture, 

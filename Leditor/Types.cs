@@ -1042,7 +1042,9 @@ public class GeneralSettings(
     bool linearZooming = false,
     float defaultZoom = 1,
     bool cycleMenus = true,
-    bool changingCategoriesResetsIndex = true
+    bool changingCategoriesResetsIndex = true,
+    bool fancyTiles = false,
+    bool fancyProps = false
     )
 {
     public bool DeveloperMode { get; set; } = developerMode;
@@ -1055,6 +1057,8 @@ public class GeneralSettings(
     public float DefaultZoom { get; set; } = defaultZoom;
     public bool CycleMenus { get; set; } = cycleMenus;
     public bool ChangingCategoriesResetsIndex { get; set; } = changingCategoriesResetsIndex;
+    public bool FancyTiles { get; set; } = fancyTiles;
+    public bool FancyProps { get; set; } = fancyProps;
 }
 
 public class Settings

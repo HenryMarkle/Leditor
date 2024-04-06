@@ -229,6 +229,9 @@ internal class NewLevelPage : EditorPage
                 {
                     _advanced = true;
                     
+                    GLOBALS.Textures.GeneralLevel =
+                        LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20);
+                    
                     Logger.Debug("new flag detected; creating a new level");
 
                     GLOBALS.Level.New(
