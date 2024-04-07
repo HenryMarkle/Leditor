@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
+    <!-- <RuntimeIdentifier>win-x64</RuntimeIdentifier> -->
     <ImplicitUsings>disable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsPublishable>true</IsPublishable>
@@ -11,6 +12,7 @@
     <!-- <StripSymbols>false</StripSymbols> -->
     <!-- <IsTrimmable>false</IsTrimmable> -->
     <IsAotCompatible>true</IsAotCompatible>
+    <!-- <PublishSingleFile>true</PublishSingleFile> -->
     <PublishAot>false</PublishAot>
   </PropertyGroup>
 

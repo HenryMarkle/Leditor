@@ -32,12 +32,9 @@ internal class ExperimentalGeometryPage : EditorPage
     private int _prevCoordsX = -1;
     private int _prevCoordsY = -1;
 
-    private int _geoMenuScrollIndex;
     private int _geoMenuCategory;
     private int _geoMenuIndex;
 
-    private readonly byte[] _geoMenuPanelBytes = "Menu"u8.ToArray();
-    
     private static readonly int[] GeoMenuIndexMaxCount = [4, 3, 6, 7];
     private static readonly int[] GeoMenuIndexToBlockId = [1, 2, 6, 9];
     private static readonly int[] GeoMenuCategory2ToStackableId = [2, 1, 11];
@@ -82,9 +79,6 @@ internal class ExperimentalGeometryPage : EditorPage
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
 
-    private bool _isNavigationWinHovered;
-    private bool _isNavigationWinDragged;
-    
     private bool _isSettingsWinHovered;
     private bool _isSettingsWinDragged;
 
@@ -146,8 +140,6 @@ internal class ExperimentalGeometryPage : EditorPage
                          !_isSettingsWinDragged &&
                          !_isShortcutsWinHovered && 
                          !_isShortcutsWinDragged && 
-                         !_isNavigationWinHovered &&
-                         !_isNavigationWinDragged &&
                          !CheckCollisionPointRec(uiMouse, layer3Rect) &&
                          (GLOBALS.Layer != 1 || !CheckCollisionPointRec(uiMouse, layer2Rect)) &&
                          (GLOBALS.Layer != 0 || !CheckCollisionPointRec(uiMouse, layer1Rect));
@@ -993,6 +985,16 @@ internal class ExperimentalGeometryPage : EditorPage
                         }
                     }
                 }
+                
+                // Index hints
+                if (GLOBALS.Settings.GeneralSettings.IndexHint)
+                {
+                    Printers.DrawLevelIndexHintsHollow(matrixX, matrixY, 
+                        2, 
+                        0, 
+                        Color.White with { A = 100 }
+                    );
+                }
 
                 // the outbound border
                 DrawRectangleLinesEx(new(0, 0, GLOBALS.Level.Width * scale, GLOBALS.Level.Height * scale), 2, new(0, 0, 0, 255));
@@ -1000,10 +1002,6 @@ internal class ExperimentalGeometryPage : EditorPage
                 // the border
                 DrawRectangleLinesEx(GLOBALS.Level.Border, _camera.Zoom < GLOBALS.ZoomIncrement ? 5 : 2, new(255, 255, 255, 255));
                 
-                // a lazy way to hide the rest of the grid
-                // DrawRectangle(GLOBALS.Level.Width * -scale, -3, GLOBALS.Level.Width * scale, GLOBALS.Level.Height * 2 * scale, new(120, 120, 120, 255));
-                // DrawRectangle(0, GLOBALS.Level.Height * scale, GLOBALS.Level.Width * scale + 2, GLOBALS.Level.Height * scale, new(120, 120, 120, 255));
-
                 // the selection rectangle
 
                 for (var y = 0; y < GLOBALS.Level.Height; y++)

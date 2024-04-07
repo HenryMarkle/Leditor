@@ -1363,6 +1363,28 @@ internal static class Printers
         
         EndTextureMode();
     }
+
+    /// <summary>
+    /// Draws four lines that intersect the cursor and extend all the way across the level
+    /// </summary>
+    /// <param name="matrixX">The X-coordinates of the cursor</param>
+    /// <param name="matrixY">The Y-coordinates of the cursor</param>
+    /// <param name="thickness">The thickness of the lines</param>
+    /// <param name="radius">The distance between the single line and the cursor in matrix units</param>
+    /// <param name="color">The color of the lines</param>
+    internal static void DrawLevelIndexHintsHollow(
+        int matrixX, 
+        int matrixY, 
+        float thickness, 
+        int radius, 
+        Color color)
+    {
+        DrawLineEx(new Vector2(0, (matrixY - radius)*20), new Vector2(GLOBALS.Level.Width*20, (matrixY - radius)*20), thickness, color);
+        DrawLineEx(new Vector2(0, (matrixY + radius + 1)*20), new Vector2(GLOBALS.Level.Width*20, (matrixY + radius + 1)*20), thickness, color);
+                    
+        DrawLineEx(new Vector2((matrixX - radius)*20, 0), new Vector2((matrixX - radius)*20, GLOBALS.Level.Height*20), thickness, color);
+        DrawLineEx(new Vector2((matrixX + radius + 1)*20, 0), new Vector2((matrixX + radius + 1)*20, GLOBALS.Level.Height*20), thickness, color);
+    }
     
     internal static void DrawTexturePoly(
         Texture2D texture, 

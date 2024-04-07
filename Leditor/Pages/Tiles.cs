@@ -94,6 +94,7 @@ internal class TileEditorPage : EditorPage, IDisposable
     
     private bool _shouldRedrawLevel = true;
 
+    // Not used
     private void RedrawLevel()
     {
         BeginTextureMode(GLOBALS.Textures.GeneralLevel);
@@ -232,9 +233,6 @@ internal class TileEditorPage : EditorPage, IDisposable
     
     private bool _isSpecsWinHovered;
     private bool _isSpecsWinDragged;
-    
-    private bool _isNavigationWinHovered;
-    private bool _isNavigationWinDragged;
     
     private bool _isSettingsWinHovered;
     private bool _isSettingsWinDragged;
@@ -2067,7 +2065,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 PropsLayer3 = false,
                 Water = false,
                 TintedTiles = GLOBALS.Settings.TileEditor.TintedTiles,
-                Grid = GLOBALS.Settings.TileEditor.Grid
+                Grid = false
             });
             _shouldRedrawLevel = false;
         }
@@ -2083,6 +2081,8 @@ internal class TileEditorPage : EditorPage, IDisposable
             DrawTexture(GLOBALS.Textures.GeneralLevel.Texture, 0, 0, Color.White);
             EndShaderMode();
             
+            if (GLOBALS.Settings.TileEditor.Grid) Printers.DrawGrid(GLOBALS.Scale);
+            
             //
 
             if (_highlightPaths)
@@ -2095,7 +2095,18 @@ internal class TileEditorPage : EditorPage, IDisposable
                     Color.Black with { A = 190 });
             }
 
+            // Draw geo features
             Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.White, false, GLOBALS.GeoPathsFilter);
+
+            if (GLOBALS.Settings.GeneralSettings.IndexHint)
+            {
+                Printers.DrawLevelIndexHintsHollow(
+                    tileMatrixX, tileMatrixY, 
+                    2, 
+                    _materialBrushRadius, 
+                    Color.White with { A = 100 }
+                );
+            }
             
             #endregion
 

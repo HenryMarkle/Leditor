@@ -288,6 +288,12 @@ internal class SettingsPage : EditorPage
                             ImGui.Text("Initializes the renderer ahead of time for faster rendering, at the cost of longer program startup time.");
                             ImGui.EndTooltip();
                         }
+                        
+                        var indexHint = GLOBALS.Settings.GeneralSettings.IndexHint;
+                        if (ImGui.Checkbox("Index Hint", ref indexHint))
+                        {
+                            GLOBALS.Settings.GeneralSettings.IndexHint = indexHint;
+                        }
 
                         var legacyGeo = GLOBALS.Settings.GeometryEditor.LegacyInterface;
                         if (ImGui.Checkbox("Legacy Geometry Editor", ref legacyGeo))

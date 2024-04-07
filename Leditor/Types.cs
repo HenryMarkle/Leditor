@@ -1044,7 +1044,8 @@ public class GeneralSettings(
     bool cycleMenus = true,
     bool changingCategoriesResetsIndex = true,
     bool fancyTiles = false,
-    bool fancyProps = false
+    bool fancyProps = false,
+    bool indexHint = true
     )
 {
     public bool DeveloperMode { get; set; } = developerMode;
@@ -1059,6 +1060,7 @@ public class GeneralSettings(
     public bool ChangingCategoriesResetsIndex { get; set; } = changingCategoriesResetsIndex;
     public bool FancyTiles { get; set; } = fancyTiles;
     public bool FancyProps { get; set; } = fancyProps;
+    public bool IndexHint { get; set; } = indexHint;
 }
 
 public class Settings

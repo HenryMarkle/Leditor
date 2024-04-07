@@ -3,7 +3,6 @@ var target = Argument("target", "Build");
 var configuration = Argument("configuration", "Release");
 
 Task("Clean")
-    .WithCriteria(c => HasArgument("rebuild"))
     .Does(() =>
 {
     EnsureDirectoryExists("build");
@@ -25,6 +24,9 @@ Task("Build")
     CopyDirectory("Leditor/assets", "build/assets");
     CopyFile("imgui.ini", "build/imgui.ini");
     CopyFile("LICENSE", "build/LICENSE");
+    CleanDirectory("build/logs");
+    CleanDirectory("build/levels");
+    CleanDirectory("build/projects");
 });
 
 RunTarget(target);

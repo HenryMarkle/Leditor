@@ -13,7 +13,7 @@ internal static class Utils
         if (value < min) value = min;
         if (value > max) value = max;
     }
-    
+
     internal static void Restrict(ref int value, int min)
     {
         if (value < min) value = min;
@@ -24,7 +24,7 @@ internal static class Utils
         if (value < min) value = min;
         if (value > max) value = max;
     }
-    
+
     internal static void Restrict(ref float value, float min)
     {
         if (value < min) value = min;
@@ -35,7 +35,7 @@ internal static class Utils
         if (value > max) value = min;
         if (value < min) value = max;
     }
-    
+
     internal static void Cycle(ref float value, float min, float max)
     {
         if (value > max) value = min;
@@ -45,7 +45,7 @@ internal static class Utils
     internal static bool AllEqual(int[] list) => list.All(i => i == list[0]);
 
     internal static bool AllEqual(IEnumerable<int> list, int item) => list.All(i => i == item);
-    
+
     internal static bool AllEqual(int a, int b, int c) => a == b && b == c && a == c;
 
     internal static RunCell CopyGeoCell(in RunCell cell) => new()
@@ -55,34 +55,35 @@ internal static class Utils
     };
 
     internal static int GetPropDepth(in InitTile tile) => tile.Repeat.Sum();
+
     internal static int GetPropDepth(in InitPropBase prop) => prop switch
     {
-        InitVariedStandardProp v => v.Repeat.Length, 
-        InitStandardProp s => s.Repeat.Length, 
+        InitVariedStandardProp v => v.Repeat.Length,
+        InitStandardProp s => s.Repeat.Length,
         _ => prop.Depth
     };
 
-    internal static Rectangle CameraCriticalRectangle(int x, int y) => 
-        new(x + 190, y + 20, 51*20, 40*20 - 40);
-    
-    internal static Rectangle CameraCriticalRectangle(float x, float y) => 
-        new(x + 190, y + 20, 51*20, 40*20 - 40);
-    
-    internal static Rectangle CameraCriticalRectangle(Vector2 origin) => 
-        new(origin.X + 190, origin.Y + 20, 51*20, 40*20 - 40);
+    internal static Rectangle CameraCriticalRectangle(int x, int y) =>
+        new(x + 190, y + 20, 51 * 20, 40 * 20 - 40);
+
+    internal static Rectangle CameraCriticalRectangle(float x, float y) =>
+        new(x + 190, y + 20, 51 * 20, 40 * 20 - 40);
+
+    internal static Rectangle CameraCriticalRectangle(Vector2 origin) =>
+        new(origin.X + 190, origin.Y + 20, 51 * 20, 40 * 20 - 40);
 
     internal static void AppendRecentProjectPath(string path)
     {
         GLOBALS.RecentProjects.AddLast((path, Path.GetFileNameWithoutExtension(path)));
-        
+
         if (GLOBALS.RecentProjects.Count > GLOBALS.RecentProjectsLimit)
             GLOBALS.RecentProjects.RemoveFirst();
     }
-    
+
     internal static async Task<string> GetFilePathAsync()
     {
         var path = string.Empty;
-        
+
         var thread = new Thread(() =>
         {
             var dialog = new OpenFileDialog
@@ -92,30 +93,31 @@ internal static class Utils
                 Multiselect = false,
                 CheckFileExists = true
             };
-            
+
             // var nativeWindow = new NativeWindow();
             // nativeWindow.AssignHandle(GLOBALS.WindowHandle);
-            
-            if (dialog.ShowDialog(/*nativeWindow*/) == DialogResult.OK)
+
+            if (dialog.ShowDialog( /*nativeWindow*/) == DialogResult.OK)
             {
                 path = dialog.FileName;
             }
         });
-            
+
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
         thread.Join();
 
         return path;
     }
-    
+
     internal static async Task<LoadFileResult> LoadProjectAsync(string filePath)
     {
         try
         {
             var text = (await File.ReadAllTextAsync(filePath)).ReplaceLineEndings().Split(Environment.NewLine);
 
-            var lightMapFileName = Path.Combine(Path.GetDirectoryName(filePath)!, Path.GetFileNameWithoutExtension(filePath) + ".png");
+            var lightMapFileName = Path.Combine(Path.GetDirectoryName(filePath)!,
+                Path.GetFileNameWithoutExtension(filePath) + ".png");
 
             if (!File.Exists(lightMapFileName)) return new();
 
@@ -123,15 +125,24 @@ internal static class Utils
 
             if (text.Length < 7) return new LoadFileResult();
 
-            var objTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[0]));
-            var tilesObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[1]));
-            var terrainObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[4]));
-            var obj2Task = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[5]));
-            var effObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[2]));
-            var lightObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[3]));
-            var camsObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[6]));
-            var waterObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[7]));
-            var propsObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[8]));
+            var objTask = Task.Factory.StartNew(() =>
+                Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[0]));
+            var tilesObjTask = Task.Factory.StartNew(() =>
+                Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[1]));
+            var terrainObjTask = Task.Factory.StartNew(() =>
+                Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[4]));
+            var obj2Task = Task.Factory.StartNew(() =>
+                Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[5]));
+            var effObjTask = Task.Factory.StartNew(() =>
+                Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[2]));
+            var lightObjTask = Task.Factory.StartNew(() =>
+                Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[3]));
+            var camsObjTask = Task.Factory.StartNew(() =>
+                Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[6]));
+            var waterObjTask = Task.Factory.StartNew(() =>
+                Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[7]));
+            var propsObjTask = Task.Factory.StartNew(() =>
+                Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[8]));
 
             var obj = await objTask;
             var tilesObj = await tilesObjTask;
@@ -153,7 +164,7 @@ internal static class Utils
             var waterData = Serialization.Importers.GetWaterData(waterObj);
             var effects = Serialization.Importers.GetEffects(effObj, givenWidth, givenHeight);
             var cams = Serialization.Importers.GetCameras(camsObj);
-            
+
             // TODO: catch PropNotFoundException
             var props = Serialization.Importers.GetProps(propsObj);
             var lightSettings = Serialization.Importers.GetLightSettings(lightObj);
@@ -174,7 +185,8 @@ internal static class Utils
 
                         var materialName = ((TileMaterial)cell.Data).Name;
 
-                        if (GLOBALS.MaterialColors.TryGetValue(materialName, out Color color)) materialColors[y, x, z] = color;
+                        if (GLOBALS.MaterialColors.TryGetValue(materialName, out Color color))
+                            materialColors[y, x, z] = color;
                     }
                 }
             }
@@ -214,7 +226,7 @@ internal static class Utils
     internal static async Task<string> SetFilePathAsync()
     {
         var path = string.Empty;
-        
+
         var thread = new Thread(() =>
         {
             var dialog = new SaveFileDialog
@@ -233,14 +245,14 @@ internal static class Utils
                 path = "";
             }
         });
-            
+
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
         thread.Join();
 
         return path;
     }
-    
+
     public static (int category, int index)? PickupTile(int x, int y, int z)
     {
         var cell = GLOBALS.Level.TileMatrix[y, x, z];
@@ -248,7 +260,7 @@ internal static class Utils
         if (cell.Type == TileType.TileHead)
         {
             if (cell.Data is TileHead { CategoryPostition: (-1, -1, _) }) return null;
-            
+
             var (category, index, _) = ((TileHead)cell.Data).CategoryPostition;
             return (category, index);
         }
@@ -271,6 +283,7 @@ internal static class Utils
 
         return null;
     }
+
     public static (int category, int index)? PickupMaterial(int x, int y, int z)
     {
         var cell = GLOBALS.Level.TileMatrix[y, x, z];
@@ -290,6 +303,7 @@ internal static class Utils
 
         return null;
     }
+
     public static bool IsTileLegal(ref InitTile init, Vector2 point)
     {
         var (width, height) = init.Size;
@@ -338,13 +352,16 @@ internal static class Utils
                             &&
                             (tileCellNextLayer.Type == TileType.Default || tileCellNextLayer.Type == TileType.Material)
                             &&*/
-                            (spec == -1 || (geoCell.Geo == spec && tileCell.Type is TileType.Default or TileType.Material))
+                            (spec == -1 || (geoCell.Geo == spec &&
+                                            tileCell.Type is TileType.Default or TileType.Material))
                             &&
-                            (spec2 == -1 || (geoCellNextLayer.Geo == spec2 && tileCellNextLayer.Type is TileType.Default or TileType.Material));
+                            (spec2 == -1 || (geoCellNextLayer.Geo == spec2 &&
+                                             tileCellNextLayer.Type is TileType.Default or TileType.Material));
                     }
                     else
                     {
-                        isLegal = spec == -1 || (geoCell.Geo == spec && tileCell.Type is TileType.Default or TileType.Material);
+                        isLegal = spec == -1 ||
+                                  (geoCell.Geo == spec && tileCell.Type is TileType.Default or TileType.Material);
                     }
 
                     if (!isLegal) return false;
@@ -355,6 +372,7 @@ internal static class Utils
 
         return true;
     }
+
     public static void ForcePlaceTileWithGeo(
         in InitTile init,
         int tileCategoryIndex,
@@ -372,7 +390,7 @@ internal static class Utils
 
         // the top-left of the tile
         var start = Raymath.Vector2Subtract(new(mx, my), head);
-        
+
         // First remove tile heads in the way
 
         for (var y = 0; y < height; y++)
@@ -424,14 +442,15 @@ internal static class Utils
 
                     if (spec != -1) GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz].Geo = spec;
                     if (spec2 != -1 && mz != 2) GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz + 1].Geo = spec2;
-                    
+
                     // leave the newly placed tile head
                     if (x == (int)head.X && y == (int)head.Y) continue;
 
                     GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = new TileCell
                     {
                         Type = TileType.TileBody,
-                        Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                        Data = new TileBody(mx + 1, my + 1,
+                            mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
                     };
 
                     if (specs2.Length > 0 && mz != 2)
@@ -439,14 +458,15 @@ internal static class Utils
                         GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = new TileCell
                         {
                             Type = TileType.TileBody,
-                            Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                            Data = new TileBody(mx + 1, my + 1,
+                                mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
                         };
                     }
                 }
             }
         }
     }
-    
+
     public static void ForcePlaceTileWithoutGeo(
         in InitTile init,
         int tileCategoryIndex,
@@ -464,7 +484,7 @@ internal static class Utils
 
         // the top-left of the tile
         var start = Raymath.Vector2Subtract(new(mx, my), head);
-        
+
         // First remove tile heads in the way
 
         for (var y = 0; y < height; y++)
@@ -515,7 +535,8 @@ internal static class Utils
                     GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = new TileCell
                     {
                         Type = TileType.TileBody,
-                        Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                        Data = new TileBody(mx + 1, my + 1,
+                            mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
                     };
 
                     if (specs2.Length > 0 && mz != 2)
@@ -523,7 +544,8 @@ internal static class Utils
                         GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = new TileCell
                         {
                             Type = TileType.TileBody,
-                            Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
+                            Data = new TileBody(mx + 1, my + 1,
+                                mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
                         };
                     }
                 }
@@ -543,6 +565,7 @@ internal static class Utils
                     { Type = TileType.Default, Data = new TileDefault() };
                 return;
             }
+
             //Console.WriteLine($"Deleting tile head at ({mx},{my},{mz})");
             var data = h;
             var tileInit = GLOBALS.Tiles[data.CategoryPostition.Item1][data.CategoryPostition.Item2];
@@ -563,10 +586,14 @@ internal static class Utils
                     var matrixX = x + (int)start.X;
                     var matrixY = y + (int)start.Y;
 
-                    if (matrixX < 0 || matrixX >= GLOBALS.Level.Width || matrixY < 0 || matrixY >=GLOBALS.Level.Height) continue;
+                    if (matrixX < 0 || matrixX >= GLOBALS.Level.Width || matrixY < 0 ||
+                        matrixY >= GLOBALS.Level.Height) continue;
 
-                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
-                    if (isThick && mz != 2) GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = new TileCell
+                        { Type = TileType.Default, Data = new TileDefault() };
+                    if (isThick && mz != 2)
+                        GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = new TileCell
+                            { Type = TileType.Default, Data = new TileDefault() };
                 }
             }
         }
@@ -581,12 +608,13 @@ internal static class Utils
             if (supposedHead.Data is TileHead { CategoryPostition: (-1, -1, _) } or not TileHead)
             {
                 //Console.WriteLine($"({mx}, {my}, {mz}) reported that ({headX}, {headY}, {headZ}) is supposed to be a tile head, but was found to be a body");
-                GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell() { Type = TileType.Default, Data = new TileDefault() };
+                GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell()
+                    { Type = TileType.Default, Data = new TileDefault() };
                 return;
             }
 
             var headTile = (TileHead)supposedHead.Data;
-            
+
             var tileInit = GLOBALS.Tiles[headTile.CategoryPostition.Item1][headTile.CategoryPostition.Item2];
             var (width, height) = tileInit.Size;
 
@@ -604,11 +632,15 @@ internal static class Utils
                 {
                     var matrixX = x + (int)start.X;
                     var matrixY = y + (int)start.Y;
-                    
-                    if (matrixX < 0 || matrixX >= GLOBALS.Level.Width || matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
 
-                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
-                    if (isThick && mz != 2) GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                    if (matrixX < 0 || matrixX >= GLOBALS.Level.Width || matrixY < 0 ||
+                        matrixY >= GLOBALS.Level.Height) continue;
+
+                    GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = new TileCell
+                        { Type = TileType.Default, Data = new TileDefault() };
+                    if (isThick && mz != 2)
+                        GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = new TileCell
+                            { Type = TileType.Default, Data = new TileDefault() };
                 }
             }
         }
@@ -618,22 +650,22 @@ internal static class Utils
     {
         var (x, y, z) = position;
 
-        for (var lx = -radius; lx < radius+1; lx++)
+        for (var lx = -radius; lx < radius + 1; lx++)
         {
             var matrixX = x + lx;
-            
+
             if (matrixX < 0 || matrixX >= GLOBALS.Level.Width) continue;
-            
-            for (var ly = -radius; ly < radius+1; ly++)
+
+            for (var ly = -radius; ly < radius + 1; ly++)
             {
                 var matrixY = y + ly;
-                
+
                 if (matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
 
                 var cell = GLOBALS.Level.TileMatrix[matrixY, matrixX, z];
-                
+
                 if (cell.Type != TileType.Default && cell.Type != TileType.Material) continue;
-                
+
                 cell.Type = TileType.Material;
                 cell.Data = new TileMaterial(material.name);
 
@@ -642,8 +674,76 @@ internal static class Utils
             }
         }
     }
+
+    internal static bool InBounds<T>(int index, T[] array) => index >= 0 && index < array.Length;
+    internal static bool InBounds<T>(int x, int y, T[,] matrix) => x >= 0 && x < matrix.GetLength(1) &&
+                                                                   y >= 0 && y < matrix.GetLength(0);
     
-    public static void RemoveMaterial(int x, int y, int z, int radius)
+    internal static bool InBounds<T>(int x, int y, int z, T[,,] matrix) => x >= 0 && x < matrix.GetLength(1) &&
+                                                                   y >= 0 && y < matrix.GetLength(0) &&
+                                                                   z >= 0 && z < matrix.GetLength(2);
+
+    internal static T[,] Sample<T>(T[,] matrix, int x, int y, int radius)
+        where T : struct
+    {
+        #if DEBUG
+        if (!InBounds(x, y, matrix)) throw new ArgumentOutOfRangeException($"X or Y are out of materix range (X:{matrix.GetLength(1)}, Y:{matrix.GetLength(0)})");
+        #endif
+        
+        var sample = new T[radius * 2 + 1, radius * 2 + 1];
+        
+        for (var i = 0; i < radius * 2 + 1; i++)
+        {
+            for (var k = 0; k < radius * 2 + 1; k++)
+            {
+                var mx = x - radius + i;
+                var my = y - radius + k;
+
+                if (mx < 0 || mx >= matrix.GetLength(1) ||
+                    my < 0 || my >= matrix.GetLength(0))
+                {
+                    sample[k, i] = default;
+                    continue;
+                }
+
+                sample[k, i] = matrix[my, mx];
+            }
+        }
+
+        return sample;
+    }
+    
+    internal static T[,] Sample<T>(T[,,] matrix, int x, int y, int z, int radius)
+        where T : struct
+    {
+        #if DEBUG
+        if (!InBounds(x, y, z, matrix)) throw new ArgumentOutOfRangeException($"X or Y are out of materix range (X:{matrix.GetLength(1)}, Y:{matrix.GetLength(0)})");
+        #endif
+        
+        var sample = new T[radius * 2 + 1, radius * 2 + 1];
+        
+        for (var i = 0; i < radius * 2 + 1; i++)
+        {
+            for (var k = 0; k < radius * 2 + 1; k++)
+            {
+                var mx = x - radius + i;
+                var my = y - radius + k;
+
+                if (mx < 0 || mx >= matrix.GetLength(1) ||
+                    my < 0 || my >= matrix.GetLength(0))
+                {
+                    sample[k, i] = default;
+                    continue;
+                }
+
+                sample[k, i] = matrix[my, mx, z];
+            }
+        }
+
+        return sample;
+    }
+
+public static void RemoveMaterial(int x, int y, int z, int radius)
     {
         for (var lx = -radius; lx < radius+1; lx++)
         {
