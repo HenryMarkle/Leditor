@@ -1,5 +1,6 @@
 ﻿using Serilog.Core;
 // ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable ClassNeverInstantiated.Global
 
 namespace Leditor.Pages;
 
@@ -12,12 +13,23 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
 
     private readonly List<EditorPage?> _pages = [];
 
+    /// <summary>
+    /// NOT registered
+    /// </summary>
     private ExceptionPage? _exceptionPage;
+    
+    /// <summary>
+    /// NOT registered
+    /// </summary>
     private EditorPage? _defaultPage;
 
     private EditorPage? _previousPage;
     private EditorPage? _currentPage;
 
+    /// <summary>
+    /// Do NOT set this to null.
+    /// </summary>
+    /// <exception cref="NullReferenceException">No current page. No default page. No Exception page.</exception>
     public EditorPage CurrentPage
     {
         get
@@ -43,7 +55,7 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
         private set
         {
             _previousPage = _currentPage;
-            _currentPage = value;
+            _currentPage = value ?? throw new NullReferenceException("Page must not be null");
         }
     }
 
@@ -53,6 +65,20 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
     /// <param name="capacity">the maximum number of pages allowed</param>
     public void Init(int capacity)
     {
+        foreach (var page in _pages)
+        {
+            if (page is IContextListener listener)
+            {
+                Context.ProjectCreated -= listener.OnProjectCreated;
+                Context.ProjectLoaded -= listener.OnProjectLoaded;
+            }
+            
+            page?.Dispose();
+        }
+        
+        _exceptionPage?.Dispose();
+        _defaultPage?.Dispose();
+        
         _pages.Clear();
         _pages.Capacity = capacity;
         _pages.AddRange(new EditorPage?[capacity]);
@@ -67,8 +93,9 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
     public void RegisterException<TPage>()
         where TPage : ExceptionPage, new()
     {
+        _exceptionPage?.Dispose();
         _exceptionPage = new TPage { Logger = Logger, Context = Context };
-        
+
         Logger.Debug("Registered an exception page");
     }
 
@@ -88,6 +115,7 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
         if (_pages[id] is not null) 
             throw new ArgumentException($"Page with id {id} is already registered");
         
+        _defaultPage?.Dispose();
         _defaultPage = new TPage { Logger = Logger, Context = Context };
         _pages[id] = _defaultPage;
         
@@ -107,6 +135,7 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
         
         if (_pages[id] is not null) return false;
         
+        _defaultPage?.Dispose();
         _defaultPage = new TPage { Logger = Logger, Context = Context };
         _pages[id] = _defaultPage;
         
@@ -190,7 +219,7 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
 
         CurrentPage = page;
         
-        PagePushed.Invoke(id, page);
+        PagePushed?.Invoke(id, page);
     }
 
     /// <summary>
@@ -214,7 +243,7 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
 
         CurrentPage = page;
         
-        PagePushed.Invoke(id, page);
+        PagePushed?.Invoke(id, page);
 
         return true;
     }
@@ -231,7 +260,7 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
                       ?? _defaultPage 
                       ?? throw new NullReferenceException("No previous or default page was set");
         
-        PreviousPagePushed.Invoke(CurrentPage);
+        PreviousPagePushed?.Invoke(CurrentPage);
     }
     
     /// <summary>
@@ -251,18 +280,17 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
 
         CurrentPage = _previousPage;
         
-        PreviousPagePushed.Invoke(CurrentPage);
+        PreviousPagePushed?.Invoke(CurrentPage);
         return true;
     }
     
     #region Events
-
     public delegate void PagePushedEventHandler(int id, EditorPage e);
 
     public delegate void PreviousPagePushedEventHandler(EditorPage e);
 
-    public event PagePushedEventHandler PagePushed;
-    public event PreviousPagePushedEventHandler PreviousPagePushed;
+    public event PagePushedEventHandler? PagePushed;
+    public event PreviousPagePushedEventHandler? PreviousPagePushed;
     #endregion
     
     #region DisposePattern
