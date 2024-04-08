@@ -432,7 +432,7 @@ class Program
         
         logger.Information("Initializing data");
 
-        const string version = "Henry's Leditor v0.9.59";
+        const string version = "Henry's Leditor v0.9.60";
         const string raylibVersion = "Raylib v5.0.0";
         
         logger.Information(version);
@@ -820,7 +820,7 @@ void main() {
         
         // Page event handlers
         startPage.ProjectLoaded += propsPage.OnProjectLoaded;
-        startPage.ProjectLoaded += mainPage.OnLevelLoadedFromStart;
+        startPage.ProjectLoaded += mainPage.OnProjectLoaded;
         startPage.ProjectLoaded += dimensionsPage.OnProjectLoaded;
         
         mainPage.ProjectLoaded += propsPage.OnProjectLoaded;

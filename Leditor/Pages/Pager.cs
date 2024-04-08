@@ -130,8 +130,16 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
         if (_pages[id] is not null) 
             throw new ArgumentException($"Page with id {id} is already registered");
 
-        _currentPage = new TPage { Logger = Logger, Context = Context };
-        _pages[id] = _currentPage;
+        var newPage = new TPage { Logger = Logger, Context = Context };
+        
+        _currentPage = newPage;
+        _pages[id] = newPage;
+
+        if (newPage is IContextListener listener)
+        {
+            Context.ProjectCreated += listener.OnProjectCreated;
+            Context.ProjectLoaded += listener.OnProjectLoaded;
+        }
         
         Logger.Debug($"Registered page with id {id}");
     }
@@ -148,8 +156,16 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
         if (id < 0 || id >= _pages.Count) return false;
         if (_pages[id] is not null) return false;
         
-        _currentPage = new TPage { Logger = Logger, Context = Context };
-        _pages[id] = _currentPage;
+        var newPage = new TPage { Logger = Logger, Context = Context };
+        
+        _currentPage = newPage;
+        _pages[id] = newPage;
+        
+        if (newPage is IContextListener listener)
+        {
+            Context.ProjectCreated += listener.OnProjectCreated;
+            Context.ProjectLoaded += listener.OnProjectLoaded;
+        }
         
         Logger.Debug($"Registered page with id {id}");
 
@@ -249,7 +265,7 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
     public event PreviousPagePushedEventHandler PreviousPagePushed;
     #endregion
     
-    #region DisposablePattern
+    #region DisposePattern
     public bool Disposed { get; private set; }
 
     public void Dispose()
@@ -260,7 +276,16 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
         
         Disposed = true;
 
-        foreach (var page in _pages) page?.Dispose();
+        foreach (var page in _pages)
+        {
+            if (page is IContextListener listener)
+            {
+                Context.ProjectCreated -= listener.OnProjectCreated;
+                Context.ProjectLoaded -= listener.OnProjectLoaded;
+            }
+            
+            page?.Dispose();
+        }
 
         _currentPage?.Dispose();
         _defaultPage?.Dispose();
@@ -271,8 +296,6 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
         _exceptionPage = null;
         
         _pages.Clear();
-        
-        GC.SuppressFinalize(this);
     }
 
     ~Pager()

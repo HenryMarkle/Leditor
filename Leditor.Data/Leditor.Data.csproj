@@ -11,4 +11,7 @@
       <ProjectReference Include="..\Leditor.RL\Leditor.RL.csproj" />
     </ItemGroup>
 
+    <PropertyGroup>
+      <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
+    </PropertyGroup>
 </Project>

@@ -952,12 +952,6 @@ internal class EffectsEditorPage : EditorPage
 
                     if (ImGui.Checkbox("Tiles", ref _showTiles)) _shouldRedrawLevel = true;
                     if (ImGui.Checkbox("Props", ref _showProps)) _shouldRedrawLevel = true;
-                    
-                    if (ImGui.IsItemHovered() && ImGui.BeginTooltip())
-                    {
-                        ImGui.Text("Performance Penalty");
-                        ImGui.EndTooltip();    
-                    }
 
                     if (_showProps)
                     {

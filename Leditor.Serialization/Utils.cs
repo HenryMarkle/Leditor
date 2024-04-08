@@ -10,10 +10,14 @@ internal static class Utils
     internal static T? TryGet<T>(AstNode.PropertyList propertyList, string key)
         where T : AstNode.Base
     {
-        return (T?) propertyList
+        var property = propertyList
             .Values
             .FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == key)
             .Value;
+
+        if (property is T t) return t;
+        
+        return null;
     }
 
     [Pure]

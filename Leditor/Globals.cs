@@ -8,6 +8,7 @@ using Leditor.Pages;
 
 namespace Leditor;
 
+#nullable enable
 
 /// <summary>
 /// Global state - accessible for pages and the Main function

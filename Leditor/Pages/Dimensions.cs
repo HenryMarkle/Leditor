@@ -5,7 +5,7 @@ using static Raylib_cs.Raylib;
 
 namespace Leditor.Pages;
 
-internal class DimensionsEditorPage : EditorPage
+internal class DimensionsEditorPage : EditorPage, IContextListener
 {
     public override void Dispose()
     {
@@ -60,10 +60,15 @@ internal class DimensionsEditorPage : EditorPage
     }
 
     #nullable enable
-    internal void OnProjectLoaded(object? sender, EventArgs e)
+    public void OnProjectLoaded(object? sender, EventArgs e)
     {
         _matrixWidthValue = GLOBALS.Level.Width;
         _matrixHeightValue = GLOBALS.Level.Height;
+    }
+
+    public void OnProjectCreated(object? sender, EventArgs e)
+    {
+        
     }
     #nullable disable
 

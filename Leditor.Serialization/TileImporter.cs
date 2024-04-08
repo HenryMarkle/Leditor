@@ -92,7 +92,24 @@ public static class TileImporter
                 }
             }).ToArray();
         } else { specs3 = []; }
+        
+        // Merge specs
+        
+        var specs = new int[size.Item2, size.Item1,3];
+        
+        for (var x = 0; x < size.Item1; x++)
+        {
+            for (var y = 0; y < size.Item2; y++)
+            {
+                var index = x * size.Item2 + y;
 
+                specs[y, x, 0] = specs1[index];
+                
+                specs[y, x, 1] = specs2 is [] ? -1 : specs2[index];
+                specs[y, x, 2] = specs3 is [] ? -1 : specs3[index];
+            }
+        }
+        
         // type
 
         var typeStr = typeAst?.Value ?? throw new MissingTileDefinitionPropertyException("tp");
@@ -130,7 +147,87 @@ public static class TileImporter
         }).ToArray();
         } else { repeatL = []; }
         
-        return new TileDefinition(name, size, tp, bfTiles, specs1, specs2, specs3, repeatL);
+        return new TileDefinition(name, size, tp, bfTiles, specs, repeatL);
+    }
+
+    /// <summary>
+    /// Retrieves the data of the tile definitions without textures
+    /// </summary>
+    /// <param name="initPath">Tile definition data</param>
+    /// <returns>Tile definitions without textures</returns>
+    public static ((string name, Color color)[], TileDefinition[][]) ParseInit(string initPath)
+    {
+        var text = File.ReadAllText(initPath);
+        
+        if (string.IsNullOrEmpty(text))
+            throw new Exception("Tile definitions text cannot be empty");
+
+        var lines = text.ReplaceLineEndings().Split(Environment.NewLine);
+
+        (string name, Color color)[] categories = [];
+        TileDefinition[][] definitions = [];
+        
+        for (var l = 0; l < lines.Length; l++)
+        {
+            var line = lines[l];
+            
+            if (string.IsNullOrEmpty(line) || line.StartsWith("--")) continue;
+
+            // Category
+            if (line.StartsWith('-'))
+            {
+                AstNode.Base categoryObject;
+                (string name, Color color) category;
+
+                try
+                {
+                    categoryObject = LingoParser.Expression.ParseOrThrow(line.TrimStart('-'));
+                }
+                catch (Exception e)
+                {
+                    throw new ParseException($"Failed to parse tile definition category from string at line {l + 1}", e);
+                }
+
+                try
+                {
+                    category = GetTileDefinitionCategory(categoryObject);
+                }
+                catch (Exception e)
+                {
+                    throw new ParseException(
+                        $"Failed to get tile definition category from parsed string at line {l + 1}", e);
+                }
+
+                categories = [..categories, category];
+                definitions = [..definitions, []];
+            }
+            // Tile
+            else
+            {
+                AstNode.Base tileObject;
+
+                try
+                {
+                    tileObject = LingoParser.Expression.ParseOrThrow(line);
+                }
+                catch (Exception e)
+                {
+                    throw new ParseException($"Failed to parse tile definition from string at line {l + 1}", e);
+                }
+
+                try
+                {
+                    var tile = GetTile(tileObject);
+                    definitions[^1] = [..definitions[^1], tile];
+                }
+                catch (ParseException e)
+                {
+                    throw new ParseException($"Failed to get tile definition from parsed string at line {l + 1}", e);
+                }
+            }
+        }
+        
+        return (categories, definitions);
     }
     
     [Pure]
@@ -165,7 +262,7 @@ public static class TileImporter
         {
             var line = lines[l];
             
-            if (line.StartsWith("--")) continue;
+            if (string.IsNullOrEmpty(line) || line.StartsWith("--")) continue;
 
             // Category
             if (line.StartsWith('-'))

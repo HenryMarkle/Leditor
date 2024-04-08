@@ -24,7 +24,7 @@ public class TileDex : IDisposable
     /// Category -> Definition[]
     /// </summary>
     private readonly ImmutableDictionary<string, TileDefinition[]> _categories;
-    
+
     /// <summary>
     /// Category -> Color
     /// </summary>
@@ -102,6 +102,11 @@ public class TileDex : IDisposable
     public bool CategoryExists(string name) => _categories.ContainsKey(name);
 
     /// <summary>
+    /// An array of category names with a fixed order
+    /// </summary>
+    public string[] OrderedCategoryNames { get; init; }
+
+    /// <summary>
     /// Gets the texture associated with the tile
     /// </summary>
     /// <param name="name">The name of the tile</param>
@@ -128,7 +133,8 @@ public class TileDex : IDisposable
         Dictionary<string, Color> colors,
         Dictionary<string, string> tileCategory,
         Dictionary<string, Color> tileColor,
-        Dictionary<string, Texture2D> textures)
+        Dictionary<string, Texture2D> textures,
+        string[] orderedCategoryNames)
     {
         _definitions = definitions.ToImmutableDictionary();
         _categories = categories.ToImmutableDictionary();
@@ -136,6 +142,7 @@ public class TileDex : IDisposable
         _tileCategory = tileCategory.ToImmutableDictionary();
         _tileColor = tileColor.ToImmutableDictionary();
         _textures = textures.ToImmutableDictionary();
+        OrderedCategoryNames = [..orderedCategoryNames];
     }
 
     ~TileDex()

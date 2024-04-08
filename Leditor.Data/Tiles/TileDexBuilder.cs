@@ -7,6 +7,7 @@ public class TileDexBuilder
 {
     private readonly Dictionary<string, (Color color, List<TileDefinition> definitions)> _tiles = new();
     private readonly Dictionary<string, Texture2D> _textures = new();
+    private readonly List<string> _orderedCategoryNames = [];
 
     /// <summary>
     /// Register a tile category
@@ -19,6 +20,7 @@ public class TileDexBuilder
         try
         {
             _tiles.Add(category, (color, []));
+            _orderedCategoryNames.Add(category);
         }
         catch (ArgumentException e)
         {
@@ -70,6 +72,14 @@ public class TileDexBuilder
             colors.Add(category, color);
         }
 
-        return new TileDex(definitions, categories, colors, tileCategory, tileColor, _textures);
+        return new TileDex(
+            definitions, 
+            categories, 
+            colors, 
+            tileCategory, 
+            tileColor, 
+            _textures, 
+            _orderedCategoryNames.ToArray()
+        );
     }
 }

@@ -373,6 +373,7 @@ internal static class Utils
         return true;
     }
 
+    [Obsolete]
     public static void ForcePlaceTileWithGeo(
         in InitTile init,
         int tileCategoryIndex,
@@ -467,6 +468,7 @@ internal static class Utils
         }
     }
 
+    [Obsolete]
     public static void ForcePlaceTileWithoutGeo(
         in InitTile init,
         int tileCategoryIndex,
@@ -646,6 +648,7 @@ internal static class Utils
         }
     }
 
+    [Obsolete]
     public static void PlaceMaterial((string name, Color color) material, (int x, int y, int z) position, int radius)
     {
         var (x, y, z) = position;
@@ -743,32 +746,33 @@ internal static class Utils
         return sample;
     }
 
-public static void RemoveMaterial(int x, int y, int z, int radius)
-    {
-        for (var lx = -radius; lx < radius+1; lx++)
+    [Obsolete]
+    public static void RemoveMaterial(int x, int y, int z, int radius)
         {
-            var matrixX = x + lx;
-            
-            if (matrixX < 0 || matrixX >= GLOBALS.Level.Width) continue;
-            
-            for (var ly = -radius; ly < radius+1; ly++)
+            for (var lx = -radius; lx < radius+1; lx++)
             {
-                var matrixY = y + ly;
+                var matrixX = x + lx;
                 
-                if (matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
+                if (matrixX < 0 || matrixX >= GLOBALS.Level.Width) continue;
+                
+                for (var ly = -radius; ly < radius+1; ly++)
+                {
+                    var matrixY = y + ly;
+                    
+                    if (matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
 
-                var cell = GLOBALS.Level.TileMatrix[matrixY, matrixX, z];
-                
-                if (cell.Type != TileType.Default && cell.Type != TileType.Material) continue;
-                
-                cell.Type = TileType.Default;
-                cell.Data = new TileDefault();
+                    var cell = GLOBALS.Level.TileMatrix[matrixY, matrixX, z];
+                    
+                    if (cell.Type != TileType.Default && cell.Type != TileType.Material) continue;
+                    
+                    cell.Type = TileType.Default;
+                    cell.Data = new TileDefault();
 
-                GLOBALS.Level.TileMatrix[matrixY, matrixX, z] = cell;
+                    GLOBALS.Level.TileMatrix[matrixY, matrixX, z] = cell;
+                }
             }
         }
-    }
-        
+            
     public static int GetEffectBrushStrength(string effect) => effect switch
     {
         "BlackGoo" or "Fungi Flowers" or "Lighthouse Flowers" or
@@ -1125,6 +1129,7 @@ public static void RemoveMaterial(int x, int y, int z, int radius)
         _ => -1
     };
 
+    [Obsolete]
     public static bool IsConnectionEntranceConnected(RunCell[][] context)
     {
         if (
@@ -1608,6 +1613,7 @@ public static void RemoveMaterial(int x, int y, int z, int radius)
         return newArray;
     }
 
+    [Obsolete]
     internal static void Resize((string, EffectOptions, double[,])[] list, int width, int height, int newWidth, int newHeight)
     {
         for (int i = 0; i < list.Length; i++)
@@ -1708,6 +1714,7 @@ public static void RemoveMaterial(int x, int y, int z, int radius)
         }
     }
 
+    [Obsolete]
     internal static RunCell[,,] NewGeoMatrix(int width, int height, int geoFill = 0)
     {
         RunCell[,,] matrix = new RunCell[height, width, 3];
@@ -1725,6 +1732,7 @@ public static void RemoveMaterial(int x, int y, int z, int radius)
         return matrix;
     }
 
+    [Obsolete]
     internal static void ReassignTileDefinitions(TileCell[,,] matrix)
     {
         for (var y = 0; y < matrix.GetLength(0); y++)
@@ -1829,6 +1837,7 @@ public static void RemoveMaterial(int x, int y, int z, int radius)
         ];
 
 
+    [Obsolete]
     /// Meaningless name; this function turns a sequel of stackable IDs to an array that can be used at leditor runtime
     internal static bool[] DecomposeStackables(IEnumerable<int> seq)
     {
@@ -1953,6 +1962,7 @@ public static void RemoveMaterial(int x, int y, int z, int radius)
         return newArray;
     }
 
+    [Obsolete]
     internal static TileCell[,,] NewTileMatrix(int width, int height)
     {
         TileCell[,,] matrix = new TileCell[height, width, 3];
@@ -2030,7 +2040,8 @@ public static void RemoveMaterial(int x, int y, int z, int radius)
         return new Rectangle(nearestX, nearestY, furthestX - nearestX, furthestY - nearestY);
     }
     
-    internal static Rectangle EncloseQuads(ref PropQuads quads)
+    [Obsolete]
+    internal static Rectangle EncloseQuads(in PropQuads quads)
     {
         var nearestX = Math.Min(Math.Min(quads.TopLeft.X, quads.TopRight.X), Math.Min(quads.BottomLeft.X, quads.BottomRight.X));
         var nearestY = Math.Min(Math.Min(quads.TopLeft.Y, quads.TopRight.Y), Math.Min(quads.BottomLeft.Y, quads.BottomRight.Y));
@@ -2250,6 +2261,7 @@ public static void RemoveMaterial(int x, int y, int z, int radius)
 
     internal static Vector2 RectangleCenter(ref Rectangle rectangle) => new(rectangle.X + rectangle.Width / 2, rectangle.Y + rectangle.Height / 2);
 
+    [Obsolete]
     internal static void ScaleQuads(ref PropQuads quads, float factor)
     {
         var enclose = EncloseQuads(quads);
@@ -2339,6 +2351,7 @@ public static void RemoveMaterial(int x, int y, int z, int radius)
         quads.BottomRight = quads.BottomRight with { Y = (quads.BottomRight.Y - center.Y) * factor + center.Y };
     }
 
+    [Obsolete]
     internal static (Vector2 pA, Vector2 pB) RopeEnds(in PropQuads quads)
     {
         return (
@@ -2422,6 +2435,7 @@ public static void RemoveMaterial(int x, int y, int z, int radius)
     }
 
     #nullable enable
+    [Obsolete]
     public static async Task<(bool success, Exception? exception)> SaveProjectAsync()
     {
         (bool success, Exception? exception) result;

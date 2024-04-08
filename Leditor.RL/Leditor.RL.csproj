@@ -15,4 +15,7 @@
       <Folder Include="Drawables\" />
     </ItemGroup>
 
+    <PropertyGroup>
+      <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
+    </PropertyGroup>
 </Project>

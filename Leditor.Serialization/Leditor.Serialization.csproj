@@ -20,4 +20,7 @@
       <PackageReference Include="Pidgin" Version="3.2.3" />
     </ItemGroup>
 
+    <PropertyGroup>
+      <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
+    </PropertyGroup>
 </Project>

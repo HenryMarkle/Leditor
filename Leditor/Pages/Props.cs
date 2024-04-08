@@ -6,7 +6,7 @@ using RenderTexture2D = Leditor.RL.Managed.RenderTexture2D;
 
 namespace Leditor.Pages;
 
-internal class PropsEditorPage : EditorPage
+internal class PropsEditorPage : EditorPage, IContextListener
 {
     public override void Dispose()
     {
@@ -785,13 +785,13 @@ internal class PropsEditorPage : EditorPage
     }
 
     #nullable enable
-    internal void OnProjectLoaded(object? sender, EventArgs e)
+    public void OnProjectLoaded(object? sender, EventArgs e)
     {
         ImportRopeModels();
         _selected = new bool[GLOBALS.Level.Props.Length];
     }
 
-    internal void OnProjectCreated(object? sender, EventArgs e)
+    public void OnProjectCreated(object? sender, EventArgs e)
     {
         ImportRopeModels();
         _selected = new bool[GLOBALS.Level.Props.Length];
@@ -2949,40 +2949,8 @@ internal class PropsEditorPage : EditorPage
                     {
                         case 0: // Current Tile-As-Prop
                             {
-                                #if DEBUG
-                                if (_propsMenuTilesCategoryIndex >= _tilesAsPropsIndices.Length)
-                                {
-                                    Logger.Fatal($"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices.Length}]: {nameof(_propsMenuTilesCategoryIndex)} ({_propsMenuTilesCategoryIndex} was out of bounds)");
-                                    throw new IndexOutOfRangeException(message: $"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices.Length}]: {nameof(_propsMenuTilesCategoryIndex)} ({_propsMenuTilesCategoryIndex} was out of bounds)");
-                                }
-
-                                if (_propsMenuTilesIndex >=
-                                    _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length)
-                                {
-                                    Logger.Fatal($"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length}]: {nameof(_propsMenuTilesIndex)} ({_propsMenuTilesIndex} was out of bounds)");
-                                    throw new IndexOutOfRangeException(message: $"failed to fetch current tile-as-prop from {nameof(_tilesAsPropsIndices)}[{_tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length}]: {nameof(_propsMenuTilesIndex)} ({_propsMenuTilesIndex} was out of bounds)");
-                                }
-
-                                {
-                                    if (currentTileAsPropCategory.index >= GLOBALS.Textures.Tiles.Length)
-                                    {
-                                        Logger.Fatal($"failed to fetch tile-as-prop texture from {nameof(GLOBALS.Textures.Tiles)}[{GLOBALS.Textures.Tiles.Length}]: {nameof(currentTileAsPropCategory)}.length ({currentTileAsPropCategory.index}) was outside the bounds of the array.");
-                                        throw new IndexOutOfRangeException($"failed to fetch tile-as-prop texture from {nameof(GLOBALS.Textures.Tiles)}[{GLOBALS.Textures.Tiles.Length}]: {nameof(currentTileAsPropCategory)}.length ({currentTileAsPropCategory.index}) was outside the bounds of the array.");
-                                    }
-                                    
-                                    var ind = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
-
-                                    if (ind.index >= GLOBALS.Textures.Tiles[currentTileAsPropCategory.index].Length)
-                                    {
-                                        Logger.Fatal($"failed to fetch tile-as-prop texture from {nameof(GLOBALS.Textures.Tiles)}[{nameof(currentTileAsPropCategory)}][Length: {GLOBALS.Textures.Tiles[currentTileAsPropCategory.index].Length}]: {nameof(_tilesAsPropsIndices)}][{_propsMenuTilesCategoryIndex}][{_propsMenuTilesIndex}] ({ind.index}) was outside of the bounds of the array.");
-                                        throw new IndexOutOfRangeException(
-                                            $"failed to fetch tile-as-prop texture from {nameof(GLOBALS.Textures.Tiles)}[{nameof(currentTileAsPropCategory)}][{GLOBALS.Textures.Tiles[currentTileAsPropCategory.index].Length}]: {nameof(_tilesAsPropsIndices)}][{_propsMenuTilesCategoryIndex}][{_propsMenuTilesIndex}] ({ind.index}) was outside of the bounds of the array.");
-                                    }
-                                }
-                                #endif
-
                                 var currentTileAsProp = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
-                                var currentTileAsPropTexture = GLOBALS.Textures.Tiles[currentTileAsPropCategory.index][currentTileAsProp.index];
+                                var currentTileAsPropTexture = GLOBALS.Textures.Tiles[_tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex].index][currentTileAsProp.index];
                                 
                                 switch (_snapMode)
                                 {

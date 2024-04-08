@@ -54,6 +54,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Leditor.Data\Leditor.Data.csproj" />
     <ProjectReference Include="..\Leditor.RL\Leditor.RL.csproj" />
   </ItemGroup>
 

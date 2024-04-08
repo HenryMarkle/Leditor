@@ -2,6 +2,17 @@
 
 namespace Leditor.Pages;
 
+#nullable enable
+
+/// <summary>
+/// Interface for any class that listens to <see cref="Context"/>'s events.
+/// </summary>
+internal interface IContextListener
+{
+    void OnProjectCreated(object? sender, EventArgs e);
+    void OnProjectLoaded(object? sender, EventArgs e);
+}
+
 internal abstract class EditorPage : IDrawable, IDisposable
 {
     public bool Disposed { get; protected set; }

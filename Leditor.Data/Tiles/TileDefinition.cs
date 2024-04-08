@@ -19,32 +19,51 @@ public enum TileType {
 /// <param name="size">The dimensions of the tile without accounting for the <paramref name="bufferTiles"/></param>
 /// <param name="type">Denotes the type of the tile</param>
 /// <param name="bufferTiles">The extra space the tile texture takes from all directions</param>
-/// <param name="specs1">The first layer geometry requirement per unit tile</param>
-/// <param name="specs2">The second layer geometry requirement per unit tile</param>
-/// <param name="specs3">The third layer geometry requirement per unit tile</param>
+/// <param name="specs">The first layer geometry requirement per unit tile</param>
 /// <param name="repeat">How many times each layer is rendered</param>
-/// <param name="texture">The texture associated with the tile - Do not construct manually</param>
 // ReSharper disable once ClassNeverInstantiated.Global
 public sealed class TileDefinition(
     string name,
     (int Width, int Height) size,
     TileType type,
     int bufferTiles,
-    int[] specs1,
-    int[] specs2,
-    int[] specs3,
+    int[,,] specs,
     int[] repeat
 ) : IIdentifiable<string>
 {
-
+    /// <summary>
+    /// The name of the tile - Must be unique.
+    /// </summary>
     public string Name { get; } = name;
+    
+    /// <summary>
+    /// The size of the tile, in matrix units (20 pixels).
+    /// </summary>
     public (int Width, int Height) Size { get; } = size;
+    
+    /// <summary>
+    /// The type of the tile - Determines the rendering method.
+    /// </summary>
     public TileType Type { get; } = type;
+    
+    /// <summary>
+    /// The extra space surrounding the tile texture from all sides - in matrix units (20 pixels).
+    /// </summary>
     public int BufferTiles { get; } = bufferTiles;
-    public int[] Specs1 { get; } = specs1;
-    public int[] Specs2 { get; } = specs2;
-    public int[] Specs3 { get; } = specs3;
+    
+    /// <summary>
+    /// A three-dimensional array of Geometry tile IDs specifying the geometry requirements of the tile.
+    /// <para>Syntax: [y, x, z]</para>
+    /// </summary>
+    public int[,,] Specs { get; } = specs;
+    
+    /// <summary>
+    /// An array specifying the number of layers and the number of
+    /// times each layer gets rendered repeatedly during render time.
+    /// </summary>
     public int[] Repeat { get; } = repeat;
+
+    private readonly int _hashCode  = name.GetHashCode();
     
     /// <summary>
     /// A weak reference to the associated texture.
@@ -59,8 +78,9 @@ public sealed class TileDefinition(
     public static bool operator ==(TileDefinition t1, TileDefinition t2) => string.Equals(t1.Name, t2.Name, StringComparison.InvariantCultureIgnoreCase);
     public static bool operator !=(TileDefinition t1, TileDefinition t2) => !string.Equals(t1.Name, t2.Name, StringComparison.InvariantCultureIgnoreCase);
 
-    public override bool Equals(object? obj) =>
-        (obj is TileDefinition t) && string.Equals(Name, t.Name, StringComparison.InvariantCultureIgnoreCase);
+    public override bool Equals(object? obj) => obj is TileDefinition t && _hashCode == t.GetHashCode();
 
-    public override int GetHashCode() => Name.GetHashCode();
+    public static implicit operator string(TileDefinition d) => d.Name;
+
+    public override int GetHashCode() => _hashCode;
 }

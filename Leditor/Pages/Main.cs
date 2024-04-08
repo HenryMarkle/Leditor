@@ -12,7 +12,7 @@ namespace Leditor.Pages;
 
 #nullable enable
 
-internal class MainPage : EditorPage
+internal class MainPage : EditorPage, IContextListener
 {
     public override void Dispose()
     {
@@ -55,12 +55,17 @@ internal class MainPage : EditorPage
     
     private DrizzleRenderWindow? _renderWindow;
 
-    public void OnLevelLoadedFromStart(object? sender, EventArgs e)
+    public void OnProjectLoaded(object? sender, EventArgs e)
     {
         if (e is LevelLoadedEventArgs l)
         {
             _undefinedTilesAlert = l.UndefinedTiles;
         }
+    }
+
+    public void OnProjectCreated(object? sender, EventArgs e)
+    {
+        
     }
     
     private async Task<SaveProjectResult> SaveProjectAsync(string path)
