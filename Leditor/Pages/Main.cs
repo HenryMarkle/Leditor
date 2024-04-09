@@ -16,10 +16,13 @@ internal class MainPage : EditorPage, IContextListener
 {
     public override void Dispose()
     {
+        if (Disposed) return;
         Disposed = true;
+        
+        // _explorer.Dispose();
     }
 
-    private FileX _explorer = new();
+    // private readonly FileX _explorer = new();
     
     internal event EventHandler? ProjectLoaded;
 
@@ -61,11 +64,13 @@ internal class MainPage : EditorPage, IContextListener
         {
             _undefinedTilesAlert = l.UndefinedTiles;
         }
+
+        _shouldRedrawLevel = true;
     }
 
     public void OnProjectCreated(object? sender, EventArgs e)
     {
-        
+        _shouldRedrawLevel = true;
     }
     
     private async Task<SaveProjectResult> SaveProjectAsync(string path)
@@ -118,43 +123,10 @@ internal class MainPage : EditorPage, IContextListener
                 {
                     var cell = res.TileMatrix![y, x, z];
 
-                    if (cell.Type == TileType.TileHead)
+                    if (cell.Data is TileHead h)
                     {
-                        var (category, position, name) = ((TileHead)cell.Data).CategoryPostition;
-
-                        // code readability could be optimized using System.Linq
-
-                        for (var c = 0; c < GLOBALS.Tiles.Length; c++)
-                        {
-                            for (var i = 0; i < GLOBALS.Tiles[c].Length; i++)
-                            {
-                                if (GLOBALS.Tiles[c][i].Name == name)
-                                {
-                                    res.TileMatrix![y, x, z].Data.CategoryPostition = (c, i, name);
-
-                                    try
-                                    {
-                                        _ = GLOBALS.Textures.Tiles[c][i];
-                                    }
-                                    catch
-                                    {
-                                        Logger.Warning($"missing tile texture detected: matrix index: ({x}, {y}, {z}); category {category}, position: {position}, name: \"{name}\"");
-                                        return TileCheckResult.MissingTexture;
-                                    }
-
-                                    goto skip;
-                                }
-                            }
-                        }
-
-                        var data = (TileHead)cell.Data;
-                        
-                        data.CategoryPostition = (-1, -1, name);
-
-                        res.TileMatrix![y, x, z] = cell with { Data = data };
-                        
-                        // Tile not found
-                        result = TileCheckResult.Missing;
+                        if (h.Definition is null) result = TileCheckResult.Missing;
+                        else if (h.Definition.Texture.Id == 0) result = TileCheckResult.MissingTexture;
                     }
                     else if (cell.Type == TileType.Material)
                     {
@@ -178,6 +150,7 @@ internal class MainPage : EditorPage, IContextListener
         return result;
     }
 
+    // TODO: Fix
     private PropCheckResult CheckPropIntegrity(in LoadFileResult res)
     {
         var result = PropCheckResult.Ok;
@@ -194,7 +167,7 @@ internal class MainPage : EditorPage, IContextListener
                 {
                     InitPropType.Long => GLOBALS.Textures.LongProps[prop.position.index],
                     InitPropType.Rope => GLOBALS.Textures.RopeProps[prop.position.index],
-                    InitPropType.Tile => GLOBALS.Textures.Tiles[prop.position.category][prop.position.index],
+                    InitPropType.Tile => prop.tile?.Texture ?? throw new NullReferenceException(),
                     _ => GLOBALS.Textures.Props[prop.position.category][prop.position.index]
                 };
 
@@ -725,6 +698,7 @@ internal class MainPage : EditorPage, IContextListener
                             
                         GLOBALS.ProjectPath = parent ?? GLOBALS.ProjectPath;
                         GLOBALS.Level.ProjectName = Path.GetFileNameWithoutExtension(_openFileDialog.Result);
+                        _shouldRedrawLevel = true;
 
                         _isGuiLocked = false;
                         GLOBALS.LockNavigation = false;
@@ -753,25 +727,25 @@ internal class MainPage : EditorPage, IContextListener
                     ? Color.Black 
                     : new(170, 170, 170, 255));
 
+                if (_shouldRedrawLevel)
+                {
+                    Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
+                    {
+                        Water = _showWater,
+                        WaterAtFront = GLOBALS.Level.WaterAtFront,
+                        TintedTiles = GLOBALS.Settings.GeneralSettings.FancyTiles,
+                        TintedProps = GLOBALS.Settings.GeneralSettings.FancyProps,
+                        TilesLayer1 = _showTiles,
+                        TilesLayer2 = _showTiles,
+                        TilesLayer3 = _showTiles,
+                        PropsLayer1 = _showProps,
+                        PropsLayer2 = _showProps,
+                        PropsLayer3 = _showProps,
+                    });
+                    _shouldRedrawLevel = false;
+                }
                 BeginMode2D(_camera);
                 {
-                    if (_shouldRedrawLevel)
-                    {
-                        Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
-                        {
-                            Water = _showWater,
-                            WaterAtFront = GLOBALS.Level.WaterAtFront,
-                            TintedTiles = GLOBALS.Settings.GeneralSettings.FancyTiles,
-                            TintedProps = GLOBALS.Settings.GeneralSettings.FancyProps,
-                            TilesLayer1 = _showTiles,
-                            TilesLayer2 = _showTiles,
-                            TilesLayer3 = _showTiles,
-                            PropsLayer1 = _showProps,
-                            PropsLayer2 = _showProps,
-                            PropsLayer3 = _showProps,
-                        });
-                        _shouldRedrawLevel = false;
-                    }
                     
                     DrawRectangleLinesEx(new Rectangle(-3, 37, GLOBALS.Level.Width * 20 + 6, GLOBALS.Level.Height * 20 + 6), 3, Color.White);
             

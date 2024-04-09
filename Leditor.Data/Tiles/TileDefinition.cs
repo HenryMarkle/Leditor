@@ -28,7 +28,8 @@ public sealed class TileDefinition(
     TileType type,
     int bufferTiles,
     int[,,] specs,
-    int[] repeat
+    int[] repeat,
+    string[] tags
 ) : IIdentifiable<string>
 {
     /// <summary>
@@ -63,6 +64,11 @@ public sealed class TileDefinition(
     /// </summary>
     public int[] Repeat { get; } = repeat;
 
+    /// <summary>
+    /// Tags that provide additional information about the tile.
+    /// </summary>
+    public string[] Tags { get; } = tags;
+
     private readonly int _hashCode  = name.GetHashCode();
     
     /// <summary>
@@ -75,9 +81,16 @@ public sealed class TileDefinition(
     
     //
 
-    public static bool operator ==(TileDefinition t1, TileDefinition t2) => string.Equals(t1.Name, t2.Name, StringComparison.InvariantCultureIgnoreCase);
-    public static bool operator !=(TileDefinition t1, TileDefinition t2) => !string.Equals(t1.Name, t2.Name, StringComparison.InvariantCultureIgnoreCase);
-
+    public static bool operator ==(TileDefinition? t1, TileDefinition? t2) 
+        => t1 is not null && 
+           t2 is not null && 
+           t1.GetHashCode() == t2.GetHashCode();
+    
+    public static bool operator !=(TileDefinition? t1, TileDefinition? t2) 
+        => t1 is null || 
+           t2 is null || 
+           t1.GetHashCode() != t2.GetHashCode();
+    
     public override bool Equals(object? obj) => obj is TileDefinition t && _hashCode == t.GetHashCode();
 
     public static implicit operator string(TileDefinition d) => d.Name;

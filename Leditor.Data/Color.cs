@@ -14,6 +14,9 @@ public readonly record struct Color(byte R = 255, byte G = 255, byte B = 255, by
         : this((byte) vector3.X, (byte) vector3.Y, (byte) vector3.Z) { }
     
     //
+
+    public static implicit operator Raylib_cs.Color(Color c) => new(c.R, c.G, c.B, c.A);
+    public static implicit operator Color(Raylib_cs.Color c) => new(c.R, c.G, c.B, c.A);
     
     public static implicit operator Color((byte, byte, byte) tuple) 
         => new(tuple.Item1, tuple.Item2, tuple.Item3);

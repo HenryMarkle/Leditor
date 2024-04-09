@@ -11,14 +11,14 @@
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <!-- <StripSymbols>false</StripSymbols> -->
     <!-- <IsTrimmable>false</IsTrimmable> -->
-    <IsAotCompatible>true</IsAotCompatible>
+    <!-- <IsAotCompatible>true</IsAotCompatible> -->
     <!-- <PublishSingleFile>true</PublishSingleFile> -->
     <PublishAot>false</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="ImGui.NET" Version="1.90.1.1" />
-    <PackageReference Include="Pidgin" Version="3.2.2" />
+    <PackageReference Include="Pidgin" Version="3.2.3" />
     <PackageReference Include="Raylib-cs" Version="6.0.0" />
     <PackageReference Include="rlImgui-cs" Version="2.0.3" />
     <PackageReference Include="Serilog" Version="2.12.0" />
@@ -56,6 +56,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Leditor.Data\Leditor.Data.csproj" />
     <ProjectReference Include="..\Leditor.RL\Leditor.RL.csproj" />
+    <ProjectReference Include="..\Leditor.Serialization\Leditor.Serialization.csproj" />
   </ItemGroup>
 
 

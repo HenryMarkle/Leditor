@@ -261,7 +261,6 @@ class Program
         return Importers.GetTileInit(text);
     }
 
-    // Unused
     private static ((string, Color)[], InitTile[][]) LoadTileInitFromRenderer()
     {
         var path = Path.Combine(GLOBALS.Paths.RendererDirectory, "Graphics", "Init.txt");
@@ -269,6 +268,12 @@ class Program
         var text = File.ReadAllText(path).ReplaceLineEndings();
 
         return Importers.GetTileInit(text);
+    }
+
+    private static async Task<((string, Data.Color)[], Data.Tiles.TileDefinition[][])> LoadTileInitFromRendererAsync()
+    {
+        return await TileImporter.ParseInitAsync(Path.Combine(GLOBALS.Paths.RendererDirectory, "Graphics",
+            "Init.txt"));
     }
 
     private static async Task<TileInitLoadInfo[]> LoadTileInitPackages()
@@ -294,6 +299,35 @@ class Program
 
         return [..inits];
     }
+
+    private static async Task<((string name, Data.Color color)[], Data.Tiles.TileDefinition[][], string directory)[]>
+        LoadTileInitPacksAsync()
+    {
+        var packageDirectories = Directory.GetDirectories(GLOBALS.Paths.TilePackagesDirectory);
+        
+        IEnumerable<(string directory, string file)> initPaths = packageDirectories.Select(directory => (directory, Path.Combine(directory, "init.txt")));
+
+        var initLoadTasks = initPaths
+            .Where(p => File.Exists(p.Item2))
+            .Select(p => 
+                Task.Factory.StartNew(() => {
+                    var task = TileImporter.ParseInitAsync(p.file);
+
+                    task.Wait();
+
+                    var (categories, tiles) = task.Result;
+                    
+                    return (categories, tiles, p.directory);
+                })
+            )
+            .ToArray();
+
+        List<((string name, Data.Color color)[], Data.Tiles.TileDefinition[][], string directory)> inits = [];
+
+        foreach (var task in initLoadTasks) inits.Add(await task);
+
+        return [..inits];
+    }
     
     // TODO: add packed props
 
@@ -309,6 +343,10 @@ class Program
         var text = File.ReadAllText(Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", "Init.txt")).ReplaceLineEndings();
         return Importers.GetPropsInit(text);
     }
+    
+    //
+
+    private static TileLoader _tileLoader;
 
     // MAIN FUNCTION
     private static void Main()
@@ -351,17 +389,26 @@ class Program
             }
         }
 
-        // check for the assets folder and subfolders
-        var integrityFailed = false;
+        // Check for the assets folder and subfolders
+        
+        // Check /assets. A common mistake when building is to forget to copy the 
+        // assets folder
+
+        var missingAssetsDirectory = !Directory.Exists(GLOBALS.Paths.AssetsDirectory);
+        
+        var failedIntegrity = missingAssetsDirectory;
+        
+        if (failedIntegrity) goto skip_file_check;
+        
         foreach (var (directory, exists) in GLOBALS.Paths.DirectoryIntegrity)
         {
             if (!exists)
             {
-                logger.Fatal($"critical directory not found: \"{directory}\"");
-                integrityFailed = true;
+                logger.Fatal($"Critical directory not found: \"{directory}\"");
+                failedIntegrity = true;
             }
             
-            if (integrityFailed) goto skip_file_check;
+            if (failedIntegrity) goto skip_file_check;
         }
 
         foreach (var (file, exists) in GLOBALS.Paths.FileIntegrity)
@@ -369,7 +416,7 @@ class Program
             if (!exists)
             {
                 logger.Fatal($"critical file not found: \"{file}]\"");
-                integrityFailed = true;
+                failedIntegrity = true;
             }
         }
         
@@ -415,9 +462,9 @@ class Program
             }
         }
 
-        // check for projects folder
-
-        if (!Directory.Exists(GLOBALS.Paths.ProjectsDirectory))
+        // Check for projects folder
+        
+        if (!failedIntegrity && !Directory.Exists(GLOBALS.Paths.ProjectsDirectory))
         {
             try
             {
@@ -432,132 +479,115 @@ class Program
         
         logger.Information("Initializing data");
 
-        const string version = "Henry's Leditor v0.9.60";
-        const string raylibVersion = "Raylib v5.0.0";
-        
-        logger.Information(version);
-        logger.Information(raylibVersion);
+        logger.Information(GLOBALS.Version);
+        logger.Information(GLOBALS.RaylibVersion);
         
         // Load Cache
 
-        var loadRecentProjectsTask = Task.Factory.StartNew(() =>
-        {
-            if (!File.Exists(GLOBALS.Paths.RecentProjectsPath)) return;
-            
-            var lines = File.ReadAllLines(GLOBALS.Paths.RecentProjectsPath);
-
-            foreach (var path in lines)
-            {
-                GLOBALS.RecentProjects.AddLast((path, Path.GetFileNameWithoutExtension(path)));
+        var loadRecentProjectsTask = failedIntegrity 
+            ? Task.CompletedTask
+            : Task.Factory.StartNew(() => {
+                if (!File.Exists(GLOBALS.Paths.RecentProjectsPath)) return;
                 
-                if (GLOBALS.RecentProjects.Count > GLOBALS.RecentProjectsLimit) 
-                    GLOBALS.RecentProjects.RemoveFirst();
-            }
-        });
+                var lines = File.ReadAllLines(GLOBALS.Paths.RecentProjectsPath);
+
+                foreach (var path in lines)
+                {
+                    GLOBALS.RecentProjects.AddLast((path, Path.GetFileNameWithoutExtension(path)));
+                    
+                    if (GLOBALS.RecentProjects.Count > GLOBALS.RecentProjectsLimit) 
+                        GLOBALS.RecentProjects.RemoveFirst();
+                }
+            });
 
         var allCacheTasks = Task.WhenAll([loadRecentProjectsTask]);
-        
-        // Load tiles and props
-
-        logger.Information("Indexing tiles and props");
-
-        try
-        {
-            (GLOBALS.TileCategories, GLOBALS.Tiles) = LoadTileInitFromRenderer();
-        }
-        catch (Exception e)
-        {
-            logger.Fatal($"Failed to load tiles init: {e}");
-            throw new Exception(innerException: e, message: $"Failed to load tiles init: {e}");
-        }
-        
-        try
-        {
-            var materialsInit = LoadMaterialInit();
-
-            GLOBALS.MaterialCategories = [..GLOBALS.MaterialCategories, ..materialsInit.Item1];
-            GLOBALS.Materials = [..GLOBALS.Materials, ..materialsInit.Item2];
-        }
-        catch (Exception e)
-        {
-            logger.Fatal($"Failed to load materials init: {e}");
-            throw new Exception(innerException: e, message: $"Failed to load materials init: {e}");
-        }
-
-        try
-        {
-            (GLOBALS.PropCategories, GLOBALS.Props) = LoadPropInitFromRenderer();
-        }
-        catch (Exception e)
-        {
-            logger.Fatal($"Failed to load props init: {e}");
-            throw new Exception(innerException: e, message: $"Failed to load props init: {e}");
-        }
-
-        //
-
-        // Merge tile packages
-        
-        logger.Debug("Loading custom tiles");
 
         var tilePackagesTask = Task.FromResult<TileInitLoadInfo[]>([]);
+
         (string name, Color color)[] loadedPackageTileCategories = [];
         InitTile[][] loadedPackageTiles = [];
         
-        if (Directory.Exists(GLOBALS.Paths.TilePackagesDirectory))
+        if (!failedIntegrity)
         {
-            logger.Debug("Loading pack tiles");
+            // Load tiles and props
             
+            logger.Information("Indexing tiles and props");
+
             try
             {
-                tilePackagesTask = LoadTileInitPackages();
-                
-                tilePackagesTask.Wait();
-
-                var packages = tilePackagesTask.Result;
-
-                if (packages.Length > 0)
-                {
-                    loadedPackageTileCategories = packages.SelectMany(p => p.Categories).ToArray();
-                    
-                    loadedPackageTiles = packages.SelectMany(p => p.Tiles).ToArray();
-                }
+                (GLOBALS.TileCategories, GLOBALS.Tiles) = LoadTileInitFromRenderer();
+                _tileLoader = new([
+                    GLOBALS.Paths.TilesAssetsDirectory, 
+                    ..Directory.GetDirectories(GLOBALS.Paths.TilePackagesDirectory)
+                ]);
             }
             catch (Exception e)
             {
-                logger.Error($"Failed to load tile packages: {e}"); 
+                logger.Fatal($"Failed to load tiles init: {e}");
+                throw new Exception(innerException: e, message: $"Failed to load tiles init: {e}");
+            }
+            
+            try
+            {
+                var materialsInit = LoadMaterialInit();
+
+                GLOBALS.MaterialCategories = [..GLOBALS.MaterialCategories, ..materialsInit.Item1];
+                GLOBALS.Materials = [..GLOBALS.Materials, ..materialsInit.Item2];
+            }
+            catch (Exception e)
+            {
+                logger.Fatal($"Failed to load materials init: {e}");
+                throw new Exception(innerException: e, message: $"Failed to load materials init: {e}");
+            }
+
+            try
+            {
+                (GLOBALS.PropCategories, GLOBALS.Props) = LoadPropInitFromRenderer();
+            }
+            catch (Exception e)
+            {
+                logger.Fatal($"Failed to load props init: {e}");
+                throw new Exception(innerException: e, message: $"Failed to load props init: {e}");
+            }
+            
+            //
+
+            // Merge tile packages
+            
+            logger.Debug("Loading custom tiles");
+
+            if (Directory.Exists(GLOBALS.Paths.TilePackagesDirectory))
+            {
+                logger.Debug("Loading pack tiles");
+                
+                try
+                {
+                    tilePackagesTask = LoadTileInitPackages();
+                    
+                    tilePackagesTask.Wait();
+
+                    var packages = tilePackagesTask.Result;
+
+                    if (packages.Length > 0)
+                    {
+                        loadedPackageTileCategories = packages.SelectMany(p => p.Categories).ToArray();
+                        
+                        loadedPackageTiles = packages.SelectMany(p => p.Tiles).ToArray();
+                    }
+                }
+                catch (Exception e)
+                {
+                    logger.Error($"Failed to load tile packages: {e}"); 
+                }
             }
         }
         
         // Load Tile Textures
 
-        var tileTextures = new TileTexturesLoader();
         var propTextures = new PropTexturesLoader();
         var lightTextures = new LightTexturesLoader();
         
         // 1. Get all texture paths
-        
-        var tileImagePaths = GLOBALS.Tiles
-            .Select((category, index) =>
-                category.Select(tile => 
-                        Path.Combine(GLOBALS.Paths.RendererDirectory, "Graphics", $"{tile.Name}.png"))
-                    .ToArray()
-            )
-            .ToArray();
-        
-        var packTileImagePaths = tilePackagesTask.Result
-            .SelectMany(result => result.Tiles
-                .Select(category => category
-                    .Select(tile =>
-                    {
-                        var path = Path.Combine(result.LoadDirectory, $"{tile.Name}.png");
-                        if (!File.Exists(path)) logger.Error($"Missing tile texture: \"{path}\"");
-
-                        return path;
-                    })
-                    .ToArray())
-                .ToArray()
-            ).ToArray();
         
         var ropePropImagePaths = GLOBALS.RopeProps
             .Select(r => Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", r.Name + ".png"))
@@ -572,7 +602,7 @@ class Program
             ).ToArray()
         ).ToArray();
         
-        var lightImagePaths = Directory
+        var lightImagePaths = failedIntegrity ? [] : Directory
             .GetFileSystemEntries(GLOBALS.Paths.LightAssetsDirectory)
             .Where(e => e.EndsWith(".png"))
             .Select(e =>
@@ -591,7 +621,6 @@ class Program
         
         // 3. Load the images
 
-        var loadTileImagesTask = tileTextures.PrepareFromPathsAsync([..tileImagePaths, ..packTileImagePaths]);
         var loadPropImagesTask = propTextures.PrepareFromPathsAsync(ropePropImagePaths, longPropImagePaths, otherPropImagePaths);
         var loadLightImagesTask = lightTextures.PrepareFromPathsAsync(lightImagePaths);
         
@@ -622,6 +651,8 @@ class Program
         SetWindowIcon(icon);
         SetWindowMinSize(GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight);
         SetExitKey(KeyboardKey.Null);
+        
+        if (failedIntegrity) goto skip_gl_init;
 
         // The splashscreen
         GLOBALS.Textures.SplashScreen = LoadTexture(GLOBALS.Paths.SplashScreenPath);
@@ -655,9 +686,6 @@ class Program
         {
             logger.Fatal($"{e}");
         }
-
-        // These two are going to be populated with textures later
-        GLOBALS.Textures.Tiles = [];
 
         GLOBALS.Textures.MissingTile =
             LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "other", "missing tile.png"));
@@ -757,6 +785,8 @@ void main() {
         SetTargetFPS(GLOBALS.Settings.Misc.FPS);
 
         GLOBALS.Camera = new Camera2D { Zoom = GLOBALS.Settings.GeneralSettings.DefaultZoom };
+        
+        skip_gl_init:
 
         float initialFrames = 0;
 
@@ -786,7 +816,10 @@ void main() {
         ExperimentalGeometryPage experimentalGeometryPage = new() { Logger = logger };
         SettingsPage settingsPage = new() { Logger = logger };
 
-        // GLOBALS.Pager = new Pager(logger, new Context());
+        // GLOBALS.Pager = new Pager(logger, new Context(logger, null));
+        //
+        // GLOBALS.Pager.Init(20);
+        
         //
         // GLOBALS.Pager.RegisterDefault<StartPage>(0);
         // GLOBALS.Pager.RegisterException<DeathScreen>();
@@ -808,9 +841,12 @@ void main() {
         // GLOBALS.Pager.Register<PropsEditorPage>(8);
         
         // Lingo runtime assets path
-        
-        LingoRuntime.MovieBasePath = GLOBALS.Paths.RendererDirectory + Path.DirectorySeparatorChar;
-        LingoRuntime.CastPath = Path.Combine(LingoRuntime.MovieBasePath, "Cast");
+
+        if (!failedIntegrity)
+        {
+            LingoRuntime.MovieBasePath = GLOBALS.Paths.RendererDirectory + Path.DirectorySeparatorChar;
+            LingoRuntime.CastPath = Path.Combine(LingoRuntime.MovieBasePath, "Cast");
+        }
         
         //
         var isLingoRuntimeInit = false;
@@ -851,7 +887,7 @@ void main() {
         
         // Load fonts
 
-        if (!GLOBALS.Settings.GeneralSettings.DefaultFont)
+        if (!failedIntegrity && !GLOBALS.Settings.GeneralSettings.DefaultFont)
         {
             logger.Debug("Loading fonts");
             try
@@ -880,13 +916,11 @@ void main() {
         
         // Tile & Prop Textures
 
-        Task.WaitAll([loadTileImagesTask, loadPropImagesTask, loadLightImagesTask]);
+        Task.WaitAll([loadPropImagesTask, loadLightImagesTask]);
 
-        var loadTileTexturesList = loadTileImagesTask.Result;
         var loadPropTexturesList = loadPropImagesTask.Result;
         var loadLightTexturesList = loadLightImagesTask.Result;
         
-        using var loadTileTexturesEnumerator = loadTileTexturesList.GetEnumerator();
         using var loadPropTexturesEnumerator = loadPropTexturesList.GetEnumerator();
         using var loadLightTexturesEnumerator = loadLightTexturesList.GetEnumerator();
 
@@ -894,7 +928,6 @@ void main() {
         var propTexturesLoadProgress = 0;
         var lightTexturesLoadProgress = 0;
 
-        var totalTileTexturesLoadProgress = loadTileTexturesList.Count;
         var totalPropTexturesLoadProgress = loadPropTexturesList.Count;
         var totalLightTexturesLoadProgress = loadLightTexturesList.Count;
 
@@ -906,10 +939,60 @@ void main() {
 
         var gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
         
+        _tileLoader.Start();
+
+        var tileLoadProgress = 0;
+        Task<Data.Tiles.TileDex>? tileDexTask = null;
+        
         while (!WindowShouldClose())
         {
             try
             {
+                if (!failedIntegrity) goto skip_failed_integrity;
+                #region FailedIntegrity
+                
+                if (missingAssetsDirectory)
+                {
+                    BeginDrawing();
+                    ClearBackground(Color.Black);
+                    
+                    DrawText("Missing Assets Folder", 50, 50, 50, Color.White);
+                    DrawText("The /assets folder seems to be completely missing.", 
+                        50, 
+                        200, 
+                        20, 
+                        Color.White
+                    );
+                    
+                    DrawText("The program cannot function without it.", 
+                        50, 
+                        230, 
+                        20, 
+                        Color.White
+                    );
+                    
+                    DrawText("If you've built the program yourself, you might have forgotten to ", 
+                        50, 
+                        260, 
+                        20, 
+                        Color.White
+                    );
+                    
+                    DrawText("copy the assets from the project's source code.", 
+                        50, 
+                        290, 
+                        20, 
+                        Color.White
+                    );
+                    
+                    DrawText(GLOBALS.Version, 10, GetScreenHeight() - 25, 20, Color.White);
+                    EndDrawing();
+                }
+                GLOBALS.Page = 15;
+                continue;
+                #endregion
+                skip_failed_integrity:
+
                 #region Splashscreen
                 if (initialFrames < 180 && GLOBALS.Settings.Misc.SplashScreen)
                 {
@@ -929,17 +1012,17 @@ void main() {
                     );
 
 
-                    if (initialFrames > 60) DrawText(version, 700, 50, 15, Color.White);
+                    if (initialFrames > 60) DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
 
                     if (initialFrames > 70)
                     {
-                        DrawText(raylibVersion, 700, 70, 15, Color.White);
+                        DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
                         if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
                     }
 
                     if (initialFrames > 90)
                     {
-                        if (integrityFailed) 
+                        if (failedIntegrity) 
                             DrawText("missing resources", 700, 320, 16, new(252, 38, 38, 255));
                     }
 
@@ -948,9 +1031,75 @@ void main() {
                     continue;
                 }
                 #endregion
+                
+                // Check for the tile init loading
+                if (!_tileLoader.Done)
+                {
+                    tileLoadProgress++;
+                    
+                    while (tileLoadProgress % loadRate != 0)
+                    {
+                        // Load complete
+                        if (_tileLoader.Proceed())
+                        {
+                            tileDexTask = _tileLoader.Build();
+                            
+                            break;
+                        } 
+                            
+                        tileLoadProgress++;
+                    }
+                    
+                    var width = GetScreenWidth();
+                    var height = GetScreenHeight();
+                    
+                    BeginDrawing();
+                    Printers.DrawSplashScreen(true);
 
-                // First, check if the folders exist at all
-                if (integrityFailed) GLOBALS.Page = 15;
+                    if (!_tileLoader.Started || !_tileLoader.PackLoadCompleted)
+                    {
+                        if (GLOBALS.Font is null)
+                            DrawText("Loading Tiles", 100, height - 120, 20, Color.White);
+                        else
+                            DrawTextEx(GLOBALS.Font.Value, "Loading Tiles", new Vector2(100, height - 120), 20, 1, Color.White);
+                    }
+                    else if (!_tileLoader.TextureLoadCompleted)
+                    {
+                        if (GLOBALS.Font is null)
+                            DrawText("Loading Tile Textures", 100, height - 120, 20, Color.White);
+                        else
+                            DrawTextEx(GLOBALS.Font.Value, "Loading Tile Textures", new Vector2(100, height - 120), 20, 1, Color.White);
+                    }
+                    else if (!_tileLoader.DexBuildCompleted)
+                    {
+                        if (GLOBALS.Font is null)
+                            DrawText("Building Table", 100, height - 120, 20, Color.White);
+                        else
+                            DrawTextEx(GLOBALS.Font.Value, "Building Table", new Vector2(100, height - 120), 20, 1, Color.White);
+                    }
+
+                    Printers.DrawProgressBar(new Rectangle(100, height - 100, width - 200, 30), tileLoadProgress, _tileLoader.TotalProgress, false, Color.White);
+                    EndDrawing();
+                    continue;
+                }
+                if (GLOBALS.TileDex is null)
+                {
+                    if (tileDexTask?.IsCompleted == true) GLOBALS.TileDex = tileDexTask.Result;
+                    
+                    var height = GetScreenHeight();
+                    
+                    BeginDrawing();
+                    Printers.DrawSplashScreen(true);
+
+                    if (GLOBALS.Font is null)
+                        DrawText("Building Tile Dex", 100, height - 120, 20, Color.White);
+                    else
+                        DrawTextEx(GLOBALS.Font.Value, "Building Tile Dex", new Vector2(100, height - 120), 20, 1, Color.White);
+                    
+                    EndDrawing();
+                    
+                    continue;
+                }
                 
                 // Then check tile textures individually
                 else if (!isLoadingTexturesDone)
@@ -959,47 +1108,6 @@ void main() {
 
                     loadLoop:
                     
-                    if (loadTileTexturesEnumerator.MoveNext())
-                    {
-                        loadTileTexturesEnumerator.Current?.Invoke();
-                        tileTexturesLoadProgress++;
-                        
-                        while (tileTexturesLoadProgress % loadRate != 0 && loadTileTexturesEnumerator.MoveNext())
-                        {
-                            loadTileTexturesEnumerator.Current?.Invoke();
-                            tileTexturesLoadProgress++;
-                        }
-
-                        var width = GetScreenWidth();
-                        var height = GetScreenHeight();
-
-                        BeginDrawing();
-                        ClearBackground(new(0, 0, 0, 255));
-
-                        DrawTexturePro(
-                            GLOBALS.Textures.SplashScreen,
-                            new(0, 0, GLOBALS.Textures.SplashScreen.Width, GLOBALS.Textures.SplashScreen.Height),
-                            new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
-                            new(0, 0),
-                            0,
-                            new(255, 255, 255, 255)
-                        );
-
-                        DrawText(version, 700, 50, 15, Color.White);
-                        DrawText(raylibVersion, 700, 70, 15, Color.White);
-                        
-                        if (GLOBALS.Font is null)
-                            DrawText("Loading tile textures", 100, height - 120, 20, Color.White);
-                        else
-                            DrawTextEx(GLOBALS.Font.Value, "Loading tile textures", new Vector2(100, height - 120), 20, 1, Color.White);
-
-                        Printers.DrawProgressBar(new Rectangle(100, height - 100, width - 200, 30), tileTexturesLoadProgress, totalTileTexturesLoadProgress, false, Color.White);
-                        EndDrawing();
-
-                        if (tileTexturesLoadProgress % loadRate != 0) goto loadLoop;
-                        
-                        continue;
-                    }
                     if (loadPropTexturesEnumerator.MoveNext())
                     {
                         loadPropTexturesEnumerator.Current?.Invoke();
@@ -1028,8 +1136,8 @@ void main() {
 
                         if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
 
-                        DrawText(version, 700, 50, 15, Color.White);
-                        DrawText(raylibVersion, 700, 70, 15, Color.White);
+                        DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
+                        DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
                         
                         
                         if (GLOBALS.Font is null)
@@ -1072,8 +1180,8 @@ void main() {
 
                         if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
 
-                        DrawText(version, 700, 50, 15, Color.White);
-                        DrawText(raylibVersion, 700, 70, 15, Color.White);
+                        DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
+                        DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
                         
                         if (GLOBALS.Font is null)
                             DrawText("Loading light brushed", 100, height - 120, 20, Color.White);
@@ -1088,13 +1196,11 @@ void main() {
                         continue;
                     }
 
-                    GLOBALS.Textures.Tiles = tileTextures.Textures;
                     GLOBALS.Textures.Props = propTextures.Others;
                     GLOBALS.Textures.RopeProps = propTextures.Ropes;
                     GLOBALS.Textures.LongProps = propTextures.Longs;
                     GLOBALS.Textures.LightBrushes = lightTextures.Textures;
                     
-                    loadTileTexturesList.Clear();
                     loadPropTexturesList.Clear();
                     loadLightTexturesList.Clear();
 
@@ -1117,8 +1223,8 @@ void main() {
                         new(255, 255, 255, 255)
                     );
 
-                    DrawText(version, 700, 50, 15, Color.White);
-                    DrawText(raylibVersion, 700, 70, 15, Color.White);
+                    DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
+                    DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
                         
                     if (GLOBALS.Font is null)
                         DrawText("Loading cache", 100, height - 120, 20, Color.White);
@@ -1158,11 +1264,11 @@ void main() {
                             new(255, 255, 255, 255)
                         );
                     
-                        DrawText(version, 700, 50, 15, Color.White);
-                        DrawText(raylibVersion, 700, 70, 15, Color.White);
+                        DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
+                        DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
                             
                         if (GLOBALS.Font is null)
-                            DrawText("Loading tile textures", 100, height - 120, 20, Color.White);
+                            DrawText("Initializing Renderer Runtime", 100, height - 120, 20, Color.White);
                         else
                             DrawTextEx(GLOBALS.Font.Value, "Initializing Renderer Runtime", new Vector2(100, height - 120), 20, 1, Color.White);
                     
@@ -1191,8 +1297,8 @@ void main() {
                             new(255, 255, 255, 255)
                         );
                     
-                        DrawText(version, 700, 50, 15, Color.White);
-                        DrawText(raylibVersion, 700, 70, 15, Color.White);
+                        DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
+                        DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
                             
                         if (GLOBALS.Font is null)
                             DrawText("Loading tile textures", 100, height - 120, 20, Color.White);
@@ -1414,8 +1520,8 @@ void main() {
                     
                     ImGui.Spacing();
                     
-                    ImGui.Text(version);
-                    ImGui.Text(raylibVersion);
+                    ImGui.Text(GLOBALS.Version);
+                    ImGui.Text(GLOBALS.RaylibVersion);
                     
                     ImGui.Spacing();
 
@@ -1649,7 +1755,6 @@ void main() {
         foreach (var texture in GLOBALS.Textures.GeoBlocks) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.GeoStackables) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.LightBrushes) UnloadTexture(texture);
-        foreach (var category in GLOBALS.Textures.Tiles) { foreach (var texture in category) UnloadTexture(texture); }
         foreach (var texture in GLOBALS.Textures.PropMenuCategories) UnloadTexture(texture);
         foreach (var category in GLOBALS.Textures.Props) { foreach (var texture in category) UnloadTexture(texture); }
         foreach (var texture in GLOBALS.Textures.LongProps) UnloadTexture(texture);

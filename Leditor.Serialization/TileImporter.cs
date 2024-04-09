@@ -1,23 +1,104 @@
-﻿using System.Diagnostics.Contracts;
-using Drizzle.Lingo.Runtime.Parser;
+﻿using Drizzle.Lingo.Runtime.Parser;
 using Leditor.Data.Tiles;
 using Leditor.Serialization.Exceptions;
 using Pidgin;
-using Raylib_cs;
 using Color = Leditor.Data.Color;
 using ParseException = Leditor.Serialization.Exceptions.ParseException;
 using Texture2D = Leditor.RL.Managed.Texture2D;
+// ReSharper disable CollectionNeverQueried.Global
+// ReSharper disable CollectionNeverUpdated.Global
 
 // ReSharper disable MemberCanBePrivate.Global
 
 namespace Leditor.Serialization;
 
-// ReSharper disable once RedundantNullableDirective
-#nullable enable
-
-public static class TileImporter
+public class TileImporter
 {
-    [Pure]
+    public List<(string name, Color color)> Categories { get; } = [];
+    public List<List<TileDefinition>> Definitions { get; } = [];
+        
+    public async Task<IEnumerable<Func<Task>>> PrepareInitParseAsync(string initPath)
+    {
+        Categories.Clear();
+        Definitions.Clear();
+        
+        var text = await File.ReadAllTextAsync(initPath);
+        
+        if (string.IsNullOrEmpty(text))
+            throw new Exception("Tile definitions text cannot be empty");
+
+        var lines = text.ReplaceLineEndings().Split(Environment.NewLine);
+
+        List<Func<Task>> tasks = new(lines.Length);
+
+        for (var l = 0; l < lines.Length; l++)
+        {
+            var line = lines[l];
+            
+            if (string.IsNullOrEmpty(line) || line.StartsWith("--")) continue;
+
+            if (line.StartsWith('-'))
+            {
+                var l1 = l;
+                
+                tasks.Add(() => Task.Factory.StartNew(() =>
+                {
+                    AstNode.Base categoryObject;
+                    (string name, Color color) category;
+
+                    try
+                    {
+                        categoryObject = LingoParser.Expression.ParseOrThrow(line.TrimStart('-'));
+                    }
+                    catch (Exception e)
+                    {
+                        throw new ParseException($"Failed to parse tile definition category from string at line {l1 + 1}", e);
+                    }
+
+                    try
+                    {
+                        category = GetTileDefinitionCategory(categoryObject);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new ParseException(
+                            $"Failed to get tile definition category from parsed string at line {l1 + 1}", e);
+                    }
+
+                    Categories.Add(category);
+                }));
+            }
+            else
+            {
+                var l2 = l;
+                tasks.Add(() => Task.Factory.StartNew(() =>
+                {
+                    AstNode.Base tileObject;
+
+                    try
+                    {
+                        tileObject = LingoParser.Expression.ParseOrThrow(line);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new ParseException($"Failed to parse tile definition from string at line {l2 + 1}", e);
+                    }
+
+                    try
+                    {
+                        return GetTile(tileObject);
+                    }
+                    catch (ParseException e)
+                    {
+                        throw new ParseException($"Failed to get tile definition from parsed string at line {l2 + 1}", e);
+                    }
+                }));
+            }
+        }
+
+        return tasks;
+    }
+    
     internal static TileDefinition GetTile(AstNode.Base @base)
     {
         if (@base is not AstNode.PropertyList propertyList)
@@ -33,6 +114,7 @@ public static class TileImporter
         var specs3Ast = Utils.TryGet<AstNode.List>(propertyList, "specs3");
         var repeatLAst = Utils.TryGet<AstNode.List>(propertyList, "repeatl");
         var bfTilesAst = Utils.TryGet<AstNode.Number>(propertyList, "bftiles");
+        var tagsAst = Utils.TryGet<AstNode.List>(propertyList, "tags");
 
         var sizeArgs = sizeAst ?? throw new MissingTileDefinitionPropertyException("sz");
         
@@ -103,10 +185,32 @@ public static class TileImporter
             {
                 var index = x * size.Item2 + y;
 
-                specs[y, x, 0] = specs1[index];
-                
-                specs[y, x, 1] = specs2 is [] ? -1 : specs2[index];
-                specs[y, x, 2] = specs3 is [] ? -1 : specs3[index];
+                try
+                {
+                    specs[y, x, 0] = specs1[index];
+                }
+                catch
+                {
+                    specs[y, x, 0] = -1;
+                }
+
+                try
+                {
+                    specs[y, x, 1] = specs2 is [] ? -1 : specs2[index];
+                }
+                catch
+                {
+                    specs[y, x, 1] = -1;
+                }
+
+                try
+                {
+                    specs[y, x, 2] = specs3 is [] ? -1 : specs3[index];
+                }
+                catch
+                {
+                    specs[y, x, 2] = -1;
+                }
             }
         }
         
@@ -147,7 +251,13 @@ public static class TileImporter
         }).ToArray();
         } else { repeatL = []; }
         
-        return new TileDefinition(name, size, tp, bfTiles, specs, repeatL);
+        // Tags
+
+        var tags = tagsAst?.Values
+            .Select(t => ((AstNode.String)t).Value)
+            .ToArray() ?? [];
+        
+        return new TileDefinition(name, size, tp, bfTiles, specs, repeatL, tags);
     }
 
     /// <summary>
@@ -230,7 +340,6 @@ public static class TileImporter
         return (categories, definitions);
     }
     
-    [Pure]
     internal static (string, Color) GetTileDefinitionCategory(AstNode.Base @base)
     {
         var list = ((AstNode.List)@base).Values;
@@ -240,23 +349,22 @@ public static class TileImporter
 
         return (name, new Color(color));
     }
-    
-    [Pure]
-    public static TileDex ImportTileDefinitions(
-        string initPath, 
-        string texturesDirectory, 
-        bool strict = false)
+
+    public static async Task<((string name, Color color)[], TileDefinition[][])> ParseInitAsync(
+        string initPath)
     {
-        var text = File.ReadAllText(initPath);
+        var text = await File.ReadAllTextAsync(initPath);
         
         if (string.IsNullOrEmpty(text))
             throw new Exception("Tile definitions text cannot be empty");
 
         var lines = text.ReplaceLineEndings().Split(Environment.NewLine);
 
-        var builder = new TileDexBuilder();
+        List<Task<(string name, Color color)>> categoryTasks = [];
+        List<List<Task<TileDefinition>>> definitionTasks = [];
 
-        var lastCategory = "";
+        categoryTasks.Capacity = lines.Length;
+        definitionTasks.Capacity = lines.Length;
 
         for (var l = 0; l < lines.Length; l++)
         {
@@ -264,63 +372,75 @@ public static class TileImporter
             
             if (string.IsNullOrEmpty(line) || line.StartsWith("--")) continue;
 
-            // Category
             if (line.StartsWith('-'))
             {
-                AstNode.Base categoryObject;
-                (string name, Color color) category;
+                categoryTasks.Add(Task.Factory.StartNew(() =>
+                {
+                    AstNode.Base categoryObject;
+                    (string name, Color color) category;
 
-                try
-                {
-                    categoryObject = LingoParser.Expression.ParseOrThrow(line.TrimStart('-'));
-                }
-                catch (Exception e)
-                {
-                    throw new ParseException($"Failed to parse tile definition category from string at line {l + 1}", e);
-                }
+                    try
+                    {
+                        categoryObject = LingoParser.Expression.ParseOrThrow(line.TrimStart('-'));
+                    }
+                    catch (Exception e)
+                    {
+                        throw new ParseException($"Failed to parse tile definition category from string at line {l + 1}", e);
+                    }
 
-                try
-                {
-                    category = GetTileDefinitionCategory(categoryObject);
-                }
-                catch (Exception e)
-                {
-                    throw new ParseException($"Failed to get tile definition category from parsed string at line {l + 1}", e);
-                }
+                    try
+                    {
+                        category = GetTileDefinitionCategory(categoryObject);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new ParseException(
+                            $"Failed to get tile definition category from parsed string at line {l + 1}", e);
+                    }
 
-                builder.Register(category.name, category.color);
-                lastCategory = category.name;
+                    return category;
+                }));
+
+                definitionTasks.Add([]);
             }
-            // Tile
             else
             {
-                AstNode.Base tileObject;
+                definitionTasks[^1].Add(Task.Factory.StartNew(() =>
+                {
+                    AstNode.Base tileObject;
 
-                try
-                {
-                    tileObject = LingoParser.Expression.ParseOrThrow(line);
-                }
-                catch (Exception e)
-                {
-                    throw new ParseException($"Failed to parse tile definition from string at line {l + 1}", e);
-                }
+                    try
+                    {
+                        tileObject = LingoParser.Expression.ParseOrThrow(line);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new ParseException($"Failed to parse tile definition from string at line {l + 1}", e);
+                    }
 
-                try
-                {
-                    var tile = GetTile(tileObject);
-                    builder.Register(
-                        lastCategory, 
-                        tile, 
-                        new Texture2D(Path.Combine(texturesDirectory, $"{tile.Name}.png"))
-                    );
-                }
-                catch (ParseException e)
-                {
-                    if (strict) throw new ParseException($"Failed to get tile definition from parsed string at line {l + 1}", e);
-                }
+                    try
+                    {
+                        return GetTile(tileObject);
+                    }
+                    catch (ParseException e)
+                    {
+                        throw new ParseException($"Failed to get tile definition from parsed string at line {l + 1}", e);
+                    }
+                }));
             }
         }
+        
+        var categories = new (string name, Color color)[categoryTasks.Count];
+        var definitions = new TileDefinition[definitionTasks.Count][];
 
-        return builder.Build();
+        for (var i = 0; i < categoryTasks.Count; i++) categories[i] = await categoryTasks[i];
+        for (var c = 0; c < definitionTasks.Count; c++)
+        {
+            definitions[c] = new TileDefinition[definitionTasks[c].Count];
+
+            for (var t = 0; t < definitions[c].Length; t++) definitions[c][t] = await definitionTasks[c][t];
+        }
+
+        return (categories, definitions);
     }
 }

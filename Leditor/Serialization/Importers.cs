@@ -1,8 +1,11 @@
 using Pidgin;
 using System.Numerics;
 using Drizzle.Lingo.Runtime.Parser;
+using Leditor.Data.Tiles;
 
 namespace Leditor.Serialization;
+
+#nullable enable
 
 public static class Importers {
     /// Meaningless name; this function turns a sequel of stackable IDs to an array that can be used at leditor runtime
@@ -149,7 +152,6 @@ public static class Importers {
             }
         }
 
-        #nullable disable
         return ([..categories], [..materials]);
     }
     
@@ -161,8 +163,6 @@ public static class Importers {
         string typeStr = ((AstNode.String)propertList.Single(p => ((AstNode.Symbol)p.Key).Value == "tp").Value).Value;
 
         // retrieve all possible properties
-
-#nullable enable
 
         AstNode.String? colorTreatment      = (AstNode.String?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "colortreatment").Value;
         AstNode.Number? bevel               = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "bevel").Value;
@@ -192,7 +192,6 @@ public static class Importers {
         float getFloatProperty(AstNode.Number? property) => property is null
                     ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(property))
                     : NumberToFloat(property);
-#nullable disable
 
         //
 
@@ -394,6 +393,7 @@ public static class Importers {
         return (categories.ToArray(), props.ToArray());
     }
 
+#nullable enable
     /// <summary>
     /// Retrieves the props from an object parsed from line (9) of the project file
     /// </summary>
@@ -401,12 +401,11 @@ public static class Importers {
     /// <returns>a list of (type, position, prop) tuples, where 'position' points to the definition index in the appropriate definitions array depending on the type (prop/tile)</returns>
     /// <exception cref="PropNotFoundException">prop not not found in neither the prop definitions nor the tile definitions</exception>
     /// <exception cref="MissingInitPropertyException">retrieved prop is missing a setting</exception>
-    public static List<(InitPropType type, (int category, int index) position, Prop prop)>GetProps(AstNode.Base @base)
+    public static List<(InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)>GetProps(AstNode.Base @base)
     {
-#nullable enable
         var list = (AstNode.List)((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "props").Value;
 
-        List<(InitPropType type, (int category, int index) position, Prop prop)> props = [];
+        List<(InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)> props = [];
 
         Random rng = new();
 
@@ -429,6 +428,7 @@ public static class Importers {
             var type = InitPropType.Tile;
 
             (int category, int index) position;
+            TileDefinition? tileDefinition = null;
             
             // check if it's a prop
 
@@ -484,9 +484,20 @@ public static class Importers {
             {
                 for (var t = 0; t < GLOBALS.Tiles[c].Length; t++)
                 {
-                    if (GLOBALS.Tiles[c][t].Name != name) continue;
+                    if (GLOBALS.TileDex is null)
+                    {
+                        position = (-1, -1);
+                        continue;
+                    }
                     
-                    position = (c, t);
+                    var found = GLOBALS.TileDex.TryGetTile(name, out var def);
+                    
+                    position = (-1, -1);
+                    
+                    if (!found) continue;
+
+                    tileDefinition = def;
+                    
                     goto end_check;
                 }
             }
@@ -545,7 +556,7 @@ public static class Importers {
                 IsTile = type == InitPropType.Tile
             };
 
-            props.Add((type, position, parsedProp));
+            props.Add((type, tileDefinition, position, parsedProp));
         }
 #nullable disable
         return props;
@@ -909,13 +920,11 @@ public static class Importers {
             case "tileHead":
                 AstNode.Base[] asList = ((AstNode.List)data).Values;
 
-                string name = ((AstNode.String)asList[1]).Value;
+                var name = ((AstNode.String)asList[1]).Value;
                 
-                AstNode.Base[] pointArgs = ((AstNode.GlobalCall)asList[0]).Arguments;
-                var category = pointArgs[0] is AstNode.UnaryOperator u ? (-1 * ((AstNode.Number)u.Expression).Value.IntValue) : ((AstNode.Number)pointArgs[0]).Value.IntValue;
-                var position = pointArgs[1] is AstNode.UnaryOperator u2 ? (-1 * ((AstNode.Number)u2.Expression).Value.IntValue) : ((AstNode.Number)pointArgs[1]).Value.IntValue;
-
-                casted = new TileHead(category, position, name);
+                casted = GLOBALS.TileDex?.TryGetTile(name, out var definition) == true 
+                    ? new TileHead(definition) { Name = name }
+                    : new TileHead(null) { Name = name };
                 break;
 
             case "tileBody":

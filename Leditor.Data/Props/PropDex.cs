@@ -4,8 +4,6 @@ using Leditor.RL.Managed;
 
 namespace Leditor.Data.Props;
 
-#nullable disable
-
 /// <summary>
 /// <see cref="IDisposable.Dispose"/> must be called by the consumer.
 /// </summary>
@@ -34,7 +32,7 @@ public class PropDex : IDisposable
     /// <summary>
     /// Prop -> Category
     /// </summary>
-    private readonly ImmutableDictionary<string, string> _propCategory;
+    private readonly ImmutableDictionary<PropDefinition, string> _propCategory;
     
     /// <summary>
     /// Prop -> Color
@@ -75,10 +73,19 @@ public class PropDex : IDisposable
     /// <summary>
     /// Get the category of a prop
     /// </summary>
-    /// <param name="name">The name of the prop</param>
+    /// <param name="prop">The prop</param>
     /// <returns>The name of the category that the prop belongs to</returns>
     /// <exception cref="KeyNotFoundException">The prop name is not found</exception>
-    public string GetCategory(string name) => _propCategory[name];
+    public string GetCategory(PropDefinition prop) => _propCategory[prop];
+
+    /// <summary>
+    /// Get the category of a prop
+    /// </summary>
+    /// <param name="prop">The prop</param>
+    /// <param name="category">The found category name</param>
+    /// <returns>true if found; otherwise false</returns>
+    /// <exception cref="KeyNotFoundException">The prop name is not found</exception>
+    public bool TryGetCategory(PropDefinition prop, out string? category) => _propCategory.TryGetValue(prop, out category);
     
     /// <summary>
     /// Get the color of the category of the prop
@@ -109,6 +116,11 @@ public class PropDex : IDisposable
     /// <returns>The associated texture</returns>
     public Texture2D GetTexture(string name) => _textures[name];
     
+    /// <summary>
+    /// An array of category names with a fixed order
+    /// </summary>
+    public string[] OrderedCategoryNames { get; init; }
+    
     //
 
     public void Dispose()
@@ -127,9 +139,10 @@ public class PropDex : IDisposable
         Dictionary<string, PropDefinition> definitions,
         Dictionary<string, PropDefinition[]> categories,
         Dictionary<string, Color> colors,
-        Dictionary<string, string> propCategory,
+        Dictionary<PropDefinition, string> propCategory,
         Dictionary<string, Color> propColor,
-        Dictionary<string, Texture2D> texture)
+        Dictionary<string, Texture2D> texture,
+        string[] orderedCategoryNames)
     {
         _definitions = definitions.ToImmutableDictionary();
         _categories = categories.ToImmutableDictionary();
@@ -137,6 +150,7 @@ public class PropDex : IDisposable
         _propCategory = propCategory.ToImmutableDictionary();
         _propColor = propColor.ToImmutableDictionary();
         _textures = texture.ToImmutableDictionary();
+        OrderedCategoryNames = orderedCategoryNames;
     }
 
     ~PropDex()

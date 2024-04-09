@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Text.Json.Serialization;
+using Leditor.Data.Tiles;
 
 namespace Leditor;
 
@@ -93,7 +94,7 @@ public sealed class LevelState
     internal TileCell[,,] TileMatrix { get; private set; } = new TileCell[0, 0, 0];
     internal Color[,,] MaterialColors { get; private set; } = new Color[0, 0, 0];
     internal (string, EffectOptions[], double[,])[] Effects { get; set; } = [];
-    internal (InitPropType type, (int category, int index) position, Prop prop)[] Props { get; set; } = [];
+    internal (InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)[] Props { get; set; } = [];
 
     internal string DefaultMaterial { get; set; } = "Concrete";
     
@@ -115,7 +116,7 @@ public sealed class LevelState
         Color[,,] materialColorMatrix,
         (string, EffectOptions[], double[,])[] effects,
         List<RenderCamera> cameras,
-        (InitPropType type, (int category, int index) position, Prop prop)[] props,
+        (InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)[] props,
         (int angle, int flatness) lightSettings,
         bool lightMode,
         bool terrainMedium,
@@ -302,6 +303,8 @@ public record struct TileInitLoadInfo(
     InitTile[][] Tiles,
     string LoadDirectory);
 
+
+
 /// Used to report the tile check status when loading a project
 public enum TileCheckResult
 {
@@ -341,7 +344,7 @@ public class LoadFileResult
     public RunCell[,,]? GeoMatrix { get; init; } = null;
     public TileCell[,,]? TileMatrix { get; init; } = null;
     public Color[,,]? MaterialColorMatrix { get; init; } = null;
-    public (InitPropType type, (int category, int index) position, Prop prop)[]? PropsArray { get; init; } = null;
+    public (InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)[]? PropsArray { get; init; } = null;
 
     public Image LightMapImage { get; init; }
     
@@ -1176,35 +1179,29 @@ public struct TileCell {
 
 public struct TileDefault
 {
-    public int Value => 0;
-
     public override string ToString() => $"TileDefault";
 }
 
 public struct TileMaterial(string material)
 {
-    private string _data = material;
+    public string Name { get; set; } = material;
 
-    public string Name
-    {
-        get => _data;
-        set { _data = value; }
-    }
-
-    public override string ToString() => $"TileMaterial(\"{_data}\")";
+    public override string ToString() => $"TileMaterial(\"{Name}\")";
 }
 
-public struct TileHead(int category, int position, string name)
+public struct TileHead
 {
-    private (int, int, string) _data = (category, position, name);
+    // It may seem redundant, but it's necessary for exportation.
+    public string Name { get; set; }
     
-    public (int Category, int Index, string Name) CategoryPostition
+    public TileDefinition? Definition { get; set; }
+
+    public TileHead(TileDefinition? definition)
     {
-        get => _data;
-        set { _data = value; }
+        Definition = definition;
     }
 
-    public override string ToString() => $"TileHead({_data.Item1}, {_data.Item2}, \"{_data.Item3}\")";
+    public override string ToString() => $"TileHead({(Definition is null ? "Undefined" : $"\"{Definition.Name}\"")})";
 }
 
 public struct TileBody(int x, int y, int z)
@@ -1216,7 +1213,7 @@ public struct TileBody(int x, int y, int z)
         set { _data = value; }
     }
 
-    public override string ToString() => $"TileBody({_data.x}, {_data.y}, {_data.z})";
+    public override string ToString() => $"TileBody({_data.x-1}, {_data.y-1}, {_data.z-1})";
 }
 
 public enum InitTileType { 
@@ -1241,37 +1238,6 @@ public readonly record struct InitTile(
     int PtPos,
     string[] Tags
 );
-
-// Unused
-public record TileDefinition(
-    string Name,
-    (int Width, int Height) Size,
-    InitTileType Type,
-    int BufferTiles,
-    int Rnd,
-    int PtPos,
-    int[] Specs,
-    int[] Specs2,
-    int[] Specs3,
-    int[] Repeat,
-    string[] Tags
-);
-// {
-//     public string Name { get; set; } = name;
-//     public (int Width, int Height) Size { get; set; } = size;
-//     public InitTileType Type { get; set; } = type;
-//     public int BufferTiles { get; set; } = bufferTiles;
-//     public int Rnd { get; set; } = rnd;
-//     public int PtPos{ get; set; } = ptPos;
-//     public int[] Specs{ get; set; } = specs;
-//     public int[] Specs2{ get; set; } = specs2;
-//     public int[] Specs3 { get; set; } = specs3;
-//     public int[] Repeat { get; set; } = repeat;
-//     public string[] Tags { get; set; } = tags;
-//
-//     public static bool operator ==(TileDefinition t1, TileDefinition t2) => t1.Name == t2.Name;
-//     public static bool operator !=(TileDefinition t1, TileDefinition t2) => t1.Name != t2.Name;
-// }
 
 #region InitProp
 

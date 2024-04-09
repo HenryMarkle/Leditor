@@ -29,7 +29,6 @@ internal static class GLOBALS
         public Texture2D[] GeoBlocks { get; set; } = [];
         public Texture2D[] GeoStackables { get; set; } = [];
         public Texture2D[] LightBrushes { get; set; } = [];
-        public Texture2D[][] Tiles { get; set; } = [];
         public Texture2D[][] Props { get; set; } = [];
         public Texture2D[] LongProps { get; set; } = [];
         public Texture2D[] RopeProps { get; set; } = [];
@@ -97,10 +96,10 @@ internal static class GLOBALS
             }
         }
         internal static string IndexDirectory => Path.Combine(AssetsDirectory, "index");
-        internal static string TilesAssetsDirectory => Path.Combine(AssetsDirectory, "tiles");
+        internal static string TilesAssetsDirectory => Path.Combine(RendererDirectory, "Graphics");
         internal static string GeoAssetsDirectory => Path.Combine(AssetsDirectory, "geo");
         internal static string LightAssetsDirectory => Path.Combine(AssetsDirectory, "light");
-        internal static string PropsAssetsDirectory => Path.Combine(AssetsDirectory, "props");
+        internal static string PropsAssetsDirectory => Path.Combine(RendererDirectory, "Props");
         internal static string ShadersAssetsDirectory => Path.Combine(AssetsDirectory, "shaders");
         internal static string CacheDirectory => Path.Combine(ExecutableDirectory, "cache");
         internal static string UiAssetsDirectory => Path.Combine(AssetsDirectory, "interface");
@@ -145,19 +144,24 @@ internal static class GLOBALS
         
         internal static readonly IEnumerable<(string, bool)> DirectoryIntegrity =
             from directory 
-                in GLOBALS.Paths.EssentialDirectories 
+                in EssentialDirectories 
             select (directory, Directory.Exists(directory));
 
         internal static readonly IEnumerable<(string, bool)> FileIntegrity =
             from file 
-                in GLOBALS.Paths.EssentialFiles 
+                in EssentialFiles 
             select (file, File.Exists(file));
     }
+
+    internal static Data.Tiles.TileDex? TileDex { get; set; }
     
     internal static LingoRuntime LingoRuntime { get; set; } = new(typeof(MovieScript).Assembly);
     internal static Task LingoRuntimeInitTask { get; set; } = default!;
     
     internal static string ProjectPath { get; set; } = "";
+    
+    internal const string Version = "Henry's Leditor v0.9.60";
+    internal const string RaylibVersion = "Raylib v5.0.0";
 
     internal static int MinScreenWidth => 1280;
     internal static int MinScreenHeight => 800;

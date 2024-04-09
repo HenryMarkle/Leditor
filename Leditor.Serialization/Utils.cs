@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics.Contracts;
+using System.Numerics;
 using Drizzle.Lingo.Runtime.Parser;
+using Leditor.Data;
 using Leditor.Serialization.Exceptions;
 
 namespace Leditor.Serialization;
@@ -39,7 +41,23 @@ internal static class Utils
             ? ((AstNode.Number)u.Expression).Value.IntValue * -1
             : ((AstNode.Number)number).Value.IntValue;
     }
-    
+
+    [Pure]
+    internal static Quad GetQuad(AstNode.List list)
+    {
+        var topLeftAst = (AstNode.GlobalCall)list.Values[0];
+        var topRightAst = (AstNode.GlobalCall)list.Values[1];
+        var bottomRightAst = (AstNode.GlobalCall)list.Values[2];
+        var bottomLeftAst = (AstNode.GlobalCall)list.Values[3];
+
+        return new Quad(
+            GetIntVector(topLeftAst), 
+            GetIntVector(topRightAst), 
+            GetIntVector(bottomRightAst), 
+            GetIntVector(bottomLeftAst)
+        );
+    }
+
     [Pure]
     internal static float GetFloat(AstNode.Base number)
     {
@@ -54,6 +72,14 @@ internal static class Utils
         var args = globalCall.Arguments;
 
         return (GetInt(args[0]), GetInt(args[1]));
+    }
+    
+    [Pure]
+    internal static Vector2 GetIntVector(AstNode.GlobalCall globalCall)
+    {
+        var args = globalCall.Arguments;
+
+        return new Vector2(GetInt(args[0]), GetInt(args[1]));
     }
     
     [Pure]

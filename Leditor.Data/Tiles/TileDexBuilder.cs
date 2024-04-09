@@ -56,20 +56,20 @@ public class TileDexBuilder
         Dictionary<string, TileDefinition> definitions = new();
         Dictionary<string, TileDefinition[]> categories = new();
         Dictionary<string, Color> colors = new();
-        Dictionary<string, string> tileCategory = new();
+        Dictionary<TileDefinition, string> tileCategory = new();
         Dictionary<string, Color> tileColor = new();
 
         foreach (var (category, (color, tileDefinitions)) in _tiles)
         {
             foreach (var tileDefinition in tileDefinitions)
             {
-                definitions.Add(tileDefinition.Name, tileDefinition);
-                tileCategory.Add(tileDefinition.Name, category);
-                tileColor.Add(tileDefinition.Name, color);
+                definitions.TryAdd(tileDefinition.Name, tileDefinition);
+                tileCategory.TryAdd(tileDefinition, category);
+                tileColor.TryAdd(tileDefinition.Name, color);
             }
             
-            categories.Add(category, [..tileDefinitions]);
-            colors.Add(category, color);
+            categories.TryAdd(category, [..tileDefinitions]);
+            colors.TryAdd(category, color);
         }
 
         return new TileDex(

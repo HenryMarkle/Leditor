@@ -29,6 +29,8 @@ internal class LightEditorPage : EditorPage
     private bool _tilePreview = true;
     private bool _tintedTileTextures = true;
 
+    private bool _shouldRedrawLevel = true;
+
     private int _quadLock;
     private readonly QuadVectors _quadPoints = new();
 
@@ -97,6 +99,13 @@ internal class LightEditorPage : EditorPage
 
     public override void Draw()
     {
+        if (GLOBALS.PreviousPage != 5)
+        {
+            _shouldRedrawLevel = true;
+        }
+
+        GLOBALS.PreviousPage = 5;
+        
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera with { Target = GLOBALS.Camera.Target + new Vector2(300, 300)};
         var mouse = GetMousePosition();
         var worldMouse = GetScreenToWorld2D(mouse, _camera);
@@ -376,6 +385,27 @@ internal class LightEditorPage : EditorPage
                 ? Color.Black 
                 : GLOBALS.Settings.LightEditor.Background);
 
+            if (_shouldRedrawLevel)
+            {
+                Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
+                {
+                    Water = true,
+                    WaterAtFront = GLOBALS.Level.WaterAtFront,
+                    
+                    TilesLayer1 = _showTiles,
+                    TilesLayer2 = _showTiles,
+                    TilesLayer3 = _showTiles,
+                    
+                    PropsLayer1 = _showProps,
+                    PropsLayer2 = _showProps,
+                    PropsLayer3 = _showProps,
+                    
+                    TintedTiles = GLOBALS.Settings.GeneralSettings.FancyTiles,
+                    TintedProps = GLOBALS.Settings.GeneralSettings.FancyProps
+                });
+                _shouldRedrawLevel = false;
+            }
+
             BeginMode2D(_camera);
             {
                 #region Level
@@ -396,41 +426,10 @@ internal class LightEditorPage : EditorPage
                         Color.White);
                 }
 
-                Printers.DrawGeoLayer(2, GLOBALS.Scale, false, Color.Black with { A = 150 }, new Vector2(300, 300));
-                
-                if (_showTiles) Printers.DrawTileLayer(2, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new Vector2(300, 300));
-                if (_showProps) Printers.DrawPropLayer(2, _tintedProps, GLOBALS.Scale, new Vector2(300, 300));
-
-                Printers.DrawGeoLayer(1, GLOBALS.Scale, false, Color.Black with { A = 150 }, new Vector2(300, 300));
-                
-                if (_showTiles) Printers.DrawTileLayer(1, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new Vector2(300, 300));
-                if (_showProps) Printers.DrawPropLayer(1, _tintedProps, GLOBALS.Scale, new Vector2(300, 300));
-                
-                if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
-                {
-                    DrawRectangle(
-                        (-1) * GLOBALS.Scale + 300,
-                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale + 300,
-                        (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                        new(0, 0, 255, 255)
-                    );
-                }
-
-                Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.Black, new Vector2(300, 300));
-                if (_showTiles) Printers.DrawTileLayer(0, GLOBALS.Scale, false, _tilePreview, _tintedTileTextures, new Vector2(300, 300));
-                if (_showProps) Printers.DrawPropLayer(0, _tintedProps, GLOBALS.Scale, new Vector2(300, 300));
-                
-                if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
-                {
-                    DrawRectangle(
-                        (-1) * GLOBALS.Scale + 300,
-                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale + 300,
-                        (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                        new(0, 0, 255, 255)
-                    );
-                }
+                BeginShaderMode(GLOBALS.Shaders.VFlip);
+                SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), GLOBALS.Textures.GeneralLevel.Texture);
+                DrawTexture(GLOBALS.Textures.GeneralLevel.Texture, 300, 300, Color.White);
+                EndShaderMode();
                 #endregion
                 
                 // Lightmap
@@ -725,43 +724,8 @@ internal class LightEditorPage : EditorPage
                     
                     ImGui.Spacing();
 
-                    var clicked = ImGui.Button((_showTiles, _tilePreview, _tintedTileTextures) switch
-                    {
-                        (true, true, false) => "Tiles: Review",
-                        (true, false, false) => "Tiles: Textures",
-                        (true, false, true) => "Tiles: Tinted Textures",
-                        _ => "Tiles: Disabled"
-                    }, availableSpace with { Y = 20 });
-
-                    if (clicked)
-                    {
-                        (_showTiles, _tilePreview, _tintedTileTextures) = (_showTiles, _tilePreview, _tintedTileTextures) switch
-                        {
-                            (false, true, false) => (true, true, false),
-                            (true, true, false) => (true, false, false),
-                            (true, false, false) => (true, false, true),
-                            (true, false, true) => (false, true, false),
-                            _ => (true, true, false)
-                        };
-                    }
-
-                    var switchPropClicked = ImGui.Button((_showProps, _tintedProps) switch
-                    {
-                        (false, _) => "Props: Off",
-                        (true, false) => "Props: Unfiltered",
-                        (true, true) => "Props: Colored"
-                    }, availableSpace with { Y = 20 });
-
-                    if (switchPropClicked)
-                    {
-                        (_showProps, _tintedProps) = (_showProps, _tintedProps) switch
-                        {
-                            (false, false) => (true, false),
-                            (true, false) => (true, true),
-                            (true, true) => (false, false),
-                            _ => (false, false)
-                        };
-                    }
+                    if (ImGui.Checkbox("Tiles", ref _showTiles)) _shouldRedrawLevel = true;
+                    if (ImGui.Checkbox("Props", ref _showProps)) _shouldRedrawLevel = true;
                     
                     ImGui.Spacing();
 

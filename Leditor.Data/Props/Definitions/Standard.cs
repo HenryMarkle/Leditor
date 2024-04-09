@@ -7,9 +7,8 @@ public sealed class Standard(
     string name,
     int depth,
     (int width, int height) size,
-    int[] repeat,
-    Texture2D texture
-) : PropDefinition(name, depth, texture), ILayered
+    int[] repeat
+) : PropDefinition(name, depth), ILayered
 {
     public override PropSettings NewSettings(int renderOrder = 0, int seed = 0, int renderTime = 0) 
         => new StandardSettings(renderOrder, seed, renderOrder);

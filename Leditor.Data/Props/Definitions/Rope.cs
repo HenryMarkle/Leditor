@@ -16,9 +16,8 @@ public sealed class Rope(
     float edgeDirection,
     float rigid,
     float selfPush,
-    float sourcePush,
-    Texture2D texture
-) : PropDefinition(name, depth, texture)
+    float sourcePush
+) : PropDefinition(name, depth)
 {
     public override PropSettings NewSettings(int renderOrder = 0, int seed = 0, int renderTime = 0)
         => new RopeSettings(renderOrder, seed, renderTime);

@@ -3,7 +3,7 @@ using Leditor.RL.Managed;
 
 namespace Leditor.Data.Tiles;
 
-#nullable disable
+#nullable enable
 
 /// <summary>
 /// <see cref="IDisposable.Dispose"/> must be called by the consumer.
@@ -33,7 +33,7 @@ public class TileDex : IDisposable
     /// <summary>
     /// Tile -> Category
     /// </summary>
-    private readonly ImmutableDictionary<string, string> _tileCategory;
+    private readonly ImmutableDictionary<TileDefinition, string> _tileCategory;
     
     /// <summary>
     /// Tile -> Color
@@ -53,7 +53,16 @@ public class TileDex : IDisposable
     /// <param name="name">The name of the tile</param>
     /// <returns>A pointer to the definition object</returns>
     /// <exception cref="KeyNotFoundException">The tile <paramref name="name"/> is not found</exception>
-    public TileDefinition GetDefinition(string name) => _definitions[name];
+    public TileDefinition GetTile(string name) => _definitions[name];
+
+    /// <summary>
+    /// Attempts to get the definition of tile
+    /// </summary>
+    /// <param name="name">The name of the tile</param>
+    /// <param name="definition">The found definition</param>
+    /// <returns>true if found; otherwise false</returns>
+    public bool TryGetTile(string name, out TileDefinition? definition) =>
+        _definitions.TryGetValue(name, out definition);
     
     /// <summary>
     /// Get all tile definitions that belong to the same category <paramref name="name"/>
@@ -61,7 +70,15 @@ public class TileDex : IDisposable
     /// <param name="name">The name of the common category</param>
     /// <returns>An array of the tile definitions</returns>
     /// <exception cref="KeyNotFoundException">The category <paramref name="name"/> is not found</exception>
-    public TileDefinition[] GetDefinitionsOfCategory(string name) => _categories[name];
+    public TileDefinition[] GetTilesOfCategory(string name) => _categories[name];
+    
+    /// <summary>
+    /// Attempts to get all tile definitions that belong to the same category <paramref name="name"/>
+    /// </summary>
+    /// <param name="name">The name of the common category</param>
+    /// <returns>An array of the tile definitions; If not found then an empty array will be returned</returns>
+    public TileDefinition[] TryGetTilesOfCategory(string name) 
+        => _categories.TryGetValue(name, out var tiles) ? tiles : [];
     
     /// <summary>
     /// Get the color associated to the category
@@ -70,14 +87,31 @@ public class TileDex : IDisposable
     /// <returns>A color struct</returns>
     /// <exception cref="KeyNotFoundException">The category <paramref name="name"/> is not found</exception>
     public Color GetCategoryColor(string name) => _colors[name];
+
+    /// <summary>
+    /// Attempts to get the color associated to the category
+    /// </summary>
+    /// <param name="name">The <param name="name"></param> of the category</param>
+    /// <param name="color">The found color</param>
+    /// <returns>true if found; otherwise false</returns>
+    public bool TryGetCategoryColor(string name, out Color color) => _colors.TryGetValue(name, out color);
     
     /// <summary>
     /// Get the category of a tile
     /// </summary>
-    /// <param name="name">The name of the tile</param>
+    /// <param name="tile">The tile</param>
     /// <returns>The name of the category that the tile belongs to</returns>
     /// <exception cref="KeyNotFoundException">The tile name is not found</exception>
-    public string GetCategory(string name) => _tileCategory[name];
+    public string GetCategory(TileDefinition tile) => _tileCategory[tile];
+
+    /// <summary>
+    /// Get the category of a tile
+    /// </summary>
+    /// <param name="tile">The name of the tile</param>
+    /// <param name="category">The found category</param>
+    /// <returns>true if found; otherwise false</returns>
+    /// <exception cref="KeyNotFoundException">The tile name is not found</exception>
+    public bool TryGetCategory(TileDefinition tile, out string? category) => _tileCategory.TryGetValue(tile, out category);
     
     /// <summary>
     /// Get the color of the category of the tile
@@ -86,6 +120,31 @@ public class TileDex : IDisposable
     /// <returns>A color struct</returns>
     /// <exception cref="KeyNotFoundException">The tile name is not found</exception>
     public Color GetTileColor(string name) => _tileColor[name];
+    
+    /// <summary>
+    /// Get the color of the category of the tile
+    /// </summary>
+    /// <param name="tile">The tile</param>
+    /// <returns>A color struct</returns>
+    /// <exception cref="KeyNotFoundException">The tile name is not found</exception>
+    public Color GetTileColor(TileDefinition tile) => _tileColor[tile.Name];
+
+    /// <summary>
+    /// Attempts to get the color of the category of the tile
+    /// </summary>
+    /// <param name="name">The name of the tile</param>
+    /// <param name="color">The found color</param>
+    /// <returns>true if found; otherwise false</returns>
+    public bool TryGetTileColor(string name, out Color color) => _tileColor.TryGetValue(name, out color);
+    
+    
+    /// <summary>
+    /// Attempts to get the color of the category of the tile
+    /// </summary>
+    /// <param name="tile">The tile</param>
+    /// <param name="color">The found color</param>
+    /// <returns>true if found; otherwise false</returns>
+    public bool TryGetTileColor(TileDefinition tile, out Color color) => _tileColor.TryGetValue(tile.Name, out color);
 
     /// <summary>
     /// Check if a tile with <paramref name="name"/> exists
@@ -113,6 +172,9 @@ public class TileDex : IDisposable
     /// <returns>A managed reference to the texture</returns>
     public Texture2D GetTexture(string name) => _textures[name];
     
+    public string[] OrderedTileAsPropCategories { get; init; }
+    public TileDefinition[][] OrderedTilesAsProps { get; init; }
+    
     /// <inheritdoc cref="IDisposable"/>
     public void Dispose()
     {
@@ -131,7 +193,7 @@ public class TileDex : IDisposable
         Dictionary<string, TileDefinition> definitions,
         Dictionary<string, TileDefinition[]> categories,
         Dictionary<string, Color> colors,
-        Dictionary<string, string> tileCategory,
+        Dictionary<TileDefinition, string> tileCategory,
         Dictionary<string, Color> tileColor,
         Dictionary<string, Texture2D> textures,
         string[] orderedCategoryNames)
@@ -142,7 +204,31 @@ public class TileDex : IDisposable
         _tileCategory = tileCategory.ToImmutableDictionary();
         _tileColor = tileColor.ToImmutableDictionary();
         _textures = textures.ToImmutableDictionary();
-        OrderedCategoryNames = [..orderedCategoryNames];
+        OrderedCategoryNames = orderedCategoryNames;
+
+        List<string> filteredCategories = [];
+        List<TileDefinition[]> filteredTiles = [];
+
+        foreach (var category in orderedCategoryNames)
+        {
+            var orderedTiles = categories[category];
+
+            List<TileDefinition> tiles = [];
+            foreach (var tile in orderedTiles)
+            {
+                if (tile.Type == TileType.VoxelStruct && !tile.Tags.Contains("notProp"))
+                    tiles.Add(tile);
+            }
+            
+            if (tiles is not [])
+            {
+                filteredCategories.Add(category);
+                filteredTiles.Add([..tiles]);
+            }
+        }
+
+        OrderedTileAsPropCategories = [..filteredCategories];
+        OrderedTilesAsProps = [..filteredTiles];
     }
 
     ~TileDex()

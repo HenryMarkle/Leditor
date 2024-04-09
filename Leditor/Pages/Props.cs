@@ -1,10 +1,13 @@
 ﻿using System.Numerics;
 using ImGuiNET;
+using Leditor.Data.Tiles;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 using RenderTexture2D = Leditor.RL.Managed.RenderTexture2D;
 
 namespace Leditor.Pages;
+
+#nullable enable
 
 internal class PropsEditorPage : EditorPage, IContextListener
 {
@@ -46,10 +49,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
         {
             case 0: // Tile-As-Prop
             {
-                var currentTileAsProp = _tilesAsPropsIndices[_hoveredCategoryIndex][_hoveredIndex];
-                var texture = GLOBALS.Textures.Tiles[_tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex].index][currentTileAsProp.index];
-
-                var (width, height) = currentTileAsProp.init.Size;
+                if (_hoveredTile is null) return;
+                
+                var (width, height) = _hoveredTile.Size;
                 
                 _propTooltip = new RenderTexture2D(20 * width + 20, 20 * height + 20);
                 
@@ -57,8 +59,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 ClearBackground(Color.White with { A = 0 });
                     
                 Printers.DrawTileAsPropColored(
-                    texture, 
-                    currentTileAsProp.init, 
+                    _hoveredTile, 
                     new Vector2(0, 0), 
                     new  Vector2(-10, -10), 
                     tint, 
@@ -176,7 +177,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 // origin must be the center
                 // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                 
-                Printers.DrawProp(current.type, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
+                Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
                 
                 // Draw Rope Point
                 if (current.type == InitPropType.Rope)
@@ -336,7 +337,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 // origin must be the center
                 // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                 
-                Printers.DrawProp(current.type, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
+                Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
                 
                 // Draw Rope Point
                 if (current.type == InitPropType.Rope)
@@ -499,7 +500,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 // origin must be the center
                 // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                 
-                Printers.DrawProp(current.type, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
+                Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
                 
                 // Draw Rope Point
                 if (current.type == InitPropType.Rope)
@@ -685,11 +686,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
     private readonly (string name, Color color)[] _propCategoriesOnly = GLOBALS.PropCategories[..^2]; // a risky move..
 
-    private readonly (int index, string category)[] _tilesAsPropsCategoryIndices = [];
-    private readonly (int index, InitTile init)[][] _tilesAsPropsIndices = [];
+    private TileDefinition? _currentTile;
+    private TileDefinition? _hoveredTile;
 
-    private readonly string[] _tilesAsPropsCategoryNames;
-    private readonly string[][] _tilesAsPropsNames;
     private readonly string[] _ropeNames = [..GLOBALS.RopeProps.Select(p => p.Name)];
     private readonly string[] _longNames = [..GLOBALS.LongProps.Select(l => l.Name)];
     private readonly string[] _otherCategoryNames;
@@ -711,33 +710,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
     {
         _defaultDepth = -GLOBALS.Layer * 10;
     }
-    
-    // Layers 2 and 3 do not show geo features like shortcuts and entrances 
-    private readonly bool[] _layerStackableFilter =
-    [
-        false, 
-        true, 
-        true, 
-        true, 
-        false, // 5
-        false, // 6
-        false, // 7
-        true, 
-        false, // 9
-        false, // 10
-        true, 
-        false, // 12
-        false, // 13
-        true, 
-        true, 
-        true, 
-        true, 
-        false, // 18
-        false, // 19
-        false, // 20
-        false, // 21
-        true
-    ];
 
     private Vector2? _propsMoveMouseAnchor;
     private Vector2? _propsMoveMousePos;
@@ -748,38 +720,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
     
-    private bool _isNavigationWinHovered;
-    private bool _isNavigationWinDragged;
-    
     private bool _isPropsWinHovered;
     private bool _isPropsWinDragged;
 
     public PropsEditorPage()
     {
-        _camera = new() { Zoom = 0.8f };
+        _camera = new Camera2D { Zoom = 0.8f };
 
-        for (var c = 0; c < GLOBALS.Tiles.Length; c++)
-        {
-            List<(int, InitTile)> tiles = [];
-
-            for (var t = 0; t < GLOBALS.Tiles[c].Length; t++)
-            {
-                var tile = GLOBALS.Tiles[c][t];
-
-                if (tile.Type == InitTileType.VoxelStruct && !tile.Tags.Contains("notProp")) tiles.Add((t, tile));
-            }
-
-            if (tiles.Count != 0)
-            {
-                _tilesAsPropsCategoryIndices = [.. _tilesAsPropsCategoryIndices, (c, GLOBALS.TileCategories[c].Item1)];
-                _tilesAsPropsIndices = [.. _tilesAsPropsIndices, [.. tiles]];
-            }
-            
-            // init rope models
-        }
-
-        _tilesAsPropsCategoryNames = [..from c in _tilesAsPropsCategoryIndices select c.category];
-        _tilesAsPropsNames = _tilesAsPropsIndices.Select(c => c.Select(t => t.init.Name).ToArray()).ToArray();
         _otherCategoryNames = [..from c in _propCategoriesOnly select c.name];
         _otherNames = GLOBALS.Props.Select(c => c.Select(p => p.Name).ToArray()).ToArray();
     }
@@ -842,10 +789,15 @@ internal class PropsEditorPage : EditorPage, IContextListener
         switch (_menuRootCategoryIndex)
         {
             case 0: // tiles as props
+                if (GLOBALS.TileDex is null) return;
+                
                 _propsMenuTilesIndex--;
                 
-                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuTilesIndex, 0, _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length - 1);
-                else Utils.Restrict(ref _propsMenuTilesIndex, 0, _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length - 1);
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuTilesIndex, 0, GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length - 1);
+                else Utils.Restrict(ref _propsMenuTilesIndex, 0, GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length - 1);
+                
+                _currentTile =
+                    GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
                 break;
                     
             case 1: // Ropes
@@ -876,13 +828,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
         switch (_menuRootCategoryIndex)
         {
             case 0: // Tiles-As-Props
+                if (GLOBALS.TileDex is null) return;
+
                 _propsMenuTilesCategoryIndex++;
 
-                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuTilesCategoryIndex, 0, _tilesAsPropsCategoryIndices.Length - 1);
-                else Utils.Restrict(ref _propsMenuTilesCategoryIndex, 0, _tilesAsPropsCategoryIndices.Length - 1);
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuTilesCategoryIndex, 0, GLOBALS.TileDex.OrderedTileAsPropCategories.Length - 1);
+                else Utils.Restrict(ref _propsMenuTilesCategoryIndex, 0, GLOBALS.TileDex.OrderedTileAsPropCategories.Length - 1);
                 
                 if (GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex) _propsMenuTilesIndex = 0;
-                else Utils.Restrict(ref _propsMenuTilesIndex, 0, _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length - 1);
+                else Utils.Restrict(ref _propsMenuTilesIndex, 0, GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length - 1);
+                
+                _currentTile =
+                    GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
                 break;
             
             case 3: // Other
@@ -902,13 +859,17 @@ internal class PropsEditorPage : EditorPage, IContextListener
         switch (_menuRootCategoryIndex)
         {
             case 0: // Tiles-As-Props
+                if (GLOBALS.TileDex is null) return;
                 _propsMenuTilesCategoryIndex--;
 
-                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuTilesCategoryIndex, 0, _tilesAsPropsCategoryIndices.Length - 1);
-                else Utils.Restrict(ref _propsMenuTilesCategoryIndex, 0, _tilesAsPropsCategoryIndices.Length - 1);
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuTilesCategoryIndex, 0, GLOBALS.TileDex.OrderedTileAsPropCategories.Length - 1);
+                else Utils.Restrict(ref _propsMenuTilesCategoryIndex, 0, GLOBALS.TileDex.OrderedTileAsPropCategories.Length - 1);
 
                 if (GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex) _propsMenuTilesIndex = 0;
-                else Utils.Restrict(ref _propsMenuTilesIndex, 0, _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length - 1);
+                else Utils.Restrict(ref _propsMenuTilesIndex, 0, GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length - 1);
+
+                _currentTile =
+                    GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
                 break;
             
             case 3: // Other
@@ -928,10 +889,14 @@ internal class PropsEditorPage : EditorPage, IContextListener
         switch (_menuRootCategoryIndex)
         {
             case 0: // Tiles as props
+                if (GLOBALS.TileDex is null) return;
                 _propsMenuTilesIndex++;
 
-                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuTilesIndex, 0, _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length - 1);
-                else Utils.Restrict(ref _propsMenuTilesIndex, 0, _tilesAsPropsIndices[_propsMenuTilesCategoryIndex].Length - 1);
+                if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _propsMenuTilesIndex, 0, GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length - 1);
+                else Utils.Restrict(ref _propsMenuTilesIndex, 0, GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length - 1);
+                
+                _currentTile =
+                    GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
                 break;
             
             case 1: // Ropes
@@ -967,6 +932,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
         }
 
         GLOBALS.PreviousPage = 8;
+        
+        if (_currentTile is null) _currentTile = GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
         
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
@@ -1004,16 +971,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                           !_isPropsWinDragged && 
                           !_isShortcutsWinHovered && 
                           !_isShortcutsWinDragged && 
-                          !_isNavigationWinHovered &&
-                          !_isNavigationWinDragged &&
                           !CheckCollisionPointRec(tileMouse, menuPanelRect) &&
                           !CheckCollisionPointRec(tileMouse, layer3Rect) &&
                           (GLOBALS.Layer != 1 || !CheckCollisionPointRec(tileMouse, layer2Rect)) &&
                           (GLOBALS.Layer != 0 || !CheckCollisionPointRec(tileMouse, layer1Rect));
 
         var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
-
-        var currentTileAsPropCategory = _tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex];
 
         if (_spinnerLock == 0)
         {
@@ -1112,9 +1075,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             case 0: // Tiles as props
                             {
-                                var currentTileAsProp = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
-                                var width = (float)(currentTileAsProp.init.Size.Item1 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
-                                var height = (float)(currentTileAsProp.init.Size.Item2 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
+                                if (_currentTile is null) break;
+                                
+                                var width = (float)(_currentTile.Size.Item1 + _currentTile.BufferTiles*2) * GLOBALS.PreviewScale / 2;
+                                var height = (float)(_currentTile.Size.Item2 + _currentTile.BufferTiles*2) * GLOBALS.PreviewScale / 2;
                                 
                                 BasicPropSettings settings;
 
@@ -1148,15 +1112,16 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
                                     (
                                         InitPropType.Tile, 
-                                        (currentTileAsPropCategory.index, currentTileAsProp.index),
+                                        _currentTile,
+                                        (-1, -1),
                                         new Prop(
                                             _defaultDepth, 
-                                            currentTileAsProp.init.Name, 
+                                            _currentTile.Name, 
                                             true, 
                                             placementQuad
                                         )
                                         {
-                                            Extras = new(settings, [])
+                                            Extras = new PropExtras(settings, [])
                                         }
                                     )
                                 ];
@@ -1198,6 +1163,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
                                     (
                                         InitPropType.Rope, 
+                                        null,
                                         (-1, _propsMenuRopesIndex), 
                                         new Prop(
                                             _defaultDepth, 
@@ -1249,6 +1215,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
                                     (
                                         InitPropType.Long, 
+                                        null,
                                         (-1, _propsMenuLongsIndex), 
                                         new Prop(
                                             _defaultDepth, 
@@ -1298,6 +1265,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
                                     (
                                         init.Type, 
+                                        null,
                                         (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex),
                                         new Prop(
                                             _defaultDepth, 
@@ -1345,9 +1313,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             case 0: // Tiles as props
                             {
-                                var currentTileAsProp = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
-                                var width = (float)(currentTileAsProp.init.Size.Item1 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
-                                var height = (float)(currentTileAsProp.init.Size.Item2 + currentTileAsProp.init.BufferTiles*2) * GLOBALS.PreviewScale / 2;
+                                var width = (float)(_currentTile.Size.Item1 + _currentTile.BufferTiles*2) * GLOBALS.PreviewScale / 2;
+                                var height = (float)(_currentTile.Size.Item2 + _currentTile.BufferTiles*2) * GLOBALS.PreviewScale / 2;
                                 
                                 BasicPropSettings settings;
 
@@ -1375,10 +1342,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
                                     (
                                         InitPropType.Tile, 
-                                        (currentTileAsPropCategory.index, currentTileAsProp.index),
+                                        _currentTile,
+                                        (-1, -1),
                                         new Prop(
                                             _defaultDepth, 
-                                            currentTileAsProp.init.Name, 
+                                            _currentTile.Name, 
                                             true, 
                                             quads
                                         )
@@ -1425,6 +1393,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
                                     (
                                         InitPropType.Rope, 
+                                        null,
                                         (-1, _propsMenuRopesIndex), 
                                         new Prop(
                                             _defaultDepth, 
@@ -1476,6 +1445,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
                                     (
                                         InitPropType.Long, 
+                                        null,
                                         (-1, _propsMenuLongsIndex), 
                                         new Prop(
                                             _defaultDepth, 
@@ -1533,6 +1503,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
                                     (
                                         init.Type, 
+                                        null,
                                         (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex),
                                         new Prop(
                                             _defaultDepth, 
@@ -1580,14 +1551,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 if (_shortcuts.NavigateMenuDown.Check(ctrl, shift, alt))
                 {
                     IncrementMenuIndex();
-                        
-                    // I don't remember what this is for
-                    currentTileAsPropCategory = _tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex];
                 }
                 else if (_shortcuts.NavigateMenuUp.Check(ctrl, shift, alt))
                 {
                     DecrementMenuIndex();
-                    currentTileAsPropCategory = _tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex];
                 }
                 
                 // Pickup Prop
@@ -1602,17 +1569,16 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             current.prop.Depth > GLOBALS.Layer * -10) 
                             continue;
 
-                        if (current.type == InitPropType.Tile)
+                        if (current.type == InitPropType.Tile && GLOBALS.TileDex is not null)
                         {
-                            for (var c = 0; c < _tilesAsPropsIndices.Length; c++)
+                            for (var c = 0; c < GLOBALS.TileDex.OrderedTilesAsProps.Length; c++)
                             {
-                                for (var p = 0; p < _tilesAsPropsIndices[c].Length; p++)
+                                for (var p = 0; p < GLOBALS.TileDex.OrderedTilesAsProps[c].Length; p++)
                                 {
-                                    var currentTileAsProp = _tilesAsPropsIndices[c][p];
+                                    var currentTileAsProp = GLOBALS.TileDex.OrderedTilesAsProps[c][p];
 
-                                    if (currentTileAsProp.init.Name != current.prop.Name) continue;
+                                    if (currentTileAsProp.Name != current.prop.Name) continue;
 
-                                    currentTileAsPropCategory = _tilesAsPropsCategoryIndices[c];
                                     _propsMenuTilesCategoryIndex = c;
                                     _propsMenuTilesIndex = p;
 
@@ -1804,11 +1770,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 {
                     _shouldRedrawLevel = true;
                     
-                    List<(InitPropType, (int, int), Prop)> dProps = [];
+                    List<(InitPropType, TileDefinition?, (int, int), Prop)> dProps = [];
                     
                     foreach (var (prop, _) in fetchedSelected)
                     {
-                        dProps.Add((prop.type, prop.position, new Prop(
+                        dProps.Add((prop.type, prop.tile, prop.position, new Prop(
                                 prop.prop.Depth,
                                 prop.prop.Name,
                                 prop.prop.IsTile,
@@ -2441,492 +2407,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 Color.White);
             EndShaderMode();
             
-            
-            // #region TileEditorLayer3
-            // if (_showTileLayer3)
-            // {
-            //     // Draw geos first
-            //
-            //     Printers.DrawGeoLayer(
-            //         2, 
-            //         GLOBALS.PreviewScale, 
-            //         false, 
-            //         Color.Black
-            //     );
-            //
-            //     // then draw the tiles
-            //
-            //     if (_showLayer3Tiles)
-            //     {
-            //         Printers.DrawTileLayer(
-            //             2, 
-            //             GLOBALS.PreviewScale, 
-            //             false, 
-            //             true,
-            //             false
-            //         );
-            //     }
-            //     
-            //     // Then draw the props
-            //
-            //     for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
-            //     {
-            //         if (_hidden[p]) continue;
-            //         
-            //         var current = GLOBALS.Level.Props[p];
-            //         
-            //         // Filter based on depth
-            //         if (current.prop.Depth > -20) continue;
-            //
-            //         var (category, index) = current.position;
-            //         var quads = current.prop.Quads;
-            //         
-            //         // origin must be the center
-            //         // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
-            //         
-            //         Printers.DrawProp(current.type, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-            //         
-            //         // Draw Rope Point
-            //         if (current.type == InitPropType.Rope)
-            //         {
-            //             foreach (var point in current.prop.Extras.RopePoints)
-            //             {
-            //                 DrawCircleV(point, 3f, Color.White);
-            //             }
-            //         }
-            //         
-            //         if (_selected[p])
-            //         {
-            //             // Side Lines
-            //             
-            //             DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
-            //             
-            //             // Quad Points
-            //
-            //             if (_stretchingProp)
-            //             {
-            //                 if (current.type == InitPropType.Rope)
-            //                 {
-            //                     DrawCircleV(
-            //                         Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
-            //                             new(2f, 2f)), 
-            //                         5f, 
-            //                         Color.Blue
-            //                     );
-            //                     
-            //                     DrawCircleV(
-            //                         Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), 
-            //                             new(2f, 2f)), 
-            //                         5f, 
-            //                         Color.Blue
-            //                     );
-            //                     
-            //                     DrawCircleV(quads.TopLeft, 2f, Color.Blue);
-            //                     DrawCircleV(quads.TopRight, 2f, Color.Blue);
-            //                     DrawCircleV(quads.BottomRight, 2f, Color.Blue);
-            //                     DrawCircleV(quads.BottomLeft, 2f, Color.Blue);
-            //                 }
-            //                 else
-            //                 {
-            //                     DrawCircleV(quads.TopLeft, 5f, Color.Blue);
-            //                     DrawCircleV(quads.TopRight, 5f, Color.Blue);
-            //                     DrawCircleV(quads.BottomRight, 5f, Color.Blue);
-            //                     DrawCircleV(quads.BottomLeft, 5f, Color.Blue);
-            //                 }
-            //             }
-            //             else if (_scalingProps)
-            //             {
-            //                 var center = Utils.QuadsCenter(ref quads);
-            //                 
-            //                 switch (_stretchAxes)
-            //                 {
-            //                     case 1:
-            //                         DrawLineEx(
-            //                             center with { X = -10 }, 
-            //                             center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
-            //                             2f, 
-            //                             Color.Red
-            //                         );
-            //                         break;
-            //                     case 2:
-            //                         DrawLineEx(
-            //                             center with { Y = -10 },
-            //                             center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
-            //                             2f,
-            //                             Color.Green
-            //                         );
-            //                         break;
-            //                 }
-            //             }
-            //             
-            //             // Draw Rope Point
-            //             if (current.type == InitPropType.Rope)
-            //             {
-            //                 if (_editingPropPoints)
-            //                 {
-            //                     foreach (var point in current.prop.Extras.RopePoints)
-            //                     {
-            //                         DrawCircleV(point, 3f, Color.Red);
-            //                     }
-            //                 }
-            //                 else
-            //                 {
-            //                     foreach (var point in current.prop.Extras.RopePoints)
-            //                     {
-            //                         DrawCircleV(point, 2f, Color.Orange);
-            //                     }
-            //                 }
-            //                 
-            //                 if (_ropeMode)
-            //                 {
-            //                     // p is copied as suggested by the code editor..
-            //                     var p1 = p;
-            //                     var model = _models.Single(r => r.index == p1);
-            //
-            //                     if (!model.simSwitch)
-            //                     {
-            //                         foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
-            // #endregion
-            //
-            // #region TileEditorLayer2
-            // if (_showTileLayer2)
-            // {
-            //     if (GLOBALS.Layer != 2) DrawRectangle(
-            //         0, 
-            //         0, 
-            //         GLOBALS.Level.Width * GLOBALS.PreviewScale, 
-            //         GLOBALS.Level.Height * GLOBALS.PreviewScale, 
-            //         Color.Gray with { A = 130 });
-            //
-            //     Printers.DrawGeoLayer(
-            //         1, 
-            //         GLOBALS.PreviewScale, 
-            //         false, 
-            //         GLOBALS.Layer < 2
-            //             ? Color.Black 
-            //             : Color.Black with { A = 80 }
-            //     );
-            //
-            //     // Draw layer 2 tiles
-            //
-            //     if (_showLayer2Tiles)
-            //     {
-            //         Printers.DrawTileLayer(
-            //             1, 
-            //             GLOBALS.PreviewScale, 
-            //             false, 
-            //             true,
-            //             false,
-            //             (byte)(GLOBALS.Layer < 2 ? 255 : 80)
-            //         );
-            //     }
-            //     
-            //     // then draw the props
-            //
-            //     for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
-            //     {
-            //         if (_hidden[p]) continue;
-            //         
-            //         var current = GLOBALS.Level.Props[p];
-            //         
-            //         // Filter based on depth
-            //         if (current.prop.Depth > -10 || current.prop.Depth < -19) continue;
-            //
-            //         var (category, index) = current.position;
-            //         var quads = current.prop.Quads;
-            //         
-            //         // origin must be the center
-            //         // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
-            //         
-            //         Printers.DrawProp(current.type, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-            //         
-            //         // Draw Rope Point
-            //         if (current.type == InitPropType.Rope)
-            //         {
-            //             foreach (var point in current.prop.Extras.RopePoints)
-            //             {
-            //                 DrawCircleV(point, 3f, Color.White);
-            //             }
-            //         }
-            //         
-            //         if (_selected[p])
-            //         {
-            //             // Side Lines
-            //             
-            //             DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
-            //             
-            //             // Quad Points
-            //
-            //             if (_stretchingProp)
-            //             {
-            //                 if (current.type == InitPropType.Rope)
-            //                 {
-            //                     DrawCircleV(
-            //                         Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
-            //                             new(2f, 2f)), 
-            //                         5f, 
-            //                         Color.Blue
-            //                     );
-            //                     
-            //                     DrawCircleV(
-            //                         Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), 
-            //                             new(2f, 2f)), 
-            //                         5f, 
-            //                         Color.Blue
-            //                     );
-            //                     
-            //                     DrawCircleV(quads.TopLeft, 2f, Color.Blue);
-            //                     DrawCircleV(quads.TopRight, 2f, Color.Blue);
-            //                     DrawCircleV(quads.BottomRight, 2f, Color.Blue);
-            //                     DrawCircleV(quads.BottomLeft, 2f, Color.Blue);
-            //                 }
-            //                 else
-            //                 {
-            //                     DrawCircleV(quads.TopLeft, 5f, Color.Blue);
-            //                     DrawCircleV(quads.TopRight, 5f, Color.Blue);
-            //                     DrawCircleV(quads.BottomRight, 5f, Color.Blue);
-            //                     DrawCircleV(quads.BottomLeft, 5f, Color.Blue);
-            //                 }
-            //             }
-            //             else if (_scalingProps)
-            //             {
-            //                 var center = Utils.QuadsCenter(ref quads);
-            //                 
-            //                 switch (_stretchAxes)
-            //                 {
-            //                     case 1:
-            //                         DrawLineEx(
-            //                             center with { X = -10 }, 
-            //                             center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
-            //                             2f, 
-            //                             Color.Red
-            //                         );
-            //                         break;
-            //                     case 2:
-            //                         DrawLineEx(
-            //                             center with { Y = -10 },
-            //                             center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
-            //                             2f,
-            //                             Color.Green
-            //                         );
-            //                         break;
-            //                 }
-            //             }
-            //             
-            //             // Draw Rope Point
-            //             if (current.type == InitPropType.Rope)
-            //             {
-            //                 if (_editingPropPoints)
-            //                 {
-            //                     foreach (var point in current.prop.Extras.RopePoints)
-            //                     {
-            //                         DrawCircleV(point, 3f, Color.Red);
-            //                     }
-            //                 }
-            //                 else
-            //                 {
-            //                     foreach (var point in current.prop.Extras.RopePoints)
-            //                     {
-            //                         DrawCircleV(point, 2f, Color.Orange);
-            //                     }
-            //                 }
-            //                 
-            //                 if (_ropeMode)
-            //                 {
-            //                     // p is copied as suggested by the code editor..
-            //                     var p1 = p;
-            //                     var model = _models.Single(r => r.index == p1);
-            //
-            //                     if (!model.simSwitch)
-            //                     {
-            //                         foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //     }
-            //     
-            // }
-            // #endregion
-            //
-            // #region TileEditorLayer1
-            // if (_showTileLayer1)
-            // {
-            //     if (GLOBALS.Layer != 1 && GLOBALS.Layer!= 2) 
-            //         DrawRectangle(
-            //             0, 
-            //             0, 
-            //             GLOBALS.Level.Width * GLOBALS.PreviewScale, 
-            //             GLOBALS.Level.Height * GLOBALS.PreviewScale, 
-            //             Color.Gray with { A = 130 }
-            //         );
-            //
-            //     Printers.DrawGeoLayer(
-            //         0, 
-            //         GLOBALS.PreviewScale, 
-            //         false, 
-            //         GLOBALS.Layer == 0
-            //             ? Color.Black 
-            //             : Color.Black with { A = 80 }
-            //     );
-            //
-            //     // Draw layer 1 tiles
-            //
-            //     if (_showLayer1Tiles)
-            //     {
-            //         Printers.DrawTileLayer(
-            //             0, 
-            //             GLOBALS.PreviewScale, 
-            //             false, 
-            //             true,
-            //             false,
-            //             (byte)(GLOBALS.Layer == 0 ? 255 : 80)
-            //         );
-            //     }
-            //     
-            //     // then draw the props
-            //
-            //     for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
-            //     {
-            //         if (_hidden[p]) continue;
-            //         
-            //         var current = GLOBALS.Level.Props[p];
-            //         
-            //         // Filter based on depth
-            //         if (current.prop.Depth < -9) continue;
-            //
-            //         var (category, index) = current.position;
-            //         var quads = current.prop.Quads;
-            //         
-            //         // origin must be the center
-            //         // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
-            //         
-            //         Printers.DrawProp(current.type, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-            //         
-            //         // Draw Rope Point
-            //         if (current.type == InitPropType.Rope)
-            //         {
-            //             foreach (var point in current.prop.Extras.RopePoints)
-            //             {
-            //                 DrawCircleV(point, 3f, Color.White);
-            //             }
-            //         }
-            //         
-            //         if (_selected[p])
-            //         {
-            //             // Side Lines
-            //             
-            //             DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
-            //             
-            //             // Quad Points
-            //
-            //             if (_stretchingProp)
-            //             {
-            //                 if (current.type == InitPropType.Rope)
-            //                 {
-            //                     DrawCircleV(
-            //                         Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
-            //                             new(2f, 2f)), 
-            //                         5f, 
-            //                         Color.Blue
-            //                     );
-            //                     
-            //                     DrawCircleV(
-            //                         Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), 
-            //                             new(2f, 2f)), 
-            //                         5f, 
-            //                         Color.Blue
-            //                     );
-            //                     
-            //                     /*DrawCircleV(quads.TopLeft, 2f, Color.Blue);
-            //                     DrawCircleV(quads.TopRight, 2f, Color.Blue);
-            //                     DrawCircleV(quads.BottomRight, 2f, Color.Blue);
-            //                     DrawCircleV(quads.BottomLeft, 2f, Color.Blue);*/
-            //                 }
-            //                 else if (current.type == InitPropType.Long)
-            //                 {
-            //                     var sides = Utils.LongSides(current.prop.Quads);
-            //                     
-            //                     DrawCircleV(sides.left, 5f, Color.Blue);
-            //                     DrawCircleV(sides.top, 5f, Color.Blue);
-            //                     DrawCircleV(sides.right, 5f, Color.Blue);
-            //                     DrawCircleV(sides.bottom, 5f, Color.Blue);
-            //                 }
-            //                 else
-            //                 {
-            //                     DrawCircleV(quads.TopLeft, 5f, Color.Blue);
-            //                     DrawCircleV(quads.TopRight, 5f, Color.Blue);
-            //                     DrawCircleV(quads.BottomRight, 5f, Color.Blue);
-            //                     DrawCircleV(quads.BottomLeft, 5f, Color.Blue);
-            //                 }
-            //             }
-            //             else if (_scalingProps)
-            //             {
-            //                 var center = Utils.QuadsCenter(ref quads);
-            //                 
-            //                 switch (_stretchAxes)
-            //                 {
-            //                     case 1:
-            //                         DrawLineEx(
-            //                             center with { X = -10 }, 
-            //                             center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
-            //                             2f, 
-            //                             Color.Red
-            //                         );
-            //                         break;
-            //                     case 2:
-            //                         DrawLineEx(
-            //                             center with { Y = -10 },
-            //                             center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
-            //                             2f,
-            //                             Color.Green
-            //                         );
-            //                         break;
-            //                 }
-            //             }
-            //             
-            //             // Draw Rope Point
-            //             if (current.type == InitPropType.Rope)
-            //             {
-            //                 if (_editingPropPoints)
-            //                 {
-            //                     foreach (var point in current.prop.Extras.RopePoints)
-            //                     {
-            //                         DrawCircleV(point, 3f, Color.Red);
-            //                     }
-            //                 }
-            //                 else
-            //                 {
-            //                     foreach (var point in current.prop.Extras.RopePoints)
-            //                     {
-            //                         DrawCircleV(point, 2f, Color.Orange);
-            //                     }
-            //                 }
-            //
-            //                 if (_ropeMode)
-            //                 {
-            //                     // p is copied as suggested by the code editor..
-            //                     var p1 = p;
-            //                     var model = _models.Single(r => r.index == p1);
-            //
-            //                     if (!model.simSwitch)
-            //                     {
-            //                         foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //     }
-            //     
-            // }
-            // #endregion
-            
             // Grid
 
             if (_showGrid)
@@ -2949,15 +2429,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         case 0: // Current Tile-As-Prop
                             {
-                                var currentTileAsProp = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
-                                var currentTileAsPropTexture = GLOBALS.Textures.Tiles[_tilesAsPropsCategoryIndices[_propsMenuTilesCategoryIndex].index][currentTileAsProp.index];
-                                
                                 switch (_snapMode)
                                 {
                                     case 0: // free
-                                        Printers.DrawTileAsProp(
-                                            currentTileAsPropTexture,
-                                            currentTileAsProp.init,
+                                        if (_currentTile is not null) Printers.DrawTileAsProp(
+                                            _currentTile,
                                             tileMouseWorld,
                                             _placementRotation * _placementRotationSteps
                                         );
@@ -2968,8 +2444,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         var posV = new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale;
                                         
                                         Printers.DrawTileAsProp(
-                                            currentTileAsPropTexture,
-                                            currentTileAsProp.init,
+                                            _currentTile,
                                             posV,
                                             _placementRotation * _placementRotationSteps
                                         );
@@ -2981,8 +2456,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         var posV = new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f;
                                         
                                         Printers.DrawTileAsProp(
-                                            currentTileAsPropTexture,
-                                            currentTileAsProp.init,
+                                            _currentTile,
                                             posV,
                                             _placementRotation * _placementRotationSteps
                                         );
@@ -3709,17 +3183,25 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             case 0: // Tiles-As-Props
                             {
+                                if (GLOBALS.TileDex is null) break;
+                                
                                 if (ImGui.BeginListBox("##TileCategories", listSize))
                                 {
-                                    for (var index = 0; index < _tilesAsPropsCategoryNames.Length; index++)
+                                    for (var index = 0; index < GLOBALS.TileDex.OrderedTileAsPropCategories.Length; index++)
                                     {
-                                        var selected = ImGui.Selectable(_tilesAsPropsCategoryNames[index],
+                                        var selected = ImGui.Selectable(GLOBALS.TileDex.OrderedTileAsPropCategories[index],
                                             index == _propsMenuTilesCategoryIndex);
                                         
                                         if (selected)
                                         {
                                             _propsMenuTilesCategoryIndex = index;
-                                            Utils.Restrict(ref _propsMenuTilesIndex, 0, _tilesAsPropsNames[_propsMenuTilesCategoryIndex].Length-1);
+                                            Utils.Restrict(
+                                                ref _propsMenuTilesIndex, 
+                                                0, 
+                                                GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length-1);
+                                            _currentTile =
+                                                GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][
+                                                    _propsMenuTilesIndex];
                                         }
                                     }
                                     ImGui.EndListBox();
@@ -3729,12 +3211,16 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                                 if (ImGui.BeginListBox("##Tiles", listSize))
                                 {
-                                    var array = _tilesAsPropsNames[_propsMenuTilesCategoryIndex];
-
-                                    for (var index = 0; index < array.Length; index++)
+                                    for (var index = 0; index < GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length; index++)
                                     {
-                                        var selected = ImGui.Selectable(array[index], index == _propsMenuTilesIndex);
-
+                                        var currentTilep =
+                                            GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][index];
+                                        
+                                        var selected = ImGui.Selectable(
+                                            currentTilep.Name, 
+                                            index == _propsMenuTilesIndex
+                                        );
+                                        
                                         if (ImGui.IsItemHovered())
                                         {
                                             if (_hoveredCategoryIndex != _propsMenuTilesCategoryIndex ||
@@ -3744,6 +3230,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                                 _hoveredCategoryIndex = _propsMenuTilesCategoryIndex;
                                                 _hoveredIndex = index;
                                                 _previousRootCategory = _menuRootCategoryIndex;
+
+                                                _hoveredTile =
+                                                    GLOBALS.TileDex.OrderedTilesAsProps[_hoveredCategoryIndex][
+                                                        _hoveredIndex];
                                                 
                                                 UpdatePropTooltip();
                                             }
@@ -3753,7 +3243,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             ImGui.EndTooltip();
                                         }
                                         
-                                        if (selected) _propsMenuTilesIndex = index;
+                                        if (selected)
+                                        {
+                                            _propsMenuTilesIndex = index;
+                                            _currentTile = currentTilep;
+                                        }
                                     }
                                     ImGui.EndListBox();
                                 }
@@ -3893,7 +3387,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 
                         // Depth
                 
-                        var currentTile = _tilesAsPropsIndices[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
+                        var currentTile = GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
                         var currentRope = GLOBALS.RopeProps[_propsMenuRopesIndex];
                         var currentLong = GLOBALS.LongProps[_propsMenuLongsIndex];
                         var currentOther = GLOBALS.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
@@ -3912,7 +3406,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         var propDepthTo = _menuRootCategoryIndex switch
                         {
-                            0 => Utils.GetPropDepth(currentTile.init),
+                            0 => Utils.GetPropDepth(currentTile),
                             1 => Utils.GetPropDepth(currentRope),
                             2 => Utils.GetPropDepth(currentLong),
                             3 => Utils.GetPropDepth(currentOther),

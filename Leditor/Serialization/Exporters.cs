@@ -1,4 +1,8 @@
+using Leditor.Data.Tiles;
+
 namespace Leditor.Serialization;
+
+#nullable enable
 
 public static class Exporters
 {
@@ -84,7 +88,7 @@ public static class Exporters
                     {
                         TileDefault => "0",
                         TileMaterial m => $"\"{m.Name}\"",
-                        TileHead h => $"[point(1, 1), \"{h.CategoryPostition.Name}\"]",
+                        TileHead h => $"[point(1, 1), \"{h.Name}\"]",
                         TileBody b => $"[point({b.HeadPosition.x}, {b.HeadPosition.y}), {b.HeadPosition.z}]",
                         
                         _ => throw new Exception("Invalid tile data")
@@ -211,7 +215,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    private static string Export((InitPropType type, (int category, int index) position, Prop prop)[] props)
+    private static string Export((InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)[] props)
     {
         System.Text.StringBuilder builder = new();
 
@@ -219,7 +223,7 @@ public static class Exporters
 
         for (var p = 0; p < props.Length; p++)
         {
-            var (type, (category, index), prop) = props[p];
+            var (type, _, (category, index), prop) = props[p];
 
             builder.Append('[');
 

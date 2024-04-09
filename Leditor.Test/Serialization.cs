@@ -10,4 +10,10 @@ public class Serialization
     {
         _ = TileImporter.ParseInit(Path.Combine("..", "..", "..", "assets", "tiles", "Init.txt"));
     }
+
+    [Fact]
+    public void PropInitImportTest()
+    {
+        _ = PropImporter.ParseInit(Path.Combine("..", "..", "..", "assets", "props", "Init.txt"));
+    }
 }

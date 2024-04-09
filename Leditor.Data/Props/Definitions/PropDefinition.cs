@@ -4,7 +4,7 @@ using Raylib_cs;
 
 namespace Leditor.Data.Props.Definitions;
 
-public abstract class PropDefinition(string name, int depth, Texture2D texture) 
+public abstract class PropDefinition(string name, int depth) 
     : IIdentifiable<string>
 {
     public abstract PropSettings NewSettings(
@@ -23,15 +23,19 @@ public abstract class PropDefinition(string name, int depth, Texture2D texture)
     /// This class is not responsible for managing the texture and should be disposed separately.
     /// </para>
     /// </summary>
-    public Texture2D Texture { get; internal set; } = texture;
+    public Texture2D Texture { get; internal set; }
+
+    private readonly int _hashCode = name.GetHashCode();
 
     //
 
-    public static bool operator ==(PropDefinition p1, PropDefinition p2) => string.Equals(p1.Name, p2.Name, StringComparison.InvariantCultureIgnoreCase);
-    public static bool operator !=(PropDefinition p1, PropDefinition p2) => !string.Equals(p1.Name, p2.Name, StringComparison.InvariantCultureIgnoreCase);
+    public static bool operator ==(PropDefinition? p1, PropDefinition? p2) 
+        => p1 is not null && p2 is not null && p1.GetHashCode() == p2.GetHashCode();
+    public static bool operator !=(PropDefinition? p1, PropDefinition? p2) 
+        => p1 is null || p2 is null || p1.GetHashCode() != p2.GetHashCode();
 
     public override bool Equals(object? obj)
-        => obj is PropDefinition p && string.Equals(Name, p.Name, StringComparison.InvariantCultureIgnoreCase);
+        => obj is PropDefinition p && _hashCode == p.GetHashCode();
 
-    public override int GetHashCode() => Name.GetHashCode();
+    public override int GetHashCode() => _hashCode;
 }

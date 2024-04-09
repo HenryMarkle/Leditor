@@ -3,8 +3,8 @@ using Raylib_cs;
 
 namespace Leditor.Data.Props.Definitions;
 
-public sealed class VariedSoft(string name, int depth, int variations, bool random, bool colorize, (int Width, int Height) sizeInPixels, Texture2D texture) 
-    : PropDefinition(name, depth, texture), IVaried, IColored, IPixelSized
+public sealed class VariedSoft(string name, int depth, int variations, bool random, bool colorize, (int Width, int Height) sizeInPixels) 
+    : PropDefinition(name, depth), IVaried, IColored, IPixelSized
 {
     public override PropSettings NewSettings(int renderOrder = 0, int seed = 0, int renderTime = 0)
         => new VariedSoftSettings(renderOrder, seed, renderTime);

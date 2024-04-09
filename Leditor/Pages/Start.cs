@@ -33,43 +33,10 @@ internal class StartPage : EditorPage
                 {
                     var cell = res.TileMatrix![y, x, z];
 
-                    if (cell.Type == TileType.TileHead)
+                    if (cell.Data is TileHead h)
                     {
-                        var (category, position, name) = ((TileHead)cell.Data).CategoryPostition;
-
-                        // code readability could be optimized using System.Linq
-
-                        for (var c = 0; c < GLOBALS.Tiles.Length; c++)
-                        {
-                            for (var i = 0; i < GLOBALS.Tiles[c].Length; i++)
-                            {
-                                if (string.Equals(GLOBALS.Tiles[c][i].Name, name, StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    res.TileMatrix![y, x, z].Data.CategoryPostition = (c, i, name);
-
-                                    try
-                                    {
-                                        _ = GLOBALS.Textures.Tiles[c][i];
-                                    }
-                                    catch
-                                    {
-                                        Logger.Warning($"missing tile texture detected: matrix index: ({x}, {y}, {z}); category {category}, position: {position}, name: \"{name}\"");
-                                        return TileCheckResult.MissingTexture;
-                                    }
-
-                                    goto skip;
-                                }
-                            }
-                        }
-
-                        var data = (TileHead)cell.Data;
-                        
-                        data.CategoryPostition = (-1, -1, name);
-
-                        res.TileMatrix![y, x, z] = cell with { Data = data };
-                        
-                        // Tile not found
-                        result = TileCheckResult.Missing;
+                        if (h.Definition is null) result = TileCheckResult.Missing;
+                        else if (h.Definition.Texture.Id == 0) result = TileCheckResult.MissingTexture;
                     }
                     else if (cell.Type == TileType.Material)
                     {
@@ -109,7 +76,7 @@ internal class StartPage : EditorPage
                 {
                     InitPropType.Long => GLOBALS.Textures.LongProps[prop.position.index],
                     InitPropType.Rope => GLOBALS.Textures.RopeProps[prop.position.index],
-                    InitPropType.Tile => GLOBALS.Textures.Tiles[prop.position.category][prop.position.index],
+                    InitPropType.Tile => prop.tile?.Texture ?? throw new NullReferenceException(),
                     _ => GLOBALS.Textures.Props[prop.position.category][prop.position.index]
                 };
 

@@ -9,6 +9,7 @@ public class PropDexBuilder
 {
     private readonly Dictionary<string, (Color color, List<PropDefinition> definitions)> _tiles = new();
     private readonly Dictionary<string, Texture2D> _textures = new();
+    private readonly List<string> _orderedCategoryNames = [];
 
     /// <summary>
     /// Register a prop category
@@ -21,6 +22,7 @@ public class PropDexBuilder
         try
         {
             _tiles.Add(category, (color, []));
+            _orderedCategoryNames.Add(category);
         }
         catch (ArgumentException e)
         {
@@ -56,7 +58,7 @@ public class PropDexBuilder
         Dictionary<string, PropDefinition> definitions = new();
         Dictionary<string, PropDefinition[]> categories = new();
         Dictionary<string, Color> colors = new();
-        Dictionary<string, string> propCategory = new();
+        Dictionary<PropDefinition, string> propCategory = new();
         Dictionary<string, Color> propColor = new();
 
         foreach (var (category, (color, propDefinitions)) in _tiles)
@@ -64,7 +66,7 @@ public class PropDexBuilder
             foreach (var propDefinition in propDefinitions)
             {
                 definitions.Add(propDefinition.Name, propDefinition);
-                propCategory.Add(propDefinition.Name, category);
+                propCategory.Add(propDefinition, category);
                 propColor.Add(propDefinition.Name, color);
             }
             
@@ -72,6 +74,14 @@ public class PropDexBuilder
             colors.Add(category, color);
         }
 
-        return new PropDex(definitions, categories, colors, propCategory, propColor, _textures);
+        return new PropDex(
+            definitions, 
+            categories, 
+            colors, 
+            propCategory, 
+            propColor, 
+            _textures,
+            [.._orderedCategoryNames]
+        );
     }
 }

@@ -323,6 +323,8 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
         _defaultPage = _previousPage = _currentPage = null;
         _exceptionPage = null;
         
+        Context.Dispose();
+        
         _pages.Clear();
     }
 
