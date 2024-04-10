@@ -52,7 +52,14 @@ public class PropDex : IDisposable
     /// <param name="name">The name of the prop</param>
     /// <returns>A pointer to the definition object</returns>
     /// <exception cref="KeyNotFoundException">The prop <paramref name="name"/> is not found</exception>
-    public PropDefinition GetDefinition(string name) => _definitions[name];
+    public PropDefinition GetProp(string name) => _definitions[name];
+
+    /// <summary>
+    /// Get the definition of prop
+    /// </summary>
+    /// <param name="name">The name of the prop</param>
+    /// <returns>true if found; otherwise false</returns>
+    public bool TryGetProp(string name, out PropDefinition? definition) => _definitions.TryGetValue(name, out definition);
     
     /// <summary>
     /// Get all prop definitions that belong to the same category <paramref name="name"/>
@@ -131,9 +138,6 @@ public class PropDex : IDisposable
 
         Disposed = true;
     }
-    
-    // ReSharper disable once UnusedMember.Local
-    private PropDex() {}
 
     public PropDex(
         Dictionary<string, PropDefinition> definitions,

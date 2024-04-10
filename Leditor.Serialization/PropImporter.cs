@@ -1,15 +1,22 @@
-﻿using Drizzle.Lingo.Runtime.Parser;
+﻿using System.Diagnostics.Contracts;
+using Drizzle.Lingo.Runtime.Parser;
 using Leditor.Data;
+using Leditor.Data.Props;
 using Leditor.Data.Props.Definitions;
+using Leditor.Data.Props.Settings;
+using Leditor.Data.Tiles;
 using Leditor.Serialization.Exceptions;
 using Pidgin;
 using ParseException = Leditor.Serialization.Exceptions.ParseException;
+using PropNotFoundException = Leditor.Data.Props.Exceptions.PropNotFoundException;
 
 namespace Leditor.Serialization;
 
+#nullable enable
+
 public static class PropImporter
 {
-    internal static PropDefinition GetProp(AstNode.PropertyList properties)
+    internal static PropDefinition GetPropDefinition(AstNode.PropertyList properties)
     {
         var nameAst = Utils.TryGet<AstNode.String>(properties, "nm") ??
                       throw new MissingPropDefinitionPropertyException("nm");
@@ -133,6 +140,123 @@ public static class PropImporter
             default: throw new InvalidPropTypeException(typeAst.Value);
         }
     }
+
+    [Pure]
+    internal static PropSettings GetPropSettings(in AstNode.PropertyList settings, in PropDefinition definition)
+    {
+        var renderOrderAst = Utils.Get<AstNode.Base>(settings, "renderorder");
+        var seedAst = Utils.Get<AstNode.Base>(settings, "seed");
+        var renderTimeAst = Utils.Get<AstNode.Base>(settings, "rendertime");
+
+        var renderOrder = Utils.GetInt(renderOrderAst);
+        var seed = Utils.GetInt(seedAst);
+        var renderTime = Utils.GetInt(renderTimeAst);
+        
+        
+        var ropePointsAst = Utils.TryGet<AstNode.List>(settings, "points");
+        var ropeReleaseAst = Utils.TryGet<AstNode.Base>(settings, "release");
+
+        var variationAst = Utils.TryGet<AstNode.Number>(settings, "variation");
+        var variation = 1;
+        
+        if (definition is IVaried && Utils.TryGetInt(variationAst, out var parsedVariation))
+            variation = parsedVariation;
+        
+        var customDepthAst = Utils.TryGet<AstNode.Base>(settings, "customdepth");
+        var applyColorAst = Utils.TryGet<AstNode.Number>(settings, "applycolor");
+        var thicknessAst = Utils.TryGet<AstNode.Number>(settings, "thickness");
+        
+        switch (definition)
+        {
+            case Standard standard: return standard.NewSettings(renderOrder, seed, renderTime);
+
+            case VariedStandard variedStandard:
+            {
+                var propSettings = (VariedStandardSettings) variedStandard.NewSettings(renderOrder, seed, renderTime);
+
+                propSettings.Variation = variation;
+
+                return propSettings;
+            }
+            
+            case Soft soft: return soft.NewSettings(renderOrder, seed, renderTime);
+
+            case VariedSoft variedSoft:
+            {
+                var propSettings = (VariedSoftSettings) variedSoft.NewSettings(renderOrder, seed, renderTime);
+
+                propSettings.Variation = variation;
+
+                propSettings.ApplyColor = Utils.TryGetInt(applyColorAst, out var applyColor) ? applyColor : 0;
+
+                propSettings.CustomDepth = Utils.TryGetInt(customDepthAst, out var customDepth) ? customDepth : 0;
+                
+                return propSettings;
+            }
+            
+            case SimpleDecal simpleDecal: return simpleDecal.NewSettings(renderOrder, seed, renderTime);
+
+            case VariedDecal variedDecal:
+            {
+                var propSettings = (VariedDecalSettings)variedDecal.NewSettings(renderOrder, seed, renderTime);
+
+                propSettings.Variation = variation;
+                
+                propSettings.CustomDepth = Utils.TryGetInt(customDepthAst, out var customDepth) ? customDepth : 0;
+
+                return propSettings;
+            }
+            
+            case SoftEffect softEffect: return softEffect.NewSettings(renderOrder, seed, renderTime);
+
+            case ColoredSoft coloredSoft: return coloredSoft.NewSettings(renderOrder, seed, renderTime);
+
+            case Rope rope:
+            {
+                var propSettings = (RopeSettings) rope.NewSettings(renderOrder, seed, renderTime);
+                
+                if (ropePointsAst is null) 
+                    throw new PropParseException($"Prop \"{definition.Name}\" is of rope type, yet has no rope points");
+                
+                var points = ropePointsAst.Values
+                    .Cast<AstNode.GlobalCall>()
+                    .Select(Utils.GetIntVector)
+                    .ToArray();
+
+                propSettings.Points = points;
+
+                propSettings.Release = Utils.TryGetInt(ropeReleaseAst, out var release)
+                    ? (RopeRelease)release
+                    : RopeRelease.None;
+
+                if (definition.Name is "wire" or "Zero-G Wire")
+                {
+                    propSettings.Thickness = Utils.TryGetFloat(thicknessAst, out var thickness) ? thickness : 0;
+                }
+
+                if (definition.Name is "Zero-G Tube")
+                {
+                    propSettings.ApplyColor = Utils.TryGetInt(applyColorAst, out var applyColor) ? applyColor : 0;
+                }
+                
+                return propSettings;
+            }
+                
+            case Long longProp: return longProp.NewSettings(renderOrder, seed, renderTime);
+
+            case Antimatter antimatter:
+            {
+                var propSettings = (AntimatterSettings) antimatter.NewSettings(renderOrder, seed, renderTime);
+
+                propSettings.CustomDepth = Utils.TryGetInt(customDepthAst, out var customDepth) ? customDepth : 0;
+                
+                return propSettings;
+            }
+            
+            default: throw new NotImplementedException();
+        }
+    }
+
     public static (string, Color) GetPropDefinitionCategory(AstNode.Base @base)
     {
         var list = ((AstNode.List)@base).Values;
@@ -206,7 +330,7 @@ public static class PropImporter
                     if (propObject is not AstNode.PropertyList propList) 
                         throw new ParseException($"Prop definition is not a property list at line {l + 1}");
                     
-                    var tile = GetProp(propList);
+                    var tile = GetPropDefinition(propList);
                     definitions[^1] = [..definitions[^1], tile];
                 }
                 catch (ParseException e)
@@ -293,7 +417,7 @@ public static class PropImporter
                         if (propObject is not AstNode.PropertyList propList)
                             throw new ParseException($"Prop definition is not a property list at line {l1 + 1}");
                         
-                        return GetProp(propList);
+                        return GetPropDefinition(propList);
                     }
                     catch (ParseException e)
                     {
@@ -315,5 +439,74 @@ public static class PropImporter
         }
 
         return (categories, definitions);
+    }
+
+    internal static Prop GetProp(AstNode.List list, PropDex dex)
+    {
+        int depth;
+        string name;
+        Quad quad;
+        
+        if (list.Values[1] is not AstNode.String s)
+            throw new PropParseException("Invalid prop name");
+        name = s.Value;
+        
+        //
+        if (!dex.TryGetProp(name, out var definition) || definition is null) 
+            throw new PropNotFoundException(name);
+        //
+        
+        if (!Utils.TryGetInt(list.Values[0], out depth)) 
+            throw new PropParseException($"Prop \"{name}\" has invalid depth value");
+
+
+        if (list.Values[3] is not AstNode.List l) 
+            throw new PropParseException($"Prop \"{name}\" has invalid quad format: expected a list of quad points");
+
+        if (!Utils.TryGetQuad(l, out quad))
+            throw new PropParseException($"Prop \"{name}\" has invalid quad points");
+        
+
+        // Extras
+
+        var extras = list.Values[4];
+
+        if (extras is not AstNode.PropertyList pl) 
+            throw new PropParseException($"Prop \"{name}\" was expected to have additional information after quad points");
+
+        var settingsAst = Utils.TryGet<AstNode.PropertyList>(pl, "settings") 
+                       ?? throw new PropParseException($"Prop \"{name}\" has no settings");
+
+        var settings = GetPropSettings(settingsAst, definition);
+
+        //
+
+        return new Prop(definition, settings, quad, depth);
+    }
+
+    internal static async IAsyncEnumerable<Prop> GetPropsAsync(AstNode.List list, PropDex dex) 
+    {
+        var propsAst = list.Values.Cast<AstNode.List>();
+
+        foreach (var prop in propsAst) yield return await Task.Factory.StartNew(() => GetProp(prop, dex));
+    }
+
+    public static async Task<List<Prop>> GetPropsAsync(string propsLine, PropDex dex)
+    {
+        var obj = LingoParser.Expression.ParseOrThrow(propsLine);
+
+        if (obj is not AstNode.PropertyList pl) throw new InvalidFormatException($"Props section was not a property list");
+    
+        var propList = Utils.Get<AstNode.List>(pl, "props");
+    
+        var propTasks = propList.Values
+            .Cast<AstNode.List>()
+            .Select(p => Task.Factory.StartNew(() => GetProp(p, dex)));
+
+        List<Prop> props = [];
+
+        foreach (var task in propTasks) props.Add(await task);
+
+        return props;
     }
 }

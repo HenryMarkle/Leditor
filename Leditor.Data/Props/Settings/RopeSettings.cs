@@ -2,7 +2,7 @@
 
 namespace Leditor.Data.Props.Settings;
 
-public enum RopeRelease { Left, Right, None }
+public enum RopeRelease { Left = -1, Right = 1, None = 0 }
 
 public class RopeSettings(
     int renderOrder = 0, 
@@ -19,6 +19,8 @@ public class RopeSettings(
 
     public Vector2[] Points { get; set; } = [];
     
+    public override PropSettings Clone() => new RopeSettings(RenderOrder, Seed, RenderTime);
+
     //
 
     public RopeSettings(

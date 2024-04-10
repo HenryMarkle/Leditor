@@ -1,56 +1,74 @@
-﻿using System.Numerics;
-using Leditor.Data.Props.Definitions;
-using Leditor.Data.Props.Exceptions;
+﻿using Leditor.Data.Props.Definitions;
 using Leditor.Data.Props.Settings;
 
 namespace Leditor.Data.Props;
 
-#nullable disable
-
-public struct PropQuad
+public sealed class Prop : IClone<Prop>
 {
-    public Vector2 TopLeft { get; set; }
-    public Vector2 TopRight { get; set; }
-    public Vector2 BottomRight { get; set; }
-    public Vector2 BottomLeft { get; set; }
-}
+    private int _depth;
 
-public class Prop(PropDefinition definition, PropSettings settings, int depth = 0)
-{
-    public int Depth { get; set; } = depth;
+    /// <summary>
+    /// Must be between -29 and 0.
+    /// </summary>
+    public int Depth
+    {
+        get => _depth;
+        set
+        {
+            _depth = value switch
+            {
+                > 0 => 0,
+                < -29 => -29,
+                _ => value
+            };
+        }
+    }
     
     //
     
-    private PropQuad _quad;
+    private Quad _quad;
 
-    public PropQuad Quad
+    public Quad Quad
     {
         get => _quad; 
         set => _quad = value;
     }
     
-    public ref PropQuad QuadRef => ref _quad;
+    public ref Quad QuadRef => ref _quad;
     
     //
 
-    public PropDefinition Definition { get; init; } = definition;
+    public PropDefinition Definition { get; init; }
     
     //
 
-    public PropSettings Settings { get; set; } = settings;
+    public PropSettings Settings { get; internal set; }
     
     //
 
-    public static Prop Instantiate(string name, PropDex dex)
+    public Prop(PropDefinition definition, PropSettings settings, Quad quad, int depth)
     {
-        try
-        {
-            var definition = dex.GetDefinition(name);
-            return new Prop(definition, definition.NewSettings());
-        }
-        catch (KeyNotFoundException e)
-        {
-            throw new PropNotFoundException(name, e);
-        }
+        Depth = depth;
+        Quad = quad;
+        Definition = definition ?? throw new ArgumentNullException(nameof(definition));
+        Settings = settings ?? throw new ArgumentNullException(nameof(settings));
     }
+    
+    //
+
+    public void ResetSettings()
+    {
+        Settings = Definition.NewSettings();
+    }
+
+    public Prop Clone()
+    {
+        var depth = Depth;
+        var quad = Quad;
+        var settings = Settings.Clone();
+
+        return new Prop(Definition, settings, quad, depth);
+    }
+
+    public static Prop Instantiate(PropDefinition definition, Quad quad) => new(definition, definition.NewSettings(), quad, 0);
 }

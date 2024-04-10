@@ -89,7 +89,7 @@ internal static class GLOBALS
         internal static string AssetsDirectory { 
             get {
                 #if DEBUG
-                return Path.Combine("..", "..", "..", "assets");
+                return Path.Combine(ExecutableDirectory, "..", "..", "..", "assets");
                 #else
                 return Path.Combine(ExecutableDirectory, "assets");
                 #endif
@@ -154,6 +154,7 @@ internal static class GLOBALS
     }
 
     internal static Data.Tiles.TileDex? TileDex { get; set; }
+    internal static Data.Props.PropDex? PropDex { get; set; }
     
     internal static LingoRuntime LingoRuntime { get; set; } = new(typeof(MovieScript).Assembly);
     internal static Task LingoRuntimeInitTask { get; set; } = default!;

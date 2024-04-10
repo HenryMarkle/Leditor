@@ -4,4 +4,6 @@ public class VariedStandardSettings(int renderOrder = 0, int seed = 0, int rende
     : PropSettings(renderOrder, seed, renderTime)
 {
     public int Variation { get; set; } = variation;
+
+    public override PropSettings Clone() => new VariedStandardSettings(RenderOrder, Seed, RenderTime);
 }

@@ -4,4 +4,6 @@ public class SimpleDecalSettings(int renderOrder = 0, int seed = 0, int renderTi
     : PropSettings(renderOrder, seed, renderTime)
 {
     public int CustomDepth { get; set; } = customDepth;
+
+    public override PropSettings Clone() => new SimpleDecalSettings(RenderOrder, Seed, RenderTime);
 }

@@ -5,4 +5,6 @@ public class VariedDecalSettings(int renderOrder = 0, int seed = 0, int renderTi
 {
     public int Variation { get; set; } = variation;
     public int CustomDepth { get; set; } = customDepth;
+
+    public override PropSettings Clone() => new VariedDecalSettings(RenderOrder, Seed, RenderTime);
 }

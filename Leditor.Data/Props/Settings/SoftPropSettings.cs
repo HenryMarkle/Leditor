@@ -4,4 +4,6 @@ public class SoftPropSettings(int renderOrder = 0, int seed = 0, int renderTime 
     : PropSettings(renderOrder, seed, renderTime)
 {
     public int CustomDepth { get; set; } = customDepth;
+
+    public override PropSettings Clone() => new SoftPropSettings(RenderOrder, Seed, RenderTime);
 }

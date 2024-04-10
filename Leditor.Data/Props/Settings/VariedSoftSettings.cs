@@ -12,4 +12,6 @@ public class VariedSoftSettings(
     public int Variation { get; set; } = variation;
     public int CustomDepth { get; set; } = customDepth;
     public int? ApplyColor { get; set; } = applyColor;
+
+    public override PropSettings Clone() => new VariedSoftSettings(RenderOrder, Seed, RenderTime);
 }

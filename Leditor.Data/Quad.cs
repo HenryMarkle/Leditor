@@ -33,8 +33,12 @@ public struct Quad
     public static Quad operator *(Quad q, int number) => new(q.TopLeft * number, q.TopRight * number, q.BottomRight * number, q.BottomLeft * number);
     public static Quad operator /(Quad q, int number) => new(q.TopLeft / number, q.TopRight / number, q.BottomRight / number, q.BottomLeft / number);
 
-    public readonly void Deconstruct(out Vector2 topLeft, out Vector2 topRight, out Vector2 bottomRight, out Vector2 bottomLeft)
-    {
+    public readonly void Deconstruct(
+        out Vector2 topLeft, 
+        out Vector2 topRight, 
+        out Vector2 bottomRight, 
+        out Vector2 bottomLeft
+    ) {
         topLeft = TopLeft;
         topRight = TopRight;
         bottomRight = BottomRight;
