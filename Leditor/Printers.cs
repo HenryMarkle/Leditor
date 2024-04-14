@@ -5,6 +5,8 @@ using Leditor.Data.Tiles;
 
 namespace Leditor;
 
+#nullable enable
+
 /// <summary>
 /// Functions that are called each frame; Must only be called after window initialization and in drawing mode.
 /// </summary>
@@ -738,12 +740,12 @@ internal static class Printers
                 {
                     var data = (TileHead)tileCell.Data;
 
-                    var init = data.Definition;
+                    TileDefinition? init = data.Definition;
                     var undefined = init is null;
 
                     var tileTexture = undefined
                         ? GLOBALS.Textures.MissingTile 
-                        : data.Definition.Texture;
+                        : data.Definition!.Texture;
 
                     var color = Color.Purple;
 
@@ -751,15 +753,6 @@ internal static class Printers
                     {
                         color = foundColor;
                     }
-                    
-                    var center = new Vector2(
-                        init.Size.Item1 % 2 == 0 ? x * scale + scale : x * scale + scale/2f, 
-                        init.Size.Item2 % 2 == 0 ? y * scale + scale : y * scale + scale/2f);
-
-                    var width = (scale / 20f)/2 * (init.Type == Data.Tiles.TileType.Box ? init.Size.Width : init.Size.Width + init.BufferTiles * 2) * 20;
-                    var height = (scale / 20f)/2 * ((init.Type == Data.Tiles.TileType.Box
-                        ? init.Size.Item2
-                        : (init.Size.Item2 + init.BufferTiles * 2)) * 20);
 
                     if (undefined)
                     {
@@ -774,6 +767,15 @@ internal static class Printers
                     }
                     else
                     {
+                        var center = new Vector2(
+                        init!.Size.Item1 % 2 == 0 ? x * scale + scale : x * scale + scale/2f, 
+                        init!.Size.Item2 % 2 == 0 ? y * scale + scale : y * scale + scale/2f);
+
+                        var width = (scale / 20f)/2 * (init.Type == Data.Tiles.TileType.Box ? init.Size.Width : init.Size.Width + init.BufferTiles * 2) * 20;
+                        var height = (scale / 20f)/2 * ((init.Type == Data.Tiles.TileType.Box
+                            ? init.Size.Item2
+                            : (init.Size.Item2 + init.BufferTiles * 2)) * 20);
+                            
                         if (!preview)
                         {
                             if (tinted)

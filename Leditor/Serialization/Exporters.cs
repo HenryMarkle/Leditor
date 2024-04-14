@@ -88,7 +88,7 @@ public static class Exporters
                     {
                         TileDefault => "0",
                         TileMaterial m => $"\"{m.Name}\"",
-                        TileHead h => $"[point(1, 1), \"{h.Name}\"]",
+                        TileHead h => $"[point(1, 1), \"{(h.Definition?.Name ?? h.Name)}\"]",
                         TileBody b => $"[point({b.HeadPosition.x}, {b.HeadPosition.y}), {b.HeadPosition.z}]",
                         
                         _ => throw new Exception("Invalid tile data")

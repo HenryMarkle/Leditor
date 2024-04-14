@@ -2027,6 +2027,7 @@ internal class TileEditorPage : EditorPage, IDisposable
 
                 var isSearching = !string.IsNullOrEmpty(_searchText);
                 
+                
                 if (!isSearching && ImGui.BeginListBox("##Groups", new Vector2(halfWidth, boxHeight)))
                 {
                     if (_materialTileSwitch)
@@ -2139,6 +2140,11 @@ internal class TileEditorPage : EditorPage, IDisposable
                                     _currentTile != currentTile)
                                 {
                                     _currentTile = currentTile;
+                                    
+                                    if (_tileSpecDisplayMode) 
+                                        UpdateTileTexturePanel();
+                                    else 
+                                        UpdateTileSpecsPanel();
                                 }
 
                                 var hovered = ImGui.IsItemHovered();
