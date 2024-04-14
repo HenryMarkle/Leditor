@@ -775,7 +775,14 @@ internal static class Printers
                         var height = (scale / 20f)/2 * ((init.Type == Data.Tiles.TileType.Box
                             ? init.Size.Item2
                             : (init.Size.Item2 + init.BufferTiles * 2)) * 20);
-                            
+
+                        var depth2 = Utils.SpecHasDepth(init.Specs);
+                        var depth3 = Utils.SpecHasDepth(init.Specs, 2);
+                        
+                        var shouldBeClearlyVisible = (layer == GLOBALS.Layer) || 
+                            (layer + 1 == GLOBALS.Layer && depth2) || 
+                            (layer + 2 == GLOBALS.Layer && depth3);
+
                         if (!preview)
                         {
                             if (tinted)
@@ -813,9 +820,7 @@ internal static class Printers
                         }
                         else DrawTilePreview(
                             init, 
-                            color with { A = (byte)(deepTileOpacity && layer == GLOBALS.Layer - 1 && init.Specs.GetLength(2) > 0
-                                ? 255
-                                : opacity) }, 
+                            color with { A = (byte)(shouldBeClearlyVisible ? 255 : opacity)}, 
                             new Vector2(x, y),
                             -Utils.GetTileHeadOrigin(init),
                             scale
@@ -848,7 +853,7 @@ internal static class Printers
                     var origin = new Vector2(x * scale + 5, y * scale + 5);
                     var color = GLOBALS.Level.MaterialColors[y, x, layer];
 
-                    color.A = opacity;
+                    color.A = (byte)((layer == GLOBALS.Layer) ? 255 : opacity);
 
                     if (color.R != 0 || color.G != 0 || color.B != 0)
                     {
@@ -1050,7 +1055,7 @@ internal static class Printers
                 false, 
                 !parameters.TintedTiles,
                 parameters.TintedTiles,
-                (byte)(parameters.CurrentLayer < 2 ? 255 : 80)
+                80
             );
         }
         
@@ -1104,7 +1109,7 @@ internal static class Printers
                 false, 
                 !parameters.TintedTiles,
                 parameters.TintedTiles,
-                (byte)(parameters.CurrentLayer == 0 ? 255 : 80)
+                80
             );
         }
         

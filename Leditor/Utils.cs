@@ -45,6 +45,18 @@ internal static class Utils
         if (value < min) value = max;
     }
 
+    internal static bool SpecHasDepth(int[,,] specs, int depth = 1) {
+        if (depth < 0 || depth >= specs.GetLength(2)) return false;
+
+        for (var y = 0; y < specs.GetLength(0); y++) {
+            for (var x = 0; x < specs.GetLength(1); x++) {
+                if (specs[y, x, depth] != -1) return true;
+            }
+        }
+
+        return false;
+    }
+
     internal static bool AllEqual(int[] list) => list.All(i => i == list[0]);
 
     internal static bool AllEqual(IEnumerable<int> list, int item) => list.All(i => i == item);
