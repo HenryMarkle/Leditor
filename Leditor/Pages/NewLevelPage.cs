@@ -169,6 +169,10 @@ internal class NewLevelPage : EditorPage
                     ClearBackground(Color.White);
                     EndTextureMode();
 
+                    UnloadRenderTexture(GLOBALS.Textures.GeneralLevel);
+                    GLOBALS.Textures.GeneralLevel =
+                        LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20);
+
                     GLOBALS.ProjectPath = "";
                     GLOBALS.Level.ProjectName = "New Project";
 
@@ -250,6 +254,10 @@ internal class NewLevelPage : EditorPage
                     BeginTextureMode(GLOBALS.Textures.LightMap);
                     ClearBackground(Color.White);
                     EndTextureMode();
+
+                    UnloadRenderTexture(GLOBALS.Textures.GeneralLevel);
+                    GLOBALS.Textures.GeneralLevel =
+                        LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20);
 
                     // create cameras
 

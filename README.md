@@ -30,14 +30,14 @@ Inside the /Drizzle directory, run the two commands in sequence:
 dotnet run --project Drizzle.Transpiler
 ```
 ```bash
-dotnet build
+dotnet build --configuration Release
 ```
 
 ### Step Three: Build the entire solution
 
 Run the command at the top level of the solution:
 ```bash
-dotnet build
+dotnet build --configuration Release
 ```
 
-Note: If you want to build the project in `release` mode, you need to copy the `assets` folder to the build folder.
+Finally, copy the `/assets` folder to the newly built's direcroty.

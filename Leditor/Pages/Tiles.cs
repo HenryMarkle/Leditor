@@ -1290,6 +1290,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                         _prevPosY = -1;
                         
                         _drawClickTracker = false;
+                        _shouldRedrawLevel = true;
                     }
                 }
                     break;
