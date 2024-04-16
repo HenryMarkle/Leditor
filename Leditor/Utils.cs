@@ -1841,6 +1841,231 @@ internal static class Utils
 
         return newArray;
     }
+    
+    /// <summary>
+    /// Generic resize method of a 3D array (with the z dimension being exactly 3).
+    /// </summary>
+    /// <param name="array">The matrix</param>
+    /// <param name="newWidth">new matrix width</param>
+    /// <param name="newHeight">new matrix height</param>
+    /// <typeparam name="T">a 3-length list (representing the three level layers) of geo IDs to fill extra space with</typeparam>
+    /// <returns>a new matrix with <paramref name="newWidth"/> and <paramref name="newHeight"/> as the new dimensions</returns>
+    internal static T[,,] Resize<T>(T[,,] array, int newWidth, int newHeight)
+
+    {
+        var width = array.GetLength(1);
+        var height = array.GetLength(0);
+        
+        var newArray = new T[newHeight, newWidth, 3];
+
+        // old height is larger
+        if (height > newHeight)
+        {
+            if (width > newWidth)
+            {
+                for (int y = 0; y < newHeight; y++)
+                {
+                    for (int x = 0; x < newWidth; x++)
+                    {
+                        newArray[y, x, 0] = array[y, x, 0];
+                        newArray[y, x, 1] = array[y, x, 1];
+                        newArray[y, x, 2] = array[y, x, 2];
+                    }
+                }
+            }
+            else
+            {
+                for (int y = 0; y < newHeight; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        newArray[y, x, 0] = array[y, x, 0];
+                        newArray[y, x, 1] = array[y, x, 1];
+                        newArray[y, x, 2] = array[y, x, 2];
+                    }
+
+                    for (int x = width; x < newWidth; x++)
+                    {
+                        newArray[y, x, 0] = default!;
+                        newArray[y, x, 1] = default!;
+                        newArray[y, x, 2] = default!;
+                    }
+                }
+            }
+
+        }
+        // new height is larger or equal
+        else
+        {
+            if (width > newWidth)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < newWidth; x++)
+                    {
+                        newArray[y, x, 0] = array[y, x, 0];
+                        newArray[y, x, 1] = array[y, x, 1];
+                        newArray[y, x, 2] = array[y, x, 2];
+                    }
+                }
+
+                for (int y = height; y < newHeight; y++)
+                {
+                    for (int x = 0; x < newWidth; x++)
+                    {
+                        newArray[y, x, 0] = default!;
+                        newArray[y, x, 1] = default!;
+                        newArray[y, x, 2] = default!;
+                    }
+                }
+            }
+            // new width is larger
+            else
+            {
+
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        newArray[y, x, 0] = array[y, x, 0];
+                        newArray[y, x, 1] = array[y, x, 1];
+                        newArray[y, x, 2] = array[y, x, 2];
+                    }
+
+                    for (int x = width; x < newWidth; x++)
+                    {
+                        newArray[y, x, 0] = default!;
+                        newArray[y, x, 1] = default!;
+                        newArray[y, x, 2] = default!;
+                    }
+                }
+
+                for (int y = height; y < newHeight; y++)
+                {
+                    for (int x = 0; x < newWidth; x++)
+                    {
+                        newArray[y, x, 0] = default!;
+                        newArray[y, x, 1] = default!;
+                        newArray[y, x, 2] = default!;
+                    }
+                }
+            }
+        }
+
+        return newArray;
+    }
+    
+    /// <summary>
+    /// Generic resize method of a 2D array.
+    /// </summary>
+    /// <param name="array">The matrix</param>
+    /// <param name="newWidth">new matrix width</param>
+    /// <param name="newHeight">new matrix height</param>
+    /// <typeparam name="T">a 3-length list (representing the three level layers) of geo IDs to fill extra space with</typeparam>
+    /// <returns>a new matrix with <paramref name="newWidth"/> and <paramref name="newHeight"/> as the new dimensions</returns>
+    internal static T[,] Resize<T>(T[,] array, int newWidth, int newHeight)
+    {
+        var width = array.GetLength(1);
+        var height = array.GetLength(0);
+        
+        var newArray = new T[newHeight, newWidth];
+
+        // old height is larger
+        if (height > newHeight)
+        {
+            if (width > newWidth)
+            {
+                for (int y = 0; y < newHeight; y++)
+                {
+                    for (int x = 0; x < newWidth; x++)
+                    {
+                        newArray[y, x] = array[y, x];
+                        newArray[y, x] = array[y, x];
+                        newArray[y, x] = array[y, x];
+                    }
+                }
+            }
+            else
+            {
+                for (int y = 0; y < newHeight; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        newArray[y, x] = array[y, x];
+                        newArray[y, x] = array[y, x];
+                        newArray[y, x] = array[y, x];
+                    }
+
+                    for (int x = width; x < newWidth; x++)
+                    {
+                        newArray[y, x] = default!;
+                        newArray[y, x] = default!;
+                        newArray[y, x] = default!;
+                    }
+                }
+            }
+
+        }
+        // new height is larger or equal
+        else
+        {
+            if (width > newWidth)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < newWidth; x++)
+                    {
+                        newArray[y, x] = array[y, x];
+                        newArray[y, x] = array[y, x];
+                        newArray[y, x] = array[y, x];
+                    }
+                }
+
+                for (int y = height; y < newHeight; y++)
+                {
+                    for (int x = 0; x < newWidth; x++)
+                    {
+                        newArray[y, x] = default!;
+                        newArray[y, x] = default!;
+                        newArray[y, x] = default!;
+                    }
+                }
+            }
+            // new width is larger
+            else
+            {
+
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        newArray[y, x] = array[y, x];
+                        newArray[y, x] = array[y, x];
+                        newArray[y, x] = array[y, x];
+                    }
+
+                    for (int x = width; x < newWidth; x++)
+                    {
+                        newArray[y, x] = default!;
+                        newArray[y, x] = default!;
+                        newArray[y, x] = default!;
+                    }
+                }
+
+                for (int y = height; y < newHeight; y++)
+                {
+                    for (int x = 0; x < newWidth; x++)
+                    {
+                        newArray[y, x] = default!;
+                        newArray[y, x] = default!;
+                        newArray[y, x] = default!;
+                    }
+                }
+            }
+        }
+
+        return newArray;
+    }
 
     [Obsolete]
     internal static TileCell[,,] NewTileMatrix(int width, int height)

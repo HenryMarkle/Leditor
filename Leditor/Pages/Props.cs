@@ -929,6 +929,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         if (GLOBALS.PreviousPage != 8)
         {
             _shouldRedrawLevel = true;
+            _defaultDepth = GLOBALS.Layer * -10;
         }
 
         GLOBALS.PreviousPage = 8;

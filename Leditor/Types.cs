@@ -263,6 +263,12 @@ public sealed class LevelState
             ]
         );
 
+        // The Effects Matrix
+        for (var m = 0; m < Effects.Length; m++)
+        {
+            Effects[m].Item3 = Utils.Resize(Effects[m].Item3, width, height);
+        }
+
         // Tile Matrix
         TileMatrix = Utils.Resize(
             TileMatrix,

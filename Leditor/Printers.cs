@@ -798,7 +798,7 @@ internal static class Printers
                                         new(width, height),
                                         new(width, -height)
                                     ],
-                                    new Color(color.R, color.G, color.B, deepTileOpacity && layer == GLOBALS.Layer - 1 && init.Specs.GetLength(2) > 0 ? 255 : opacity),
+                                    new Color(color.R, color.G, color.B, (byte)(shouldBeClearlyVisible ? 255 : opacity)),
                                     0
                                 );
                             }
@@ -814,7 +814,7 @@ internal static class Printers
                                         new(width, height),
                                         new(width, -height)
                                     ],
-                                    deepTileOpacity && layer == GLOBALS.Layer - 1 && init.Specs.GetLength(2) > 0 ? 255 : opacity
+                                    (byte)(shouldBeClearlyVisible ? 255 : opacity)
                                 );
                             }
                         }
