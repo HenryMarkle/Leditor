@@ -1031,9 +1031,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
             _shouldRedrawLevel = true;
         }
 
-        if (_shortcuts.ToggleLayer1Tiles.Check(ctrl, shift, alt)) _showLayer1Tiles = !_showLayer1Tiles;
-        if (_shortcuts.ToggleLayer2Tiles.Check(ctrl, shift, alt)) _showLayer2Tiles = !_showLayer2Tiles;
-        if (_shortcuts.ToggleLayer3Tiles.Check(ctrl, shift, alt)) _showLayer3Tiles = !_showLayer3Tiles;
+        if (_shortcuts.ToggleLayer1Tiles.Check(ctrl, shift, alt)) {
+            _showLayer1Tiles = !_showLayer1Tiles;
+            _shouldRedrawLevel = true;
+        }
+        if (_shortcuts.ToggleLayer2Tiles.Check(ctrl, shift, alt)) {
+            _showLayer2Tiles = !_showLayer2Tiles;
+            _shouldRedrawLevel = true;
+        }
+        if (_shortcuts.ToggleLayer3Tiles.Check(ctrl, shift, alt)) {
+            _showLayer3Tiles = !_showLayer3Tiles;
+            _shouldRedrawLevel = true;
+        }
         
         // Cycle Mode
         if (_shortcuts.CycleModeRight.Check(ctrl, shift, alt))
@@ -1046,9 +1055,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
             if (_mode < 0) _mode = 1;
         }
         
-        if (_shortcuts.ToggleLayer1.Check(ctrl, shift, alt) && !_scalingProps) _showTileLayer1 = !_showTileLayer1;
-        if (_shortcuts.ToggleLayer2.Check(ctrl, shift, alt) && !_scalingProps) _showTileLayer2 = !_showTileLayer2;
-        if (_shortcuts.ToggleLayer3.Check(ctrl, shift, alt) && !_scalingProps) _showTileLayer3 = !_showTileLayer3;
+        if (_shortcuts.ToggleLayer1.Check(ctrl, shift, alt) && !_scalingProps) {
+            _showTileLayer1 = !_showTileLayer1;
+            _shouldRedrawLevel = true;
+        }
+        if (_shortcuts.ToggleLayer2.Check(ctrl, shift, alt) && !_scalingProps) {
+            _showTileLayer2 = !_showTileLayer2;
+            _shouldRedrawLevel = true;
+        }
+        if (_shortcuts.ToggleLayer3.Check(ctrl, shift, alt) && !_scalingProps) {
+            _showTileLayer3 = !_showTileLayer3;
+            _shouldRedrawLevel = true;
+        }
 
         if (_shortcuts.CycleSnapMode.Check(ctrl, shift, alt)) _snapMode = ++_snapMode % 3;
 
