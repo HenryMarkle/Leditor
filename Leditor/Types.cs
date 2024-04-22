@@ -908,6 +908,13 @@ public class TileEditor(
     public bool UseTextures { get; set; } = useTextures;
     public bool AllowUndefinedTiles { get; set; } = allowUndefinedTiles;
     public bool Grid { get; set; } = grid;
+    
+    public IEnumerable<AutoTiler.PackMeta> AutoTilerPacks { get; set; } = [
+        new AutoTiler.PackMeta("Thin Pipes", "Vertical Pipe", "Horizontal Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),
+        new AutoTiler.PackMeta("Thin Plain Pipes", "Vertical Plain Pipe", "Horizontal Plain Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),
+        new AutoTiler.PackMeta("Wall Wires",  "WallWires Vertical A", "WallWires Horizontal A", "WallWires Square SE", "WallWires Square SW", "WallWires Square NW", "WallWires Square NE", "WallWires X Section", "WallWires T Section S", "WallWires T Section W", "WallWires T Section N", "WallWires T Section E"),
+        new AutoTiler.PackMeta("Inside Thin Pipes", "insidePipeVertical", "insidePipeHorizontal", "insidePipeRD", "insidePipeLD", "insidePipeLU", "insidePipeRU", "", "", "", "", ""),
+    ];
 }
 
 public class LightEditor(

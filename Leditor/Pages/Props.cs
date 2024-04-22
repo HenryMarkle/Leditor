@@ -3011,12 +3011,49 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 }
                             }
                             
-                            // Rope
+                            // Colored
+
+                            if (selectedProp.type == InitPropType.VariedSoft && 
+                                selectedProp.prop.Extras.Settings is PropVariedSoftSettings vs)
+                            {
+                                var applyColor = vs.ApplyColor is 1;
+
+                                if (ImGui.Checkbox("Apply Color", ref applyColor))
+                                {
+                                    vs.ApplyColor = applyColor ? 1 : 0;
+                                }
+                            }
                             
+                            // Rope
                             
                             if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.type == InitPropType.Rope)
                             {
                                 ImGui.SeparatorText("Rope Options");
+                                
+                                //
+
+                                if (fetchedSelected[0].prop.prop.Name == "Zero-G Tube")
+                                {
+                                    var ropeSettings = ((PropRopeSettings)fetchedSelected[0].prop.prop.Extras.Settings);
+                                    var applyColor = ropeSettings.ApplyColor is 1;
+
+                                    if (ImGui.Checkbox("Apply Color", ref applyColor))
+                                    {
+                                        ropeSettings.ApplyColor = applyColor ? 1 : 0;
+                                    }
+                                }
+                                else if (fetchedSelected[0].prop.prop.Name is "Wire" or "Zero-G Wire")
+                                {
+                                    var ropeSettings = ((PropRopeSettings)fetchedSelected[0].prop.prop.Extras.Settings);
+                                    var thickness = ropeSettings.Thickness ?? 2f;
+
+                                    ImGui.SetNextItemWidth(100);
+                                    var thicknessUpdated = ImGui.InputFloat("Thickness", ref thickness, 0.5f, 1f);
+                                    if (thicknessUpdated)
+                                    {
+                                        ropeSettings.Thickness = thickness;
+                                    }
+                                }
                                 
                                 var modelIndex = -1;
 
@@ -3080,7 +3117,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     UpdateRopeModelSegments();
                                     _shouldRedrawLevel = true;
                                 }
-
+                                
                                 //
 
                                 if (ImGui.Checkbox("Simulate Rope", ref _ropeMode))

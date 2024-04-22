@@ -15,7 +15,7 @@ internal class TileEditorPage : EditorPage, IDisposable
 
     private readonly GlobalShortcuts _gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
     private readonly TileShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.TileEditor;
-    
+
     private bool _materialTileSwitch;
     
     private int _tileCategoryIndex;
@@ -79,14 +79,23 @@ internal class TileEditorPage : EditorPage, IDisposable
     private bool _isSearching;
     private Task _searchTask = default!;
 
+    // Auto Tiler
+    private LinkedList<Data.Coords> _autoTilerPath = new();
+    private AutoTiler? _autoTiler;
+    private bool _autoTilingCancled;
+
+    private bool _autoTilingWithGeo = true;
+    private bool _autoTilerLinearAlgorithm = true;
+
     /// <summary>
     /// 0 - none
     /// 1 - with geo
     /// 2 - without geo
     /// 3 - paste with geo
     /// 4 - paste without geo
+    /// 5 - auto-tiling
     /// </summary>
-    private int _copyMode;
+    private int _placeMode;
 
     private Rectangle _prevCopiedRectangle;
     private Rectangle _copyRectangle;
@@ -994,6 +1003,11 @@ internal class TileEditorPage : EditorPage, IDisposable
     public override void Draw()
     {
         if (GLOBALS.PreviousPage != 3) _shouldRedrawLevel = true;
+
+        if (_autoTiler is null)
+        {
+            _autoTiler = new AutoTiler(GLOBALS.Settings.TileEditor.AutoTilerPacks);
+        }
         
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
 
@@ -1010,7 +1024,7 @@ internal class TileEditorPage : EditorPage, IDisposable
         var layer3Rect = new Rectangle(10, teHeight - 80, 40, 40);
         var layer2Rect = new Rectangle(20, teHeight - 90, 40, 40);
         var layer1Rect = new Rectangle(30, teHeight - 100, 40, 40);
-
+        
         //                        v this was done to avoid rounding errors
         var tileMatrixY = tileMouseWorld.Y < 0 
             ? -1 
@@ -1092,81 +1106,28 @@ internal class TileEditorPage : EditorPage, IDisposable
         // Skip the rest of the shortcuts when searching
         if (_isSearching) goto skipShortcuts;
         
-        // if (_gShortcuts.ToMainPage.Check(ctrl, shift, alt))
-        // {
-        //     #if DEBUG
-        //     Logger.Debug("Going to page 1");
-        //     #endif
-        //     GLOBALS.Page = 1;
-        // }
-        // if (_gShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
-        // {
-        //     #if DEBUG
-        //     Logger.Debug("Going to page 2");
-        //     #endif
-        //     GLOBALS.Page = 2;
-        // }
-        // // if (_gShortcuts.ToTileEditor.Check(ctrl, shift)) GLOBALS.Page = 3;
-        // if (_gShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
-        // {
-        //     #if DEBUG
-        //     Logger.Debug("Going to page 4");
-        //     #endif
-        //     GLOBALS.Page = 4;
-        // }
-        // if (_gShortcuts.ToLightEditor.Check(ctrl, shift, alt))
-        // {
-        //     #if DEBUG
-        //     Logger.Debug("Going to page 5");
-        //     #endif
-        //     GLOBALS.Page = 5;
-        // }
-        //
-        // if (_gShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
-        // {
-        //     #if DEBUG
-        //     Logger.Debug("Going to page 6");
-        //     #endif
-        //     GLOBALS.Page = 6;
-        // }
-        // if (_gShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
-        // {
-        //     #if DEBUG
-        //     Logger.Debug("Going to page 7");
-        //     #endif
-        //     GLOBALS.Page = 7;
-        // }
-        // if (_gShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
-        // {
-        //     #if DEBUG
-        //     Logger.Debug("Going to page 8");
-        //     #endif
-        //     GLOBALS.Page = 8;
-        // }
-        // if (_gShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
-        // {
-        //     #if DEBUG
-        //     Logger.Debug("Going to page 9");
-        //     #endif
-        //     GLOBALS.Page = 9;
-        // }
-        
         // Undo
 
-        if (_shortcuts.Undo.Check(ctrl, shift, alt)) Undo();
+        if (_shortcuts.Undo.Check(ctrl, shift, alt)) {
+            Undo();
+            _shouldRedrawLevel = true;
+        }
         
         // Redo
         
-        if (_shortcuts.Redo.Check(ctrl, shift, alt)) Redo();
+        if (_shortcuts.Redo.Check(ctrl, shift, alt)) {
+            Redo();
+            _shouldRedrawLevel = true;
+        }
         
         //
         
         // Copy Shortcuts
 
-        if (_shortcuts.CopyTiles.Check(ctrl, shift, alt)) _copyMode = _copyMode == 1 ? 0 : 1;
+        if (_shortcuts.CopyTiles.Check(ctrl, shift, alt)) _placeMode = _placeMode == 1 ? 0 : 1;
         
-        if (_shortcuts.PasteTilesWithGeo.Check(ctrl, shift, alt)) _copyMode = _copyMode == 3 ? 0 : 3;
-        if (_shortcuts.PasteTilesWithoutGeo.Check(ctrl, shift, alt)) _copyMode = _copyMode == 4 ? 0 : 4;
+        if (_shortcuts.PasteTilesWithGeo.Check(ctrl, shift, alt)) _placeMode = _placeMode == 3 ? 0 : 3;
+        if (_shortcuts.PasteTilesWithoutGeo.Check(ctrl, shift, alt)) _placeMode = _placeMode == 4 ? 0 : 4;
         
         //
         
@@ -1216,7 +1177,7 @@ internal class TileEditorPage : EditorPage, IDisposable
 
         if (canDrawTile)
         {
-            switch (_copyMode)
+            switch (_placeMode)
             {
                 case 0: // None
                 {
@@ -1367,7 +1328,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             _copyRectangle.Width = 0;
                             _copyRectangle.Height = 0;
 
-                            _copyMode = 0;
+                            _placeMode = 0;
                         }
                     }
 
@@ -1398,7 +1359,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                 {
                                     var pos = b.HeadPosition;
 
-                                    l1Copy.Data = new TileBody(pos.x - difX, pos.y - difY, pos.z);
+                                    l1Copy.Data = new TileBody(pos.x - difX, pos.y - difY, GLOBALS.Layer);
                                 }
                                 
                                 actions.Add(new Gram.TileGeoAction(
@@ -1418,7 +1379,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                     {
                                         var pos = b2.HeadPosition;
 
-                                        l2Copy.Data = new TileBody(pos.x - difX, pos.y - difY, pos.z);
+                                        l2Copy.Data = new TileBody(pos.x - difX, pos.y - difY, GLOBALS.Layer);
                                     }
                                     
                                     actions.Add(new Gram.TileGeoAction(
@@ -1462,7 +1423,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                 {
                                     var pos = b.HeadPosition;
 
-                                    l1Copy.Data = new TileBody(pos.x - difX, pos.y - difY, pos.z);
+                                    l1Copy.Data = new TileBody(pos.x - difX, pos.y - difY, GLOBALS.Layer + 1);
                                 }
                                 
                                 actions.Add(new Gram.TileAction(
@@ -1481,7 +1442,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                     {
                                         var pos = b2.HeadPosition;
 
-                                        l2Copy.Data = new TileBody(pos.x - difX, pos.y - difY, pos.z);
+                                        l2Copy.Data = new TileBody(pos.x - difX, pos.y - difY, GLOBALS.Layer + 1);
                                     }
                                     
                                     actions.Add(new Gram.TileAction(
@@ -1497,6 +1458,53 @@ internal class TileEditorPage : EditorPage, IDisposable
                         
                         GLOBALS.Gram.Proceed(new Gram.GroupAction<TileCell>(actions));
                         _shouldRedrawLevel = true;
+                    }
+                }
+                    break;
+
+                case 5: // Auto-Tiling
+                {
+
+                    if (!_autoTilingCancled && (_shortcuts.Draw.Check(ctrl, shift, alt, true) ||
+                                                _shortcuts.AltDraw.Check(ctrl, shift, alt, true)))
+                    {
+                        var lastCoords = _autoTilerPath.Last?.Value;
+
+                        if (lastCoords is not null && lastCoords.Value.X == tileMatrixX && lastCoords.Value.Y == tileMatrixY) break;
+
+                        _autoTilerPath.AddLast(new Data.Coords(tileMatrixX, tileMatrixY, GLOBALS.Layer));
+                    }
+
+                    // if (IsMouseButtonPressed(MouseButton.Right))
+                    // {
+                    //     _autoTilerPath.Clear();
+                    //     _autoTilingCancled = true;
+                    // }
+
+                    if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw)))
+                    {
+                        _autoTilingCancled = false;
+
+                        if (_autoTilerPath.Count > 0)
+                        {
+                            var resolvedTiles = _autoTilerLinearAlgorithm 
+                                ? _autoTiler?.ResolveLinear(_autoTilerPath) 
+                                : _autoTiler.Resolve(_autoTilerPath);
+
+                            foreach (var resolved in resolvedTiles!)
+                            {
+                                if (!Utils.InBounds(resolved.Coords, GLOBALS.Level.TileMatrix) || resolved.Tile is null) continue;
+
+                                var actions = _autoTilingWithGeo 
+                                    ? ForcePlaceTileWithGeo(resolved.Tile, resolved.Coords) 
+                                    : ForcePlaceTileWithoutGeo(resolved.Tile, resolved.Coords);
+                                
+                                GLOBALS.Gram.Proceed(new Gram.GroupAction<TileCell>(actions));
+                            }
+                            
+                            _autoTilerPath.Clear();
+                            _shouldRedrawLevel = true;
+                        }
                     }
                 }
                     break;
@@ -1785,9 +1793,20 @@ internal class TileEditorPage : EditorPage, IDisposable
             
             #endregion
 
+            if (_placeMode == 5)
+            {
+                foreach (var node in _autoTilerPath)
+                {
+                    var scaledNode = node * 20;
+                 
+                    DrawCircle(scaledNode.X + 10, scaledNode.Y + 10, 5, Color.White);
+                    DrawCircle(scaledNode.X + 10, scaledNode.Y + 10, 3, Color.Green);
+                }
+            }
+
             if (inMatrixBounds)
             {
-                switch (_copyMode)
+                switch (_placeMode)
                 {
                     case 0: // none
                     {
@@ -1983,6 +2002,14 @@ internal class TileEditorPage : EditorPage, IDisposable
                 if (ImGui.Button(_materialTileSwitch ? "Switch to materials" : "Switch to tiles", ImGui.GetContentRegionAvail() with { Y = 20 }))
                     _materialTileSwitch = !_materialTileSwitch;
 
+                var autoTileSwitch = ImGui.Button(_placeMode == 5 ? "Cancel" : "Use Auto-Tiling", ImGui.GetContentRegionAvail() with { Y = 20 });
+            
+                if (autoTileSwitch) 
+                {
+                    _placeMode = _placeMode == 5 ? 0 : 5;
+                    _searchText = "";
+                }
+                
                 if (!_materialTileSwitch)
                 {
                     if (currentMaterialInit.Item1 == GLOBALS.Level.DefaultMaterial)
@@ -2027,279 +2054,304 @@ internal class TileEditorPage : EditorPage, IDisposable
                 //
 
                 var isSearching = !string.IsNullOrEmpty(_searchText);
-                
-                
-                if (!isSearching && ImGui.BeginListBox("##Groups", new Vector2(halfWidth, boxHeight)))
-                {
-                    if (_materialTileSwitch)
-                    {
-                        // Thanks to Chromosoze
-                        var drawList = ImGui.GetWindowDrawList();
-                        var textHeight = ImGui.GetTextLineHeight();
-                        //
 
-                        if (string.IsNullOrEmpty(_searchText))
+                if (_placeMode == 5) {
+                    if (ImGui.BeginListBox("##AutoTilerTemplates", ImGui.GetContentRegionAvail() - new Vector2(0, 70))) {
+                        
+                        for (var index = 0; index < (_autoTiler?.Packs.Count ?? 0); index++) 
                         {
-                            for (var categoryIndex = 0; categoryIndex < (GLOBALS.TileDex?.OrderedCategoryNames.Length ?? 0); categoryIndex++)
-                            {
-                                var category = GLOBALS.TileDex?.OrderedCategoryNames[categoryIndex] ?? "";
-                                var color = GLOBALS.TileDex?.GetCategoryColor(category) ?? Color.Black;
-                                Vector4 colorVec = color; 
-                                
-                                // Thanks to Chromosoze
-                                var cursor = ImGui.GetCursorScreenPos();
-                                drawList.AddRectFilled(
-                                    p_min: cursor,
-                                    p_max: cursor + new Vector2(10f, textHeight),
-                                    ImGui.ColorConvertFloat4ToU32((colorVec / 255f))
-                                );
+                            var pack = _autoTiler!.Packs[index];
+                            if (!string.IsNullOrEmpty(_searchText) && !pack.Name.Contains(_searchText)) continue;
 
-                                if (_tileCategoryIndex == categoryIndex && 
-                                    !string.Equals(category, _currentCategory.name,
-                                        StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    _currentCategory = (category, color);
-                                    _currentCategoryTiles = GLOBALS.TileDex?.GetTilesOfCategory(category) ?? [];
-                                }
-                                
-                                // TODO: performance issue
-                                var selected = ImGui.Selectable("  "+category, _tileCategoryIndex == categoryIndex);
+                            var packSelected = ImGui.Selectable(pack.Name, _autoTiler.SelectedPack == pack);
 
-                                if (selected)
-                                {
-                                    _tileCategoryIndex = categoryIndex;
-                                    _tileIndex = 0;
-
-                                    _currentCategory = (category, color);
-                                    _currentCategoryTiles = GLOBALS.TileDex?.GetTilesOfCategory(category) ?? [];
-                                    
-                                    if (_tileSpecDisplayMode) 
-                                        UpdateTileTexturePanel();
-                                    else 
-                                        UpdateTileSpecsPanel();
-                                }
-                            }
+                            if (packSelected) _autoTiler.SelectedPack = pack;
                         }
+                        
+                        ImGui.EndListBox();
                     }
-                    else
+
+                    ImGui.SeparatorText("Options");
+
+                    ImGui.Checkbox("Place Geo", ref _autoTilingWithGeo);
+                    ImGui.Checkbox("Linear Algorithm", ref _autoTilerLinearAlgorithm);
+
+                } else {
+
+                    if (!isSearching && ImGui.BeginListBox("##Groups", new Vector2(halfWidth, boxHeight)))
                     {
-                        if (string.IsNullOrEmpty(_searchText))
+                        if (_materialTileSwitch)
                         {
-                            for (var category = 0; category < GLOBALS.MaterialCategories.Length; category++)
+                            // Thanks to Chromosoze
+                            var drawList = ImGui.GetWindowDrawList();
+                            var textHeight = ImGui.GetTextLineHeight();
+                            //
+
+                            if (string.IsNullOrEmpty(_searchText))
                             {
-                                var selected = ImGui.Selectable(GLOBALS.MaterialCategories[category], _materialCategoryIndex == category);
-                                if (selected)
+                                for (var categoryIndex = 0; categoryIndex < (GLOBALS.TileDex?.OrderedCategoryNames.Length ?? 0); categoryIndex++)
                                 {
-                                    _materialCategoryIndex = category;
-                                    _materialIndex = 0;
+                                    var category = GLOBALS.TileDex?.OrderedCategoryNames[categoryIndex] ?? "";
+                                    var color = GLOBALS.TileDex?.GetCategoryColor(category) ?? Color.Black;
+                                    Vector4 colorVec = color; 
+                                    
+                                    // Thanks to Chromosoze
+                                    var cursor = ImGui.GetCursorScreenPos();
+                                    drawList.AddRectFilled(
+                                        p_min: cursor,
+                                        p_max: cursor + new Vector2(10f, textHeight),
+                                        ImGui.ColorConvertFloat4ToU32((colorVec / 255f))
+                                    );
+
+                                    if (_tileCategoryIndex == categoryIndex && 
+                                        !string.Equals(category, _currentCategory.name,
+                                            StringComparison.InvariantCultureIgnoreCase))
+                                    {
+                                        _currentCategory = (category, color);
+                                        _currentCategoryTiles = GLOBALS.TileDex?.GetTilesOfCategory(category) ?? [];
+                                    }
+                                    
+                                    // TODO: performance issue
+                                    var selected = ImGui.Selectable("  "+category, _tileCategoryIndex == categoryIndex);
+
+                                    if (selected)
+                                    {
+                                        _tileCategoryIndex = categoryIndex;
+                                        _tileIndex = 0;
+
+                                        _currentCategory = (category, color);
+                                        _currentCategoryTiles = GLOBALS.TileDex?.GetTilesOfCategory(category) ?? [];
+                                        
+                                        if (_tileSpecDisplayMode) 
+                                            UpdateTileTexturePanel();
+                                        else 
+                                            UpdateTileSpecsPanel();
+                                    }
                                 }
                             }
                         }
-                        // When searching
                         else
                         {
-                            for (var c = 0; c < _materialIndices.Length; c++)
+                            if (string.IsNullOrEmpty(_searchText))
                             {
-                                var searchIndex = _materialIndices[c];
-                                
-                                var selected = ImGui.Selectable(GLOBALS.MaterialCategories[searchIndex.category], _materialCategorySearchIndex == c);
-                                if (selected)
+                                for (var category = 0; category < GLOBALS.MaterialCategories.Length; category++)
                                 {
-                                    _materialCategorySearchIndex = c;
-                                    if (searchIndex.materials.Length > 0)_materialSearchIndex = 0;
+                                    var selected = ImGui.Selectable(GLOBALS.MaterialCategories[category], _materialCategoryIndex == category);
+                                    if (selected)
+                                    {
+                                        _materialCategoryIndex = category;
+                                        _materialIndex = 0;
+                                    }
+                                }
+                            }
+                            // When searching
+                            else
+                            {
+                                for (var c = 0; c < _materialIndices.Length; c++)
+                                {
+                                    var searchIndex = _materialIndices[c];
+                                    
+                                    var selected = ImGui.Selectable(GLOBALS.MaterialCategories[searchIndex.category], _materialCategorySearchIndex == c);
+                                    if (selected)
+                                    {
+                                        _materialCategorySearchIndex = c;
+                                        if (searchIndex.materials.Length > 0)_materialSearchIndex = 0;
+                                    }
                                 }
                             }
                         }
+                    
+                        ImGui.EndListBox();
                     }
-                
-                    ImGui.EndListBox();
+                    
+                    if (!isSearching) ImGui.SameLine();
+                    if (ImGui.BeginListBox("##Tiles", isSearching 
+                            ? ImGui.GetContentRegionAvail() with { Y = boxHeight} : new Vector2(halfWidth, boxHeight)))
+                    {
+                        if (_materialTileSwitch)
+                        {
+                            // Thanks to Chromosoze
+                            var drawList = ImGui.GetWindowDrawList();
+                            var textHeight = ImGui.GetTextLineHeight();
+                            //
+                            
+                            if (string.IsNullOrEmpty(_searchText))
+                            {
+                                for (var tileIndex = 0; tileIndex < _currentCategoryTiles.Length; tileIndex++)
+                                {
+                                    var currentTile = _currentCategoryTiles[tileIndex];
+                                    
+                                    var selected = ImGui.Selectable(
+                                        currentTile.Name, 
+                                        _tileIndex == tileIndex
+                                    );
+
+                                    if (_tileIndex == tileIndex && 
+                                        _currentTile != currentTile)
+                                    {
+                                        _currentTile = currentTile;
+                                        
+                                        if (_tileSpecDisplayMode) 
+                                            UpdateTileTexturePanel();
+                                        else 
+                                            UpdateTileSpecsPanel();
+                                    }
+
+                                    var hovered = ImGui.IsItemHovered();
+
+                                    if (hovered)
+                                    {
+                                        if (_hoveredTile != currentTile)
+                                        {
+                                            _hoveredTile = currentTile;
+                                            if (_tooltip) UpdatePreviewToolTip();
+                                        }
+                                        
+                                        if (_hoveredTileCategoryIndex != _tileCategoryIndex ||
+                                            _hoveredTileIndex != tileIndex)
+                                        {
+                                            _hoveredTileCategoryIndex = _tileCategoryIndex;
+                                            _hoveredTileIndex = tileIndex;
+                                            
+                                            if (_tooltip) UpdatePreviewToolTip();
+                                        }
+                                        
+                                        if (_tooltip && _previewTooltipRT.Raw.Id != 0)
+                                        {
+                                            _hoveredTileCategoryIndex = _tileCategoryIndex;
+                                            _hoveredTileIndex = tileIndex;
+                                            
+                                            _hoveredTile = currentTile;
+                                            
+                                            ImGui.BeginTooltip();
+                                            rlImGui.ImageRenderTexture(_previewTooltipRT);
+                                            ImGui.EndTooltip();
+                                        }
+                                    }
+
+
+                                    if (selected)
+                                    {
+                                        _tileIndex = tileIndex;
+                                        _currentTile = currentTile;
+                                        
+                                        if (_tileSpecDisplayMode) 
+                                            UpdateTileTexturePanel();
+                                        else 
+                                            UpdateTileSpecsPanel();
+                                    }
+                                }
+                            }
+                            // When searching
+                            else if (_tileMatches.Length > 0)
+                            {
+                                for (var t = 0; t < _tileMatches.Length; t++)
+                                {
+                                    var (category, color, tile) = _tileMatches[t];
+                                    
+                                    Vector4 colorVec = color; 
+                                    
+                                    // Thanks to Chromosoze
+                                    var cursor = ImGui.GetCursorScreenPos();
+                                    drawList.AddRectFilled(
+                                        p_min: cursor,
+                                        p_max: cursor + new Vector2(10f, textHeight),
+                                        ImGui.ColorConvertFloat4ToU32((colorVec / 255f))
+                                    );
+                                    
+                                    var selected = ImGui.Selectable(
+                                        "  " + tile.Name, 
+                                        _tileSearchIndex == t
+                                    );
+
+                                    if (_tileSearchIndex == t && tile != _currentTile)
+                                    {
+                                        _currentTile = tile;
+                                        _currentCategory = (category, color);
+                                    }
+
+                                    if (selected)
+                                    {
+                                        _tileSearchIndex = t;
+
+                                        _currentTile = tile;
+                                        _currentCategory = (category, color);
+                                        
+                                        if (_tileSpecDisplayMode) 
+                                            UpdateTileTexturePanel();
+                                        else 
+                                            UpdateTileSpecsPanel();
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Thanks to Chromosoze
+                            var drawList = ImGui.GetWindowDrawList();
+                            var textHeight = ImGui.GetTextLineHeight();
+                            //
+
+                            if (string.IsNullOrEmpty(_searchText))
+                            {
+                                for (var materialIndex = 0; materialIndex < GLOBALS.Materials[_materialCategoryIndex].Length; materialIndex++)
+                                {
+                                    ref var material = ref GLOBALS.Materials[_materialCategoryIndex][materialIndex];
+                                    
+                                    // Thanks to Chromosoze
+                                    var cursor = ImGui.GetCursorScreenPos();
+                                    drawList.AddRectFilled(
+                                        p_min: cursor,
+                                        p_max: cursor + new Vector2(10f, textHeight),
+                                        ImGui.ColorConvertFloat4ToU32(new Vector4(material.Item2.R / 255f, material.Item2.G / 255f, material.Item2.B / 255, 1f))
+                                    );
+                                    //
+                                    
+                                    var selected = ImGui.Selectable(
+                                        "  "+material.Item1,
+                                        _materialIndex == materialIndex
+                                    );
+
+                                    if (selected) _materialIndex = materialIndex;
+                                }
+                            }
+                            // When searching
+                            else if (_materialIndices.Length > 0)
+                            {
+                                for (var m = 0; m < _materialIndices[_materialCategorySearchIndex].materials.Length; m++)
+                                {
+                                    ref var material =
+                                        ref GLOBALS.Materials[_materialIndices[_materialCategorySearchIndex].category][_materialIndices[_materialCategorySearchIndex].materials[m]];
+                                    
+                                    // Thanks to Chromosoze
+                                    var cursor = ImGui.GetCursorScreenPos();
+                                    drawList.AddRectFilled(
+                                        p_min: cursor,
+                                        p_max: cursor + new Vector2(10f, textHeight),
+                                        ImGui.ColorConvertFloat4ToU32(new Vector4(material.Item2.R / 255f, material.Item2.G / 255f, material.Item2.B / 255, 1f))
+                                    );
+                                    //
+                                    
+                                    var selected = ImGui.Selectable(
+                                        "  "+material.Item1,
+                                        _materialSearchIndex == m
+                                    );
+
+                                    if (selected)
+                                    {
+                                        _materialSearchIndex = m;
+
+                                        _materialCategoryIndex = _materialIndices[_materialCategorySearchIndex].category;
+                                        _materialIndex = _materialIndices[_materialCategorySearchIndex].materials[m];
+                                    }
+                                }
+                            }
+                        }
+                        ImGui.EndListBox();
+                    }
                 }
                 
-                if (!isSearching) ImGui.SameLine();
-                if (ImGui.BeginListBox("##Tiles", isSearching 
-                        ? ImGui.GetContentRegionAvail() with { Y = boxHeight} : new Vector2(halfWidth, boxHeight)))
-                {
-                    if (_materialTileSwitch)
-                    {
-                        // Thanks to Chromosoze
-                        var drawList = ImGui.GetWindowDrawList();
-                        var textHeight = ImGui.GetTextLineHeight();
-                        //
-                        
-                        if (string.IsNullOrEmpty(_searchText))
-                        {
-                            for (var tileIndex = 0; tileIndex < _currentCategoryTiles.Length; tileIndex++)
-                            {
-                                var currentTile = _currentCategoryTiles[tileIndex];
-                                
-                                var selected = ImGui.Selectable(
-                                    currentTile.Name, 
-                                    _tileIndex == tileIndex
-                                );
-
-                                if (_tileIndex == tileIndex && 
-                                    _currentTile != currentTile)
-                                {
-                                    _currentTile = currentTile;
-                                    
-                                    if (_tileSpecDisplayMode) 
-                                        UpdateTileTexturePanel();
-                                    else 
-                                        UpdateTileSpecsPanel();
-                                }
-
-                                var hovered = ImGui.IsItemHovered();
-
-                                if (hovered)
-                                {
-                                    if (_hoveredTile != currentTile)
-                                    {
-                                        _hoveredTile = currentTile;
-                                        if (_tooltip) UpdatePreviewToolTip();
-                                    }
-                                    
-                                    if (_hoveredTileCategoryIndex != _tileCategoryIndex ||
-                                        _hoveredTileIndex != tileIndex)
-                                    {
-                                        _hoveredTileCategoryIndex = _tileCategoryIndex;
-                                        _hoveredTileIndex = tileIndex;
-                                        
-                                        if (_tooltip) UpdatePreviewToolTip();
-                                    }
-                                    
-                                    if (_tooltip && _previewTooltipRT.Raw.Id != 0)
-                                    {
-                                        _hoveredTileCategoryIndex = _tileCategoryIndex;
-                                        _hoveredTileIndex = tileIndex;
-                                        
-                                        _hoveredTile = currentTile;
-                                        
-                                        ImGui.BeginTooltip();
-                                        rlImGui.ImageRenderTexture(_previewTooltipRT);
-                                        ImGui.EndTooltip();
-                                    }
-                                }
-
-
-                                if (selected)
-                                {
-                                    _tileIndex = tileIndex;
-                                    _currentTile = currentTile;
-                                    
-                                    if (_tileSpecDisplayMode) 
-                                        UpdateTileTexturePanel();
-                                    else 
-                                        UpdateTileSpecsPanel();
-                                }
-                            }
-                        }
-                        // When searching
-                        else if (_tileMatches.Length > 0)
-                        {
-                            for (var t = 0; t < _tileMatches.Length; t++)
-                            {
-                                var (category, color, tile) = _tileMatches[t];
-                                
-                                Vector4 colorVec = color; 
-                                
-                                // Thanks to Chromosoze
-                                var cursor = ImGui.GetCursorScreenPos();
-                                drawList.AddRectFilled(
-                                    p_min: cursor,
-                                    p_max: cursor + new Vector2(10f, textHeight),
-                                    ImGui.ColorConvertFloat4ToU32((colorVec / 255f))
-                                );
-                                
-                                var selected = ImGui.Selectable(
-                                    "  " + tile.Name, 
-                                    _tileSearchIndex == t
-                                );
-
-                                if (_tileSearchIndex == t && tile != _currentTile)
-                                {
-                                    _currentTile = tile;
-                                    _currentCategory = (category, color);
-                                }
-
-                                if (selected)
-                                {
-                                    _tileSearchIndex = t;
-
-                                    _currentTile = tile;
-                                    _currentCategory = (category, color);
-                                    
-                                    if (_tileSpecDisplayMode) 
-                                        UpdateTileTexturePanel();
-                                    else 
-                                        UpdateTileSpecsPanel();
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // Thanks to Chromosoze
-                        var drawList = ImGui.GetWindowDrawList();
-                        var textHeight = ImGui.GetTextLineHeight();
-                        //
-
-                        if (string.IsNullOrEmpty(_searchText))
-                        {
-                            for (var materialIndex = 0; materialIndex < GLOBALS.Materials[_materialCategoryIndex].Length; materialIndex++)
-                            {
-                                ref var material = ref GLOBALS.Materials[_materialCategoryIndex][materialIndex];
-                                
-                                // Thanks to Chromosoze
-                                var cursor = ImGui.GetCursorScreenPos();
-                                drawList.AddRectFilled(
-                                    p_min: cursor,
-                                    p_max: cursor + new Vector2(10f, textHeight),
-                                    ImGui.ColorConvertFloat4ToU32(new Vector4(material.Item2.R / 255f, material.Item2.G / 255f, material.Item2.B / 255, 1f))
-                                );
-                                //
-                                
-                                var selected = ImGui.Selectable(
-                                    "  "+material.Item1,
-                                    _materialIndex == materialIndex
-                                );
-
-                                if (selected) _materialIndex = materialIndex;
-                            }
-                        }
-                        // When searching
-                        else if (_materialIndices.Length > 0)
-                        {
-                            for (var m = 0; m < _materialIndices[_materialCategorySearchIndex].materials.Length; m++)
-                            {
-                                ref var material =
-                                    ref GLOBALS.Materials[_materialIndices[_materialCategorySearchIndex].category][_materialIndices[_materialCategorySearchIndex].materials[m]];
-                                
-                                // Thanks to Chromosoze
-                                var cursor = ImGui.GetCursorScreenPos();
-                                drawList.AddRectFilled(
-                                    p_min: cursor,
-                                    p_max: cursor + new Vector2(10f, textHeight),
-                                    ImGui.ColorConvertFloat4ToU32(new Vector4(material.Item2.R / 255f, material.Item2.G / 255f, material.Item2.B / 255, 1f))
-                                );
-                                //
-                                
-                                var selected = ImGui.Selectable(
-                                    "  "+material.Item1,
-                                    _materialSearchIndex == m
-                                );
-
-                                if (selected)
-                                {
-                                    _materialSearchIndex = m;
-
-                                    _materialCategoryIndex = _materialIndices[_materialCategorySearchIndex].category;
-                                    _materialIndex = _materialIndices[_materialCategorySearchIndex].materials[m];
-                                }
-                            }
-                        }
-                    }
-                    ImGui.EndListBox();
-                }
+                
                 
                 ImGui.End();
             }

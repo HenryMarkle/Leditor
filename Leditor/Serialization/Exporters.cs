@@ -238,7 +238,7 @@ public static class Exporters
 
             var settingsString = prop.Extras.Settings switch
             {
-                PropRopeSettings rope => $"[#renderorder: {rope.RenderOrder}, #seed: {rope.Seed}, #renderTime: {rope.RenderTime}, #release: {(rope.Release switch { PropRopeRelease.Left => -1, PropRopeRelease.Right => 1, _ => 0 })}{(rope.Thickness is null ? "" : $", #thickness: {rope.Thickness}")}{(rope.ApplyColor is null ? "": $", #applyColor: {rope.ApplyColor}")}]",
+                PropRopeSettings rope => $"[#renderorder: {rope.RenderOrder}, #seed: {rope.Seed}, #renderTime: {rope.RenderTime}, #release: {(rope.Release switch { PropRopeRelease.Left => -1, PropRopeRelease.Right => 1, _ => 0 })}{(rope.Thickness is null ? "" : $", #thickness: {rope.Thickness:0.0000}")}{(rope.ApplyColor is null ? "": $", #applyColor: {rope.ApplyColor}")}]",
                 PropVariedSettings variedStandard => $"[#renderorder: {variedStandard.RenderOrder}, #seed: {variedStandard.Seed}, #renderTime: {variedStandard.RenderTime}, #variation: {(variedStandard.Variation + 1)}]",
                 PropVariedSoftSettings variedSoft => $"[#renderorder: {variedSoft.RenderOrder}, #seed: {variedSoft.Seed}, #renderTime: {variedSoft.RenderTime}, #variation: {(variedSoft.Variation + 1)}, #customDepth: {variedSoft.CustomDepth}{(variedSoft.ApplyColor is null ? "" : $", #applyColor: {variedSoft.ApplyColor}")}]",
                 PropVariedDecalSettings variedDecal => $"[#renderorder: {variedDecal.RenderOrder}, #seed: {variedDecal.Seed}, #renderTime: {variedDecal.RenderTime}, #variation: {(variedDecal.Variation + 1)}, #customDepth: {variedDecal.CustomDepth}]",

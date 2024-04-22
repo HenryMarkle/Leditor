@@ -329,6 +329,19 @@ internal static class Utils
         return null;
     }
 
+    public static bool InBounds<T>(in Data.Coords coords, T[,,] matrix)
+    {
+        return coords.X >= 0 && coords.X < matrix.GetLength(1) &&
+               coords.Y >= 0 && coords.Y < matrix.GetLength(0) &&
+               coords.Z >= 0 && coords.Z < matrix.GetLength(2);
+    }
+    
+    public static bool InBounds<T>(in Data.Coords coords, T[,] matrix)
+    {
+        return coords.X >= 0 && coords.X < matrix.GetLength(1) &&
+               coords.Y >= 0 && coords.Y < matrix.GetLength(0);
+    }
+
     public static bool IsTileLegal(ref InitTile init, Vector2 point)
     {
         var (width, height) = init.Size;
