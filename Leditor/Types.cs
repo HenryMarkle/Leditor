@@ -506,6 +506,8 @@ public record TileShortcuts : IEditorShortcuts
     public KeyboardShortcut PasteTilesWithGeo { get; set; } = new(KeyboardKey.V, ctrl: true, shift: true);
     public KeyboardShortcut PasteTilesWithoutGeo { get; set; } = new(KeyboardKey.V, ctrl: true);
 
+    public KeyboardShortcut CycleAutoTilerMacroAxisPriority { get; set; } = new(KeyboardKey.Tab, ctrl:false, shift:false, alt:false);
+
     public KeyboardShortcut ToggleLayer1 { get; set; } = new(KeyboardKey.Null, shift:false, ctrl: false);
     public KeyboardShortcut ToggleLayer2 { get; set; } = new(KeyboardKey.Null, shift:false, ctrl: false);
     public KeyboardShortcut ToggleLayer3 { get; set; } = new(KeyboardKey.Null, shift:false, ctrl: false);
@@ -909,11 +911,15 @@ public class TileEditor(
     public bool AllowUndefinedTiles { get; set; } = allowUndefinedTiles;
     public bool Grid { get; set; } = grid;
     
-    public IEnumerable<AutoTiler.PackMeta> AutoTilerPacks { get; set; } = [
-        new AutoTiler.PackMeta("Thin Pipes", "Vertical Pipe", "Horizontal Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),
-        new AutoTiler.PackMeta("Thin Plain Pipes", "Vertical Plain Pipe", "Horizontal Plain Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),
-        new AutoTiler.PackMeta("Wall Wires",  "WallWires Vertical A", "WallWires Horizontal A", "WallWires Square SE", "WallWires Square SW", "WallWires Square NW", "WallWires Square NE", "WallWires X Section", "WallWires T Section S", "WallWires T Section W", "WallWires T Section N", "WallWires T Section E"),
-        new AutoTiler.PackMeta("Inside Thin Pipes", "insidePipeVertical", "insidePipeHorizontal", "insidePipeRD", "insidePipeLD", "insidePipeLU", "insidePipeRU", "", "", "", "", ""),
+    public IEnumerable<AutoTiler.PathPackMeta> AutoTilerPathPacks { get; set; } = [
+        new("Thin Pipes", "Vertical Pipe", "Horizontal Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),
+        new("Thin Plain Pipes", "Vertical Plain Pipe", "Horizontal Plain Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),
+        new("Wall Wires",  "WallWires Vertical A", "WallWires Horizontal A", "WallWires Square SE", "WallWires Square SW", "WallWires Square NW", "WallWires Square NE", "WallWires X Section", "WallWires T Section S", "WallWires T Section W", "WallWires T Section N", "WallWires T Section E"),
+        new("Inside Thin Pipes", "insidePipeVertical", "insidePipeHorizontal", "insidePipeRD", "insidePipeLD", "insidePipeLU", "insidePipeRU", "", "", "", "", ""),
+    ];
+
+    public IEnumerable<AutoTiler.RectPackMeta> AutoTilerRectPacks { get; set; } = [
+        new("Su Patterns", "Block Edge W", "Block Edge N", "Block Edge E", "Block Edge S", "Block Corner NW", "Block Corner NE", "Block Corner SE", "Block Corner SW", [])
     ];
 }
 

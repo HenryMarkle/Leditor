@@ -17,8 +17,6 @@ public sealed class Texture2D : IDisposable
     public Texture2D(string path)
     {
         Raw = Raylib.LoadTexture(path);
-
-        if (!Raylib.IsTextureReady(Raw)) throw new TextureLoadException(path);
     }
 
     public Texture2D(Raylib_cs.Texture2D texture)
@@ -50,7 +48,7 @@ public sealed class Texture2D : IDisposable
         if (fromConsumer)
         {
             // Was moved here to prevent GC from unloading on a separate thread
-            Raylib.UnloadTexture(Raw);
+            if (Raw.Id != 0) Raylib.UnloadTexture(Raw);
         }
         
 

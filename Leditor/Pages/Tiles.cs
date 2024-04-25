@@ -79,21 +79,35 @@ internal class TileEditorPage : EditorPage, IDisposable
     private bool _isSearching;
     private Task _searchTask = default!;
 
+    
+
     // Auto Tiler
     private LinkedList<Data.Coords> _autoTilerPath = new();
     private AutoTiler? _autoTiler;
     private bool _autoTilingCancled;
 
+    /// <summary>
+    /// 0 - Micro
+    /// 1 - Macro
+    /// </summary>
+    private int _autoTilerMethod;
+    private bool _autoTilerMacroFirstClick;
+    private Data.Coords _autoTilerFirstClickPos;
+    private bool _autoTilerMacroYAxisFirst;
+
     private bool _autoTilingWithGeo = true;
     private bool _autoTilerLinearAlgorithm = true;
 
+
+
     /// <summary>
-    /// 0 - none
+    /// 0 - default
     /// 1 - with geo
     /// 2 - without geo
     /// 3 - paste with geo
     /// 4 - paste without geo
     /// 5 - auto-tiling
+    /// 6 - rect
     /// </summary>
     private int _placeMode;
 
@@ -127,6 +141,23 @@ internal class TileEditorPage : EditorPage, IDisposable
     
     private bool _isSettingsWinHovered;
     private bool _isSettingsWinDragged;
+
+    public void ResolveAutoTiler() {
+        var resolvedTiles = _autoTilerLinearAlgorithm 
+            ? _autoTiler?.ResolvePathLinear(_autoTilerPath) 
+            : _autoTiler?.ResolvePath(_autoTilerPath);
+
+        foreach (var resolved in resolvedTiles!)
+        {
+            if (!Utils.InBounds(resolved.Coords, GLOBALS.Level.TileMatrix) || resolved.Tile is null) continue;
+
+            var actions = _autoTilingWithGeo 
+                ? ForcePlaceTileWithGeo(resolved.Tile, resolved.Coords) 
+                : ForcePlaceTileWithoutGeo(resolved.Tile, resolved.Coords);
+            
+            GLOBALS.Gram.Proceed(new Gram.GroupAction<TileCell>(actions));
+        }        
+    }
     
     public override void Dispose()
     {
@@ -1006,7 +1037,10 @@ internal class TileEditorPage : EditorPage, IDisposable
 
         if (_autoTiler is null)
         {
-            _autoTiler = new AutoTiler(GLOBALS.Settings.TileEditor.AutoTilerPacks);
+            _autoTiler = new AutoTiler(
+                GLOBALS.Settings.TileEditor.AutoTilerPathPacks, 
+                GLOBALS.Settings.TileEditor.AutoTilerRectPacks
+            );
         }
         
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
@@ -1181,7 +1215,7 @@ internal class TileEditorPage : EditorPage, IDisposable
             {
                 case 0: // None
                 {
-                    if (_shortcuts.Draw.Check(ctrl, shift, alt, true) && inMatrixBounds && _currentTile is not null)
+                    if (_shortcuts.Draw.Check(ctrl, shift, alt, true) && inMatrixBounds && ( !_materialTileSwitch || _currentTile is not null))
                     {
                         // _clickTracker = true;
                         if (_materialTileSwitch)
@@ -1351,7 +1385,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                 var mx = x + tileMatrixX;
                                 var my = y + tileMatrixY;
 
-                                if (mx >= GLOBALS.Level.Width || my >= GLOBALS.Level.Height) continue;
+                                if (mx < 0 || my < 0 || mx >= GLOBALS.Level.Width || my >= GLOBALS.Level.Height) continue;
 
                                 var l1Copy = CopyTileCell(_copyBuffer[y, x, 0]);
 
@@ -1415,7 +1449,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                 var mx = x + tileMatrixX;
                                 var my = y + tileMatrixY;
 
-                                if (mx >= GLOBALS.Level.Width || my >= GLOBALS.Level.Height) continue;
+                                if (mx < 0 || my < 0 || mx >= GLOBALS.Level.Width || my >= GLOBALS.Level.Height) continue;
 
                                 var l1Copy = CopyTileCell(_copyBuffer[y, x, 0]);
 
@@ -1464,50 +1498,78 @@ internal class TileEditorPage : EditorPage, IDisposable
 
                 case 5: // Auto-Tiling
                 {
-
-                    if (!_autoTilingCancled && (_shortcuts.Draw.Check(ctrl, shift, alt, true) ||
-                                                _shortcuts.AltDraw.Check(ctrl, shift, alt, true)))
-                    {
-                        var lastCoords = _autoTilerPath.Last?.Value;
-
-                        if (lastCoords is not null && lastCoords.Value.X == tileMatrixX && lastCoords.Value.Y == tileMatrixY) break;
-
-                        _autoTilerPath.AddLast(new Data.Coords(tileMatrixX, tileMatrixY, GLOBALS.Layer));
-                    }
-
-                    // if (IsMouseButtonPressed(MouseButton.Right))
-                    // {
-                    //     _autoTilerPath.Clear();
-                    //     _autoTilingCancled = true;
-                    // }
-
-                    if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw)))
-                    {
-                        _autoTilingCancled = false;
-
-                        if (_autoTilerPath.Count > 0)
+                    switch (_autoTilerMethod) {
+                        case 0: // Micro
                         {
-                            var resolvedTiles = _autoTilerLinearAlgorithm 
-                                ? _autoTiler?.ResolveLinear(_autoTilerPath) 
-                                : _autoTiler.Resolve(_autoTilerPath);
-
-                            foreach (var resolved in resolvedTiles!)
+                            if (!_autoTilingCancled && (_shortcuts.Draw.Check(ctrl, shift, alt, true) ||
+                                                _shortcuts.AltDraw.Check(ctrl, shift, alt, true)))
                             {
-                                if (!Utils.InBounds(resolved.Coords, GLOBALS.Level.TileMatrix) || resolved.Tile is null) continue;
+                                var lastCoords = _autoTilerPath.Last?.Value;
 
-                                var actions = _autoTilingWithGeo 
-                                    ? ForcePlaceTileWithGeo(resolved.Tile, resolved.Coords) 
-                                    : ForcePlaceTileWithoutGeo(resolved.Tile, resolved.Coords);
-                                
-                                GLOBALS.Gram.Proceed(new Gram.GroupAction<TileCell>(actions));
+                                if (lastCoords is not null && lastCoords.Value.X == tileMatrixX && lastCoords.Value.Y == tileMatrixY) break;
+
+                                _autoTilerPath.AddLast(new Data.Coords(tileMatrixX, tileMatrixY, GLOBALS.Layer));
                             }
-                            
-                            _autoTilerPath.Clear();
-                            _shouldRedrawLevel = true;
+
+                            // if (IsMouseButtonPressed(MouseButton.Right))
+                            // {
+                            //     _autoTilerPath.Clear();
+                            //     _autoTilingCancled = true;
+                            // }
+
+                            if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw)))
+                            {
+                                _autoTilingCancled = false;
+
+                                if (_autoTilerPath.Count > 0)
+                                {
+                                    ResolveAutoTiler();
+                                    _autoTilerPath.Clear();
+                                    _shouldRedrawLevel = true;
+                                }
+                            }
                         }
+                        break;
+
+                        case 1: // Macro
+                        {
+                            if (_shortcuts.CycleAutoTilerMacroAxisPriority.Check(ctrl, shift, alt)) 
+                                _autoTilerMacroYAxisFirst = !_autoTilerMacroYAxisFirst;
+
+                            if (IsMouseButtonPressed(MouseButton.Left)) {
+                                _autoTilerMacroFirstClick = !_autoTilerMacroFirstClick;
+                                if (_autoTilerMacroFirstClick) _autoTilerFirstClickPos = new Data.Coords(tileMatrixX, tileMatrixY);
+                                else {
+                                    ResolveAutoTiler();
+                                    _autoTilerPath.Clear();
+                                    
+                                    _shouldRedrawLevel = true;
+                                }
+
+                            }
+
+
+                            if (_autoTilerMacroFirstClick) {
+                                _autoTilerPath.Clear();
+                                var points = Utils.GetTrianglePathPoints(_autoTilerFirstClickPos, new Data.Coords(tileMatrixX, tileMatrixY), _autoTilerMacroYAxisFirst);
+                            
+                                foreach (var p in points) {
+                                    _autoTilerPath.AddLast(p);
+                                }
+
+                                _shouldRedrawLevel = true;
+                            }
+                        }
+                        break;
                     }
                 }
                     break;
+            
+                case 6: // Rect
+                {
+
+                }
+                break;
             }
         }
         
@@ -2058,20 +2120,22 @@ internal class TileEditorPage : EditorPage, IDisposable
                 if (_placeMode == 5) {
                     if (ImGui.BeginListBox("##AutoTilerTemplates", ImGui.GetContentRegionAvail() - new Vector2(0, 70))) {
                         
-                        for (var index = 0; index < (_autoTiler?.Packs.Count ?? 0); index++) 
+                        for (var index = 0; index < (_autoTiler?.PathPacks.Count ?? 0); index++) 
                         {
-                            var pack = _autoTiler!.Packs[index];
+                            var pack = _autoTiler!.PathPacks[index];
                             if (!string.IsNullOrEmpty(_searchText) && !pack.Name.Contains(_searchText)) continue;
 
-                            var packSelected = ImGui.Selectable(pack.Name, _autoTiler.SelectedPack == pack);
+                            var packSelected = ImGui.Selectable(pack.Name, _autoTiler.SelectedPathPack == pack);
 
-                            if (packSelected) _autoTiler.SelectedPack = pack;
+                            if (packSelected) _autoTiler.SelectedPathPack = pack;
                         }
                         
                         ImGui.EndListBox();
                     }
 
                     ImGui.SeparatorText("Options");
+
+                    ImGui.Combo("Input Method", ref _autoTilerMethod, "Micro\0Macro");
 
                     ImGui.Checkbox("Place Geo", ref _autoTilingWithGeo);
                     ImGui.Checkbox("Linear Algorithm", ref _autoTilerLinearAlgorithm);

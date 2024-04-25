@@ -1,4 +1,5 @@
 ﻿using Leditor.Data.Props.Definitions;
+using Leditor.Data.Tiles;
 using Color = Leditor.Data.Color;
 
 namespace Leditor;
@@ -20,11 +21,11 @@ internal sealed class PropLoader : IDisposable
     }
     #endregion
     
-    private struct PropPackInfo
+    private readonly struct PropPackInfo
     {
         internal string Directory { get; init; }
         internal (string name, Data.Color)[] Categories { get; init; }
-        internal Data.Props.Definitions.PropDefinition[][] Props { get; init; }
+        internal PropDefinition[][] Props { get; init; }
         internal RL.Managed.Texture2D[][] Textures { get; init; }
     }
 
@@ -74,6 +75,7 @@ internal sealed class PropLoader : IDisposable
             _packDirs.Add(directory);
         }
     }
+
     
     internal void Start()
     {
@@ -100,8 +102,8 @@ internal sealed class PropLoader : IDisposable
             return new PropPackInfo
             {
                 Directory = directory,
-                Categories = task.Result.Item1,
-                Props = task.Result.Item2,
+                Categories = task.Result.categories,
+                Props = task.Result.props,
                 Textures = textureArray
             };
         })).ToArray();
@@ -109,6 +111,52 @@ internal sealed class PropLoader : IDisposable
         TotalProgress += _propPackTasks.Length;
 
         _started = true;
+    }
+
+    /// <summary>
+    /// Include defined tiles that only need textures. 
+    /// Must be called right after <see cref="Start"/>
+    /// </summary>
+    /// <param name="category"></param>
+    /// <param name="props"></param>
+    /// <param name="textureDir"></param>
+    internal void IncludeDefined((string name, Color color) category, PropDefinition[] props, string textureDir) 
+    {
+        if (!_started) throw new InvalidOperationException("TileLoader hasn't started yet");;
+
+        var pack = new PropPackInfo {
+            Categories = [ category ],
+            Props = [ props ],
+            Directory = textureDir,
+            Textures = [ new RL.Managed.Texture2D[props.Length] ]
+        };
+
+        TotalProgress += props.Length * 2 + 1;
+
+        _propPackTasks = [.._propPackTasks, Task.FromResult(pack) ];
+    }
+
+    internal void IncludeTiles(TileDex dex) 
+    {
+        if (!_started) throw new InvalidOperationException("TileLoader hasn't started yet");
+
+        var categories = dex.OrderedTileAsPropCategories;
+        var tiles = dex.OrderedTilesAsProps;
+
+        for (var c = 0; c < categories.Length; c++)
+        {
+            var category = categories[c];    
+            var color = dex.GetCategoryColor(category);
+
+            _builder.Register(category, color);
+
+            for (var t = 0; t < tiles[c].Length; t++)
+            {
+                var tile = tiles[c][t];
+                var asProp = new TileAsProp(tile);
+                _builder.Register(category, asProp, dex.GetTexture(tile.Name));
+            }
+        }
     }
 
     /// <summary>

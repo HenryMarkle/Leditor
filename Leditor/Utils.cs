@@ -57,6 +57,58 @@ internal static class Utils
         return false;
     }
 
+    /// <summary>
+    /// Calculates all integers between two flaoting points
+    /// </summary>
+    /// <param name="f1">The first floating point</param>
+    /// <param name="f2">The second floating point</param>
+    /// <returns>A list of all integers from f1 to f2</returns>
+    internal static IEnumerable<int> GetIntsBetweenFloats(float f1, float f2) 
+    {
+        var i1 = (int)f1;
+        var i2 = (int)f2;
+
+        if (i1 > i2) {
+            for (var x = i1; x >= i2; x--) yield return x;
+        } else {
+            for (var x = i1; x <= i2; x++) yield return x;
+        }
+    }
+
+    internal static IEnumerable<int> GetIntsBetween(int i1, int i2)
+    {
+        if (i1 > i2) {
+            for (var x = i1; x >= i2; x--) yield return x;
+        } else {
+            for (var x = i1; x <= i2; x++) yield return x;
+        }
+    }
+
+    internal static IEnumerable<Data.Coords> GetTrianglePathPoints(Data.Coords p1, Data.Coords p2, bool yAxisFirst) 
+    {
+        if (yAxisFirst)
+        {
+            var yVecs = GetIntsBetween(p1.Y, p2.Y).Select(y => p1 with { Y = y });
+
+            var lastVec = yVecs.Last();
+
+            var xVecs = GetIntsBetween(p1.X, p2.X).Select(x => lastVec with { X = x });
+
+            return yVecs.Concat(xVecs.Skip(1));
+        }
+        else
+        {
+            var xVecs = GetIntsBetween(p1.X, p2.X).Select(x => p1 with { X = x });
+
+            var lastVec = xVecs.Last();
+
+            var yVecs = GetIntsBetween(lastVec.Y, p2.Y).Select(y => lastVec with { Y = y });
+
+            return xVecs.Concat(yVecs.Skip(1));
+        }
+    }
+
+
     internal static bool AllEqual(int[] list) => list.All(i => i == list[0]);
 
     internal static bool AllEqual(IEnumerable<int> list, int item) => list.All(i => i == item);

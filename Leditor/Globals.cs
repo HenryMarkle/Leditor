@@ -5,6 +5,7 @@ using System.Text.Json;
 using Drizzle.Lingo.Runtime;
 using Drizzle.Ported;
 using Leditor.Pages;
+using Leditor.Data.Props.Definitions;
 
 namespace Leditor;
 
@@ -161,7 +162,7 @@ internal static class GLOBALS
     
     internal static string ProjectPath { get; set; } = "";
     
-    internal const string Version = "Henry's Leditor v0.9.61";
+    internal const string Version = "Henry's Leditor v0.9.62";
     internal const string RaylibVersion = "Raylib v5.0.0";
 
     internal static int MinScreenWidth => 1280;
@@ -248,6 +249,41 @@ internal static class GLOBALS
         new("Ring Chain", InitPropType.Rope, 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, new(100, 200, 0, 255), 1, 0.1f, 0.2f, 10, 0.1f),
         new("Christmas Wire", InitPropType.Rope, 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, new(200, 0, 200, 255), 1, 0, 0, 0, 0),
         new("Ornate Wire", InitPropType.Rope, 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, new(0, 200, 200, 255), 1, 0, 0, 0, 0),
+    ];
+
+    internal static Rope[] Ropes => 
+    [
+        new("Wire", 0, 3, 0, 1f, 0.5f, 0.5f, 0.9f, false, 0, 0, 0, 0),
+        new("Tube", 3, 4, 1, 2f, 0.5f, 0.8f, 0.9f, true, 0, 0.2f, 0, 0),
+        new("ThickWire", 3, 4, 1, 2f, 0.5f, 0.8f, 0.9f, true, 0, 0.2f, 0, 0),
+        new("RidgedTube", 4, 5, 2, 5, 0.5f, 0.3f, 0.7f, true, 0, 0.1f, 0, 0),
+        new("Fuel Hose", 5, 16, 1, 7, 0.5f, 0.8f, 0.9f, true, 1.4f, 0.2f, 0, 0),
+        new("Broken Fuel Hose", 6, 16, 1, 7, 0.5f, 0.8f, 0.9f, true, 1.4f, 0.2f, 0, 0),
+        new("Large Chain", 9, 28, 3, 9.5f, 0.9f, 0.8f, 0.95f, true, 0, 0, 6.5f, 0),
+        new("Large Chain 2", 9, 28, 3, 9.5f, 0.9f, 0.8f, 0.95f, true, 0, 0, 6.5f, 0),
+        new("Bike Chain", 9, 28, 3, 9.5f, 0.9f, 0.8f, 0.95f, true, 0, 0, 6.5f, 0),
+        new("Zero-G Tube", 4, 10, 2, 4.5f, 0, 0.5f, 0.9f, true, 0, 0.6f, 2, 0.5f),
+        new("Zero-G Wire", 0, 8, 0, 1, 0, 0.5f, 0.9f, true, 0.3f, 0.5f, 1.2f, 0.5f),
+        new("Fat Hose", 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, 0.1f, 0.2f, 10, 0.1f),
+        new("Wire Bunch", 9, 50, 3, 20, 0.9f, 0.6f, 0.95f, true, 0.1f, 0.2f, 10, 0.1f),
+        new("Wire Bunch 2", 9, 50, 3, 20, 0.9f, 0.6f, 0.95f, true, 0.1f, 0.2f, 10, 0.1f),
+        new("Big Big Pipe", 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, 0.1f, 0.2f, 10, 0.1f),
+        new("Ring Chain", 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, 0.1f, 0.2f, 10, 0.1f),
+        new("Christmas Wire", 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, 0, 0, 0, 0),
+        new("Ornate Wire", 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, 0, 0, 0, 0),
+    ];
+
+    internal static Long[] Longs => 
+    [
+        new("Cabinet Clamp", 0),
+        new("Drill Suspender", 5),
+        new("Thick Chain", 0),
+        new("Drill", 10),
+        new("Piston", 4),
+        
+        new("Stretched Pipe", 0),
+        new("Twisted Thread", 0),
+        new("Stretched Wire", 0),
     ];
 
     /// Embedded long prop definitions

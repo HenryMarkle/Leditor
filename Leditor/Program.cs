@@ -942,7 +942,10 @@ void main() {
         var gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
         
         _tileLoader.Start();
+
         _propLoader.Start();
+        _propLoader.IncludeDefined(("Ropes", new Data.Color(0, 0, 0)), GLOBALS.Ropes, GLOBALS.Paths.PropsAssetsDirectory);
+        _propLoader.IncludeDefined(("Longs", new Data.Color(0, 0, 0)), GLOBALS.Longs, GLOBALS.Paths.PropsAssetsDirectory);
 
         var tileLoadProgress = 0;
         var propLoadProgress = 0;
@@ -1088,7 +1091,10 @@ void main() {
                 }
                 if (GLOBALS.TileDex is null)
                 {
-                    if (tileDexTask?.IsCompleted == true) GLOBALS.TileDex = tileDexTask.Result;
+                    if (tileDexTask?.IsCompleted == true) {
+                        GLOBALS.TileDex = tileDexTask.Result;
+                        _propLoader.IncludeTiles(GLOBALS.TileDex);
+                    }
                     
                     var height = GetScreenHeight();
                     
@@ -1105,74 +1111,77 @@ void main() {
                     continue;
                 }
 
-                // if (!_propLoader.Done)
-                // {
-                //     propLoadProgress++;
-                //     
-                //     while (propLoadProgress % loadRate != 0)
-                //     {
-                //         // Load complete
-                //         if (_propLoader.Proceed())
-                //         {
-                //             propDexTask = _propLoader.Build();
-                //             
-                //             break;
-                //         } 
-                //             
-                //         propLoadProgress++;
-                //     }
-                //     
-                //     var width = GetScreenWidth();
-                //     var height = GetScreenHeight();
-                //     
-                //     BeginDrawing();
-                //     Printers.DrawSplashScreen(true);
-                //
-                //     if (!_propLoader.Started || !_propLoader.PackLoadCompleted)
-                //     {
-                //         if (GLOBALS.Font is null)
-                //             DrawText("Loading Props", 100, height - 120, 20, Color.White);
-                //         else
-                //             DrawTextEx(GLOBALS.Font.Value, "Loading Props", new Vector2(100, height - 120), 20, 1, Color.White);
-                //     }
-                //     else if (!_propLoader.TextureLoadCompleted)
-                //     {
-                //         if (GLOBALS.Font is null)
-                //             DrawText("Loading Prop Textures", 100, height - 120, 20, Color.White);
-                //         else
-                //             DrawTextEx(GLOBALS.Font.Value, "Loading Prop Textures", new Vector2(100, height - 120), 20, 1, Color.White);
-                //     }
-                //     else if (!_propLoader.DexBuildCompleted)
-                //     {
-                //         if (GLOBALS.Font is null)
-                //             DrawText("Building Table", 100, height - 120, 20, Color.White);
-                //         else
-                //             DrawTextEx(GLOBALS.Font.Value, "Building Table", new Vector2(100, height - 120), 20, 1, Color.White);
-                //     }
-                //
-                //     Printers.DrawProgressBar(new Rectangle(100, height - 100, width - 200, 30), propLoadProgress, _propLoader.TotalProgress, false, Color.White);
-                //     EndDrawing();
-                //     
-                //     continue;
-                // }
-                // if (GLOBALS.PropDex is null)
-                // {
-                //     if (propDexTask?.IsCompleted == true) GLOBALS.PropDex = propDexTask.Result;
-                //     
-                //     var height = GetScreenHeight();
-                //     
-                //     BeginDrawing();
-                //     Printers.DrawSplashScreen(true);
-                //
-                //     if (GLOBALS.Font is null)
-                //         DrawText("Building Prop Dex", 100, height - 120, 20, Color.White);
-                //     else
-                //         DrawTextEx(GLOBALS.Font.Value, "Building Prop Dex", new Vector2(100, height - 120), 20, 1, Color.White);
-                //     
-                //     EndDrawing();
-                //     continue;
-                // }
+                goto skip_prop_load;
+
+                if (!_propLoader.Done)
+                {
+                    propLoadProgress++;
+                    
+                    while (propLoadProgress % loadRate != 0)
+                    {
+                        // Load complete
+                        if (_propLoader.Proceed())
+                        {
+                            propDexTask = _propLoader.Build();
+                            
+                            break;
+                        } 
+                            
+                        propLoadProgress++;
+                    }
+                    
+                    var width = GetScreenWidth();
+                    var height = GetScreenHeight();
+                    
+                    BeginDrawing();
+                    Printers.DrawSplashScreen(true);
                 
+                    if (!_propLoader.Started || !_propLoader.PackLoadCompleted)
+                    {
+                        if (GLOBALS.Font is null)
+                            DrawText("Loading Props", 100, height - 120, 20, Color.White);
+                        else
+                            DrawTextEx(GLOBALS.Font.Value, "Loading Props", new Vector2(100, height - 120), 20, 1, Color.White);
+                    }
+                    else if (!_propLoader.TextureLoadCompleted)
+                    {
+                        if (GLOBALS.Font is null)
+                            DrawText("Loading Prop Textures", 100, height - 120, 20, Color.White);
+                        else
+                            DrawTextEx(GLOBALS.Font.Value, "Loading Prop Textures", new Vector2(100, height - 120), 20, 1, Color.White);
+                    }
+                    else if (!_propLoader.DexBuildCompleted)
+                    {
+                        if (GLOBALS.Font is null)
+                            DrawText("Building Table", 100, height - 120, 20, Color.White);
+                        else
+                            DrawTextEx(GLOBALS.Font.Value, "Building Table", new Vector2(100, height - 120), 20, 1, Color.White);
+                    }
+                
+                    Printers.DrawProgressBar(new Rectangle(100, height - 100, width - 200, 30), propLoadProgress, _propLoader.TotalProgress, false, Color.White);
+                    EndDrawing();
+                    
+                    continue;
+                }
+                if (GLOBALS.PropDex is null)
+                {
+                    if (propDexTask?.IsCompleted == true) GLOBALS.PropDex = propDexTask.Result;
+                    
+                    var height = GetScreenHeight();
+                    
+                    BeginDrawing();
+                    Printers.DrawSplashScreen(true);
+                
+                    if (GLOBALS.Font is null)
+                        DrawText("Building Prop Dex", 100, height - 120, 20, Color.White);
+                    else
+                        DrawTextEx(GLOBALS.Font.Value, "Building Prop Dex", new Vector2(100, height - 120), 20, 1, Color.White);
+                    
+                    EndDrawing();
+                    continue;
+                }
+                
+                skip_prop_load:
                 // TODO: To be replaced
                 if (!isLoadingTexturesDone)
                 {
@@ -1653,6 +1662,7 @@ void main() {
                         // TODO: Move to using Pager
                         
                         if (!GLOBALS.LockNavigation) {
+                            Console.WriteLine("HEARING");
                             if (gShortcuts.ToMainPage.Check(ctrl, shift, alt))
                             {
 #if DEBUG
@@ -1791,6 +1801,21 @@ void main() {
                             break;
                     }
                 }
+            }
+            catch (Data.Tiles.Exceptions.DuplicateTileCategoryException dtce) {
+                logger.Fatal($"Found duplicate tile category \"{(dtce.Category)}\"");
+                Raylib.CloseWindow();
+                break;
+            }
+            catch (Data.Tiles.Exceptions.DuplicateTileDefinitionException dtde) {
+                logger.Fatal($"Found duplicate tile definition \"{(dtde.Name)}\"");
+                Raylib.CloseWindow();
+                break;
+            }
+            catch (Data.Tiles.Exceptions.TileCategoryNotFoundException tcnfe) {
+                logger.Fatal($"Tile claimed to belong to an non-existent category \"{(tcnfe.Category)}\"");
+                Raylib.CloseWindow();
+                break;
             }
             catch (Exception e)
             {

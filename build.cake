@@ -15,7 +15,7 @@ Task("Build")
 {
     DotNetPublish("Leditor.sln", new DotNetPublishSettings
     {
-        SelfContained = true,
+        // SelfContained = true,
         OutputDirectory = "build",
         MSBuildSettings = new DotNetMSBuildSettings()
     });
