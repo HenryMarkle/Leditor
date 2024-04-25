@@ -2,6 +2,7 @@ using static Raylib_cs.Raylib;
 using System.Numerics;
 using System.Transactions;
 using Leditor.Data.Tiles;
+using System.Data.SqlTypes;
 
 namespace Leditor;
 
@@ -3951,6 +3952,99 @@ internal static class Printers
     {
         DrawLineEx(origin, origin + size, thickness, color);
         DrawLineEx(origin with { Y = origin.Y + size.Y }, origin with { X = origin.X + size.X }, thickness, color);
+    }
+
+    /// <summary>
+    /// Matrix coordinates required
+    /// </summary>
+    internal static void DrawCircularSquare(int x, int y, int radius, int scale, Color color)
+    {
+        var centerV = new Vector2(x + 0.5f, y + 0.5f) * scale;
+
+        for (var lx = -radius; lx < radius + 1; lx++) {
+            var mx = x + lx;
+
+            for (var ly = -radius; ly < radius + 1; ly++) {
+                var my = y + ly;
+
+                if (CheckCollisionCircleRec(centerV, radius * scale, new(mx * scale, my * scale, scale, scale))) {
+                    DrawRectangle(mx * scale, my * scale, scale, scale, color);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Matrix coordinates required
+    /// </summary>
+    internal static void DrawCircularSquareLines(int x, int y, int radius, int scale, float thickness, Color color)
+    {
+        var centerV = new Vector2(x + 0.5f, y + 0.5f) * scale;
+
+        for (var lx = -radius; lx < radius + 1; lx++) {
+            var mx = x + lx;
+
+            for (var ly = -radius; ly < radius + 1; ly++) {
+                var my = y + ly;
+
+                var sx = mx * scale;
+                var sy = my * scale;
+
+                if (!CheckCollisionCircleRec(centerV, radius * scale, new(sx, sy, scale, scale))) 
+                    continue;
+            
+                var left = (bool) CheckCollisionCircleRec(centerV, radius * scale, new(sx - scale, sy, scale, scale));
+                var top = (bool) CheckCollisionCircleRec(centerV, radius * scale, new(sx, sy - scale, scale, scale));
+                var right = (bool) CheckCollisionCircleRec(centerV, radius * scale, new(sx + scale, sy, scale, scale));
+                var bottom = (bool) CheckCollisionCircleRec(centerV, radius * scale, new(sx, sy + scale, scale, scale));
+            
+                switch ((left, top, right, bottom)) {
+                    // left wall
+                    case (false, true, true, true):
+                    DrawLineEx(new Vector2(sx, sy), new Vector2(sx, sy + scale), thickness, color);
+                    break;
+
+                    // top wall
+                    case (true, false, true, true):
+                    DrawLineEx(new Vector2(sx, sy), new Vector2(sx + scale, sy), thickness, color);
+                    break;
+
+                    // right wall
+                    case (true, true, false, true):
+                    DrawLineEx(new Vector2(sx + scale, sy), new Vector2(sx + scale, sy + scale), thickness, color);
+                    break;
+
+                    // bottom wall
+                    case (true, true, true, false):
+                    DrawLineEx(new Vector2(sx, sy + scale), new Vector2(sx + scale, sy + scale), thickness, color);
+                    break;
+
+                    // top-left
+                    case (false, false, true, true):
+                    DrawLineEx(new Vector2(sx, sy), new Vector2(sx + scale, sy), thickness, color);
+                    DrawLineEx(new Vector2(sx, sy), new Vector2(sx, sy + scale), thickness, color);
+                    break;
+
+                    // top-right
+                    case (true, false, false, true):
+                    DrawLineEx(new Vector2(sx, sy), new Vector2(sx + scale, sy), thickness, color);
+                    DrawLineEx(new Vector2(sx + scale, sy), new Vector2(sx + scale, sy + scale), thickness, color);
+                    break;
+
+                    // bottom-right
+                    case (true, true, false, false):
+                    DrawLineEx(new Vector2(sx + scale, sy), new Vector2(sx + scale, sy + scale), thickness, color);
+                    DrawLineEx(new Vector2(sx, sy + scale), new Vector2(sx + scale, sy + scale), thickness, color);
+                    break;
+
+                    // bottom-left
+                    case (false, true, true, false):
+                    DrawLineEx(new Vector2(sx, sy + scale), new Vector2(sx + scale, sy + scale), thickness, color);
+                    DrawLineEx(new Vector2(sx, sy), new Vector2(sx, sy + scale), thickness, color);
+                    break;
+                }
+            }
+        }
     }
 
     /// <summary>

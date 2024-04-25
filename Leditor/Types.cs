@@ -458,7 +458,7 @@ public class ExperimentalGeoShortcuts : IEditorShortcuts
     public KeyboardShortcut EraseEverything { get; set; } = new(KeyboardKey.X);
     
     public KeyboardShortcut ToggleTileVisibility { get; set; } = new(KeyboardKey.T);
-    
+
     
     public KeyboardShortcut ToggleMemoryLoadMode { get; set; } = new(KeyboardKey.C, ctrl:true);
     public KeyboardShortcut ToggleMemoryDumbMode { get; set; } = new(KeyboardKey.V, ctrl:true);
@@ -1031,13 +1031,16 @@ public class EffectsSettings
         ConColor effectColorLight,
         ConColor effectColorDark,
         ConColor effectCanvasColorLight,
-        ConColor effectCanvasColorDark)
+        ConColor effectCanvasColorDark,
+        bool blockyBrush)
     {
         EffectColorLight = effectColorLight;
         EffectColorDark = effectColorDark;
     
         EffectsCanvasColorLight = effectCanvasColorLight;
-        EffectsCanvasColorDark = effectCanvasColorDark;    
+        EffectsCanvasColorDark = effectCanvasColorDark;
+
+        BlockyBrush = blockyBrush;
     }
     
     public EffectsSettings()
@@ -1046,12 +1049,15 @@ public class EffectsSettings
         EffectColorDark = Color.Yellow;
         EffectsCanvasColorLight = new ConColor(215, 66, 245, 100);
         EffectsCanvasColorDark = new ConColor(0, 0, 0, 0);
+        BlockyBrush = true;
     }
     
     public ConColor EffectColorLight { get; set; }
     public ConColor EffectColorDark { get; set; }
     public ConColor EffectsCanvasColorLight { get; set; }
     public ConColor EffectsCanvasColorDark { get; set; }
+
+    public bool BlockyBrush { get; set; }
 }
 
 public class GeneralSettings(
@@ -1115,7 +1121,8 @@ public class Settings
             Color.Green, 
             Color.Yellow, 
             new ConColor(215, 66, 245, 100), 
-            new ConColor(0, 0, 0, 0)
+            new ConColor(0, 0, 0, 0),
+            true
         );
         PropEditor = new();
         Experimental = new();

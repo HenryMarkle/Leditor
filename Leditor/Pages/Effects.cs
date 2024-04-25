@@ -663,39 +663,16 @@ internal class EffectsEditorPage : EditorPage
                                     GLOBALS.Scale, 
                                     brushColor with { A = (byte)(GLOBALS.Level.Effects[_currentAppliedEffect].Item3[y, x] * 255 / 100) }
                                 );
-                                
-                                // Brush
-                                
-                                var effAreaRect = new Rectangle(x * GLOBALS.Scale, y * GLOBALS.Scale,
-                                    GLOBALS.Scale, GLOBALS.Scale);
-                                if (_brushRadius > 0 && CheckCollisionCircleRec(
-                                        new Vector2(effectsMatrixX+0.5f, effectsMatrixY+0.5f) * GLOBALS.Scale,
-                                        _brushRadius*GLOBALS.Scale, effAreaRect))
-                                {
-                                    DrawRectangleRec(effAreaRect, Color.White with { A = 50 });
-                                }
-                                
-                                if (effectsMatrixX == x && effectsMatrixY == y)
-                                {
-                                    DrawCircleLines(
-                                        (int) ((x + 0.5f) * GLOBALS.Scale), 
-                                        (int) ((y + 0.5f) * GLOBALS.Scale),
-                                        (_brushRadius+1)*GLOBALS.Scale,
-                                        _brushEraseMode ? Color.Red : Color.White);
-                                        
-                                    DrawRectangleLinesEx(
-                                        new Rectangle(
-                                            x * GLOBALS.Scale,
-                                            y * GLOBALS.Scale,
-                                            GLOBALS.Scale,
-                                            GLOBALS.Scale
-                                        ),
-                                        2.0f,
-                                        _brushEraseMode ? Color.Red : Color.White
-                                    );
-                                }
                             }
                         }
+                    }
+
+                    // Brush
+
+                    if (GLOBALS.Settings.EffectsSettings.BlockyBrush) {
+                        Printers.DrawCircularSquareLines(effectsMatrixX, effectsMatrixY, _brushRadius, 20, 2, Color.White);
+                    } else {
+                        DrawCircleLines(effectsMatrixX * 20, effectsMatrixY * 20, _brushRadius * 20, Color.White);
                     }
                 }
                 EndMode2D();
@@ -957,6 +934,11 @@ internal class EffectsEditorPage : EditorPage
                     {
                         if (ImGui.Checkbox("Tinted Props", ref _tintedProps)) _shouldRedrawLevel = true;
                     };
+
+                    var blockyBrush = GLOBALS.Settings.EffectsSettings.BlockyBrush;
+
+                    if (ImGui.Checkbox("Blocky Brush Style", ref blockyBrush))
+                        GLOBALS.Settings.EffectsSettings.BlockyBrush = blockyBrush;
                     
                     ImGui.End();
                 }

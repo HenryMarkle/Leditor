@@ -1207,7 +1207,7 @@ internal class TileEditorPage : EditorPage, IDisposable
             if (IsKeyReleased(_shortcuts.AltDragLevel.Key)) _clickTracker = false;
         }
 
-        // handle placing/removing tiles
+        // handle placing tiles
 
         if (canDrawTile)
         {
@@ -1578,26 +1578,64 @@ internal class TileEditorPage : EditorPage, IDisposable
         {
             if (_shortcuts.Erase.Check(ctrl, shift, alt, true) && canDrawTile && inMatrixBounds)
             {
-                var cell = GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer];
+                if (_materialBrushRadius == 0) {
+                    var cell = GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer];
 
-                switch (cell.Data)
-                {
-                    case TileHead:
-                    case TileBody:
-                        if (!_eraseClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY) {
-                            var actions = RemoveTile(tileMatrixX, tileMatrixY, GLOBALS.Layer);
-                                    
-                            foreach (var action in actions) _tempActions.Add(action);
-                        }
-                        break;
+                    switch (cell.Data)
+                    {
+                        case TileHead:
+                        case TileBody:
+                            if (!_eraseClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY) {
+                                var actions = RemoveTile(tileMatrixX, tileMatrixY, GLOBALS.Layer);
+                                        
+                                foreach (var action in actions) _tempActions.Add(action);
+                            }
+                            break;
 
-                    case TileMaterial:
-                        if (!_eraseClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY) {
-                            var actions = RemoveMaterial(tileMatrixX, tileMatrixY, GLOBALS.Layer, _materialBrushRadius);
-                                    
-                            foreach (var action in actions) _tempActions.Add(action);
+                        case TileMaterial:
+                            if (!_eraseClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY) {
+                                var actions = RemoveMaterial(tileMatrixX, tileMatrixY, GLOBALS.Layer, _materialBrushRadius);
+                                        
+                                foreach (var action in actions) _tempActions.Add(action);
+                            }
+                            break;
+                    }
+                } else {
+                    for (var lx = -_materialBrushRadius; lx < _materialBrushRadius+1; lx++)
+                    {
+                        var matrixX = tileMatrixX + lx;
+                        
+                        if (matrixX < 0 || matrixX >= GLOBALS.Level.Width) continue;
+                        
+                        for (var ly = -_materialBrushRadius; ly < _materialBrushRadius+1; ly++)
+                        {
+                            var matrixY = tileMatrixY + ly;
+                
+                            if (matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
+
+                            var cell = GLOBALS.Level.TileMatrix[matrixY, matrixX, GLOBALS.Layer];
+
+                            switch (cell.Data)
+                            {
+                                case TileHead:
+                                case TileBody:
+                                    if (!_eraseClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY) {
+                                        var actions = RemoveTile(matrixX, matrixY, GLOBALS.Layer);
+                                                
+                                        foreach (var action in actions) _tempActions.Add(action);
+                                    }
+                                    break;
+
+                                case TileMaterial:
+                                    if (!_eraseClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY) {
+                                        var actions = RemoveMaterial(matrixX, matrixY, GLOBALS.Layer, 0);
+                                                
+                                        foreach (var action in actions) _tempActions.Add(action);
+                                    }
+                                    break;
+                            }
                         }
-                        break;
+                    }
                 }
                             
                 _prevPosX = tileMatrixX;

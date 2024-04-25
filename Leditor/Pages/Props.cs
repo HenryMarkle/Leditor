@@ -1838,43 +1838,48 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 {
                     _shouldRedrawLevel = true;
                     
-                    var foundRope = _models
-                        .Single(rope => rope.index == fetchedSelected[0].index);
+                    var foundRopeList = _models.Where(rope => rope.index == fetchedSelected[0].index);
 
-                    if (foundRope.simSwitch) // simulate
-                    {
-                        if (++_ropeSimulationFrame % _ropeSimulationFrameCut == 0)
+                    if (foundRopeList.Any()) {
+                        var foundRope = foundRopeList.First();
+
+
+                        if (foundRope.simSwitch) // simulate
                         {
-                            foundRope.model.Update(
-                            fetchedSelected[0].prop.prop.Quads, 
-                            fetchedSelected[0].prop.prop.Depth switch
+                            if (++_ropeSimulationFrame % _ropeSimulationFrameCut == 0)
                             {
-                                < -19 => 2,
-                                < -9 => 1,
-                                _ => 0
-                            });
-                        }
-                    }
-                    else // bezier
-                    {
-                        var ends = Utils.RopeEnds(fetchedSelected[0].prop.prop.Quads);
-                        
-                        fetchedSelected[0].prop.prop.Extras.RopePoints = Utils.Casteljau(fetchedSelected[0].prop.prop.Extras.RopePoints.Length, [ ends.pA, ..foundRope.bezierHandles, ends.pB ]);
-
-                        if (IsMouseButtonDown(MouseButton.Left))
-                        {
-                            for (var b = 0; b < foundRope.bezierHandles.Length; b++)
-                            {
-                                if (_bezierHandleLock == -1 && CheckCollisionPointCircle(tileMouseWorld, foundRope.bezierHandles[b], 3f))
-                                    _bezierHandleLock = b;
-
-                                if (_bezierHandleLock == b) foundRope.bezierHandles[b] = tileMouseWorld;
+                                foundRope.model.Update(
+                                fetchedSelected[0].prop.prop.Quads, 
+                                fetchedSelected[0].prop.prop.Depth switch
+                                {
+                                    < -19 => 2,
+                                    < -9 => 1,
+                                    _ => 0
+                                });
                             }
                         }
+                        else // bezier
+                        {
+                            var ends = Utils.RopeEnds(fetchedSelected[0].prop.prop.Quads);
+                            
+                            fetchedSelected[0].prop.prop.Extras.RopePoints = Utils.Casteljau(fetchedSelected[0].prop.prop.Extras.RopePoints.Length, [ ends.pA, ..foundRope.bezierHandles, ends.pB ]);
 
-                        if (IsMouseButtonReleased(MouseButton.Left) && _bezierHandleLock != -1)
-                            _bezierHandleLock = -1;
+                            if (IsMouseButtonDown(MouseButton.Left))
+                            {
+                                for (var b = 0; b < foundRope.bezierHandles.Length; b++)
+                                {
+                                    if (_bezierHandleLock == -1 && CheckCollisionPointCircle(tileMouseWorld, foundRope.bezierHandles[b], 3f))
+                                        _bezierHandleLock = b;
+
+                                    if (_bezierHandleLock == b) foundRope.bezierHandles[b] = tileMouseWorld;
+                                }
+                            }
+
+                            if (IsMouseButtonReleased(MouseButton.Left) && _bezierHandleLock != -1)
+                                _bezierHandleLock = -1;
+                        }
                     }
+
                 }
                 
                 // TODO: switch on enums instead

@@ -162,7 +162,7 @@ internal static class GLOBALS
     
     internal static string ProjectPath { get; set; } = "";
     
-    internal const string Version = "Henry's Leditor v0.9.62";
+    internal const string Version = "Henry's Leditor v0.9.63";
     internal const string RaylibVersion = "Raylib v5.0.0";
 
     internal static int MinScreenWidth => 1280;
@@ -195,7 +195,7 @@ internal static class GLOBALS
     /// Current working layer
     internal static int Layer { get; set; }
     
-    internal static Pager Pager { get; set; }
+    internal static Pager? Pager { get; set; }
     internal static int NavSignal { get; set; }
     internal static bool LockNavigation { get; set; }
 
@@ -253,24 +253,24 @@ internal static class GLOBALS
 
     internal static Rope[] Ropes => 
     [
-        new("Wire", 0, 3, 0, 1f, 0.5f, 0.5f, 0.9f, false, 0, 0, 0, 0),
-        new("Tube", 3, 4, 1, 2f, 0.5f, 0.8f, 0.9f, true, 0, 0.2f, 0, 0),
-        new("ThickWire", 3, 4, 1, 2f, 0.5f, 0.8f, 0.9f, true, 0, 0.2f, 0, 0),
-        new("RidgedTube", 4, 5, 2, 5, 0.5f, 0.3f, 0.7f, true, 0, 0.1f, 0, 0),
-        new("Fuel Hose", 5, 16, 1, 7, 0.5f, 0.8f, 0.9f, true, 1.4f, 0.2f, 0, 0),
-        new("Broken Fuel Hose", 6, 16, 1, 7, 0.5f, 0.8f, 0.9f, true, 1.4f, 0.2f, 0, 0),
-        new("Large Chain", 9, 28, 3, 9.5f, 0.9f, 0.8f, 0.95f, true, 0, 0, 6.5f, 0),
-        new("Large Chain 2", 9, 28, 3, 9.5f, 0.9f, 0.8f, 0.95f, true, 0, 0, 6.5f, 0),
-        new("Bike Chain", 9, 28, 3, 9.5f, 0.9f, 0.8f, 0.95f, true, 0, 0, 6.5f, 0),
-        new("Zero-G Tube", 4, 10, 2, 4.5f, 0, 0.5f, 0.9f, true, 0, 0.6f, 2, 0.5f),
-        new("Zero-G Wire", 0, 8, 0, 1, 0, 0.5f, 0.9f, true, 0.3f, 0.5f, 1.2f, 0.5f),
-        new("Fat Hose", 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, 0.1f, 0.2f, 10, 0.1f),
-        new("Wire Bunch", 9, 50, 3, 20, 0.9f, 0.6f, 0.95f, true, 0.1f, 0.2f, 10, 0.1f),
-        new("Wire Bunch 2", 9, 50, 3, 20, 0.9f, 0.6f, 0.95f, true, 0.1f, 0.2f, 10, 0.1f),
-        new("Big Big Pipe", 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, 0.1f, 0.2f, 10, 0.1f),
-        new("Ring Chain", 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, 0.1f, 0.2f, 10, 0.1f),
-        new("Christmas Wire", 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, 0, 0, 0, 0),
-        new("Ornate Wire", 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, 0, 0, 0, 0),
+        new("Wire",                 0,  3, 0,   1f, 0.5f, 0.5f,  0.9f, false,    0,    0,    0,    0),
+        new("Tube",                 3,  4, 1,   2f, 0.5f, 0.8f,  0.9f,  true,    0, 0.2f,    0,    0),
+        new("ThickWire",            3,  4, 1,   2f, 0.5f, 0.8f,  0.9f,  true,    0, 0.2f,    0,    0),
+        new("RidgedTube",           4,  5, 2,    5, 0.5f, 0.3f,  0.7f,  true,    0, 0.1f,    0,    0),
+        new("Fuel Hose",            5, 16, 1,    7, 0.5f, 0.8f,  0.9f,  true, 1.4f, 0.2f,    0,    0),
+        new("Broken Fuel Hose",     6, 16, 1,    7, 0.5f, 0.8f,  0.9f,  true, 1.4f, 0.2f,    0,    0),
+        new("Large Chain",          9, 28, 3, 9.5f, 0.9f, 0.8f, 0.95f,  true,    0,    0, 6.5f,    0),
+        new("Large Chain 2",        9, 28, 3, 9.5f, 0.9f, 0.8f, 0.95f,  true,    0,    0, 6.5f,    0),
+        new("Bike Chain",           9, 28, 3, 9.5f, 0.9f, 0.8f, 0.95f,  true,    0,    0, 6.5f,    0),
+        new("Zero-G Tube",          4, 10, 2, 4.5f,    0, 0.5f,  0.9f,  true,    0, 0.6f,    2, 0.5f),
+        new("Zero-G Wire",          0,  8, 0,    1,    0, 0.5f,  0.9f,  true, 0.3f, 0.5f, 1.2f, 0.5f),
+        new("Fat Hose",             6, 40, 3,   20, 0.9f, 0.6f, 0.95f,  true, 0.1f, 0.2f,   10, 0.1f),
+        new("Wire Bunch",           9, 50, 3,   20, 0.9f, 0.6f, 0.95f,  true, 0.1f, 0.2f,   10, 0.1f),
+        new("Wire Bunch 2",         9, 50, 3,   20, 0.9f, 0.6f, 0.95f,  true, 0.1f, 0.2f,   10, 0.1f),
+        new("Big Big Pipe",         6, 40, 3,   20, 0.9f, 0.6f, 0.95f,  true, 0.1f, 0.2f,   10, 0.1f),
+        new("Ring Chain",           6, 40, 3,   20, 0.9f, 0.6f, 0.95f,  true, 0.1f, 0.2f,   10, 0.1f),
+        new("Christmas Wire",       0, 17, 0, 8.5f, 0.5f, 0.5f,  0.9f, false,    0,    0,    0,    0),
+        new("Ornate Wire",          0, 17, 0, 8.5f, 0.5f, 0.5f,  0.9f, false,    0,    0,    0,    0),
     ];
 
     internal static Long[] Longs => 
@@ -598,6 +598,7 @@ internal static class GLOBALS
     /// Used when loading a level
     internal static Task<PropCheckResult>? PropCheck { get; set; }
     
+    // Is this even working?
     public static Serilog.Core.Logger? Logger { get; set; }
 
     public static JsonSerializerOptions JsonSerializerOptions { get; } =
@@ -605,11 +606,12 @@ internal static class GLOBALS
     
     public static Camera2D Camera { get; set; }
 
+    // Useless for the time being
     internal static IntPtr WindowHandle { get; set; }
 
     internal static Color DarkThemeWaterColor { get; set; } = new(80, 80, 255, 110);
     internal static Color LightThemeWaterColor { get; set; } = new(0, 0, 255, 110);
     
+    // Should probably be localized
     internal static Gram Gram { get; set; } = new(100);
-#nullable disable
 }

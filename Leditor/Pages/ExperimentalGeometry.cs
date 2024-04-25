@@ -20,6 +20,9 @@ internal class ExperimentalGeometryPage : EditorPage
     private bool _multiselect;
     private bool _hideGrid;
     private bool _clickTracker;
+
+    private bool _circularBrush;
+    private int _brushRadius;
     
     private bool _showLayer1 = true;
     private bool _showLayer2 = true;
@@ -90,6 +93,67 @@ internal class ExperimentalGeometryPage : EditorPage
 
     private string _selectionSizeString = "";
     private Rectangle _selectionRectangle = new(0, 0, 0, 0);
+
+    private GeoGram.CellAction[] PlaceGeoSquareBrush(int x, int y, int radius, int id) {
+        List<GeoGram.CellAction> actions = [];
+    
+        for (var rx = -radius; rx < radius + 1; rx++) {
+            var mx = rx + x;
+
+            if (mx < 0 || mx >= GLOBALS.Level.Width) continue;
+
+            for (var ry = -radius; ry < radius + 1; ry++) {
+                var my = ry + y;
+
+                if (my < 0 || my >= GLOBALS.Level.Height) continue;
+
+                var oldCell = GLOBALS.Level.GeoMatrix[my, mx, GLOBALS.Layer];
+                oldCell.Stackables = [..oldCell.Stackables];
+
+                var newCell = new RunCell { Geo = id, Stackables = [..oldCell.Stackables] };
+
+                var action = new GeoGram.CellAction (new Coords(mx, my, GLOBALS.Layer), oldCell, newCell);
+                actions.Add(action);
+
+                GLOBALS.Level.GeoMatrix[my, mx, GLOBALS.Layer] = newCell;
+            }
+        }
+
+        return [..actions];
+    }
+
+    private GeoGram.CellAction[] PlaceGeoCircularBrush(int x, int y, int radius, int id) {
+        List<GeoGram.CellAction> actions = [];
+
+        var centerV = new Vector2(x + 0.5f, y + 0.5f) * 20;
+    
+        for (var rx = -radius; rx < radius + 1; rx++) {
+            var mx = rx + x;
+
+            if (mx < 0 || mx >= GLOBALS.Level.Width) continue;
+
+            for (var ry = -radius; ry < radius + 1; ry++) {
+                var my = ry + y;
+
+                if (my < 0 || my >= GLOBALS.Level.Height) continue;
+
+                if (!CheckCollisionCircleRec(centerV, radius * 20, new(mx * 20, my * 20, 20, 20))) 
+                    continue;
+
+                var oldCell = GLOBALS.Level.GeoMatrix[my, mx, GLOBALS.Layer];
+                oldCell.Stackables = [..oldCell.Stackables];
+
+                var newCell = new RunCell { Geo = id, Stackables = [..oldCell.Stackables] };
+
+                var action = new GeoGram.CellAction (new Coords(mx, my, GLOBALS.Layer), oldCell, newCell);
+                actions.Add(action);
+
+                GLOBALS.Level.GeoMatrix[my, mx, GLOBALS.Layer] = newCell;
+            }
+        }
+
+        return [..actions];
+    }
     
     public override void Draw()
     {
@@ -202,11 +266,16 @@ internal class ExperimentalGeometryPage : EditorPage
         var wheel = GetMouseWheelMove();
         if (wheel != 0 && canDrawGeo)
         {
-            var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
-            _camera.Offset = GetMousePosition();
-            _camera.Target = mouseWorldPosition;
-            _camera.Zoom += wheel * GLOBALS.ZoomIncrement;
-            if (_camera.Zoom < GLOBALS.ZoomIncrement) _camera.Zoom = GLOBALS.ZoomIncrement;
+            if (!_allowMultiSelect && (IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt))) {
+                _brushRadius += wheel > 0 ? 1 : -1;
+                Utils.Restrict(ref _brushRadius, 0);
+            } else {
+                var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
+                _camera.Offset = GetMousePosition();
+                _camera.Target = mouseWorldPosition;
+                _camera.Zoom += wheel * GLOBALS.ZoomIncrement;
+                if (_camera.Zoom < GLOBALS.ZoomIncrement) _camera.Zoom = GLOBALS.ZoomIncrement;
+            }
         }
         
         // Undo/Redo
@@ -697,29 +766,45 @@ internal class ExperimentalGeometryPage : EditorPage
             if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.AltErase.Check(ctrl, shift, alt, true)) && canDrawGeo && inMatrixBounds)
             {
                 _clickTracker = true;
-                var cell = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
-                
-                var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                if (_brushRadius > 0) {
+                    GeoGram.CellAction[] actions;
 
-                cell.Geo = 0;
-                Array.Fill(cell.Stackables, false);
-                
-                var newAction = new GeoGram.CellAction((matrixX, matrixY, GLOBALS.Layer), oldCell, cell);
+                    if (_circularBrush) {
+                        actions = PlaceGeoCircularBrush(matrixX, matrixY, _brushRadius, 0);
+                    } else {
+                        actions = PlaceGeoSquareBrush(matrixX, matrixY, _brushRadius, 0);
+                    }
 
-                var equalActions = _groupedActions.Count != 0 
-                                   && oldCell.Geo == cell.Geo
-                                   && Utils.GeoStackEq(oldCell.Stackables, cell.Stackables);
-                
-                if (_groupedActions.Count == 0 || !equalActions) _groupedActions.Add(newAction);
+                    if (_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker) {
+                        _groupedActions.AddRange(actions);
+                    }
 
-                // _groupedActions.Add(new((matrixX, matrixY, GLOBALS.Layer), oldCell, cell));
-                
-                GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = cell;
+                    _prevCoordsX = matrixX;
+                    _prevCoordsY = matrixY;
+                    _clickTracker = true;
+                } else {
+                    var cell = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+                    
+                    var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+
+                    cell.Geo = 0;
+                    Array.Fill(cell.Stackables, false);
+                    
+                    var newAction = new GeoGram.CellAction((matrixX, matrixY, GLOBALS.Layer), oldCell, cell);
+
+                    var equalActions = _groupedActions.Count != 0 
+                                    && oldCell.Geo == cell.Geo
+                                    && Utils.GeoStackEq(oldCell.Stackables, cell.Stackables);
+                    
+                    if (_groupedActions.Count == 0 || !equalActions) _groupedActions.Add(newAction);
+
+                    // _groupedActions.Add(new((matrixX, matrixY, GLOBALS.Layer), oldCell, cell));
+                    
+                    GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = cell;
+                }
             }
             else if ((_shortcuts.Draw.Check(ctrl, shift, alt, true) || _shortcuts.AltDraw.Check(ctrl, shift, alt, true)) && canDrawGeo && inMatrixBounds)
-            {
-                _clickTracker = true;
-                
+            {                
                 ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
                 
                 var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
@@ -728,7 +813,6 @@ internal class ExperimentalGeometryPage : EditorPage
                     {
                         case 0:
                             {
-
                                 var id = GeoMenuIndexToBlockId[_geoMenuIndex];
 
                                 // slope
@@ -741,7 +825,21 @@ internal class ExperimentalGeometryPage : EditorPage
                                 // solid, platform, glass
                                 else
                                 {
-                                    GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer].Geo = _eraseMode ? 0 : id;
+                                    if (_brushRadius > 0) {
+                                        GeoGram.CellAction[] actions;
+
+                                        if (_circularBrush) {
+                                            actions = PlaceGeoCircularBrush(matrixX, matrixY, _brushRadius, id);
+                                        } else {
+                                            actions = PlaceGeoSquareBrush(matrixX, matrixY, _brushRadius, id);
+                                        }
+
+                                        if (_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker) {
+                                            _groupedActions.AddRange(actions);
+                                        }
+                                    } else {
+                                        GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer].Geo = _eraseMode ? 0 : id;
+                                    }
                                 }
                             }
                             break;
@@ -791,6 +889,10 @@ internal class ExperimentalGeometryPage : EditorPage
                                    && Utils.GeoStackEq(oldCell.Stackables, cell.Stackables);
                 
                 if (_groupedActions.Count == 0 || !equalActions) _groupedActions.Add(newAction);
+
+                _prevCoordsX = matrixX;
+                _prevCoordsY = matrixY;
+                _clickTracker = true;
             }
 
             if ((IsMouseButtonReleased(_shortcuts.Erase.Button) || IsKeyReleased(_shortcuts.AltErase.Key)) &&
@@ -799,6 +901,9 @@ internal class ExperimentalGeometryPage : EditorPage
                 _clickTracker = false;
                 _gram.Proceed([.._groupedActions]);
                 _groupedActions.Clear();
+
+                _prevCoordsX = -1;
+                _prevCoordsY = -1;
             }
             else if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw.Key)) &&
                      _clickTracker)
@@ -806,6 +911,9 @@ internal class ExperimentalGeometryPage : EditorPage
                 _clickTracker = false;
                 _gram.Proceed([.._groupedActions]);
                 _groupedActions.Clear();
+
+                _prevCoordsX = -1;
+                _prevCoordsY = -1;
             }
         }
 
@@ -991,7 +1099,7 @@ internal class ExperimentalGeometryPage : EditorPage
                 {
                     Printers.DrawLevelIndexHintsHollow(matrixX, matrixY, 
                         2, 
-                        0, 
+                        _circularBrush ? 0 : _brushRadius, 
                         Color.White with { A = 100 }
                     );
                 }
@@ -1049,15 +1157,19 @@ internal class ExperimentalGeometryPage : EditorPage
                         {
                             if (matrixX == x && matrixY == y)
                             {
-                                DrawRectangleLinesEx(
-                                    new Rectangle(x * scale, y * scale, scale, scale), 
-                                    2, 
-                                    _eraseMode 
-                                        ? new(255, 0, 0, 255) 
-                                        : (_memLoadMode 
-                                            ? new Color(89, 7, 222, 255) 
-                                            : Color.White
-                                        ));
+                                if (_circularBrush && _brushRadius > 0) {
+                                    Printers.DrawCircularSquareLines(x, y, _brushRadius, 20, 2, Color.White);
+                                } else {
+                                    DrawRectangleLinesEx(
+                                        new Rectangle(x * scale, y * scale, scale, scale), 
+                                        2, 
+                                        _eraseMode 
+                                            ? new(255, 0, 0, 255) 
+                                            : (_memLoadMode 
+                                                ? new Color(89, 7, 222, 255) 
+                                                : Color.White
+                                            ));
+                                }
 
                                 // Coordinates
 
@@ -1431,6 +1543,7 @@ internal class ExperimentalGeometryPage : EditorPage
             }
             
             // Settings Window
+            #region Settings
 
             var settingsOpened = ImGui.Begin("Settings##NewGeoSettings");
 
@@ -1551,10 +1664,19 @@ internal class ExperimentalGeometryPage : EditorPage
                 ImGui.Checkbox("Geo Indicator", ref geoIndicator);
                 if (GLOBALS.Settings.GeometryEditor.ShowCurrentGeoIndicator != geoIndicator)
                     GLOBALS.Settings.GeometryEditor.ShowCurrentGeoIndicator = geoIndicator;
+
+                if (_allowMultiSelect) ImGui.BeginDisabled();
+                ImGui.SetNextItemWidth(100);
+                ImGui.InputInt("BrushRadius", ref _brushRadius);
+                Utils.Restrict(ref _brushRadius, 0);
+
+                ImGui.Checkbox("Circular Brush", ref _circularBrush);
+                if (_allowMultiSelect) ImGui.EndDisabled();
                 
                 ImGui.End();
             }
             
+            #endregion
             // Shortcuts Window
 
             if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
