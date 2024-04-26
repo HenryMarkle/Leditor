@@ -56,6 +56,8 @@ internal sealed class TileLoader : IDisposable
 
     private readonly Data.Tiles.TileDexBuilder _builder = new();
 
+    public Serilog.ILogger? Logger { get; set; }
+
     internal TileLoader(IEnumerable<string> initDirs, string initName = "Init.txt")
     {
         _initName = initName;
@@ -75,6 +77,8 @@ internal sealed class TileLoader : IDisposable
     internal void Start()
     {
         if (_started) return;
+
+        Logger?.Debug("[TileLoader]: Started");
 
         _tilePackTasks = _packDirs.Select(directory => Task.Factory.StartNew(() =>
         {
@@ -115,7 +119,11 @@ internal sealed class TileLoader : IDisposable
     /// <exception cref="InvalidOperationException">When calling the function before calling <see cref="Start"/></exception>
     internal bool Proceed()
     {
-        if (Done) return true;
+        if (Done) {
+            Logger?.Debug("[TileLoader]: Done");
+
+            return true;
+        }
         
         if (!_started) throw new InvalidOperationException("TileLoader hasn't started yet");
         
@@ -124,6 +132,9 @@ internal sealed class TileLoader : IDisposable
             if (_tilePackLoadWaitCursor == _tilePackTasks.Length)
             {
                 _packLoadCompleted = true;
+
+                Logger?.Debug("[TileLoader]: Init load completed");
+
                 return false;
             }
 
@@ -154,12 +165,17 @@ internal sealed class TileLoader : IDisposable
             if (_texturePackCursor == _tilePacks.Count)
             {
                 _textureLoadCompleted = true;
+                
+                Logger?.Debug("[TileLoader]: Texture load complete");
+
                 return false;
             }
 
-            
-
             var pack = _tilePacks[_texturePackCursor];
+            if (pack.Tiles[_textureCategoryCursor].Length == 0)
+            {
+                return false;
+            }
             var tile = pack.Tiles[_textureCategoryCursor][_textureCursor];
 
             pack.Textures[_textureCategoryCursor][_textureCursor] = 
@@ -187,17 +203,24 @@ internal sealed class TileLoader : IDisposable
             if (_tilePackCursor == _tilePacks.Count)
             {
                 _dexBuildCompleted = true;
+
+                Logger?.Debug("[TileLoader]: Dex build complete");
+
                 return false;
             }
 
             var pack = _tilePacks[_tilePackCursor];
             var category = pack.Categories[_tileCategoryCursor];
+            if (pack.Tiles[_tileCategoryCursor].Length == 0)
+            {
+                return false;
+            }
             var tile = pack.Tiles[_tileCategoryCursor][_tileCursor];
             var texture = pack.Textures[_tileCategoryCursor][_tileCursor];
 
-            if (_tileCursor == 0) _builder.Register(category.name, category.Item2);
+            if (_tileCursor == 0) _builder.Register(category.name, category.Item2, true);
 
-            _builder.Register(category.name, tile, texture);
+            _builder.Register(category.name, tile, texture, true);
 
             _tileCursor++;
             return false;

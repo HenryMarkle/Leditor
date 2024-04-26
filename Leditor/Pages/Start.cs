@@ -1,6 +1,9 @@
 using System.Numerics;
+using System.Text;
+using ImGuiNET;
 using Leditor.Pages;
 using Pidgin;
+using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
 namespace Leditor.Pages;
@@ -11,7 +14,11 @@ internal class StartPage : EditorPage
 {
     public override void Dispose()
     {
+        if (Disposed) return;
         Disposed = true;
+        _levelPreviewRT.Dispose();
+        _upTexture.Dispose();
+        _homeTexture.Dispose();
     }
 
     internal event EventHandler? ProjectLoaded;
@@ -96,6 +103,99 @@ internal class StartPage : EditorPage
         return result;
     }
     
+    private RL.Managed.RenderTexture2D _levelPreviewRT;
+    private RL.Managed.Texture2D _upTexture;
+    private RL.Managed.Texture2D _homeTexture;
+
+    private bool _shouldRedrawLevelReview = true;
+
+    //
+    private string _currentDir;
+    private (string path, string name, bool isDir)[] _dirEntries;
+
+    private int _currentIndex = -1;
+
+    private void NavigateToDir(string path) {
+        if (!Directory.Exists(path)) return;
+
+        _currentDir = path;
+        _dirEntries = Directory
+            .GetFileSystemEntries(path)
+            .Select(e => {
+                var attrs = File.GetAttributes(e);
+
+                return (e, (attrs & FileAttributes.Directory) == FileAttributes.Directory);
+            })
+            .Where(e => e.Item2 || e.Item1.EndsWith(".txt"))
+            .Select(e => {
+                return (e.Item1, Path.GetFileNameWithoutExtension(e.Item1), e.Item2);
+            })
+            .ToArray();
+    }
+
+    private void NavigateUp() {
+        var parentDir = Directory.GetParent(_currentDir);
+
+        if (parentDir is null or { Exists: false }) return;
+
+        NavigateToDir(parentDir.FullName);
+    }
+
+    private void LoadLevelPreview(string path) {
+        var name = Path.GetFileNameWithoutExtension(path);
+
+        var pngPath = Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews", name+".png");
+
+        if (File.Exists(pngPath)) {
+            using RL.Managed.Texture2D texture = new(LoadTexture(pngPath));
+        
+            _levelPreviewRT.Dispose();
+            _levelPreviewRT = new(texture.Raw.Width, texture.Raw.Height);
+
+            BeginTextureMode(_levelPreviewRT);
+            ClearBackground(Color.White);
+
+            DrawTexture(texture, 0, 0, Color.White);
+            EndTextureMode();
+        } else {
+            using RL.Managed.Image image = Printers.GenerateLevelReviewImage(Utils.GetGeometryMatrixFromFile(path));
+            ExportImage(image, pngPath);
+            
+            using RL.Managed.Texture2D texture = new(image);
+        
+            _levelPreviewRT.Dispose();
+            _levelPreviewRT = new(texture.Raw.Width, texture.Raw.Height);
+
+            BeginTextureMode(_levelPreviewRT);
+            ClearBackground(Color.White);
+
+            DrawTexture(texture, 0, 0, Color.White);
+            EndTextureMode();
+        }
+    }
+    //
+
+    internal StartPage()
+    {
+        _currentDir = GLOBALS.Paths.ProjectsDirectory;
+        _dirEntries = Directory
+        .GetFileSystemEntries(GLOBALS.Paths.ProjectsDirectory)
+        .Select(e => {
+            var attrs = File.GetAttributes(e);
+
+            return (e, Path.GetFileNameWithoutExtension(e), (attrs & FileAttributes.Directory) == FileAttributes.Directory);
+        })
+        .ToArray();
+
+        _levelPreviewRT = new(0, 0);
+        _upTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "up icon.png"));
+        _homeTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "home icon.png"));
+    }
+
+    ~StartPage() {
+        if (!Disposed) throw new InvalidOperationException("StartPage was not disposed by consumer");
+    }
+
     public override void Draw()
     {
         GLOBALS.PreviousPage = 0;
@@ -282,7 +382,8 @@ internal class StartPage : EditorPage
             }
             else
             {
-                ClearBackground(new Color(170, 170, 170, 255));
+                if (GLOBALS.Settings.GeneralSettings.DarkTheme) ClearBackground(new Color(100, 100, 100, 255));
+                else ClearBackground(new Color(170, 170, 170, 255));
                 
                 // Create
 
@@ -328,6 +429,93 @@ internal class StartPage : EditorPage
                         _uiLocked = true;
                     }
                 }
+
+                if (_currentIndex > -1 && _currentIndex < _dirEntries.Length && !_dirEntries[_currentIndex].isDir) {
+                    if (_shouldRedrawLevelReview) {
+                        _shouldRedrawLevelReview = false;
+
+                        LoadLevelPreview(_dirEntries[_currentIndex].path);
+                    }
+                }
+
+                #region ImGui
+                rlImGui.Begin();
+
+                if (false && ImGui.Begin("Start##StartupWindow", ImGuiWindowFlags.NoCollapse)) {
+                    
+                    ImGui.Columns(2);
+
+                    // ImGui.SetColumnWidth(0, 300);
+
+                    var createClicked = ImGui.Button("Create", ImGui.GetContentRegionAvail() with { Y = 20 });
+
+                    ImGui.Separator();
+
+                    var upALevelClicked = rlImGui.ImageButtonSize("##Up", _upTexture, new(18, 18));
+                    ImGui.SameLine();
+                    
+                    var homeClicked = rlImGui.ImageButtonSize("##Home", _homeTexture, new(18, 18));
+                    ImGui.SameLine();
+                    
+                    ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                    var pathUpdated = ImGui.InputText("##FilePathBuffer", ref _currentDir, 260, ImGuiInputTextFlags.None);
+
+                    var listAvailSpace = ImGui.GetContentRegionAvail();
+
+                    if (ImGui.BeginListBox("##StartPageFileExplorerList", listAvailSpace with { Y = listAvailSpace.Y - 30 })) {
+                        
+                        for (var i = 0; i < _dirEntries.Length; i++) {
+                            var selected = ImGui.Selectable(_dirEntries[i].name, _currentIndex == i);
+                        
+                            if (selected) {
+                                if (_currentIndex == i) {
+                                    if (_dirEntries[i].isDir) NavigateToDir(_dirEntries[i].path);
+                                    else {
+                                        // Open Level
+                                    }
+                                } else {
+                                    _currentIndex = i;
+                                    _shouldRedrawLevelReview = true;
+                                }
+                            }
+                        }
+                        
+                        ImGui.EndListBox();
+                    }
+
+                    if (pathUpdated) {
+                        if (!Directory.Exists(_currentDir)) {
+                            _dirEntries = [];
+                        } else {
+                            NavigateToDir(_currentDir);
+                        }
+                    }
+
+                    var openLevelClicked = ImGui.Button("Open Level", ImGui.GetContentRegionAvail() with { Y = 20 });
+
+                    if (openLevelClicked) {
+                        // Load level
+                    }
+
+                    //
+
+                    if (homeClicked) {
+                        NavigateToDir(GLOBALS.Paths.ProjectsDirectory);
+                    }
+
+                    if (upALevelClicked) {
+                        NavigateUp();
+                    }
+
+                    ImGui.NextColumn();
+
+                    rlImGui.ImageRenderTextureFit(_levelPreviewRT, false);
+                    
+                    ImGui.End();
+                }
+
+                rlImGui.End();
+                #endregion
             }
         }
         EndDrawing();

@@ -14,21 +14,38 @@ public class TileDexBuilder
     /// </summary>
     /// <param name="category">The name of the category</param>
     /// <param name="color">The associated color</param>
+    /// <param name="ignoreDuplicate">If a duplicate category was found, replace the duplicate.</param>
     /// <exception cref="DuplicateTileCategoryException">When attempting to register the same category</exception>
-    public TileDexBuilder Register(string category, Color color)
+    public TileDexBuilder Register(string category, Color color, bool ignoreDuplicate = false)
     {
-        try
-        {
-            _tiles.Add(category, (color, []));
-            _orderedCategoryNames.Add(category);
+        if (ignoreDuplicate) {
+            if (_tiles.ContainsKey(category)) return this;
+
+            try
+            {
+                _tiles.Add(category, (color, []));
+                _orderedCategoryNames.Add(category);
+            }
+            catch (ArgumentException e)
+            {
+                throw new DuplicateTileCategoryException(category, e);
+            }
+        } else {
+            try
+            {
+                _tiles.Add(category, (color, []));
+                _orderedCategoryNames.Add(category);
+            }
+            catch (ArgumentException e)
+            {
+                throw new DuplicateTileCategoryException(category, e);
+            }
         }
-        catch (ArgumentException e)
-        {
-            throw new DuplicateTileCategoryException(category, e);
-        }
+
         
         return this;
     }
+
 
     /// <summary>
     /// Register a tile belonging to a <paramref name="category"/> along with a texture.
@@ -36,19 +53,36 @@ public class TileDexBuilder
     /// <param name="category">The name of the tile category</param>
     /// <param name="definition">A pointer to the tile definition object</param>
     /// <param name="texture">The associated texture</param>
+    /// <param name="force">If a duplicate was found, replace the duplicate.</param>
     /// <exception cref="DuplicateTileDefinitionException">When attempting to register the same tile definition more than once</exception>
     /// <exception cref="TileCategoryNotFoundException">When the <paramref name="category"/> is not registered</exception>
-    public TileDexBuilder Register(string category, TileDefinition definition, Texture2D texture)
+    public TileDexBuilder Register(string category, TileDefinition definition, Texture2D texture, bool force = false)
     {
         if (_tiles.TryGetValue(category, out var row))
         {
-            row.definitions.Add(definition);
-            if (_textures.TryAdd(definition.Name, texture)) definition.Texture = texture.Raw;
+            if (force) {
+                if (row.definitions.Contains(definition)) {
+                    var textureExists = _textures.TryGetValue(definition.Name, out var foundTexture);
+
+                    if (textureExists) foundTexture?.Dispose();
+
+                    row.definitions.Remove(definition);
+                    row.definitions.Add(definition);
+
+                    if (_textures.TryAdd(definition.Name, texture)) definition.Texture = texture.Raw;
+                } else {
+                    row.definitions.Add(definition);
+                    if (_textures.TryAdd(definition.Name, texture)) definition.Texture = texture.Raw;
+                }
+            } else {
+                row.definitions.Add(definition);
+                if (_textures.TryAdd(definition.Name, texture)) definition.Texture = texture.Raw;
+            }
             
             return this;
         }
 
-        throw new TileCategoryNotFoundException(category);
+        throw new TileCategoryNotFoundException(category, definition.Name);
     }
 
     public TileDex Build()

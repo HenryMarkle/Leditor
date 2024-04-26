@@ -940,6 +940,9 @@ void main() {
         logger.Information("Begin main loop");
 
         var gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
+
+        // Doesn't seem to work
+        _tileLoader.Logger = logger;
         
         _tileLoader.Start();
 
@@ -952,6 +955,8 @@ void main() {
         
         Task<Data.Tiles.TileDex>? tileDexTask = null;
         Task<Data.Props.PropDex>? propDexTask = null;
+
+        var fatalException = false;
         
         while (!WindowShouldClose())
         {
@@ -1040,6 +1045,12 @@ void main() {
                 }
                 #endregion
                 
+                // Temporary solution
+                if (fatalException) {
+                    deathScreen.Draw();
+                    continue;
+                }
+
                 if (!_tileLoader.Done)
                 {
                     tileLoadProgress++;
@@ -1662,7 +1673,6 @@ void main() {
                         // TODO: Move to using Pager
                         
                         if (!GLOBALS.LockNavigation) {
-                            Console.WriteLine("HEARING");
                             if (gShortcuts.ToMainPage.Check(ctrl, shift, alt))
                             {
 #if DEBUG
@@ -1804,17 +1814,17 @@ void main() {
             }
             catch (Data.Tiles.Exceptions.DuplicateTileCategoryException dtce) {
                 logger.Fatal($"Found duplicate tile category \"{(dtce.Category)}\"");
-                Raylib.CloseWindow();
+                CloseWindow();
                 break;
             }
             catch (Data.Tiles.Exceptions.DuplicateTileDefinitionException dtde) {
                 logger.Fatal($"Found duplicate tile definition \"{(dtde.Name)}\"");
-                Raylib.CloseWindow();
+                CloseWindow();
                 break;
             }
             catch (Data.Tiles.Exceptions.TileCategoryNotFoundException tcnfe) {
-                logger.Fatal($"Tile claimed to belong to an non-existent category \"{(tcnfe.Category)}\"");
-                Raylib.CloseWindow();
+                logger.Fatal($"Tile {(string.IsNullOrEmpty(tcnfe.Tile) ? "" : $"\"{(tcnfe.Tile)}\"")} claimed to belong to an non-existent category \"{(tcnfe.Category)}\"");
+                CloseWindow();
                 break;
             }
             catch (Exception e)

@@ -456,6 +456,18 @@ internal class MainPage : EditorPage, IContextListener
                                     _saveResult = null;
                                     _isGuiLocked = false;
                                     GLOBALS.LockNavigation = false;
+
+                                    // Export level image to cache
+                                    if (!Directory.Exists(Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews"))) {
+                                        Directory.CreateDirectory(Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews"));
+                                    }
+
+                                    using var levelImg = Printers.GenerateLevelReviewImage();
+
+                                    ExportImage(levelImg, Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews", GLOBALS.Level.ProjectName+".png"));
+
+                                    //
+
                                     EndDrawing();
                                 }
                             }
@@ -505,6 +517,17 @@ internal class MainPage : EditorPage, IContextListener
                                 var name = Path.GetFileNameWithoutExtension(path);
 
                                 ExportImage(image, Path.Combine(parent, name + ".png"));
+
+                                // Export level image to cache
+                                if (!Directory.Exists(Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews"))) {
+                                    Directory.CreateDirectory(Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews"));
+                                }
+
+                                using var levelImg = Printers.GenerateLevelReviewImage();
+
+                                ExportImage(levelImg, Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews", GLOBALS.Level.ProjectName+".png"));
+
+                                //
 
                                 UnloadImage(image);
                             }

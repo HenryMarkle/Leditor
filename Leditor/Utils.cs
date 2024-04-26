@@ -147,6 +147,21 @@ internal static class Utils
             GLOBALS.RecentProjects.RemoveFirst();
     }
 
+    internal static RunCell[,,] GetGeometryMatrixFromFile(string path) {
+        if (!File.Exists(path)) throw new FileNotFoundException("Level file not found", path);
+    
+        var text = File
+            .ReadAllText(path)
+            .ReplaceLineEndings()
+            .Split(Environment.NewLine);
+
+        var matrixObject = Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[0]);
+    
+        var matrix = Serialization.Importers.GetGeoMatrix(matrixObject, out _, out _);
+
+        return matrix;
+    }
+
     internal static async Task<string> GetFilePathAsync()
     {
         var path = string.Empty;

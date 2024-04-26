@@ -135,7 +135,7 @@ internal class LightEditorPage : EditorPage
                        !_isShortcutsWinDragged && 
                        !_isStretchWinHovered &&
                        !_isStretchWinDragged &&
-                       !CheckCollisionPointRec(mouse, brushPanel) && !indHovered && 
+                        !indHovered && 
                        !_isDraggingIndicator;
         
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
