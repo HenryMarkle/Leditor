@@ -1704,12 +1704,12 @@ internal class TileEditorPage : EditorPage, IDisposable
                 {
                     if (_tileMatches is [])
                     {
-                        _tileIndex = ++_tileIndex % GLOBALS.Tiles[_tileCategoryIndex].Length;
-                        if (
-                            _tileIndex % (categoriesPageSize + _tileScrollIndex) == categoriesPageSize + _tileScrollIndex - 1 &&
-                            _tileIndex != GLOBALS.Tiles[_tileCategoryIndex].Length - 1) _tileScrollIndex++;
+                        _tileIndex = ++_tileIndex;
 
-                        if (_tileIndex == 0) _tileScrollIndex = 0;
+                        if (GLOBALS.Settings.GeneralSettings.CycleMenus)
+                            Utils.Cycle(ref _tileIndex, 0, _currentCategoryTiles.Length - 1);                     
+                        else 
+                            Utils.Restrict(ref _tileIndex, 0, _currentCategoryTiles.Length - 1);
                     }
                     // When searching
                     // Why did I leave this empty?
@@ -1754,8 +1754,11 @@ internal class TileEditorPage : EditorPage, IDisposable
                 else
                 {
                     _tileIndex--;
-                    if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _tileIndex, 0, GLOBALS.Tiles[_tileCategoryIndex].Length - 1);
-                    else Utils.Restrict(ref _tileIndex, 0, GLOBALS.Tiles[_tileCategoryIndex].Length - 1);
+                    
+                    if (GLOBALS.Settings.GeneralSettings.CycleMenus)
+                            Utils.Cycle(ref _tileIndex, 0, _currentCategoryTiles.Length - 1);                     
+                        else 
+                            Utils.Restrict(ref _tileIndex, 0, _currentCategoryTiles.Length - 1);
                 }
             }
             else

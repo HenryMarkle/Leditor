@@ -19,6 +19,8 @@ internal class StartPage : EditorPage
         _levelPreviewRT.Dispose();
         _upTexture.Dispose();
         _homeTexture.Dispose();
+        _folderTexture.Dispose();
+        _fileTexture.Dispose();
     }
 
     internal event EventHandler? ProjectLoaded;
@@ -106,6 +108,8 @@ internal class StartPage : EditorPage
     private RL.Managed.RenderTexture2D _levelPreviewRT;
     private RL.Managed.Texture2D _upTexture;
     private RL.Managed.Texture2D _homeTexture;
+    private RL.Managed.Texture2D _folderTexture;
+    private RL.Managed.Texture2D _fileTexture;
 
     private bool _shouldRedrawLevelReview = true;
 
@@ -143,6 +147,9 @@ internal class StartPage : EditorPage
 
     private void LoadLevelPreview(string path) {
         var name = Path.GetFileNameWithoutExtension(path);
+
+        if (!Directory.Exists(Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews")))
+            Directory.CreateDirectory(Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews"));
 
         var pngPath = Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews", name+".png");
 
@@ -190,6 +197,8 @@ internal class StartPage : EditorPage
         _levelPreviewRT = new(0, 0);
         _upTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "up icon.png"));
         _homeTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "home icon.png"));
+        _folderTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "folder icon.png"));
+        _fileTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "file icon.png"));
     }
 
     ~StartPage() {
@@ -200,29 +209,59 @@ internal class StartPage : EditorPage
     {
         GLOBALS.PreviousPage = 0;
 
+        if (!_uiLocked) {
+            if (_dirEntries.Length > 0 && (IsKeyPressed(KeyboardKey.S) || IsKeyPressed(KeyboardKey.Down))) {
+                _currentIndex++;
+                _shouldRedrawLevelReview = true;
+
+                Utils.Restrict(ref _currentIndex, 0, _dirEntries.Length - 1);
+            }
+
+            if (_dirEntries.Length > 0 && (IsKeyPressed(KeyboardKey.W) || IsKeyPressed(KeyboardKey.Up))) {
+                _currentIndex--;
+                _shouldRedrawLevelReview = true;
+
+                Utils.Restrict(ref _currentIndex, 0, _dirEntries.Length - 1);
+            }
+
+            if (IsKeyPressed(KeyboardKey.A) || IsKeyPressed(KeyboardKey.Left)) {
+                NavigateUp();
+                _shouldRedrawLevelReview = true;
+            }
+
+            if (_dirEntries.Length > 0 && (IsKeyPressed(KeyboardKey.D) || IsKeyPressed(KeyboardKey.Right)) && _dirEntries[_currentIndex].isDir) {
+                NavigateToDir(_dirEntries[_currentIndex].path);
+                _shouldRedrawLevelReview = true;
+            }
+
+            if (_dirEntries.Length > 0 && IsKeyPressed(KeyboardKey.Enter) && !_dirEntries[_currentIndex].isDir) {
+                _uiLocked = true;
+            } 
+        }
+
         BeginDrawing();
         {
             if (_uiLocked)
             {
                 ClearBackground(Color.Black);
                 
-                if (_openFileDialog!.IsCompleted != true)
-                {
-                    DrawText("Please wait..", GetScreenWidth() / 2 - 100, GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
+                // if (_openFileDialog!.IsCompleted != true)
+                // {
+                //     DrawText("Please wait..", GetScreenWidth() / 2 - 100, GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
 
-                    EndDrawing();
-                    return;
-                }
-                if (string.IsNullOrEmpty(_openFileDialog.Result))
-                {
-                    _openFileDialog = null;
-                    _uiLocked = false;
-                    EndDrawing();
-                    return;
-                }
+                //     EndDrawing();
+                //     return;
+                // }
+                // if (string.IsNullOrEmpty(_openFileDialog.Result))
+                // {
+                //     _openFileDialog = null;
+                //     _uiLocked = false;
+                //     EndDrawing();
+                //     return;
+                // }
                 if (_loadFileTask is null)
                 {
-                    _loadFileTask = Utils.LoadProjectAsync(_openFileDialog.Result);
+                    _loadFileTask = Utils.LoadProjectAsync(_dirEntries[_currentIndex].path);
                     EndDrawing();
                     return;
                 }
@@ -296,7 +335,7 @@ internal class StartPage : EditorPage
                     return;
                 }
                 
-                Utils.AppendRecentProjectPath(_openFileDialog.Result);
+                Utils.AppendRecentProjectPath(_dirEntries[_currentIndex].path);
                 
                 Logger.Debug("Globals.Level.Import()");
                 
@@ -373,10 +412,10 @@ internal class StartPage : EditorPage
                 Logger.Debug($"Invoking {nameof(ProjectLoaded)} event");
                 #endif
                 
-                var parent = Directory.GetParent(_openFileDialog.Result)?.FullName;
+                var parent = Directory.GetParent(_dirEntries[_currentIndex].path)?.FullName;
                     
                 GLOBALS.ProjectPath = parent ?? GLOBALS.ProjectPath;
-                GLOBALS.Level.ProjectName = Path.GetFileNameWithoutExtension(_openFileDialog.Result);
+                GLOBALS.Level.ProjectName = Path.GetFileNameWithoutExtension(_dirEntries[_currentIndex].path);
 
                 _uiLocked = false;
             }
@@ -384,51 +423,6 @@ internal class StartPage : EditorPage
             {
                 if (GLOBALS.Settings.GeneralSettings.DarkTheme) ClearBackground(new Color(100, 100, 100, 255));
                 else ClearBackground(new Color(170, 170, 170, 255));
-                
-                // Create
-
-                var createRect = new Rectangle(GetScreenWidth() / 2f - 200, GetScreenHeight() / 2f - 42, 400, 40);
-                var createHovered = CheckCollisionPointRec(GetMousePosition(), createRect);
-                
-                DrawRectangleLinesEx(createRect, 1, Color.Black);
-
-                if (GLOBALS.Font is null)
-                    DrawText("Create", (int)(createRect.X + 5), (int)(createRect.Y + 10), 20, Color.Black);
-                else 
-                    DrawTextEx(GLOBALS.Font.Value, "Create", new Vector2(createRect.X + (createRect.Width - MeasureText("Create", 20))/2, createRect.Y + 10), 20, 1, Color.Black);
-                
-                if (createHovered)
-                {
-                    DrawRectangleRec(createRect, Color.Blue with { A = 100 });
-                    
-                    if (IsMouseButtonPressed(MouseButton.Left))
-                    {
-                        GLOBALS.Page = 11;
-                    }
-                }
-                
-                // Load
-
-                var loadRect = new Rectangle(GetScreenWidth() / 2f - 200, GetScreenHeight() / 2f, 400, 40);
-                var loadHovered = CheckCollisionPointRec(GetMousePosition(), loadRect);
-                
-                DrawRectangleLinesEx(loadRect, 1, Color.Black);
-
-                if (GLOBALS.Font is null)
-                    DrawText("Load", (int)(loadRect.X + 5), (int)(loadRect.Y + 10), 20, Color.Black);
-                else 
-                    DrawTextEx(GLOBALS.Font.Value, "Load", new Vector2(loadRect.X + (loadRect.Width - MeasureText("Load", 20))/2, loadRect.Y + 10), 20, 1, Color.Black);
-                
-                if (loadHovered)
-                {
-                    DrawRectangleRec(loadRect, Color.Blue with { A = 100 });
-                    
-                    if (IsMouseButtonPressed(MouseButton.Left))
-                    {
-                        _openFileDialog = Utils.GetFilePathAsync();
-                        _uiLocked = true;
-                    }
-                }
 
                 if (_currentIndex > -1 && _currentIndex < _dirEntries.Length && !_dirEntries[_currentIndex].isDir) {
                     if (_shouldRedrawLevelReview) {
@@ -441,7 +435,7 @@ internal class StartPage : EditorPage
                 #region ImGui
                 rlImGui.Begin();
 
-                if (false && ImGui.Begin("Start##StartupWindow", ImGuiWindowFlags.NoCollapse)) {
+                if (ImGui.Begin("Start##StartupWindow", ImGuiWindowFlags.NoCollapse)) {
                     
                     ImGui.Columns(2);
 
@@ -451,10 +445,10 @@ internal class StartPage : EditorPage
 
                     ImGui.Separator();
 
-                    var upALevelClicked = rlImGui.ImageButtonSize("##Up", _upTexture, new(18, 18));
+                    var upALevelClicked = rlImGui.ImageButtonSize("##Up", _upTexture, new(20, 20));
                     ImGui.SameLine();
                     
-                    var homeClicked = rlImGui.ImageButtonSize("##Home", _homeTexture, new(18, 18));
+                    var homeClicked = rlImGui.ImageButtonSize("##Home", _homeTexture, new(20, 20));
                     ImGui.SameLine();
                     
                     ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
@@ -465,13 +459,17 @@ internal class StartPage : EditorPage
                     if (ImGui.BeginListBox("##StartPageFileExplorerList", listAvailSpace with { Y = listAvailSpace.Y - 30 })) {
                         
                         for (var i = 0; i < _dirEntries.Length; i++) {
-                            var selected = ImGui.Selectable(_dirEntries[i].name, _currentIndex == i);
-                        
+
+                            if (_dirEntries[i].isDir) rlImGui.ImageSize(_folderTexture, new(23, 23));
+                            else rlImGui.ImageSize(_fileTexture, new(23, 23));
+                            ImGui.SameLine();
+                            var selected = ImGui.Selectable(_dirEntries[i].name, _currentIndex == i, ImGuiSelectableFlags.None, ImGui.GetContentRegionAvail() with { Y = 20 });
+
                             if (selected) {
                                 if (_currentIndex == i) {
                                     if (_dirEntries[i].isDir) NavigateToDir(_dirEntries[i].path);
                                     else {
-                                        // Open Level
+                                        _uiLocked = true;
                                     }
                                 } else {
                                     _currentIndex = i;
@@ -481,6 +479,10 @@ internal class StartPage : EditorPage
                         }
                         
                         ImGui.EndListBox();
+                    }
+
+                    if (createClicked) {
+                        GLOBALS.Page = 11;
                     }
 
                     if (pathUpdated) {
