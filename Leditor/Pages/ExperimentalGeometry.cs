@@ -1097,11 +1097,27 @@ internal class ExperimentalGeometryPage : EditorPage
                 // Index hints
                 if (GLOBALS.Settings.GeneralSettings.IndexHint)
                 {
-                    Printers.DrawLevelIndexHintsHollow(matrixX, matrixY, 
-                        2, 
-                        _circularBrush ? 0 : _brushRadius, 
-                        Color.White with { A = 100 }
-                    );
+                    if (_allowMultiSelect) {
+                        Printers.DrawLevelIndexHintsHollow(matrixX, matrixY, 
+                            2, 
+                            0, 
+                            Color.White with { A = 100 }
+                        );
+                    } else {
+                        if (_circularBrush) {
+                            Printers.DrawLevelIndexHintsHollow(matrixX, matrixY, 
+                                2, 
+                                0, 
+                                Color.White with { A = 100 }
+                            );
+                        } else {
+                            Printers.DrawLevelIndexHintsHollow(matrixX, matrixY, 
+                                2, 
+                                _brushRadius, 
+                                Color.White with { A = 100 }
+                            );
+                        }
+                    }
                 }
 
                 // the outbound border
@@ -1157,9 +1173,7 @@ internal class ExperimentalGeometryPage : EditorPage
                         {
                             if (matrixX == x && matrixY == y)
                             {
-                                if (_circularBrush && _brushRadius > 0) {
-                                    Printers.DrawCircularSquareLines(x, y, _brushRadius, 20, 2, Color.White);
-                                } else {
+                                if (_allowMultiSelect) {
                                     DrawRectangleLinesEx(
                                         new Rectangle(x * scale, y * scale, scale, scale), 
                                         2, 
@@ -1169,6 +1183,32 @@ internal class ExperimentalGeometryPage : EditorPage
                                                 ? new Color(89, 7, 222, 255) 
                                                 : Color.White
                                             ));
+                                } else {
+                                    if (_brushRadius > 0) {
+                                        if (_circularBrush) {
+                                            Printers.DrawCircularSquareLines(x, y, _brushRadius, 20, 2, Color.White);
+                                        } else {
+                                            DrawRectangleLinesEx(
+                                                new Rectangle((x - _brushRadius) * scale, (y - _brushRadius) * scale, (_brushRadius * 2 + 1) * scale, (_brushRadius * 2 + 1) *  scale), 
+                                                2, 
+                                                _eraseMode 
+                                                    ? new(255, 0, 0, 255) 
+                                                    : (_memLoadMode 
+                                                        ? new Color(89, 7, 222, 255) 
+                                                        : Color.White
+                                                    ));
+                                        }
+                                    } else {
+                                        DrawRectangleLinesEx(
+                                        new Rectangle(x * scale, y * scale, scale, scale), 
+                                        2, 
+                                        _eraseMode 
+                                            ? new(255, 0, 0, 255) 
+                                            : (_memLoadMode 
+                                                ? new Color(89, 7, 222, 255) 
+                                                : Color.White
+                                            ));
+                                    }
                                 }
 
                                 // Coordinates
