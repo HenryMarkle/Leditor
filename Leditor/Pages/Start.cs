@@ -21,6 +21,11 @@ internal class StartPage : EditorPage
         _homeTexture.Dispose();
         _folderTexture.Dispose();
         _fileTexture.Dispose();
+
+        _upBlackTexture.Dispose();
+        _homeBlackTexture.Dispose();
+        _folderBlackTexture.Dispose();
+        _fileBlackTexture.Dispose();
     }
 
     internal event EventHandler? ProjectLoaded;
@@ -110,6 +115,11 @@ internal class StartPage : EditorPage
     private RL.Managed.Texture2D _homeTexture;
     private RL.Managed.Texture2D _folderTexture;
     private RL.Managed.Texture2D _fileTexture;
+    
+    private RL.Managed.Texture2D _upBlackTexture;
+    private RL.Managed.Texture2D _homeBlackTexture;
+    private RL.Managed.Texture2D _folderBlackTexture;
+    private RL.Managed.Texture2D _fileBlackTexture;
 
     private bool _shouldRedrawLevelReview = true;
 
@@ -195,10 +205,18 @@ internal class StartPage : EditorPage
         .ToArray();
 
         _levelPreviewRT = new(0, 0);
+        
         _upTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "up icon.png"));
         _homeTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "home icon.png"));
         _folderTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "folder icon.png"));
         _fileTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "file icon.png"));
+    
+        _upBlackTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "up icon black.png"));
+        _homeBlackTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "home icon black.png"));
+        _folderBlackTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "folder icon black.png"));
+        _fileBlackTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "file icon black.png"));
+    
+
     }
 
     ~StartPage() {
@@ -445,10 +463,10 @@ internal class StartPage : EditorPage
 
                     ImGui.Separator();
 
-                    var upALevelClicked = rlImGui.ImageButtonSize("##Up", _upTexture, new(20, 20));
+                    var upALevelClicked = rlImGui.ImageButtonSize("##Up", GLOBALS.Settings.GeneralSettings.DarkTheme ? _upTexture : _upBlackTexture, new(20, 20));
                     ImGui.SameLine();
                     
-                    var homeClicked = rlImGui.ImageButtonSize("##Home", _homeTexture, new(20, 20));
+                    var homeClicked = rlImGui.ImageButtonSize("##Home", GLOBALS.Settings.GeneralSettings.DarkTheme ? _homeTexture : _homeBlackTexture, new(20, 20));
                     ImGui.SameLine();
                     
                     ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
@@ -460,8 +478,8 @@ internal class StartPage : EditorPage
                         
                         for (var i = 0; i < _dirEntries.Length; i++) {
 
-                            if (_dirEntries[i].isDir) rlImGui.ImageSize(_folderTexture, new(23, 23));
-                            else rlImGui.ImageSize(_fileTexture, new(23, 23));
+                            if (_dirEntries[i].isDir) rlImGui.ImageSize(GLOBALS.Settings.GeneralSettings.DarkTheme ? _folderTexture : _folderBlackTexture, new(23, 23));
+                            else rlImGui.ImageSize(GLOBALS.Settings.GeneralSettings.DarkTheme ? _fileTexture : _fileBlackTexture, new(23, 23));
                             ImGui.SameLine();
                             var selected = ImGui.Selectable(_dirEntries[i].name, _currentIndex == i, ImGuiSelectableFlags.None, ImGui.GetContentRegionAvail() with { Y = 20 });
 
