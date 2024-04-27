@@ -2,12 +2,12 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <!-- <RuntimeIdentifier>win-x64</RuntimeIdentifier> -->
     <ImplicitUsings>disable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsPublishable>true</IsPublishable>
-    <UseWindowsForms>true</UseWindowsForms>
+    <!-- <UseWindowsForms>true</UseWindowsForms> -->
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <!-- <StripSymbols>false</StripSymbols> -->
     <!-- <IsTrimmable>false</IsTrimmable> -->

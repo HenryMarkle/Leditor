@@ -162,36 +162,6 @@ internal static class Utils
         return matrix;
     }
 
-    internal static async Task<string> GetFilePathAsync()
-    {
-        var path = string.Empty;
-
-        var thread = new Thread(() =>
-        {
-            var dialog = new OpenFileDialog
-            {
-                InitialDirectory = GLOBALS.Paths.ProjectsDirectory,
-                Filter = "text files (*.txt)|*.txt",
-                Multiselect = false,
-                CheckFileExists = true
-            };
-
-            // var nativeWindow = new NativeWindow();
-            // nativeWindow.AssignHandle(GLOBALS.WindowHandle);
-
-            if (dialog.ShowDialog( /*nativeWindow*/) == DialogResult.OK)
-            {
-                path = dialog.FileName;
-            }
-        });
-
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-        thread.Join();
-
-        return path;
-    }
-
     internal static async Task<LoadFileResult> LoadProjectAsync(string filePath)
     {
         try
@@ -303,36 +273,6 @@ internal static class Utils
             Console.WriteLine(e);
             return new();
         }
-    }
-
-    internal static async Task<string> SetFilePathAsync()
-    {
-        var path = string.Empty;
-
-        var thread = new Thread(() =>
-        {
-            var dialog = new SaveFileDialog
-            {
-                InitialDirectory = GLOBALS.Paths.ProjectsDirectory,
-                Filter = "txt files (*.txt)|*.txt",
-                FileName = GLOBALS.Level.ProjectName
-            };
-
-            if (dialog.ShowDialog() == DialogResult.OK)
-            {
-                path = dialog.FileName;
-            }
-            else
-            {
-                path = "";
-            }
-        });
-
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-        thread.Join();
-
-        return path;
     }
 
     public static TileDefinition? PickupTile(int x, int y, int z)

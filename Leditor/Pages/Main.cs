@@ -908,8 +908,8 @@ internal class MainPage : EditorPage, IContextListener
                         _fileDialogMode = 0;
                         if (string.IsNullOrEmpty(GLOBALS.ProjectPath))
                         {
-                            _askForPath = true;
-                            _saveFileDialog = Utils.SetFilePathAsync();
+                            GLOBALS.PreviousPage = GLOBALS.Page;
+                            GLOBALS.Page = 12;
                         }
                         else
                         {

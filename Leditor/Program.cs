@@ -1757,8 +1757,8 @@ void main() {
                         {
                             if (string.IsNullOrEmpty(GLOBALS.ProjectPath))
                             {
-                                _askForPath = true;
-                                _saveFileDialog = Utils.SetFilePathAsync();
+                                GLOBALS.PreviousPage = GLOBALS.Page;
+                                GLOBALS.Page = 12;
                             }
                             else
                             {
