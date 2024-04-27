@@ -2,7 +2,6 @@
 using System.Numerics;
 using System.Text.Json;
 using ImGuiNET;
-using Leditor.FileExplorer;
 using Pidgin;
 using rlImGui_cs;
 using Leditor.Renderer;
@@ -923,19 +922,23 @@ internal class MainPage : EditorPage, IContextListener
 
                     if (saveAsSelected)
                     {
-                        _fileDialogMode = 0;
-                        _askForPath = true;
-                        _saveFileDialog = Utils.SetFilePathAsync();
-                        _isGuiLocked = true;
-                        GLOBALS.LockNavigation = true;
+                        // _fileDialogMode = 0;
+                        // _askForPath = true;
+                        // _saveFileDialog = Utils.SetFilePathAsync();
+                        // _isGuiLocked = true;
+                        // GLOBALS.LockNavigation = true;
+
+                        GLOBALS.Page = 12;
                     }
                     
                     if (loadSelected)
                     {
-                        _fileDialogMode = 1;
-                        _openFileDialog = Utils.GetFilePathAsync();
-                        _isGuiLocked = true;
-                        GLOBALS.LockNavigation = true;
+                        // _fileDialogMode = 1;
+                        // _openFileDialog = Utils.GetFilePathAsync();
+                        // _isGuiLocked = true;
+                        // GLOBALS.LockNavigation = true;
+
+                        GLOBALS.Page = 0;
                     }
                     
                     if (newSelected)

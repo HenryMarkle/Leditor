@@ -253,6 +253,7 @@ internal class SettingsPage : EditorPage
 
                         ImGui.SeparatorText("Quick Actions");
                         
+                        var assignOpen = ImGui.Button($"Open: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.Open}");
                         var assignSave = ImGui.Button($"Save: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave}");
                         var assignSaveAs = ImGui.Button($"Save As:{GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSaveAs}");
                         var assignRender = ImGui.Button($"Render: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.Render}");
@@ -266,6 +267,7 @@ internal class SettingsPage : EditorPage
                         if (assignToEffectsEditor) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor;
                         if (assignToPropsEditor) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor;
                         if (assignToSettings) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage;
+                        if (assignOpen) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.Open;
                         if (assignSave) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave;
                         if (assignSaveAs) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSaveAs;
                         if (assignRender) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.Render;

@@ -5021,11 +5021,20 @@ internal static class Printers
             
             if (ImGuiNET.ImGui.BeginMenu("Options"))
             {
+                if (ImGuiNET.ImGui.MenuItem("Open..", gShortcuts.Open.ToString())) 
+                {
+                    GLOBALS.PreviousPage = GLOBALS.Page;
+                    GLOBALS.Page = 0;
+                }
+
                 if (ImGuiNET.ImGui.MenuItem("Save", gShortcuts.QuickSave.ToString()))
                     selected = 1;
 
                 if (ImGuiNET.ImGui.MenuItem("Save as..", gShortcuts.QuickSaveAs.ToString()))
-                    selected = 2;
+                {
+                    GLOBALS.PreviousPage = GLOBALS.Page;
+                    GLOBALS.Page = 12;
+                }
 
                 if (ImGuiNET.ImGui.MenuItem("Render", gShortcuts.Render.ToString()))
                     selected = 3;

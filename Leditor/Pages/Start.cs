@@ -155,6 +155,7 @@ internal class StartPage : EditorPage
         NavigateToDir(parentDir.FullName);
     }
 
+    // TODO: Optimize
     private void LoadLevelPreview(string path) {
         var name = Path.GetFileNameWithoutExtension(path);
 
@@ -175,7 +176,15 @@ internal class StartPage : EditorPage
             DrawTexture(texture, 0, 0, Color.White);
             EndTextureMode();
         } else {
-            using RL.Managed.Image image = Printers.GenerateLevelReviewImage(Utils.GetGeometryMatrixFromFile(path));
+            RunCell[,,] matrix;
+
+            try {
+                matrix = Utils.GetGeometryMatrixFromFile(path);
+            } catch {
+                return;
+            }
+            
+            using RL.Managed.Image image = Printers.GenerateLevelReviewImage(matrix);
             ExportImage(image, pngPath);
             
             using RL.Managed.Texture2D texture = new(image);
@@ -196,13 +205,17 @@ internal class StartPage : EditorPage
     {
         _currentDir = GLOBALS.Paths.ProjectsDirectory;
         _dirEntries = Directory
-        .GetFileSystemEntries(GLOBALS.Paths.ProjectsDirectory)
-        .Select(e => {
-            var attrs = File.GetAttributes(e);
+            .GetFileSystemEntries(_currentDir)
+            .Select(e => {
+                var attrs = File.GetAttributes(e);
 
-            return (e, Path.GetFileNameWithoutExtension(e), (attrs & FileAttributes.Directory) == FileAttributes.Directory);
-        })
-        .ToArray();
+                return (e, (attrs & FileAttributes.Directory) == FileAttributes.Directory);
+            })
+            .Where(e => e.Item2 || e.Item1.EndsWith(".txt"))
+            .Select(e => {
+                return (e.Item1, Path.GetFileNameWithoutExtension(e.Item1), e.Item2);
+            })
+            .ToArray();
 
         _levelPreviewRT = new(0, 0);
         
@@ -225,35 +238,40 @@ internal class StartPage : EditorPage
 
     public override void Draw()
     {
-        GLOBALS.PreviousPage = 0;
+        GLOBALS.Page = 0;
 
         if (!_uiLocked) {
-            if (_dirEntries.Length > 0 && (IsKeyPressed(KeyboardKey.S) || IsKeyPressed(KeyboardKey.Down))) {
+            if (_dirEntries.Length > 0 && (IsKeyPressed(KeyboardKey.Down))) {
                 _currentIndex++;
                 _shouldRedrawLevelReview = true;
 
                 Utils.Restrict(ref _currentIndex, 0, _dirEntries.Length - 1);
             }
 
-            if (_dirEntries.Length > 0 && (IsKeyPressed(KeyboardKey.W) || IsKeyPressed(KeyboardKey.Up))) {
+            if (_dirEntries.Length > 0 && (IsKeyPressed(KeyboardKey.Up))) {
                 _currentIndex--;
                 _shouldRedrawLevelReview = true;
 
                 Utils.Restrict(ref _currentIndex, 0, _dirEntries.Length - 1);
             }
 
-            if (IsKeyPressed(KeyboardKey.A) || IsKeyPressed(KeyboardKey.Left)) {
+            if (IsKeyPressed(KeyboardKey.Left)) {
                 NavigateUp();
                 _shouldRedrawLevelReview = true;
             }
 
-            if (_dirEntries.Length > 0 && (IsKeyPressed(KeyboardKey.D) || IsKeyPressed(KeyboardKey.Right)) && _dirEntries[_currentIndex].isDir) {
+            if (_dirEntries.Length > 0 && (IsKeyPressed(KeyboardKey.Right)) && _dirEntries[_currentIndex].isDir) {
                 NavigateToDir(_dirEntries[_currentIndex].path);
                 _shouldRedrawLevelReview = true;
             }
 
-            if (_dirEntries.Length > 0 && IsKeyPressed(KeyboardKey.Enter) && !_dirEntries[_currentIndex].isDir) {
-                _uiLocked = true;
+            if (_dirEntries.Length > 0 && IsKeyPressed(KeyboardKey.Enter)) {
+                if (_dirEntries[_currentIndex].isDir) {
+                    NavigateToDir(_dirEntries[_currentIndex].path);
+                    _shouldRedrawLevelReview = true;
+                } else {
+                    _uiLocked = true;
+                }
             } 
         }
 
@@ -262,21 +280,13 @@ internal class StartPage : EditorPage
             if (_uiLocked)
             {
                 ClearBackground(Color.Black);
-                
-                // if (_openFileDialog!.IsCompleted != true)
-                // {
-                //     DrawText("Please wait..", GetScreenWidth() / 2 - 100, GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
 
-                //     EndDrawing();
-                //     return;
-                // }
-                // if (string.IsNullOrEmpty(_openFileDialog.Result))
-                // {
-                //     _openFileDialog = null;
-                //     _uiLocked = false;
-                //     EndDrawing();
-                //     return;
-                // }
+                if (_dirEntries[_currentIndex].isDir || !_dirEntries[_currentIndex].path.EndsWith(".txt")) {
+                    _uiLocked = false;
+                    EndDrawing();
+                    return;
+                } 
+                
                 if (_loadFileTask is null)
                 {
                     _loadFileTask = Utils.LoadProjectAsync(_dirEntries[_currentIndex].path);
@@ -453,11 +463,14 @@ internal class StartPage : EditorPage
                 #region ImGui
                 rlImGui.Begin();
 
-                if (ImGui.Begin("Start##StartupWindow", ImGuiWindowFlags.NoCollapse)) {
+                var winSize = new Vector2(GetScreenWidth() - 80, GetScreenHeight() - 80);
+
+
+                if (ImGui.Begin("Start##StartupWindow", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoDocking)) {
+                    ImGui.SetWindowSize(winSize);
+                    ImGui.SetWindowPos(new(40, 40));
                     
                     ImGui.Columns(2);
-
-                    // ImGui.SetColumnWidth(0, 300);
 
                     var createClicked = ImGui.Button("Create", ImGui.GetContentRegionAvail() with { Y = 20 });
 
@@ -474,7 +487,7 @@ internal class StartPage : EditorPage
 
                     var listAvailSpace = ImGui.GetContentRegionAvail();
 
-                    if (ImGui.BeginListBox("##StartPageFileExplorerList", listAvailSpace with { Y = listAvailSpace.Y - 30 })) {
+                    if (ImGui.BeginListBox("##StartPageFileExplorerList", listAvailSpace with { Y = listAvailSpace.Y - 60 })) {
                         
                         for (var i = 0; i < _dirEntries.Length; i++) {
 
@@ -512,10 +525,13 @@ internal class StartPage : EditorPage
                     }
 
                     var openLevelClicked = ImGui.Button("Open Level", ImGui.GetContentRegionAvail() with { Y = 20 });
+                    var cancelClicked = ImGui.Button("Cancel", ImGui.GetContentRegionAvail() with { Y = 20 });
 
                     if (openLevelClicked) {
-                        // Load level
+                        _uiLocked = true;
                     }
+
+                    if (cancelClicked) GLOBALS.Page = GLOBALS.PreviousPage;
 
                     //
 
@@ -530,7 +546,7 @@ internal class StartPage : EditorPage
                     ImGui.NextColumn();
 
                     rlImGui.ImageRenderTextureFit(_levelPreviewRT, false);
-                    
+
                     ImGui.End();
                 }
 

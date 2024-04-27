@@ -13,7 +13,6 @@ using System.Text;
 using System.Threading;
 using Drizzle.Lingo.Runtime;
 using Drizzle.Logic;
-using ImGuiNET;
 using Leditor.Pages;
 using Leditor.Renderer;
 
@@ -353,6 +352,12 @@ class Program
     private static void Main()
     {
         Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
+
+        #if DEBUG
+        GLOBALS.BuildConfiguration = "Debug";
+        #else
+        GLOBALS.BuildConfiguration = "Release";
+        #endif
 
         // Initialize logging
 
@@ -809,6 +814,7 @@ void main() {
         PropsEditorPage propsPage = new() { Logger = logger };
         MainPage mainPage = new() { Logger = logger };
         StartPage startPage = new() { Logger = logger };
+        SaveProjectPage savePage = new() { Logger = logger };
         FailedTileCheckOnLoadPage failedTileCheckOnLoadPage = new() { Logger = logger };
         AssetsNukedPage assetsNukedPage = new() { Logger = logger };
         MissingAssetsPage missingAssetsPage = new() { Logger = logger };
@@ -1745,8 +1751,9 @@ void main() {
                                 GLOBALS.Page = 9;
                             }
                         }
-                        
-                        if (gShortcuts.QuickSave.Check(ctrl, shift, alt) || GLOBALS.NavSignal == 1)
+
+                        if (gShortcuts.Open.Check(ctrl, shift, alt)) GLOBALS.Page = 0;
+                        else if (gShortcuts.QuickSave.Check(ctrl, shift, alt) || GLOBALS.NavSignal == 1)
                         {
                             if (string.IsNullOrEmpty(GLOBALS.ProjectPath))
                             {
@@ -1764,11 +1771,14 @@ void main() {
                         }
                         else if (gShortcuts.QuickSaveAs.Check(ctrl, shift, alt) || GLOBALS.NavSignal == 2)
                         {
-                            _askForPath = true;
-                            _saveFileDialog = Utils.SetFilePathAsync();
-                            _isGuiLocked = true;
-                            _globalSave = true;
-                            GLOBALS.NavSignal = 0;
+                            // _askForPath = true;
+                            // _saveFileDialog = Utils.SetFilePathAsync();
+                            // _isGuiLocked = true;
+                            // _globalSave = true;
+                            // GLOBALS.NavSignal = 0;
+
+                            GLOBALS.PreviousPage = GLOBALS.Page;
+                            GLOBALS.Page = 12;
                         }
                         else if (gShortcuts.Render.Check(ctrl, shift, alt) || GLOBALS.NavSignal == 3)
                         {
@@ -1796,7 +1806,7 @@ void main() {
                         case 8: propsPage.Draw(); break;
                         case 9: settingsPage.Draw(); break;
                         case 11: newLevelPage.Draw(); break;
-                        // case 12: savePage.Draw(); break;
+                        case 12: savePage.Draw(); break;
                         case 13: failedTileCheckOnLoadPage.Draw(); break;
                         case 14: assetsNukedPage.Draw(); break;
                         case 15: missingAssetsPage.Draw(); break;
@@ -1919,6 +1929,7 @@ void main() {
         propsPage.Dispose();
         mainPage.Dispose();
         startPage.Dispose();
+        savePage.Dispose();
         failedTileCheckOnLoadPage.Dispose();
         assetsNukedPage.Dispose();
         missingAssetsPage.Dispose();
