@@ -13,7 +13,7 @@ Task("Build")
     .IsDependentOn("Clean")
     .Does(() =>
 {
-    DotNetPublish("Leditor.sln", new DotNetPublishSettings
+    DotNetPublish("Leditor/Leditor.csproj", new DotNetPublishSettings
     {
         Configuration = "Release",
         PublishSingleFile = false,
