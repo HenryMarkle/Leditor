@@ -23,6 +23,7 @@ internal class DeathScreen : ExceptionPage
     public override void Draw()
     {
         var sWidth = GetScreenWidth();
+        var sHeight = GetScreenHeight();
 
         if (GLOBALS.Settings.Misc.FunnyDeathScreen)
         {
@@ -104,6 +105,12 @@ internal class DeathScreen : ExceptionPage
                 } else {
                     DrawTextEx(GLOBALS.Font.Value, $"{Exception}", new(50, 200), 22, 1, Color.White);
                 }
+            }
+
+            if (GLOBALS.Font is null) {
+                DrawText(GLOBALS.Version, 5, sHeight - 25, 20, Color.White);
+            } else {
+                DrawTextPro(GLOBALS.Font.Value, GLOBALS.Version, new(5, sHeight - 35), new(0, 0), 0, 30, 0, Color.White);
             }
             EndDrawing();
         }
