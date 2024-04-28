@@ -221,7 +221,7 @@ internal class SaveProjectPage : EditorPage
         {
             if (_uiLocked)
             {
-                var path = Path.Combine(_currentDir, _projectName);
+                var path = Path.Combine(_currentDir, _projectName+".txt");
 
                 if (_saveResult is null)
                 {
@@ -399,6 +399,8 @@ internal class SaveProjectPage : EditorPage
                         if (_duplicateName) { 
                             ImGui.OpenPopup("Confirm Override");
                             _modalMode = true;
+                        } else {
+                            _uiLocked = true;
                         }
                     }
 

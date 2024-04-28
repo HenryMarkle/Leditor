@@ -328,6 +328,12 @@ internal class SettingsPage : EditorPage
                         var resetsIndex = GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex;
                         if (ImGui.Checkbox("Changing Categories Resets Index", ref resetsIndex))
                             GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex = resetsIndex;
+
+                        var allowUndefinedTiles = GLOBALS.Settings.TileEditor.AllowUndefinedTiles;
+
+                        if (ImGui.Checkbox("Allow Undefined Tiles", ref allowUndefinedTiles)) {
+                            GLOBALS.Settings.TileEditor.AllowUndefinedTiles = allowUndefinedTiles;
+                        }
                     }
                         break;
 

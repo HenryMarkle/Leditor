@@ -329,29 +329,30 @@ internal class StartPage : EditorPage
                     EndDrawing();
                     return;
                 }
-                
-                if (!GLOBALS.TileCheck.IsCompleted || !GLOBALS.PropCheck.IsCompleted)
-                {
-                    DrawText("Validating..", Raylib.GetScreenWidth() / 2 - 100, Raylib.GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
+
+                if (!GLOBALS.TileCheck.IsCompleted) {
+                    DrawText("Validating Tiles..", Raylib.GetScreenWidth() / 2 - 100, Raylib.GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
                     EndDrawing();
                     return;
                 }
                 
-                // Tile check failure
-                if (GLOBALS.TileCheck.Result != TileCheckResult.Ok)
+                if (!GLOBALS.PropCheck.IsCompleted)
                 {
-                    if (GLOBALS.TileCheck.Result == TileCheckResult.Missing && GLOBALS.Settings.TileEditor.AllowUndefinedTiles)
-                    {
-                    }
-                    else
-                    {
-                        GLOBALS.Page = 13;
-                        _uiLocked = false;
-                        
-                        EndDrawing();
-                        return;
-                    }
+                    DrawText("Validating Props..", Raylib.GetScreenWidth() / 2 - 100, Raylib.GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
+                    EndDrawing();
+                    return;
                 }
+
+                // Tile check failure
+                if (GLOBALS.TileCheck.Result != TileCheckResult.Ok && !GLOBALS.Settings.TileEditor.AllowUndefinedTiles)
+                {
+                    GLOBALS.Page = 13;
+                    _uiLocked = false;
+                    
+                    EndDrawing();
+                    return;
+                }
+                
 
                 // Prop check failure
                 if (GLOBALS.PropCheck.Result != PropCheckResult.Ok)
@@ -430,7 +431,7 @@ internal class StartPage : EditorPage
                 GLOBALS.Textures.GeneralLevel =
                     LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20);
                 
-                ProjectLoaded?.Invoke(this, new LevelLoadedEventArgs(GLOBALS.TileCheck.Result == TileCheckResult.Missing));
+                ProjectLoaded?.Invoke(this, new LevelLoadedEventArgs(GLOBALS.TileCheck?.Result is TileCheckResult.Missing or TileCheckResult.MissingTexture));
 
                 GLOBALS.TileCheck = null;
                 GLOBALS.PropCheck = null;

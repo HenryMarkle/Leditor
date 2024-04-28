@@ -530,6 +530,7 @@ class Program
             catch (Exception e)
             {
                 logger.Fatal($"Failed to load tiles init: {e}");
+                failedIntegrity = true;
                 throw new Exception(innerException: e, message: $"Failed to load tiles init: {e}");
             }
             
@@ -539,6 +540,16 @@ class Program
 
                 GLOBALS.MaterialCategories = [..GLOBALS.MaterialCategories, ..materialsInit.Item1];
                 GLOBALS.Materials = [..GLOBALS.Materials, ..materialsInit.Item2];
+
+                foreach (var category in materialsInit.Item2) {
+                    foreach (var (material, color) in category) {
+                        if (GLOBALS.MaterialColors.ContainsKey(material)) {
+                            throw new Exception($"Duplicate material definition \"{material}\"");
+                        } else {
+                            GLOBALS.MaterialColors.Add(material, color);
+                        }
+                    }
+                }
             }
             catch (Exception e)
             {

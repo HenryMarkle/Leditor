@@ -162,7 +162,7 @@ internal static class GLOBALS
     
     internal static string ProjectPath { get; set; } = "";
     
-    internal const string Version = "Henry's Leditor v0.9.68";
+    internal const string Version = "Henry's Leditor v0.9.69";
     internal const string RaylibVersion = "Raylib v5.0.0";
     internal static string BuildConfiguration { get; set; } = "Unknown";
 
@@ -369,7 +369,7 @@ internal static class GLOBALS
     ];
     
     /// A map of each material and its associated color; used when loading a level.
-    internal static Dictionary<string, Color> MaterialColors => new()
+    internal static Dictionary<string, Color> MaterialColors { get; set; } = new()
     {
         ["Standard"] = new(150, 150, 150, 255),
         ["Concrete"] = new(150, 255, 255, 255),
