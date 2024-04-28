@@ -164,7 +164,7 @@ internal static class GLOBALS
     
     internal const string Version = "Henry's Leditor v0.9.69";
     internal const string RaylibVersion = "Raylib v5.0.0";
-    internal static string BuildConfiguration { get; set; } = "Unknown";
+    internal static string BuildConfiguration { get; set; } = "Build Configuration: Unknown";
 
     internal static int MinScreenWidth => 1280;
     internal static int MinScreenHeight => 800;

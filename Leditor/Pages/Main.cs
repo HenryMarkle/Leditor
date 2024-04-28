@@ -306,40 +306,6 @@ internal class MainPage : EditorPage, IContextListener
 
         if (!_isGuiLocked)
         {
-            
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
-            // {
-            //     GLOBALS.Page = 2;
-            // }
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt))
-            // {
-            //     GLOBALS.Page = 3;
-            // }
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
-            // {
-            //     GLOBALS.Page = 4;
-            // }
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt))
-            // {
-            //     GLOBALS.Page = 5;
-            // }
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
-            // {
-            //     GLOBALS.Page = 6;
-            // }
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
-            // {
-            //     GLOBALS.Page = 7;
-            // }
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt))
-            // {
-            //     GLOBALS.Page = 8;
-            // }
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt))
-            // {
-            //     GLOBALS.Page = 9;
-            // }
-
             // handle zoom
             var mainPageWheel = GetMouseWheelMove();
             if (mainPageWheel != 0)

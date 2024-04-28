@@ -108,22 +108,7 @@ internal class SaveProjectPage : EditorPage
         
         try
         {
-            var strTask = Leditor.Serialization.Exporters.ExportAsync(GLOBALS.Level);
-
-            // export light map
-            // var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.texture);
-            //
-            // unsafe
-            // {
-            //     ImageFlipVertical(&image);
-            // }
-            //
-            // var parent = Directory.GetParent(path)?.FullName ?? GLOBALS.ProjectPath;
-            // var name = Path.GetFileNameWithoutExtension(path);
-            //         
-            // ExportImage(image, Path.Combine(parent, name+".png"));
-            //
-            // UnloadImage(image);
+            var strTask = Serialization.Exporters.ExportAsync(GLOBALS.Level);
 
             var str = await strTask;
             

@@ -1290,6 +1290,7 @@ internal static class Printers
         
         DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
         DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
+        DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
     }
 
     internal static RL.Managed.Image GenerateLevelReviewImage() 

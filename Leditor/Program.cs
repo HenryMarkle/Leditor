@@ -354,9 +354,9 @@ class Program
         Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
 
         #if DEBUG
-        GLOBALS.BuildConfiguration = "Debug";
+        GLOBALS.BuildConfiguration = "Build Configuration: Debug";
         #else
-        GLOBALS.BuildConfiguration = "Release";
+        GLOBALS.BuildConfiguration = "Build Configuration: Release";
         #endif
 
         // Initialize logging
@@ -1023,6 +1023,9 @@ void main() {
                 continue;
                 #endregion
                 skip_failed_integrity:
+                
+                
+                
                 #region Splashscreen
                 if (initialFrames < 180 && GLOBALS.Settings.Misc.SplashScreen)
                 {
@@ -1047,7 +1050,11 @@ void main() {
                     if (initialFrames > 70)
                     {
                         DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
-                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
+                    }
+
+                    if (initialFrames > 80)
+                    {
+                        DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
                     }
 
                     if (initialFrames > 90)
@@ -1247,6 +1254,7 @@ void main() {
 
                         DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
                         DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
+                        DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
                         
                         
                         if (GLOBALS.Font is null)
@@ -1291,6 +1299,7 @@ void main() {
 
                         DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
                         DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
+                        DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
                         
                         if (GLOBALS.Font is null)
                             DrawText("Loading light brushed", 100, height - 120, 20, Color.White);
@@ -1334,6 +1343,7 @@ void main() {
 
                     DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
                     DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
+                    DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
                         
                     if (GLOBALS.Font is null)
                         DrawText("Loading cache", 100, height - 120, 20, Color.White);
@@ -1375,6 +1385,7 @@ void main() {
                     
                         DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
                         DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
+                        DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
                             
                         if (GLOBALS.Font is null)
                             DrawText("Initializing Renderer Runtime", 100, height - 120, 20, Color.White);
@@ -1525,6 +1536,17 @@ void main() {
                                 _saveFileDialog = null;
                                 _saveResult = null;
                                 _isGuiLocked = false;
+
+                                // Export level image to cache
+                                if (!Directory.Exists(Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews"))) {
+                                    Directory.CreateDirectory(Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews"));
+                                }
+
+                                using var levelImg = Printers.GenerateLevelReviewImage();
+
+                                ExportImage(levelImg, Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews", GLOBALS.Level.ProjectName+".png"));
+
+
                                 EndDrawing();
                             }
                         }
@@ -1582,6 +1604,16 @@ void main() {
                         _saveFileDialog = null;
                         _saveResult = null;
                         _isGuiLocked = false;
+
+                        // Export level image to cache
+                        if (!Directory.Exists(Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews"))) {
+                            Directory.CreateDirectory(Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews"));
+                        }
+
+                        using var levelImg = Printers.GenerateLevelReviewImage();
+
+                        ExportImage(levelImg, Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews", GLOBALS.Level.ProjectName+".png"));
+
                         EndDrawing();
                     }
                 }
@@ -1608,6 +1640,7 @@ void main() {
                     
                     EndDrawing();
                 }
+                // turn into popup modal
                 else if (GLOBALS.NavSignal == 4)
                 {
                     BeginDrawing();
@@ -1631,6 +1664,7 @@ void main() {
                     
                     ImGui.Text(GLOBALS.Version);
                     ImGui.Text(GLOBALS.RaylibVersion);
+                    ImGui.Text(GLOBALS.BuildConfiguration);
                     
                     ImGui.Spacing();
 

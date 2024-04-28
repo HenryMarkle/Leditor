@@ -484,7 +484,8 @@ internal class StartPage : EditorPage
                     ImGui.SameLine();
                     
                     ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-                    var pathUpdated = ImGui.InputText("##FilePathBuffer", ref _currentDir, 260, ImGuiInputTextFlags.None);
+
+                    var pathUpdated = ImGui.InputText("##FilePathBuffer", ref _currentDir, 260, ImGuiInputTextFlags.AutoSelectAll);
 
                     var listAvailSpace = ImGui.GetContentRegionAvail();
 
@@ -525,11 +526,21 @@ internal class StartPage : EditorPage
                         }
                     }
 
+                    var loadableLevel = _currentIndex >= 0 && 
+                        _currentIndex < _dirEntries.Length && 
+                        !_dirEntries[_currentIndex].isDir;
+
+                    if (!loadableLevel) ImGui.BeginDisabled();
+
                     var openLevelClicked = ImGui.Button("Open Level", ImGui.GetContentRegionAvail() with { Y = 20 });
+                    
+                    if (!loadableLevel) ImGui.EndDisabled();
+                    
                     var cancelClicked = ImGui.Button("Cancel", ImGui.GetContentRegionAvail() with { Y = 20 });
 
                     if (openLevelClicked) {
                         _uiLocked = true;
+                            
                     }
 
                     if (cancelClicked) GLOBALS.Page = GLOBALS.PreviousPage;
