@@ -436,10 +436,10 @@ internal class LightEditorPage : EditorPage
 
                 if (_stretchMode)
                 {
-                    BeginShaderMode(GLOBALS.Shaders.LightMapStretch);
-                    SetShaderValueTexture(GLOBALS.Shaders.LightMapStretch, GetShaderLocation(GLOBALS.Shaders.LightMapStretch, "textureSampler"), _stretchTexture);
+                    // BeginShaderMode(GLOBALS.Shaders.LightMapStretch);
+                    // SetShaderValueTexture(GLOBALS.Shaders.LightMapStretch, GetShaderLocation(GLOBALS.Shaders.LightMapStretch, "textureSampler"), _stretchTexture);
                     Printers.DrawTextureQuad(_stretchTexture, _quadPoints, Color.White with { A = 150 });
-                    EndShaderMode();
+                    // EndShaderMode();
                 }
                 else
                 {
