@@ -1045,16 +1045,21 @@ void main() {
                     );
 
 
-                    if (initialFrames > 60) DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
+                    if (initialFrames > 60) {
+                        if (GLOBALS.Font is null) DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
+                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.Version, new(700, 50), new(0, 0), 0, 30, 0, Color.White);
+                    }
 
                     if (initialFrames > 70)
                     {
-                        DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
+                        if (GLOBALS.Font is null) DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
+                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.RaylibVersion, new(700, 80), new(0, 0), 0, 30, 0, Color.White);
                     }
 
                     if (initialFrames > 80)
                     {
-                        DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
+                        if (GLOBALS.Font is null) DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
+                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.BuildConfiguration, new(700, 110), new(0, 0), 0, 30, 0, Color.White);
                     }
 
                     if (initialFrames > 90)
@@ -1252,9 +1257,14 @@ void main() {
 
                         if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
 
-                        DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
-                        DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
-                        DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
+                        if (GLOBALS.Font is null) DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
+                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.Version, new(700, 50), new(0, 0), 0, 30, 0, Color.White);
+
+                        if (GLOBALS.Font is null) DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
+                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.RaylibVersion, new(700, 80), new(0, 0), 0, 30, 0, Color.White);
+
+                        if (GLOBALS.Font is null) DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
+                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.BuildConfiguration, new(700, 110), new(0, 0), 0, 30, 0, Color.White);
                         
                         
                         if (GLOBALS.Font is null)
@@ -1297,9 +1307,14 @@ void main() {
 
                         if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
 
-                        DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
-                        DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
-                        DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
+                        if (GLOBALS.Font is null) DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
+                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.Version, new(700, 50), new(0, 0), 0, 30, 0, Color.White);
+
+                        if (GLOBALS.Font is null) DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
+                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.RaylibVersion, new(700, 80), new(0, 0), 0, 30, 0, Color.White);
+
+                        if (GLOBALS.Font is null) DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
+                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.BuildConfiguration, new(700, 110), new(0, 0), 0, 30, 0, Color.White);
                         
                         if (GLOBALS.Font is null)
                             DrawText("Loading light brushed", 100, height - 120, 20, Color.White);
@@ -1341,9 +1356,14 @@ void main() {
                         new(255, 255, 255, 255)
                     );
 
-                    DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
-                    DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
-                    DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
+                    if (GLOBALS.Font is null) DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
+                    else DrawTextPro(GLOBALS.Font.Value, GLOBALS.Version, new(700, 50), new(0, 0), 0, 30, 0, Color.White);
+
+                    if (GLOBALS.Font is null) DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
+                    else DrawTextPro(GLOBALS.Font.Value, GLOBALS.RaylibVersion, new(700, 80), new(0, 0), 0, 30, 0, Color.White);
+
+                    if (GLOBALS.Font is null) DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
+                    else DrawTextPro(GLOBALS.Font.Value, GLOBALS.BuildConfiguration, new(700, 110), new(0, 0), 0, 30, 0, Color.White);
                         
                     if (GLOBALS.Font is null)
                         DrawText("Loading cache", 100, height - 120, 20, Color.White);
@@ -1383,9 +1403,14 @@ void main() {
                             new(255, 255, 255, 255)
                         );
                     
-                        DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
-                        DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
-                        DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
+                        if (GLOBALS.Font is null) DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
+                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.Version, new(700, 50), new(0, 0), 0, 30, 0, Color.White);
+
+                        if (GLOBALS.Font is null) DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
+                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.RaylibVersion, new(700, 80), new(0, 0), 0, 30, 0, Color.White);
+
+                        if (GLOBALS.Font is null) DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
+                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.BuildConfiguration, new(700, 110), new(0, 0), 0, 30, 0, Color.White);
                             
                         if (GLOBALS.Font is null)
                             DrawText("Initializing Renderer Runtime", 100, height - 120, 20, Color.White);

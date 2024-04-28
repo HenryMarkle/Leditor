@@ -1288,9 +1288,14 @@ internal static class Printers
 
         if (!version) return;
         
-        DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
-        DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
-        DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
+        if (GLOBALS.Font is null) DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
+        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.Version, new(700, 50), new(0, 0), 0, 30, 0, Color.White);
+
+        if (GLOBALS.Font is null) DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
+        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.RaylibVersion, new(700, 80), new(0, 0), 0, 30, 0, Color.White);
+
+        if (GLOBALS.Font is null) DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
+        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.BuildConfiguration, new(700, 110), new(0, 0), 0, 30, 0, Color.White);
     }
 
     internal static RL.Managed.Image GenerateLevelReviewImage() 

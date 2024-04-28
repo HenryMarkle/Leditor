@@ -189,14 +189,6 @@ internal class SaveProjectPage : EditorPage
                 Utils.Restrict(ref _currentIndex, 0, _dirEntries.Length - 1);
             }
 
-            if (IsKeyPressed(KeyboardKey.Left)) {
-                NavigateUp();
-            }
-
-            if (_dirEntries.Length > 0 && (IsKeyPressed(KeyboardKey.Right))) {
-                NavigateToDir(_dirEntries[_currentIndex].path);
-            }
-
             if (_dirEntries.Length > 0 && IsKeyPressed(KeyboardKey.Enter)) {
                 NavigateToDir(_dirEntries[_currentIndex].path);
             } 
@@ -256,8 +248,7 @@ internal class SaveProjectPage : EditorPage
                     var parent = Directory.GetParent(path)?.FullName;
 
                     GLOBALS.ProjectPath = parent ?? GLOBALS.ProjectPath;
-                    GLOBALS.Level.ProjectName =
-                        Path.GetFileNameWithoutExtension(path);
+                    GLOBALS.Level.ProjectName = _projectName;
 
                     _saveResult = null;
                     _uiLocked = false;
