@@ -2,6 +2,7 @@
 using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
+using Leditor.Types;
 
 namespace Leditor.Pages;
 
@@ -29,14 +30,14 @@ internal class CamerasEditorPage : EditorPage
     private bool _alignment = GLOBALS.Settings.CameraSettings.Alignment;
     private bool _snap = GLOBALS.Settings.CameraSettings.Snap;
 
+    public void OnPageUpdated(int previous, int @next) {
+        _shouldRedrawLevel = true;
+    }
+
     public override void Draw()
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
 
-        if (GLOBALS.PreviousPage != 4) _shouldRedrawLevel = true;
-        
-        GLOBALS.PreviousPage = 4;
-        
         var worldMouse = GetScreenToWorld2D(GetMousePosition(), _camera);
 
         #region CamerasInputHandlers
@@ -158,7 +159,10 @@ internal class CamerasEditorPage : EditorPage
                     PropsLayer1 = _showProps,
                     PropsLayer2 = _showProps,
                     PropsLayer3 = _showProps,
-                    CurrentLayer = GLOBALS.Layer
+                    PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
+                    TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
+                    Palette = GLOBALS.SelectedPalette,
+                    CurrentLayer = 0
                 });
                 _shouldRedrawLevel = false;
             }

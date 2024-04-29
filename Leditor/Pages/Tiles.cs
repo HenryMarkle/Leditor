@@ -4,6 +4,7 @@ using Leditor.Data.Tiles;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 using RenderTexture2D = Leditor.RL.Managed.RenderTexture2D;
+using Leditor.Types;
 
 namespace Leditor.Pages;
 
@@ -1031,10 +1032,12 @@ internal class TileEditorPage : EditorPage, IDisposable
         EndTextureMode();
     }
 
+    public void OnPageUpdated(int previous, int @next) {
+        _shouldRedrawLevel = true;
+    }
+
     public override void Draw()
     {
-        if (GLOBALS.PreviousPage != 3) _shouldRedrawLevel = true;
-
         if (_autoTiler is null)
         {
             _autoTiler = new AutoTiler(
@@ -1850,7 +1853,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                 PropsLayer2 = false,
                 PropsLayer3 = false,
                 Water = false,
-                TintedTiles = GLOBALS.Settings.TileEditor.TintedTiles,
+                TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
+                Palette = GLOBALS.SelectedPalette,
                 Grid = false
             });
             _shouldRedrawLevel = false;
@@ -2532,15 +2536,6 @@ internal class TileEditorPage : EditorPage, IDisposable
             
             if (settingsWinOpened)
             {
-                // TODO: Globalize this option
-                var tinted = GLOBALS.Settings.TileEditor.TintedTiles;
-                var texturedTiles = ImGui.Checkbox("Use Textures Instead of Previews", ref tinted);
-                if (texturedTiles)
-                {
-                    GLOBALS.Settings.TileEditor.TintedTiles = tinted;
-                    _shouldRedrawLevel = true;
-                }
-                
                 //
 
                 ImGui.Checkbox("Tooltip", ref _tooltip);
@@ -2826,8 +2821,6 @@ internal class TileEditorPage : EditorPage, IDisposable
         #endregion
 
         EndDrawing();
-        
-        GLOBALS.PreviousPage = 3;
         
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera;
     }

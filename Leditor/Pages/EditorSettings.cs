@@ -3,6 +3,8 @@ using System.Text.Json;
 using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
+using Leditor.Types;
+
 
 namespace Leditor.Pages;
 
@@ -36,8 +38,6 @@ internal class SettingsPage : EditorPage
     
     public override void Draw()
     {
-        GLOBALS.PreviousPage = 9;
-        
         #region Shortcuts
         
         if (!_assigningShortcut)

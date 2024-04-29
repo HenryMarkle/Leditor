@@ -168,6 +168,7 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
         {
             Context.ProjectCreated += listener.OnProjectCreated;
             Context.ProjectLoaded += listener.OnProjectLoaded;
+            Context.PageUpdated += listener.OnPageUpdated;
         }
         
         Logger.Debug($"Registered page with id {id}");
@@ -194,6 +195,7 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
         {
             Context.ProjectCreated += listener.OnProjectCreated;
             Context.ProjectLoaded += listener.OnProjectLoaded;
+            Context.PageUpdated += listener.OnPageUpdated;
         }
         
         Logger.Debug($"Registered page with id {id}");
@@ -310,6 +312,7 @@ internal sealed class Pager(Serilog.ILogger logger, Context context) : IDisposab
             {
                 Context.ProjectCreated -= listener.OnProjectCreated;
                 Context.ProjectLoaded -= listener.OnProjectLoaded;
+                Context.PageUpdated -= listener.OnPageUpdated;
             }
             
             page?.Dispose();

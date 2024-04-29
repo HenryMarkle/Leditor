@@ -1,6 +1,7 @@
 ﻿global using Raylib_cs;
 using System.Globalization;
 using static Raylib_cs.Raylib;
+using Leditor.Types;
 
 using rlImGui_cs;
 
@@ -25,50 +26,50 @@ class Program
     // Used to load geo blocks menu item textures.
     // Do not alter the indices, and do NOT call before InitWindow()
     private static Texture2D[] LoadUiTextures() => [
-        LoadTexture("assets/geo/ui/solid.png"),             // 0
-        LoadTexture("assets/geo/ui/air.png"),               // 1
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/solid.png")),             // 0
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/air.png")),               // 1
         // LoadTexture("assets/geo/ui/slopebr.png"),     
-        LoadTexture("assets/geo/ui/slopebl.png"),           // 2
-        LoadTexture("assets/geo/ui/multisolid.png"),        // 3
-        LoadTexture("assets/geo/ui/multiair.png"),          // 4
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/slopebl.png")),           // 2
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/multisolid.png")),        // 3
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/multiair.png")),          // 4
         // LoadTexture("assets/geo/ui/slopetr.png"),        
         // LoadTexture("assets/geo/ui/slopetl.png"),        
-        LoadTexture("assets/geo/ui/platform.png"),          // 5
-        LoadTexture("assets/geo/ui/move.png"),              // 6
-        LoadTexture("assets/geo/ui/rock.png"),              // 7
-        LoadTexture("assets/geo/ui/spear.png"),             // 8
-        LoadTexture("assets/geo/ui/crack.png"),             // 9
-        LoadTexture("assets/geo/ui/ph.png"),                // 10
-        LoadTexture("assets/geo/ui/pv.png"),                // 11
-        LoadTexture("assets/geo/ui/glass.png"),             // 12
-        LoadTexture("assets/geo/ui/backcopy.png"),          // 13
-        LoadTexture("assets/geo/ui/entry.png"),             // 14
-        LoadTexture("assets/geo/ui/shortcut.png"),          // 15
-        LoadTexture("assets/geo/ui/den.png"),               // 16
-        LoadTexture("assets/geo/ui/passage.png"),           // 17
-        LoadTexture("assets/geo/ui/bathive.png"),           // 18
-        LoadTexture("assets/geo/ui/waterfall.png"),         // 19
-        LoadTexture("assets/geo/ui/scav.png"),              // 20
-        LoadTexture("assets/geo/ui/wack.png"),              // 21
-        LoadTexture("assets/geo/ui/garbageworm.png"),       // 22
-        LoadTexture("assets/geo/ui/worm.png"),              // 23
-        LoadTexture("assets/geo/ui/forbidflychains.png"),   // 24
-        LoadTexture("assets/geo/ui/clearall.png"),          // 25
-        LoadTexture("assets/geo/ui/save-to-memory.png"),    // 26
-        LoadTexture("assets/geo/ui/load-from-memory.png"),  // 27
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/platform.png")),          // 5
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/move.png")),              // 6
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/rock.png")),              // 7
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/spear.png")),             // 8
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/crack.png")),             // 9
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/ph.png")),                // 10
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/pv.png")),                // 11
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/glass.png")),             // 12
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/backcopy.png")),          // 13
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/entry.png")),             // 14
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/shortcut.png")),          // 15
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/den.png")),               // 16
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/passage.png")),           // 17
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/bathive.png")),           // 18
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/waterfall.png")),         // 19
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/scav.png")),              // 20
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/wack.png")),              // 21
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/garbageworm.png")),       // 22
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/worm.png")),              // 23
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/forbidflychains.png")),   // 24
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/clearall.png")),          // 25
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/save-to-memory.png")),    // 26
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ui/load-from-memory.png")),  // 27
     ];
 
     // Used to load geo block textures.
     // Do not alter the indices, and do NOT call before InitWindow()
     private static Texture2D[] LoadGeoTextures() => [
         // 0: air
-        LoadTexture("assets/geo/solid.png"),
-        LoadTexture("assets/geo/cbl.png"),
-        LoadTexture("assets/geo/cbr.png"),
-        LoadTexture("assets/geo/ctl.png"),
-        LoadTexture("assets/geo/ctr.png"),
-        LoadTexture("assets/geo/platform.png"),
-        LoadTexture("assets/geo/entryblock.png"),
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/solid.png")),
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/cbl.png")),
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/cbr.png")),
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ctl.png")),
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ctr.png")),
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/platform.png")),
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/entryblock.png")),
         // 7: NONE
         // 8: NONE
         LoadTexture("assets/geo/thickglass.png"),
@@ -78,41 +79,41 @@ class Program
     // Used to load geo stackables textures.
     // And you guessed it: do not alter the indices, and do NOT call before InitWindow()
     static Texture2D[] LoadStackableTextures() => [
-        LoadTexture("assets/geo/ph.png"),             // 0
-        LoadTexture("assets/geo/pv.png"),             // 1
-        LoadTexture("assets/geo/bathive.png"),        // 2
-        LoadTexture("assets/geo/dot.png"),            // 3
-        LoadTexture("assets/geo/crackbl.png"),        // 4
-        LoadTexture("assets/geo/crackbr.png"),        // 5
-        LoadTexture("assets/geo/crackc.png"),         // 6
-        LoadTexture("assets/geo/crackh.png"),         // 7
-        LoadTexture("assets/geo/cracklbr.png"),       // 8
-        LoadTexture("assets/geo/cracktbr.png"),       // 9
-        LoadTexture("assets/geo/cracktl.png"),        // 10
-        LoadTexture("assets/geo/cracktlb.png"),       // 11
-        LoadTexture("assets/geo/cracktlr.png"),       // 12
-        LoadTexture("assets/geo/cracktr.png"),        // 13
-        LoadTexture("assets/geo/cracku.png"),         // 14
-        LoadTexture("assets/geo/crackv.png"),         // 15
-        LoadTexture("assets/geo/garbageworm.png"),    // 16
-        LoadTexture("assets/geo/scav.png"),           // 17
-        LoadTexture("assets/geo/rock.png"),           // 18
-        LoadTexture("assets/geo/waterfall.png"),      // 19
-        LoadTexture("assets/geo/wack.png"),           // 20
-        LoadTexture("assets/geo/worm.png"),           // 21
-        LoadTexture("assets/geo/entryb.png"),         // 22
-        LoadTexture("assets/geo/entryl.png"),         // 23
-        LoadTexture("assets/geo/entryr.png"),         // 24
-        LoadTexture("assets/geo/entryt.png"),         // 25
-        LoadTexture("assets/geo/looseentry.png"),     // 26
-        LoadTexture("assets/geo/passage.png"),        // 27
-        LoadTexture("assets/geo/den.png"),            // 28
-        LoadTexture("assets/geo/spear.png"),          // 29
-        LoadTexture("assets/geo/forbidflychains.png"),// 30
-        LoadTexture("assets/geo/crackb.png"),         // 31
-        LoadTexture("assets/geo/crackr.png"),         // 32
-        LoadTexture("assets/geo/crackt.png"),         // 33
-        LoadTexture("assets/geo/crackl.png"),         // 34
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/ph.png")),             // 0
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/pv.png")),             // 1
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/bathive.png")),        // 2
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/dot.png")),            // 3
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/crackbl.png")),        // 4
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/crackbr.png")),        // 5
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/crackc.png")),         // 6
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/crackh.png")),         // 7
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/cracklbr.png")),       // 8
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/cracktbr.png")),       // 9
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/cracktl.png")),        // 10
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/cracktlb.png")),       // 11
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/cracktlr.png")),       // 12
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/cracktr.png")),        // 13
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/cracku.png")),         // 14
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/crackv.png")),         // 15
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/garbageworm.png")),    // 16
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/scav.png")),           // 17
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/rock.png")),           // 18
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/waterfall.png")),      // 19
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/wack.png")),           // 20
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/worm.png")),           // 21
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/entryb.png")),         // 22
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/entryl.png")),         // 23
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/entryr.png")),         // 24
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/entryt.png")),         // 25
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/looseentry.png")),     // 26
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/passage.png")),        // 27
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/den.png")),            // 28
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/spear.png")),          // 29
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/forbidflychains.png")),// 30
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/crackb.png")),         // 31
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/crackr.png")),         // 32
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/crackt.png")),         // 33
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/crackl.png")),         // 34
     ];
 
     private static Texture2D[] LoadPropMenuCategoryTextures() =>
@@ -737,6 +738,7 @@ class Program
 
         logger.Information("loading shaders");
 
+        GLOBALS.Shaders.GeoPalette = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "geo_palette.frag"));
         GLOBALS.Shaders.TilePreview = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "tile_preview2.frag"));
 
         // These two are used to display the light/shadow brush beneath the cursor
@@ -752,14 +754,32 @@ class Program
         GLOBALS.Shaders.StandardProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_standard.frag"));
         
+        GLOBALS.Shaders.StandardPropColored =
+            LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_standard_colored.frag"));
+        
+        GLOBALS.Shaders.StandardPropPalette =
+            LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_standard_palette.frag"));
+        
         GLOBALS.Shaders.VariedStandardProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_varied_standard.frag"));
+
+        GLOBALS.Shaders.VariedStandardPropColored =
+            LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_varied_standard_colored.frag"));
+        
+        GLOBALS.Shaders.VariedStandardPropPalette =
+            LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_varied_standard_palette.frag"));
         
         GLOBALS.Shaders.SoftProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_soft.frag"));
         
+        GLOBALS.Shaders.SoftPropPalette =
+            LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_soft_palette.frag"));
+        
         GLOBALS.Shaders.VariedSoftProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_varied_soft.frag"));
+        
+        GLOBALS.Shaders.VariedSoftPropPalette =
+            LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_varied_soft_palette.frag"));
         
         GLOBALS.Shaders.SimpleDecalProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_simple_decal.frag"));
@@ -785,6 +805,9 @@ class Program
         GLOBALS.Shaders.LightMapStretch =
             LoadShader(null,
                 Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "lightmap_stretch.frag"));
+
+        GLOBALS.Shaders.TilePalette = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "tile_palette.frag"));
+        GLOBALS.Shaders.BoxTilePalette = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "tile_box_palette.frag"));
 
         GLOBALS.Shaders.VFlip = LoadShaderFromMemory(null, @"#version 330
 in vec2 fragTexCoord;
@@ -882,6 +905,14 @@ void main() {
         mainPage.ProjectLoaded += dimensionsPage.OnProjectLoaded;
         
         newLevelPage.ProjectCreated += propsPage.OnProjectCreated;
+
+        GLOBALS.PageUpdated += mainPage.OnPageUpdated;
+        GLOBALS.PageUpdated += tilePage.OnPageUpdated;
+        GLOBALS.PageUpdated += lightPage.OnPageUpdated;
+        GLOBALS.PageUpdated += effectsPage.OnPageUpdated;
+        GLOBALS.PageUpdated += propsPage.OnPageUpdated;
+        GLOBALS.PageUpdated += camerasPage.OnPageUpdated;
+        GLOBALS.PageUpdated += savePage.OnPageUpdated;
         //
 
         unsafe
@@ -972,6 +1003,14 @@ void main() {
         
         Task<Data.Tiles.TileDex>? tileDexTask = null;
         Task<Data.Props.PropDex>? propDexTask = null;
+
+        var palettesDirExists = Directory.Exists(GLOBALS.Paths.PalettesDirectory);
+
+        PaletteLoader? paletteLoader = palettesDirExists 
+            ? new(GLOBALS.Paths.PalettesDirectory) 
+            : null;
+        
+        var paletteLoadProgress = 0;
 
         var fatalException = false;
         
@@ -1220,8 +1259,44 @@ void main() {
                     EndDrawing();
                     continue;
                 }
-                
+
                 skip_prop_load:
+
+                if (palettesDirExists && !paletteLoader!.Done)
+                {
+                    paletteLoadProgress++;
+
+                    while (paletteLoadProgress % loadRate != 0) {
+                        if (paletteLoader!.Proceed()) {
+                            var (textures, names) = paletteLoader!.GetPalettes();
+
+                            GLOBALS.Textures.Palettes = textures;
+                            GLOBALS.Textures.PaletteNames = names;
+
+                            if (textures.Length > 0) GLOBALS.SelectedPalette = textures[0];
+                            
+                            break;
+                        }
+
+                        paletteLoadProgress++;
+                    }
+
+                    var width = GetScreenWidth();
+                    var height = GetScreenHeight();
+                    
+                    BeginDrawing();
+                    Printers.DrawSplashScreen(true);
+
+                    if (GLOBALS.Font is null)
+                            DrawText("Loading Palettes", 100, height - 120, 20, Color.White);
+                        else
+                            DrawTextEx(GLOBALS.Font.Value, "Loading Palettes", new Vector2(100, height - 120), 20, 1, Color.White);
+
+                    Printers.DrawProgressBar(new Rectangle(100, height - 100, width - 200, 30), paletteLoadProgress, paletteLoader.TotalProgress, false, Color.White);
+                    EndDrawing();
+                    continue;
+                }
+
                 // TODO: To be replaced
                 if (!isLoadingTexturesDone)
                 {
@@ -1827,7 +1902,6 @@ void main() {
                         {
                             if (string.IsNullOrEmpty(GLOBALS.ProjectPath))
                             {
-                                GLOBALS.PreviousPage = GLOBALS.Page;
                                 GLOBALS.Page = 12;
                             }
                             else
@@ -1847,7 +1921,6 @@ void main() {
                             // _globalSave = true;
                             // GLOBALS.NavSignal = 0;
 
-                            GLOBALS.PreviousPage = GLOBALS.Page;
                             GLOBALS.Page = 12;
                         }
                         else if (gShortcuts.Render.Check(ctrl, shift, alt) || GLOBALS.NavSignal == 3)
@@ -1960,6 +2033,7 @@ void main() {
         
         logger.Debug("Unloading shaders");
 
+        UnloadShader(GLOBALS.Shaders.GeoPalette);
         UnloadShader(GLOBALS.Shaders.TilePreview);
         UnloadShader(GLOBALS.Shaders.ShadowBrush);
         UnloadShader(GLOBALS.Shaders.LightBrush);
@@ -1967,8 +2041,14 @@ void main() {
         UnloadShader(GLOBALS.Shaders.ApplyShadowBrush);
         UnloadShader(GLOBALS.Shaders.Prop);
         UnloadShader(GLOBALS.Shaders.StandardProp);
+        UnloadShader(GLOBALS.Shaders.StandardPropColored);
+        UnloadShader(GLOBALS.Shaders.StandardPropPalette);
         UnloadShader(GLOBALS.Shaders.VariedStandardProp);
+        UnloadShader(GLOBALS.Shaders.VariedStandardPropPalette);
+        UnloadShader(GLOBALS.Shaders.VariedStandardPropColored);
         UnloadShader(GLOBALS.Shaders.SoftProp);
+        UnloadShader(GLOBALS.Shaders.SoftPropPalette);
+        UnloadShader(GLOBALS.Shaders.VariedSoftPropPalette);
         UnloadShader(GLOBALS.Shaders.VariedSoftProp);
         UnloadShader(GLOBALS.Shaders.SimpleDecalProp);
         UnloadShader(GLOBALS.Shaders.VariedDecalProp);
@@ -1977,6 +2057,8 @@ void main() {
         UnloadShader(GLOBALS.Shaders.LongProp);
         UnloadShader(GLOBALS.Shaders.DefaultProp);
         UnloadShader(GLOBALS.Shaders.PreviewColoredTileProp);
+        UnloadShader(GLOBALS.Shaders.TilePalette);
+        UnloadShader(GLOBALS.Shaders.BoxTilePalette);
         UnloadShader(GLOBALS.Shaders.LightMapStretch);
         
         UnloadShader(GLOBALS.Shaders.VFlip);
@@ -2008,6 +2090,8 @@ void main() {
         missingInitFilePage.Dispose();
         experimentalGeometryPage.Dispose();
         settingsPage.Dispose();
+
+        paletteLoader?.Dispose();
 
         //
         rlImGui.Shutdown();

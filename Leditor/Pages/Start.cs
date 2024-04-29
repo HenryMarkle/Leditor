@@ -238,8 +238,6 @@ internal class StartPage : EditorPage
 
     public override void Draw()
     {
-        GLOBALS.Page = 0;
-
         if (!_uiLocked) {
             if (_dirEntries.Length > 0 && (IsKeyPressed(KeyboardKey.Down))) {
                 _currentIndex++;

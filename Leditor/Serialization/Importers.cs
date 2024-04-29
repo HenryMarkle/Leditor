@@ -521,9 +521,13 @@ public static class Importers {
                     ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(property))
                     : NumberToInteger(property);
 
+            var deNullVariation = variation is null ? 0 : getIntProperty(variation) - 1;
+
+            if (deNullVariation < 0) deNullVariation = 0;
+
             BasicPropSettings settings = type switch
             {
-                InitPropType.VariedStandard => new PropVariedSettings(depth, rng.Next(1000), 0, getIntProperty(variation) - 1),
+                InitPropType.VariedStandard => new PropVariedSettings(depth, rng.Next(1000), 0, deNullVariation),
                 InitPropType.Rope => new PropRopeSettings(depth, rng.Next(1000), 0, getIntProperty(release switch
                 {
                     AstNode.Number n => n,
@@ -532,8 +536,8 @@ public static class Importers {
                 }) switch { 1 => PropRopeRelease.Right, -1 => PropRopeRelease.Left, _ => PropRopeRelease.None }, 
                     name is "Wire" or "Zero-G Wire" ? thickness is null ? 2 : NumberToFloat(thickness) : null, 
                     name == "Zero-G Tube" ? getIntProperty(applyColor) : null),
-                InitPropType.VariedDecal => new PropVariedDecalSettings(depth, rng.Next(1000), 0, getIntProperty(variation) - 1, getIntProperty(customDepth)),
-                InitPropType.VariedSoft => new PropVariedSoftSettings(depth, rng.Next(1000), 0, getIntProperty(variation) - 1, getIntProperty(customDepth),
+                InitPropType.VariedDecal => new PropVariedDecalSettings(depth, rng.Next(1000), 0, deNullVariation, getIntProperty(customDepth)),
+                InitPropType.VariedSoft => new PropVariedSoftSettings(depth, rng.Next(1000), 0, deNullVariation, getIntProperty(customDepth),
                     ((InitVariedSoftProp)GLOBALS.Props[position.category][position.index]).Colorize == 0 ? 1 : null),
                 InitPropType.SimpleDecal => new PropSimpleDecalSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
                 InitPropType.Soft => new PropSoftSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),

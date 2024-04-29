@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿using Leditor.Types;
 using System.Numerics;
 using System.Text.Json;
 using ImGuiNET;
@@ -53,7 +53,22 @@ internal class MainPage : EditorPage, IContextListener
     private bool _showProps = true;
     
     private bool _shouldRedrawLevel = true;
-    
+
+    private bool _isVisualsWinHovered;
+    private bool _isVisualsWinDragged;
+
+
+    // 0 - Preview
+    // 1 - Tinted Texture
+    // 2 - Palette
+    private TileDrawMode _tileVisual;
+
+    // 0 - Untinted Texture
+    // 1 - Tinted Texture
+    // 2 - Palette
+    private PropDrawMode _propVisual;
+
+    private int _selectedPaletteIndex;
     
     private DrizzleRenderWindow? _renderWindow;
 
@@ -70,6 +85,10 @@ internal class MainPage : EditorPage, IContextListener
     public void OnProjectCreated(object? sender, EventArgs e)
     {
         _shouldRedrawLevel = true;
+    }
+
+    public void OnPageUpdated(int previous, int @next) {
+        if (next == 1) _shouldRedrawLevel = true;
     }
     
     private async Task<SaveProjectResult> SaveProjectAsync(string path)
@@ -288,23 +307,23 @@ internal class MainPage : EditorPage, IContextListener
         }
     }
 
+
     public override void Draw()
     {
-        if (GLOBALS.PreviousPage != 1)
-        {
-            _shouldRedrawLevel = true;
-        }
-        
-        GLOBALS.PreviousPage = 1;
+        var mouse = GetMousePosition();
 
         var width = GetScreenWidth();
         var height = GetScreenHeight();
+
+
+        var isWinBusy = _isVisualsWinHovered || _isVisualsWinDragged || _isShortcutsWinHovered || _isShortcutsWinDragged;
+
         
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
 
-        if (!_isGuiLocked)
+        if (!_isGuiLocked && !isWinBusy)
         {
             // handle zoom
             var mainPageWheel = GetMouseWheelMove();
@@ -719,16 +738,19 @@ internal class MainPage : EditorPage, IContextListener
                 {
                     Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
                     {
+                        CurrentLayer = 0,
                         Water = _showWater,
                         WaterAtFront = GLOBALS.Level.WaterAtFront,
-                        TintedTiles = GLOBALS.Settings.GeneralSettings.FancyTiles,
-                        TintedProps = GLOBALS.Settings.GeneralSettings.FancyProps,
+                        TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
+                        PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
                         TilesLayer1 = _showTiles,
                         TilesLayer2 = _showTiles,
                         TilesLayer3 = _showTiles,
                         PropsLayer1 = _showProps,
                         PropsLayer2 = _showProps,
                         PropsLayer3 = _showProps,
+                        HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
+                        Palette = GLOBALS.SelectedPalette
                     });
                     _shouldRedrawLevel = false;
                 }
@@ -874,7 +896,6 @@ internal class MainPage : EditorPage, IContextListener
                         _fileDialogMode = 0;
                         if (string.IsNullOrEmpty(GLOBALS.ProjectPath))
                         {
-                            GLOBALS.PreviousPage = GLOBALS.Page;
                             GLOBALS.Page = 12;
                         }
                         else
@@ -987,36 +1008,6 @@ internal class MainPage : EditorPage, IContextListener
                         _shouldRedrawLevel = true;
                     }
                     
-                    if (ImGui.Checkbox("Tiles", ref _showTiles))
-                    {
-                        _shouldRedrawLevel = true;
-                    }
-
-                    if (_showTiles)
-                    {
-                        var fancyTiles = GLOBALS.Settings.GeneralSettings.FancyTiles;
-                        if (ImGui.Checkbox("Fancy Tiles", ref fancyTiles))
-                        {
-                            _shouldRedrawLevel = true;
-                            GLOBALS.Settings.GeneralSettings.FancyTiles = fancyTiles;
-                        }
-                    }
-
-                    if (ImGui.Checkbox("Props", ref _showProps))
-                    {
-                        _shouldRedrawLevel = true;
-                    }
-
-                    if (_showProps)
-                    {
-                        var fancyProps = GLOBALS.Settings.GeneralSettings.FancyProps;
-                        if (ImGui.Checkbox("Fancy Props", ref fancyProps))
-                        {
-                            _shouldRedrawLevel = true;
-                            GLOBALS.Settings.GeneralSettings.FancyProps = fancyProps;
-                        }
-                    }
-                    
 
                     // Save Settings
                     
@@ -1033,6 +1024,96 @@ internal class MainPage : EditorPage, IContextListener
                         }
                     }
 
+                    ImGui.End();
+                }
+
+                var visualsWinOpened = ImGui.Begin("Visuals##MainTextureVisualsWindow");
+
+                var visualsWinPos = ImGui.GetWindowPos();
+                var visualsWinSize = ImGui.GetWindowSize();
+
+                //
+                if (CheckCollisionPointRec(mouse, new(visualsWinPos.X - 5, visualsWinPos.Y, visualsWinSize.X + 10, visualsWinSize.Y)))
+                {
+                    _isVisualsWinHovered = true;
+
+                    if (IsMouseButtonDown(MouseButton.Left)) _isVisualsWinDragged = true;
+                }
+                else
+                {
+                    _isVisualsWinHovered = false;
+                }
+
+                if (IsMouseButtonReleased(MouseButton.Left) && _isVisualsWinDragged) _isVisualsWinDragged = false;
+                //
+
+                if (visualsWinOpened) {
+                    var highContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast;
+
+                    if (ImGui.Checkbox("Non-current layer is transparent", ref highContrast))
+                    {
+                        GLOBALS.Settings.GeneralSettings.HighLayerContrast = highContrast;
+                        _shouldRedrawLevel = true;
+                    }
+
+                    var tileVisual = (int)GLOBALS.Settings.GeneralSettings.DrawTileMode;
+                    var propVisual = (int)GLOBALS.Settings.GeneralSettings.DrawPropMode;
+
+                    if (ImGui.Checkbox("Show Tiles", ref _showTiles)) _shouldRedrawLevel = true;
+
+                    if (ImGui.Combo("Tiles", ref tileVisual, "Preview\0Tinted Texture\0Palette")) {
+                        _shouldRedrawLevel = true;
+                        GLOBALS.Settings.GeneralSettings.DrawTileMode = (TileDrawMode)tileVisual;
+                    }
+
+                    ImGui.Spacing();
+
+                    if (ImGui.Checkbox("Show Props", ref _showProps)) _shouldRedrawLevel = true;
+
+                    if (ImGui.Combo("Props", ref propVisual, "Untinted Texture\0Tinted Texture\0Palette")) {
+                        _shouldRedrawLevel = true;
+                        GLOBALS.Settings.GeneralSettings.DrawPropMode = (PropDrawMode)propVisual;
+                    }
+
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette || 
+                        GLOBALS.Settings.GeneralSettings.DrawPropMode == PropDrawMode.Palette) {
+                        
+                        ImGui.SeparatorText("Palettes");
+
+                        if (GLOBALS.Textures.Palettes.Length > 0) {
+                            if (ImGui.BeginListBox("##Visuals", ImGui.GetContentRegionAvail())) {
+                                
+                                for (var index = 0; index < GLOBALS.Textures.Palettes.Length; index++) {
+                                    var size = ImGui.GetContentRegionAvail();
+
+                                    var ratioX = (size.X - 10) / 32;
+
+                                    var selected = ImGui.Selectable(GLOBALS.Textures.PaletteNames[index], index == _selectedPaletteIndex);
+                                    
+                                    if (selected) {
+                                        _selectedPaletteIndex = index;
+                                        GLOBALS.SelectedPalette = GLOBALS.Textures.Palettes[index];
+                                        _shouldRedrawLevel = true;
+                                    }
+
+                                    if (ImGui.IsItemHovered()) {
+                                        ImGui.BeginTooltip();
+
+                                        rlImGui.ImageSize(GLOBALS.Textures.Palettes[index], new Vector2(320, 160));
+                                        
+                                        ImGui.EndTooltip();
+                                    }
+                                }
+
+                                ImGui.EndListBox();
+                            }
+                        } else {
+                            ImGui.Text("No palettes loaded");
+                        }
+
+                    }
+
+                    
                     ImGui.End();
                 }
                 

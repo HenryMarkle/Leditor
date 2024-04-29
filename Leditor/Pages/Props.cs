@@ -4,6 +4,8 @@ using Leditor.Data.Tiles;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 using RenderTexture2D = Leditor.RL.Managed.RenderTexture2D;
+using Leditor.Types;
+
 
 namespace Leditor.Pages;
 
@@ -125,39 +127,93 @@ internal class PropsEditorPage : EditorPage, IContextListener
     {
         var lWidth = GLOBALS.Level.Width * 16;
         var lHeight = GLOBALS.Level.Height * 16;
-        
+
+        var paletteTiles = GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette;
+
+        var geoL = LoadRenderTexture(lWidth, lHeight);
+
         BeginTextureMode(GLOBALS.Textures.GeneralLevel);
-        ClearBackground(Color.White);
+        ClearBackground(new(170, 170, 170, 255));
+        EndTextureMode();
+        
         #region TileEditorLayer3
         if (_showTileLayer3)
         {
-            if (GLOBALS.Layer == 2) DrawRectangle(0, 0, lWidth, lHeight, Color.Gray with { A = 120 });
-            
             // Draw geos first
+            if (paletteTiles) {
+                BeginTextureMode(geoL);
+                ClearBackground(Color.White with { A = 0 });
+                
+                Printers.DrawGeoLayer(
+                    2, 
+                    16, 
+                    false, 
+                    Color.Black
+                );
+                EndTextureMode();
 
-            Printers.DrawGeoLayer(
-                2, 
-                GLOBALS.PreviewScale, 
-                false, 
-                GLOBALS.Layer switch
-                {
-                    0 => Color.Gray,
-                    1 => Color.Gray,
-                    2 => Color.Black
-                }
-            );
+                BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+
+                BeginShaderMode(GLOBALS.Shaders.GeoPalette);
+
+                var textureLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "inputTexture");
+                var paletteLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "paletteTexture");
+
+                var depthLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "depth");
+                var shadingLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "shading");
+
+                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, textureLoc, geoL.Texture);
+                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, paletteLoc, GLOBALS.SelectedPalette!.Value);
+
+                SetShaderValue(GLOBALS.Shaders.GeoPalette, depthLoc, 20, ShaderUniformDataType.Int);
+                SetShaderValue(GLOBALS.Shaders.GeoPalette, shadingLoc, 1, ShaderUniformDataType.Int);
+
+                DrawTexture(geoL.Texture, 0, 0, GLOBALS.Layer == 2 ? Color.Black : Color.Black with { A = 120 });
+
+                EndShaderMode();
+
+                EndTextureMode();
+            } else {
+                BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+
+                Printers.DrawGeoLayer(
+                    2, 
+                    16, 
+                    false, 
+                    GLOBALS.Layer == 2 ? Color.Black : Color.Black with { A = 120 }
+                );
+
+                EndTextureMode();
+            }
+
 
             // then draw the tiles
 
+            BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+
+
             if (_showLayer3Tiles)
             {
-                Printers.DrawTileLayer(
-                    2, 
-                    GLOBALS.PreviewScale, 
-                    false, 
-                    true,
-                    false
-                );
+                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+                    Printers.DrawTileLayer(
+                        GLOBALS.Layer,
+                        2, 
+                        16, 
+                        false, 
+                        TileDrawMode.Palette,
+                        GLOBALS.SelectedPalette!.Value,
+                        70
+                    );
+                } else {
+                    Printers.DrawTileLayer(
+                        GLOBALS.Layer,
+                        2, 
+                        16, 
+                        false, 
+                        GLOBALS.Settings.GeneralSettings.DrawTileMode,
+                        70
+                    );
+                }
             }
             
             // Then draw the props
@@ -177,8 +233,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 // origin must be the center
                 // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                 
-                Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                
+                // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
+                Printers.DrawProp(current.type, current.tile, category, index, current.prop, 16, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+
+
                 // Draw Rope Point
                 if (current.type == InitPropType.Rope)
                 {
@@ -284,40 +342,89 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     }
                 }
             }
+
+            EndTextureMode();
         }
         #endregion
 
         #region TileEditorLayer2
         if (_showTileLayer2)
         {
-            if (GLOBALS.Layer != 2) DrawRectangle(
-                0, 
-                0, 
-                lWidth, 
-                lHeight, 
-                Color.Gray with { A = 120 });
+            if (paletteTiles) {
+                BeginTextureMode(geoL);
+                ClearBackground(Color.White with { A = 0 });
+                
+                Printers.DrawGeoLayer(
+                    1, 
+                    16, 
+                    false, 
+                    Color.Black
+                );
+                EndTextureMode();
 
-            Printers.DrawGeoLayer(
-                1, 
-                GLOBALS.PreviewScale, 
-                false, 
-                GLOBALS.Layer < 2
-                    ? Color.Black 
-                    : Color.Black with { A = 80 }
-            );
+                BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+
+                BeginShaderMode(GLOBALS.Shaders.GeoPalette);
+
+                var textureLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "inputTexture");
+                var paletteLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "paletteTexture");
+
+                var depthLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "depth");
+                var shadingLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "shading");
+
+                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, textureLoc, geoL.Texture);
+                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, paletteLoc, GLOBALS.SelectedPalette!.Value);
+
+                SetShaderValue(GLOBALS.Shaders.GeoPalette, depthLoc, 10, ShaderUniformDataType.Int);
+                SetShaderValue(GLOBALS.Shaders.GeoPalette, shadingLoc, 1, ShaderUniformDataType.Int);
+
+                DrawTexture(geoL.Texture, 0, 0, GLOBALS.Layer == 1 ? Color.Black : Color.Black with { A = 140 });
+
+                EndShaderMode();
+
+                EndTextureMode();
+            } else {
+                BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+
+                Printers.DrawGeoLayer(
+                    1, 
+                    16, 
+                    false, 
+                    GLOBALS.Layer == 1
+                        ? Color.Black 
+                        : Color.Black with { A = 140 }
+                );
+
+                EndTextureMode();
+            }
+
+
+            BeginTextureMode(GLOBALS.Textures.GeneralLevel);
 
             // Draw layer 2 tiles
 
             if (_showLayer2Tiles)
             {
-                Printers.DrawTileLayer(
-                    1, 
-                    GLOBALS.PreviewScale, 
-                    false, 
-                    true,
-                    false,
-                    (byte)(GLOBALS.Layer < 2 ? 255 : 80)
-                );
+                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+                    Printers.DrawTileLayer(
+                        GLOBALS.Layer,
+                        1, 
+                        16, 
+                        false, 
+                        TileDrawMode.Palette,
+                        GLOBALS.SelectedPalette!.Value,
+                        70
+                    );
+                } else {
+                    Printers.DrawTileLayer(
+                        GLOBALS.Layer,
+                        1, 
+                        16, 
+                        false, 
+                        GLOBALS.Settings.GeneralSettings.DrawTileMode,
+                        70
+                    );
+                }
             }
             
             // then draw the props
@@ -337,8 +444,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 // origin must be the center
                 // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                 
-                Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                
+                // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
+                Printers.DrawProp(current.type, current.tile, category, index, current.prop, 16, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+
                 // Draw Rope Point
                 if (current.type == InitPropType.Rope)
                 {
@@ -444,6 +552,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     }
                 }
             }
+
+            EndTextureMode();
             
         }
         #endregion
@@ -451,36 +561,80 @@ internal class PropsEditorPage : EditorPage, IContextListener
         #region TileEditorLayer1
         if (_showTileLayer1)
         {
-            if (GLOBALS.Layer == 0) 
-                DrawRectangle(
+            if (paletteTiles) {
+                BeginTextureMode(geoL);
+                ClearBackground(Color.White with { A = 0 });
+                
+                Printers.DrawGeoLayer(
                     0, 
+                    16, 
+                    false, 
+                    Color.Black
+                );
+                EndTextureMode();
+
+                BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+
+                BeginShaderMode(GLOBALS.Shaders.GeoPalette);
+
+                var textureLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "inputTexture");
+                var paletteLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "paletteTexture");
+
+                var depthLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "depth");
+                var shadingLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "shading");
+
+                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, textureLoc, geoL.Texture);
+                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, paletteLoc, GLOBALS.SelectedPalette!.Value);
+
+                SetShaderValue(GLOBALS.Shaders.GeoPalette, depthLoc, 0, ShaderUniformDataType.Int);
+                SetShaderValue(GLOBALS.Shaders.GeoPalette, shadingLoc, 1, ShaderUniformDataType.Int);
+
+                DrawTexture(geoL.Texture, 0, 0, GLOBALS.Layer == 0 ? Color.Black : Color.Black with { A = 120 });
+
+                EndShaderMode();
+
+                EndTextureMode();
+            } else {
+                BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+
+                Printers.DrawGeoLayer(
                     0, 
-                    lWidth, 
-                    lHeight, 
-                    Color.Gray with { A = 130 }
+                    16, 
+                    false, 
+                    GLOBALS.Layer == 0
+                        ? Color.Black 
+                        : Color.Black with { A = 120 }
                 );
 
-            Printers.DrawGeoLayer(
-                0, 
-                GLOBALS.PreviewScale, 
-                false, 
-                GLOBALS.Layer == 0
-                    ? Color.Black 
-                    : Color.Black with { A = 80 }
-            );
+                EndTextureMode();
+            }
+
+            BeginTextureMode(GLOBALS.Textures.GeneralLevel);
 
             // Draw layer 1 tiles
 
             if (_showLayer1Tiles)
             {
-                Printers.DrawTileLayer(
-                    0, 
-                    GLOBALS.PreviewScale, 
-                    false, 
-                    true,
-                    false,
-                    (byte)(GLOBALS.Layer == 0 ? 255 : 80)
-                );
+                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+                    Printers.DrawTileLayer(
+                        GLOBALS.Layer,
+                        0, 
+                        16, 
+                        false, 
+                        TileDrawMode.Palette,
+                        GLOBALS.SelectedPalette!.Value,
+                        70
+                    );
+                } else {
+                    Printers.DrawTileLayer(
+                        GLOBALS.Layer,
+                        0, 
+                        16, 
+                        false, 
+                        GLOBALS.Settings.GeneralSettings.DrawTileMode,
+                        70
+                    );
+                }
             }
             
             // then draw the props
@@ -500,8 +654,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 // origin must be the center
                 // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                 
-                Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                
+                // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
+                Printers.DrawProp(current.type, current.tile, category, index, current.prop, 16, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+
                 // Draw Rope Point
                 if (current.type == InitPropType.Rope)
                 {
@@ -616,10 +771,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     }
                 }
             }
-            
+
+            EndTextureMode();
         }
         #endregion
-        EndTextureMode();
+
+        UnloadRenderTexture(geoL);
     }
     
     private bool _showLayer1Tiles = true;
@@ -744,6 +901,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
         _selected = new bool[GLOBALS.Level.Props.Length];
     }
     #nullable disable
+
+    public void OnPageUpdated(int previous, int @next) {
+        _shouldRedrawLevel = true;
+    }
 
     private void ImportRopeModels()
     {
@@ -926,14 +1087,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
 
-        if (GLOBALS.PreviousPage != 8)
-        {
-            _shouldRedrawLevel = true;
-            _defaultDepth = GLOBALS.Layer * -10;
-        }
-
-        GLOBALS.PreviousPage = 8;
-        
         if (_currentTile is null) _currentTile = GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
         
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);

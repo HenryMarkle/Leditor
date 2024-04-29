@@ -1,6 +1,5 @@
 using System.Numerics;
-using System.Windows.Forms;
-using System.Threading;
+using Leditor.Types;
 using Leditor.Data.Tiles;
 using Pidgin;
 

@@ -98,6 +98,7 @@ public sealed class Context(Serilog.ILogger logger, TileDex tileDex) : IDisposab
         get => _page;
         set
         {
+            PageUpdated.Invoke(_page, value);
             PreviousPage = _page;
             _page = value;
             _logger?.Debug($"Page is set to {value}");
@@ -205,4 +206,7 @@ public sealed class Context(Serilog.ILogger logger, TileDex tileDex) : IDisposab
 
     public event EventHandler ProjectCreated; 
     public event EventHandler ProjectLoaded;
+    
+    public delegate void PageUpdateHandler(int previous, int @next);
+    public event PageUpdateHandler PageUpdated;
 }

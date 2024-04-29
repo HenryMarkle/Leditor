@@ -3,6 +3,7 @@ using System.Text.Json;
 using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
+using Leditor.Types;
 
 namespace Leditor.Pages;
 
@@ -97,14 +98,13 @@ internal class LightEditorPage : EditorPage
     private bool _isSettingsWinHovered;
     private bool _isSettingsWinDragged;
 
+    public void OnPageUpdated(int previous, int @next) {
+        _shouldRedrawLevel = true;
+    }
+
     public override void Draw()
     {
-        if (GLOBALS.PreviousPage != 5)
-        {
-            _shouldRedrawLevel = true;
-        }
-
-        GLOBALS.PreviousPage = 5;
+        
         
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera with { Target = GLOBALS.Camera.Target + new Vector2(300, 300)};
         var mouse = GetMousePosition();
@@ -142,7 +142,6 @@ internal class LightEditorPage : EditorPage
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
 
-        GLOBALS.PreviousPage = 5;
 
         // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt))
         // {
@@ -400,8 +399,9 @@ internal class LightEditorPage : EditorPage
                     PropsLayer2 = _showProps,
                     PropsLayer3 = _showProps,
                     
-                    TintedTiles = GLOBALS.Settings.GeneralSettings.FancyTiles,
-                    TintedProps = GLOBALS.Settings.GeneralSettings.FancyProps
+                    TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
+                    PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
+                    Palette = GLOBALS.SelectedPalette
                 });
                 _shouldRedrawLevel = false;
             }

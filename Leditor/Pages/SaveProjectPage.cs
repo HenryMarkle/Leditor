@@ -168,14 +168,16 @@ internal class SaveProjectPage : EditorPage
         if (!Disposed) throw new InvalidOperationException("SaveProjectPage was not disposed by consumer");
     }
 
+    public void OnPageUpdated(int previous, int @next) {
+        if (@next == 12) {
+            _projectName = GLOBALS.Level.ProjectName;
+            _currentDir = GLOBALS.ProjectPath;  
+        }
+    }
+
     public override void Draw()
     {
-        if (GLOBALS.Page != 12) {
-            _projectName = GLOBALS.Level.ProjectName;
-            _currentDir = GLOBALS.ProjectPath;
-            GLOBALS.Page = 12;
-        }
-
+        
         if (!_uiLocked && !_modalMode) {
             if (_dirEntries.Length > 0 && (IsKeyPressed(KeyboardKey.Down))) {
                 _currentIndex++;
@@ -189,7 +191,7 @@ internal class SaveProjectPage : EditorPage
                 Utils.Restrict(ref _currentIndex, 0, _dirEntries.Length - 1);
             }
 
-            if (_dirEntries.Length > 0 && IsKeyPressed(KeyboardKey.Enter)) {
+            if (_dirEntries.Length > 0 && _currentIndex > -1 && _currentIndex < _dirEntries.Length && IsKeyPressed(KeyboardKey.Enter)) {
                 NavigateToDir(_dirEntries[_currentIndex].path);
             } 
         }
@@ -369,7 +371,6 @@ internal class SaveProjectPage : EditorPage
                     if (string.IsNullOrEmpty(_projectName)) ImGui.BeginDisabled();
 
                     var saveLevelClicked = ImGui.Button(_duplicateName ? "Override" : "Save", ImGui.GetContentRegionAvail() with { Y = 20 });
-                    var cancelClicked = ImGui.Button("Cancel", ImGui.GetContentRegionAvail() with { Y = 20 });
 
                     if (saveLevelClicked) {
                         if (_duplicateName) { 
@@ -380,7 +381,6 @@ internal class SaveProjectPage : EditorPage
                         }
                     }
 
-                    if (cancelClicked) GLOBALS.Page = GLOBALS.PreviousPage;
 
                     if (ImGui.BeginPopupModal("Confirm Override")) {
                         if (ImGui.Button("Yes", ImGui.GetContentRegionAvail() with { Y = 20 })) {
@@ -398,6 +398,11 @@ internal class SaveProjectPage : EditorPage
                     }
 
                     if (string.IsNullOrEmpty(_projectName)) ImGui.EndDisabled();
+
+                    var cancelClicked = ImGui.Button("Cancel", ImGui.GetContentRegionAvail() with { Y = 20 });
+                    if (cancelClicked) GLOBALS.Page = GLOBALS.PreviousPage;
+
+
 
                     //
 

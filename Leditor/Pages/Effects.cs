@@ -2,6 +2,8 @@
 using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
+using Leditor.Types;
+
 
 namespace Leditor.Pages;
 
@@ -128,11 +130,11 @@ internal class EffectsEditorPage : EditorPage
                 : Color.White);
 
         Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
-        if (_showTiles) Printers.DrawTileLayer(2, GLOBALS.Scale, false, true, true);
+        if (_showTiles) Printers.DrawTileLayer(GLOBALS.Layer, 2, GLOBALS.Scale, false, TileDrawMode.Preview);
         if(_showProps) Printers.DrawPropLayer(2, _tintedProps, GLOBALS.Scale);
         
         Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
-        if (_showTiles) Printers.DrawTileLayer(1, GLOBALS.Scale, false, true, true);
+        if (_showTiles) Printers.DrawTileLayer(GLOBALS.Layer, 1, GLOBALS.Scale, false, TileDrawMode.Preview);
         if(_showProps) Printers.DrawPropLayer(1, _tintedProps, GLOBALS.Scale);
         
         if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel > -1)
@@ -147,7 +149,7 @@ internal class EffectsEditorPage : EditorPage
         }
         
         Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.Black with { A = 255 });
-        if (_showTiles) Printers.DrawTileLayer(0, GLOBALS.Scale, false, true, true);
+        if (_showTiles) Printers.DrawTileLayer(GLOBALS.Layer, 0, GLOBALS.Scale, false, TileDrawMode.Preview);
         if(_showProps) Printers.DrawPropLayer(0, _tintedProps, GLOBALS.Scale);
         
         if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
@@ -166,6 +168,10 @@ internal class EffectsEditorPage : EditorPage
         EndTextureMode();
     }
 
+    public void OnPageUpdated(int previous, int @next) {
+        _shouldRedrawLevel = true;
+    }
+
     public override void Draw()
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
@@ -173,10 +179,6 @@ internal class EffectsEditorPage : EditorPage
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
-
-        if (GLOBALS.PreviousPage != 7) _shouldRedrawLevel = true;
-        
-        GLOBALS.PreviousPage = 7;
         
         if (!_isOptionsInputActive)
         {
@@ -612,7 +614,10 @@ internal class EffectsEditorPage : EditorPage
                         PropsLayer1 = _showProps,
                         PropsLayer2 = _showProps,
                         PropsLayer3 = _showProps,
-                        TintedProps = _tintedProps
+                        CurrentLayer = 0,
+                        PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
+                        TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
+                        Palette = GLOBALS.SelectedPalette
                     });
                     _shouldRedrawLevel = false;
                 }

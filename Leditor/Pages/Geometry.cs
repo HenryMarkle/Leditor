@@ -2,6 +2,7 @@
 using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
+using Leditor.Types;
 
 namespace Leditor.Pages;
 
@@ -141,8 +142,6 @@ internal class GeoEditorPage : EditorPage
 
     public override void Draw()
     {
-        GLOBALS.PreviousPage = 2;
-        
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
 
         var scale = GLOBALS.Scale;

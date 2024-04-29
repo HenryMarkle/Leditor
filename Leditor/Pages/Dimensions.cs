@@ -72,6 +72,10 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
     }
     #nullable disable
 
+    public void OnPageUpdated(int previous, int @next) {
+        
+    }
+
     public override void Draw()
     {
         BeginDrawing();

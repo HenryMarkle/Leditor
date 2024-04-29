@@ -1,6 +1,4 @@
-﻿using static Raylib_cs.Raylib;
-
-using System.Numerics;
+﻿using Leditor.Types;
 using System.Text.Json;
 using Drizzle.Lingo.Runtime;
 using Drizzle.Ported;
@@ -44,6 +42,11 @@ internal static class GLOBALS
         public RenderTexture2D TileSpecs { get; set; }
         public RenderTexture2D PropDepth { get; set; }
         public RenderTexture2D DimensionsVisual { get; set; }
+
+        //
+
+        public Texture2D[] Palettes { get; set; } = [];
+        public string[] PaletteNames { get; set; } = [];
         
         //
         
@@ -55,6 +58,7 @@ internal static class GLOBALS
     /// </summary>
     internal class ShaderService
     {
+        internal Shader GeoPalette { get; set; }
         internal Shader TilePreview { get; set; }
         internal Shader ColoredTileProp { get; set; }
         internal Shader ColoredBoxTileProp { get; set; }
@@ -64,15 +68,24 @@ internal static class GLOBALS
         internal Shader ApplyLightBrush { get; set; }
         internal Shader Prop { get; set; }
         internal Shader StandardProp { get; set; }
+        internal Shader StandardPropColored { get; set; }
+        internal Shader StandardPropPalette { get; set; }
         internal Shader VariedStandardProp { get; set; }
+        internal Shader VariedStandardPropColored { get; set; }
+        internal Shader VariedStandardPropPalette { get; set; }
         internal Shader SoftProp { get; set; }
+        internal Shader SoftPropPalette { get; set; }
         internal Shader VariedSoftProp { get; set; }
+        internal Shader VariedSoftPropPalette { get; set; }
         internal Shader SimpleDecalProp { get; set; }
         internal Shader VariedDecalProp { get; set; }
         internal Shader LongProp { get; set; }
         internal Shader DefaultProp { get; set; }
         internal Shader PreviewColoredTileProp { get; set; }
         internal Shader LightMapStretch { get; set; }
+
+        internal Shader TilePalette { get; set; }
+        internal Shader BoxTilePalette { get; set; }
         
         //
         
@@ -108,12 +121,13 @@ internal static class GLOBALS
         internal static string TilePackagesDirectory => Path.Combine(PackagesDirectory, "tiles");
         internal static string FontsDirectory => Path.Combine(AssetsDirectory, "fonts");
         internal static string RendererDirectory => Path.Combine(AssetsDirectory, "renderer");
+        internal static string PalettesDirectory => Path.Combine(AssetsDirectory, "palettes");
 
         internal static string LevelsDirectory => Path.Combine(ExecutableDirectory, "levels");
         
         
         internal static string TilesInitPath => Path.Combine(IndexDirectory, "tiles.txt");
-        internal static string MaterialsInitPath => Path.Combine(IndexDirectory, "materials.txt");
+        internal static string MaterialsInitPath => Path.Combine(RendererDirectory, "Materials", "Init.txt");
         internal static string EffectsInitPath => Path.Combine(IndexDirectory, "effects.txt");
         internal static string PropsInitPath => Path.Combine(IndexDirectory, "props.txt");
         
@@ -190,11 +204,26 @@ internal static class GLOBALS
     internal static int InitialMatrixWidth => 72;
     internal static int InitialMatrixHeight => 43;
 
-    internal static int Page { get; set; }
-    internal static int PreviousPage { get; set; }
+    private static int _page;
+
+    internal static int PreviousPage { get; private set; }
+    internal static int Page 
+    { 
+        get => _page; 
+        set
+        {
+            PageUpdated?.Invoke(_page, value);
+            PreviousPage = _page;
+            _page = value;
+        } 
+    }
+
 
     /// Current working layer
     internal static int Layer { get; set; }
+
+    internal delegate void PageUpdateHandler(int previous, int @new);
+    internal static event PageUpdateHandler? PageUpdated;
     
     internal static Pager? Pager { get; set; }
     internal static int NavSignal { get; set; }
@@ -212,6 +241,8 @@ internal static class GLOBALS
     
     /// Global shaders; Do not access before window is initialized.
     internal static ShaderService Shaders { get; set; } = new();
+
+    internal static Texture2D? SelectedPalette { get; set; }
     
     internal static (string, Color)[] TileCategories { get; set; } = [];
     

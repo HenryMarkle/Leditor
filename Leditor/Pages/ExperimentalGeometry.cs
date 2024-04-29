@@ -1,5 +1,5 @@
 using static Raylib_cs.Raylib;
-
+using Leditor.Types;
 using System.Numerics;
 using ImGuiNET;
 using rlImGui_cs;
@@ -18,7 +18,7 @@ internal class ExperimentalGeometryPage : EditorPage
     private Camera2D _camera = new() { Zoom = 1.0f };
 
     private bool _multiselect;
-    private bool _hideGrid;
+    private bool _showGrid = true;
     private bool _clickTracker;
 
     private bool _circularBrush;
@@ -163,7 +163,6 @@ internal class ExperimentalGeometryPage : EditorPage
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
         
-        GLOBALS.PreviousPage = 2;
         var scale = GLOBALS.Scale;
 
         // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
@@ -251,7 +250,7 @@ internal class ExperimentalGeometryPage : EditorPage
 
         if (_shortcuts.ToggleGrid.Check(ctrl, shift, alt))
         {
-            _hideGrid = !_hideGrid;
+            _showGrid = !_showGrid;
         }
 
         // handle mouse drag
@@ -369,6 +368,14 @@ internal class ExperimentalGeometryPage : EditorPage
             GLOBALS.Settings.GeometryEditor.ShowTiles = !GLOBALS.Settings.GeometryEditor.ShowTiles;
 
         // multi-place/erase geos
+
+        if (IsKeyDown(GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.TempActivateMultiSelect.Key)) {
+            _allowMultiSelect = true;
+        }
+
+        if (IsKeyReleased(GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.TempActivateMultiSelect.Key)) {
+            _allowMultiSelect = false;
+        }
 
         if (_allowMultiSelect)
         {
@@ -950,11 +957,11 @@ internal class ExperimentalGeometryPage : EditorPage
                 );
                 
                 if (GLOBALS.Settings.GeometryEditor.ShowTiles && _showLayer3) Printers.DrawTileLayer(
+                    GLOBALS.Layer, 
                     2, 
                     GLOBALS.Scale, 
                     false, 
-                    !GLOBALS.Settings.TileEditor.UseTextures,
-                    GLOBALS.Settings.TileEditor.TintedTiles
+                    GLOBALS.Settings.GeneralSettings.DrawTileMode
                 );
 
                 if (_showLayer2)
@@ -967,11 +974,11 @@ internal class ExperimentalGeometryPage : EditorPage
                 );
                 
                 if (GLOBALS.Settings.GeometryEditor.ShowTiles && _showLayer2) Printers.DrawTileLayer(
+                    GLOBALS.Layer, 
                     1, 
                     GLOBALS.Scale, 
                     false, 
-                    !GLOBALS.Settings.TileEditor.UseTextures,
-                    GLOBALS.Settings.TileEditor.TintedTiles
+                    GLOBALS.Settings.GeneralSettings.DrawTileMode
                 );
                 
                 if (_showLayer3) Printers.DrawGeoLayer(
@@ -1007,16 +1014,16 @@ internal class ExperimentalGeometryPage : EditorPage
                 );
                 
                 if (GLOBALS.Settings.GeometryEditor.ShowTiles && _showLayer1) Printers.DrawTileLayer(
+                    GLOBALS.Layer, 
                     0, 
                     GLOBALS.Scale, 
                     false, 
-                    !GLOBALS.Settings.TileEditor.UseTextures,
-                    GLOBALS.Settings.TileEditor.TintedTiles
+                    GLOBALS.Settings.GeneralSettings.DrawTileMode
                 );
                 
                 // Grid
 
-                Printers.DrawGrid(GLOBALS.Scale);
+                if (_showGrid) Printers.DrawGrid(GLOBALS.Scale);
                 
                 #endregion
 
@@ -1658,6 +1665,8 @@ internal class ExperimentalGeometryPage : EditorPage
                 // Visibility
 
                 ImGui.SeparatorText("Visibility");
+
+                ImGui.Checkbox("Grid", ref _showGrid);
                 
                 var showLayer1 = _showLayer1;
                 var showLayer2 = _showLayer2;
