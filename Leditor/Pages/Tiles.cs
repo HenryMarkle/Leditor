@@ -1855,7 +1855,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                 Water = false,
                 TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
                 Palette = GLOBALS.SelectedPalette,
-                Grid = false
+                Grid = false,
+                VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePreceedingUnfocusedLayers
             });
             _shouldRedrawLevel = false;
         }
@@ -2667,7 +2668,10 @@ internal class TileEditorPage : EditorPage, IDisposable
                 DrawText("1", 48, (int)layer1Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             }
 
-            if (newLayer != GLOBALS.Layer) GLOBALS.Layer = newLayer;
+            if (newLayer != GLOBALS.Layer) {
+                GLOBALS.Layer = newLayer;
+                _shouldRedrawLevel = true;
+            }
             
             #endregion
             

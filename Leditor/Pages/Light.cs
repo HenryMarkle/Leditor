@@ -388,6 +388,7 @@ internal class LightEditorPage : EditorPage
             {
                 Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
                 {
+                    CurrentLayer = 0,
                     Water = true,
                     WaterAtFront = GLOBALS.Level.WaterAtFront,
                     

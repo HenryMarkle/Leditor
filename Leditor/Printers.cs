@@ -1400,6 +1400,7 @@ internal static class Printers
         internal bool Grid { get; init; } = false;
         internal Texture2D? Palette { get; init; } = null;
         internal bool HighLayerContrast { get; init; } = true;
+        internal bool VisiblePreceedingUnfocusedLayers { get; init; } = true;
     }
     
     internal static void DrawLevelIntoBuffer(in RenderTexture2D texture, DrawLevelParams parameters)
@@ -1529,284 +1530,293 @@ internal static class Printers
 
         EndTextureMode();
         
-        //
-        
-        if (parameters.GeometryLayer2)
-        {
-            if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                BeginTextureMode(geoL);
-                ClearBackground(Color.White with { A = 0 });
-                
-                DrawGeoLayer(
-                    1, 
-                    parameters.Scale, 
-                    false, 
-                    Color.Black
-                );
-                EndTextureMode();
+        // Layer 2
 
-                BeginTextureMode(texture);
-
-                BeginShaderMode(GLOBALS.Shaders.GeoPalette);
-
-                var textureLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "inputTexture");
-                var paletteLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "paletteTexture");
-
-                var depthLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "depth");
-                var shadingLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "shading");
-
-                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, textureLoc, geoL.Texture);
-                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, paletteLoc, parameters.Palette!.Value);
-
-                SetShaderValue(GLOBALS.Shaders.GeoPalette, depthLoc, 10, ShaderUniformDataType.Int);
-                SetShaderValue(GLOBALS.Shaders.GeoPalette, shadingLoc, 1, ShaderUniformDataType.Int);
-
-                if (parameters.HighLayerContrast) {
-                    DrawTexture(geoL.Texture, 0, 0, parameters.CurrentLayer == 1 ? Color.Black : Color.Black with { A = 140 });
-                } else {
-                    DrawTexture(geoL.Texture, 0, 0, Color.Black);
-                }
-
-                EndShaderMode();
-
-                EndTextureMode();
-            } else {
-                BeginTextureMode(texture);
-
-                if (parameters.HighLayerContrast) {
-                    DrawGeoLayer(
-                        1, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.CurrentLayer == 1
-                            ? Color.Black 
-                            : Color.Black with { A = 140 }
-                    );
-                } else {
+        if (parameters.VisiblePreceedingUnfocusedLayers || parameters.CurrentLayer is 0 or 1) {
+            if (parameters.GeometryLayer2)
+            {
+                if (parameters.TileDrawMode == TileDrawMode.Palette) {
+                    BeginTextureMode(geoL);
+                    ClearBackground(Color.White with { A = 0 });
+                    
                     DrawGeoLayer(
                         1, 
                         parameters.Scale, 
                         false, 
                         Color.Black
                     );
-                }
+                    EndTextureMode();
 
+                    BeginTextureMode(texture);
 
-                EndTextureMode();
-            }
-        }
+                    BeginShaderMode(GLOBALS.Shaders.GeoPalette);
 
-        BeginTextureMode(texture);
-        
-        if (parameters.TilesLayer2)
-        {
-            if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                if (parameters.HighLayerContrast) {
-                    DrawTileLayer(
-                        parameters.CurrentLayer,
-                        1, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.TileDrawMode,
-                        parameters.Palette!.Value,
-                        70
-                    );
+                    var textureLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "inputTexture");
+                    var paletteLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "paletteTexture");
+
+                    var depthLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "depth");
+                    var shadingLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "shading");
+
+                    SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, textureLoc, geoL.Texture);
+                    SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, paletteLoc, parameters.Palette!.Value);
+
+                    SetShaderValue(GLOBALS.Shaders.GeoPalette, depthLoc, 10, ShaderUniformDataType.Int);
+                    SetShaderValue(GLOBALS.Shaders.GeoPalette, shadingLoc, 1, ShaderUniformDataType.Int);
+
+                    if (parameters.HighLayerContrast) {
+                        DrawTexture(geoL.Texture, 0, 0, parameters.CurrentLayer == 1 ? Color.Black : Color.Black with { A = 140 });
+                    } else {
+                        DrawTexture(geoL.Texture, 0, 0, Color.Black);
+                    }
+
+                    EndShaderMode();
+
+                    EndTextureMode();
                 } else {
-                    DrawTileLayer(
-                        parameters.CurrentLayer,
-                        1, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.TileDrawMode,
-                        parameters.Palette!.Value,
-                        255
-                    );
-                }
-            } else {    
-                if (parameters.HighLayerContrast) {
-                    DrawTileLayer(
-                        parameters.CurrentLayer,
-                        1, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.TileDrawMode,
-                        70
-                    );
-                } else {
-                    DrawTileLayer(
-                        parameters.CurrentLayer,
-                        1, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.TileDrawMode,
-                        255
-                    );
+                    BeginTextureMode(texture);
+
+                    if (parameters.HighLayerContrast) {
+                        DrawGeoLayer(
+                            1, 
+                            parameters.Scale, 
+                            false, 
+                            parameters.CurrentLayer == 1
+                                ? Color.Black 
+                                : Color.Black with { A = 140 }
+                        );
+                    } else {
+                        DrawGeoLayer(
+                            1, 
+                            parameters.Scale, 
+                            false, 
+                            Color.Black
+                        );
+                    }
+
+
+                    EndTextureMode();
                 }
             }
-        }
-        
-        if (parameters.PropsLayer2)
-        {
-            DrawPropLayer(1, parameters.PropDrawMode, parameters.Palette, parameters.Scale);
-        }
-        
-        //
 
-        if (parameters.Water)
-        {
-            if (!parameters.WaterAtFront && GLOBALS.Level.WaterLevel > -1)
+            BeginTextureMode(texture);
+            
+            if (parameters.TilesLayer2)
             {
-                DrawRectangle(
-                    (-1) * parameters.Scale,
-                    (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * parameters.Scale,
-                    (GLOBALS.Level.Width + 2) * parameters.Scale,
-                    (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * parameters.Scale,
-                    new Color(0, 0, 255, 110)
-                );
-            }
-        }
-
-        EndTextureMode();
-        
-        if (parameters.GeometryLayer1)
-        {
-            if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                BeginTextureMode(geoL);
-                ClearBackground(Color.White with { A = 0 });
-                
-                DrawGeoLayer(
-                    0, 
-                    parameters.Scale, 
-                    false, 
-                    Color.Black
-                );
-                EndTextureMode();
-
-                BeginTextureMode(texture);
-
-                BeginShaderMode(GLOBALS.Shaders.GeoPalette);
-
-                var textureLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "inputTexture");
-                var paletteLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "paletteTexture");
-
-                var depthLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "depth");
-                var shadingLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "shading");
-
-                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, textureLoc, geoL.Texture);
-                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, paletteLoc, parameters.Palette!.Value);
-
-                SetShaderValue(GLOBALS.Shaders.GeoPalette, depthLoc, 0, ShaderUniformDataType.Int);
-                SetShaderValue(GLOBALS.Shaders.GeoPalette, shadingLoc, 1, ShaderUniformDataType.Int);
-
-                if (parameters.HighLayerContrast) {
-                    DrawTexture(geoL.Texture, 0, 0, parameters.CurrentLayer == 0 ? Color.Black : Color.Black with { A = 120 });
-                } else {
-                    DrawTexture(geoL.Texture, 0, 0, Color.Black);
+                if (parameters.TileDrawMode == TileDrawMode.Palette) {
+                    if (parameters.HighLayerContrast) {
+                        DrawTileLayer(
+                            parameters.CurrentLayer,
+                            1, 
+                            parameters.Scale, 
+                            false, 
+                            parameters.TileDrawMode,
+                            parameters.Palette!.Value,
+                            70
+                        );
+                    } else {
+                        DrawTileLayer(
+                            parameters.CurrentLayer,
+                            1, 
+                            parameters.Scale, 
+                            false, 
+                            parameters.TileDrawMode,
+                            parameters.Palette!.Value,
+                            255
+                        );
+                    }
+                } else {    
+                    if (parameters.HighLayerContrast) {
+                        DrawTileLayer(
+                            parameters.CurrentLayer,
+                            1, 
+                            parameters.Scale, 
+                            false, 
+                            parameters.TileDrawMode,
+                            70
+                        );
+                    } else {
+                        DrawTileLayer(
+                            parameters.CurrentLayer,
+                            1, 
+                            parameters.Scale, 
+                            false, 
+                            parameters.TileDrawMode,
+                            255
+                        );
+                    }
                 }
+            }
+            
+            if (parameters.PropsLayer2)
+            {
+                DrawPropLayer(1, parameters.PropDrawMode, parameters.Palette, parameters.Scale);
+            }
+            
+            //
 
-                EndShaderMode();
-
-                EndTextureMode();
-            } else {
-                BeginTextureMode(texture);
-
-                if (parameters.HighLayerContrast) {
-                    DrawGeoLayer(
-                        0, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.CurrentLayer == 0
-                            ? Color.Black 
-                            : Color.Black with { A = 120 }
+            if (parameters.Water)
+            {
+                if (!parameters.WaterAtFront && GLOBALS.Level.WaterLevel > -1)
+                {
+                    DrawRectangle(
+                        (-1) * parameters.Scale,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * parameters.Scale,
+                        (GLOBALS.Level.Width + 2) * parameters.Scale,
+                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * parameters.Scale,
+                        new Color(0, 0, 255, 110)
                     );
-                } else {
+                }
+            }
+
+            EndTextureMode();
+        }
+        
+
+        // Layer 1
+
+        if (parameters.VisiblePreceedingUnfocusedLayers || parameters.CurrentLayer == 0) {
+
+            if (parameters.GeometryLayer1)
+            {
+                if (parameters.TileDrawMode == TileDrawMode.Palette) {
+                    BeginTextureMode(geoL);
+                    ClearBackground(Color.White with { A = 0 });
+                    
                     DrawGeoLayer(
                         0, 
                         parameters.Scale, 
                         false, 
                         Color.Black
                     );
-                }
+                    EndTextureMode();
 
+                    BeginTextureMode(texture);
 
-                EndTextureMode();
-            }
-        }
+                    BeginShaderMode(GLOBALS.Shaders.GeoPalette);
 
-        BeginTextureMode(texture);
-        
-        if (parameters.TilesLayer1)
-        {
-            if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                if (parameters.HighLayerContrast) {
-                    DrawTileLayer(
-                        parameters.CurrentLayer,
-                        0, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.TileDrawMode,
-                        parameters.Palette!.Value,
-                        70
-                    );
+                    var textureLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "inputTexture");
+                    var paletteLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "paletteTexture");
+
+                    var depthLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "depth");
+                    var shadingLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "shading");
+
+                    SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, textureLoc, geoL.Texture);
+                    SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, paletteLoc, parameters.Palette!.Value);
+
+                    SetShaderValue(GLOBALS.Shaders.GeoPalette, depthLoc, 0, ShaderUniformDataType.Int);
+                    SetShaderValue(GLOBALS.Shaders.GeoPalette, shadingLoc, 1, ShaderUniformDataType.Int);
+
+                    if (parameters.HighLayerContrast) {
+                        DrawTexture(geoL.Texture, 0, 0, parameters.CurrentLayer == 0 ? Color.Black : Color.Black with { A = 120 });
+                    } else {
+                        DrawTexture(geoL.Texture, 0, 0, Color.Black);
+                    }
+
+                    EndShaderMode();
+
+                    EndTextureMode();
                 } else {
-                    DrawTileLayer(
-                        parameters.CurrentLayer,
-                        0, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.TileDrawMode,
-                        parameters.Palette!.Value,
-                        255
-                    );
-                }
-                
-            } else {
-                if (parameters.HighLayerContrast) {
-                    DrawTileLayer(
-                        parameters.CurrentLayer,
-                        0, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.TileDrawMode,
-                        70
-                    );
-                } else {
-                    DrawTileLayer(
-                        parameters.CurrentLayer,
-                        0, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.TileDrawMode,
-                        255
-                    );
+                    BeginTextureMode(texture);
+
+                    if (parameters.HighLayerContrast) {
+                        DrawGeoLayer(
+                            0, 
+                            parameters.Scale, 
+                            false, 
+                            parameters.CurrentLayer == 0
+                                ? Color.Black 
+                                : Color.Black with { A = 120 }
+                        );
+                    } else {
+                        DrawGeoLayer(
+                            0, 
+                            parameters.Scale, 
+                            false, 
+                            Color.Black
+                        );
+                    }
+
+
+                    EndTextureMode();
                 }
             }
-        }
-        
-        if (parameters.PropsLayer1)
-        {
-            DrawPropLayer(0, parameters.PropDrawMode, parameters.Palette, parameters.Scale);
-        }
 
-        if (parameters.Water)
-        {
-            if (parameters.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
+            BeginTextureMode(texture);
+            
+            if (parameters.TilesLayer1)
             {
-                DrawRectangle(
-                    (-1) * GLOBALS.Scale,
-                    (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                    (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                    (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                    GLOBALS.Settings.GeneralSettings.DarkTheme 
-                        ? GLOBALS.DarkThemeWaterColor 
-                        : GLOBALS.LightThemeWaterColor
-                );
+                if (parameters.TileDrawMode == TileDrawMode.Palette) {
+                    if (parameters.HighLayerContrast) {
+                        DrawTileLayer(
+                            parameters.CurrentLayer,
+                            0, 
+                            parameters.Scale, 
+                            false, 
+                            parameters.TileDrawMode,
+                            parameters.Palette!.Value,
+                            70
+                        );
+                    } else {
+                        DrawTileLayer(
+                            parameters.CurrentLayer,
+                            0, 
+                            parameters.Scale, 
+                            false, 
+                            parameters.TileDrawMode,
+                            parameters.Palette!.Value,
+                            255
+                        );
+                    }
+                    
+                } else {
+                    if (parameters.HighLayerContrast) {
+                        DrawTileLayer(
+                            parameters.CurrentLayer,
+                            0, 
+                            parameters.Scale, 
+                            false, 
+                            parameters.TileDrawMode,
+                            70
+                        );
+                    } else {
+                        DrawTileLayer(
+                            parameters.CurrentLayer,
+                            0, 
+                            parameters.Scale, 
+                            false, 
+                            parameters.TileDrawMode,
+                            255
+                        );
+                    }
+                }
             }
-        }
+            
+            if (parameters.PropsLayer1)
+            {
+                DrawPropLayer(0, parameters.PropDrawMode, parameters.Palette, parameters.Scale);
+            }
 
-        if (parameters.Grid) DrawGrid(parameters.Scale);
+            if (parameters.Water)
+            {
+                if (parameters.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
+                {
+                    DrawRectangle(
+                        (-1) * GLOBALS.Scale,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
+                        (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
+                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
+                        GLOBALS.Settings.GeneralSettings.DarkTheme 
+                            ? GLOBALS.DarkThemeWaterColor 
+                            : GLOBALS.LightThemeWaterColor
+                    );
+                }
+            }
+
+            if (parameters.Grid) DrawGrid(parameters.Scale);
+            
+            EndTextureMode();
+        }
         
-        EndTextureMode();
 
         UnloadRenderTexture(geoL);
     }

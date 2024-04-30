@@ -1048,12 +1048,33 @@ internal class MainPage : EditorPage, IContextListener
                 //
 
                 if (visualsWinOpened) {
+                    if (ImGui.Button("Take a screeshot", ImGui.GetContentRegionAvail() with { Y = 20 })) {
+                        if (!Directory.Exists(GLOBALS.Paths.ScreenshotsDirectory))
+                            Directory.CreateDirectory(GLOBALS.Paths.ScreenshotsDirectory);
+                        
+                        var img = LoadImageFromTexture(GLOBALS.Textures.GeneralLevel.Texture);
+
+                        ImageFlipVertical(ref img);
+
+                        ExportImage(img, Path.Combine(GLOBALS.Paths.ScreenshotsDirectory, $"screenshot-{(DateTime.Now.ToString("yyyy-MM-ddTHH-mm-ss"))}.png"));
+
+                        UnloadImage(img);
+                    }
+
+                    //
                     var highContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast;
 
                     if (ImGui.Checkbox("Non-current layer is transparent", ref highContrast))
                     {
                         GLOBALS.Settings.GeneralSettings.HighLayerContrast = highContrast;
                         _shouldRedrawLevel = true;
+                    }
+
+                    var visiblePreceeding = GLOBALS.Settings.GeneralSettings.VisiblePreceedingUnfocusedLayers;
+
+                    if (ImGui.Checkbox("Visible Preceeding Unfocused Layers", ref visiblePreceeding)) {
+                        _shouldRedrawLevel = true;
+                        GLOBALS.Settings.GeneralSettings.VisiblePreceedingUnfocusedLayers = visiblePreceeding;
                     }
 
                     var tileVisual = (int)GLOBALS.Settings.GeneralSettings.DrawTileMode;

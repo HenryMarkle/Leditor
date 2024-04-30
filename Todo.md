@@ -4,16 +4,15 @@ No guarantees. No promises.
 
 ## Near Future
 
-- Fix geometry editor placement inconsistencies between multi-select and single-select
-- ~~Add a third layer `specs` property support for tiles~~
-- ~~Add show/hide tiles in cameras editor~~
 - Add multi-level support
 - Add a tool to rebind tile bodies after moving the level
-- Make a better start screen
+- Add a new light/shadow previewer in the light editor
 
 ## Some Day
 
-- Make the project cross-platform
+- Add material previewer
+- Implement lazy tile-loading
+- Add a new view to preview tiles from a selectable camera prespective
 - Write a new renderer
 - Better convey multi-layer tiles in the tile editor
 - Upscale props editor to 20px per unit

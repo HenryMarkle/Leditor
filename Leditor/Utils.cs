@@ -110,7 +110,7 @@ internal static class Utils
 
     internal static void SaveSettings() {
         try {
-            var text = JsonSerializer.Serialize(GLOBALS.Settings);
+            var text = JsonSerializer.Serialize(GLOBALS.Settings, GLOBALS.JsonSerializerOptions);
             File.WriteAllText(GLOBALS.Paths.SettingsPath, text);
         } catch {
             // do nothing, I guess

@@ -170,7 +170,8 @@ public class GeneralSettings(
     TileDrawMode drawTileMode = TileDrawMode.Preview,
     PropDrawMode drawPropMode = PropDrawMode.Untinted,
     bool indexHint = true,
-    bool highLayerContrast = true
+    bool highLayerContrast = true,
+    bool visiblePreceedingUnfocusedLayers = true
     )
 {
     public bool DeveloperMode { get; set; } = developerMode;
@@ -187,6 +188,7 @@ public class GeneralSettings(
     public PropDrawMode DrawPropMode { get; set; } = drawPropMode;
     public bool IndexHint { get; set; } = indexHint;
     public bool HighLayerContrast { get; set; } = highLayerContrast;
+    public bool VisiblePreceedingUnfocusedLayers { get; set; } = visiblePreceedingUnfocusedLayers;
 }
 
 public class Settings
