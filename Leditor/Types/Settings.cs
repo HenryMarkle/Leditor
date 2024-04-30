@@ -30,9 +30,11 @@ public class GeoEditor
         bool allowOutboundsPlacement = false,
         bool showCameras = false,
         bool showTiles = false,
+        bool showProps = false,
         bool showCurrentGeoIndicator = true,
         bool legacyInterface = false,
-        bool pasteAir = false
+        bool pasteAir = false,
+        bool basicView = true
     )
     {
         LayerColors = layerColors;
@@ -40,10 +42,12 @@ public class GeoEditor
         LegacyGeoTools = legacyGeoTools;
         ShowCameras = showCameras;
         ShowTiles = showTiles;
+        ShowProps = showProps;
         AllowOutboundsPlacement = allowOutboundsPlacement;
         ShowCurrentGeoIndicator = showCurrentGeoIndicator;
         LegacyInterface = legacyInterface;
         PasteAir = pasteAir;
+        BasicView = basicView;
     }
     
     public LayerColors LayerColors { get; set; }
@@ -51,10 +55,12 @@ public class GeoEditor
     public bool LegacyGeoTools { get; set; }
     public bool ShowCameras { get; set; }
     public bool ShowTiles { get; set; }
+    public bool ShowProps { get; set; }
     public bool AllowOutboundsPlacement { get; set; }
     public bool ShowCurrentGeoIndicator { get; set; }
     public bool LegacyInterface { get; set; }
     public bool PasteAir { get; set; }
+    public bool BasicView { get; set; }
 }
 
 public class TileEditor(
@@ -62,7 +68,8 @@ public class TileEditor(
     bool tintedTiles = false, 
     bool useTextures = false,
     bool allowUndefinedTiles = true,
-    bool grid = false
+    bool grid = false,
+    bool showCameras = false
     )
 {
     public bool HoveredTileInfo { get; set; } = hoveredTileInfo;
@@ -70,6 +77,7 @@ public class TileEditor(
     public bool UseTextures { get; set; } = useTextures;
     public bool AllowUndefinedTiles { get; set; } = allowUndefinedTiles;
     public bool Grid { get; set; } = grid;
+    public bool ShowCameras { get; set; } = showCameras;
     
     public IEnumerable<AutoTiler.PathPackMeta> AutoTilerPathPacks { get; set; } = [
         new("Thin Pipes", "Vertical Pipe", "Horizontal Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),

@@ -2,6 +2,7 @@ using System.Numerics;
 using Leditor.Types;
 using Leditor.Data.Tiles;
 using Pidgin;
+using System.Text.Json;
 
 namespace Leditor;
 
@@ -107,6 +108,14 @@ internal static class Utils
         }
     }
 
+    internal static void SaveSettings() {
+        try {
+            var text = JsonSerializer.Serialize(GLOBALS.Settings);
+            File.WriteAllText(GLOBALS.Paths.SettingsPath, text);
+        } catch {
+            // do nothing, I guess
+        }
+    }
 
     internal static bool AllEqual(int[] list) => list.All(i => i == list[0]);
 

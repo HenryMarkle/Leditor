@@ -1061,7 +1061,7 @@ internal class MainPage : EditorPage, IContextListener
 
                     if (ImGui.Checkbox("Show Tiles", ref _showTiles)) _shouldRedrawLevel = true;
 
-                    if (ImGui.Combo("Tiles", ref tileVisual, "Preview\0Tinted Texture\0Palette")) {
+                    if (ImGui.Combo("Tiles", ref tileVisual, GLOBALS.Textures.Palettes.Length > 0 ? "Preview\0Tinted Texture\0Palette" : "Preview\0Tinted Texture")) {
                         _shouldRedrawLevel = true;
                         GLOBALS.Settings.GeneralSettings.DrawTileMode = (TileDrawMode)tileVisual;
                     }
@@ -1070,7 +1070,7 @@ internal class MainPage : EditorPage, IContextListener
 
                     if (ImGui.Checkbox("Show Props", ref _showProps)) _shouldRedrawLevel = true;
 
-                    if (ImGui.Combo("Props", ref propVisual, "Untinted Texture\0Tinted Texture\0Palette")) {
+                    if (ImGui.Combo("Props", ref propVisual, GLOBALS.Textures.Palettes.Length > 0 ?  "Untinted Texture\0Tinted Texture\0Palette" : "Untinted Texture\0Tinted Texture")) {
                         _shouldRedrawLevel = true;
                         GLOBALS.Settings.GeneralSettings.DrawPropMode = (PropDrawMode)propVisual;
                     }

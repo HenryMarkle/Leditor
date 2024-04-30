@@ -435,6 +435,7 @@ internal class SettingsPage : EditorPage
                         var assignToggleMultiselect = ImGui.Button($"Toggle Multi-Select: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMultiSelect}");
                         var assignEraseEverything = ImGui.Button($"Erase Everything (hold){GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.EraseEverything}");
                         var assignToggleTileVisibility = ImGui.Button($"Show/Hide Tiles: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleTileVisibility}");
+                        var assignTogglePropVisibility = ImGui.Button($"Show/Hide Props: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.TogglePropVisibility}");
                         var assignToggleMemoryLoadMode = ImGui.Button($"Toggle Copy: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMemoryLoadMode}");
                         var assignToggleMemoryDumpMode = ImGui.Button($"Toggle Paste{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMemoryDumbMode}");
                         var assignAltErase = ImGui.Button($"Erase: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.AltErase}");
@@ -449,6 +450,7 @@ internal class SettingsPage : EditorPage
                         if (assignToggleMultiselect) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMultiSelect;
                         if (assignEraseEverything) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.EraseEverything;
                         if (assignToggleTileVisibility) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleTileVisibility;
+                        if (assignTogglePropVisibility) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.TogglePropVisibility;
                         if (assignToggleMemoryLoadMode) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMemoryLoadMode;
                         if (assignToggleMemoryDumpMode) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMemoryDumbMode;
                         if (assignAltErase) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.AltErase;

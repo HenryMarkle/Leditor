@@ -913,6 +913,7 @@ void main() {
         GLOBALS.PageUpdated += propsPage.OnPageUpdated;
         GLOBALS.PageUpdated += camerasPage.OnPageUpdated;
         GLOBALS.PageUpdated += savePage.OnPageUpdated;
+        GLOBALS.PageUpdated += experimentalGeometryPage.OnPageUpdated;
         //
 
         unsafe

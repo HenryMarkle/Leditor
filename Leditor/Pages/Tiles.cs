@@ -1870,6 +1870,20 @@ internal class TileEditorPage : EditorPage, IDisposable
             SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), GLOBALS.Textures.GeneralLevel.Texture);
             DrawTexture(GLOBALS.Textures.GeneralLevel.Texture, 0, 0, Color.White);
             EndShaderMode();
+
+            // cameras
+
+            if (GLOBALS.Settings.TileEditor.ShowCameras)
+            {
+                foreach (var cam in GLOBALS.Level.Cameras)
+                {
+                    DrawRectangleLinesEx(
+                        new(cam.Coords.X, cam.Coords.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
+                        4f,
+                        Color.Pink
+                    );
+                }
+            }
             
             if (GLOBALS.Settings.TileEditor.Grid) Printers.DrawGrid(GLOBALS.Scale);
             
@@ -2546,6 +2560,9 @@ internal class TileEditorPage : EditorPage, IDisposable
                 ImGui.Checkbox("Hovered Item Info", ref hoveredInfo);
                 if (GLOBALS.Settings.TileEditor.HoveredTileInfo != hoveredInfo) 
                     GLOBALS.Settings.TileEditor.HoveredTileInfo = hoveredInfo;
+
+                var showCameras = GLOBALS.Settings.TileEditor.ShowCameras;
+                if (ImGui.Checkbox("Cameras", ref showCameras)) GLOBALS.Settings.TileEditor.ShowCameras = showCameras;
 
                 var grid = GLOBALS.Settings.TileEditor.Grid;
                 if (ImGui.Checkbox("Grid", ref grid))

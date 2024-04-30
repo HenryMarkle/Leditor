@@ -119,7 +119,7 @@ public class ExperimentalGeoShortcuts : IEditorShortcuts
     public KeyboardShortcut EraseEverything { get; set; } = new(KeyboardKey.X);
     
     public KeyboardShortcut ToggleTileVisibility { get; set; } = new(KeyboardKey.T);
-
+    public KeyboardShortcut TogglePropVisibility { get; set; } = new(KeyboardKey.P);
     
     public KeyboardShortcut ToggleMemoryLoadMode { get; set; } = new(KeyboardKey.C, ctrl:true);
     public KeyboardShortcut ToggleMemoryDumbMode { get; set; } = new(KeyboardKey.V, ctrl:true);
