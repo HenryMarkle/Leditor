@@ -1072,7 +1072,7 @@ internal class MainPage : EditorPage, IContextListener
 
                     var visiblePreceeding = GLOBALS.Settings.GeneralSettings.VisiblePreceedingUnfocusedLayers;
 
-                    if (ImGui.Checkbox("Visible Preceeding Unfocused Layers", ref visiblePreceeding)) {
+                    if (ImGui.Checkbox("Visible Preceding Unfocused Layers", ref visiblePreceeding)) {
                         _shouldRedrawLevel = true;
                         GLOBALS.Settings.GeneralSettings.VisiblePreceedingUnfocusedLayers = visiblePreceeding;
                     }

@@ -348,7 +348,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         #endregion
 
         #region TileEditorLayer2
-        if (_showTileLayer2 && (GLOBALS.Settings.GeneralSettings.VisiblePreceedingUnfocusedLayers || GLOBALS.Layer is 0 or 1))
+        if (_showTileLayer2 && (GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers || GLOBALS.Layer is 0 or 1))
         {
             if (paletteTiles) {
                 BeginTextureMode(geoL);
@@ -559,7 +559,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         #endregion
 
         #region TileEditorLayer1
-        if (_showTileLayer1 && (GLOBALS.Settings.GeneralSettings.VisiblePreceedingUnfocusedLayers || GLOBALS.Layer == 0))
+        if (_showTileLayer1 && (GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers || GLOBALS.Layer == 0))
         {
             if (paletteTiles) {
                 BeginTextureMode(geoL);

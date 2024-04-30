@@ -1856,7 +1856,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
                 Palette = GLOBALS.SelectedPalette,
                 Grid = false,
-                VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePreceedingUnfocusedLayers
+                VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers
             });
             _shouldRedrawLevel = false;
         }
