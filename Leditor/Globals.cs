@@ -176,7 +176,7 @@ internal static class GLOBALS
     
     internal static string ProjectPath { get; set; } = "";
     
-    internal const string Version = "Henry's Leditor v0.9.70";
+    internal const string Version = "Henry's Leditor v0.9.71";
     internal const string RaylibVersion = "Raylib v5.0.0";
     internal static string BuildConfiguration { get; set; } = "Build Configuration: Unknown";
 
