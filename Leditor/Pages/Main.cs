@@ -1070,11 +1070,11 @@ internal class MainPage : EditorPage, IContextListener
                         _shouldRedrawLevel = true;
                     }
 
-                    var visiblePreceeding = GLOBALS.Settings.GeneralSettings.VisiblePreceedingUnfocusedLayers;
+                    var visiblePreceeding = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers;
 
                     if (ImGui.Checkbox("Visible Preceding Unfocused Layers", ref visiblePreceeding)) {
                         _shouldRedrawLevel = true;
-                        GLOBALS.Settings.GeneralSettings.VisiblePreceedingUnfocusedLayers = visiblePreceeding;
+                        GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers = visiblePreceeding;
                     }
 
                     var tileVisual = (int)GLOBALS.Settings.GeneralSettings.DrawTileMode;

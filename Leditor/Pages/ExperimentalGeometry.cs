@@ -1046,7 +1046,7 @@ internal class ExperimentalGeometryPage : EditorPage
                         PropsLayer3 = _showLayer3 && GLOBALS.Settings.GeometryEditor.ShowProps,
                         HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
                         Palette = GLOBALS.SelectedPalette,
-                        VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePreceedingUnfocusedLayers
+                        VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers
                     });
                 }
                 _shouldRedrawLevel = false;
