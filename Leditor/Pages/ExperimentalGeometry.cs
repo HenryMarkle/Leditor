@@ -76,6 +76,74 @@ internal class ExperimentalGeometryPage : EditorPage
         false, // 21
         true
     ];
+
+    private void RedrawLevelBasicView() {
+        BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+
+        DrawRectangle(
+            0, 
+            0, 
+            GLOBALS.Level.Width * GLOBALS.Scale, 
+            GLOBALS.Level.Height * GLOBALS.Scale, 
+            new Color(120, 120, 120, 255)
+        );
+        // geo matrix
+
+        // first layer without stackables
+
+
+        if (_showLayer1) Printers.DrawGeoLayer(
+            0,
+            GLOBALS.Scale,
+            false,
+            GLOBALS.Settings.GeometryEditor.LayerColors.Layer1,
+            true,
+            false
+        );
+        
+        if (_showLayer2)
+            Printers.DrawGeoLayer(
+            1,
+            GLOBALS.Scale,
+            false, 
+            GLOBALS.Settings.GeometryEditor.LayerColors.Layer2,
+            _layerStackableFilter
+        );
+        
+        if (_showLayer3) Printers.DrawGeoLayer(
+            2, 
+            GLOBALS.Scale,
+            false, 
+            GLOBALS.Settings.GeometryEditor.LayerColors.Layer3,
+            _layerStackableFilter
+        );
+        
+        // Water
+
+        if (GLOBALS.Level.WaterLevel > -1)
+        {
+            DrawRectangle(
+                0,
+                (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
+                GLOBALS.Level.Width*GLOBALS.Scale,
+                (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
+                GLOBALS.Settings.GeometryEditor.WaterColor
+            );
+        }
+
+        // draw stackables
+        
+        if (_showLayer1) Printers.DrawGeoLayer(
+            0,
+            GLOBALS.Scale,
+            false,
+            GLOBALS.Settings.GeometryEditor.LayerColors.Layer1,
+            false,
+            true
+        );
+        
+        EndTextureMode();
+    }
     
     private RunCell[,] _savedChunk = new RunCell[0, 0];
     
@@ -957,123 +1025,42 @@ internal class ExperimentalGeometryPage : EditorPage
 
             if (_shouldRedrawLevel)
             {
-                Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
-                {
-                    CurrentLayer = GLOBALS.Layer,
-                    Water = true,
-                    WaterAtFront = GLOBALS.Level.WaterAtFront,
-                    TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
-                    PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
-                    TilesLayer1 = GLOBALS.Settings.GeometryEditor.ShowTiles,
-                    TilesLayer2 = GLOBALS.Settings.GeometryEditor.ShowTiles,
-                    TilesLayer3 = GLOBALS.Settings.GeometryEditor.ShowTiles,
-                    PropsLayer1 = GLOBALS.Settings.GeometryEditor.ShowProps,
-                    PropsLayer2 = GLOBALS.Settings.GeometryEditor.ShowProps,
-                    PropsLayer3 = GLOBALS.Settings.GeometryEditor.ShowProps,
-                    HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
-                    Palette = GLOBALS.SelectedPalette
-                });
+                if (GLOBALS.Settings.GeometryEditor.BasicView) {
+                    RedrawLevelBasicView(); 
+                } else {
+                    Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
+                    {
+                        CurrentLayer = GLOBALS.Layer,
+                        Water = true,
+                        WaterAtFront = GLOBALS.Level.WaterAtFront,
+                        TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
+                        PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
+                        GeometryLayer1 = _showLayer1,
+                        GeometryLayer2 = _showLayer2,
+                        GeometryLayer3 = _showLayer3,
+                        TilesLayer1 = _showLayer1 && GLOBALS.Settings.GeometryEditor.ShowTiles,
+                        TilesLayer2 = _showLayer2 && GLOBALS.Settings.GeometryEditor.ShowTiles,
+                        TilesLayer3 = _showLayer3 && GLOBALS.Settings.GeometryEditor.ShowTiles,
+                        PropsLayer1 = _showLayer1 && GLOBALS.Settings.GeometryEditor.ShowProps,
+                        PropsLayer2 = _showLayer2 && GLOBALS.Settings.GeometryEditor.ShowProps,
+                        PropsLayer3 = _showLayer3 && GLOBALS.Settings.GeometryEditor.ShowProps,
+                        HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
+                        Palette = GLOBALS.SelectedPalette
+                    });
+                }
                 _shouldRedrawLevel = false;
             }
 
             BeginMode2D(_camera);
             {
                 #region DrawingMatrix
-                if (GLOBALS.Settings.GeometryEditor.BasicView) {
-                    DrawRectangle(
-                        0, 
-                        0, 
-                        GLOBALS.Level.Width * GLOBALS.Scale, 
-                        GLOBALS.Level.Height * GLOBALS.Scale, 
-                        new Color(120, 120, 120, 255)
-                    );
-                    // geo matrix
-
-                    // first layer without stackables
-
-
-                    if (_showLayer1) Printers.DrawGeoLayer(
-                        0,
-                        GLOBALS.Scale,
-                        false,
-                        GLOBALS.Settings.GeometryEditor.LayerColors.Layer1,
-                        true,
-                        false
-                    );
-                    
-                    if (GLOBALS.Settings.GeometryEditor.ShowTiles && _showLayer3) Printers.DrawTileLayer(
-                        GLOBALS.Layer, 
-                        2, 
-                        GLOBALS.Scale, 
-                        false, 
-                        GLOBALS.Settings.GeneralSettings.DrawTileMode
-                    );
-
-                    if (_showLayer2)
-                        Printers.DrawGeoLayer(
-                        1,
-                        GLOBALS.Scale,
-                        false, 
-                        GLOBALS.Settings.GeometryEditor.LayerColors.Layer2,
-                        _layerStackableFilter
-                    );
-                    
-                    if (GLOBALS.Settings.GeometryEditor.ShowTiles && _showLayer2) Printers.DrawTileLayer(
-                        GLOBALS.Layer, 
-                        1, 
-                        GLOBALS.Scale, 
-                        false, 
-                        GLOBALS.Settings.GeneralSettings.DrawTileMode
-                    );
-                    
-                    if (_showLayer3) Printers.DrawGeoLayer(
-                        2, 
-                        GLOBALS.Scale,
-                        false, 
-                        GLOBALS.Settings.GeometryEditor.LayerColors.Layer3,
-                        _layerStackableFilter
-                    );
-                    
-                    // Water
-
-                    if (GLOBALS.Level.WaterLevel > -1)
-                    {
-                        DrawRectangle(
-                            0,
-                            (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                            GLOBALS.Level.Width*GLOBALS.Scale,
-                            (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                            GLOBALS.Settings.GeometryEditor.WaterColor
-                        );
-                    }
-
-                    // draw stackables
-                    
-                    if (_showLayer1) Printers.DrawGeoLayer(
-                        0,
-                        GLOBALS.Scale,
-                        false,
-                        GLOBALS.Settings.GeometryEditor.LayerColors.Layer1,
-                        false,
-                        true
-                    );
-                    
-                    if (GLOBALS.Settings.GeometryEditor.ShowTiles && _showLayer1) Printers.DrawTileLayer(
-                        GLOBALS.Layer, 
-                        0, 
-                        GLOBALS.Scale, 
-                        false, 
-                        GLOBALS.Settings.GeneralSettings.DrawTileMode
-                    );                    
-                } else {
-                    BeginShaderMode(GLOBALS.Shaders.VFlip);
-                    SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), GLOBALS.Textures.GeneralLevel.Texture);
-                    DrawTexture(GLOBALS.Textures.GeneralLevel.Texture, 
-                        0, 
-                        0,
-                        Color.White);
-                    EndShaderMode();
-                }
+                BeginShaderMode(GLOBALS.Shaders.VFlip);
+                SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), GLOBALS.Textures.GeneralLevel.Texture);
+                DrawTexture(GLOBALS.Textures.GeneralLevel.Texture, 
+                    0, 
+                    0,
+                    Color.White);
+                EndShaderMode();
                 #endregion
                 
                 // Grid
@@ -1685,16 +1672,24 @@ internal class ExperimentalGeometryPage : EditorPage
                 var waterColorVec = new Vector3(waterColor.R / 255f, waterColor.G / 255f, waterColor.B / 255f);
                 
                 ImGui.SetNextItemWidth(250);
-                ImGui.ColorEdit3("Layer 1", ref layer1ColorVec);
+                if (ImGui.ColorEdit3("Layer 1", ref layer1ColorVec)) {
+                    _shouldRedrawLevel = true;
+                }
                 
                 ImGui.SetNextItemWidth(250);
-                ImGui.ColorEdit3("Layer 2", ref layer2ColorVec);
+                if (ImGui.ColorEdit3("Layer 2", ref layer2ColorVec)) {
+                    _shouldRedrawLevel = true;
+                }
                 
                 ImGui.SetNextItemWidth(250);
-                ImGui.ColorEdit3("Layer 3", ref layer3ColorVec);
+                if (ImGui.ColorEdit3("Layer 3", ref layer3ColorVec)) {
+                    _shouldRedrawLevel = true;
+                }
                 
                 ImGui.SetNextItemWidth(250);
-                ImGui.ColorEdit3("Water", ref waterColorVec);
+                if (ImGui.ColorEdit3("Water", ref waterColorVec)) {
+                    _shouldRedrawLevel = true;
+                }
 
                 GLOBALS.Settings.GeometryEditor.LayerColors.Layer1 = new ConColor((byte)(layer1ColorVec.X * 255),
                     (byte)(layer1ColorVec.Y * 255), (byte)(layer1ColorVec.Z * 255));
@@ -1734,13 +1729,18 @@ internal class ExperimentalGeometryPage : EditorPage
                 var showLayer2 = _showLayer2;
                 var showLayer3 = _showLayer3;
 
-                ImGui.Checkbox("Layer 1", ref showLayer1);
-                ImGui.Checkbox("Layer 2", ref showLayer2);
-                ImGui.Checkbox("Layer 3", ref showLayer3);
-
-                _showLayer1 = showLayer1;
-                _showLayer2 = showLayer2;
-                _showLayer3 = showLayer3;
+                if (ImGui.Checkbox("Layer 1", ref showLayer1)) {
+                    _shouldRedrawLevel = true;
+                    _showLayer1 = showLayer1;
+                }
+                if (ImGui.Checkbox("Layer 2", ref showLayer2)) {
+                    _shouldRedrawLevel = true;
+                    _showLayer2 = showLayer2;
+                }
+                if (ImGui.Checkbox("Layer 3", ref showLayer3)) {
+                    _shouldRedrawLevel = true;
+                    _showLayer3 = showLayer3;
+                }
                 
                 ImGui.Spacing();
 
@@ -1749,6 +1749,15 @@ internal class ExperimentalGeometryPage : EditorPage
                 ImGui.Checkbox("Cameras", ref showCameras);
 
                 GLOBALS.Settings.GeometryEditor.ShowCameras = showCameras;
+
+                var basicView = GLOBALS.Settings.GeometryEditor.BasicView;
+
+                if (ImGui.Checkbox("Basic View", ref basicView)) {
+                    GLOBALS.Settings.GeometryEditor.BasicView = basicView;
+                    _shouldRedrawLevel = true;
+                }
+
+                if (GLOBALS.Settings.GeometryEditor.BasicView) ImGui.BeginDisabled();
 
                 var showTiles = GLOBALS.Settings.GeometryEditor.ShowTiles;
                 if (ImGui.Checkbox("Tiles", ref showTiles))
@@ -1764,12 +1773,7 @@ internal class ExperimentalGeometryPage : EditorPage
                     _shouldRedrawLevel = true;
                 }
 
-                var basicView = GLOBALS.Settings.GeometryEditor.BasicView;
-
-                if (ImGui.Checkbox("Basic View", ref basicView)) {
-                    GLOBALS.Settings.GeometryEditor.BasicView = basicView;
-                    _shouldRedrawLevel = true;
-                }
+                if (GLOBALS.Settings.GeometryEditor.BasicView) ImGui.EndDisabled();
                 
                 // Controls
                 
