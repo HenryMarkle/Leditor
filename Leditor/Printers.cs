@@ -2520,6 +2520,54 @@ internal static class Printers
 
         Rlgl.SetTexture(0);
     }
+
+    internal static void DrawTextureQuad(
+        in Texture2D texture, 
+        in PropQuads quads,
+        Color tint,
+        bool flipX,
+        bool flipY
+    )
+    {
+        var (topRight, topLeft, bottomLeft, bottomRight) = (flipX, flipY) switch
+        {
+            (false, false) => (quads.TopRight, quads.TopLeft, quads.BottomLeft, quads.BottomRight),
+            (false, true ) => (quads.BottomRight, quads.BottomLeft, quads.TopLeft, quads.TopRight),
+            (true , false) => (quads.TopLeft, quads.TopRight, quads.BottomRight, quads.BottomLeft),
+            (true , true ) => (quads.BottomLeft, quads.BottomRight, quads.TopRight, quads.TopLeft)
+        };
+
+        var ((trX, trY), (tlX, tlY), (blX, blY), (brX, brY)) = (flipX, flipY) switch
+        {
+            (false, false) => ((1.0f, 0.0f), (0.0f, 0.0f), (0.0f, 1.0f), (1.0f, 1.0f)),
+            (false, true) => ((1.0f, 1.0f), (0.0f, 1.0f), (0.0f, 0.0f), (1.0f, 0.0f)),
+            (true, false) => ((0.0f, 0.0f), (1.0f, 0.0f), (1.0f, 1.0f), (0.0f, 1.0f)),
+            (true, true) => ((0.0f, 1.0f), (1.0f, 1.0f), (1.0f, 0.0f), (0.0f, 0.0f))
+        };
+        
+        Rlgl.SetTexture(texture.Id);
+
+        Rlgl.Begin(0x0007);
+        Rlgl.Color4ub(tint.R, tint.G, tint.B, tint.A);
+
+        Rlgl.TexCoord2f(trX, trY);
+        Rlgl.Vertex2f(topRight.X, topRight.Y);
+        
+        Rlgl.TexCoord2f(tlX, tlY);
+        Rlgl.Vertex2f(topLeft.X, topLeft.Y);
+        
+        Rlgl.TexCoord2f(blX, blY);
+        Rlgl.Vertex2f(bottomLeft.X, bottomLeft.Y);
+        
+        Rlgl.TexCoord2f(brX, brY);
+        Rlgl.Vertex2f(bottomRight.X, bottomRight.Y);
+        
+        Rlgl.TexCoord2f(trX, trY);
+        Rlgl.Vertex2f(topRight.X, topRight.Y);
+        Rlgl.End();
+
+        Rlgl.SetTexture(0);
+    }
     
     internal static void DrawTilePreview(
         ref InitTile init, 
@@ -4435,6 +4483,7 @@ internal static class Printers
                             break;
 
                             case PropDrawMode.Tinted:
+                            DrawVariedSoftPropColored(variedSoft, texture, quads, color, ((PropVariedSoftSettings)prop.Extras.Settings).Variation, depth);
                             break;
 
                             case PropDrawMode.Palette:
@@ -4450,6 +4499,7 @@ internal static class Printers
                             break;
 
                             case PropDrawMode.Tinted:
+                            DrawSoftPropColored(texture, quads, depth, color);
                             break;
 
                             case PropDrawMode.Palette:
@@ -5074,6 +5124,25 @@ internal static class Printers
         DrawTextureQuad(texture, quads, flippedX, flippedY);
         EndShaderMode();
     }
+
+    internal static void DrawSoftPropColored(in Texture2D texture, in PropQuads quads, int depth, Color tint)
+    {
+        var shader = GLOBALS.Shaders.SoftPropColored;
+
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+        
+        var textureLoc = GetShaderLocation(shader, "inputTexture");
+        var depthLoc = GetShaderLocation(shader, "depth");
+
+        BeginShaderMode(shader);
+
+        SetShaderValueTexture(shader, textureLoc, texture);
+        SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
+        
+        DrawTextureQuad(texture, quads, tint, flippedX, flippedY);
+        EndShaderMode();
+    }
     
     internal static void DrawSoftProp(in Texture2D texture, in PropQuads quads, int depth, int rotation)
     {
@@ -5176,6 +5245,44 @@ internal static class Printers
         SetShaderValue(GLOBALS.Shaders.VariedSoftProp, depthLoc, depth, ShaderUniformDataType.Int);
         
         DrawTextureQuad(texture, quads, flippedX, flippedY);
+        EndShaderMode();
+    }
+
+    internal static void DrawVariedSoftPropColored(
+        InitVariedSoftProp init, 
+        in Texture2D texture, 
+        PropQuads quads,
+        Color tint,
+        int variation,
+        int depth
+    )
+    {
+        var shader = GLOBALS.Shaders.VariedSoftPropColored;
+
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+        
+        var calcHeight = (float) init.SizeInPixels.y / texture.Height;
+        var calcVariationWidth = (float) init.SizeInPixels.x / texture.Width;
+
+        var textureLoc = GetShaderLocation(shader, "inputTexture");
+
+        var heightLoc = GetShaderLocation(shader, "height");
+        var variationWidthLoc = GetShaderLocation(shader, "varWidth");
+        var variationLoc = GetShaderLocation(shader, "variation");
+        var depthLoc = GetShaderLocation(shader, "depth");
+
+        BeginShaderMode(shader);
+
+        SetShaderValueTexture(shader, textureLoc, texture);
+
+        SetShaderValue(shader, variationWidthLoc, calcVariationWidth,
+            ShaderUniformDataType.Float);
+        SetShaderValue(shader, heightLoc, calcHeight, ShaderUniformDataType.Float);
+        SetShaderValue(shader, variationLoc, variation, ShaderUniformDataType.Int);
+        SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
+        
+        DrawTextureQuad(texture, quads, tint, flippedX, flippedY);
         EndShaderMode();
     }
     

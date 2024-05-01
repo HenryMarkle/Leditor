@@ -787,11 +787,17 @@ class Program
         GLOBALS.Shaders.SoftProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_soft.frag"));
         
+        GLOBALS.Shaders.SoftPropColored =
+            LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_soft_colored.frag"));
+        
         GLOBALS.Shaders.SoftPropPalette =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_soft_palette.frag"));
         
         GLOBALS.Shaders.VariedSoftProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_varied_soft.frag"));
+        
+        GLOBALS.Shaders.VariedSoftPropColored =
+            LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_varied_soft_colored.frag"));
         
         GLOBALS.Shaders.VariedSoftPropPalette =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_varied_soft_palette.frag"));
@@ -1914,6 +1920,18 @@ void main() {
                         }
 
                         if (gShortcuts.Open.Check(ctrl, shift, alt)) GLOBALS.Page = 0;
+                        else if (gShortcuts.TakeScreenshot.Check(ctrl, shift, alt)) {
+                            if (!Directory.Exists(GLOBALS.Paths.ScreenshotsDirectory))
+                                Directory.CreateDirectory(GLOBALS.Paths.ScreenshotsDirectory);
+                        
+                            var img = LoadImageFromTexture(GLOBALS.Textures.GeneralLevel.Texture);
+
+                            ImageFlipVertical(ref img);
+
+                            ExportImage(img, Path.Combine(GLOBALS.Paths.ScreenshotsDirectory, $"screenshot-{(DateTime.Now.ToString("yyyy-MM-ddTHH-mm-ss"))}.png"));
+
+                            UnloadImage(img);
+                        }
                         else if (gShortcuts.QuickSave.Check(ctrl, shift, alt) || GLOBALS.NavSignal == 1)
                         {
                             if (string.IsNullOrEmpty(GLOBALS.ProjectPath))
@@ -2067,8 +2085,10 @@ void main() {
         UnloadShader(GLOBALS.Shaders.VariedStandardPropPalette);
         UnloadShader(GLOBALS.Shaders.VariedStandardPropColored);
         UnloadShader(GLOBALS.Shaders.SoftProp);
+        UnloadShader(GLOBALS.Shaders.SoftPropColored);
         UnloadShader(GLOBALS.Shaders.SoftPropPalette);
         UnloadShader(GLOBALS.Shaders.VariedSoftPropPalette);
+        UnloadShader(GLOBALS.Shaders.VariedSoftPropColored);
         UnloadShader(GLOBALS.Shaders.VariedSoftProp);
         UnloadShader(GLOBALS.Shaders.SimpleDecalProp);
         UnloadShader(GLOBALS.Shaders.VariedDecalProp);

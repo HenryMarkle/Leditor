@@ -1593,6 +1593,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                 var actions = RemoveTile(tileMatrixX, tileMatrixY, GLOBALS.Layer);
                                         
                                 foreach (var action in actions) _tempActions.Add(action);
+                                _shouldRedrawLevel = true;
                             }
                             break;
 
@@ -1601,6 +1602,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                 var actions = RemoveMaterial(tileMatrixX, tileMatrixY, GLOBALS.Layer, _materialBrushRadius);
                                         
                                 foreach (var action in actions) _tempActions.Add(action);
+                                _shouldRedrawLevel = true;
                             }
                             break;
                     }
@@ -1627,6 +1629,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                         var actions = RemoveTile(matrixX, matrixY, GLOBALS.Layer);
                                                 
                                         foreach (var action in actions) _tempActions.Add(action);
+                                        _shouldRedrawLevel = true;
                                     }
                                     break;
 
@@ -1635,6 +1638,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                         var actions = RemoveMaterial(matrixX, matrixY, GLOBALS.Layer, 0);
                                                 
                                         foreach (var action in actions) _tempActions.Add(action);
+                                        _shouldRedrawLevel = true;
                                     }
                                     break;
                             }
@@ -1646,7 +1650,6 @@ internal class TileEditorPage : EditorPage, IDisposable
                 _prevPosY = tileMatrixY;
                         
                 _eraseClickTracker = true;
-                _shouldRedrawLevel = true;
             }
         }
         if (IsMouseButtonReleased(_shortcuts.Erase.Button) && _eraseClickTracker)

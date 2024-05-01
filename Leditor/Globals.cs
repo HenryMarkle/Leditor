@@ -77,8 +77,10 @@ internal static class GLOBALS
         internal Shader VariedStandardPropColored { get; set; }
         internal Shader VariedStandardPropPalette { get; set; }
         internal Shader SoftProp { get; set; }
+        internal Shader SoftPropColored { get; set; }
         internal Shader SoftPropPalette { get; set; }
         internal Shader VariedSoftProp { get; set; }
+        internal Shader VariedSoftPropColored { get; set; }
         internal Shader VariedSoftPropPalette { get; set; }
         internal Shader SimpleDecalProp { get; set; }
         internal Shader VariedDecalProp { get; set; }

@@ -398,6 +398,8 @@ public class GlobalShortcuts : IEditorShortcuts
     public KeyboardShortcut ToPropsEditor { get; set; } = new(KeyboardKey.Eight, shift:false, ctrl:false, alt:true);
     public KeyboardShortcut ToSettingsPage { get; set; } = new(KeyboardKey.Nine, shift:false, ctrl:false, alt:true);
 
+    public KeyboardShortcut TakeScreenshot { get; set; } = new(KeyboardKey.Null);
+
     public KeyboardShortcut Open { get; set; } = new(KeyboardKey.O, ctrl: true, shift: false, alt: false);
     public KeyboardShortcut QuickSave { get; set; } = new(KeyboardKey.S, shift:false, ctrl:true, alt:false);
     public KeyboardShortcut QuickSaveAs { get; set; } = new(KeyboardKey.S, shift:true, ctrl:true, alt:false);
