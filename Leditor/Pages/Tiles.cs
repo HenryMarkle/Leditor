@@ -99,7 +99,8 @@ internal class TileEditorPage : EditorPage, IDisposable
     private bool _autoTilingWithGeo = true;
     private bool _autoTilerLinearAlgorithm = true;
 
-
+    private int _placeMatPrevPosX = -1;
+    private int _placeMatPrevPosY = -1;
 
     /// <summary>
     /// 0 - default
@@ -1233,6 +1234,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                     );
                                     
                                     foreach (var action in actions) _tempActions.Add(action);
+                                    _shouldRedrawLevel = true;
                                 }
                             } 
                             else if (_shortcuts.ForcePlaceTileWithoutGeo.Check(ctrl, shift, alt, true))
@@ -1245,6 +1247,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                     );
                                     
                                     foreach (var action in actions) _tempActions.Add(action);
+                                    _shouldRedrawLevel = true;
                                 }
                             }
                             else
@@ -1259,6 +1262,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                         );
                                         
                                         foreach (var action in actions) _tempActions.Add(action);
+                                        _shouldRedrawLevel = true;
                                     }
                                 }
                             }
@@ -1269,7 +1273,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                             {
                                 var actions = PlaceMaterial(currentMaterialInit, (tileMatrixX, tileMatrixY, GLOBALS.Layer), _materialBrushRadius);
 
-                                foreach (var action in actions) _tempActions.Add(action);
+                                _tempActions.AddRange(actions);
+                                _shouldRedrawLevel = true;
                             }
                         }
 
@@ -1277,7 +1282,6 @@ internal class TileEditorPage : EditorPage, IDisposable
                         _prevPosY = tileMatrixY;
                         
                         _drawClickTracker = true;
-                        _shouldRedrawLevel = true;
                     }
                     if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw.Key)) && _drawClickTracker)
                     {
@@ -1288,7 +1292,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                         _prevPosY = -1;
                         
                         _drawClickTracker = false;
-                        _shouldRedrawLevel = true;
+                        // _shouldRedrawLevel = true;
                     }
                 }
                     break;
