@@ -178,6 +178,17 @@ class Program
         LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "camera icon.png")) // 44
     ];
 
+    public static Texture2D[] LoadInternalMaterialTextures() => Directory.Exists(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials")) 
+        ? [
+          LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "Concrete.png")),        // 0
+          LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "RainStone.png")),       // 1
+          LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "Bricks.png")),          // 2
+          LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "Non-Slip Metal.png")),  // 3
+          LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "Asphalt.png")),         // 4
+        ]
+        
+        : [];
+
     // Used to load light/shadow brush images as textures.
     private static Texture2D[] LoadLightTextures(Serilog.Core.Logger logger) => Directory
         .GetFileSystemEntries(GLOBALS.Paths.LightAssetsDirectory)
@@ -700,6 +711,8 @@ class Program
             logger.Debug("loading light brush textures");
             // Light textures need to be loaded on a separate thread, just like tile textures
             GLOBALS.Textures.LightBrushes = LoadLightTextures(logger);
+
+            GLOBALS.Textures.InternalMaterials = LoadInternalMaterialTextures();
         }
         catch (Exception e)
         {
@@ -738,7 +751,8 @@ class Program
 
         logger.Information("loading shaders");
 
-        GLOBALS.Shaders.GeoPalette = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "geo_palette.frag"));
+        GLOBALS.Shaders.Palette = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "palette.frag"));
+        GLOBALS.Shaders.GeoPalette = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "geo_palette2.frag"));
         GLOBALS.Shaders.TilePreview = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "tile_preview2.frag"));
 
         // These two are used to display the light/shadow brush beneath the cursor
@@ -750,6 +764,7 @@ class Program
         GLOBALS.Shaders.ApplyShadowBrush = LoadShader(null, Path.Combine(GLOBALS.Paths.AssetsDirectory, "shaders", "apply_shadow_brush.fs"));
 
         GLOBALS.Shaders.Prop = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop.frag"));
+        // GLOBALS.Shaders.BoxProp = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_box.frag"));
 
         GLOBALS.Shaders.StandardProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_standard.frag"));
@@ -2023,6 +2038,8 @@ void main() {
         foreach (var texture in GLOBALS.Textures.PropEditModes) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.PropGenerals) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.GeoInterface) UnloadTexture(texture);
+
+        foreach (var texture in GLOBALS.Textures.InternalMaterials) UnloadTexture(texture);
         
         logger.Debug("Unloading light map");
 
@@ -2034,6 +2051,7 @@ void main() {
         
         logger.Debug("Unloading shaders");
 
+        UnloadShader(GLOBALS.Shaders.Palette);
         UnloadShader(GLOBALS.Shaders.GeoPalette);
         UnloadShader(GLOBALS.Shaders.TilePreview);
         UnloadShader(GLOBALS.Shaders.ShadowBrush);
@@ -2041,6 +2059,7 @@ void main() {
         UnloadShader(GLOBALS.Shaders.ApplyLightBrush);
         UnloadShader(GLOBALS.Shaders.ApplyShadowBrush);
         UnloadShader(GLOBALS.Shaders.Prop);
+        // UnloadShader(GLOBALS.Shaders.BoxProp);
         UnloadShader(GLOBALS.Shaders.StandardProp);
         UnloadShader(GLOBALS.Shaders.StandardPropColored);
         UnloadShader(GLOBALS.Shaders.StandardPropPalette);

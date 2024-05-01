@@ -34,6 +34,7 @@ internal static class GLOBALS
         public Texture2D[] PropMenuCategories { get; set; } = [];
         public Texture2D[] PropEditModes { get; set; } = [];
         public Texture2D[] PropGenerals { get; set; } = [];
+        public Texture2D[] InternalMaterials { get; set; } = [];
         
         public RenderTexture2D LightMap { get; set; }
         
@@ -58,6 +59,7 @@ internal static class GLOBALS
     /// </summary>
     internal class ShaderService
     {
+        internal Shader Palette { get; set; }
         internal Shader GeoPalette { get; set; }
         internal Shader TilePreview { get; set; }
         internal Shader ColoredTileProp { get; set; }
@@ -67,6 +69,7 @@ internal static class GLOBALS
         internal Shader ApplyShadowBrush { get; set; }
         internal Shader ApplyLightBrush { get; set; }
         internal Shader Prop { get; set; }
+        internal Shader BoxProp { get; set; }
         internal Shader StandardProp { get; set; }
         internal Shader StandardPropColored { get; set; }
         internal Shader StandardPropPalette { get; set; }
@@ -86,6 +89,8 @@ internal static class GLOBALS
 
         internal Shader TilePalette { get; set; }
         internal Shader BoxTilePalette { get; set; }
+
+        // internal Shader GeoMaterialMask { get; set; }
         
         //
         
@@ -178,7 +183,7 @@ internal static class GLOBALS
     
     internal static string ProjectPath { get; set; } = "";
     
-    internal const string Version = "Henry's Leditor v0.9.73";
+    internal const string Version = "Henry's Leditor v0.9.74";
     internal const string RaylibVersion = "Raylib v5.0.0";
     internal static string BuildConfiguration { get; set; } = "Build Configuration: Unknown";
 

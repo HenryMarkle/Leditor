@@ -322,6 +322,193 @@ internal static class Printers
             }
         }
     }
+    
+    internal static void DrawGeoLayerWithMaterialsIntoBuffer(RenderTexture2D renderTexture, int layer, int scale, bool renderMaterials)
+    {
+        var color = new Color(0, 255, 0, 255);
+
+        BeginTextureMode(renderTexture);
+        ClearBackground(Color.White);
+
+        for (var y = 0; y < GLOBALS.Level.Height; y++)
+        {
+            for (var x = 0; x < GLOBALS.Level.Width; x++)
+            {
+                var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
+                
+                DrawTileSpec(x*scale, y*scale, cell.Geo, scale, color);
+
+                for (var s = 1; s < cell.Stackables.Length; s++)
+                {
+                    if (cell.Stackables[s])
+                    {
+                        switch (s)
+                        {
+                            // dump placement
+                            case 1:     // ph
+                            case 2:     // pv
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+
+                                DrawTexturePro(
+                                    stackableTexture, 
+                                    new(0, 0, stackableTexture.Width, stackableTexture.Height),
+                                    new(x * scale, y * scale, scale, scale), 
+                                    new(0, 0), 
+                                    0, 
+                                    color
+                                );
+                                break;
+                            case 3:     // bathive
+                                case 5:     // entrance
+                                case 6:     // passage
+                                case 7:     // den
+                                case 9:     // rock
+                                case 10:    // spear
+                                case 12:    // forbidflychains
+                                case 13:    // garbagewormhole
+                                case 18:    // waterfall
+                                case 19:    // wac
+                                case 20:    // worm
+                                case 21:    // scav
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+
+                                    DrawTexturePro(
+                                        stackableTexture2,
+                                        new(0, 0, stackableTexture2.Width, stackableTexture2.Height),
+                                        new(x * scale, y*scale, scale, scale), 
+                                        new(0, 0),
+                                        0, 
+                                        Color.White
+                                    ); // TODO: remove opacity from entrances
+                                break;
+
+                            // directional placement
+                            case 4:     // entrance
+                                var index = Utils.GetStackableTextureIndex(s, Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, x, y, layer));
+
+                                if (index is 22 or 23 or 24 or 25)
+                                {
+                                    GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
+                                }
+
+                                var t = GLOBALS.Textures.GeoStackables[index];
+                                DrawTexturePro(
+                                    t,
+                                    new(0, 0, t.Width, t.Height),
+                                    new(x*scale, y*scale, scale, scale), 
+                                    new(0, 0),
+                                    0, 
+                                    Color.White
+                                );
+                                break;
+                            case 11:    // crack
+                                var crackTexture = GLOBALS.Textures.GeoStackables[
+                                    Utils.GetStackableTextureIndex(s,
+                                        Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width,
+                                            GLOBALS.Level.Height, x, y, layer))];
+                                DrawTexturePro(
+                                    crackTexture,
+                                    new(0, 0, crackTexture.Width, crackTexture.Height),
+                                    new(
+                                    x * scale,
+                                    y * scale,scale, scale
+                                    ),
+                                    new(0, 0),
+                                    0,
+                                    Color.White
+                                );
+                                break;
+                        }
+                    }
+                }
+
+                if (renderMaterials) {
+                    switch (GLOBALS.Level.TileMatrix[y, x, layer].Data) {
+                        case TileMaterial m:
+                        DrawMaterialTexture(m.Name, cell.Geo, x, y, scale, 255);
+                        break;
+
+                        case TileDefault:
+                        DrawMaterialTexture(GLOBALS.Level.DefaultMaterial, cell.Geo, x, y, scale, 255);
+                        break;
+                    }
+                } 
+                // else if (!renderMaterials && tileCell.Type == TileType.Material) {
+                //     // var materialName = ((TileMaterial)tileCell.Data).Name;
+                //     var origin = new Vector2(x * scale + 5, y * scale + 5);
+                //     var color = GLOBALS.Level.MaterialColors[y, x, targetLayer];
+
+                //     color.A = (byte)((targetLayer == currentLayer) ? 255 : opacity);
+
+                //     if (color.R != 0 || color.G != 0 || color.B != 0)
+                //     {
+
+                //         switch (GLOBALS.Level.GeoMatrix[y, x, targetLayer].Geo)
+                //         {
+                //             case 1:
+                //                 DrawRectangle(
+                //                     x * scale + 6,
+                //                     y * scale + 6,
+                //                     scale - 12,
+                //                     scale - 12,
+                //                     color
+                //                 );
+                //                 break;
+
+
+                //             case 2:
+                //                 DrawTriangle(
+                //                     origin,
+                //                     new(origin.X, origin.Y + scale - 10),
+                //                     new(origin.X + scale - 10, origin.Y + scale - 10),
+                //                     color
+                //                 );
+                //                 break;
+
+
+                //             case 3:
+                //                 DrawTriangle(
+                //                     new(origin.X + scale - 10, origin.Y),
+                //                     new(origin.X, origin.Y + scale - 10),
+                //                     new(origin.X + scale - 10, origin.Y + scale - 10),
+                //                     color
+                //                 );
+                //                 break;
+
+                //             case 4:
+                //                 DrawTriangle(
+                //                     origin,
+                //                     new(origin.X, origin.Y + scale - 10),
+                //                     new(origin.X + scale - 10, origin.Y),
+                //                     color
+                //                 );
+                //                 break;
+
+                //             case 5:
+                //                 DrawTriangle(
+                //                     origin,
+                //                     new(origin.X + scale - 10, origin.Y + scale - 10),
+                //                     new(origin.X + scale - 10, origin.Y),
+                //                     color
+                //                 );
+                //                 break;
+
+                //             case 6:
+                //                 DrawRectangleV(
+                //                     origin,
+                //                     new(scale - 10, (scale - 10) / 2),
+                //                     color
+                //                 );
+                //                 break;
+                //         }
+                //     }
+                // }
+            }
+        }
+
+        EndTextureMode();
+    }
+
     internal static void DrawGeoLayer(int layer, int scale, bool grid, Color color, Vector2 offsetPixels)
     {
         for (var y = 0; y < GLOBALS.Level.Height; y++)
@@ -1171,49 +1358,6 @@ internal static class Printers
                                 );
                             break;
                         }
-
-                        // if (!preview)
-                        // {
-                        //     if (tinted)
-                        //     {
-                        //         // TODO: Replace
-                        //         DrawTileAsPropColored(
-                        //             init,
-                        //             center,
-                        //             [
-                        //                 new(width, -height),
-                        //                 new(-width, -height),
-                        //                 new(-width, height),
-                        //                 new(width, height),
-                        //                 new(width, -height)
-                        //             ],
-                        //             new Color(color.R, color.G, color.B, (byte)(shouldBeClearlyVisible ? 255 : opacity)),
-                        //             0
-                        //         );
-                        //     }
-                        //     else
-                        //     {
-                        //         DrawTileAsProp(
-                        //             init,
-                        //             center,
-                        //             [
-                        //                 new(width, -height),
-                        //                 new(-width, -height),
-                        //                 new(-width, height),
-                        //                 new(width, height),
-                        //                 new(width, -height)
-                        //             ],
-                        //             (byte)(shouldBeClearlyVisible ? 255 : opacity)
-                        //         );
-                        //     }
-                        // }
-                        // else DrawTilePreview(
-                        //     init, 
-                        //     color with { A = (byte)(shouldBeClearlyVisible ? 255 : opacity)}, 
-                        //     new Vector2(x, y),
-                        //     -Utils.GetTileHeadOrigin(init),
-                        //     scale
-                        // );
                     }
                 }
                 else if (tileCell.Type == TileType.TileBody)
@@ -1238,6 +1382,13 @@ internal static class Printers
                 }
                 else if (tileCell.Type == TileType.Material)
                 {
+                    
+                    if (drawMode == TileDrawMode.Palette) {
+                        var op = (byte)((targetLayer == currentLayer) ? 255 : opacity);
+
+                        DrawMaterialTexture(((TileMaterial)tileCell.Data).Name, GLOBALS.Level.GeoMatrix[y, x, targetLayer].Geo, x, y, scale, op);
+                        continue;
+                    }
                     // var materialName = ((TileMaterial)tileCell.Data).Name;
                     var origin = new Vector2(x * scale + 5, y * scale + 5);
                     var color = GLOBALS.Level.MaterialColors[y, x, targetLayer];
@@ -1307,6 +1458,14 @@ internal static class Printers
                         }
                     }
                 }
+                else if (tileCell.Data is TileDefault) {
+                    if (drawMode == TileDrawMode.Palette) {
+                        var op = (byte)((targetLayer == currentLayer) ? 255 : opacity);
+                        DrawMaterialTexture(GLOBALS.Level.DefaultMaterial, GLOBALS.Level.GeoMatrix[y, x, targetLayer].Geo, x, y, scale, op);
+                        continue;
+                    }
+                }
+            
             }
         }
     }
@@ -1401,6 +1560,7 @@ internal static class Printers
         internal Texture2D? Palette { get; init; } = null;
         internal bool HighLayerContrast { get; init; } = true;
         internal bool VisiblePreceedingUnfocusedLayers { get; init; } = true;
+        internal bool RenderMaterials { get; init; } = false;
     }
     
     internal static void DrawLevelIntoBuffer(in RenderTexture2D texture, DrawLevelParams parameters)
@@ -1414,32 +1574,38 @@ internal static class Printers
         if (parameters.GeometryLayer3)
         {
             if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                BeginTextureMode(geoL);
-                ClearBackground(Color.White with { A = 0 });
-                
-                DrawGeoLayer(
-                    2, 
-                    parameters.Scale, 
-                    false, 
-                    Color.Black
-                );
-                EndTextureMode();
+                DrawGeoLayerWithMaterialsIntoBuffer(geoL, 2, parameters.Scale, parameters.RenderMaterials);
+                // if (parameters.RenderMaterials) {
+                // } else {
+                //     BeginTextureMode(geoL);
+                //     ClearBackground(Color.White with { A = 0 });
+                    
+                //     DrawGeoLayer(
+                //         2, 
+                //         parameters.Scale, 
+                //         false, 
+                //         Color.Green
+                //     );
+                //     EndTextureMode();
+                // }
+
 
                 BeginTextureMode(texture);
 
-                BeginShaderMode(GLOBALS.Shaders.GeoPalette);
+                var shader = GLOBALS.Shaders.Palette;
+                BeginShaderMode(shader);
 
-                var textureLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "inputTexture");
-                var paletteLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "paletteTexture");
+                var textureLoc = GetShaderLocation(shader, "inputTexture");
+                var paletteLoc = GetShaderLocation(shader, "paletteTexture");
 
-                var depthLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "depth");
-                var shadingLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "shading");
+                var depthLoc = GetShaderLocation(shader, "depth");
+                // var shadingLoc = GetShaderLocation(shader, "shading");
 
-                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, textureLoc, geoL.Texture);
-                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, paletteLoc, parameters.Palette!.Value);
+                SetShaderValueTexture(shader, textureLoc, geoL.Texture);
+                SetShaderValueTexture(shader, paletteLoc, parameters.Palette!.Value);
 
-                SetShaderValue(GLOBALS.Shaders.GeoPalette, depthLoc, 20, ShaderUniformDataType.Int);
-                SetShaderValue(GLOBALS.Shaders.GeoPalette, shadingLoc, 1, ShaderUniformDataType.Int);
+                SetShaderValue(shader, depthLoc, 20, ShaderUniformDataType.Int);
+                // SetShaderValue(shader, shadingLoc, 1, ShaderUniformDataType.Int);
 
                 if (parameters.HighLayerContrast) {
                     DrawTexture(geoL.Texture, 0, 0, parameters.CurrentLayer == 2 ? Color.Black : Color.Black with { A = 120 });
@@ -1473,34 +1639,34 @@ internal static class Printers
             }
 
         }
-
-        BeginTextureMode(texture);
         
         if (parameters.TilesLayer3)
         {
             if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                if (parameters.HighLayerContrast) {
-                    DrawTileLayer(
-                        parameters.CurrentLayer,
-                        2, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.TileDrawMode,
-                        parameters.Palette!.Value,
-                        70
-                    );
-                } else {
-                    DrawTileLayer(
-                        parameters.CurrentLayer,
-                        2, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.TileDrawMode,
-                        parameters.Palette!.Value,
-                        255
-                    );
-                }
+                DrawTileLayerWithPaletteIntoBuffer(texture, parameters.CurrentLayer, 2, parameters.Scale, parameters.Palette!.Value, (byte)(parameters.HighLayerContrast ? 70 : 255), true, parameters.RenderMaterials);
+                // if (parameters.HighLayerContrast) {
+                //     DrawTileLayer(
+                //         parameters.CurrentLayer,
+                //         2, 
+                //         parameters.Scale, 
+                //         false, 
+                //         parameters.TileDrawMode,
+                //         parameters.Palette!.Value,
+                //         70
+                //     );
+                // } else {
+                //     DrawTileLayer(
+                //         parameters.CurrentLayer,
+                //         2, 
+                //         parameters.Scale, 
+                //         false, 
+                //         parameters.TileDrawMode,
+                //         parameters.Palette!.Value,
+                //         255
+                //     );
+                // }
             } else {
+                BeginTextureMode(texture);
                 if (parameters.HighLayerContrast) {
                     DrawTileLayer(
                         parameters.CurrentLayer,
@@ -1520,15 +1686,19 @@ internal static class Printers
                         255
                     );
                 }
+                EndTextureMode();
             }
         }
         
+
+
         if (parameters.PropsLayer3)
         {
+            BeginTextureMode(texture);
             DrawPropLayer(2, parameters.PropDrawMode, parameters.Palette, parameters.Scale);
+            EndTextureMode();
         }
 
-        EndTextureMode();
         
         // Layer 2
 
@@ -1536,32 +1706,39 @@ internal static class Printers
             if (parameters.GeometryLayer2)
             {
                 if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                    BeginTextureMode(geoL);
-                    ClearBackground(Color.White with { A = 0 });
-                    
-                    DrawGeoLayer(
-                        1, 
-                        parameters.Scale, 
-                        false, 
-                        Color.Black
-                    );
-                    EndTextureMode();
+                    DrawGeoLayerWithMaterialsIntoBuffer(geoL, 1, parameters.Scale, parameters.RenderMaterials);
+                    // if (parameters.RenderMaterials) {
+                    // } else {
+                    //     BeginTextureMode(geoL);
+                    //     ClearBackground(Color.White with { A = 0 });
+                        
+                    //     DrawGeoLayer(
+                    //         1, 
+                    //         parameters.Scale, 
+                    //         false, 
+                    //         Color.Green
+                    //     );
+                    //     EndTextureMode();
+                    // }
+
 
                     BeginTextureMode(texture);
 
-                    BeginShaderMode(GLOBALS.Shaders.GeoPalette);
+                    var shader = GLOBALS.Shaders.Palette;
 
-                    var textureLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "inputTexture");
-                    var paletteLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "paletteTexture");
+                    BeginShaderMode(shader);
 
-                    var depthLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "depth");
-                    var shadingLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "shading");
+                    var textureLoc = GetShaderLocation(shader, "inputTexture");
+                    var paletteLoc = GetShaderLocation(shader, "paletteTexture");
 
-                    SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, textureLoc, geoL.Texture);
-                    SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, paletteLoc, parameters.Palette!.Value);
+                    var depthLoc = GetShaderLocation(shader, "depth");
+                    // var shadingLoc = GetShaderLocation(shader, "shading");
 
-                    SetShaderValue(GLOBALS.Shaders.GeoPalette, depthLoc, 10, ShaderUniformDataType.Int);
-                    SetShaderValue(GLOBALS.Shaders.GeoPalette, shadingLoc, 1, ShaderUniformDataType.Int);
+                    SetShaderValueTexture(shader, textureLoc, geoL.Texture);
+                    SetShaderValueTexture(shader, paletteLoc, parameters.Palette!.Value);
+
+                    SetShaderValue(shader, depthLoc, 10, ShaderUniformDataType.Int);
+                    // SetShaderValue(shader, shadingLoc, 1, ShaderUniformDataType.Int);
 
                     if (parameters.HighLayerContrast) {
                         DrawTexture(geoL.Texture, 0, 0, parameters.CurrentLayer == 1 ? Color.Black : Color.Black with { A = 140 });
@@ -1597,34 +1774,35 @@ internal static class Printers
                     EndTextureMode();
                 }
             }
-
-            BeginTextureMode(texture);
             
             if (parameters.TilesLayer2)
             {
                 if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                    if (parameters.HighLayerContrast) {
-                        DrawTileLayer(
-                            parameters.CurrentLayer,
-                            1, 
-                            parameters.Scale, 
-                            false, 
-                            parameters.TileDrawMode,
-                            parameters.Palette!.Value,
-                            70
-                        );
-                    } else {
-                        DrawTileLayer(
-                            parameters.CurrentLayer,
-                            1, 
-                            parameters.Scale, 
-                            false, 
-                            parameters.TileDrawMode,
-                            parameters.Palette!.Value,
-                            255
-                        );
-                    }
+                    DrawTileLayerWithPaletteIntoBuffer(texture, parameters.CurrentLayer, 1, parameters.Scale, parameters.Palette!.Value, (byte)(parameters.HighLayerContrast ? 70 : 255), true, parameters.RenderMaterials);
+
+                    // if (parameters.HighLayerContrast) {
+                    //     DrawTileLayer(
+                    //         parameters.CurrentLayer,
+                    //         1, 
+                    //         parameters.Scale, 
+                    //         false, 
+                    //         parameters.TileDrawMode,
+                    //         parameters.Palette!.Value,
+                    //         70
+                    //     );
+                    // } else {
+                    //     DrawTileLayer(
+                    //         parameters.CurrentLayer,
+                    //         1, 
+                    //         parameters.Scale, 
+                    //         false, 
+                    //         parameters.TileDrawMode,
+                    //         parameters.Palette!.Value,
+                    //         255
+                    //     );
+                    // }
                 } else {    
+                    BeginTextureMode(texture);
                     if (parameters.HighLayerContrast) {
                         DrawTileLayer(
                             parameters.CurrentLayer,
@@ -1644,11 +1822,15 @@ internal static class Printers
                             255
                         );
                     }
+                    EndTextureMode();
                 }
             }
             
+            BeginTextureMode(texture);
+            
             if (parameters.PropsLayer2)
             {
+
                 DrawPropLayer(1, parameters.PropDrawMode, parameters.Palette, parameters.Scale);
             }
             
@@ -1679,32 +1861,40 @@ internal static class Printers
             if (parameters.GeometryLayer1)
             {
                 if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                    BeginTextureMode(geoL);
-                    ClearBackground(Color.White with { A = 0 });
-                    
-                    DrawGeoLayer(
-                        0, 
-                        parameters.Scale, 
-                        false, 
-                        Color.Black
-                    );
-                    EndTextureMode();
+                    DrawGeoLayerWithMaterialsIntoBuffer(geoL, 0, parameters.Scale, parameters.RenderMaterials);
+                    // if (parameters.RenderMaterials) {
+                    // } else {
+                    //     BeginTextureMode(geoL);
+                    //     ClearBackground(Color.White with { A = 0 });
+                        
+                    //     DrawGeoLayer(
+                    //         0, 
+                    //         parameters.Scale, 
+                    //         false, 
+                    //         Color.Green
+                    //     );
+
+                    //     EndTextureMode();
+                    // }
+
+                    var shader = GLOBALS.Shaders.Palette;
+
 
                     BeginTextureMode(texture);
 
-                    BeginShaderMode(GLOBALS.Shaders.GeoPalette);
+                    BeginShaderMode(shader);
 
-                    var textureLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "inputTexture");
-                    var paletteLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "paletteTexture");
+                    var textureLoc = GetShaderLocation(shader, "inputTexture");
+                    var paletteLoc = GetShaderLocation(shader, "paletteTexture");
 
-                    var depthLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "depth");
-                    var shadingLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "shading");
+                    var depthLoc = GetShaderLocation(shader, "depth");
+                    // var shadingLoc = GetShaderLocation(shader, "shading");
 
-                    SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, textureLoc, geoL.Texture);
-                    SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, paletteLoc, parameters.Palette!.Value);
+                    SetShaderValueTexture(shader, textureLoc, geoL.Texture);
+                    SetShaderValueTexture(shader, paletteLoc, parameters.Palette!.Value);
 
-                    SetShaderValue(GLOBALS.Shaders.GeoPalette, depthLoc, 0, ShaderUniformDataType.Int);
-                    SetShaderValue(GLOBALS.Shaders.GeoPalette, shadingLoc, 1, ShaderUniformDataType.Int);
+                    SetShaderValue(shader, depthLoc, 0, ShaderUniformDataType.Int);
+                    // SetShaderValue(shader, shadingLoc, 1, ShaderUniformDataType.Int);
 
                     if (parameters.HighLayerContrast) {
                         DrawTexture(geoL.Texture, 0, 0, parameters.CurrentLayer == 0 ? Color.Black : Color.Black with { A = 120 });
@@ -1715,6 +1905,8 @@ internal static class Printers
                     EndShaderMode();
 
                     EndTextureMode();
+
+                    // DrawGeoLayerWithPalette(0, parameters.Scale, parameters.Palette!.Value, true);
                 } else {
                     BeginTextureMode(texture);
 
@@ -1741,34 +1933,36 @@ internal static class Printers
                 }
             }
 
-            BeginTextureMode(texture);
             
             if (parameters.TilesLayer1)
             {
                 if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                    if (parameters.HighLayerContrast) {
-                        DrawTileLayer(
-                            parameters.CurrentLayer,
-                            0, 
-                            parameters.Scale, 
-                            false, 
-                            parameters.TileDrawMode,
-                            parameters.Palette!.Value,
-                            70
-                        );
-                    } else {
-                        DrawTileLayer(
-                            parameters.CurrentLayer,
-                            0, 
-                            parameters.Scale, 
-                            false, 
-                            parameters.TileDrawMode,
-                            parameters.Palette!.Value,
-                            255
-                        );
-                    }
+                    DrawTileLayerWithPaletteIntoBuffer(texture, parameters.CurrentLayer, 0, parameters.Scale, parameters.Palette!.Value, (byte)(parameters.HighLayerContrast ? 70 : 255), true, parameters.RenderMaterials);
+
+                    // if (parameters.HighLayerContrast) {
+                    //     DrawTileLayer(
+                    //         parameters.CurrentLayer,
+                    //         0, 
+                    //         parameters.Scale, 
+                    //         false, 
+                    //         parameters.TileDrawMode,
+                    //         parameters.Palette!.Value,
+                    //         70
+                    //     );
+                    // } else {
+                    //     DrawTileLayer(
+                    //         parameters.CurrentLayer,
+                    //         0, 
+                    //         parameters.Scale, 
+                    //         false, 
+                    //         parameters.TileDrawMode,
+                    //         parameters.Palette!.Value,
+                    //         255
+                    //     );
+                    // }
                     
                 } else {
+                    BeginTextureMode(texture);
                     if (parameters.HighLayerContrast) {
                         DrawTileLayer(
                             parameters.CurrentLayer,
@@ -1788,9 +1982,12 @@ internal static class Printers
                             255
                         );
                     }
+                    EndTextureMode();
                 }
             }
             
+            BeginTextureMode(texture);
+
             if (parameters.PropsLayer1)
             {
                 DrawPropLayer(0, parameters.PropDrawMode, parameters.Palette, parameters.Scale);
@@ -1868,6 +2065,8 @@ internal static class Printers
         if (GLOBALS.Font is null) DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
         else DrawTextPro(GLOBALS.Font.Value, GLOBALS.BuildConfiguration, new(700, 110), new(0, 0), 0, 30, 0, Color.White);
     }
+
+    
 
     internal static RL.Managed.Image GenerateLevelReviewImage() 
     {
@@ -2112,6 +2311,41 @@ internal static class Printers
             Rlgl.TexCoord2f(texCoords[i + 1].X, texCoords[i + 1].Y);
             Rlgl.Vertex2f(points[i + 1].X + center.X, points[i + 1].Y + center.Y);
         }
+        Rlgl.End();
+
+        Rlgl.SetTexture(0);
+    }
+
+    internal static void DrawTextureTriangle(
+        in Texture2D texture,
+        Vector2 s1,
+        Vector2 s2,
+        Vector2 s3,
+        Vector2 p1,
+        Vector2 p2,
+        Vector2 p3,
+        Color tint
+    )
+    {
+        var tz = new Vector2(texture.Width, texture.Height);
+
+        Rlgl.SetTexture(texture.Id);
+
+        Rlgl.Begin(0x0007);
+        Rlgl.Color4ub(tint.R, tint.G, tint.B, tint.A);
+
+        Rlgl.TexCoord2f(s1.X, s1.Y);
+        Rlgl.Vertex2f(p1.X, p1.Y);
+        
+        Rlgl.TexCoord2f(s2.X, s2.Y);
+        Rlgl.Vertex2f(p2.X, p2.Y);
+        
+        Rlgl.TexCoord2f(s3.X, s3.Y);
+        Rlgl.Vertex2f(p3.X, p3.Y);
+        
+        Rlgl.TexCoord2f(s1.X, s1.Y);
+        Rlgl.Vertex2f(p1.X, p1.Y);
+        
         Rlgl.End();
 
         Rlgl.SetTexture(0);
@@ -2824,6 +3058,7 @@ internal static class Printers
     /// <param name="center">the center origin of the target position to draw on</param>
     /// <param name="quads">target placement quads</param>
     /// <param name="alpha">opacity, from 0 to 255</param>
+    [Obsolete]
     internal static void DrawTileAsProp(
         ref Texture2D texture,
         ref InitTile init,
@@ -2878,6 +3113,7 @@ internal static class Printers
     /// <param name="center">the center origin of the target position to draw on</param>
     /// <param name="quads">target placement quads</param>
     /// <param name="alpha">opacity, from 0 to 255</param>
+    [Obsolete]
     internal static void DrawTileAsProp(
         in TileDefinition init,
         in Vector2 center,
@@ -3387,6 +3623,104 @@ internal static class Printers
                 new Vector4(tint.R / 255f, tint.G / 255f, tint.B / 255f, tint.A / 255f),
                 ShaderUniformDataType.Vec4);
             SetShaderValue(GLOBALS.Shaders.ColoredTileProp, depthLoc, depth, ShaderUniformDataType.Int);
+
+            DrawTexturePoly(
+                texture,
+                center,
+                quads,
+                new Span<Vector2>([new(1, 0), new(0, 0), new(0, 1), new(1, 1), new(1, 0)]),
+                5,
+                Color.White
+            );
+            EndShaderMode();
+        }
+    }
+
+    internal static void DrawTileAsProp(
+        in TileDefinition init, 
+        in Vector2 center, 
+        Span<Vector2> quads,
+        int depth,
+        byte opacity
+    )
+    {
+        var scale = GLOBALS.Scale;
+        var texture = init.Texture;
+
+        if (init.Type == Data.Tiles.TileType.Box)
+        {
+            var shader = GLOBALS.Shaders.BoxProp;
+
+            var (tWidth, tHeight) = init.Size;
+            var bufferPixels = init.BufferTiles * 20;
+            
+            var height = tHeight * 20;
+            var offset = new Vector2(bufferPixels,tHeight*20*tWidth + bufferPixels);
+            
+            var calcHeight = (float)height / (float)texture.Height;
+            var calcOffset = Raymath.Vector2Divide(offset, new(texture.Width, texture.Height));
+            var calcWidth = (float)tWidth*20 / texture.Width;
+
+            var textureLoc = GetShaderLocation(shader, "inputTexture");
+
+            var widthLoc = GetShaderLocation(shader, "width");
+            var heightLoc = GetShaderLocation(shader, "height");
+            var offsetLoc = GetShaderLocation(shader, "offset");
+            var depthLoc = GetShaderLocation(shader, "depth");
+            var alphaLoc = GetShaderLocation(shader, "alpha");
+
+            BeginShaderMode(shader);
+
+            SetShaderValueTexture(shader, textureLoc, texture);
+            
+            SetShaderValue(shader, widthLoc, calcWidth, ShaderUniformDataType.Float);
+            
+            SetShaderValue(shader, heightLoc, calcHeight,
+                ShaderUniformDataType.Float);
+            
+            SetShaderValue(shader, offsetLoc, calcOffset,
+                ShaderUniformDataType.Vec2);
+            
+            
+            
+            SetShaderValue(shader, alphaLoc, opacity/255f, ShaderUniformDataType.Float);
+            SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
+
+            DrawTexturePoly(
+                texture,
+                center,
+                quads,
+                new Span<Vector2>([new Vector2(1, 0), new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0)]),
+                5,
+                Color.White
+            );
+            EndShaderMode();
+        }
+        else
+        {
+            var shader = GLOBALS.Shaders.ColoredTileProp;
+
+            var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * scale;
+            float calLayerHeight = (float)layerHeight / (float)texture.Height;
+            var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * scale;
+            float calTextureCutWidth = (float)textureCutWidth / (float)texture.Width;
+
+            var textureLoc = GetShaderLocation(shader, "inputTexture");
+            var layerNumLoc = GetShaderLocation(shader, "layerNum");
+            var layerHeightLoc = GetShaderLocation(shader, "layerHeight");
+            var layerWidthLoc = GetShaderLocation(shader, "layerWidth");
+            var depthLoc = GetShaderLocation(shader, "depth");
+            var alphaLoc = GetShaderLocation(shader, "alpha");
+
+            BeginShaderMode(shader);
+
+            SetShaderValueTexture(shader, textureLoc, texture);
+            SetShaderValue(shader, layerNumLoc, init.Type == Data.Tiles.TileType.VoxelStructRockType ? 1 : init.Repeat.Length, ShaderUniformDataType.Int);
+            SetShaderValue(shader, layerHeightLoc, calLayerHeight, ShaderUniformDataType.Float);
+            SetShaderValue(shader, layerWidthLoc, calTextureCutWidth, ShaderUniformDataType.Float);
+            SetShaderValue(shader, alphaLoc, opacity/255f, ShaderUniformDataType.Float);
+            
+            SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
 
             DrawTexturePoly(
                 texture,
@@ -5749,7 +6083,702 @@ internal static class Printers
         );
     }
 
+    // Do not use(?)
+    internal static void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, float scale, Color tint)
+    {
+        if ((texture.Id <= 0) || (scale <= 0.0f)) return;
+        if ((source.Width == 0) || (source.Height == 0)) return;
+
+        int tileWidth = (int)(source.Width*scale), tileHeight = (int)(source.Height*scale);
+        if ((dest.Width < tileWidth) && (dest.Height < tileHeight))
+        {
+            DrawTexturePro(texture, new Rectangle(source.X, source.Y, ((float)dest.Width/tileWidth)*source.Width, ((float)dest.Height/tileHeight)*source.Height),
+                        new Rectangle(dest.X, dest.Y, dest.Width, dest.Height), origin, rotation, tint);
+        }
+        else if (dest.Width <= tileWidth)
+        {
+            var dy = 0;
+            for (;dy+tileHeight < dest.Height; dy += tileHeight)
+            {
+                DrawTexturePro(texture, new Rectangle(source.X, source.Y, ((float)dest.Width/tileWidth)*source.Width, source.Height), new Rectangle(dest.X, dest.Y + dy, dest.Width, (float)tileHeight), origin, rotation, tint);
+            }
+
+            if (dy < dest.Height)
+            {
+                DrawTexturePro(texture, new Rectangle(source.X, source.Y, ((float)dest.Width/tileWidth)*source.Width, ((float)(dest.Height - dy)/tileHeight)*source.Height),
+                            new Rectangle(dest.X, dest.Y + dy, dest.Width, dest.Height - dy), origin, rotation, tint);
+            }
+        }
+        else if (dest.Height <= tileHeight)
+        {
+            var dx = 0;
+            for (;dx+tileWidth < dest.Width; dx += tileWidth)
+            {
+                DrawTexturePro(texture, new Rectangle(source.X, source.Y, source.Width, ((float)dest.Height/tileHeight)*source.Height), new Rectangle(dest.X + dx, dest.Y, (float)tileWidth, dest.Height), origin, rotation, tint);
+            }
+
+            if (dx < dest.Width)
+            {
+                DrawTexturePro(texture, new Rectangle(source.X, source.Y, ((float)(dest.Width - dx)/tileWidth)*source.Width, ((float)dest.Height/tileHeight)*source.Height),
+                            new Rectangle(dest.X + dx, dest.Y, dest.Width - dx, dest.Height), origin, rotation, tint);
+            }
+        }
+        else
+        {
+            var dx = 0;
+            for (;dx+tileWidth < dest.Width; dx += tileWidth)
+            {
+                var dy = 0;
+                for (;dy+tileHeight < dest.Height; dy += tileHeight)
+                {
+                    DrawTexturePro(texture, source, new Rectangle (dest.X + dx, dest.Y + dy, (float)tileWidth, (float)tileHeight), origin, rotation, tint);
+                }
+
+                if (dy < dest.Height)
+                {
+                    DrawTexturePro(texture, new Rectangle (source.X, source.Y, source.Width, ((float)(dest.Height - dy)/tileHeight)*source.Height),
+                        new Rectangle (dest.X + dx, dest.Y + dy, (float)tileWidth, dest.Height - dy), origin, rotation, tint);
+                }
+            }
+
+            if (dx < dest.Width)
+            {
+                var dy = 0;
+                for (;dy+tileHeight < dest.Height; dy += tileHeight)
+                {
+                    DrawTexturePro(texture, new Rectangle (source.X, source.Y, ((float)(dest.Width - dx)/tileWidth)*source.Width, source.Height),
+                            new Rectangle (dest.X + dx, dest.Y + dy, dest.Width - dx, (float)tileHeight), origin, rotation, tint);
+                }
+
+                if (dy < dest.Height)
+                {
+                    DrawTexturePro(texture, new Rectangle (source.X, source.Y, ((float)(dest.Width - dx)/tileWidth)*source.Width, ((float)(dest.Height - dy)/tileHeight)*source.Height),
+                        new Rectangle (dest.X + dx, dest.Y + dy, dest.Width - dx, dest.Height - dy), origin, rotation, tint);
+                }
+            }
+        }
+    }
+
+    internal static void DrawMaterialTexture(string name, int geoId, int mx, int my, int scale, byte opacity) {
+        var x = mx * scale;
+        var y = my * scale;
+
+        var rect = new Rectangle(x, y, scale, scale);
+
+        var tint = Color.White with { A = opacity };
+        
+        switch (name) {
+            case "Concrete":
+            {
+                var texture = GLOBALS.Textures.InternalMaterials[0];
+
+                var tx = (float)x / texture.Width;
+                var ty = (float)y / texture.Height;
+
+                var tsx = ((float)x + scale) / texture.Width;
+                var tsy = ((float)y + scale) / texture.Height;
+
+                switch (geoId) {
+                    case 1:
+                    DrawTexturePro(texture, rect, rect, new(0, 0), 0, tint);
+                    break;
+
+                    case 2:// \
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tx, tsy),
+                            new(tsx, tsy),
+                            new(x, y),
+                            new(x, y + scale),
+                            new(x + scale, y + scale),
+                            tint
+                        );
+                        break;
+
+
+                    case 3:// /
+                        DrawTextureTriangle(
+                            texture,
+                            new(tsx, ty),
+                            new(tx, tsy),
+                            new(tsx, tsy),
+                            new(x + scale, y),
+                            new(x, y + scale),
+                            new(x + scale, y + scale),
+                            tint
+                        );
+                        break;
+
+                    case 5:
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tsx, tsy),
+                            new(tsx, ty),
+                            new(x, y),
+                            new(x + scale, y + scale),
+                            new(x + scale, y),
+                            tint
+                        );
+                        break;
+
+                    case 4:
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tx, tsy),
+                            new(tsx, ty),
+                            new(x, y),
+                            new(x, y + scale),
+                            new(x + scale, y),
+                            tint
+                        );
+                        break;
+
+                    case 6:
+                        DrawTexturePro(texture, rect with { Height = rect.Height / 2.0f }, rect with { Height = rect.Height / 2.0f }, new(0, 0), 0, tint);
+                        break;
+                }
+            }
+            break;
+
+            case "RainStone":
+            {
+                var texture = GLOBALS.Textures.InternalMaterials[1];
+
+                var tx = (float)x / texture.Width;
+                var ty = (float)y / texture.Height;
+
+                var tsx = ((float)x + scale) / texture.Width;
+                var tsy = ((float)y + scale) / texture.Height;
+
+                switch (geoId) {
+                    case 1:
+                    DrawTexturePro(texture, rect, rect, new(0, 0), 0, tint);
+                    break;
+
+                    case 2:// \
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tx, tsy),
+                            new(tsx, tsy),
+                            new(x, y),
+                            new(x, y + scale),
+                            new(x + scale, y + scale),
+                            tint
+                        );
+                        break;
+
+
+                    case 3:// /
+                        DrawTextureTriangle(
+                            texture,
+                            new(tsx, ty),
+                            new(tx, tsy),
+                            new(tsx, tsy),
+                            new(x + scale, y),
+                            new(x, y + scale),
+                            new(x + scale, y + scale),
+                            tint
+                        );
+                        break;
+
+                    case 5:
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tsx, tsy),
+                            new(tsx, ty),
+                            new(x, y),
+                            new(x + scale, y + scale),
+                            new(x + scale, y),
+                            tint
+                        );
+                        break;
+
+                    case 4:
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tx, tsy),
+                            new(tsx, ty),
+                            new(x, y),
+                            new(x, y + scale),
+                            new(x + scale, y),
+                            tint
+                        );
+                        break;
+
+                    case 6:
+                        DrawTexturePro(texture, rect with { Height = rect.Height / 2.0f }, rect with { Height = rect.Height / 2.0f }, new(0, 0), 0, tint);
+                        break;
+                }
+            }
+            break;
+
+            case "Bricks":
+            {
+                var texture = GLOBALS.Textures.InternalMaterials[2];
+
+                var tx = (float)x / texture.Width;
+                var ty = (float)y / texture.Height;
+
+                var tsx = ((float)x + scale) / texture.Width;
+                var tsy = ((float)y + scale) / texture.Height;
+
+                switch (geoId) {
+                    case 1:
+                    DrawTexturePro(texture, rect, rect, new(0, 0), 0, tint);
+                    break;
+
+                    case 2:// \
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tx, tsy),
+                            new(tsx, tsy),
+                            new(x, y),
+                            new(x, y + scale),
+                            new(x + scale, y + scale),
+                            tint
+                        );
+                        break;
+
+
+                    case 3:// /
+                        DrawTextureTriangle(
+                            texture,
+                            new(tsx, ty),
+                            new(tx, tsy),
+                            new(tsx, tsy),
+                            new(x + scale, y),
+                            new(x, y + scale),
+                            new(x + scale, y + scale),
+                            tint
+                        );
+                        break;
+
+                    case 5:
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tsx, tsy),
+                            new(tsx, ty),
+                            new(x, y),
+                            new(x + scale, y + scale),
+                            new(x + scale, y),
+                            tint
+                        );
+                        break;
+
+                    case 4:
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tx, tsy),
+                            new(tsx, ty),
+                            new(x, y),
+                            new(x, y + scale),
+                            new(x + scale, y),
+                            tint
+                        );
+                        break;
+
+                    case 6:
+                        DrawTexturePro(texture, rect with { Height = rect.Height / 2.0f }, rect with { Height = rect.Height / 2.0f }, new(0, 0), 0, tint);
+                        break;
+                }
+            }
+            break;
+
+            case "Non-Slip Metal":
+            {
+                var texture = GLOBALS.Textures.InternalMaterials[3];
+
+                var tx = (float)x / texture.Width;
+                var ty = (float)y / texture.Height;
+
+                var tsx = ((float)x + scale) / texture.Width;
+                var tsy = ((float)y + scale) / texture.Height;
+
+                switch (geoId) {
+                    case 1:
+                    DrawTexturePro(texture, rect, rect, new(0, 0), 0, tint);
+                    break;
+
+                    case 2:// \
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tx, tsy),
+                            new(tsx, tsy),
+                            new(x, y),
+                            new(x, y + scale),
+                            new(x + scale, y + scale),
+                            tint
+                        );
+                        break;
+
+
+                    case 3:// /
+                        DrawTextureTriangle(
+                            texture,
+                            new(tsx, ty),
+                            new(tx, tsy),
+                            new(tsx, tsy),
+                            new(x + scale, y),
+                            new(x, y + scale),
+                            new(x + scale, y + scale),
+                            tint
+                        );
+                        break;
+
+                    case 5:
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tsx, tsy),
+                            new(tsx, ty),
+                            new(x, y),
+                            new(x + scale, y + scale),
+                            new(x + scale, y),
+                            tint
+                        );
+                        break;
+
+                    case 4:
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tx, tsy),
+                            new(tsx, ty),
+                            new(x, y),
+                            new(x, y + scale),
+                            new(x + scale, y),
+                            tint
+                        );
+                        break;
+
+                    case 6:
+                        DrawTexturePro(texture, rect with { Height = rect.Height / 2.0f }, rect with { Height = rect.Height / 2.0f }, new(0, 0), 0, tint);
+                        break;
+                }
+            }
+            break;
+
+            case "Asphalt":
+            {
+                var texture = GLOBALS.Textures.InternalMaterials[4];
+
+                var tx = (float)x / texture.Width;
+                var ty = (float)y / texture.Height;
+
+                var tsx = ((float)x + scale) / texture.Width;
+                var tsy = ((float)y + scale) / texture.Height;
+
+                switch (geoId) {
+                    case 1:
+                    DrawTexturePro(texture, rect, rect, new(0, 0), 0, tint);
+                    break;
+
+                    case 2:// \
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tx, tsy),
+                            new(tsx, tsy),
+                            new(x, y),
+                            new(x, y + scale),
+                            new(x + scale, y + scale),
+                            tint
+                        );
+                        break;
+
+
+                    case 3:// /
+                        DrawTextureTriangle(
+                            texture,
+                            new(tsx, ty),
+                            new(tx, tsy),
+                            new(tsx, tsy),
+                            new(x + scale, y),
+                            new(x, y + scale),
+                            new(x + scale, y + scale),
+                            tint
+                        );
+                        break;
+
+                    case 5:
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tsx, tsy),
+                            new(tsx, ty),
+                            new(x, y),
+                            new(x + scale, y + scale),
+                            new(x + scale, y),
+                            tint
+                        );
+                        break;
+
+                    case 4:
+                        DrawTextureTriangle(
+                            texture,
+                            new(tx, ty),
+                            new(tx, tsy),
+                            new(tsx, ty),
+                            new(x, y),
+                            new(x, y + scale),
+                            new(x + scale, y),
+                            tint
+                        );
+                        break;
+
+                    case 6:
+                        DrawTexturePro(texture, rect with { Height = rect.Height / 2.0f }, rect with { Height = rect.Height / 2.0f }, new(0, 0), 0, tint);
+                        break;
+                }
+            }
+            break;
+        }
+    }
+    
     // Palette Printers
+
+    internal static void DrawTileLayerWithPaletteIntoBuffer(RenderTexture2D renderTexture, int currentLayer, int targetLayer, int scale, in Texture2D palette, byte opacity, bool deepTileOpacity, bool renderMaterials)
+    {
+        // if (renderMaterials) {
+        //     var buffer = LoadRenderTexture(GLOBALS.Level.Width * scale, GLOBALS.Level.Height * scale);
+
+        //     BeginTextureMode(buffer);
+        //     ClearBackground(Color.White);
+
+        //     // Materials first
+        //     for (var y = 0; y < GLOBALS.Level.Height; y++)
+        //     {
+        //         for (var x = 0; x < GLOBALS.Level.Width; x++)
+        //         {
+        //             var cell = GLOBALS.Level.TileMatrix[y, x, targetLayer];
+
+        //             if (cell.Type != TileType.Material && cell.Type != TileType.Default) continue;
+
+        //             var isDefault = cell.Type == TileType.Default;
+
+        //             DrawMaterialTexture(isDefault 
+        //                 ? GLOBALS.Level.DefaultMaterial 
+        //                     : ((TileMaterial)cell.Data).Name, 
+        //                 GLOBALS.Level.GeoMatrix[y, x, targetLayer].Geo, 
+        //                 x, y, scale, 255);
+        //         }
+        //     }
+
+        //     var op = (byte)((targetLayer == currentLayer) ? 255 : opacity);
+
+
+        //     EndTextureMode();
+
+
+
+        //     BeginTextureMode(renderTexture);
+
+        //     var shader = GLOBALS.Shaders.Palette;
+        //     BeginShaderMode(shader);
+        //     SetShaderValueTexture(shader, GetShaderLocation(shader, "paletteTexture"), palette);
+        //     SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), buffer.Texture);
+        //     SetShaderValue(shader, GetShaderLocation(shader, "depth"), targetLayer*10, ShaderUniformDataType.Int);
+
+        //     DrawTexture(buffer.Texture, 0, 0, Color.White with { A = op });
+
+        //     EndShaderMode();
+
+        //     EndTextureMode();
+
+        //     UnloadRenderTexture(buffer);
+        // }
+
+        BeginTextureMode(renderTexture);
+
+        // Then tiles
+
+        for (var y = 0; y < GLOBALS.Level.Height; y++)
+        {
+            for (var x = 0; x < GLOBALS.Level.Width; x++)
+            {
+                TileCell tileCell;
+
+                #if DEBUG
+                try
+                {
+                    tileCell = GLOBALS.Level.TileMatrix[y, x, targetLayer];
+                }
+                catch (IndexOutOfRangeException ie)
+                {
+                    throw new IndexOutOfRangeException(innerException: ie, message: $"Failed to fetch tile cell from {nameof(GLOBALS.Level.TileMatrix)}[{GLOBALS.Level.TileMatrix.GetLength(0)}, {GLOBALS.Level.TileMatrix.GetLength(1)}, {GLOBALS.Level.TileMatrix.GetLength(2)}]: x, y, or z ({x}, {y}, {targetLayer}) was out of bounds");
+                }
+                #else
+                tileCell = GLOBALS.Level.TileMatrix[y, x, targetLayer];
+                #endif
+                
+                if (tileCell.Type == TileType.TileHead)
+                {
+                    var data = (TileHead)tileCell.Data;
+
+                    TileDefinition? init = data.Definition;
+                    var undefined = init is null;
+
+                    var tileTexture = undefined
+                        ? GLOBALS.Textures.MissingTile 
+                        : data.Definition!.Texture;
+
+                    var color = Color.Purple;
+
+                    if (GLOBALS.TileDex?.TryGetTileColor(data.Definition?.Name ?? "", out var foundColor) ?? false)
+                    {
+                        color = foundColor;
+                    }
+
+                    if (undefined)
+                    {
+                        DrawTexturePro(
+                            tileTexture, 
+                            new Rectangle(0, 0, tileTexture.Width, tileTexture.Height),
+                            new(x*scale, y*scale, scale, scale),
+                            new Vector2(0, 0),
+                            0,
+                            Color.White with { A = opacity }
+                        );
+                    }
+                    else
+                    {
+                        var center = new Vector2(
+                        init!.Size.Item1 % 2 == 0 ? x * scale + scale : x * scale + scale/2f, 
+                        init!.Size.Item2 % 2 == 0 ? y * scale + scale : y * scale + scale/2f);
+
+                        var width = (scale / 20f)/2 * (init.Type == Data.Tiles.TileType.Box ? init.Size.Width : init.Size.Width + init.BufferTiles * 2) * 20;
+                        var height = (scale / 20f)/2 * ((init.Type == Data.Tiles.TileType.Box
+                            ? init.Size.Item2
+                            : (init.Size.Item2 + init.BufferTiles * 2)) * 20);
+
+                        var depth2 = Utils.SpecHasDepth(init.Specs);
+                        var depth3 = Utils.SpecHasDepth(init.Specs, 2);
+                        
+                        var shouldBeClearlyVisible = (targetLayer == currentLayer) || 
+                            (targetLayer + 1 == currentLayer && depth2) || 
+                            (targetLayer + 2 == currentLayer && depth3);
+
+                        DrawTileWithPalette(
+                            init,
+                            palette,
+                            center,
+                            [
+                                new(width, -height),
+                                new(-width, -height),
+                                new(-width, height),
+                                new(width, height),
+                                new(width, -height)
+                            ],
+                            targetLayer * 10,
+                            shouldBeClearlyVisible ? 1f : opacity/255f
+                        );
+                    }
+                }
+                else if (tileCell.Type == TileType.TileBody)
+                {
+                    var missingTexture = GLOBALS.Textures.MissingTile;
+                    
+                    var (hx, hy, hz) = ((TileBody)tileCell.Data).HeadPosition;
+
+                    var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
+
+                    if (supposedHead.Data is TileHead { Definition: null } or not TileHead)
+                    {
+                        DrawTexturePro(
+                            GLOBALS.Textures.MissingTile, 
+                            new Rectangle(0, 0, missingTexture.Width, missingTexture.Height),
+                            new Rectangle(x*scale, y*scale, scale, scale),
+                            new(0, 0),
+                            0,
+                            Color.White
+                        );
+                    }
+                }
+                else if (!renderMaterials && tileCell.Type == TileType.Material) {
+                    // var materialName = ((TileMaterial)tileCell.Data).Name;
+                    var origin = new Vector2(x * scale + 5, y * scale + 5);
+                    var color = GLOBALS.Level.MaterialColors[y, x, targetLayer];
+
+                    color.A = (byte)((targetLayer == currentLayer) ? 255 : opacity);
+
+                    if (color.R != 0 || color.G != 0 || color.B != 0)
+                    {
+
+                        switch (GLOBALS.Level.GeoMatrix[y, x, targetLayer].Geo)
+                        {
+                            case 1:
+                                DrawRectangle(
+                                    x * scale + 6,
+                                    y * scale + 6,
+                                    scale - 12,
+                                    scale - 12,
+                                    color
+                                );
+                                break;
+
+
+                            case 2:
+                                DrawTriangle(
+                                    origin,
+                                    new(origin.X, origin.Y + scale - 10),
+                                    new(origin.X + scale - 10, origin.Y + scale - 10),
+                                    color
+                                );
+                                break;
+
+
+                            case 3:
+                                DrawTriangle(
+                                    new(origin.X + scale - 10, origin.Y),
+                                    new(origin.X, origin.Y + scale - 10),
+                                    new(origin.X + scale - 10, origin.Y + scale - 10),
+                                    color
+                                );
+                                break;
+
+                            case 4:
+                                DrawTriangle(
+                                    origin,
+                                    new(origin.X, origin.Y + scale - 10),
+                                    new(origin.X + scale - 10, origin.Y),
+                                    color
+                                );
+                                break;
+
+                            case 5:
+                                DrawTriangle(
+                                    origin,
+                                    new(origin.X + scale - 10, origin.Y + scale - 10),
+                                    new(origin.X + scale - 10, origin.Y),
+                                    color
+                                );
+                                break;
+
+                            case 6:
+                                DrawRectangleV(
+                                    origin,
+                                    new(scale - 10, (scale - 10) / 2),
+                                    color
+                                );
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        EndTextureMode();
+    }
 
     internal static void DrawTileWithPalette(
         in TileDefinition init,

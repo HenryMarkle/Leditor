@@ -1046,7 +1046,8 @@ internal class ExperimentalGeometryPage : EditorPage
                         PropsLayer3 = _showLayer3 && GLOBALS.Settings.GeometryEditor.ShowProps,
                         HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
                         Palette = GLOBALS.SelectedPalette,
-                        VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers
+                        VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers,
+                        RenderMaterials = GLOBALS.Settings.GeneralSettings.RenderMaterials
                     });
                 }
                 _shouldRedrawLevel = false;
@@ -1063,6 +1064,9 @@ internal class ExperimentalGeometryPage : EditorPage
                     Color.White);
                 EndShaderMode();
                 #endregion
+
+                // Draw geo features
+                Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.White, false, GLOBALS.GeoPathsFilter);
                 
                 // Grid
 

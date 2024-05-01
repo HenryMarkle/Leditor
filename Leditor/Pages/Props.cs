@@ -141,32 +141,36 @@ internal class PropsEditorPage : EditorPage, IContextListener
         {
             // Draw geos first
             if (paletteTiles) {
-                BeginTextureMode(geoL);
-                ClearBackground(Color.White with { A = 0 });
+                Printers.DrawGeoLayerWithMaterialsIntoBuffer(geoL, 2, 16, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+
+                // BeginTextureMode(geoL);
+                // ClearBackground(Color.White with { A = 0 });
                 
-                Printers.DrawGeoLayer(
-                    2, 
-                    16, 
-                    false, 
-                    Color.Black
-                );
-                EndTextureMode();
+                // Printers.DrawGeoLayer(
+                //     2, 
+                //     16, 
+                //     false, 
+                //     Color.Black
+                // );
+                // EndTextureMode();
 
                 BeginTextureMode(GLOBALS.Textures.GeneralLevel);
 
-                BeginShaderMode(GLOBALS.Shaders.GeoPalette);
+                var shader = GLOBALS.Shaders.Palette;
 
-                var textureLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "inputTexture");
-                var paletteLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "paletteTexture");
+                BeginShaderMode(shader);
 
-                var depthLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "depth");
-                var shadingLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "shading");
+                var textureLoc = GetShaderLocation(shader, "inputTexture");
+                var paletteLoc = GetShaderLocation(shader, "paletteTexture");
 
-                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, textureLoc, geoL.Texture);
-                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, paletteLoc, GLOBALS.SelectedPalette!.Value);
+                var depthLoc = GetShaderLocation(shader, "depth");
+                var shadingLoc = GetShaderLocation(shader, "shading");
 
-                SetShaderValue(GLOBALS.Shaders.GeoPalette, depthLoc, 20, ShaderUniformDataType.Int);
-                SetShaderValue(GLOBALS.Shaders.GeoPalette, shadingLoc, 1, ShaderUniformDataType.Int);
+                SetShaderValueTexture(shader, textureLoc, geoL.Texture);
+                SetShaderValueTexture(shader, paletteLoc, GLOBALS.SelectedPalette!.Value);
+
+                SetShaderValue(shader, depthLoc, 20, ShaderUniformDataType.Int);
+                SetShaderValue(shader, shadingLoc, 1, ShaderUniformDataType.Int);
 
                 DrawTexture(geoL.Texture, 0, 0, GLOBALS.Layer == 2 ? Color.Black : Color.Black with { A = 120 });
 
@@ -189,34 +193,42 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
             // then draw the tiles
 
-            BeginTextureMode(GLOBALS.Textures.GeneralLevel);
 
 
             if (_showLayer3Tiles)
             {
                 if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
-                    Printers.DrawTileLayer(
-                        GLOBALS.Layer,
-                        2, 
-                        16, 
-                        false, 
-                        TileDrawMode.Palette,
-                        GLOBALS.SelectedPalette!.Value,
-                        70
-                    );
+                    // Printers.DrawTileLayer(
+                    //     GLOBALS.Layer,
+                    //     2, 
+                    //     16, 
+                    //     false, 
+                    //     TileDrawMode.Palette,
+                    //     GLOBALS.SelectedPalette!.Value,
+                    //     70
+                    // );
+                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 2, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), true, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+
                 } else {
+                    BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+
                     Printers.DrawTileLayer(
                         GLOBALS.Layer,
                         2, 
                         16, 
                         false, 
                         GLOBALS.Settings.GeneralSettings.DrawTileMode,
-                        70
+                        (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255)
                     );
+
+                    EndTextureMode();
                 }
             }
             
             // Then draw the props
+
+            BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+
 
             for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
             {
@@ -351,32 +363,36 @@ internal class PropsEditorPage : EditorPage, IContextListener
         if (_showTileLayer2 && (GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers || GLOBALS.Layer is 0 or 1))
         {
             if (paletteTiles) {
-                BeginTextureMode(geoL);
-                ClearBackground(Color.White with { A = 0 });
+                Printers.DrawGeoLayerWithMaterialsIntoBuffer(geoL, 1, 16, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+
+                // BeginTextureMode(geoL);
+                // ClearBackground(Color.White with { A = 0 });
                 
-                Printers.DrawGeoLayer(
-                    1, 
-                    16, 
-                    false, 
-                    Color.Black
-                );
-                EndTextureMode();
+                // Printers.DrawGeoLayer(
+                //     1, 
+                //     16, 
+                //     false, 
+                //     Color.Black
+                // );
+                // EndTextureMode();
+
+                var shader = GLOBALS.Shaders.Palette;
 
                 BeginTextureMode(GLOBALS.Textures.GeneralLevel);
 
-                BeginShaderMode(GLOBALS.Shaders.GeoPalette);
+                BeginShaderMode(shader);
 
-                var textureLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "inputTexture");
-                var paletteLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "paletteTexture");
+                var textureLoc = GetShaderLocation(shader, "inputTexture");
+                var paletteLoc = GetShaderLocation(shader, "paletteTexture");
 
-                var depthLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "depth");
-                var shadingLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "shading");
+                var depthLoc = GetShaderLocation(shader, "depth");
+                var shadingLoc = GetShaderLocation(shader, "shading");
 
-                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, textureLoc, geoL.Texture);
-                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, paletteLoc, GLOBALS.SelectedPalette!.Value);
+                SetShaderValueTexture(shader, textureLoc, geoL.Texture);
+                SetShaderValueTexture(shader, paletteLoc, GLOBALS.SelectedPalette!.Value);
 
-                SetShaderValue(GLOBALS.Shaders.GeoPalette, depthLoc, 10, ShaderUniformDataType.Int);
-                SetShaderValue(GLOBALS.Shaders.GeoPalette, shadingLoc, 1, ShaderUniformDataType.Int);
+                SetShaderValue(shader, depthLoc, 10, ShaderUniformDataType.Int);
+                SetShaderValue(shader, shadingLoc, 1, ShaderUniformDataType.Int);
 
                 DrawTexture(geoL.Texture, 0, 0, GLOBALS.Layer == 1 ? Color.Black : Color.Black with { A = 140 });
 
@@ -399,33 +415,42 @@ internal class PropsEditorPage : EditorPage, IContextListener
             }
 
 
-            BeginTextureMode(GLOBALS.Textures.GeneralLevel);
 
             // Draw layer 2 tiles
 
             if (_showLayer2Tiles)
             {
                 if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
-                    Printers.DrawTileLayer(
-                        GLOBALS.Layer,
-                        1, 
-                        16, 
-                        false, 
-                        TileDrawMode.Palette,
-                        GLOBALS.SelectedPalette!.Value,
-                        70
-                    );
+                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 1, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), true, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+                    
+                    
+                    // Printers.DrawTileLayer(
+                    //     GLOBALS.Layer,
+                    //     1, 
+                    //     16, 
+                    //     false, 
+                    //     TileDrawMode.Palette,
+                    //     GLOBALS.SelectedPalette!.Value,
+                    //     70
+                    // );
                 } else {
+                    BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+
                     Printers.DrawTileLayer(
                         GLOBALS.Layer,
                         1, 
                         16, 
                         false, 
                         GLOBALS.Settings.GeneralSettings.DrawTileMode,
-                        70
+                        (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255)
                     );
+
+                    EndTextureMode();
                 }
             }
+
+            BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+
             
             // then draw the props
 
@@ -562,32 +587,36 @@ internal class PropsEditorPage : EditorPage, IContextListener
         if (_showTileLayer1 && (GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers || GLOBALS.Layer == 0))
         {
             if (paletteTiles) {
-                BeginTextureMode(geoL);
-                ClearBackground(Color.White with { A = 0 });
+                Printers.DrawGeoLayerWithMaterialsIntoBuffer(geoL, 0, 16, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+
+                // BeginTextureMode(geoL);
+                // ClearBackground(Color.White with { A = 0 });
                 
-                Printers.DrawGeoLayer(
-                    0, 
-                    16, 
-                    false, 
-                    Color.Black
-                );
-                EndTextureMode();
+                // Printers.DrawGeoLayer(
+                //     0, 
+                //     16, 
+                //     false, 
+                //     Color.Black
+                // );
+                // EndTextureMode();
+
+                var shader = GLOBALS.Shaders.Palette;
 
                 BeginTextureMode(GLOBALS.Textures.GeneralLevel);
 
-                BeginShaderMode(GLOBALS.Shaders.GeoPalette);
+                BeginShaderMode(shader);
 
-                var textureLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "inputTexture");
-                var paletteLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "paletteTexture");
+                var textureLoc = GetShaderLocation(shader, "inputTexture");
+                var paletteLoc = GetShaderLocation(shader, "paletteTexture");
 
-                var depthLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "depth");
-                var shadingLoc = GetShaderLocation(GLOBALS.Shaders.GeoPalette, "shading");
+                var depthLoc = GetShaderLocation(shader, "depth");
+                var shadingLoc = GetShaderLocation(shader, "shading");
 
-                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, textureLoc, geoL.Texture);
-                SetShaderValueTexture(GLOBALS.Shaders.GeoPalette, paletteLoc, GLOBALS.SelectedPalette!.Value);
+                SetShaderValueTexture(shader, textureLoc, geoL.Texture);
+                SetShaderValueTexture(shader, paletteLoc, GLOBALS.SelectedPalette!.Value);
 
-                SetShaderValue(GLOBALS.Shaders.GeoPalette, depthLoc, 0, ShaderUniformDataType.Int);
-                SetShaderValue(GLOBALS.Shaders.GeoPalette, shadingLoc, 1, ShaderUniformDataType.Int);
+                SetShaderValue(shader, depthLoc, 0, ShaderUniformDataType.Int);
+                SetShaderValue(shader, shadingLoc, 1, ShaderUniformDataType.Int);
 
                 DrawTexture(geoL.Texture, 0, 0, GLOBALS.Layer == 0 ? Color.Black : Color.Black with { A = 120 });
 
@@ -609,34 +638,39 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 EndTextureMode();
             }
 
-            BeginTextureMode(GLOBALS.Textures.GeneralLevel);
 
             // Draw layer 1 tiles
 
             if (_showLayer1Tiles)
             {
                 if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
-                    Printers.DrawTileLayer(
-                        GLOBALS.Layer,
-                        0, 
-                        16, 
-                        false, 
-                        TileDrawMode.Palette,
-                        GLOBALS.SelectedPalette!.Value,
-                        70
-                    );
+                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 0, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), true, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+                    
+                    // Printers.DrawTileLayer(
+                    //     GLOBALS.Layer,
+                    //     0, 
+                    //     16, 
+                    //     false, 
+                    //     TileDrawMode.Palette,
+                    //     GLOBALS.SelectedPalette!.Value,
+                    //     70
+                    // );
                 } else {
+                    BeginTextureMode(GLOBALS.Textures.GeneralLevel);
                     Printers.DrawTileLayer(
                         GLOBALS.Layer,
                         0, 
                         16, 
                         false, 
                         GLOBALS.Settings.GeneralSettings.DrawTileMode,
-                        70
+                        (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255)
                     );
+                    EndTextureMode();
                 }
             }
-            
+
+            BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+
             // then draw the props
 
             for (var p = 0; p < GLOBALS.Level.Props.Length; p++)

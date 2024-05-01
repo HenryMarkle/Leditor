@@ -750,7 +750,8 @@ internal class MainPage : EditorPage, IContextListener
                         PropsLayer2 = _showProps,
                         PropsLayer3 = _showProps,
                         HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
-                        Palette = GLOBALS.SelectedPalette
+                        Palette = GLOBALS.SelectedPalette,
+                        RenderMaterials = GLOBALS.Settings.GeneralSettings.RenderMaterials
                     });
                     _shouldRedrawLevel = false;
                 }
@@ -1086,6 +1087,28 @@ internal class MainPage : EditorPage, IContextListener
                         _shouldRedrawLevel = true;
                         GLOBALS.Settings.GeneralSettings.DrawTileMode = (TileDrawMode)tileVisual;
                     }
+
+                    ImGui.Spacing();
+
+                    if (tileVisual != 2) ImGui.BeginDisabled();
+
+                    var renderMaterials = GLOBALS.Settings.GeneralSettings.RenderMaterials;
+                    
+                    var renderMaterialsChecked = ImGui.Checkbox("Render Materials", ref renderMaterials);
+                    
+                    if (ImGui.IsItemHovered()) {
+                        if (ImGui.BeginTooltip()) {
+                            ImGui.Text("May negatively impact performance");
+                            ImGui.EndTooltip();
+                        }
+                    }
+
+                    if (renderMaterialsChecked)
+                    {
+                        _shouldRedrawLevel = true;
+                        GLOBALS.Settings.GeneralSettings.RenderMaterials = renderMaterials;
+                    }
+                    if (tileVisual != 2) ImGui.EndDisabled();
 
                     ImGui.Spacing();
 
