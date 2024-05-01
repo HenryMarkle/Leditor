@@ -99,9 +99,6 @@ internal class TileEditorPage : EditorPage, IDisposable
     private bool _autoTilingWithGeo = true;
     private bool _autoTilerLinearAlgorithm = true;
 
-    private int _placeMatPrevPosX = -1;
-    private int _placeMatPrevPosY = -1;
-
     /// <summary>
     /// 0 - default
     /// 1 - with geo

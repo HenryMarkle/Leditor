@@ -5,6 +5,7 @@ using rlImGui_cs;
 using static Raylib_cs.Raylib;
 using RenderTexture2D = Leditor.RL.Managed.RenderTexture2D;
 using Leditor.Types;
+using System.Drawing.Printing;
 
 
 namespace Leditor.Pages;
@@ -20,6 +21,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         Disposed = true;
         
         _propTooltip.Dispose();
+        _propLayerRT.Dispose();
     }
 
     ~PropsEditorPage()
@@ -31,6 +33,149 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
     private readonly PropsShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.PropsEditor;
 
+    private RenderTexture2D _propLayerRT = new(0, 0);
+
+    private bool _shouldRedrawPropLayer = true;
+
+    private void DrawPropLayerRT() {
+        BeginTextureMode(_propLayerRT);
+        ClearBackground(Color.White with { A = 0 });
+
+        for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
+        {
+            if (_hidden[p]) continue;
+            
+            var current = GLOBALS.Level.Props[p];
+            
+            // Filter based on depth
+            if (current.prop.Depth <= -(GLOBALS.Layer+1)*10 || current.prop.Depth > -GLOBALS.Layer*10) continue;
+
+            var (category, index) = current.position;
+            var quads = current.prop.Quads;
+            
+            // origin must be the center
+            // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
+            
+            // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
+            Printers.DrawProp(current.type, current.tile, category, index, current.prop, 16, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+
+            // Draw Rope Point
+            if (current.type == InitPropType.Rope)
+            {
+                foreach (var point in current.prop.Extras.RopePoints)
+                {
+                    DrawCircleV(point, 3f, Color.White);
+                }
+            }
+            
+            if (_selected[p])
+            {
+                // Side Lines
+                
+                DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
+                
+                // Quad Points
+
+                if (_stretchingProp)
+                {
+                    if (current.type == InitPropType.Rope)
+                    {
+                        DrawCircleV(
+                            Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
+                                new(2f, 2f)), 
+                            5f, 
+                            Color.Blue
+                        );
+                        
+                        DrawCircleV(
+                            Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), 
+                                new(2f, 2f)), 
+                            5f, 
+                            Color.Blue
+                        );
+                        
+                        /*DrawCircleV(quads.TopLeft, 2f, Color.Blue);
+                        DrawCircleV(quads.TopRight, 2f, Color.Blue);
+                        DrawCircleV(quads.BottomRight, 2f, Color.Blue);
+                        DrawCircleV(quads.BottomLeft, 2f, Color.Blue);*/
+                    }
+                    else if (current.type == InitPropType.Long)
+                    {
+                        var sides = Utils.LongSides(current.prop.Quads);
+                        
+                        DrawCircleV(sides.left, 5f, Color.Blue);
+                        DrawCircleV(sides.top, 5f, Color.Blue);
+                        DrawCircleV(sides.right, 5f, Color.Blue);
+                        DrawCircleV(sides.bottom, 5f, Color.Blue);
+                    }
+                    else
+                    {
+                        DrawCircleV(quads.TopLeft, 5f, Color.Blue);
+                        DrawCircleV(quads.TopRight, 5f, Color.Blue);
+                        DrawCircleV(quads.BottomRight, 5f, Color.Blue);
+                        DrawCircleV(quads.BottomLeft, 5f, Color.Blue);
+                    }
+                }
+                else if (_scalingProps)
+                {
+                    var center = Utils.QuadsCenter(ref quads);
+                    
+                    switch (_stretchAxes)
+                    {
+                        case 1:
+                            DrawLineEx(
+                                center with { X = -10 }, 
+                                center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
+                                2f, 
+                                Color.Red
+                            );
+                            break;
+                        case 2:
+                            DrawLineEx(
+                                center with { Y = -10 },
+                                center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
+                                2f,
+                                Color.Green
+                            );
+                            break;
+                    }
+                }
+                
+                // Draw Rope Point
+                if (current.type == InitPropType.Rope)
+                {
+                    if (_editingPropPoints)
+                    {
+                        foreach (var point in current.prop.Extras.RopePoints)
+                        {
+                            DrawCircleV(point, 3f, Color.Red);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var point in current.prop.Extras.RopePoints)
+                        {
+                            DrawCircleV(point, 2f, Color.Orange);
+                        }
+                    }
+
+                    if (_ropeMode)
+                    {
+                        // p is copied as suggested by the code editor..
+                        var p1 = p;
+                        var model = _models.Single(r => r.index == p1);
+
+                        if (!model.simSwitch)
+                        {
+                            foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
+                        }
+                    }
+                }
+            }
+        }
+
+        EndTextureMode();
+    }
 
     private int _hoveredCategoryIndex = -1;
     private int _hoveredIndex = -1;
@@ -207,7 +352,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     //     GLOBALS.SelectedPalette!.Value,
                     //     70
                     // );
-                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 2, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), true, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 2, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, GLOBALS.Settings.GeneralSettings.RenderMaterials);
 
                 } else {
                     BeginTextureMode(GLOBALS.Textures.GeneralLevel);
@@ -227,135 +372,139 @@ internal class PropsEditorPage : EditorPage, IContextListener
             
             // Then draw the props
 
-            BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette || GLOBALS.Layer != 2) {
+
+                BeginTextureMode(GLOBALS.Textures.GeneralLevel);
 
 
-            for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
-            {
-                if (_hidden[p]) continue;
-                
-                var current = GLOBALS.Level.Props[p];
-                
-                // Filter based on depth
-                if (current.prop.Depth > -20) continue;
-
-                var (category, index) = current.position;
-                var quads = current.prop.Quads;
-                
-                // origin must be the center
-                // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
-                
-                // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                Printers.DrawProp(current.type, current.tile, category, index, current.prop, 16, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
-
-
-                // Draw Rope Point
-                if (current.type == InitPropType.Rope)
+                for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
                 {
-                    foreach (var point in current.prop.Extras.RopePoints)
-                    {
-                        DrawCircleV(point, 3f, Color.White);
-                    }
-                }
-                
-                if (_selected[p])
-                {
-                    // Side Lines
+                    if (_hidden[p]) continue;
                     
-                    DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
+                    var current = GLOBALS.Level.Props[p];
                     
-                    // Quad Points
+                    // Filter based on depth
+                    if (current.prop.Depth > -20) continue;
 
-                    if (_stretchingProp)
-                    {
-                        if (current.type == InitPropType.Rope)
-                        {
-                            DrawCircleV(
-                                Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
-                                    new(2f, 2f)), 
-                                5f, 
-                                Color.Blue
-                            );
-                            
-                            DrawCircleV(
-                                Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), 
-                                    new(2f, 2f)), 
-                                5f, 
-                                Color.Blue
-                            );
-                            
-                            DrawCircleV(quads.TopLeft, 2f, Color.Blue);
-                            DrawCircleV(quads.TopRight, 2f, Color.Blue);
-                            DrawCircleV(quads.BottomRight, 2f, Color.Blue);
-                            DrawCircleV(quads.BottomLeft, 2f, Color.Blue);
-                        }
-                        else
-                        {
-                            DrawCircleV(quads.TopLeft, 5f, Color.Blue);
-                            DrawCircleV(quads.TopRight, 5f, Color.Blue);
-                            DrawCircleV(quads.BottomRight, 5f, Color.Blue);
-                            DrawCircleV(quads.BottomLeft, 5f, Color.Blue);
-                        }
-                    }
-                    else if (_scalingProps)
-                    {
-                        var center = Utils.QuadsCenter(ref quads);
-                        
-                        switch (_stretchAxes)
-                        {
-                            case 1:
-                                DrawLineEx(
-                                    center with { X = -10 }, 
-                                    center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
-                                    2f, 
-                                    Color.Red
-                                );
-                                break;
-                            case 2:
-                                DrawLineEx(
-                                    center with { Y = -10 },
-                                    center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
-                                    2f,
-                                    Color.Green
-                                );
-                                break;
-                        }
-                    }
+                    var (category, index) = current.position;
+                    var quads = current.prop.Quads;
                     
+                    // origin must be the center
+                    // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
+                    
+                    // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
+                    Printers.DrawProp(current.type, current.tile, category, index, current.prop, 16, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+
+
                     // Draw Rope Point
                     if (current.type == InitPropType.Rope)
                     {
-                        if (_editingPropPoints)
+                        foreach (var point in current.prop.Extras.RopePoints)
                         {
-                            foreach (var point in current.prop.Extras.RopePoints)
+                            DrawCircleV(point, 3f, Color.White);
+                        }
+                    }
+                    
+                    if (_selected[p])
+                    {
+                        // Side Lines
+                        
+                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
+                        
+                        // Quad Points
+
+                        if (_stretchingProp)
+                        {
+                            if (current.type == InitPropType.Rope)
                             {
-                                DrawCircleV(point, 3f, Color.Red);
+                                DrawCircleV(
+                                    Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
+                                        new(2f, 2f)), 
+                                    5f, 
+                                    Color.Blue
+                                );
+                                
+                                DrawCircleV(
+                                    Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), 
+                                        new(2f, 2f)), 
+                                    5f, 
+                                    Color.Blue
+                                );
+                                
+                                DrawCircleV(quads.TopLeft, 2f, Color.Blue);
+                                DrawCircleV(quads.TopRight, 2f, Color.Blue);
+                                DrawCircleV(quads.BottomRight, 2f, Color.Blue);
+                                DrawCircleV(quads.BottomLeft, 2f, Color.Blue);
+                            }
+                            else
+                            {
+                                DrawCircleV(quads.TopLeft, 5f, Color.Blue);
+                                DrawCircleV(quads.TopRight, 5f, Color.Blue);
+                                DrawCircleV(quads.BottomRight, 5f, Color.Blue);
+                                DrawCircleV(quads.BottomLeft, 5f, Color.Blue);
                             }
                         }
-                        else
+                        else if (_scalingProps)
                         {
-                            foreach (var point in current.prop.Extras.RopePoints)
+                            var center = Utils.QuadsCenter(ref quads);
+                            
+                            switch (_stretchAxes)
                             {
-                                DrawCircleV(point, 2f, Color.Orange);
+                                case 1:
+                                    DrawLineEx(
+                                        center with { X = -10 }, 
+                                        center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
+                                        2f, 
+                                        Color.Red
+                                    );
+                                    break;
+                                case 2:
+                                    DrawLineEx(
+                                        center with { Y = -10 },
+                                        center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
+                                        2f,
+                                        Color.Green
+                                    );
+                                    break;
                             }
                         }
                         
-                        if (_ropeMode)
+                        // Draw Rope Point
+                        if (current.type == InitPropType.Rope)
                         {
-                            // p is copied as suggested by the code editor..
-                            var p1 = p;
-                            var model = _models.Single(r => r.index == p1);
-
-                            if (!model.simSwitch)
+                            if (_editingPropPoints)
                             {
-                                foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
+                                foreach (var point in current.prop.Extras.RopePoints)
+                                {
+                                    DrawCircleV(point, 3f, Color.Red);
+                                }
+                            }
+                            else
+                            {
+                                foreach (var point in current.prop.Extras.RopePoints)
+                                {
+                                    DrawCircleV(point, 2f, Color.Orange);
+                                }
+                            }
+                            
+                            if (_ropeMode)
+                            {
+                                // p is copied as suggested by the code editor..
+                                var p1 = p;
+                                var model = _models.Single(r => r.index == p1);
+
+                                if (!model.simSwitch)
+                                {
+                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
+                                }
                             }
                         }
                     }
                 }
+
+                EndTextureMode();
             }
 
-            EndTextureMode();
         }
         #endregion
 
@@ -421,7 +570,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             if (_showLayer2Tiles)
             {
                 if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
-                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 1, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), true, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 1, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, GLOBALS.Settings.GeneralSettings.RenderMaterials);
                     
                     
                     // Printers.DrawTileLayer(
@@ -454,131 +603,134 @@ internal class PropsEditorPage : EditorPage, IContextListener
             
             // then draw the props
 
-            for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
-            {
-                if (_hidden[p]) continue;
-                
-                var current = GLOBALS.Level.Props[p];
-                
-                // Filter based on depth
-                if (current.prop.Depth > -10 || current.prop.Depth < -19) continue;
-
-                var (category, index) = current.position;
-                var quads = current.prop.Quads;
-                
-                // origin must be the center
-                // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
-                
-                // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                Printers.DrawProp(current.type, current.tile, category, index, current.prop, 16, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
-
-                // Draw Rope Point
-                if (current.type == InitPropType.Rope)
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette || GLOBALS.Layer != 1) {
+                for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
                 {
-                    foreach (var point in current.prop.Extras.RopePoints)
-                    {
-                        DrawCircleV(point, 3f, Color.White);
-                    }
-                }
-                
-                if (_selected[p])
-                {
-                    // Side Lines
+                    if (_hidden[p]) continue;
                     
-                    DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
+                    var current = GLOBALS.Level.Props[p];
                     
-                    // Quad Points
+                    // Filter based on depth
+                    if (current.prop.Depth > -10 || current.prop.Depth < -19) continue;
 
-                    if (_stretchingProp)
-                    {
-                        if (current.type == InitPropType.Rope)
-                        {
-                            DrawCircleV(
-                                Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
-                                    new(2f, 2f)), 
-                                5f, 
-                                Color.Blue
-                            );
-                            
-                            DrawCircleV(
-                                Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), 
-                                    new(2f, 2f)), 
-                                5f, 
-                                Color.Blue
-                            );
-                            
-                            DrawCircleV(quads.TopLeft, 2f, Color.Blue);
-                            DrawCircleV(quads.TopRight, 2f, Color.Blue);
-                            DrawCircleV(quads.BottomRight, 2f, Color.Blue);
-                            DrawCircleV(quads.BottomLeft, 2f, Color.Blue);
-                        }
-                        else
-                        {
-                            DrawCircleV(quads.TopLeft, 5f, Color.Blue);
-                            DrawCircleV(quads.TopRight, 5f, Color.Blue);
-                            DrawCircleV(quads.BottomRight, 5f, Color.Blue);
-                            DrawCircleV(quads.BottomLeft, 5f, Color.Blue);
-                        }
-                    }
-                    else if (_scalingProps)
-                    {
-                        var center = Utils.QuadsCenter(ref quads);
-                        
-                        switch (_stretchAxes)
-                        {
-                            case 1:
-                                DrawLineEx(
-                                    center with { X = -10 }, 
-                                    center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
-                                    2f, 
-                                    Color.Red
-                                );
-                                break;
-                            case 2:
-                                DrawLineEx(
-                                    center with { Y = -10 },
-                                    center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
-                                    2f,
-                                    Color.Green
-                                );
-                                break;
-                        }
-                    }
+                    var (category, index) = current.position;
+                    var quads = current.prop.Quads;
                     
+                    // origin must be the center
+                    // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
+                    
+                    // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
+                    Printers.DrawProp(current.type, current.tile, category, index, current.prop, 16, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+
                     // Draw Rope Point
                     if (current.type == InitPropType.Rope)
                     {
-                        if (_editingPropPoints)
+                        foreach (var point in current.prop.Extras.RopePoints)
                         {
-                            foreach (var point in current.prop.Extras.RopePoints)
+                            DrawCircleV(point, 3f, Color.White);
+                        }
+                    }
+                    
+                    if (_selected[p])
+                    {
+                        // Side Lines
+                        
+                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
+                        
+                        // Quad Points
+
+                        if (_stretchingProp)
+                        {
+                            if (current.type == InitPropType.Rope)
                             {
-                                DrawCircleV(point, 3f, Color.Red);
+                                DrawCircleV(
+                                    Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
+                                        new(2f, 2f)), 
+                                    5f, 
+                                    Color.Blue
+                                );
+                                
+                                DrawCircleV(
+                                    Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), 
+                                        new(2f, 2f)), 
+                                    5f, 
+                                    Color.Blue
+                                );
+                                
+                                DrawCircleV(quads.TopLeft, 2f, Color.Blue);
+                                DrawCircleV(quads.TopRight, 2f, Color.Blue);
+                                DrawCircleV(quads.BottomRight, 2f, Color.Blue);
+                                DrawCircleV(quads.BottomLeft, 2f, Color.Blue);
+                            }
+                            else
+                            {
+                                DrawCircleV(quads.TopLeft, 5f, Color.Blue);
+                                DrawCircleV(quads.TopRight, 5f, Color.Blue);
+                                DrawCircleV(quads.BottomRight, 5f, Color.Blue);
+                                DrawCircleV(quads.BottomLeft, 5f, Color.Blue);
                             }
                         }
-                        else
+                        else if (_scalingProps)
                         {
-                            foreach (var point in current.prop.Extras.RopePoints)
+                            var center = Utils.QuadsCenter(ref quads);
+                            
+                            switch (_stretchAxes)
                             {
-                                DrawCircleV(point, 2f, Color.Orange);
+                                case 1:
+                                    DrawLineEx(
+                                        center with { X = -10 }, 
+                                        center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
+                                        2f, 
+                                        Color.Red
+                                    );
+                                    break;
+                                case 2:
+                                    DrawLineEx(
+                                        center with { Y = -10 },
+                                        center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
+                                        2f,
+                                        Color.Green
+                                    );
+                                    break;
                             }
                         }
                         
-                        if (_ropeMode)
+                        // Draw Rope Point
+                        if (current.type == InitPropType.Rope)
                         {
-                            // p is copied as suggested by the code editor..
-                            var p1 = p;
-                            var model = _models.Single(r => r.index == p1);
-
-                            if (!model.simSwitch)
+                            if (_editingPropPoints)
                             {
-                                foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
+                                foreach (var point in current.prop.Extras.RopePoints)
+                                {
+                                    DrawCircleV(point, 3f, Color.Red);
+                                }
+                            }
+                            else
+                            {
+                                foreach (var point in current.prop.Extras.RopePoints)
+                                {
+                                    DrawCircleV(point, 2f, Color.Orange);
+                                }
+                            }
+                            
+                            if (_ropeMode)
+                            {
+                                // p is copied as suggested by the code editor..
+                                var p1 = p;
+                                var model = _models.Single(r => r.index == p1);
+
+                                if (!model.simSwitch)
+                                {
+                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
+                                }
                             }
                         }
                     }
                 }
+
+                EndTextureMode();
             }
 
-            EndTextureMode();
             
         }
         #endregion
@@ -644,7 +796,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             if (_showLayer1Tiles)
             {
                 if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
-                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 0, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), true, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 0, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, GLOBALS.Settings.GeneralSettings.RenderMaterials);
                     
                     // Printers.DrawTileLayer(
                     //     GLOBALS.Layer,
@@ -669,144 +821,148 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 }
             }
 
-            BeginTextureMode(GLOBALS.Textures.GeneralLevel);
-
             // then draw the props
 
-            for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
-            {
-                if (_hidden[p]) continue;
-                
-                var current = GLOBALS.Level.Props[p];
-                
-                // Filter based on depth
-                if (current.prop.Depth < -9) continue;
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette || GLOBALS.Layer != 0) {
 
-                var (category, index) = current.position;
-                var quads = current.prop.Quads;
-                
-                // origin must be the center
-                // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
-                
-                // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                Printers.DrawProp(current.type, current.tile, category, index, current.prop, 16, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+                BeginTextureMode(GLOBALS.Textures.GeneralLevel);
 
-                // Draw Rope Point
-                if (current.type == InitPropType.Rope)
+
+                for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
                 {
-                    foreach (var point in current.prop.Extras.RopePoints)
-                    {
-                        DrawCircleV(point, 3f, Color.White);
-                    }
-                }
-                
-                if (_selected[p])
-                {
-                    // Side Lines
+                    if (_hidden[p]) continue;
                     
-                    DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
+                    var current = GLOBALS.Level.Props[p];
                     
-                    // Quad Points
+                    // Filter based on depth
+                    if (current.prop.Depth < -9) continue;
 
-                    if (_stretchingProp)
-                    {
-                        if (current.type == InitPropType.Rope)
-                        {
-                            DrawCircleV(
-                                Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
-                                    new(2f, 2f)), 
-                                5f, 
-                                Color.Blue
-                            );
-                            
-                            DrawCircleV(
-                                Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), 
-                                    new(2f, 2f)), 
-                                5f, 
-                                Color.Blue
-                            );
-                            
-                            /*DrawCircleV(quads.TopLeft, 2f, Color.Blue);
-                            DrawCircleV(quads.TopRight, 2f, Color.Blue);
-                            DrawCircleV(quads.BottomRight, 2f, Color.Blue);
-                            DrawCircleV(quads.BottomLeft, 2f, Color.Blue);*/
-                        }
-                        else if (current.type == InitPropType.Long)
-                        {
-                            var sides = Utils.LongSides(current.prop.Quads);
-                            
-                            DrawCircleV(sides.left, 5f, Color.Blue);
-                            DrawCircleV(sides.top, 5f, Color.Blue);
-                            DrawCircleV(sides.right, 5f, Color.Blue);
-                            DrawCircleV(sides.bottom, 5f, Color.Blue);
-                        }
-                        else
-                        {
-                            DrawCircleV(quads.TopLeft, 5f, Color.Blue);
-                            DrawCircleV(quads.TopRight, 5f, Color.Blue);
-                            DrawCircleV(quads.BottomRight, 5f, Color.Blue);
-                            DrawCircleV(quads.BottomLeft, 5f, Color.Blue);
-                        }
-                    }
-                    else if (_scalingProps)
-                    {
-                        var center = Utils.QuadsCenter(ref quads);
-                        
-                        switch (_stretchAxes)
-                        {
-                            case 1:
-                                DrawLineEx(
-                                    center with { X = -10 }, 
-                                    center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
-                                    2f, 
-                                    Color.Red
-                                );
-                                break;
-                            case 2:
-                                DrawLineEx(
-                                    center with { Y = -10 },
-                                    center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
-                                    2f,
-                                    Color.Green
-                                );
-                                break;
-                        }
-                    }
+                    var (category, index) = current.position;
+                    var quads = current.prop.Quads;
                     
+                    // origin must be the center
+                    // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
+                    
+                    // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
+                    Printers.DrawProp(current.type, current.tile, category, index, current.prop, 16, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+
                     // Draw Rope Point
                     if (current.type == InitPropType.Rope)
                     {
-                        if (_editingPropPoints)
+                        foreach (var point in current.prop.Extras.RopePoints)
                         {
-                            foreach (var point in current.prop.Extras.RopePoints)
+                            DrawCircleV(point, 3f, Color.White);
+                        }
+                    }
+                    
+                    if (_selected[p])
+                    {
+                        // Side Lines
+                        
+                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
+                        
+                        // Quad Points
+
+                        if (_stretchingProp)
+                        {
+                            if (current.type == InitPropType.Rope)
                             {
-                                DrawCircleV(point, 3f, Color.Red);
+                                DrawCircleV(
+                                    Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
+                                        new(2f, 2f)), 
+                                    5f, 
+                                    Color.Blue
+                                );
+                                
+                                DrawCircleV(
+                                    Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopRight, quads.BottomRight), 
+                                        new(2f, 2f)), 
+                                    5f, 
+                                    Color.Blue
+                                );
+                                
+                                /*DrawCircleV(quads.TopLeft, 2f, Color.Blue);
+                                DrawCircleV(quads.TopRight, 2f, Color.Blue);
+                                DrawCircleV(quads.BottomRight, 2f, Color.Blue);
+                                DrawCircleV(quads.BottomLeft, 2f, Color.Blue);*/
+                            }
+                            else if (current.type == InitPropType.Long)
+                            {
+                                var sides = Utils.LongSides(current.prop.Quads);
+                                
+                                DrawCircleV(sides.left, 5f, Color.Blue);
+                                DrawCircleV(sides.top, 5f, Color.Blue);
+                                DrawCircleV(sides.right, 5f, Color.Blue);
+                                DrawCircleV(sides.bottom, 5f, Color.Blue);
+                            }
+                            else
+                            {
+                                DrawCircleV(quads.TopLeft, 5f, Color.Blue);
+                                DrawCircleV(quads.TopRight, 5f, Color.Blue);
+                                DrawCircleV(quads.BottomRight, 5f, Color.Blue);
+                                DrawCircleV(quads.BottomLeft, 5f, Color.Blue);
                             }
                         }
-                        else
+                        else if (_scalingProps)
                         {
-                            foreach (var point in current.prop.Extras.RopePoints)
+                            var center = Utils.QuadsCenter(ref quads);
+                            
+                            switch (_stretchAxes)
                             {
-                                DrawCircleV(point, 2f, Color.Orange);
+                                case 1:
+                                    DrawLineEx(
+                                        center with { X = -10 }, 
+                                        center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
+                                        2f, 
+                                        Color.Red
+                                    );
+                                    break;
+                                case 2:
+                                    DrawLineEx(
+                                        center with { Y = -10 },
+                                        center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
+                                        2f,
+                                        Color.Green
+                                    );
+                                    break;
                             }
                         }
-
-                        if (_ropeMode)
+                        
+                        // Draw Rope Point
+                        if (current.type == InitPropType.Rope)
                         {
-                            // p is copied as suggested by the code editor..
-                            var p1 = p;
-                            var model = _models.Single(r => r.index == p1);
-
-                            if (!model.simSwitch)
+                            if (_editingPropPoints)
                             {
-                                foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
+                                foreach (var point in current.prop.Extras.RopePoints)
+                                {
+                                    DrawCircleV(point, 3f, Color.Red);
+                                }
+                            }
+                            else
+                            {
+                                foreach (var point in current.prop.Extras.RopePoints)
+                                {
+                                    DrawCircleV(point, 2f, Color.Orange);
+                                }
+                            }
+
+                            if (_ropeMode)
+                            {
+                                // p is copied as suggested by the code editor..
+                                var p1 = p;
+                                var model = _models.Single(r => r.index == p1);
+
+                                if (!model.simSwitch)
+                                {
+                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            EndTextureMode();
+                EndTextureMode();
+            }
         }
         #endregion
 
@@ -927,17 +1083,26 @@ internal class PropsEditorPage : EditorPage, IContextListener
     {
         ImportRopeModels();
         _selected = new bool[GLOBALS.Level.Props.Length];
+
+        _propLayerRT.Dispose();
+        _propLayerRT = new RenderTexture2D(GLOBALS.Level.Width * 16, GLOBALS.Level.Height * 16);
     }
 
     public void OnProjectCreated(object? sender, EventArgs e)
     {
         ImportRopeModels();
         _selected = new bool[GLOBALS.Level.Props.Length];
+
+        _propLayerRT.Dispose();
+        _propLayerRT = new RenderTexture2D(GLOBALS.Level.Width * 16, GLOBALS.Level.Height * 16);
     }
     #nullable disable
 
     public void OnPageUpdated(int previous, int @next) {
-        _shouldRedrawLevel = true;
+        if (@next == 8) {
+            _shouldRedrawLevel = true;
+            _shouldRedrawPropLayer = true;
+        }
     }
 
     private void ImportRopeModels()
@@ -1216,6 +1381,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             UpdateDefaultDepth();
 
             _shouldRedrawLevel = true;
+            _shouldRedrawPropLayer = true;
         }
 
         if (_shortcuts.ToggleLayer1Tiles.Check(ctrl, shift, alt)) {
@@ -1268,7 +1434,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     if (canDrawTile && (_shortcuts.PlaceProp.Check(ctrl, shift, alt, true) ||
                                         _shortcuts.PlacePropAlt.Check(ctrl, shift, alt, true)))
                     {
-                        _shouldRedrawLevel = true;
+                        // _shouldRedrawLevel = true;
+                        _shouldRedrawPropLayer = true;
                         
                         var posV = _snapMode switch
                         {
@@ -1506,7 +1673,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 {
                     if (canDrawTile && (_shortcuts.PlaceProp.Check(ctrl, shift, alt) || _shortcuts.PlacePropAlt.Check(ctrl, shift, alt)))
                     {
-                        _shouldRedrawLevel = true;
+                        // _shouldRedrawLevel = true;
+                        _shouldRedrawPropLayer = true;
+
                         
                         var posV = _snapMode switch
                         {
@@ -1846,7 +2015,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 // Cycle selected
                 if (_shortcuts.CycleSelected.Check(ctrl, shift, alt) && anySelected && _selectedCycleIndices.Length > 0)
                 {
-                    _shouldRedrawLevel = true;
+                    // _shouldRedrawLevel = true;
+                    _shouldRedrawPropLayer = true;
+
                     
                     _selectedCycleCursor++;
                     Utils.Cycle(ref _selectedCycleCursor, 0, _selectedCycleIndices.Length - 1);
@@ -1892,7 +2063,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 // Hide
                 else if (_shortcuts.TogglePropsVisibility.Check(ctrl, shift, alt) && anySelected)
                 {
-                    _shouldRedrawLevel = true;
+                    // _shouldRedrawLevel = true;
+                    _shouldRedrawPropLayer = true;
+
                     
                     for (var i = 0; i < GLOBALS.Level.Props.Length; i++)
                     {
@@ -1902,7 +2075,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 // Edit Quads
                 else if (_shortcuts.ToggleEditingPropQuadsMode.Check(ctrl, shift, alt) && fetchedSelected.Length == 1)
                 {
-                    _shouldRedrawLevel = true;
+                    // _shouldRedrawLevel = true;
+                    _shouldRedrawPropLayer = true;
+
                     
                     _scalingProps = false;
                     _movingProps = false;
@@ -1914,7 +2089,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 // Delete
                 else if (_shortcuts.DeleteSelectedProps.Check(ctrl, shift, alt) && anySelected)
                 {
-                    _shouldRedrawLevel = true;
+                    // _shouldRedrawLevel = true;
+                    _shouldRedrawPropLayer = true;
+
                     
                     _scalingProps = false;
                     _movingProps = false;
@@ -1950,7 +2127,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     // Edit Rope Points
                     if (_shortcuts.ToggleRopePointsEditingMode.Check(ctrl, shift, alt))
                     {
-                        _shouldRedrawLevel = true;
+                        // _shouldRedrawLevel = true;
+                        _shouldRedrawPropLayer = true;
+
                         
                         _scalingProps = false;
                         _movingProps = false;
@@ -1962,7 +2141,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     // Rope mode
                     else if (_shortcuts.ToggleRopeEditingMode.Check(ctrl, shift, alt))
                     {
-                        _shouldRedrawLevel = true;
+                        // _shouldRedrawLevel = true;
+                        _shouldRedrawPropLayer = true;
+
                         // _scalingProps = false;
                         // _movingProps = false;
                         // _rotatingProps = false;
@@ -1974,7 +2155,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 // Duplicate
                 else if (_shortcuts.DuplicateProps.Check(ctrl, shift, alt) && anySelected)
                 {
-                    _shouldRedrawLevel = true;
+                    // _shouldRedrawLevel = true;
+                    _shouldRedrawPropLayer = true;
+
                     
                     List<(InitPropType, TileDefinition?, (int, int), Prop)> dProps = [];
                     
@@ -2023,7 +2206,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                 if (_ropeMode && fetchedSelected.Length == 1)
                 {
-                    _shouldRedrawLevel = true;
+                    // _shouldRedrawLevel = true;
+                    _shouldRedrawPropLayer = true;
+
                     
                     var foundRopeList = _models.Where(rope => rope.index == fetchedSelected[0].index);
 
@@ -2072,7 +2257,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 // TODO: switch on enums instead
                 if (_movingProps && anySelected && _propsMoveMouseAnchor is not null && _propsMoveMousePos is not null)
                 {
-                    _shouldRedrawLevel = true;
+                    // _shouldRedrawLevel = true;
+                    _shouldRedrawPropLayer = true;
+
                     
                     if (IsMouseButtonPressed(MouseButton.Left)) _movingProps = false;
                     
@@ -2182,7 +2369,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 }
                 else if (_rotatingProps && anySelected)
                 {
-                    _shouldRedrawLevel = true;
+                    // _shouldRedrawLevel = true;
+                    _shouldRedrawPropLayer = true;
+
                     
                     if (IsMouseButtonPressed(MouseButton.Left)) _rotatingProps = false;
 
@@ -2206,7 +2395,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 }
                 else if (_scalingProps && anySelected)
                 {
-                    _shouldRedrawLevel = true;
+                    // _shouldRedrawLevel = true;
+                    _shouldRedrawPropLayer = true;
+
                     
                     if (IsMouseButtonPressed(MouseButton.Left))
                     {
@@ -2275,7 +2466,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 }
                 else if (_stretchingProp && anySelected)
                 {
-                    _shouldRedrawLevel = true;
+                    // _shouldRedrawLevel = true;
+                    _shouldRedrawPropLayer = true;
+
                     
                     var currentQuads = fetchedSelected[0].prop.prop.Quads; 
                     
@@ -2489,7 +2682,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 }
                 else if (_editingPropPoints && fetchedSelected.Length == 1)
                 {
-                    _shouldRedrawLevel = true;
+                    // _shouldRedrawLevel = true;
+                    _shouldRedrawPropLayer = true;
+
                     
                     var points = fetchedSelected[0].prop.prop.Extras.RopePoints;
                     
@@ -2522,7 +2717,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         if (_shortcuts.DeepenSelectedProps.Check(ctrl, shift, alt))
                         {
-                            _shouldRedrawLevel = true;
+                            // _shouldRedrawLevel = true;
+                            _shouldRedrawPropLayer = true;
+
                             
                             foreach (var selected in fetchedSelected)
                             {
@@ -2533,7 +2730,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
                         else if (_shortcuts.UndeepenSelectedProps.Check(ctrl, shift, alt))
                         {
-                            _shouldRedrawLevel = true;
+                            // _shouldRedrawLevel = true;
+                            _shouldRedrawPropLayer = true;
+
                             
                             foreach (var selected in fetchedSelected)
                             {
@@ -2552,7 +2751,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                     if ((IsMouseButtonReleased(_shortcuts.SelectProps.Button) || IsKeyReleased(_shortcuts.SelectPropsAlt.Key)) && _clickTracker && !(_isPropsWinHovered || _isPropsWinDragged))
                     {
-                        _shouldRedrawLevel = true;
+                        // _shouldRedrawLevel = true;
+                        _shouldRedrawPropLayer = true;
+
                         
                         _clickTracker = false;
 
@@ -2600,6 +2801,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
             _shouldRedrawLevel = false;
         }
 
+        if (_shouldRedrawPropLayer) {
+            DrawPropLayerRT();
+
+            _shouldRedrawPropLayer = false;
+        } 
+
         ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
             ? Color.Black 
             : new Color(170, 170, 170, 255));
@@ -2616,7 +2823,17 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 new Vector2(0, 0), 
                 0, 
                 Color.White);
+            
+            
             EndShaderMode();
+
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+                BeginShaderMode(GLOBALS.Shaders.VFlip);
+                SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), _propLayerRT.Raw.Texture);
+                DrawTexture(_propLayerRT.Raw.Texture, 0, 0, Color.White);
+                EndShaderMode();
+            }
+
             
             // Grid
 
@@ -2893,6 +3110,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 GLOBALS.Layer = newLayer;
                 UpdateDefaultDepth();
                 _shouldRedrawLevel = true;
+                _shouldRedrawPropLayer = true;
             }
 
             // Update prop depth render texture
