@@ -88,6 +88,8 @@ internal class SaveProjectPage : EditorPage
     }
 
     private bool ProjectNameExists(string name) {
+        if (string.IsNullOrEmpty(name)) return false;
+
         return Directory
             .GetFiles(_currentDir)
             .Where(f => f.EndsWith(".txt"))
@@ -96,7 +98,12 @@ internal class SaveProjectPage : EditorPage
     }
 
     private bool FolderExists(string name) {
-        return Directory.GetDirectories(_currentDir).Select(Path.GetFileNameWithoutExtension).Contains(name);
+        if (string.IsNullOrEmpty(name)) return false;
+        
+        return Directory
+            .GetDirectories(_currentDir)
+            .Select(Path.GetFileNameWithoutExtension)
+            .Contains(name);
     }
     //
 
