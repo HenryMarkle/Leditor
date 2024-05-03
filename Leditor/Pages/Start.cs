@@ -521,6 +521,7 @@ internal class StartPage : EditorPage
                             _dirEntries = [];
                         } else {
                             NavigateToDir(_currentDir);
+                            GLOBALS.ProjectPath = _currentDir;
                         }
                     }
 

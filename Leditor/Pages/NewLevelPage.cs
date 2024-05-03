@@ -246,7 +246,7 @@ internal class NewLevelPage : EditorPage
                     );
 
                     GLOBALS.Level.ProjectName = "New Level";
-                    GLOBALS.ProjectPath = "";
+                    // GLOBALS.ProjectPath = GLOBALS.Paths.ProjectsDirectory;
                     
                     UnloadRenderTexture(GLOBALS.Textures.LightMap);
                     GLOBALS.Textures.LightMap = LoadRenderTexture((GLOBALS.Level.Width * GLOBALS.Scale) + 300, (GLOBALS.Level.Height * GLOBALS.Scale) + 300);

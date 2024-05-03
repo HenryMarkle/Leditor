@@ -1941,18 +1941,17 @@ void main() {
                         }
                         else if (gShortcuts.QuickSave.Check(ctrl, shift, alt) || GLOBALS.NavSignal == 1)
                         {
-                            if (string.IsNullOrEmpty(GLOBALS.ProjectPath))
+                            if (string.IsNullOrEmpty(GLOBALS.ProjectPath) || !File.Exists(Path.Combine(GLOBALS.ProjectPath, GLOBALS.Level.ProjectName+".txt")))
                             {
                                 GLOBALS.Page = 12;
                             }
                             else
                             {
                                 _askForPath = false;
+                                _globalSave = true;
+                                _isGuiLocked = true;
+                                GLOBALS.NavSignal = 0;
                             }
-
-                            _globalSave = true;
-                            _isGuiLocked = true;
-                            GLOBALS.NavSignal = 0;
                         }
                         else if (gShortcuts.QuickSaveAs.Check(ctrl, shift, alt) || GLOBALS.NavSignal == 2)
                         {

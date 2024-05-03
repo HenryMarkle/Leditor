@@ -183,7 +183,7 @@ internal static class GLOBALS
     internal static LingoRuntime LingoRuntime { get; set; } = new(typeof(MovieScript).Assembly);
     internal static Task LingoRuntimeInitTask { get; set; } = default!;
     
-    internal static string ProjectPath { get; set; } = "";
+    internal static string ProjectPath { get; set; } = Paths.ProjectsDirectory;
     
     internal const string Version = "Henry's Leditor v0.9.75";
     internal const string RaylibVersion = "Raylib v5.0.0";
