@@ -5593,6 +5593,48 @@ internal static class Printers
         }
     }
 
+    internal static void DrawTileSpecs(in int[,,]? specs, Vector2 origin, int scale) {
+        if (specs is null) return;
+
+        for (var x = 0; x < specs.GetLength(1); x++) {
+            for (var y = 0; y < specs.GetLength(0); y++) {
+                var spec = specs[y, x, 0];
+                var spec2 = specs[y, x, 1];
+                var spec3 = specs[y, x, 2];
+
+                var scaledOrigin = new Vector2(origin.X + x, origin.Y + y) * scale;
+
+                if (spec is >= 0 and < 9 and not 8)
+                {
+                    if (spec3 is >= 0 and < 9 and not 8) DrawTileSpec(
+                        spec3,
+                        scaledOrigin + new Vector2(4, 4),
+                        scale - 8,
+                        Color.Red,
+                        spec3 is 0 ? 8 : 1
+                    );
+                    
+                    if (spec2 is >= 0 and < 9 and not 8) DrawTileSpec(
+                        spec2,
+                        scaledOrigin + new Vector2(2, 2),
+                        scale - 4,
+                        Color.Green,
+                        spec2 is 0 ? 4 : 1
+                    );
+                    
+                    DrawTileSpec(
+                        spec,
+                        scaledOrigin,
+                        scale,
+                        GLOBALS.Settings.GeneralSettings.DarkTheme 
+                            ? Color.White
+                            : Color.Black
+                    );
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// Draws an individual tile geo-spec based on the ID.
     /// </summary>

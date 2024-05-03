@@ -258,7 +258,7 @@ internal class StartPage : EditorPage
                 _shouldRedrawLevelReview = true;
             }
 
-            if (_dirEntries.Length > 0 && (IsKeyPressed(KeyboardKey.Right)) && _dirEntries[_currentIndex].isDir) {
+            if (_dirEntries.Length > 0 && _currentIndex > -1 && _currentIndex < _dirEntries.Length && IsKeyPressed(KeyboardKey.Right) && _dirEntries[_currentIndex].isDir) {
                 NavigateToDir(_dirEntries[_currentIndex].path);
                 _shouldRedrawLevelReview = true;
             }

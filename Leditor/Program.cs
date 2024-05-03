@@ -1919,6 +1919,13 @@ void main() {
                             }
                         }
 
+                        if (gShortcuts.CycleTileRenderModes.Check(ctrl, shift, alt)) {
+                            GLOBALS.Settings.GeneralSettings.DrawTileMode = (TileDrawMode)((((int) GLOBALS.Settings.GeneralSettings.DrawTileMode) + 1) % 3);
+                        }
+                        if (gShortcuts.CyclePropRenderModes.Check(ctrl, shift, alt)) {
+                            GLOBALS.Settings.GeneralSettings.DrawPropMode = (PropDrawMode)((((int) GLOBALS.Settings.GeneralSettings.DrawPropMode) + 1) % 3);
+                        }
+
                         if (gShortcuts.Open.Check(ctrl, shift, alt)) GLOBALS.Page = 0;
                         else if (gShortcuts.TakeScreenshot.Check(ctrl, shift, alt)) {
                             if (!Directory.Exists(GLOBALS.Paths.ScreenshotsDirectory))

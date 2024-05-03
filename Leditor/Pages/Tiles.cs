@@ -42,9 +42,6 @@ internal class TileEditorPage : EditorPage, IDisposable
     
     private bool _clickTracker;
     private bool _tileCategoryFocus;
-    private int _tileCategoryScrollIndex;
-    private int _tileScrollIndex;
-    private int _materialCategoryScrollIndex;
     private int _materialScrollIndex;
 
     private bool _highlightPaths;
@@ -54,8 +51,6 @@ internal class TileEditorPage : EditorPage, IDisposable
     private bool _copyClickTracker;
 
     private bool _deepTileCopy = true;
-
-    private bool _showGrid;
 
     private int _prevPosX = -1;
     private int _prevPosY = -1;
@@ -924,22 +919,42 @@ internal class TileEditorPage : EditorPage, IDisposable
         if (_hoveredTile is null) return;
         
         _previewTooltipRT.Dispose();
+
+        if (GLOBALS.Settings.TileEditor.UseTexturesInTooltip) {
+            var (width, height) = _hoveredTile.Size;
+                
+            _previewTooltipRT = new RenderTexture2D(20 * width + 20, 20 * height + 20);
             
-        _previewTooltipRT = new RenderTexture2D(
-            _hoveredTile.Size.Width*16, 
-            _hoveredTile.Size.Height*16
-        );
+            BeginTextureMode(_previewTooltipRT);
+            ClearBackground(Color.White with { A = 0 });
+                
+            Printers.DrawTileAsPropColored(
+                _hoveredTile, 
+                new Vector2(0, 0), 
+                new  Vector2(-10, -10), 
+                Color.LightGray, 
+                0, 
+                20
+            );
+            EndTextureMode();
+        } else {
+            _previewTooltipRT = new RenderTexture2D(
+                _hoveredTile.Size.Width*16, 
+                _hoveredTile.Size.Height*16
+            );
+                
+            BeginTextureMode(_previewTooltipRT);
+            ClearBackground(Color.Black with { A = 0 });
+                                        
+            Printers.DrawTilePreview(
+                _hoveredTile,
+                GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black,
+                new Vector2(0, 0),
+                16
+            );
+            EndTextureMode();
+        }
             
-        BeginTextureMode(_previewTooltipRT);
-        ClearBackground(Color.Black with { A = 0 });
-                                    
-        Printers.DrawTilePreview(
-            _hoveredTile,
-            GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black,
-            new Vector2(0, 0),
-            16
-        );
-        EndTextureMode();
     }
 
     private void UpdateTileSpecsPanel()
@@ -1031,7 +1046,11 @@ internal class TileEditorPage : EditorPage, IDisposable
     }
 
     public void OnPageUpdated(int previous, int @next) {
-        _shouldRedrawLevel = true;
+        if (@next == 3) {
+            _shouldRedrawLevel = true;
+            if (_tileSpecDisplayMode) UpdateTileTexturePanel();
+            else UpdateTileSpecsPanel();
+        }
     }
 
     public override void Draw()
@@ -1948,10 +1967,21 @@ internal class TileEditorPage : EditorPage, IDisposable
                         
                         if (_materialTileSwitch)
                         {
-                            Color color = isTileLegal ? _currentCategory.color : Color.Red;
-                            Printers.DrawTilePreview(_currentTile, color, (tileMatrixX, tileMatrixY), GLOBALS.Scale);
+                            // Draw current specs
+                            if (GLOBALS.Settings.TileEditor.DrawCurrentSpecs) {
+                                var headOrigin = Utils.GetTileHeadOrigin(_currentTile!);
+                                
+                                Printers.DrawTileSpecs(_currentTile?.Specs, new Vector2(tileMatrixX, tileMatrixY) - headOrigin, GLOBALS.Scale);
+                            }
+                            
+                            // Draw current tile
+                            if (GLOBALS.Settings.TileEditor.DrawCurrentTile) {
+                                Color color = isTileLegal ? _currentCategory.color : Color.Red;
+                                Printers.DrawTilePreview(_currentTile, color, (tileMatrixX, tileMatrixY), GLOBALS.Scale);
 
-                            EndShaderMode();
+                                // Where's BeginShaderMode()??????
+                                EndShaderMode();
+                            }
                         }
                         else
                         {
@@ -2559,6 +2589,25 @@ internal class TileEditorPage : EditorPage, IDisposable
                 //
 
                 ImGui.Checkbox("Tooltip", ref _tooltip);
+
+                if (!_tooltip) ImGui.BeginDisabled();
+
+                var useTextures = GLOBALS.Settings.TileEditor.UseTexturesInTooltip;
+                if (ImGui.Checkbox("Use textures in tooltip", ref useTextures)) {
+                    GLOBALS.Settings.TileEditor.UseTexturesInTooltip = useTextures;
+                    UpdatePreviewToolTip();
+                }
+                if (!_tooltip) ImGui.EndDisabled();
+
+                var drawCurrentTile = GLOBALS.Settings.TileEditor.DrawCurrentTile;
+                if (ImGui.Checkbox("Current Tile", ref drawCurrentTile)) {
+                    GLOBALS.Settings.TileEditor.DrawCurrentTile = drawCurrentTile;
+                }
+
+                var drawCurrentSpecs = GLOBALS.Settings.TileEditor.DrawCurrentSpecs;
+                if (ImGui.Checkbox("Current Specs", ref drawCurrentSpecs)) {
+                    GLOBALS.Settings.TileEditor.DrawCurrentSpecs = drawCurrentSpecs;
+                }
                 
                 ImGui.Checkbox("Deep Tile Copy", ref _deepTileCopy);
 

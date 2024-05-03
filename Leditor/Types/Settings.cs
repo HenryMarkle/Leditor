@@ -1,3 +1,4 @@
+using System.Security.Authentication.ExtendedProtection;
 using System.Text.Json.Serialization;
 namespace Leditor.Types;
 
@@ -69,7 +70,10 @@ public class TileEditor(
     bool useTextures = false,
     bool allowUndefinedTiles = true,
     bool grid = false,
-    bool showCameras = false
+    bool showCameras = false,
+    bool drawCurrentTile = true,
+    bool drawCurrentSpecs = false,
+    bool useTexturesInTooltip = false
     )
 {
     public bool HoveredTileInfo { get; set; } = hoveredTileInfo;
@@ -78,6 +82,9 @@ public class TileEditor(
     public bool AllowUndefinedTiles { get; set; } = allowUndefinedTiles;
     public bool Grid { get; set; } = grid;
     public bool ShowCameras { get; set; } = showCameras;
+    public bool DrawCurrentTile { get; set; } = drawCurrentTile;
+    public bool DrawCurrentSpecs { get; set; } = drawCurrentSpecs;
+    public bool UseTexturesInTooltip { get; set; } = useTexturesInTooltip;
     
     public IEnumerable<AutoTiler.PathPackMeta> AutoTilerPathPacks { get; set; } = [
         new("Thin Pipes", "Vertical Pipe", "Horizontal Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),

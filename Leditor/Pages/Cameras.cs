@@ -31,7 +31,7 @@ internal class CamerasEditorPage : EditorPage
     private bool _snap = GLOBALS.Settings.CameraSettings.Snap;
 
     public void OnPageUpdated(int previous, int @next) {
-        _shouldRedrawLevel = true;
+        if (@next == 4) _shouldRedrawLevel = true;
     }
 
     public override void Draw()
@@ -161,6 +161,7 @@ internal class CamerasEditorPage : EditorPage
                     PropsLayer3 = _showProps,
                     PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
                     TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
+                    RenderMaterials = GLOBALS.Settings.GeneralSettings.RenderMaterials,
                     Palette = GLOBALS.SelectedPalette,
                     CurrentLayer = 0
                 });
@@ -169,47 +170,7 @@ internal class CamerasEditorPage : EditorPage
 
             BeginMode2D(_camera);
             {
-                
-                // DrawRectangle(0, 0, GLOBALS.Level.Width * GLOBALS.Scale, GLOBALS.Level.Height * GLOBALS.Scale,
-                //     GLOBALS.Settings.GeneralSettings.DarkTheme
-                //         ? new Color(50, 50, 50, 255)
-                //         : Color.White);
-                //
                 #region CamerasLevelBackground
-                //
-                // Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : Color.Black with { A = 150 });
-                //
-                // if (_showTiles) Printers.DrawTileLayer(2, GLOBALS.Scale, false, true, false);
-                //
-                // Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : Color.Black with { A = 150 });
-                //     
-                // if (_showTiles) Printers.DrawTileLayer(1, GLOBALS.Scale, false, true, false);
-                //
-                // if (!GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
-                // {
-                //     DrawRectangle(
-                //         (-1) * GLOBALS.Scale,
-                //         (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                //         (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                //         (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                //         new Color(0, 0, 255, 110)
-                //     );
-                // }
-                //     
-                // Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.Black);
-                //
-                // if (_showTiles) Printers.DrawTileLayer(0, GLOBALS.Scale, false, true, false);
-                //
-                // if (GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel > -1)
-                // {
-                //     DrawRectangle(
-                //         (-1) * GLOBALS.Scale,
-                //         (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                //         (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                //         (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                //         new Color(0, 0, 255, 110)
-                //     );
-                // }
 
                 BeginShaderMode(GLOBALS.Shaders.VFlip);
                 SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), GLOBALS.Textures.GeneralLevel.Texture);

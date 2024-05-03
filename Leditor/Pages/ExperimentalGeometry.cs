@@ -356,6 +356,7 @@ internal class ExperimentalGeometryPage : EditorPage
 
         if (_shortcuts.Undo.Check(ctrl, shift, alt))
         {
+            _shouldRedrawLevel = true;
             var action = _gram.Current;
             switch (action)
             {
@@ -394,6 +395,7 @@ internal class ExperimentalGeometryPage : EditorPage
         }
         if (_shortcuts.Redo.Check(ctrl, shift, alt))
         {
+            _shouldRedrawLevel = true;
             _gram.Redo();
 
             switch (_gram.Current)
@@ -463,31 +465,25 @@ internal class ExperimentalGeometryPage : EditorPage
 
         if (_allowMultiSelect)
         {
-            if ((_shortcuts.Draw.Check(ctrl, shift, alt, true) || _shortcuts.AltDraw.Check(ctrl, shift, alt, true)) && !_clickTracker)
+            if ((_shortcuts.Draw.Check(ctrl, shift, alt, true) || _shortcuts.AltDraw.Check(ctrl, shift, alt, true)) && canDrawGeo && inMatrixBounds && !_clickTracker)
             {
-                if (canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width)
-                {
-                    _clickTracker = true;
-                    _multiselect = true;
+                _clickTracker = true;
+                _multiselect = true;
 
-                    _prevCoordsX = matrixX;
-                    _prevCoordsY = matrixY;
+                _prevCoordsX = matrixX;
+                _prevCoordsY = matrixY;
 
-                    _eraseMode = false;
-                }
+                _eraseMode = false;
             }
-            else if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.AltErase.Check(ctrl, shift, alt, true)) && canDrawGeo && !_clickTracker)
+            else if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.AltErase.Check(ctrl, shift, alt, true)) && inMatrixBounds && canDrawGeo && !_clickTracker)
             {
-                if (canDrawGeo && matrixY >= 0 && matrixY < GLOBALS.Level.Height && matrixX >= 0 && matrixX < GLOBALS.Level.Width)
-                {
-                    _clickTracker = true;
-                    _multiselect = true;
+                _clickTracker = true;
+                _multiselect = true;
 
-                    _prevCoordsX = matrixX;
-                    _prevCoordsY = matrixY;
+                _prevCoordsX = matrixX;
+                _prevCoordsY = matrixY;
 
-                    _eraseMode = true;
-                }
+                _eraseMode = true;
             }
 
             if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw.Key)) && _prevCoordsX != -1)
@@ -863,6 +859,9 @@ internal class ExperimentalGeometryPage : EditorPage
                 _shouldRedrawLevel = true;
 
                 _clickTracker = true;
+
+                _eraseMode = true;
+
                 if (_brushRadius > 0) {
                     GeoGram.CellAction[] actions;
 
@@ -902,12 +901,6 @@ internal class ExperimentalGeometryPage : EditorPage
             }
             else if ((_shortcuts.Draw.Check(ctrl, shift, alt, true) || _shortcuts.AltDraw.Check(ctrl, shift, alt, true)) && canDrawGeo && inMatrixBounds)
             {
-                _shouldRedrawLevel = true;
-
-                ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
-                
-                var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
-                
                 switch (_geoMenuCategory)
                     {
                         case 0:
@@ -919,25 +912,59 @@ internal class ExperimentalGeometryPage : EditorPage
                                 {
                                     var slope = Utils.GetCorrectSlopeID(Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, matrixX, matrixY, GLOBALS.Layer));
                                     if (slope == -1) break;
-                                    GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer].Geo = _eraseMode ? 0 : slope;
+
+                                    ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+                                    
+                                    if (cell.Geo == id) break;
+
+                                    if (matrixX != _prevCoordsX || matrixY != _prevCoordsY || !_clickTracker) {                                        
+                                        var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                        var newCell = new RunCell { Geo = id, Stackables = [..cell.Stackables] };
+                                        
+                                        cell.Geo = slope;
+                                        
+                                        var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
+                                        
+                                        _groupedActions.Add(action);
+
+                                        _shouldRedrawLevel = true;
+                                    }
                                 }
                                 // solid, platform, glass
                                 else
                                 {
                                     if (_brushRadius > 0) {
-                                        GeoGram.CellAction[] actions;
-
-                                        if (_circularBrush) {
-                                            actions = PlaceGeoCircularBrush(matrixX, matrixY, _brushRadius, id);
-                                        } else {
-                                            actions = PlaceGeoSquareBrush(matrixX, matrixY, _brushRadius, id);
-                                        }
 
                                         if (_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker) {
+                                            GeoGram.CellAction[] actions;
+
+                                            if (_circularBrush) {
+                                                actions = PlaceGeoCircularBrush(matrixX, matrixY, _brushRadius, id);
+                                            } else {
+                                                actions = PlaceGeoSquareBrush(matrixX, matrixY, _brushRadius, id);
+                                            }
+
                                             _groupedActions.AddRange(actions);
+
+                                            _shouldRedrawLevel = true;
                                         }
                                     } else {
-                                        GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer].Geo = _eraseMode ? 0 : id;
+                                        ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+
+                                        if (id != cell.Geo && 
+                                            (_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) {
+
+                                            var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                            var newCell = new RunCell { Geo = id, Stackables = [..cell.Stackables] };
+
+                                            GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = newCell;
+
+                                            var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
+
+                                            _groupedActions.Add(action);
+
+                                            _shouldRedrawLevel = true;
+                                        }
                                     }
                                 }
                             }
@@ -946,12 +973,30 @@ internal class ExperimentalGeometryPage : EditorPage
                         case 1:
                             {
                                 var id = GeoMenuCategory2ToStackableId[_geoMenuIndex];
-                                GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer].Stackables[id] = !_eraseMode;
+
+                                ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+
+                                if (!cell.Stackables[id] && 
+                                            (_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) {
+                                    
+                                    var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                    
+                                    cell.Stackables[id] = true;
+
+                                    var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                
+                                    var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
+
+                                    _groupedActions.Add(action);
+
+                                    _shouldRedrawLevel = true;
+                                }
                             }
                             break;
 
                         case 2:
                             {
+                                // Wtf why is this scaled?
                                 if (
                                     matrixX * scale < GLOBALS.Level.Border.X ||
                                     matrixX * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
@@ -961,7 +1006,22 @@ internal class ExperimentalGeometryPage : EditorPage
                                 if (_geoMenuIndex == 0 && GLOBALS.Layer != 0 && GLOBALS.Layer != 1) break;
 
                                 var id = GeoMenuCategory3ToStackableId[_geoMenuIndex];
-                                GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer].Stackables[id] = !_eraseMode;
+                                
+                                ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+
+                                if (cell.Stackables[id] || !(_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) break;
+
+                                var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                
+                                oldCell.Stackables[id] = true;
+                                
+                                var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                
+                                var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
+
+                                _groupedActions.Add(action);
+
+                                _shouldRedrawLevel = true;
                             }
                             break;
 
@@ -976,18 +1036,25 @@ internal class ExperimentalGeometryPage : EditorPage
                                 if (GLOBALS.Layer != 0) break;
 
                                 var id = GeoMenuCategory4ToStackableId[_geoMenuIndex];
-                                GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer].Stackables[id] = !_eraseMode;
+
+                                ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+
+                                if (cell.Stackables[id] || !(_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) break;
+
+                                var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+
+                                cell.Stackables[id] = !_eraseMode;
+
+                                var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                
+                                var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
+
+                                _groupedActions.Add(action);
+
+                                _shouldRedrawLevel = true;
                             }
                             break;
                     }
-
-                var newAction = new GeoGram.CellAction((matrixX, matrixY, GLOBALS.Layer), oldCell, cell);
-
-                var equalActions = _groupedActions.Count != 0 
-                                   && oldCell.Geo == cell.Geo
-                                   && Utils.GeoStackEq(oldCell.Stackables, cell.Stackables);
-                
-                if (_groupedActions.Count == 0 || !equalActions) _groupedActions.Add(newAction);
 
                 _prevCoordsX = matrixX;
                 _prevCoordsY = matrixY;
@@ -1000,6 +1067,7 @@ internal class ExperimentalGeometryPage : EditorPage
                 _clickTracker = false;
                 _gram.Proceed([.._groupedActions]);
                 _groupedActions.Clear();
+                _eraseMode = false;
 
                 _prevCoordsX = -1;
                 _prevCoordsY = -1;
@@ -1180,169 +1248,158 @@ internal class ExperimentalGeometryPage : EditorPage
                 
                 // the selection rectangle
 
-                for (var y = 0; y < GLOBALS.Level.Height; y++)
-                {
-                    for (var x = 0; x < GLOBALS.Level.Width; x++)
-                    {
-                        if (!_multiselect && _selectionRectangle is not { Width: 0, Height: 0 })
+                if (!_multiselect && _selectionRectangle is not { Width: 0, Height: 0 })
                             _selectionRectangle = new Rectangle(0, 0, 0, 0);
-                        
-                        
-                        if (_memDumbMode)
-                        {
-                            DrawRectangleLinesEx(
-                                new Rectangle(
-                                    (matrixX - Utils.GetMiddle(_savedChunk.GetLength(1))) * GLOBALS.Scale,
-                                    (matrixY - Utils.GetMiddle(_savedChunk.GetLength(0))) * GLOBALS.Scale, 
-                                    _savedChunk.GetLength(1)*GLOBALS.Scale, 
-                                    _savedChunk.GetLength(0)*GLOBALS.Scale), 
-                                4f, 
-                                Color.White
-                            );
-                        }
-                        else if (_multiselect)
-                        {
-                            DrawRectangleLinesEx(
-                                _selectionRectangle,
-                                2, 
-                                _eraseMode 
-                                    ? Color.Red
-                                    : (_memLoadMode 
-                                        ? new Color(89, 7, 222, 255) 
-                                        : Color.White
-                                    )
-                            );
 
-                            DrawText(
-                                _selectionSizeString,
-                                (matrixX + 1) * scale,
-                                (matrixY - 1) * scale,
-                                12,
-                                Color.White
-                                );
+                if (_memDumbMode)
+                {
+                    DrawRectangleLinesEx(
+                        new Rectangle(
+                            (matrixX - Utils.GetMiddle(_savedChunk.GetLength(1))) * GLOBALS.Scale,
+                            (matrixY - Utils.GetMiddle(_savedChunk.GetLength(0))) * GLOBALS.Scale, 
+                            _savedChunk.GetLength(1)*GLOBALS.Scale, 
+                            _savedChunk.GetLength(0)*GLOBALS.Scale), 
+                        4f, 
+                        Color.White
+                    );
+                } else if (_multiselect)
+                {
+                    DrawRectangleLinesEx(
+                        _selectionRectangle,
+                        2, 
+                        _eraseMode 
+                            ? Color.Red
+                            : (_memLoadMode 
+                                ? new Color(89, 7, 222, 255) 
+                                : Color.White
+                            )
+                    );
+
+                    DrawText(
+                        _selectionSizeString,
+                        (matrixX + 1) * scale,
+                        (matrixY - 1) * scale,
+                        12,
+                        Color.White
+                        );
+                }
+                else
+                {
+                    if (_allowMultiSelect) {
+                        DrawRectangleLinesEx(
+                            new Rectangle(matrixX * scale, matrixY * scale, scale, scale), 
+                            2, 
+                            _eraseMode 
+                                ? Color.Red
+                                : (_memLoadMode 
+                                    ? new Color(89, 7, 222, 255) 
+                                    : Color.White
+                                ));
+                    } else {
+                        if (_brushRadius > 0) {
+                            if (_circularBrush) {
+                                Printers.DrawCircularSquareLines(matrixX, matrixY, _brushRadius, 20, 2,_eraseMode ? Color.Red : Color.White);
+                            } else {
+                                DrawRectangleLinesEx(
+                                    new Rectangle((matrixX - _brushRadius) * scale, (matrixY - _brushRadius) * scale, (_brushRadius * 2 + 1) * scale, (_brushRadius * 2 + 1) *  scale), 
+                                    2, 
+                                    _eraseMode 
+                                        ? Color.Red
+                                        : (_memLoadMode 
+                                            ? new Color(89, 7, 222, 255) 
+                                            : Color.White
+                                        ));
+                            }
+                        } else {
+                            DrawRectangleLinesEx(
+                            new Rectangle(matrixX * scale, matrixY * scale, scale, scale), 
+                            2, 
+                            _eraseMode 
+                                ? Color.Red
+                                : (_memLoadMode 
+                                    ? new Color(89, 7, 222, 255) 
+                                    : Color.White
+                                ));
+                        }
+                    }
+
+                    // Coordinates
+
+                    if (inMatrixBounds)
+                        DrawText(
+                            $"x: {matrixX:0} y: {matrixY:0}",
+                            (matrixX + 1) * scale,
+                            (matrixY - 1) * scale,
+                            12,
+                            Color.White);
+                }
+
+                if (GLOBALS.Settings.GeometryEditor.ShowCurrentGeoIndicator)
+                {
+                    Utils.Restrict(ref _geoMenuIndex, 0, _geoMenuCategory switch
+                    {
+                        0 => GeoMenuIndexToBlockId.Length-1,
+                        1 => GeoMenuCategory2ToStackableId.Length-1,
+                        2 => GeoMenuCategory3ToStackableId.Length-1,
+                        3 => GeoMenuCategory4ToStackableId.Length,
+                        _ => 0
+                    });
+                    
+                    var id = _geoMenuCategory switch
+                    {
+                        0 => GeoMenuIndexToBlockId[_geoMenuIndex],
+                        1 => GeoMenuCategory2ToStackableId[_geoMenuIndex],
+                        2 => GeoMenuCategory3ToStackableId[_geoMenuIndex],
+                        3 => GeoMenuCategory4ToStackableId[_geoMenuIndex],
+                        _ => 0
+                    };
+                    
+                    if (_geoMenuCategory == 0) Printers.DrawTileSpec2(id, new Vector2(matrixX+1, matrixY+1)*scale, 40, Color.White with { A = 100 });
+                    else
+                    {
+                        if (id == 4)
+                        {
+                            var textureIndex = 26;
+
+                            var texture = GLOBALS.Textures.GeoStackables[textureIndex];
+                                
+                            DrawTexturePro(
+                                texture,
+                                new(0, 0, texture.Width, texture.Height),
+                                new ((matrixX+1)*scale, (matrixY+1)*scale, 40, 40),
+                                new(0, 0),
+                                0,
+                                Color.White with { A = 100 });
+                        }
+                        else if (id == 11)
+                        {
+                            var textureIndex = 7;
+
+                            var texture = GLOBALS.Textures.GeoStackables[textureIndex];
+                                
+                            DrawTexturePro(
+                                texture,
+                                new(0, 0, texture.Width, texture.Height),
+                                new ((matrixX+1)*scale, (matrixY+1)*scale, 40, 40),
+                                new(0, 0),
+                                0,
+                                Color.White with { A = 100 });
                         }
                         else
                         {
-                            if (matrixX == x && matrixY == y)
+                            var textureIndex = Utils.GetStackableTextureIndex(id);
+
+                            if (textureIndex != -1)
                             {
-                                if (_allowMultiSelect) {
-                                    DrawRectangleLinesEx(
-                                        new Rectangle(x * scale, y * scale, scale, scale), 
-                                        2, 
-                                        _eraseMode 
-                                            ? new(255, 0, 0, 255) 
-                                            : (_memLoadMode 
-                                                ? new Color(89, 7, 222, 255) 
-                                                : Color.White
-                                            ));
-                                } else {
-                                    if (_brushRadius > 0) {
-                                        if (_circularBrush) {
-                                            Printers.DrawCircularSquareLines(x, y, _brushRadius, 20, 2, Color.White);
-                                        } else {
-                                            DrawRectangleLinesEx(
-                                                new Rectangle((x - _brushRadius) * scale, (y - _brushRadius) * scale, (_brushRadius * 2 + 1) * scale, (_brushRadius * 2 + 1) *  scale), 
-                                                2, 
-                                                _eraseMode 
-                                                    ? new(255, 0, 0, 255) 
-                                                    : (_memLoadMode 
-                                                        ? new Color(89, 7, 222, 255) 
-                                                        : Color.White
-                                                    ));
-                                        }
-                                    } else {
-                                        DrawRectangleLinesEx(
-                                        new Rectangle(x * scale, y * scale, scale, scale), 
-                                        2, 
-                                        _eraseMode 
-                                            ? new(255, 0, 0, 255) 
-                                            : (_memLoadMode 
-                                                ? new Color(89, 7, 222, 255) 
-                                                : Color.White
-                                            ));
-                                    }
-                                }
-
-                                // Coordinates
-
-                                if (matrixX >= 0 && matrixX < GLOBALS.Level.Width && matrixY >= 0 && matrixY < GLOBALS.Level.Height)
-                                    DrawText(
-                                        $"x: {matrixX:0} y: {matrixY:0}",
-                                        (matrixX + 1) * scale,
-                                        (matrixY - 1) * scale,
-                                        12,
-                                        Color.White);
-                            }
-                        }
-
-                        if (GLOBALS.Settings.GeometryEditor.ShowCurrentGeoIndicator && matrixX == x && matrixY == y)
-                        {
-                            Utils.Restrict(ref _geoMenuIndex, 0, _geoMenuCategory switch
-                            {
-                                0 => GeoMenuIndexToBlockId.Length-1,
-                                1 => GeoMenuCategory2ToStackableId.Length-1,
-                                2 => GeoMenuCategory3ToStackableId.Length-1,
-                                3 => GeoMenuCategory4ToStackableId.Length,
-                                _ => 0
-                            });
-                            
-                            var id = _geoMenuCategory switch
-                            {
-                                0 => GeoMenuIndexToBlockId[_geoMenuIndex],
-                                1 => GeoMenuCategory2ToStackableId[_geoMenuIndex],
-                                2 => GeoMenuCategory3ToStackableId[_geoMenuIndex],
-                                3 => GeoMenuCategory4ToStackableId[_geoMenuIndex],
-                                _ => 0
-                            };
-                            
-                            if (_geoMenuCategory == 0) Printers.DrawTileSpec2(id, new Vector2(matrixX+1, matrixY+1)*scale, 40, Color.White with { A = 100 });
-                            else
-                            {
-                                if (id == 4)
-                                {
-                                    var textureIndex = 26;
-
-                                    var texture = GLOBALS.Textures.GeoStackables[textureIndex];
-                                        
-                                    DrawTexturePro(
-                                        texture,
-                                        new(0, 0, texture.Width, texture.Height),
-                                        new ((x+1)*scale, (y+1)*scale, 40, 40),
-                                        new(0, 0),
-                                        0,
-                                        Color.White with { A = 100 });
-                                }
-                                else if (id == 11)
-                                {
-                                    var textureIndex = 7;
-
-                                    var texture = GLOBALS.Textures.GeoStackables[textureIndex];
-                                        
-                                    DrawTexturePro(
-                                        texture,
-                                        new(0, 0, texture.Width, texture.Height),
-                                        new ((x+1)*scale, (y+1)*scale, 40, 40),
-                                        new(0, 0),
-                                        0,
-                                        Color.White with { A = 100 });
-                                }
-                                else
-                                {
-                                    var textureIndex = Utils.GetStackableTextureIndex(id);
-
-                                    if (textureIndex != -1)
-                                    {
-                                        var texture = GLOBALS.Textures.GeoStackables[textureIndex];
-                                        
-                                        DrawTexturePro(
-                                            texture,
-                                            new(0, 0, texture.Width, texture.Height),
-                                            new ((x+1)*scale, (y+1)*scale, 40, 40),
-                                            new(0, 0),
-                                            0,
-                                            Color.White with { A = 100 });
-                                    }
-                                }
+                                var texture = GLOBALS.Textures.GeoStackables[textureIndex];
+                                
+                                DrawTexturePro(
+                                    texture,
+                                    new(0, 0, texture.Width, texture.Height),
+                                    new ((matrixX+1)*scale, (matrixY+1)*scale, 40, 40),
+                                    new(0, 0),
+                                    0,
+                                    Color.White with { A = 100 });
                             }
                         }
                     }
@@ -1718,6 +1775,8 @@ internal class ExperimentalGeometryPage : EditorPage
 
                 if (resetColorsSelected)
                 {
+                    _shouldRedrawLevel = true;
+                    
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer1 = Color.Black;
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 = new ConColor(0, 255, 0, 50);
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 = new ConColor(255, 0, 0, 50);

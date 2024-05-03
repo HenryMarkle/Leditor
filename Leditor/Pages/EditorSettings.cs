@@ -254,6 +254,9 @@ internal class SettingsPage : EditorPage
                         ImGui.SeparatorText("Quick Actions");
 
                         var assignScreenshot = ImGui.Button($"Screenshot: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.TakeScreenshot}");
+
+                        var cycleTileDrawMode = ImGui.Button($"Cycle Tile Draw Modes: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.CycleTileRenderModes}");
+                        var cyclePropDrawMode = ImGui.Button($"Cycle Prop Draw Modes: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.CyclePropRenderModes}");
                         
                         var assignOpen = ImGui.Button($"Open: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.Open}");
                         var assignSave = ImGui.Button($"Save: {GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave}");
@@ -271,6 +274,10 @@ internal class SettingsPage : EditorPage
                         if (assignToSettings) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage;
                         
                         if (assignScreenshot) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.TakeScreenshot;
+
+                        if (cycleTileDrawMode) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.CycleTileRenderModes;
+                        if (cyclePropDrawMode) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.CyclePropRenderModes;
+
                         if (assignOpen) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.Open;
                         if (assignSave) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSave;
                         if (assignSaveAs) _shortcutToAssign = GLOBALS.Settings.Shortcuts.GlobalShortcuts.QuickSaveAs;
