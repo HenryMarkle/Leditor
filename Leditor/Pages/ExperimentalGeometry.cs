@@ -19,6 +19,10 @@ internal class ExperimentalGeometryPage : EditorPage
 
     private bool _shouldRedrawLevel = true;
 
+    // needed for when a shortcut entrance becomes valid and places a special block
+    // beneath
+    private bool _connectionUpdate;
+
     public void OnPageUpdated(int previous, int @next) {
         if (@next == 2) _shouldRedrawLevel = true;
     }
@@ -232,6 +236,11 @@ internal class ExperimentalGeometryPage : EditorPage
     public override void Draw()
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
+
+        if (_connectionUpdate && !_shouldRedrawLevel) {
+            _shouldRedrawLevel = true;
+            _connectionUpdate = false;
+        }
         
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
@@ -680,6 +689,8 @@ internal class ExperimentalGeometryPage : EditorPage
 
                                                 cell.Geo = 7;
                                             }*/
+
+                                            _connectionUpdate = true;
                                         }
                                         break;
                                 }
@@ -806,6 +817,7 @@ internal class ExperimentalGeometryPage : EditorPage
 
                                         var id = GeoMenuCategory4ToStackableId[_geoMenuIndex];
                                         cell.Stackables[id] = false;
+                                        _connectionUpdate = true;
                                     }
                                     break;
                             }
@@ -856,48 +868,167 @@ internal class ExperimentalGeometryPage : EditorPage
         {
             if ((_shortcuts.Erase.Check(ctrl, shift, alt, true) || _shortcuts.AltErase.Check(ctrl, shift, alt, true)) && canDrawGeo && inMatrixBounds)
             {
-                _shouldRedrawLevel = true;
-
-                _clickTracker = true;
-
                 _eraseMode = true;
 
-                if (_brushRadius > 0) {
-                    GeoGram.CellAction[] actions;
+                switch (_geoMenuCategory)
+                {
+                    case 0:
+                        {
+                            var id = GeoMenuIndexToBlockId[_geoMenuIndex];
 
-                    if (_circularBrush) {
-                        actions = PlaceGeoCircularBrush(matrixX, matrixY, _brushRadius, 0);
-                    } else {
-                        actions = PlaceGeoSquareBrush(matrixX, matrixY, _brushRadius, 0);
-                    }
+                            // slope
+                            if (id == 2)
+                            {
+                                var slope = Utils.GetCorrectSlopeID(Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, matrixX, matrixY, GLOBALS.Layer));
+                                if (slope == -1) break;
 
-                    if (_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker) {
-                        _groupedActions.AddRange(actions);
-                    }
+                                ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+                                
+                                if (cell.Geo == id) break;
 
-                    _prevCoordsX = matrixX;
-                    _prevCoordsY = matrixY;
-                    _clickTracker = true;
-                } else {
-                    var cell = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
-                    
-                    var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                if (matrixX != _prevCoordsX || matrixY != _prevCoordsY || !_clickTracker) {                                        
+                                    var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                    var newCell = new RunCell { Geo = 0, Stackables = [..cell.Stackables] };
+                                    
+                                    cell.Geo = slope;
+                                    
+                                    var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
+                                    
+                                    _groupedActions.Add(action);
 
-                    cell.Geo = 0;
-                    Array.Fill(cell.Stackables, false);
-                    
-                    var newAction = new GeoGram.CellAction((matrixX, matrixY, GLOBALS.Layer), oldCell, cell);
+                                    _shouldRedrawLevel = true;
+                                }
+                            }
+                            // solid, platform, glass
+                            else
+                            {
+                                if (_brushRadius > 0) {
 
-                    var equalActions = _groupedActions.Count != 0 
-                                    && oldCell.Geo == cell.Geo
-                                    && Utils.GeoStackEq(oldCell.Stackables, cell.Stackables);
-                    
-                    if (_groupedActions.Count == 0 || !equalActions) _groupedActions.Add(newAction);
+                                    if (_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker) {
+                                        GeoGram.CellAction[] actions;
 
-                    // _groupedActions.Add(new((matrixX, matrixY, GLOBALS.Layer), oldCell, cell));
-                    
-                    GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = cell;
+                                        if (_circularBrush) {
+                                            actions = PlaceGeoCircularBrush(matrixX, matrixY, _brushRadius, 0);
+                                        } else {
+                                            actions = PlaceGeoSquareBrush(matrixX, matrixY, _brushRadius, 0);
+                                        }
+
+                                        _groupedActions.AddRange(actions);
+
+                                        _shouldRedrawLevel = true;
+                                    }
+                                } else {
+                                    ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+
+                                    if (0 != cell.Geo && 
+                                        (_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) {
+
+                                        var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                        var newCell = new RunCell { Geo = 0, Stackables = [..cell.Stackables] };
+
+                                        GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = newCell;
+
+                                        var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
+
+                                        _groupedActions.Add(action);
+
+                                        _shouldRedrawLevel = true;
+                                    }
+                                }
+                            }
+                        }
+                        break;
+
+                    case 1:
+                        {
+                            var id = GeoMenuCategory2ToStackableId[_geoMenuIndex];
+
+                            ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+
+                            if (cell.Stackables[id] && 
+                                        (_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) {
+                                
+                                var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                
+                                cell.Stackables[id] = false;
+
+                                var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                            
+                                var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
+
+                                _groupedActions.Add(action);
+
+                                _shouldRedrawLevel = true;
+                            }
+                        }
+                        break;
+
+                    case 2:
+                        {
+                            // Wtf why is this scaled?
+                            if (
+                                matrixX * scale < GLOBALS.Level.Border.X ||
+                                matrixX * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
+                                matrixY * scale < GLOBALS.Level.Border.Y ||
+                                matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
+
+                            if (_geoMenuIndex == 0 && GLOBALS.Layer != 0 && GLOBALS.Layer != 1) break;
+
+                            var id = GeoMenuCategory3ToStackableId[_geoMenuIndex];
+                            
+                            ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+
+                            if (!cell.Stackables[id] || !(_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) break;
+
+                            var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                            
+                            oldCell.Stackables[id] = false;
+                            
+                            var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                            
+                            var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
+
+                            _groupedActions.Add(action);
+
+                            _shouldRedrawLevel = true;
+                        }
+                        break;
+
+                    case 3:
+                        {
+                            if (
+                                matrixX * scale < GLOBALS.Level.Border.X ||
+                                matrixX * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
+                                matrixY * scale < GLOBALS.Level.Border.Y ||
+                                matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
+
+                            if (GLOBALS.Layer != 0) break;
+
+                            var id = GeoMenuCategory4ToStackableId[_geoMenuIndex];
+
+                            ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+
+                            if (!cell.Stackables[id] || !(_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) break;
+
+                            var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+
+                            cell.Stackables[id] = false;
+
+                            var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                            
+                            var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
+
+                            _groupedActions.Add(action);
+
+                            _shouldRedrawLevel = true;
+                            _connectionUpdate = true;
+                        }
+                        break;
                 }
+
+                _prevCoordsX = matrixX;
+                _prevCoordsY = matrixY;
+                _clickTracker = true;
             }
             else if ((_shortcuts.Draw.Check(ctrl, shift, alt, true) || _shortcuts.AltDraw.Check(ctrl, shift, alt, true)) && canDrawGeo && inMatrixBounds)
             {
@@ -1052,6 +1183,7 @@ internal class ExperimentalGeometryPage : EditorPage
                                 _groupedActions.Add(action);
 
                                 _shouldRedrawLevel = true;
+                                _connectionUpdate = true;
                             }
                             break;
                     }

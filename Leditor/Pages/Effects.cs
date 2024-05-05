@@ -401,8 +401,7 @@ internal class EffectsEditorPage : EditorPage
                 {
                     _brushRadius += (int)effectsMouseWheel;
 
-                    if (_brushRadius < 0) _brushRadius = 0;
-                    if (_brushRadius > 10) _brushRadius = 10;
+                    Utils.Restrict(ref _brushRadius, 0, 10);
                 }
             }
             else
@@ -680,6 +679,7 @@ internal class EffectsEditorPage : EditorPage
                     } else {
                         DrawCircleLines(effectsMatrixX * 20, effectsMatrixY * 20, _brushRadius * 20, Color.White);
                     }
+
                 }
                 EndMode2D();
 

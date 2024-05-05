@@ -5525,6 +5525,11 @@ internal static class Printers
     /// </summary>
     internal static void DrawCircularSquareLines(int x, int y, int radius, int scale, float thickness, Color color)
     {
+        if (radius == 0) {
+            DrawRectangleLinesEx(new (x * scale, y * scale, scale, scale), thickness, color);
+            return;
+        }
+
         var centerV = new Vector2(x + 0.5f, y + 0.5f) * scale;
 
         for (var lx = -radius; lx < radius + 1; lx++) {
