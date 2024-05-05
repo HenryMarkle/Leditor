@@ -1561,7 +1561,7 @@ internal class TileEditorPage : EditorPage, IDisposable
 
                             if (IsMouseButtonPressed(MouseButton.Left)) {
                                 _autoTilerMacroFirstClick = !_autoTilerMacroFirstClick;
-                                if (_autoTilerMacroFirstClick) _autoTilerFirstClickPos = new Data.Coords(tileMatrixX, tileMatrixY);
+                                if (_autoTilerMacroFirstClick) _autoTilerFirstClickPos = new Data.Coords(tileMatrixX, tileMatrixY, GLOBALS.Layer);
                                 else {
                                     ResolveAutoTiler();
                                     _autoTilerPath.Clear();
@@ -1574,7 +1574,7 @@ internal class TileEditorPage : EditorPage, IDisposable
 
                             if (_autoTilerMacroFirstClick) {
                                 _autoTilerPath.Clear();
-                                var points = Utils.GetTrianglePathPoints(_autoTilerFirstClickPos, new Data.Coords(tileMatrixX, tileMatrixY), _autoTilerMacroYAxisFirst);
+                                var points = Utils.GetTrianglePathPoints(_autoTilerFirstClickPos, new Data.Coords(tileMatrixX, tileMatrixY, GLOBALS.Layer), _autoTilerMacroYAxisFirst);
                             
                                 foreach (var p in points) {
                                     _autoTilerPath.AddLast(p);

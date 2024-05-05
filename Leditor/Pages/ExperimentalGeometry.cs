@@ -498,6 +498,7 @@ internal class ExperimentalGeometryPage : EditorPage
             if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw.Key)) && _prevCoordsX != -1)
             {
                 _shouldRedrawLevel = true;
+                _connectionUpdate = true;
 
                 _clickTracker = false;
                 _eraseMode = false;
@@ -608,6 +609,7 @@ internal class ExperimentalGeometryPage : EditorPage
                                 newCopy[y - startY, x - startX] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
 
                                 GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer] = cell;
+                                _connectionUpdate = true;
                             }
                             else
                             {
@@ -711,6 +713,7 @@ internal class ExperimentalGeometryPage : EditorPage
             else if ((IsMouseButtonReleased(_shortcuts.Erase.Button) || IsKeyReleased(_shortcuts.AltErase.Key)) && _prevCoordsX != -1)
             {
                 _shouldRedrawLevel = true;
+                _connectionUpdate = true;
 
                 _eraseMode = false;
                 _clickTracker = false;
