@@ -1234,7 +1234,7 @@ internal class ExperimentalGeometryPage : EditorPage
                 if (GLOBALS.Settings.GeometryEditor.BasicView) {
                     RedrawLevelBasicView(); 
                 } else {
-                    Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
+                    Printers.DrawLevelIntoBufferV2(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
                     {
                         CurrentLayer = GLOBALS.Layer,
                         Water = true,

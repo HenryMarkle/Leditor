@@ -185,7 +185,7 @@ internal static class GLOBALS
     
     internal static string ProjectPath { get; set; } = Paths.ProjectsDirectory;
     
-    internal const string Version = "Henry's Leditor v0.9.76";
+    internal const string Version = "Henry's Leditor v0.9.77";
     internal const string RaylibVersion = "Raylib v5.0.0";
     internal static string BuildConfiguration { get; set; } = "Build Configuration: Unknown";
 
