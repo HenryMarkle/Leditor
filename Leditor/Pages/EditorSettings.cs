@@ -465,6 +465,13 @@ internal class SettingsPage : EditorPage
                         if (assignToggleMemoryLoadMode) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMemoryLoadMode;
                         if (assignToggleMemoryDumpMode) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMemoryDumbMode;
                         if (assignAltErase) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.AltErase;
+                    
+                        ImGui.SeparatorText("Controls");
+
+                        var allowOutbounds = GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement;
+                        if (ImGui.Checkbox("Allow features outbounds", ref allowOutbounds)) {
+                            GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement = allowOutbounds;
+                        }
                     }
                         break;
 
