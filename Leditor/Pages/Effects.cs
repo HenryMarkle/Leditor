@@ -762,7 +762,7 @@ internal class EffectsEditorPage : EditorPage
                         // i is index relative to the GLOBALS.Page; oi is index relative to the whole list
                         foreach (var (i, (name, _, _)) in GLOBALS.Level.Effects.Select((value, i) => (i, value)))
                         {
-                            if (ImGui.Selectable(name, i == _currentAppliedEffect)) _currentAppliedEffect = i;
+                            if (ImGui.Selectable($"{i}. {name}", i == _currentAppliedEffect)) _currentAppliedEffect = i;
                         }
 
                         ImGui.EndListBox();
