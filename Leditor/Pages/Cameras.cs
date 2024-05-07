@@ -161,7 +161,6 @@ internal class CamerasEditorPage : EditorPage
                     PropsLayer3 = _showProps,
                     PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
                     TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
-                    RenderMaterials = GLOBALS.Settings.GeneralSettings.RenderMaterials,
                     Palette = GLOBALS.SelectedPalette,
                     CurrentLayer = 0
                 });
@@ -329,7 +328,7 @@ internal class CamerasEditorPage : EditorPage
             
             // Navigation bar
                 
-            GLOBALS.NavSignal = Printers.ImGui.Nav();
+            GLOBALS.NavSignal = Printers.ImGui.Nav(out _);
             
             // Settings
 

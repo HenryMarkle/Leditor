@@ -119,6 +119,8 @@ internal class EffectsEditorPage : EditorPage
     private bool _isSettingsWinHovered;
     private bool _isSettingsWinDragged;
 
+    private bool _isNavbarHovered;
+
     private bool _isOptionsInputActive;
 
     private void RedrawLevel()
@@ -363,7 +365,8 @@ internal class EffectsEditorPage : EditorPage
             var appliedEffectPageSize = (appliedEffectsPanelHeight / (appliedEffectRecHeight + 30));
 
             // Prevent using the brush when mouse over the effects list
-            var canUseBrush = !_isSettingsWinHovered && 
+            var canUseBrush = !_isNavbarHovered && 
+                                !_isSettingsWinHovered && 
                               !_isSettingsWinDragged && 
                               !_isOptionsWinHovered && 
                               !_isOptionsWinDragged && 
@@ -616,7 +619,6 @@ internal class EffectsEditorPage : EditorPage
                         CurrentLayer = 0,
                         PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
                         TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
-                        RenderMaterials = GLOBALS.Settings.GeneralSettings.RenderMaterials,
                         Palette = GLOBALS.SelectedPalette
                     });
                     _shouldRedrawLevel = false;
@@ -691,7 +693,7 @@ internal class EffectsEditorPage : EditorPage
                 
                 // Navigation bar
                 
-                GLOBALS.NavSignal = Printers.ImGui.Nav();
+                GLOBALS.NavSignal = Printers.ImGui.Nav(out _isNavbarHovered);
                 
                 // Applied Effects
 

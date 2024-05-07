@@ -57,6 +57,8 @@ internal class MainPage : EditorPage, IContextListener
     private bool _isVisualsWinHovered;
     private bool _isVisualsWinDragged;
 
+    private bool _isNavbarHovered;
+
 
     // 0 - Preview
     // 1 - Tinted Texture
@@ -316,9 +318,12 @@ internal class MainPage : EditorPage, IContextListener
         var height = GetScreenHeight();
 
 
-        var isWinBusy = _isVisualsWinHovered || _isVisualsWinDragged || _isShortcutsWinHovered || _isShortcutsWinDragged;
+        var isWinBusy = _isNavbarHovered || 
+                _isVisualsWinHovered || 
+                _isVisualsWinDragged || 
+                _isShortcutsWinHovered || 
+                _isShortcutsWinDragged;
 
-        
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
@@ -736,7 +741,7 @@ internal class MainPage : EditorPage, IContextListener
 
                 if (_shouldRedrawLevel)
                 {
-                    Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
+                    Printers.DrawLevelIntoBufferV2(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
                     {
                         CurrentLayer = 0,
                         Water = _showWater,
@@ -750,8 +755,7 @@ internal class MainPage : EditorPage, IContextListener
                         PropsLayer2 = _showProps,
                         PropsLayer3 = _showProps,
                         HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
-                        Palette = GLOBALS.SelectedPalette,
-                        RenderMaterials = GLOBALS.Settings.GeneralSettings.RenderMaterials
+                        Palette = GLOBALS.SelectedPalette
                     });
                     _shouldRedrawLevel = false;
                 }
@@ -778,7 +782,7 @@ internal class MainPage : EditorPage, IContextListener
                 
                 // Navigation bar
                 
-                GLOBALS.NavSignal = Printers.ImGui.Nav();
+                GLOBALS.NavSignal = Printers.ImGui.Nav(out _isNavbarHovered);
                 
                 // render window
 
@@ -1087,28 +1091,6 @@ internal class MainPage : EditorPage, IContextListener
                         _shouldRedrawLevel = true;
                         GLOBALS.Settings.GeneralSettings.DrawTileMode = (TileDrawMode)tileVisual;
                     }
-
-                    ImGui.Spacing();
-
-                    if (tileVisual != 2) ImGui.BeginDisabled();
-
-                    var renderMaterials = GLOBALS.Settings.GeneralSettings.RenderMaterials;
-                    
-                    var renderMaterialsChecked = ImGui.Checkbox("Render Materials", ref renderMaterials);
-                    
-                    if (ImGui.IsItemHovered()) {
-                        if (ImGui.BeginTooltip()) {
-                            ImGui.Text("May negatively impact performance");
-                            ImGui.EndTooltip();
-                        }
-                    }
-
-                    if (renderMaterialsChecked)
-                    {
-                        _shouldRedrawLevel = true;
-                        GLOBALS.Settings.GeneralSettings.RenderMaterials = renderMaterials;
-                    }
-                    if (tileVisual != 2) ImGui.EndDisabled();
 
                     ImGui.Spacing();
 

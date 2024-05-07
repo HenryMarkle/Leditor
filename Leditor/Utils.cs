@@ -678,6 +678,21 @@ internal static class Utils
         return sample;
     }
 
+
+    internal static (bool left, bool top, bool right, bool bottom) GetConnectionNode<T> (T[,,] matrix, Data.Coords coords, Func<T, bool> predicate)
+        where T : struct
+    {
+        var sample = Sample(matrix, coords.X, coords.Y, coords.Z, 1);
+
+        var left = predicate(sample[1, 0]);
+        var top = predicate(sample[0, 1]);
+        var right = predicate(sample[1, 2]);
+        var bottom = predicate(sample[2, 1]);
+
+        return (left, top, right, bottom);
+    }
+
+
     [Obsolete]
     public static void RemoveMaterial(int x, int y, int z, int radius)
         {

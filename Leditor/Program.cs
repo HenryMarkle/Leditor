@@ -185,6 +185,7 @@ class Program
           LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "Bricks.png")),          // 2
           LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "Non-Slip Metal.png")),  // 3
           LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "Asphalt.png")),         // 4
+        //   LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "ConcreteBricks.png")),  // 5
         ]
         
         : [];
@@ -764,7 +765,7 @@ class Program
         GLOBALS.Shaders.ApplyShadowBrush = LoadShader(null, Path.Combine(GLOBALS.Paths.AssetsDirectory, "shaders", "apply_shadow_brush.fs"));
 
         GLOBALS.Shaders.Prop = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop.frag"));
-        // GLOBALS.Shaders.BoxProp = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_box.frag"));
+        GLOBALS.Shaders.BoxTile = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_box.frag"));
 
         GLOBALS.Shaders.StandardProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_standard.frag"));
@@ -2083,7 +2084,7 @@ void main() {
         UnloadShader(GLOBALS.Shaders.ApplyLightBrush);
         UnloadShader(GLOBALS.Shaders.ApplyShadowBrush);
         UnloadShader(GLOBALS.Shaders.Prop);
-        // UnloadShader(GLOBALS.Shaders.BoxProp);
+        UnloadShader(GLOBALS.Shaders.BoxTile);
         UnloadShader(GLOBALS.Shaders.StandardProp);
         UnloadShader(GLOBALS.Shaders.StandardPropColored);
         UnloadShader(GLOBALS.Shaders.StandardPropPalette);

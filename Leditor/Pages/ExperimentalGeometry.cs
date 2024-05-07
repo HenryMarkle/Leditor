@@ -165,6 +165,8 @@ internal class ExperimentalGeometryPage : EditorPage
 
     private bool _isMenuWinHovered;
     private bool _isMenuWinDragged;
+
+    private bool _isNavbarHovered;
     
     private int _lastChangingMatrixX = -1;
     private int _lastChangingMatrixY = -1;
@@ -279,7 +281,8 @@ internal class ExperimentalGeometryPage : EditorPage
         var toggleCameraRect = new Rectangle(90, sHeight - 60, 50, 50);
         var toggleCameraHovered = CheckCollisionPointRec(uiMouse, toggleCameraRect);
 
-        var canDrawGeo = !toggleCameraHovered &&
+        var canDrawGeo = !_isNavbarHovered && 
+                            !toggleCameraHovered &&
                          !_isMenuWinHovered &&
                          !_isMenuWinDragged &&
                          !_isSettingsWinHovered && 
@@ -1249,8 +1252,7 @@ internal class ExperimentalGeometryPage : EditorPage
                         PropsLayer3 = _showLayer3 && GLOBALS.Settings.GeometryEditor.ShowProps,
                         HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
                         Palette = GLOBALS.SelectedPalette,
-                        VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers,
-                        RenderMaterials = GLOBALS.Settings.GeneralSettings.RenderMaterials
+                        VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers
                     });
                 }
                 _shouldRedrawLevel = false;
@@ -1669,7 +1671,7 @@ internal class ExperimentalGeometryPage : EditorPage
             
             // Navigation bar
                 
-            GLOBALS.NavSignal = Printers.ImGui.Nav();
+            GLOBALS.NavSignal = Printers.ImGui.Nav(out _isNavbarHovered);
             
             // Geo Menu
 

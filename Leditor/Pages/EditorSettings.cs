@@ -136,7 +136,7 @@ internal class SettingsPage : EditorPage
         
         // Navigation bar
                 
-        GLOBALS.NavSignal = Printers.ImGui.Nav();
+        GLOBALS.NavSignal = Printers.ImGui.Nav(out _);
 
         if (ImGui.Begin("Settings##EditorSettings", ImGuiWindowFlags.NoCollapse))
         {

@@ -98,6 +98,9 @@ internal class LightEditorPage : EditorPage
     private bool _isSettingsWinHovered;
     private bool _isSettingsWinDragged;
 
+    private bool _isNavbarHovered;
+
+
     public void OnPageUpdated(int previous, int @next) {
         _shouldRedrawLevel = true;
     }
@@ -127,7 +130,8 @@ internal class LightEditorPage : EditorPage
         var panelHeight = GetScreenHeight() - 100;
         var brushPanel = new Rectangle(10, 50, 120, panelHeight);
 
-        var canPaint = !_isSettingsWinHovered && 
+        var canPaint = !_isNavbarHovered && 
+                        !_isSettingsWinHovered && 
                        !_isSettingsWinDragged && 
                        !_isBrushesWinHovered && 
                        !_isBrushesWinDragged && 
@@ -552,7 +556,7 @@ internal class LightEditorPage : EditorPage
             
             // Navigation bar
                 
-            GLOBALS.NavSignal = Printers.ImGui.Nav();
+            GLOBALS.NavSignal = Printers.ImGui.Nav(out _isNavbarHovered);
             
             #region Brushes
             {

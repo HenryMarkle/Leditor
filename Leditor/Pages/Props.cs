@@ -286,7 +286,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         {
             // Draw geos first
             if (paletteTiles) {
-                Printers.DrawGeoLayerWithMaterialsIntoBuffer(geoL, 2, 16, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+                Printers.DrawGeoLayerWithMaterialsIntoBuffer(geoL, 2, 16, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
 
                 // BeginTextureMode(geoL);
                 // ClearBackground(Color.White with { A = 0 });
@@ -342,8 +342,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
             if (_showLayer3Tiles)
             {
-                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette
-                    && GLOBALS.Settings.GeneralSettings.RenderMaterials) {
+                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
                     // Printers.DrawTileLayer(
                     //     GLOBALS.Layer,
                     //     2, 
@@ -353,7 +352,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     //     GLOBALS.SelectedPalette!.Value,
                     //     70
                     // );
-                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 2, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 2, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true);
 
                 } else {
                     BeginTextureMode(GLOBALS.Textures.GeneralLevel);
@@ -513,7 +512,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         if (_showTileLayer2 && (GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers || GLOBALS.Layer is 0 or 1))
         {
             if (paletteTiles) {
-                Printers.DrawGeoLayerWithMaterialsIntoBuffer(geoL, 1, 16, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+                Printers.DrawGeoLayerWithMaterialsIntoBuffer(geoL, 1, 16, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
 
                 // BeginTextureMode(geoL);
                 // ClearBackground(Color.White with { A = 0 });
@@ -570,9 +569,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
             if (_showLayer2Tiles)
             {
-                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette 
-                    && GLOBALS.Settings.GeneralSettings.RenderMaterials) {
-                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 1, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 1, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true);
                     
                     
                     // Printers.DrawTileLayer(
@@ -741,7 +739,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         if (_showTileLayer1 && (GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers || GLOBALS.Layer == 0))
         {
             if (paletteTiles) {
-                Printers.DrawGeoLayerWithMaterialsIntoBuffer(geoL, 0, 16, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+                Printers.DrawGeoLayerWithMaterialsIntoBuffer(geoL, 0, 16, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
 
                 // BeginTextureMode(geoL);
                 // ClearBackground(Color.White with { A = 0 });
@@ -797,9 +795,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
             if (_showLayer1Tiles)
             {
-                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette 
-                    && GLOBALS.Settings.GeneralSettings.RenderMaterials) {
-                        Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 0, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, GLOBALS.Settings.GeneralSettings.RenderMaterials);
+                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+                        Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 0, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true);
                     
                     // Printers.DrawTileLayer(
                     //     GLOBALS.Layer,
@@ -1073,6 +1070,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
     private bool _isPropsWinHovered;
     private bool _isPropsWinDragged;
 
+    private bool _isNavbarHovered;
+
     public PropsEditorPage()
     {
         _camera = new Camera2D { Zoom = 0.8f };
@@ -1323,7 +1322,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
         var tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / previewScale;
         var tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / previewScale;
 
-        var canDrawTile = !_isPropsWinHovered && 
+        var canDrawTile = !_isNavbarHovered && 
+                        !_isPropsWinHovered && 
                           !_isPropsWinDragged && 
                           !_isShortcutsWinHovered && 
                           !_isShortcutsWinDragged && 
@@ -1384,7 +1384,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             UpdateDefaultDepth();
 
             _shouldRedrawLevel = true;
-            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
         }
 
         if (_shortcuts.ToggleLayer1Tiles.Check(ctrl, shift, alt)) {
@@ -1444,7 +1444,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         _shortcuts.PlacePropAlt.Check(ctrl, shift, alt, true)))
                     {
                         // _shouldRedrawLevel = true;
-                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                         else {
                             _shouldRedrawLevel = true;
                         }
@@ -1686,7 +1686,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     if (canDrawTile && (_shortcuts.PlaceProp.Check(ctrl, shift, alt) || _shortcuts.PlacePropAlt.Check(ctrl, shift, alt)))
                     {
                         // _shouldRedrawLevel = true;
-                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                         else _shouldRedrawLevel = true;
                         
                         var posV = _snapMode switch
@@ -2028,7 +2028,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 if (_shortcuts.CycleSelected.Check(ctrl, shift, alt) && anySelected && _selectedCycleIndices.Length > 0)
                 {
                     // _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     else {
                         _shouldRedrawLevel = true;
                     }
@@ -2079,7 +2079,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 else if (_shortcuts.TogglePropsVisibility.Check(ctrl, shift, alt) && anySelected)
                 {
                     // _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     else {
                         _shouldRedrawLevel = true;
                     }
@@ -2094,7 +2094,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 else if (_shortcuts.ToggleEditingPropQuadsMode.Check(ctrl, shift, alt) && fetchedSelected.Length == 1)
                 {
                     // _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     else {
                         _shouldRedrawLevel = true;
                     }
@@ -2111,7 +2111,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 else if (_shortcuts.DeleteSelectedProps.Check(ctrl, shift, alt) && anySelected)
                 {
                     // _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     else {
                         _shouldRedrawLevel = true;
                     }
@@ -2152,7 +2152,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     if (_shortcuts.ToggleRopePointsEditingMode.Check(ctrl, shift, alt))
                     {
                         // _shouldRedrawLevel = true;
-                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                         else {
                             _shouldRedrawLevel = true;
                         }
@@ -2169,7 +2169,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     else if (_shortcuts.ToggleRopeEditingMode.Check(ctrl, shift, alt))
                     {
                         // _shouldRedrawLevel = true;
-                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                         else {
                             _shouldRedrawLevel = true;
                         }
@@ -2186,7 +2186,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 else if (_shortcuts.DuplicateProps.Check(ctrl, shift, alt) && anySelected)
                 {
                     // _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     else {
                         _shouldRedrawLevel = true;
                     }
@@ -2240,7 +2240,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 if (_ropeMode && fetchedSelected.Length == 1)
                 {
                     // _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     else {
                         _shouldRedrawLevel = true;
                     }
@@ -2294,7 +2294,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 if (_movingProps && anySelected && _propsMoveMouseAnchor is not null && _propsMoveMousePos is not null)
                 {
                     // _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     else {
                         _shouldRedrawLevel = true;
                     }
@@ -2409,7 +2409,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 else if (_rotatingProps && anySelected)
                 {
                     // _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     else {
                         _shouldRedrawLevel = true;
                     }
@@ -2438,7 +2438,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 else if (_scalingProps && anySelected)
                 {
                     // _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     else {
                         _shouldRedrawLevel = true;
                     }
@@ -2512,7 +2512,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 else if (_stretchingProp && anySelected)
                 {
                     // _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     else {
                         _shouldRedrawLevel = true;
                     }
@@ -2731,7 +2731,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 else if (_editingPropPoints && fetchedSelected.Length == 1)
                 {
                     // _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     else {
                         _shouldRedrawLevel = true;
                     }
@@ -2769,7 +2769,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         if (_shortcuts.DeepenSelectedProps.Check(ctrl, shift, alt))
                         {
                             // _shouldRedrawLevel = true;
-                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                             else {
                                 _shouldRedrawLevel = true;
                             }
@@ -2785,7 +2785,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         else if (_shortcuts.UndeepenSelectedProps.Check(ctrl, shift, alt))
                         {
                             // _shouldRedrawLevel = true;
-                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                             else {
                                 _shouldRedrawLevel = true;
                             }
@@ -2809,7 +2809,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     if ((IsMouseButtonReleased(_shortcuts.SelectProps.Button) || IsKeyReleased(_shortcuts.SelectPropsAlt.Key)) && _clickTracker && !(_isPropsWinHovered || _isPropsWinDragged))
                     {
                         // _shouldRedrawLevel = true;
-                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                         else {
                             _shouldRedrawLevel = true;
                         }
@@ -2886,7 +2886,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             
             EndShaderMode();
 
-            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) {
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
                 BeginShaderMode(GLOBALS.Shaders.VFlip);
                 SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), _propLayerRT.Raw.Texture);
                 DrawTexture(_propLayerRT.Raw.Texture, 0, 0, Color.White);
@@ -3169,7 +3169,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 GLOBALS.Layer = newLayer;
                 UpdateDefaultDepth();
                 _shouldRedrawLevel = true;
-                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
             }
 
             // Update prop depth render texture
@@ -3260,7 +3260,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             
             // Navigation bar
                 
-            GLOBALS.NavSignal = Printers.ImGui.Nav();
+            GLOBALS.NavSignal = Printers.ImGui.Nav(out _isNavbarHovered);
 
             var menuOpened = ImGui.Begin("Props##PropsPanel");
             
@@ -3297,7 +3297,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 )
                 {
                     _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     _mode = 0;
                 }
                 
@@ -3311,7 +3311,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 )
                 {
                     _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     _mode = 1;
                 }
                 
@@ -3322,7 +3322,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 {
                     _showGrid = !_showGrid;
                     _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                 }
                         
                 ImGui.SameLine();
@@ -3344,7 +3344,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         if (ImGui.Button("Select All", availableSpace with { Y = 20 }))
                         {
                             _shouldRedrawLevel = true;
-                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                             
                             for (var i = 0; i < _selected.Length; i++) _selected[i] = true;
                         }
@@ -3362,7 +3362,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 if (selected)
                                 {
                                     _shouldRedrawLevel = true;
-                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                                     
                                     if (IsKeyDown(KeyboardKey.LeftControl))
                                     {
@@ -3397,7 +3397,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         if (hideSelected)
                         {
                             _shouldRedrawLevel = true;
-                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                             
                             for (var i = 0; i < _hidden.Length; i++)
                             {
@@ -3410,7 +3410,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         if (deleteSelected)
                         {
                             _shouldRedrawLevel = true;
-                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                             
                             GLOBALS.Level.Props = _selected
                                 .Select((s, i) => (s, i))
@@ -3463,7 +3463,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             if (ImGui.InputInt("Depth", ref depth))
                             {
                                 _shouldRedrawLevel = true;
-                                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                             }
                     
                             Utils.Restrict(ref depth, -29, 0);
@@ -3476,17 +3476,22 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             {
                                 var init = GLOBALS.Props[selectedProp.position.category][selectedProp.position.index];
                                 var variations = (init as IVariableInit).Variations;
-                                ImGui.SetNextItemWidth(100);
-                                var variation = v.Variation;
-                                if (ImGui.InputInt("Variation", ref variation))
-                                {
-                                    // _shouldRedrawLevel = true;
-                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
-                                    else _shouldRedrawLevel = true;
-                                    
-                                    Utils.Restrict(ref variation, 0, variations -1);
 
-                                    v.Variation = variation;
+                                if (variations > 1) {
+                                    ImGui.SetNextItemWidth(100);
+                                    var variation = v.Variation;
+                                    if (ImGui.InputInt("Variation", ref variation))
+                                    {
+                                        // _shouldRedrawLevel = true;
+                                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                                        else _shouldRedrawLevel = true;
+                                        
+                                        Utils.Restrict(ref variation, 0, variations -1);
+
+                                        v.Variation = variation;
+                                    }
+                                } else {
+                                    v.Variation = 0;
                                 }
                             }
                             
@@ -3564,7 +3569,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 if (switchSimSelected)
                                 {
                                     _shouldRedrawLevel = true;
-                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                                     currentModel.simSwitch = !currentModel.simSwitch;
                                 }
 
@@ -3573,7 +3578,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 if (ImGui.InputInt("Segment Count", ref segmentCount))
                                 {
                                     _shouldRedrawLevel = true;
-                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                                 }
 
                                 // Update segment count if needed
@@ -3597,7 +3602,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 {
                                     UpdateRopeModelSegments();
                                     // _shouldRedrawLevel = true;
-                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                                     else _shouldRedrawLevel = true;
                                 }
                                 
@@ -3606,7 +3611,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 if (ImGui.Checkbox("Simulate Rope", ref _ropeMode))
                                 {
                                     // _shouldRedrawLevel = true;
-                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                                     else _shouldRedrawLevel = true;
                                 }
 
@@ -3618,7 +3623,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     {
                                         _ropeSimulationFrameCut = ++_ropeSimulationFrameCut % 3 + 1;
                                         // _shouldRedrawLevel = true;
-                                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                                         else _shouldRedrawLevel = true;
                                     }
 
@@ -3636,7 +3641,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     if (releaseClicked)
                                     {
                                         // _shouldRedrawLevel = true;
-                                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                                         else _shouldRedrawLevel = true;
                                         
                                         release = (PropRopeRelease)((int)release + 1);
@@ -3655,7 +3660,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     if (ImGui.InputInt("Control Points", ref handlePointNumber))
                                     {
                                         _shouldRedrawLevel = true;
-                                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                                     }
 
                                     var quads = GLOBALS.Level.Props[currentModel.index].prop.Quads;
@@ -3688,7 +3693,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             if (ImGui.InputInt("Depth", ref depth))
                             {
                                 _shouldRedrawLevel = true;
-                                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                             }
                     
                             Utils.Restrict(ref depth, -29, 0);
@@ -3946,7 +3951,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         if (ImGui.InputInt("Depth", ref depth))
                         {
                             _shouldRedrawLevel = true;
-                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette && GLOBALS.Settings.GeneralSettings.RenderMaterials) _shouldRedrawPropLayer = true;
+                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                         }
 
                         Utils.Restrict(ref depth, -29, 0);
@@ -3969,18 +3974,23 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         if (_menuRootCategoryIndex == 3 && currentOther is IVariableInit v)
                         {
                             var variations = v.Variations;
-                            var variation = _defaultVariation;
-                    
-                            ImGui.SetNextItemWidth(100);
-                            if (ImGui.InputInt("Variation", ref variation))
-                            {
-                                // _shouldRedrawLevel = true;
-                                _shouldRedrawPropLayer = true;
-                            }
-                    
-                            Utils.Restrict(ref variation, 0, variations-1);
 
-                            _defaultVariation = variation;
+                            if (variations > 1) {
+                                var variation = _defaultVariation;
+                        
+                                ImGui.SetNextItemWidth(100);
+                                if (ImGui.InputInt("Variation", ref variation))
+                                {
+                                    // _shouldRedrawLevel = true;
+                                    _shouldRedrawPropLayer = true;
+                                }
+
+                                Utils.Restrict(ref variation, 0, variations-1);
+
+                                _defaultVariation = variation;
+                            } else {
+                                _defaultVariation = 0;
+                            }
                         }
                         
                         // Misc

@@ -69,7 +69,6 @@ internal static class GLOBALS
         internal Shader ApplyShadowBrush { get; set; }
         internal Shader ApplyLightBrush { get; set; }
         internal Shader Prop { get; set; }
-        internal Shader BoxProp { get; set; }
         internal Shader StandardProp { get; set; }
         internal Shader StandardPropColored { get; set; }
         internal Shader StandardPropPalette { get; set; }
@@ -90,6 +89,7 @@ internal static class GLOBALS
         internal Shader LightMapStretch { get; set; }
 
         internal Shader TilePalette { get; set; }
+        internal Shader BoxTile { get; set; }
         internal Shader BoxTilePalette { get; set; }
 
         // internal Shader GeoMaterialMask { get; set; }

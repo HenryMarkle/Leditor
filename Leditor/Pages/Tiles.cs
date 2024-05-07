@@ -136,6 +136,8 @@ internal class TileEditorPage : EditorPage, IDisposable
     private bool _isSettingsWinHovered;
     private bool _isSettingsWinDragged;
 
+    private bool _isNavbarHovered;
+
     public void ResolveAutoTiler() {
         var resolvedTiles = _autoTilerLinearAlgorithm 
             ? _autoTiler?.ResolvePathLinear(_autoTilerPath) 
@@ -1094,7 +1096,7 @@ internal class TileEditorPage : EditorPage, IDisposable
 
         var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
 
-        var canDrawTile =
+        var canDrawTile = !_isNavbarHovered &&
                           !_isSettingsWinHovered && 
                           !_isSettingsWinDragged && 
                           !_isSpecsWinHovered &&
@@ -1868,10 +1870,13 @@ internal class TileEditorPage : EditorPage, IDisposable
         
         if (_shouldRedrawLevel)
         {
-            Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
+            Printers.DrawLevelIntoBufferV2(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
             {
                 DarkTheme = GLOBALS.Settings.GeneralSettings.DarkTheme,
                 CurrentLayer = GLOBALS.Layer,
+                TilesLayer1 = _showLayer1Tiles,
+                TilesLayer2 = _showLayer2Tiles,
+                TilesLayer3 = _showLayer3Tiles,
                 PropsLayer1 = false,
                 PropsLayer2 = false,
                 PropsLayer3 = false,
@@ -1879,8 +1884,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
                 Palette = GLOBALS.SelectedPalette,
                 Grid = false,
-                VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers,
-                RenderMaterials = GLOBALS.Settings.GeneralSettings.RenderMaterials
+                VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers
             });
             _shouldRedrawLevel = false;
         }
@@ -2132,7 +2136,7 @@ internal class TileEditorPage : EditorPage, IDisposable
             
             // Navigation bar
                 
-            GLOBALS.NavSignal = Printers.ImGui.Nav();
+            GLOBALS.NavSignal = Printers.ImGui.Nav(out _isNavbarHovered);
             
             // Menu
 

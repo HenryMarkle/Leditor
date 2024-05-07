@@ -38,6 +38,7 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
 
     private bool _advanced;
 
+
     /// <summary>
     /// Only call in drawing mode
     /// </summary>
@@ -89,7 +90,7 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
         
         // Navigation bar
                 
-        GLOBALS.NavSignal = Printers.ImGui.Nav();
+        GLOBALS.NavSignal = Printers.ImGui.Nav(out _);
 
         if (ImGui.Begin("Resize##LevelDimensions", ImGuiWindowFlags.NoCollapse))
         {

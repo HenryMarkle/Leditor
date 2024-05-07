@@ -139,6 +139,8 @@ internal class GeoEditorPage : EditorPage
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
 
+    private bool _isNavbarHovered;
+
 
     public override void Draw()
     {
@@ -163,7 +165,8 @@ internal class GeoEditorPage : EditorPage
         var layer2Rect = new Rectangle(20, sHeight - 60, 40, 40);
         var layer3Rect = new Rectangle(10, sHeight - 50, 40, 40);
 
-        var canDrawGeo = !_isShortcutsWinHovered && 
+        var canDrawGeo = !_isNavbarHovered && 
+                            !_isShortcutsWinHovered && 
                          !_isShortcutsWinDragged && 
                          !CheckCollisionPointRec(uiMouse, layer3Rect) && 
                          (GLOBALS.Layer != 1 || !CheckCollisionPointRec(uiMouse, layer2Rect)) &&
@@ -1235,7 +1238,7 @@ internal class GeoEditorPage : EditorPage
             
             ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
 
-            GLOBALS.NavSignal = Printers.ImGui.Nav();
+            GLOBALS.NavSignal = Printers.ImGui.Nav(out _isNavbarHovered);
             
             var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.GeoEditor);
             

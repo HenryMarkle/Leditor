@@ -178,8 +178,7 @@ public class GeneralSettings(
     PropDrawMode drawPropMode = PropDrawMode.Untinted,
     bool indexHint = true,
     bool highLayerContrast = true,
-    bool visiblePrecedingUnfocusedLayers = true,
-    bool renderMaterials = false
+    bool visiblePrecedingUnfocusedLayers = true
     )
 {
     public bool DeveloperMode { get; set; } = developerMode;
@@ -197,7 +196,6 @@ public class GeneralSettings(
     public bool IndexHint { get; set; } = indexHint;
     public bool HighLayerContrast { get; set; } = highLayerContrast;
     public bool VisiblePrecedingUnfocusedLayers { get; set; } = visiblePrecedingUnfocusedLayers;
-    public bool RenderMaterials { get; set; } = renderMaterials;
 }
 
 public class Settings
