@@ -724,7 +724,7 @@ internal static class Utils
     public static bool IsEffectBruhConstrained(string effect) => effect switch
     {
         "Fungi Flowers" or "Lighthouse Flowers" or "Fern" or "Giant Mushroom" or 
-            "Sprawlbush" or "featherFern" or "Feather Plants" or "Fungus Tree" => true,
+            "Sprawlbush" or "featherFern" or "Fungus Tree" => true,
         _ => false
     };
 

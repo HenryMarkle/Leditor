@@ -513,9 +513,28 @@ public static class Importers {
 
             AstNode.Number? variation = (AstNode.Number?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "variation").Value;
             AstNode.Base? release = (AstNode.Base?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "release").Value;
-            AstNode.Number? customDepth = (AstNode.Number?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "customdepth").Value;
+            AstNode.Base? customDepth = (AstNode.Base?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "customdepth").Value;
             AstNode.Number? applyColor = (AstNode.Number?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "applycolor").Value;
             AstNode.Number? thickness = (AstNode.Number?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "thickness").Value;
+
+            int baseToNumber(AstNode.Base? @base) {
+                if (@base is null) return 0;
+
+                switch (@base) {
+                    case AstNode.Number number: return number.Value.IntValue;
+                    
+                    case AstNode.UnaryOperator op:
+                        if (op.Type == AstNode.UnaryOperatorType.Negate) {
+                            if (op.Expression is AstNode.Number containedNumber) {
+                                return containedNumber.Value.IntValue * -1; 
+                            }
+                            else throw new Exception($"Prop \"{name}\" had a value that was expected to be a number");
+                        } else throw new Exception($"Prop \"{name}\" had an invalid operator");
+
+                    default:
+                        throw new Exception($"Prop \"{name}\" had a value that was expected to be a number");
+                }
+            }
 
             int getIntProperty(AstNode.Number? property) => property is null
                     ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(property))
@@ -536,13 +555,13 @@ public static class Importers {
                 }) switch { 1 => PropRopeRelease.Right, -1 => PropRopeRelease.Left, _ => PropRopeRelease.None }, 
                     name is "Wire" or "Zero-G Wire" ? thickness is null ? 2 : NumberToFloat(thickness) : null, 
                     name == "Zero-G Tube" ? getIntProperty(applyColor) : null),
-                InitPropType.VariedDecal => new PropVariedDecalSettings(depth, rng.Next(1000), 0, deNullVariation, getIntProperty(customDepth)),
-                InitPropType.VariedSoft => new PropVariedSoftSettings(depth, rng.Next(1000), 0, deNullVariation, getIntProperty(customDepth),
+                InitPropType.VariedDecal => new PropVariedDecalSettings(depth, rng.Next(1000), 0, deNullVariation, baseToNumber(customDepth)),
+                InitPropType.VariedSoft => new PropVariedSoftSettings(depth, rng.Next(1000), 0, deNullVariation, baseToNumber(customDepth),
                     ((InitVariedSoftProp)GLOBALS.Props[position.category][position.index]).Colorize == 0 ? 1 : null),
-                InitPropType.SimpleDecal => new PropSimpleDecalSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
-                InitPropType.Soft => new PropSoftSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
-                InitPropType.SoftEffect => new PropSoftEffectSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
-                InitPropType.Antimatter => new PropAntimatterSettings(depth, rng.Next(1000), 0, getIntProperty(customDepth)),
+                InitPropType.SimpleDecal => new PropSimpleDecalSettings(depth, rng.Next(1000), 0, baseToNumber(customDepth)),
+                InitPropType.Soft => new PropSoftSettings(depth, rng.Next(1000), 0, baseToNumber(customDepth)),
+                InitPropType.SoftEffect => new PropSoftEffectSettings(depth, rng.Next(1000), 0, baseToNumber(customDepth)),
+                InitPropType.Antimatter => new PropAntimatterSettings(depth, rng.Next(1000), 0, baseToNumber(customDepth)),
                 _ => new BasicPropSettings(seed: rng.Next(1000))
             };
 

@@ -211,34 +211,28 @@ internal class EffectsEditorPage : EditorPage
 
         if (_addNewEffectMode)
         {
-            if (_shortcuts.NewEffectMenuCategoryNavigation.Check(ctrl, shift, alt, true))
+            if (_shortcuts.MoveCategoryUpInNewEffectsMenu.Check(ctrl, shift, alt))
             {
-                if (IsKeyPressed(_shortcuts.MoveUpInNewEffectMenu.Key))
-                {
-                    _newEffectSelectedValue = 0;
+                _newEffectSelectedValue = 0;
 
-                    _newEffectCategorySelectedValue = --_newEffectCategorySelectedValue;
+                _newEffectCategorySelectedValue = --_newEffectCategorySelectedValue;
 
-                    if (_newEffectCategorySelectedValue < 0) _newEffectCategorySelectedValue = GLOBALS.EffectCategories.Length - 1;
-                }
-                else if (IsKeyPressed(_shortcuts.MoveDownInNewEffectMenu.Key))
-                {
-                    _newEffectSelectedValue = 0;
-                    _newEffectCategorySelectedValue = ++_newEffectCategorySelectedValue % GLOBALS.EffectCategories.Length;
-                }
+                if (_newEffectCategorySelectedValue < 0) _newEffectCategorySelectedValue = GLOBALS.EffectCategories.Length - 1;
             }
-            else
+            else if (_shortcuts.MoveCategoryDownInNewEffectsMenu.Check(ctrl, shift, alt))
             {
-                if (_shortcuts.MoveUpInNewEffectMenu.Check(ctrl, shift, alt))
-                {
-                    _newEffectSelectedValue = --_newEffectSelectedValue;
-                    if (_newEffectSelectedValue < 0) _newEffectSelectedValue = GLOBALS.Effects[_newEffectCategorySelectedValue].Length - 1;
-                }
-                else if (_shortcuts.MoveDownInNewEffectMenu.Check(ctrl, shift, alt))
-                {
-                    _newEffectSelectedValue = ++_newEffectSelectedValue % GLOBALS.Effects[_newEffectCategorySelectedValue].Length;
-                }
-                
+                _newEffectSelectedValue = 0;
+                _newEffectCategorySelectedValue = ++_newEffectCategorySelectedValue % GLOBALS.EffectCategories.Length;
+            }
+
+            if (_shortcuts.MoveUpInNewEffectMenu.Check(ctrl, shift, alt))
+            {
+                _newEffectSelectedValue = --_newEffectSelectedValue;
+                if (_newEffectSelectedValue < 0) _newEffectSelectedValue = GLOBALS.Effects[_newEffectCategorySelectedValue].Length - 1;
+            }
+            else if (_shortcuts.MoveDownInNewEffectMenu.Check(ctrl, shift, alt))
+            {
+                _newEffectSelectedValue = ++_newEffectSelectedValue % GLOBALS.Effects[_newEffectCategorySelectedValue].Length;
             }
             
             
@@ -542,7 +536,7 @@ internal class EffectsEditorPage : EditorPage
                 if (_shortcuts.CycleEffectOptionsUp.Check(ctrl, shift, alt))
                 {
                     _optionsIndex--;
-                    if (_optionsIndex < 2) _optionsIndex = GLOBALS.Level.Effects[_currentAppliedEffect].Item2.Length - 1;
+                    if (_optionsIndex < 1) _optionsIndex = GLOBALS.Level.Effects[_currentAppliedEffect].Item2.Length - 1;
                 }
                 else if (_shortcuts.CycleEffectOptionsDown.Check(ctrl, shift, alt))
                 {

@@ -3498,13 +3498,28 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             // Colored
 
                             if (selectedProp.type == InitPropType.VariedSoft && 
-                                selectedProp.prop.Extras.Settings is PropVariedSoftSettings vs)
+                                selectedProp.prop.Extras.Settings is PropVariedSoftSettings vs &&
+                                ((InitVariedSoftProp) GLOBALS.Props[selectedProp.position.category][selectedProp.position.index]).Colorize != 0)
                             {
                                 var applyColor = vs.ApplyColor is 1;
 
                                 if (ImGui.Checkbox("Apply Color", ref applyColor))
                                 {
                                     vs.ApplyColor = applyColor ? 1 : 0;
+                                }
+                            }
+
+                            // Custom Depth
+
+                            if (selectedProp.prop.Extras.Settings is ICustomDepth cd) {
+                                ImGui.SetNextItemWidth(200);
+
+                                var customDepth = cd.CustomDepth;
+
+                                if (ImGui.InputInt("Custom Depth", ref customDepth)) {
+                                    // Utils.Restrict(ref customDepth, -29, 0);
+                                    
+                                    cd.CustomDepth = customDepth;
                                 }
                             }
                             

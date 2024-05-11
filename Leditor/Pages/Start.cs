@@ -148,6 +148,7 @@ internal class StartPage : EditorPage
             .Select(e => {
                 return (e.Item1, Path.GetFileNameWithoutExtension(e.Item1), e.Item2);
             })
+            .OrderBy(e => !e.Item3)
             .ToArray();
     }
 
@@ -219,6 +220,7 @@ internal class StartPage : EditorPage
             .Select(e => {
                 return (e.Item1, Path.GetFileNameWithoutExtension(e.Item1), e.Item2);
             })
+            .OrderBy(e => !e.Item3)
             .ToArray();
 
         _levelPreviewRT = new(0, 0);
@@ -590,6 +592,7 @@ internal class StartPage : EditorPage
 
                     if (ImGui.Button("Ok")) {
                         _loadFailed = false;
+                        ImGui.CloseCurrentPopup();
                     }
 
                     ImGui.EndPopup();

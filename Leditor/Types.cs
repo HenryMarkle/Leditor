@@ -863,6 +863,10 @@ public class PropExtras(BasicPropSettings settings, Vector2[] ropePoints)
 
 #region PropSettings
 
+public interface ICustomDepth {
+    int CustomDepth { get; set; }
+}
+
 public class BasicPropSettings(int renderOrder = 0, int seed = 0, int renderTime = 0)
 {
     public int RenderOrder { get; set; } = renderOrder;
@@ -901,7 +905,7 @@ public class PropRopeSettings(int renderOrder = 0, int seed = 0, int renderTime 
     }
 }
 
-public class PropVariedDecalSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime), IVariable
+public class PropVariedDecalSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime), IVariable, ICustomDepth
 {
     public int Variation { get; set; } = variation;
     public int CustomDepth { get; set; } = customDepth;
@@ -911,7 +915,7 @@ public class PropVariedDecalSettings(int renderOrder = 0, int seed = 0, int rend
         return new PropVariedDecalSettings(RenderOrder, Seed, RenderTime, Variation, CustomDepth);
     }
 }
-public class PropVariedSoftSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0, int? applyColor = null) : BasicPropSettings(renderOrder, seed, renderTime), IVariable
+public class PropVariedSoftSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0, int? applyColor = null) : BasicPropSettings(renderOrder, seed, renderTime), IVariable, ICustomDepth
 {
     public int Variation { get; set; } = variation;
     public int CustomDepth { get; set; } = customDepth;
@@ -923,7 +927,7 @@ public class PropVariedSoftSettings(int renderOrder = 0, int seed = 0, int rende
     }
 }
 
-public class PropSimpleDecalSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime)
+public class PropSimpleDecalSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime), ICustomDepth
 {
     public int CustomDepth { get; set; } = customDepth;
 
@@ -933,7 +937,7 @@ public class PropSimpleDecalSettings(int renderOrder = 0, int seed = 0, int rend
     }
 }
 
-public class PropSoftSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime)
+public class PropSoftSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime), ICustomDepth
 {
     public int CustomDepth { get; set; } = customDepth;
     
@@ -942,7 +946,7 @@ public class PropSoftSettings(int renderOrder = 0, int seed = 0, int renderTime 
         return new PropSoftSettings(RenderOrder, Seed, RenderTime, CustomDepth);
     }
 }
-public class PropSoftEffectSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime)
+public class PropSoftEffectSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime), ICustomDepth
 {
     public int CustomDepth { get; set; } = customDepth;
     
@@ -952,7 +956,7 @@ public class PropSoftEffectSettings(int renderOrder = 0, int seed = 0, int rende
     }
 }
 
-public class PropAntimatterSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime)
+public class PropAntimatterSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int customDepth = 0) : BasicPropSettings(renderOrder, seed, renderTime), ICustomDepth
 {
     public int CustomDepth { get; set; } = customDepth;
     

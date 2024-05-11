@@ -278,9 +278,11 @@ public class EffectsShortcuts : IEditorShortcuts
 {
     public KeyboardShortcut NewEffect { get; set; } = KeyboardKey.N;
 
-    public KeyboardShortcut NewEffectMenuCategoryNavigation { get; set; } = new(KeyboardKey.LeftShift, shift: true);    
     public KeyboardShortcut MoveDownInNewEffectMenu { get; set; } = new(KeyboardKey.S, shift:false, alt:false, ctrl:false);
     public KeyboardShortcut MoveUpInNewEffectMenu { get; set; } = new(KeyboardKey.W, shift:false, alt:false, ctrl:false);
+
+    public KeyboardShortcut MoveCategoryDownInNewEffectsMenu { get; set; } = new(KeyboardKey.D, shift:false, alt:false, ctrl:false);
+    public KeyboardShortcut MoveCategoryUpInNewEffectsMenu { get; set; } = new(KeyboardKey.A, shift:false, alt:false, ctrl:false);
 
     public KeyboardShortcut AcceptNewEffect { get; set; } = new(KeyboardKey.Space, shift:false, alt:false, ctrl:false);
     public KeyboardShortcut AcceptNewEffectAlt { get; set; } = KeyboardKey.Enter;

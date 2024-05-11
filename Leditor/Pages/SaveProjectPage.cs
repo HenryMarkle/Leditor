@@ -57,7 +57,7 @@ internal class SaveProjectPage : EditorPage
     private bool _duplicateName;
     private string _projectName;
     private string _currentDir;
-    private (string path, string name)[] _dirEntries;
+    private (string path, string name, bool isDir)[] _dirEntries;
 
     private int _currentIndex = -1;
 
@@ -72,10 +72,11 @@ internal class SaveProjectPage : EditorPage
 
                 return (e, (attrs & FileAttributes.Directory) == FileAttributes.Directory);
             })
-            .Where(e => e.Item2)
+            .Where(e => e.Item2 || e.Item1.EndsWith(".txt"))
             .Select(e => {
-                return (e.Item1, Path.GetFileNameWithoutExtension(e.Item1));
+                return (e.Item1, Path.GetFileNameWithoutExtension(e.Item1), e.Item2);
             })
+            .OrderBy(e => !e.Item3)
             .ToArray();
     }
 
@@ -147,10 +148,11 @@ internal class SaveProjectPage : EditorPage
 
                 return (e, (attrs & FileAttributes.Directory) == FileAttributes.Directory);
             })
-            .Where(e => e.Item2)
+            .Where(e => e.Item2 || e.Item1.EndsWith(".txt"))
             .Select(e => {
-                return (e.Item1, Path.GetFileNameWithoutExtension(e.Item1));
+                return (e.Item1, Path.GetFileNameWithoutExtension(e.Item1), e.Item2);
             })
+            .OrderBy(e => !e.Item3)
             .ToArray();
 
         _currentDirExists = Directory.Exists(_currentDir);
@@ -316,7 +318,9 @@ internal class SaveProjectPage : EditorPage
                         
                         for (var i = 0; i < _dirEntries.Length; i++) {
 
-                            rlImGui.ImageSize(GLOBALS.Settings.GeneralSettings.DarkTheme ? _folderTexture : _folderBlackTexture, new(23, 23));
+                            if (_dirEntries[i].isDir) rlImGui.ImageSize(GLOBALS.Settings.GeneralSettings.DarkTheme ? _folderTexture : _folderBlackTexture, new(23, 23));
+                            else rlImGui.ImageSize(GLOBALS.Settings.GeneralSettings.DarkTheme ? _fileTexture : _fileBlackTexture, new(23, 23));
+
                             ImGui.SameLine();
                             var selected = ImGui.Selectable(_dirEntries[i].name, _currentIndex == i, ImGuiSelectableFlags.None, ImGui.GetContentRegionAvail() with { Y = 20 });
 
@@ -326,6 +330,10 @@ internal class SaveProjectPage : EditorPage
                                     _currentDirExists = Directory.Exists(_currentDir);
                                 } else {
                                     _currentIndex = i;
+                                }
+
+                                if (!_dirEntries[i].isDir) {
+                                    _projectName = _dirEntries[i].name;
                                 }
 
                                 _duplicateName = ProjectNameExists(_projectName);
