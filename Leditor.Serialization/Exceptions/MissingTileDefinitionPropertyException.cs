@@ -15,4 +15,18 @@ public class MissingTileDefinitionPropertyException : TileDefinitionParseExcepti
     {
         Property = property;
     }
+
+    //
+
+    public MissingTileDefinitionPropertyException(string tileName, string property) 
+        : base($"Tile definition of \"{tileName}\" is missing \"{property}\" property")
+    {
+        Property = property;
+    }
+
+    public MissingTileDefinitionPropertyException(string tileName, string property, Exception? innerException) 
+        : base($"Tile definition of \"{tileName}\" is missing \"{property}\" property", innerException)
+    {
+        Property = property;
+    }
 }

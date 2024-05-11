@@ -28,6 +28,10 @@ internal class StartPage : EditorPage
         _fileBlackTexture.Dispose();
     }
 
+    private bool _loadFailed;
+    private Exception? _loadException;
+
+
     internal event EventHandler? ProjectLoaded;
 
     private bool _uiLocked;
@@ -299,10 +303,25 @@ internal class StartPage : EditorPage
                     return;
                 }
 
+                if (_loadFileTask.IsFaulted) {
+                    _loadFailed = true;
+                    _loadException = _loadFileTask.Exception;
+
+                    if (_loadException is not null) Logger.Error($"Failed to load a level: {_loadException.Message}");
+
+                    _loadFileTask = null;
+                    _openFileDialog = null;
+                    _uiLocked = false;
+                    EndDrawing();
+                    return;
+                }
+
                 var result = _loadFileTask.Result;
 
                 if (!result.Success)
                 {
+                    _loadFailed = true;
+
                     _loadFileTask = null;
                     _openFileDialog = null;
                     _uiLocked = false;
@@ -559,6 +578,21 @@ internal class StartPage : EditorPage
                     rlImGui.ImageRenderTextureFit(_levelPreviewRT, false);
 
                     ImGui.End();
+                }
+
+                if (_loadFailed) {
+                    ImGui.OpenPopup("Load Failed");
+                }
+
+                if (ImGui.BeginPopupModal("Load Failed")) {
+
+                    ImGui.Text("Failed to load the selected level. This might be due to data corruption or invalid level data.");
+
+                    if (ImGui.Button("Ok")) {
+                        _loadFailed = false;
+                    }
+
+                    ImGui.EndPopup();
                 }
 
                 rlImGui.End();

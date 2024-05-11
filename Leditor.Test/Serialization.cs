@@ -1,6 +1,7 @@
 namespace Leditor.Test;
 
 using Leditor.Serialization;
+using Leditor.Serialization.Exceptions;
 using System.IO;
 
 public class Serialization
@@ -11,7 +12,11 @@ public class Serialization
     [Fact]
     public void TileInitImportTest()
     {
-        _ = TileImporter.ParseInit(Path.Combine(ExecutableDirectory, "..", "..", "..", "assets", "tiles", "Init.txt"));
+        _  = TileImporter.ParseInit(Path.Combine(ExecutableDirectory, "..", "..", "..", "assets", "tiles", "Init.txt"));
+        // try {
+        // } catch (ParseException e) {
+        //     throw new Exception($"Parsing tile init failed: {e.Message}");
+        // }
     }
 
     [Fact]

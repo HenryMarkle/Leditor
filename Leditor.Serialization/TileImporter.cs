@@ -116,61 +116,71 @@ public class TileImporter
         var bfTilesAst = Utils.TryGet<AstNode.Number>(propertyList, "bftiles");
         var tagsAst = Utils.TryGet<AstNode.List>(propertyList, "tags");
 
-        var sizeArgs = sizeAst ?? throw new MissingTileDefinitionPropertyException("sz");
-        
         var name = nameAst?.Value ?? throw new MissingTileDefinitionPropertyException("nm");
+        
+        var sizeArgs = sizeAst ?? throw new MissingTileDefinitionPropertyException(name, "sz");
         var size = Utils.GetIntPair(sizeArgs);
-        var bfTiles = Utils.GetInt(bfTilesAst ?? throw new MissingTileDefinitionPropertyException("bfTiles"));
+        var bfTiles = Utils.GetInt(bfTilesAst ?? throw new MissingTileDefinitionPropertyException(name, "bfTiles"));
         
         // specs
         
         var specs1 = specs1Ast?
             .Values
-            .Select(n => {
+            .Select((n, index) => {
                 switch (n) {
                     case AstNode.Number number: return number.Value.IntValue;
                     
                     case AstNode.UnaryOperator op:
                         if (op.Type == AstNode.UnaryOperatorType.Negate) {
-                            return ((AstNode.Number)op.Expression).Value.IntValue * -1; 
-                        } else throw new Exception("Invalid number operator");
+                            if (op.Expression is AstNode.Number containedNumber) {
+                                return containedNumber.Value.IntValue * -1; 
+                            }
+                            else throw new TileDefinitionParseException(name, $"Property \"specs\" contains a non-number value at index {index}");
+
+                        } else throw new TileDefinitionParseException(name, $"Invalid property \"specs\" number operator at index {index}");
 
                     default:
-                        throw new Exception("Invalid specs value");
+                        throw new TileDefinitionParseException(name, $"Invalid property \"specs\" value at index {index}");
                 }
         })
-            .ToArray() ?? throw new MissingTileDefinitionPropertyException("specs");
+            .ToArray() ?? throw new MissingTileDefinitionPropertyException(name, "specs");
         
         int[] specs2, specs3;
 
         if (specs2Ast is not null) {
-            specs2 = specs2Ast.Values.Select(n => {
+            specs2 = specs2Ast.Values.Select((n, index) => {
                 switch (n) {
                     case AstNode.Number number: return number.Value.IntValue;
                     
                     case AstNode.UnaryOperator op:
                         if (op.Type == AstNode.UnaryOperatorType.Negate) {
-                            return ((AstNode.Number)op.Expression).Value.IntValue * -1; 
-                        } else throw new Exception("Invalid number operator");
+                            if (op.Expression is AstNode.Number containedNumber) {
+                                return containedNumber.Value.IntValue * -1; 
+                            }
+                            else throw new TileDefinitionParseException(name, $"Propert \"specs2\" contains a non-number value at index {index}");
+                        } else throw new TileDefinitionParseException(name, $"Invalid property \"specs2\" number operator at index {index}");
 
                     default:
-                        throw new Exception("Invalid specs value");
+                        throw new TileDefinitionParseException(name, $"Invalid property \"specs2\" value at index {index}");
                 }
         }).ToArray();
         } else { specs2 = []; }
         
         if (specs3Ast is not null) {
-            specs3 = specs3Ast.Values.Select(n => {
+            specs3 = specs3Ast.Values.Select((n, index) => {
                 switch (n) {
                     case AstNode.Number number: return number.Value.IntValue;
                     
                     case AstNode.UnaryOperator op:
                         if (op.Type == AstNode.UnaryOperatorType.Negate) {
-                            return ((AstNode.Number)op.Expression).Value.IntValue * -1; 
-                        } else throw new Exception("Invalid number operator");
+                            if (op.Expression is AstNode.Number containedNumber) {
+                                return containedNumber.Value.IntValue * -1; 
+                            }
+                            else throw new TileDefinitionParseException(name, $"Property \"specs3\" contains a non-number value at index {index}");
+                        } else throw new TileDefinitionParseException(name, $"Invalid property \"specs\" number operator at index {index}");
 
                     default:
-                        throw new Exception("Invalid specs value");
+                        throw new TileDefinitionParseException(name, $"Invalid property \"specs\" value at index {index}");
                 }
             }).ToArray();
         } else { specs3 = []; }
@@ -216,7 +226,7 @@ public class TileImporter
         
         // type
 
-        var typeStr = typeAst?.Value ?? throw new MissingTileDefinitionPropertyException("tp");
+        var typeStr = typeAst?.Value ?? throw new MissingTileDefinitionPropertyException(name, "tp");
 
         var tp = typeStr switch {
             "box" => TileType.Box,
@@ -226,7 +236,7 @@ public class TileImporter
             "voxelStructRockType" => TileType.VoxelStructRockType,
             "voxelStructSandType" => TileType.VoxelStructSandType,
 
-            _ => throw new InvalidTileTypeException(typeStr)
+            _ => throw new TileDefinitionParseException(name, $"Invalid property \"tp\" value {typeStr}")
         };
         
         // repeatL
@@ -234,28 +244,40 @@ public class TileImporter
         int[] repeatL;
 
         if (repeatLAst is not null) {
-            repeatL = ((AstNode.List) propertyList.Values.First(p => ((AstNode.Symbol)p.Key).Value == "repeatl").Value).Values.Select(n => {
-                switch (n) {
-                    case AstNode.Number number: return number.Value.IntValue;
-                    
-                    case AstNode.UnaryOperator op:
-                        if (op.Type == AstNode.UnaryOperatorType.Negate) 
-                            return ((AstNode.Number)op.Expression).Value.IntValue * -1; 
-                        
-                        
-                        throw new ParseException("Invalid number operator");
 
-                    default:
-                        throw new ParseException("Invalid specs value");
-                }
-        }).ToArray();
-        } else { repeatL = []; }
+            repeatL = ((AstNode.List) propertyList.Values
+                .First(p => ((AstNode.Symbol)p.Key).Value == "repeatl").Value).Values
+                .Select((n, index) => {
+                        switch (n) {
+                            case AstNode.Number number: return number.Value.IntValue;
+                            
+                            case AstNode.UnaryOperator op:
+                                if (op.Type == AstNode.UnaryOperatorType.Negate) 
+                                    return ((AstNode.Number)op.Expression).Value.IntValue * -1; 
+                                
+                                
+                                throw new TileDefinitionParseException(name, $"Invalid property \"specs\" number operator at index {index}");
+
+                            default:
+                                throw new TileDefinitionParseException(name, $"Invalid property \"specs\" value at index {index}");
+                        }
+                }).ToArray();
+
+        } 
+        else if (tp is TileType.VoxelStruct) throw new MissingTileDefinitionPropertyException(name, "repeatL"); 
+        else {
+            repeatL = [];
+        };
         
         // Tags
 
-        var tags = tagsAst?.Values
-            .Select(t => ((AstNode.String)t).Value)
-            .ToArray() ?? [];
+        string[] tags = tagsAst?.Values
+            .Select((t, index) => {
+                if (t is AstNode.String str) return str.Value;
+
+                throw new TileDefinitionParseException(name, $"\"tags\" property contains a non-string value at index {index}");
+            }).ToArray() ?? [];
+
         
         return new TileDefinition(name, size, tp, bfTiles, specs, repeatL, tags);
     }
@@ -330,7 +352,7 @@ public class TileImporter
                     var tile = GetTile(tileObject);
                     definitions[^1] = [..definitions[^1], tile];
                 }
-                catch (ParseException e)
+                catch (Exception e)
                 {
                     throw new ParseException($"Failed to get tile definition from parsed string at line {l + 1}", e);
                 }
