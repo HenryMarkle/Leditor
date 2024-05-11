@@ -2204,6 +2204,11 @@ internal class TileEditorPage : EditorPage, IDisposable
                     120, 
                     ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EscapeClearsAll
                 );
+
+                if (_shortcuts.ActivateSearch.Check(ctrl, shift, alt)) {
+                    ImGui.SetItemDefaultFocus();
+                    ImGui.SetKeyboardFocusHere(-1);
+                }
                 
                 _isSearching = ImGui.IsItemActive();
                 
