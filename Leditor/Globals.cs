@@ -59,6 +59,7 @@ internal static class GLOBALS
     /// </summary>
     internal class ShaderService
     {
+        internal Shader TilePreviewFragment { get; set; }
         internal Shader Palette { get; set; }
         internal Shader GeoPalette { get; set; }
         internal Shader TilePreview { get; set; }

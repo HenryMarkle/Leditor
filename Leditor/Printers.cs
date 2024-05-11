@@ -1098,7 +1098,7 @@ internal static class Printers
         }
     }
 
-    internal static void DrawTileLayer(int currentLayer, int targetLayer, int scale, bool grid, TileDrawMode drawMode, byte opacity = 255, bool deepTileOpacity = true)
+    internal static void DrawTileLayer(int currentLayer, int targetLayer, int scale, bool grid, TileDrawMode drawMode, byte opacity = 255, bool deepTileOpacity = true, bool crop = false)
     {
         for (var y = 0; y < GLOBALS.Level.Height; y++)
         {
@@ -1174,13 +1174,20 @@ internal static class Printers
 
                         switch (drawMode) {
                             case TileDrawMode.Preview:
-                                DrawTilePreview(
+                                // DrawTilePreview(
+                                //     init, 
+                                //     color with { A = (byte)(shouldBeClearlyVisible ? 255 : opacity)}, 
+                                //     new Vector2(x, y),
+                                //     -Utils.GetTileHeadOrigin(init),
+                                //     scale
+                                // );
+
+                                DrawCroppedTilePreview(
                                     init, 
-                                    color with { A = (byte)(shouldBeClearlyVisible ? 255 : opacity)}, 
-                                    new Vector2(x, y),
-                                    -Utils.GetTileHeadOrigin(init),
-                                    scale
-                                );
+                                    color with { A = (byte)(shouldBeClearlyVisible ? 255 : opacity)},
+                                    new Vector2(x, y) * scale,
+                                    scale,
+                                    0);
                             break;
 
                             case TileDrawMode.Tinted:
@@ -1294,6 +1301,98 @@ internal static class Printers
                                     color
                                 );
                                 break;
+                        }
+                    }
+                }
+            
+                if (crop && targetLayer is not 0) {
+                    var prevTileCell = GLOBALS.Level.TileMatrix[y, x, targetLayer - 1];
+
+                    if (prevTileCell.Data is TileHead h && h.Definition is not null) {
+                        var data = h;
+
+                        TileDefinition? init = data.Definition;
+                        var undefined = init is null;
+
+                        var tileTexture = undefined
+                            ? GLOBALS.Textures.MissingTile 
+                            : data.Definition!.Texture;
+
+                        var color = Color.Purple;
+
+                        if (GLOBALS.TileDex?.TryGetTileColor(data.Definition?.Name ?? "", out var foundColor) ?? false)
+                        {
+                            color = foundColor;
+                        }
+
+                        if (undefined)
+                        {
+                            DrawTexturePro(
+                                tileTexture, 
+                                new Rectangle(0, 0, tileTexture.Width, tileTexture.Height),
+                                new(x*scale, y*scale, scale, scale),
+                                new Vector2(0, 0),
+                                0,
+                                Color.White with { A = opacity }
+                            );
+                        }
+                        else
+                        {
+                            var center = new Vector2(
+                            init!.Size.Item1 % 2 == 0 ? x * scale + scale : x * scale + scale/2f, 
+                            init!.Size.Item2 % 2 == 0 ? y * scale + scale : y * scale + scale/2f);
+
+                            var width = (scale / 20f)/2 * (init.Type == Data.Tiles.TileType.Box ? init.Size.Width : init.Size.Width + init.BufferTiles * 2) * 20;
+                            var height = (scale / 20f)/2 * ((init.Type == Data.Tiles.TileType.Box
+                                ? init.Size.Item2
+                                : (init.Size.Item2 + init.BufferTiles * 2)) * 20);
+
+                            var depth2 = Utils.SpecHasDepth(init.Specs);
+                            var depth3 = Utils.SpecHasDepth(init.Specs, 2);
+                            
+                            var shouldBeClearlyVisible = (targetLayer == currentLayer) || 
+                                (targetLayer + 1 == currentLayer && depth2) || 
+                                (targetLayer + 2 == currentLayer && depth3);
+
+                            switch (drawMode) {
+                                case TileDrawMode.Preview:
+                                    // DrawTilePreview(
+                                    //     init, 
+                                    //     color with { A = (byte)(shouldBeClearlyVisible ? 255 : opacity)}, 
+                                    //     new Vector2(x, y),
+                                    //     -Utils.GetTileHeadOrigin(init),
+                                    //     scale
+                                    // );
+
+                                    DrawCroppedTilePreview(
+                                        init, 
+                                        color with { A = (byte)(shouldBeClearlyVisible ? 255 : opacity)},
+                                        new Vector2(x, y) * scale,
+                                        scale,
+                                        1);
+                                break;
+
+                                case TileDrawMode.Tinted:
+                                    // TODO: Replace
+                                    DrawTileAsPropColored(
+                                        init,
+                                        center,
+                                        [
+                                            new(width, -height),
+                                            new(-width, -height),
+                                            new(-width, height),
+                                            new(width, height),
+                                            new(width, -height)
+                                        ],
+                                        new Color(color.R, color.G, color.B, (byte)(shouldBeClearlyVisible ? 255 : opacity)),
+                                        0
+                                    );
+                                break;
+
+                                case TileDrawMode.Palette:
+                                    
+                                break;
+                            }
                         }
                     }
                 }
@@ -1963,25 +2062,16 @@ internal static class Printers
                 DrawTileLayerWithPaletteIntoBuffer(texture, parameters.CurrentLayer, 2, parameters.Scale, parameters.Palette!.Value, (byte)(parameters.HighLayerContrast ? 70 : 255), true, true);
             } else {
                 BeginTextureMode(texture);
-                if (parameters.HighLayerContrast) {
-                    DrawTileLayer(
-                        parameters.CurrentLayer,
-                        2, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.TileDrawMode,
-                        70
-                    );
-                } else {
-                    DrawTileLayer(
-                        parameters.CurrentLayer,
-                        2, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.TileDrawMode,
-                        255
-                    );
-                }
+                DrawTileLayer(
+                    parameters.CurrentLayer,
+                    2, 
+                    parameters.Scale, 
+                    false, 
+                    parameters.TileDrawMode,
+                    (byte)(parameters.HighLayerContrast ? 70 : 255),
+                    true, 
+                    true
+                );
                 EndTextureMode();
             }
         }
@@ -2097,25 +2187,16 @@ internal static class Printers
                     // }
                 } else {    
                     BeginTextureMode(texture);
-                    if (parameters.HighLayerContrast) {
-                        DrawTileLayer(
-                            parameters.CurrentLayer,
-                            1, 
-                            parameters.Scale, 
-                            false, 
-                            parameters.TileDrawMode,
-                            70
-                        );
-                    } else {
-                        DrawTileLayer(
-                            parameters.CurrentLayer,
-                            1, 
-                            parameters.Scale, 
-                            false, 
-                            parameters.TileDrawMode,
-                            255
-                        );
-                    }
+                    DrawTileLayer(
+                        parameters.CurrentLayer,
+                        1, 
+                        parameters.Scale, 
+                        false, 
+                        parameters.TileDrawMode,
+                        (byte)(parameters.HighLayerContrast ? 70 : 255),
+                        true, 
+                        true
+                    );
                     EndTextureMode();
                 }
             }
@@ -2371,25 +2452,16 @@ internal static class Printers
                 ApplyPaletteIntoLevel(texture, 20, (byte)(!parameters.HighLayerContrast || parameters.CurrentLayer == 2 ? 255 : 120));
             } else {
                 BeginTextureMode(texture);
-                if (parameters.HighLayerContrast) {
-                    DrawTileLayer(
-                        parameters.CurrentLayer,
-                        2, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.TileDrawMode,
-                        70
-                    );
-                } else {
-                    DrawTileLayer(
-                        parameters.CurrentLayer,
-                        2, 
-                        parameters.Scale, 
-                        false, 
-                        parameters.TileDrawMode,
-                        255
-                    );
-                }
+                DrawTileLayer(
+                    parameters.CurrentLayer,
+                    2, 
+                    parameters.Scale, 
+                    false, 
+                    parameters.TileDrawMode,
+                    (byte)(parameters.HighLayerContrast ? 70 : 255),
+                    true, 
+                    true
+                );
                 EndTextureMode();
             }
         }
@@ -2449,25 +2521,16 @@ internal static class Printers
 
                 } else {    
                     BeginTextureMode(texture);
-                    if (parameters.HighLayerContrast) {
-                        DrawTileLayer(
-                            parameters.CurrentLayer,
-                            1, 
-                            parameters.Scale, 
-                            false, 
-                            parameters.TileDrawMode,
-                            70
-                        );
-                    } else {
-                        DrawTileLayer(
-                            parameters.CurrentLayer,
-                            1, 
-                            parameters.Scale, 
-                            false, 
-                            parameters.TileDrawMode,
-                            255
-                        );
-                    }
+                    DrawTileLayer(
+                        parameters.CurrentLayer,
+                        1, 
+                        parameters.Scale, 
+                        false, 
+                        parameters.TileDrawMode,
+                        (byte)(parameters.HighLayerContrast ? 70 : 255),
+                        true, 
+                        true
+                    );
                     EndTextureMode();
                 }
             }
@@ -2549,25 +2612,16 @@ internal static class Printers
                     
                 } else {
                     BeginTextureMode(texture);
-                    if (parameters.HighLayerContrast) {
-                        DrawTileLayer(
-                            parameters.CurrentLayer,
-                            0, 
-                            parameters.Scale, 
-                            false, 
-                            parameters.TileDrawMode,
-                            70
-                        );
-                    } else {
-                        DrawTileLayer(
-                            parameters.CurrentLayer,
-                            0, 
-                            parameters.Scale, 
-                            false, 
-                            parameters.TileDrawMode,
-                            255
-                        );
-                    }
+                    DrawTileLayer(
+                        parameters.CurrentLayer,
+                        0, 
+                        parameters.Scale, 
+                        false, 
+                        parameters.TileDrawMode,
+                        (byte)(parameters.HighLayerContrast ? 70 : 255),
+                        true, 
+                        true
+                    );
                     EndTextureMode();
                 }
             }
@@ -3155,43 +3209,6 @@ internal static class Printers
         Rlgl.SetTexture(0);
     }
     
-    internal static void DrawTilePreview(
-        ref InitTile init, 
-        ref Texture2D texture, 
-        ref Color color, 
-        (int x, int y) position,
-        int scale
-    )
-    {
-        var uniformLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "inputTexture");
-        var colorLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "highlightColor");
-        var heightStartLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "heightStart");
-        var heightLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "height");
-        var widthLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "width");
-
-        var startingTextureHeight = Utils.GetTilePreviewStartingHeight(init);
-        float calcStartingTextureHeight = (float)startingTextureHeight / (float)texture.Height;
-        float calcTextureHeight = (float)(init.Size.Item2 * GLOBALS.PreviewScale) / (float)texture.Height;
-        float calcTextureWidth = (float)(init.Size.Item1 * GLOBALS.PreviewScale) / (float)texture.Width;
-
-        BeginShaderMode(GLOBALS.Shaders.TilePreview);
-        SetShaderValueTexture(GLOBALS.Shaders.TilePreview, uniformLoc, texture);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, colorLoc, new System.Numerics.Vector4(color.R, color.G, color.B, color.A), ShaderUniformDataType.Vec4);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, heightStartLoc, calcStartingTextureHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, heightLoc, calcTextureHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, widthLoc, calcTextureWidth, ShaderUniformDataType.Float);
-
-        DrawTexturePro(
-            texture,
-            new(0, 0, texture.Width, texture.Height),
-            new(position.x * scale, position.y * scale, init.Size.Item1 * scale, init.Size.Item2 * scale),
-            Raymath.Vector2Scale(Utils.GetTileHeadOrigin(init), scale),
-            0,
-            Color.White
-        );
-        EndShaderMode();
-    }
-    
     #nullable enable
     
     internal static void DrawTilePreview(
@@ -3239,58 +3256,6 @@ internal static class Printers
     /// Draws tile preview texture
     /// </summary>
     /// <param name="init"></param>
-    /// <param name="texture"></param>
-    /// <param name="color"></param>
-    /// <param name="position"></param>
-    /// <param name="scale"></param>
-    internal static void DrawTilePreview(
-        in InitTile init, 
-        in Texture2D texture, 
-        in Color color, 
-        in Vector2 position,
-        in int scale
-    )
-    {
-        var uniformLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "inputTexture");
-        var colorLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "highlightColor");
-        var heightStartLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "heightStart");
-        var heightLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "height");
-        var widthLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "width");
-
-        var startingTextureHeight = Utils.GetTilePreviewStartingHeight(init);
-        var calcStartingTextureHeight = (float)startingTextureHeight / (float)texture.Height;
-        var calcTextureHeight = (float)(init.Size.Item2 * 16) / (float)texture.Height;
-        var calcTextureWidth = (float)(init.Size.Item1 * 16) / (float)texture.Width;
-
-        BeginShaderMode(GLOBALS.Shaders.TilePreview);
-        SetShaderValueTexture(GLOBALS.Shaders.TilePreview, uniformLoc, texture);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, colorLoc, new Vector4(color.R, color.G, color.B, color.A), ShaderUniformDataType.Vec4);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, heightStartLoc, calcStartingTextureHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, heightLoc, calcTextureHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, widthLoc, calcTextureWidth, ShaderUniformDataType.Float);
-
-        var quads = new PropQuads
-        {
-            TopLeft = position * scale,
-            TopRight = (position + new Vector2(init.Size.Item1, 0)) * scale,
-            BottomRight = (position + new Vector2(init.Size.Item1, init.Size.Item2)) * scale,
-            BottomLeft = (position + new Vector2(0, init.Size.Item2)) * scale
-        };
-        
-        DrawTextureQuad(
-            texture, 
-            quads
-        );
-        
-        EndShaderMode();
-    }
-    
-    #nullable enable
-    
-    /// <summary>
-    /// Draws tile preview texture
-    /// </summary>
-    /// <param name="init"></param>
     /// <param name="color"></param>
     /// <param name="position"></param>
     /// <param name="scale"></param>
@@ -3329,49 +3294,6 @@ internal static class Printers
             TopRight = (position + new Vector2(init.Size.Item1, 0)) * scale,
             BottomRight = (position + new Vector2(init.Size.Item1, init.Size.Item2)) * scale,
             BottomLeft = (position + new Vector2(0, init.Size.Item2)) * scale
-        };
-        
-        DrawTextureQuad(
-            texture, 
-            quads
-        );
-        
-        EndShaderMode();
-    }
-    
-    internal static void DrawTilePreview(
-        in InitTile init, 
-        in Texture2D texture, 
-        in Color color, 
-        in Vector2 position,
-        in Vector2 offset,
-        in int scale
-    )
-    {
-        var uniformLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "inputTexture");
-        var colorLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "highlightColor");
-        var heightStartLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "heightStart");
-        var heightLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "height");
-        var widthLoc = GetShaderLocation(GLOBALS.Shaders.TilePreview, "width");
-
-        var startingTextureHeight = Utils.GetTilePreviewStartingHeight(init);
-        var calcStartingTextureHeight = (float)startingTextureHeight / (float)texture.Height;
-        var calcTextureHeight = (float)(init.Size.Item2 * 16) / (float)texture.Height;
-        var calcTextureWidth = (float)(init.Size.Item1 * 16) / (float)texture.Width;
-
-        BeginShaderMode(GLOBALS.Shaders.TilePreview);
-        SetShaderValueTexture(GLOBALS.Shaders.TilePreview, uniformLoc, texture);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, colorLoc, new Vector4(color.R, color.G, color.B, color.A), ShaderUniformDataType.Vec4);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, heightStartLoc, calcStartingTextureHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, heightLoc, calcTextureHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.TilePreview, widthLoc, calcTextureWidth, ShaderUniformDataType.Float);
-
-        var quads = new PropQuads
-        {
-            TopLeft = (position + offset) * scale,
-            TopRight = (position + new Vector2(init.Size.Item1, 0) + offset) * scale,
-            BottomRight = (position + new Vector2(init.Size.Item1, init.Size.Item2) + offset) * scale,
-            BottomLeft = (position + new Vector2(0, init.Size.Item2) + offset) * scale
         };
         
         DrawTextureQuad(
@@ -3426,6 +3348,74 @@ internal static class Printers
         EndShaderMode();
     }
     
+    internal static void DrawCroppedTilePreview(
+        in TileDefinition tile,
+        Color color,
+        Vector2 center,
+        int scale,
+        int layer
+    )
+    {
+        if (layer is < 0 or > 2) return;
+        if (color is { A: 0 }) return;
+
+        var shader = GLOBALS.Shaders.TilePreviewFragment;
+
+        var specs = tile.Specs;
+        var (width, height) = tile.Size;
+
+        var headPos = Utils.GetTileHeadOrigin(tile) * scale;
+        var startingTextureHeight = Utils.GetTilePreviewStartingHeight(tile);
+
+        var begin = center - headPos;
+
+        var textureSize = new Vector2(tile.Texture.Width, tile.Texture.Height);
+        var originalScaleSize = new Vector2(16, 16) / textureSize;
+    
+        for (var y = 0; y < height; y++) {
+            for (var x = 0; x < width; x++) {
+                var spec = specs[y, x, layer];
+
+                if (spec is 0 or -1) continue;
+
+                var sx = x * scale;
+                var sy = y * scale;
+
+                var tx = (int)begin.X + sx;
+                var ty = (int)begin.Y + sy;
+
+                BeginShaderMode(shader);
+                var segmentTextureOrigin = new Vector2(x * 16, startingTextureHeight + y * 16) / textureSize;
+                var segmentTextureEnd = segmentTextureOrigin + originalScaleSize;
+
+                Rlgl.SetTexture(tile.Texture.Id);
+
+                Rlgl.Begin(0x0007);
+                Rlgl.Color4ub(color.R, color.G, color.B, color.A);
+
+                Rlgl.TexCoord2f(segmentTextureEnd.X, segmentTextureOrigin.Y);
+                Rlgl.Vertex2f(tx + scale, ty);
+                
+                Rlgl.TexCoord2f(segmentTextureOrigin.X, segmentTextureOrigin.Y);
+                Rlgl.Vertex2f(tx, ty);
+                
+                Rlgl.TexCoord2f(segmentTextureOrigin.X, segmentTextureEnd.Y);
+                Rlgl.Vertex2f(tx, ty + scale);
+                
+                Rlgl.TexCoord2f(segmentTextureEnd.X, segmentTextureEnd.Y);
+                Rlgl.Vertex2f(tx + scale, ty + scale);
+                
+                Rlgl.TexCoord2f(segmentTextureEnd.X, segmentTextureOrigin.Y);
+                Rlgl.Vertex2f(tx + scale, ty);
+                Rlgl.End();
+
+                Rlgl.SetTexture(0);
+
+                EndShaderMode();
+            }
+        }
+    }
+
     /// <summary>
     /// Draws a camera (used in the camera editor)
     /// </summary>

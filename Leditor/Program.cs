@@ -843,6 +843,28 @@ void main() {
     vec2 op = vec2(fragTexCoord.x, 1 - fragTexCoord.y);
     FragColor = texture(inputTexture, op);
 }");
+
+        GLOBALS.Shaders.TilePreviewFragment = LoadShaderFromMemory(null, @"#version 330
+
+in vec2 fragTexCoord;
+in vec4 fragColor;
+
+out vec4 FragColor;
+
+uniform sampler2D inputTexture;
+
+void main()
+{
+    vec4 color = texture(inputTexture, fragTexCoord);
+
+    if (color.r == 1.0 && color.g == 1.0 && color.b == 1.0) {
+        discard;
+    }
+
+    FragColor = fragColor;
+}
+");
+
         //
 
         SetTargetFPS(GLOBALS.Settings.Misc.FPS);
@@ -908,6 +930,7 @@ void main() {
 
         if (!failedIntegrity)
         {
+            Console.WriteLine("REACHED");
             LingoRuntime.MovieBasePath = GLOBALS.Paths.RendererDirectory + Path.DirectorySeparatorChar;
             LingoRuntime.CastPath = Path.Combine(LingoRuntime.MovieBasePath, "Cast");
         }
@@ -2107,6 +2130,7 @@ void main() {
         UnloadShader(GLOBALS.Shaders.TilePalette);
         UnloadShader(GLOBALS.Shaders.BoxTilePalette);
         UnloadShader(GLOBALS.Shaders.LightMapStretch);
+        UnloadShader(GLOBALS.Shaders.TilePreviewFragment);
         
         UnloadShader(GLOBALS.Shaders.VFlip);
         

@@ -8,6 +8,7 @@ using Drizzle.Logic;
 using Drizzle.Logic.Rendering;
 using Drizzle.Ported;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Leditor.Renderer;
 
@@ -445,6 +446,7 @@ class DrizzleRender : IDisposable
                     break;
                 
                 case MessageRenderFailed msgFail:
+                Console.WriteLine(msgFail);
                     // RainEd.Logger.Error("Error occured when rendering level:\n{ErrorMessage}", msgFail.Exception);
                     thread.Join();
                     state = RenderState.Errored;
