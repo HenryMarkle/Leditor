@@ -986,22 +986,22 @@ internal class TileEditorPage : EditorPage, IDisposable
 
                 var specOrigin = new Vector2(scale*x + 5, scale*y + 5);
 
+                if (spec3 is >= 0 and < 9 and not 8) Printers.DrawTileSpec(
+                    spec3,
+                    specOrigin + new Vector2(10, 10),
+                    scale,
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 with { A = 255 }
+                );
+
+                if (spec2 is >= 0 and < 9 and not 8) Printers.DrawTileSpec(
+                    spec2,
+                    specOrigin + new Vector2(5, 5),
+                    scale,
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 with { A = 255 }
+                );
+
                 if (spec is >= 0 and < 9 and not 8)
                 {
-                    if (spec3 is >= 0 and < 9 and not 8) Printers.DrawTileSpec(
-                        spec3,
-                        specOrigin + new Vector2(10, 10),
-                        scale,
-                        GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 with { A = 255 }
-                    );
-                    
-                    if (spec2 is >= 0 and < 9 and not 8) Printers.DrawTileSpec(
-                        spec2,
-                        specOrigin + new Vector2(5, 5),
-                        scale,
-                        GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 with { A = 255 }
-                    );
-                    
                     Printers.DrawTileSpec(
                         spec,
                         specOrigin,

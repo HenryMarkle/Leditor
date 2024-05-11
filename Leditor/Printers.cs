@@ -6184,24 +6184,24 @@ internal static class Printers
 
                 var scaledOrigin = new Vector2(origin.X + x, origin.Y + y) * scale;
 
+                if (spec3 is >= 0 and < 9 and not 8) DrawTileSpec(
+                    spec3,
+                    scaledOrigin + new Vector2(4, 4),
+                    scale - 8,
+                    Color.Red,
+                    spec3 is 0 ? 8 : 1
+                );
+                
+                if (spec2 is >= 0 and < 9 and not 8) DrawTileSpec(
+                    spec2,
+                    scaledOrigin + new Vector2(2, 2),
+                    scale - 4,
+                    Color.Green,
+                    spec2 is 0 ? 4 : 1
+                );
+                
                 if (spec is >= 0 and < 9 and not 8)
                 {
-                    if (spec3 is >= 0 and < 9 and not 8) DrawTileSpec(
-                        spec3,
-                        scaledOrigin + new Vector2(4, 4),
-                        scale - 8,
-                        Color.Red,
-                        spec3 is 0 ? 8 : 1
-                    );
-                    
-                    if (spec2 is >= 0 and < 9 and not 8) DrawTileSpec(
-                        spec2,
-                        scaledOrigin + new Vector2(2, 2),
-                        scale - 4,
-                        Color.Green,
-                        spec2 is 0 ? 4 : 1
-                    );
-                    
                     DrawTileSpec(
                         spec,
                         scaledOrigin,
