@@ -534,6 +534,7 @@ internal class SettingsPage : EditorPage
                         var assignToggleLayer2Tiles = ImGui.Button($"Show/Hide Layer 2 Tiles: {GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer2Tiles}");
                         var assignToggleLayer3Tiles = ImGui.Button($"Show/Hide Layer 3 Tiles: {GLOBALS.Settings.Shortcuts.TileEditor.ToggleLayer3Tiles}");
                         var assignMoveToPreviousCategory = ImGui.Button($"To Previous Category: {GLOBALS.Settings.Shortcuts.TileEditor.MoveToPreviousCategory}");
+                        var assignSetMaterialDefault = ImGui.Button($"Set Material As Default: {GLOBALS.Settings.Shortcuts.TileEditor.SetMaterialDefault}");
 
                         if (assignCycleLayers) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.CycleLayers;
                         if (assignPickupItem) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.PickupItem;
@@ -554,6 +555,7 @@ internal class SettingsPage : EditorPage
                         if (assignMoveToNextCategory) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.MoveToNextCategory;
                         if (assignMoveToPreviousCategory) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.MoveToPreviousCategory;
                         if (assignTogglePathsView) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.TogglePathsView;
+                        if (assignSetMaterialDefault) _shortcutToAssign = GLOBALS.Settings.Shortcuts.TileEditor.SetMaterialDefault;
                     }
                         break;
 

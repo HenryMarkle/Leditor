@@ -1821,6 +1821,10 @@ internal class TileEditorPage : EditorPage, IDisposable
 
         if (_shortcuts.HoveredItemInfo.Check(ctrl, shift, alt)) GLOBALS.Settings.TileEditor.HoveredTileInfo = !GLOBALS.Settings.TileEditor.HoveredTileInfo;
         
+        if (_shortcuts.SetMaterialDefault.Check(ctrl, shift, alt) && !_materialTileSwitch) {
+            GLOBALS.Level.DefaultMaterial = currentMaterialInit.Item1;
+        }
+
         if (_shortcuts.ToggleLayer1Tiles.Check(ctrl, shift, alt))
         {
             _showLayer1Tiles = !_showLayer1Tiles;

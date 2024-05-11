@@ -160,6 +160,8 @@ public record TileShortcuts : IEditorShortcuts
     public KeyboardShortcut TileMaterialSwitch { get; set; } = new(KeyboardKey.M);
     public KeyboardShortcut HoveredItemInfo { get; set; } = new(KeyboardKey.P);
 
+    public KeyboardShortcut SetMaterialDefault { get; set; } = new(KeyboardKey.E, shift:false, ctrl:false, alt:false);
+
     public KeyboardShortcut Undo { get; set; } = new(KeyboardKey.Z, ctrl:true, shift:false);
     public KeyboardShortcut Redo { get; set; } = new(KeyboardKey.Z, ctrl:true, shift: true);
 
