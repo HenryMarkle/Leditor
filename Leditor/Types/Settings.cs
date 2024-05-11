@@ -179,7 +179,9 @@ public class GeneralSettings(
     bool indexHint = true,
     bool highLayerContrast = true,
     bool visiblePrecedingUnfocusedLayers = true,
-    bool cropTilePreviews = false
+    bool cropTilePreviews = false,
+    int autoSaveSeconds = 120,
+    bool autoSave = false
     )
 {
     public bool DeveloperMode { get; set; } = developerMode;
@@ -198,6 +200,8 @@ public class GeneralSettings(
     public bool HighLayerContrast { get; set; } = highLayerContrast;
     public bool VisiblePrecedingUnfocusedLayers { get; set; } = visiblePrecedingUnfocusedLayers;
     public bool CropTilePreviews { get; set; } = cropTilePreviews;
+    public bool AutoSave { get; set; } = autoSave;
+    public int AutoSaveSeconds { get; set; } = autoSaveSeconds < 30 ? 30 : autoSaveSeconds;
 }
 
 public class Settings

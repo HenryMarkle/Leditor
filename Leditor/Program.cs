@@ -16,6 +16,7 @@ using Drizzle.Lingo.Runtime;
 using Drizzle.Logic;
 using Leditor.Pages;
 using Leditor.Renderer;
+using System.Diagnostics;
 
 #nullable enable
 
@@ -1008,7 +1009,7 @@ void main()
                 logger.Error($"Failed to load custom fonts: {e}");
             }
         }
-        
+
         // Tile & Prop Textures
 
         Task.WaitAll([loadPropImagesTask, loadLightImagesTask]);
@@ -1058,6 +1059,22 @@ void main()
         var paletteLoadProgress = 0;
 
         var fatalException = false;
+
+        // Timer
+
+        using var autoSaveTimer = new System.Timers.Timer(GLOBALS.Settings.GeneralSettings.AutoSaveSeconds * 1000);
+        
+        autoSaveTimer.Elapsed += (sender, args) => {
+            _isGuiLocked = true;
+            _globalSave = true;
+
+            Console.WriteLine("Auto saving..");
+
+            logger.Debug("Auto saving..");
+        };
+
+        autoSaveTimer.AutoReset = true;
+        autoSaveTimer.Enabled = GLOBALS.Settings.GeneralSettings.AutoSave;
         
         while (!WindowShouldClose())
         {
@@ -1458,6 +1475,7 @@ void main()
                     loadLightTexturesList.Clear();
 
                     isLoadingTexturesDone = true;
+                    // Enabled = true;
                 }
                 else if (!allCacheTasks.IsCompleted)
                 {

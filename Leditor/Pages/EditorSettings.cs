@@ -295,6 +295,25 @@ internal class SettingsPage : EditorPage
                         if (cacheRendererRuntime != GLOBALS.Settings.GeneralSettings.CacheRendererRuntime)
                              GLOBALS.Settings.GeneralSettings.CacheRendererRuntime = cacheRendererRuntime;
 
+                        var autoSave = GLOBALS.Settings.GeneralSettings.AutoSave;
+                        if (ImGui.Checkbox("Auto-save", ref autoSave)) {
+                            GLOBALS.Settings.GeneralSettings.AutoSave = autoSave;
+                        }
+
+                        if (ImGui.IsItemHovered()) {
+                            ImGui.BeginTooltip();
+                            ImGui.Text("Warning: experimental feature");
+                            ImGui.EndTooltip();
+                        }
+
+                        var autoSaveSeconds = GLOBALS.Settings.GeneralSettings.AutoSaveSeconds;
+                        ImGui.SetNextItemWidth(300);
+                        if (ImGui.InputInt("Auto-save in seconds", ref autoSaveSeconds)) {
+                            Utils.Restrict(ref autoSaveSeconds, 30);
+
+                            GLOBALS.Settings.GeneralSettings.AutoSaveSeconds = autoSaveSeconds;
+                        }
+
                         if (ImGui.IsItemHovered())
                         {
                             ImGui.BeginTooltip();
