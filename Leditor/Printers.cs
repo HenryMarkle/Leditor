@@ -1174,20 +1174,19 @@ internal static class Printers
 
                         switch (drawMode) {
                             case TileDrawMode.Preview:
-                                // DrawTilePreview(
-                                //     init, 
-                                //     color with { A = (byte)(shouldBeClearlyVisible ? 255 : opacity)}, 
-                                //     new Vector2(x, y),
-                                //     -Utils.GetTileHeadOrigin(init),
-                                //     scale
-                                // );
-
-                                DrawCroppedTilePreview(
+                                if (crop) DrawCroppedTilePreview(
                                     init, 
                                     color with { A = (byte)(shouldBeClearlyVisible ? 255 : opacity)},
                                     new Vector2(x, y) * scale,
                                     scale,
                                     0);
+                                else DrawTilePreview(
+                                    init, 
+                                    color with { A = (byte)(shouldBeClearlyVisible ? 255 : opacity)}, 
+                                    new Vector2(x, y),
+                                    -Utils.GetTileHeadOrigin(init),
+                                    scale
+                                );
                             break;
 
                             case TileDrawMode.Tinted:
@@ -1977,6 +1976,7 @@ internal static class Printers
         internal Texture2D? Palette { get; init; } = null;
         internal bool HighLayerContrast { get; init; } = true;
         internal bool VisiblePreceedingUnfocusedLayers { get; init; } = true;
+        internal bool CropTilePrevious { get; init; } = false;
     }
     
     internal static void DrawLevelIntoBuffer(in RenderTexture2D texture, DrawLevelParams parameters)
@@ -2460,7 +2460,7 @@ internal static class Printers
                     parameters.TileDrawMode,
                     (byte)(parameters.HighLayerContrast ? 70 : 255),
                     true, 
-                    true
+                    parameters.CropTilePrevious
                 );
                 EndTextureMode();
             }
@@ -2529,7 +2529,7 @@ internal static class Printers
                         parameters.TileDrawMode,
                         (byte)(parameters.HighLayerContrast ? 70 : 255),
                         true, 
-                        true
+                        parameters.CropTilePrevious
                     );
                     EndTextureMode();
                 }
@@ -2620,7 +2620,7 @@ internal static class Printers
                         parameters.TileDrawMode,
                         (byte)(parameters.HighLayerContrast ? 70 : 255),
                         true, 
-                        true
+                        parameters.CropTilePrevious
                     );
                     EndTextureMode();
                 }
@@ -3376,7 +3376,7 @@ internal static class Printers
             for (var x = 0; x < width; x++) {
                 var spec = specs[y, x, layer];
 
-                if (spec is 0 or -1) continue;
+                if (spec is -1) continue;
 
                 var sx = x * scale;
                 var sy = y * scale;

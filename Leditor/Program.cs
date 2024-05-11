@@ -930,7 +930,6 @@ void main()
 
         if (!failedIntegrity)
         {
-            Console.WriteLine("REACHED");
             LingoRuntime.MovieBasePath = GLOBALS.Paths.RendererDirectory + Path.DirectorySeparatorChar;
             LingoRuntime.CastPath = Path.Combine(LingoRuntime.MovieBasePath, "Cast");
         }

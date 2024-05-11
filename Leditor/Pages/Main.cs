@@ -755,7 +755,8 @@ internal class MainPage : EditorPage, IContextListener
                         PropsLayer2 = _showProps,
                         PropsLayer3 = _showProps,
                         HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
-                        Palette = GLOBALS.SelectedPalette
+                        Palette = GLOBALS.SelectedPalette,
+                        CropTilePrevious = GLOBALS.Settings.GeneralSettings.CropTilePreviews
                     });
                     _shouldRedrawLevel = false;
                 }
@@ -1081,6 +1082,26 @@ internal class MainPage : EditorPage, IContextListener
                         _shouldRedrawLevel = true;
                         GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers = visiblePreceeding;
                     }
+
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Preview) ImGui.BeginDisabled();
+
+                    var cropTilePreviews = GLOBALS.Settings.GeneralSettings.CropTilePreviews;
+
+                    if (ImGui.Checkbox("Crop Tile Previews", ref cropTilePreviews)) {
+                        GLOBALS.Settings.GeneralSettings.CropTilePreviews = cropTilePreviews;
+                        _shouldRedrawLevel = true;
+                    }
+
+                    if (ImGui.IsItemHovered()) {
+                        ImGui.BeginTooltip();
+
+                        ImGui.Text("Tiles that take up more than one layer will only render the parts that intersect with their layers");
+
+                        ImGui.EndTooltip();
+                    }
+
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Preview) ImGui.EndDisabled();
+
 
                     var tileVisual = (int)GLOBALS.Settings.GeneralSettings.DrawTileMode;
                     var propVisual = (int)GLOBALS.Settings.GeneralSettings.DrawPropMode;
