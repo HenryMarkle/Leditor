@@ -7,10 +7,12 @@ No guarantees. No promises.
 - Add multi-level support
 - Add a tool to rebind tile bodies after moving the level
 - Add a new light/shadow previewer in the light editor
+- Add a search feature for props
+- Add rect-shape auto-tiler
 
 ## Some Day
 
-- Add material previewer
+- ~~Add material previewer~~
 - Implement lazy tile-loading
 - Add a new view to preview tiles from a selectable camera prespective
 - Write a new renderer
