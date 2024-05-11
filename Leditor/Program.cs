@@ -1062,19 +1062,21 @@ void main()
 
         // Timer
 
-        using var autoSaveTimer = new System.Timers.Timer(GLOBALS.Settings.GeneralSettings.AutoSaveSeconds * 1000);
+        GLOBALS.AutoSaveTimer = new System.Timers.Timer(GLOBALS.Settings.GeneralSettings.AutoSaveSeconds * 1000);
         
-        autoSaveTimer.Elapsed += (sender, args) => {
-            _isGuiLocked = true;
-            _globalSave = true;
+        GLOBALS.AutoSaveTimer.Elapsed += (sender, args) => {
+            // Only save if the level was saved before
+            if (!File.Exists(Path.Combine(GLOBALS.ProjectPath, GLOBALS.Level.ProjectName+".txt")) || !(GLOBALS.Page is 1 or 2 or 3 or 4 or 5 or 6 or 7 or 8)) return;
+
+            _isGuiLocked = _globalSave = true;
 
             Console.WriteLine("Auto saving..");
 
             logger.Debug("Auto saving..");
         };
 
-        autoSaveTimer.AutoReset = true;
-        autoSaveTimer.Enabled = GLOBALS.Settings.GeneralSettings.AutoSave;
+        GLOBALS.AutoSaveTimer.AutoReset = true;
+        GLOBALS.AutoSaveTimer.Enabled = GLOBALS.Settings.GeneralSettings.AutoSave;
         
         while (!WindowShouldClose())
         {
@@ -2180,6 +2182,8 @@ void main()
         settingsPage.Dispose();
 
         paletteLoader?.Dispose();
+
+        GLOBALS.AutoSaveTimer.Dispose();
 
         //
         rlImGui.Shutdown();
