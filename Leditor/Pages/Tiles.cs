@@ -317,22 +317,22 @@ internal class TileEditorPage : EditorPage, IDisposable
     {
         _tileCategoryIndex++;
         
-        if (GLOBALS.Settings.GeneralSettings.CycleMenus) _tileCategoryIndex %= GLOBALS.TileCategories.Length;
-        else Utils.Restrict(ref _tileCategoryIndex, 0, GLOBALS.TileCategories.Length-1);
+        if (GLOBALS.Settings.GeneralSettings.CycleMenus) _tileCategoryIndex %= GLOBALS.TileDex!.OrderedCategoryNames.Length;
+        else Utils.Restrict(ref _tileCategoryIndex, 0, GLOBALS.TileDex!.OrderedCategoryNames.Length-1);
         
         if (GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex) _tileIndex = 0;
-        else Utils.Restrict(ref _tileIndex, 0, GLOBALS.Tiles[_tileCategoryIndex].Length-1);
+        else Utils.Restrict(ref _tileIndex, 0, _currentCategoryTiles.Length-1);
     }
 
     private void ToPreviousCategory()
     {
         _tileCategoryIndex--;
 
-        if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _tileCategoryIndex, 0, GLOBALS.Tiles.Length - 1);
-        else Utils.Restrict(ref _tileCategoryIndex, 0, GLOBALS.Tiles.Length - 1);
+        if (GLOBALS.Settings.GeneralSettings.CycleMenus) Utils.Cycle(ref _tileCategoryIndex, 0, GLOBALS.TileDex!.OrderedCategoryNames.Length - 1);
+        else Utils.Restrict(ref _tileCategoryIndex, 0, GLOBALS.TileDex!.OrderedCategoryNames.Length - 1);
         
         if (GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex) _tileIndex = 0;
-        else Utils.Restrict(ref _tileIndex, 0, GLOBALS.Tiles[_tileCategoryIndex].Length-1);
+        else Utils.Restrict(ref _tileIndex, 0, _currentCategoryTiles.Length-1);
     }
 
     private void ToNextMaterialCategory()

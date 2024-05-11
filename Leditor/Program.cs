@@ -534,7 +534,7 @@ class Program
 
             try
             {
-                (GLOBALS.TileCategories, GLOBALS.Tiles) = LoadTileInitFromRenderer();
+                // (GLOBALS.TileCategories, GLOBALS.Tiles) = LoadTileInitFromRenderer();
                 _tileLoader = new([
                     GLOBALS.Paths.TilesAssetsDirectory, 
                     ..Directory.GetDirectories(GLOBALS.Paths.TilePackagesDirectory)
