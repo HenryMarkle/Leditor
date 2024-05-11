@@ -1699,28 +1699,36 @@ internal class ExperimentalGeometryPage : EditorPage
 
                 var blockSelected = ImGui.ImageButton(
                     "Blocks", 
-                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[4].Id : GLOBALS.Textures.GeoInterface[0].Id), 
+                    new IntPtr(_geoMenuCategory == 0 
+                        ? GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[4].Id : GLOBALS.Textures.GeoInterface[0].Id
+                        : GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[0].Id : GLOBALS.Textures.GeoInterface[4].Id), 
                     new Vector2(30, 30));
                 
                 ImGui.SameLine();
 
                 var polesSelected = ImGui.ImageButton(
                     "Poles", 
-                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[5].Id : GLOBALS.Textures.GeoInterface[1].Id), 
+                    new IntPtr(_geoMenuCategory == 1 
+                        ? GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[5].Id : GLOBALS.Textures.GeoInterface[1].Id
+                        : GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[1].Id : GLOBALS.Textures.GeoInterface[5].Id), 
                     new Vector2(30, 30));
                 
                 ImGui.SameLine();
 
                 var stuffSelected = ImGui.ImageButton(
                     "Stuff", 
-                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[6].Id : GLOBALS.Textures.GeoInterface[2].Id), 
+                    new IntPtr(_geoMenuCategory == 2 
+                        ? GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[6].Id : GLOBALS.Textures.GeoInterface[2].Id
+                        : GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[2].Id : GLOBALS.Textures.GeoInterface[6].Id), 
                     new Vector2(30, 30));
                 
                 ImGui.SameLine();
 
                 var pathsSelected = ImGui.ImageButton(
                     "Paths", 
-                    new IntPtr(GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[7].Id : GLOBALS.Textures.GeoInterface[3].Id), 
+                    new IntPtr(_geoMenuCategory == 3
+                        ? GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[7].Id : GLOBALS.Textures.GeoInterface[3].Id
+                        : GLOBALS.Settings.GeneralSettings.DarkTheme ? GLOBALS.Textures.GeoInterface[3].Id : GLOBALS.Textures.GeoInterface[7].Id), 
                     new Vector2(30, 30));
 
                 if (blockSelected) _geoMenuCategory = 0;
