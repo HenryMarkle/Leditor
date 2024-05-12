@@ -557,10 +557,8 @@ class Program
 
                 foreach (var category in materialsInit.Item2) {
                     foreach (var (material, color) in category) {
-                        if (GLOBALS.MaterialColors.ContainsKey(material)) {
+                        if (!GLOBALS.MaterialColors.TryAdd(material, color)) {
                             throw new Exception($"Duplicate material definition \"{material}\"");
-                        } else {
-                            GLOBALS.MaterialColors.Add(material, color);
                         }
                     }
                 }

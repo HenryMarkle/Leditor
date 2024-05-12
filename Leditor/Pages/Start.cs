@@ -21,11 +21,13 @@ internal class StartPage : EditorPage
         _homeTexture.Dispose();
         _folderTexture.Dispose();
         _fileTexture.Dispose();
+        _refreshTexture.Dispose();
 
         _upBlackTexture.Dispose();
         _homeBlackTexture.Dispose();
         _folderBlackTexture.Dispose();
         _fileBlackTexture.Dispose();
+        _refreshBlackTexture.Dispose();
     }
 
     private bool _loadFailed;
@@ -119,11 +121,14 @@ internal class StartPage : EditorPage
     private RL.Managed.Texture2D _homeTexture;
     private RL.Managed.Texture2D _folderTexture;
     private RL.Managed.Texture2D _fileTexture;
+    private RL.Managed.Texture2D _refreshTexture;
     
     private RL.Managed.Texture2D _upBlackTexture;
     private RL.Managed.Texture2D _homeBlackTexture;
     private RL.Managed.Texture2D _folderBlackTexture;
     private RL.Managed.Texture2D _fileBlackTexture;
+    private RL.Managed.Texture2D _refreshBlackTexture;
+
 
     private bool _shouldRedrawLevelReview = true;
 
@@ -229,13 +234,13 @@ internal class StartPage : EditorPage
         _homeTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "home icon.png"));
         _folderTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "folder icon.png"));
         _fileTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "file icon.png"));
+        _refreshTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "rotate icon.png"));
     
         _upBlackTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "up icon black.png"));
         _homeBlackTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "home icon black.png"));
         _folderBlackTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "folder icon black.png"));
         _fileBlackTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "file icon black.png"));
-    
-
+        _refreshBlackTexture = new(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "rotate icon black.png"));
     }
 
     ~StartPage() {
@@ -502,6 +507,9 @@ internal class StartPage : EditorPage
                     var homeClicked = rlImGui.ImageButtonSize("##Home", GLOBALS.Settings.GeneralSettings.DarkTheme ? _homeTexture : _homeBlackTexture, new(20, 20));
                     ImGui.SameLine();
                     
+                    var refreshClicked = rlImGui.ImageButtonSize("##Refresh", GLOBALS.Settings.GeneralSettings.DarkTheme ? _refreshTexture : _refreshBlackTexture, new(20, 20));
+                    ImGui.SameLine();
+                    
                     ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
 
                     var pathUpdated = ImGui.InputText("##FilePathBuffer", ref _currentDir, 260, ImGuiInputTextFlags.AutoSelectAll);
@@ -569,6 +577,10 @@ internal class StartPage : EditorPage
 
                     if (homeClicked) {
                         NavigateToDir(GLOBALS.Paths.ProjectsDirectory);
+                    }
+
+                    if (refreshClicked) {
+                        NavigateToDir(_currentDir);
                     }
 
                     if (upALevelClicked) {

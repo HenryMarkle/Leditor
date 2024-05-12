@@ -2476,7 +2476,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                     drawList.AddRectFilled(
                                         p_min: cursor,
                                         p_max: cursor + new Vector2(10f, textHeight),
-                                        ImGui.ColorConvertFloat4ToU32(new Vector4(material.Item2.R / 255f, material.Item2.G / 255f, material.Item2.B / 255, 1f))
+                                        ImGui.ColorConvertFloat4ToU32(new Vector4(material.Item2.R / 255f, material.Item2.G / 255f, material.Item2.B / 255f, 1f))
                                     );
                                     //
                                     
