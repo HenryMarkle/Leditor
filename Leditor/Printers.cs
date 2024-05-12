@@ -3434,11 +3434,13 @@ internal static class Printers
         
         var mouse = GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
 
-        GLOBALS.CamLock = CheckCollisionPointRec(mouse, new(origin.X - 200, origin.Y - 200, GLOBALS.EditorCameraWidth + 200, GLOBALS.EditorCameraHeight + 200)) 
-            ? index 
-            : 0;
+        // GLOBALS.CamLock = CheckCollisionPointRec(mouse, new(origin.X - 200, origin.Y - 200, GLOBALS.EditorCameraWidth + 200, GLOBALS.EditorCameraHeight + 200)) 
+        //     ? index 
+        //     : 0;
+
         
-        var hover = CheckCollisionPointCircle(mouse, new(origin.X + GLOBALS.EditorCameraWidth / 2f, origin.Y + GLOBALS.EditorCameraHeight / 2f), 50) && quadLock == 0 && GLOBALS.CamLock == index;
+        
+        var hover = CheckCollisionPointCircle(mouse, new(origin.X + GLOBALS.EditorCameraWidth / 2f, origin.Y + GLOBALS.EditorCameraHeight / 2f), 50) && quadLock == 0;
         var biggerHover = CheckCollisionPointRec(mouse, new(origin.X, origin.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight));
 
         Vector2 pointOrigin1 = new(origin.X, origin.Y),
@@ -3446,6 +3448,34 @@ internal static class Printers
             pointOrigin3 = new(origin.X + GLOBALS.EditorCameraWidth, origin.Y + GLOBALS.EditorCameraHeight),
             pointOrigin4 = new(origin.X, origin.Y + GLOBALS.EditorCameraHeight);
 
+        var topLeftV = new Vector2(pointOrigin1.X + (float)(quad.TopLeft.radius*100 * Math.Cos(float.DegreesToRadians(quad.TopLeft.angle - 90))), pointOrigin1.Y + (float)(quad.TopLeft.radius*100 * Math.Sin(float.DegreesToRadians(quad.TopLeft.angle - 90))));
+        var topRightV = new Vector2(pointOrigin2.X + (float)(quad.TopRight.radius*100 * Math.Cos(float.DegreesToRadians(quad.TopRight.angle - 90))), pointOrigin2.Y + (float)(quad.TopRight.radius*100 * Math.Sin(float.DegreesToRadians(quad.TopRight.angle - 90))));
+        var bottomRightV = new Vector2(pointOrigin3.X + (float)(quad.BottomRight.radius*100 * Math.Cos(float.DegreesToRadians(quad.BottomRight.angle - 90))), pointOrigin3.Y + (float)(quad.BottomRight.radius*100 * Math.Sin(float.DegreesToRadians(quad.BottomRight.angle - 90))));
+        var bottomLeftV = new Vector2(pointOrigin4.X +(float)(quad.BottomLeft.radius*100 * Math.Cos(float.DegreesToRadians(quad.BottomLeft.angle - 90))), pointOrigin4.Y + (float)(quad.BottomLeft.radius*100 * Math.Sin(float.DegreesToRadians(quad.BottomLeft.angle - 90))));
+        
+        var topLeftHovered = CheckCollisionPointCircle(mouse, topLeftV, 10);
+        var topRightHovered = CheckCollisionPointCircle(mouse, topRightV, 10);
+        var bottomRightHovered = CheckCollisionPointCircle(mouse, bottomRightV, 10);
+        var bottomLeftHovered = CheckCollisionPointCircle(mouse, bottomLeftV, 10);
+
+        var anyCornerHovered = topLeftHovered || topRightHovered || bottomRightHovered || bottomLeftHovered;
+
+        // if (GLOBALS.CamLock == 0) {
+        //     if (anyCornerHovered || CheckCollisionPointRec(mouse, new(origin.X - 100, origin.Y - 100, GLOBALS.EditorCameraWidth + 200, GLOBALS.EditorCameraHeight + 200))) {
+        //         GLOBALS.CamLock = index;
+        //     }
+        // } else if (GLOBALS.CamLock == index) {
+        //     if (quadLock == 0 && !CheckCollisionPointRec(mouse, new(origin.X - 100, origin.Y - 100, GLOBALS.EditorCameraWidth + 200, GLOBALS.EditorCameraHeight + 200))) {
+        //         GLOBALS.CamLock = 0;
+        //     }
+        // }
+
+        if (((anyCornerHovered || quadLock != 0) && GLOBALS.CamLock == -1) || hover) {
+            GLOBALS.CamLock = index;
+        } else if (GLOBALS.CamLock == index && quadLock == 0 && !hover) {
+            GLOBALS.CamLock = -1;
+        }
+        
         if (biggerHover)
         {
             DrawRectangleV(
@@ -3520,15 +3550,11 @@ internal static class Printers
             Color.Red
         );
 
-        var quarter1 = new Rectangle(origin.X - 150, origin.Y - 150, GLOBALS.EditorCameraWidth / 2 + 150, GLOBALS.EditorCameraHeight / 2 + 150);
-        var quarter2 = new Rectangle(GLOBALS.EditorCameraWidth / 2 + origin.X, origin.Y - 150, GLOBALS.EditorCameraWidth / 2 + 150, GLOBALS.EditorCameraHeight / 2 + 150);
-        var quarter3 = new Rectangle(GLOBALS.EditorCameraWidth / 2 + origin.X, origin.Y + GLOBALS.EditorCameraHeight / 2, GLOBALS.EditorCameraWidth / 2 + 150, GLOBALS.EditorCameraHeight / 2 + 150);
-        var quarter4 = new Rectangle(origin.X - 150 , GLOBALS.EditorCameraHeight / 2 + origin.Y, GLOBALS.EditorCameraWidth / 2 + 150, GLOBALS.EditorCameraHeight / 2 + 150);
+        // var quarter1 = new Rectangle(origin.X - 150, origin.Y - 150, GLOBALS.EditorCameraWidth / 2 + 150, GLOBALS.EditorCameraHeight / 2 + 150);
+        // var quarter2 = new Rectangle(GLOBALS.EditorCameraWidth / 2 + origin.X, origin.Y - 150, GLOBALS.EditorCameraWidth / 2 + 150, GLOBALS.EditorCameraHeight / 2 + 150);
+        // var quarter3 = new Rectangle(GLOBALS.EditorCameraWidth / 2 + origin.X, origin.Y + GLOBALS.EditorCameraHeight / 2, GLOBALS.EditorCameraWidth / 2 + 150, GLOBALS.EditorCameraHeight / 2 + 150);
+        // var quarter4 = new Rectangle(origin.X - 150 , GLOBALS.EditorCameraHeight / 2 + origin.Y, GLOBALS.EditorCameraWidth / 2 + 150, GLOBALS.EditorCameraHeight / 2 + 150);
         
-        var topLeftV = new Vector2(pointOrigin1.X + (float)(quad.TopLeft.radius*100 * Math.Cos(float.DegreesToRadians(quad.TopLeft.angle - 90))), pointOrigin1.Y + (float)(quad.TopLeft.radius*100 * Math.Sin(float.DegreesToRadians(quad.TopLeft.angle - 90))));
-        var topRightV = new Vector2(pointOrigin2.X + (float)(quad.TopRight.radius*100 * Math.Cos(float.DegreesToRadians(quad.TopRight.angle - 90))), pointOrigin2.Y + (float)(quad.TopRight.radius*100 * Math.Sin(float.DegreesToRadians(quad.TopRight.angle - 90))));
-        var bottomRightV = new Vector2(pointOrigin3.X + (float)(quad.BottomRight.radius*100 * Math.Cos(float.DegreesToRadians(quad.BottomRight.angle - 90))), pointOrigin3.Y + (float)(quad.BottomRight.radius*100 * Math.Sin(float.DegreesToRadians(quad.BottomRight.angle - 90))));
-        var bottomLeftV = new Vector2(pointOrigin4.X +(float)(quad.BottomLeft.radius*100 * Math.Cos(float.DegreesToRadians(quad.BottomLeft.angle - 90))), pointOrigin4.Y + (float)(quad.BottomLeft.radius*100 * Math.Sin(float.DegreesToRadians(quad.BottomLeft.angle - 90))));
         
         DrawLineV(topLeftV, topRightV, Color.Green);
         DrawLineV(topRightV, bottomRightV, Color.Green);
@@ -3547,16 +3573,12 @@ internal static class Printers
         {
             if (GLOBALS.CamQuadLocks[index] == 0)
             {
-                if (CheckCollisionPointCircle(mouse, topLeftV, 10))
-                {
-                    quadLock = 1;
-                    GLOBALS.CamLock = index;
-                }
+                if (CheckCollisionPointCircle(mouse, topLeftV, 10)) quadLock = 1;
                 if (CheckCollisionPointCircle(mouse, topRightV, 10)) quadLock = 2;
                 if (CheckCollisionPointCircle(mouse, bottomRightV, 10)) quadLock = 3;
                 if (CheckCollisionPointCircle(mouse, bottomLeftV, 10)) quadLock = 4;
             }
-            else 
+            else if (GLOBALS.CamLock == index)
             {
                 switch (quadLock)
                 {
