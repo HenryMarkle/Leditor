@@ -1913,6 +1913,22 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     }
                 }
                 
+                if (_shortcuts.RotateClockwise.Check(ctrl, shift, alt, true)) {
+                    _placementRotation += 1;
+                }
+
+                if (_shortcuts.RotateCounterClockwise.Check(ctrl, shift, alt, true)) {
+                    _placementRotation -= 1;
+                }
+
+                if (_shortcuts.FastRotateClockwise.Check(ctrl, shift, alt, true)) {
+                    _placementRotation += 2;
+                }
+
+                if (_shortcuts.FastRotateCounterClockwise.Check(ctrl, shift, alt, true)) {
+                    _placementRotation -= 2;
+                }
+
                 // Activate Selection Mode Via Mouse
                 {
                     if ((_shortcuts.SelectProps.Check(ctrl, shift, alt, true) || _shortcuts.SelectPropsAlt.Check(ctrl, shift, alt, true)) && !_clickTracker && canDrawTile)
