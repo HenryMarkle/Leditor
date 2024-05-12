@@ -816,7 +816,12 @@ internal class SettingsPage : EditorPage
                         var assignUndeepenProps = ImGui.Button($"Undeepen Prop: {GLOBALS.Settings.Shortcuts.PropsEditor.UndeepenSelectedProps}");
                         var assignDuplicate = ImGui.Button($"Duplicate: {GLOBALS.Settings.Shortcuts.PropsEditor.DuplicateProps}");
                         var assignCycleSelected = ImGui.Button($"Cycle Selected: {GLOBALS.Settings.Shortcuts.PropsEditor.CycleSelected}");
-                        
+                        var assignRotateClockwise = ImGui.Button($"Rotate Clockwise: {GLOBALS.Settings.Shortcuts.PropsEditor.RotateClockwise}");
+                        var assignRotateCounterClockwise = ImGui.Button($"Rotate Counter-Clockwise: {GLOBALS.Settings.Shortcuts.PropsEditor.RotateCounterClockwise}");
+                        var assignFastRotateClockwise = ImGui.Button($"Fast Rotate Clockwise: {GLOBALS.Settings.Shortcuts.PropsEditor.FastRotateClockwise}");
+                        var assignFastRotateCounterClockwise = ImGui.Button($"Fast Rotate Counter-Clockwise: {GLOBALS.Settings.Shortcuts.PropsEditor.FastRotateCounterClockwise}");
+
+
                         if (assignCycleLayers) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleLayers;
                         if (assignCycleSnapMode) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleSnapMode;
                         if (assignToggleLayer1) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer1;
@@ -844,6 +849,10 @@ internal class SettingsPage : EditorPage
                         if (assignUndeepenProps) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.UndeepenSelectedProps;
                         if (assignDuplicate) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DuplicateProps;
                         if (assignCycleSelected) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleSelected;
+                        if (assignRotateClockwise) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.RotateClockwise;
+                        if (assignRotateCounterClockwise) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.RotateCounterClockwise;
+                        if (assignFastRotateClockwise) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.FastRotateClockwise;
+                        if (assignFastRotateCounterClockwise) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.FastRotateCounterClockwise;
                     }
                         break;
                     case 8: // Style

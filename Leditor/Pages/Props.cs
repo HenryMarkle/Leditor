@@ -1913,6 +1913,57 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     }
                 }
                 
+                // Activate Selection Mode Via Mouse
+                {
+                    if ((_shortcuts.SelectProps.Check(ctrl, shift, alt, true) || _shortcuts.SelectPropsAlt.Check(ctrl, shift, alt, true)) && !_clickTracker && canDrawTile)
+                    {
+                        _selection1 = GetScreenToWorld2D(GetMousePosition(), _camera);
+                        _clickTracker = true;
+                        _mode = 0;
+                    }
+
+                    if ((IsMouseButtonReleased(_shortcuts.SelectProps.Button) || IsKeyReleased(_shortcuts.SelectPropsAlt.Key)) && _clickTracker && !(_isPropsWinHovered || _isPropsWinDragged))
+                    {
+                        // _shouldRedrawLevel = true;
+                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                        else {
+                            _shouldRedrawLevel = true;
+                        }
+                        
+                        _clickTracker = false;
+
+                        List<int> selectedI = [];
+                    
+                        for (var i = 0; i < GLOBALS.Level.Props.Length; i++)
+                        {
+                            var current = GLOBALS.Level.Props[i];
+                            var propSelectRect = Utils.EncloseQuads(current.prop.Quads);
+                            if (_shortcuts.PropSelectionModifier.Check(ctrl, shift, alt, true))
+                            {
+                                if (CheckCollisionRecs(propSelectRect, _selection) && !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10))
+                                {
+                                    _selected[i] = !_selected[i];
+                                }
+                            }
+                            else
+                            {
+                                if (CheckCollisionRecs(propSelectRect, _selection) && !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10))
+                                {
+                                    _selected[i] = true;
+                                    selectedI.Add(i);
+                                }
+                                else
+                                {
+                                    _selected[i] = false;
+                                }
+                            }
+                        }
+
+                        _selectedCycleIndices = [..selectedI];
+                        _selectedCycleCursor = -1;
+                    }  
+                }
+
                 // Cycle categories
                 if (_shortcuts.CycleCategoriesRight.Check(ctrl, shift, alt))
                 {
@@ -2024,6 +2075,95 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     _selectedPropsCenter.Y = 0;
                 }
 
+                #region RotatePropsKeyboard
+                // Rotate Selected (Keyboard)
+                if (_shortcuts.RotateClockwise.Check(ctrl, shift, alt, true) && anySelected) {
+                    const float degree = 0.3f;
+
+                    for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
+                    {
+                        if (!_selected[p]) continue;
+                        
+                        var quads = GLOBALS.Level.Props[p].prop.Quads;
+
+                        GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
+
+                        if (GLOBALS.Level.Props[p].type == InitPropType.Rope)
+                        {
+                            Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
+                        }
+                    }
+
+                    _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette) _shouldRedrawLevel = true;
+                }
+
+                if (_shortcuts.RotateCounterClockwise.Check(ctrl, shift, alt, true) && anySelected) {
+                    const float degree = -0.3f;
+
+                    for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
+                    {
+                        if (!_selected[p]) continue;
+                        
+                        var quads = GLOBALS.Level.Props[p].prop.Quads;
+
+                        GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
+
+                        if (GLOBALS.Level.Props[p].type == InitPropType.Rope)
+                        {
+                            Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
+                        }
+                    }
+
+                    _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette) _shouldRedrawLevel = true;
+                }
+
+                if (_shortcuts.FastRotateClockwise.Check(ctrl, shift, alt, true) && anySelected) {
+                    const float degree = 2f;
+
+                    for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
+                    {
+                        if (!_selected[p]) continue;
+                        
+                        var quads = GLOBALS.Level.Props[p].prop.Quads;
+
+                        GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
+
+                        if (GLOBALS.Level.Props[p].type == InitPropType.Rope)
+                        {
+                            Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
+                        }
+                    }
+
+                    _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette) _shouldRedrawLevel = true;
+                }
+
+                if (_shortcuts.FastRotateCounterClockwise.Check(ctrl, shift, alt, true) && anySelected) {
+                    const float degree = -2f;
+
+                    for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
+                    {
+                        if (!_selected[p]) continue;
+                        
+                        var quads = GLOBALS.Level.Props[p].prop.Quads;
+
+                        GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
+
+                        if (GLOBALS.Level.Props[p].type == InitPropType.Rope)
+                        {
+                            Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
+                        }
+                    }
+
+                    _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette) _shouldRedrawLevel = true;
+                }
+
+                #endregion
+
+                #region ActivateModes
                 // Cycle selected
                 if (_shortcuts.CycleSelected.Check(ctrl, shift, alt) && anySelected && _selectedCycleIndices.Length > 0)
                 {
@@ -2236,6 +2376,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         .ToArray();
                 }
                 else SetMouseCursor(MouseCursor.Default);
+                #endregion
 
                 if (_ropeMode && fetchedSelected.Length == 1)
                 {
@@ -2846,6 +2987,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         _selectedCycleIndices = [..selectedI];
                         _selectedCycleCursor = -1;
                     }   
+                    else if ((_shortcuts.PlaceProp.Check(ctrl, shift, alt, true) ||
+                                        _shortcuts.PlacePropAlt.Check(ctrl, shift, alt, true))) {
+                                            _mode = 1;
+                                        }
                 }
                 
                 break;
@@ -3031,35 +3176,64 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 
                 case 0: // Select Mode
                     
-                    // TODO: tweak selection cancellation
-                    if (IsMouseButtonDown(MouseButton.Left) && _clickTracker)
-                    {
-                        var mouse = GetScreenToWorld2D(GetMousePosition(), _camera);
-                        var diff = Raymath.Vector2Subtract(mouse, _selection1);
-                        var position = (diff.X > 0, diff.Y > 0) switch
-                        {
-                            (true, true) => _selection1,
-                            (true, false) => new Vector2(_selection1.X, mouse.Y),
-                            (false, true) => new Vector2(mouse.X, _selection1.Y),
-                            (false, false) => mouse
-                        };
+                    // // TODO: tweak selection cancellation
+                    // if ((_shortcuts.SelectProps.Check(ctrl, shift, alt, true) || _shortcuts.SelectPropsAlt.Check(ctrl, shift, alt, true)) && _clickTracker)
+                    // {
+                    //     var mouse = GetScreenToWorld2D(GetMousePosition(), _camera);
+                    //     var diff = Raymath.Vector2Subtract(mouse, _selection1);
+                    //     var position = (diff.X > 0, diff.Y > 0) switch
+                    //     {
+                    //         (true, true) => _selection1,
+                    //         (true, false) => new Vector2(_selection1.X, mouse.Y),
+                    //         (false, true) => new Vector2(mouse.X, _selection1.Y),
+                    //         (false, false) => mouse
+                    //     };
 
-                        _selection = new Rectangle(
-                            position.X, 
-                            position.Y, 
-                            Math.Abs(diff.X), 
-                            Math.Abs(diff.Y)
-                        );
+                    //     _selection = new Rectangle(
+                    //         position.X, 
+                    //         position.Y, 
+                    //         Math.Abs(diff.X), 
+                    //         Math.Abs(diff.Y)
+                    //     );
                         
-                        DrawRectangleRec(_selection, new Color(0, 0, 255, 90));
+                    //     DrawRectangleRec(_selection, new Color(0, 0, 255, 90));
                         
-                        DrawRectangleLinesEx(
-                            _selection,
-                            2f,
-                            Color.Blue
-                        );
-                    }
+                    //     DrawRectangleLinesEx(
+                    //         _selection,
+                    //         2f,
+                    //         Color.Blue
+                    //     );
+                    // }
                     break;
+            }
+
+            // TODO: tweak selection cancellation
+            if ((_shortcuts.SelectProps.Check(ctrl, shift, alt, true) || _shortcuts.SelectPropsAlt.Check(ctrl, shift, alt, true)) && _clickTracker)
+            {
+                var mouse = GetScreenToWorld2D(GetMousePosition(), _camera);
+                var diff = Raymath.Vector2Subtract(mouse, _selection1);
+                var position = (diff.X > 0, diff.Y > 0) switch
+                {
+                    (true, true) => _selection1,
+                    (true, false) => new Vector2(_selection1.X, mouse.Y),
+                    (false, true) => new Vector2(mouse.X, _selection1.Y),
+                    (false, false) => mouse
+                };
+
+                _selection = new Rectangle(
+                    position.X, 
+                    position.Y, 
+                    Math.Abs(diff.X), 
+                    Math.Abs(diff.Y)
+                );
+                
+                DrawRectangleRec(_selection, new Color(0, 0, 255, 90));
+                
+                DrawRectangleLinesEx(
+                    _selection,
+                    2f,
+                    Color.Blue
+                );
             }
 
         }

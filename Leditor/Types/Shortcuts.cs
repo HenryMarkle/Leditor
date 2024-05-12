@@ -368,9 +368,15 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut CycleSelected { get; set; } = new(KeyboardKey.Null);
     public KeyboardShortcut DuplicateProps { get; set; } = new(KeyboardKey.Null);
     
-    public KeyboardShortcut DeepenSelectedProps { get; } = new(KeyboardKey.Null);
-    public KeyboardShortcut UndeepenSelectedProps { get; } = new(KeyboardKey.Null);
+    public KeyboardShortcut DeepenSelectedProps { get; set; } = new(KeyboardKey.Null);
+    public KeyboardShortcut UndeepenSelectedProps { get; set; } = new(KeyboardKey.Null);
     
+    public KeyboardShortcut RotateClockwise { get; set; } = new(KeyboardKey.Null);
+    public KeyboardShortcut RotateCounterClockwise { get; set; } = new(KeyboardKey.Null);
+    
+    public KeyboardShortcut FastRotateClockwise { get; set; } = new(KeyboardKey.Null);
+    public KeyboardShortcut FastRotateCounterClockwise { get; set; } = new(KeyboardKey.Null);
+
     public KeyboardShortcut ToggleNoCollisionPropPlacement { get; set; } = KeyboardKey.Null;
 
     public KeyboardShortcut PropSelectionModifier { get; set; } = new(KeyboardKey.LeftControl, ctrl: true);

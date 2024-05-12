@@ -715,7 +715,7 @@ internal static class Utils
     public static int GetEffectBrushStrength(string effect) => effect switch
     {
         "BlackGoo" or "Fungi Flowers" or "Lighthouse Flowers" or
-            "Fern" or "Giant Mushroom" or "Sprawlbush" or "Feather Plants" or
+            "Fern" or "Giant Mushroom" or "Sprawlbush" or
             "featherFern" or "Fungus Tree" or "Restore As Scaffolding" or "Restore As Pipes" or "Super BlackGoo" => 100,
 
         _ => 10
