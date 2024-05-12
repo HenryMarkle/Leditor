@@ -3,6 +3,7 @@ using Leditor.Types;
 using Leditor.Data.Tiles;
 using Pidgin;
 using System.Text.Json;
+using ImGuiNET;
 
 namespace Leditor;
 
@@ -711,6 +712,11 @@ internal static class Utils
                 }
             }
         }
+
+    public static bool EffectCoversScreen(string effect) => effect switch {
+        "BlackGoo" or "Super BlackGoo" => true,
+        _ => false
+    };
             
     public static int GetEffectBrushStrength(string effect) => effect switch
     {

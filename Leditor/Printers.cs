@@ -3438,9 +3438,9 @@ internal static class Printers
         //     ? index 
         //     : 0;
 
+        var center = new Vector2(origin.X + GLOBALS.EditorCameraWidth / 2f, origin.Y + GLOBALS.EditorCameraHeight / 2f);
         
-        
-        var hover = CheckCollisionPointCircle(mouse, new(origin.X + GLOBALS.EditorCameraWidth / 2f, origin.Y + GLOBALS.EditorCameraHeight / 2f), 50) && quadLock == 0;
+        var hover = CheckCollisionPointCircle(mouse, center, 50) && quadLock == 0;
         var biggerHover = CheckCollisionPointRec(mouse, new(origin.X, origin.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight));
 
         Vector2 pointOrigin1 = new(origin.X, origin.Y),
@@ -3460,20 +3460,26 @@ internal static class Printers
 
         var anyCornerHovered = topLeftHovered || topRightHovered || bottomRightHovered || bottomLeftHovered;
 
-        // if (GLOBALS.CamLock == 0) {
-        //     if (anyCornerHovered || CheckCollisionPointRec(mouse, new(origin.X - 100, origin.Y - 100, GLOBALS.EditorCameraWidth + 200, GLOBALS.EditorCameraHeight + 200))) {
-        //         GLOBALS.CamLock = index;
-        //     }
-        // } else if (GLOBALS.CamLock == index) {
-        //     if (quadLock == 0 && !CheckCollisionPointRec(mouse, new(origin.X - 100, origin.Y - 100, GLOBALS.EditorCameraWidth + 200, GLOBALS.EditorCameraHeight + 200))) {
-        //         GLOBALS.CamLock = 0;
-        //     }
-        // }
-
         if (((anyCornerHovered || quadLock != 0) && GLOBALS.CamLock == -1) || hover) {
             GLOBALS.CamLock = index;
         } else if (GLOBALS.CamLock == index && quadLock == 0 && !hover) {
             GLOBALS.CamLock = -1;
+        }
+
+        if (topLeftHovered || quadLock == 1) {
+            DrawLineEx(topLeftV, center, 2, Color.Green);
+        }
+
+        if (topRightHovered || quadLock == 2) {
+            DrawLineEx(topRightV, center, 2, Color.Green);
+        }
+
+        if (bottomRightHovered || quadLock == 3) {
+            DrawLineEx(bottomRightV, center, 2, Color.Green);
+        }
+
+        if (bottomLeftHovered || quadLock == 4) {
+            DrawLineEx(bottomLeftV, center, 2, Color.Green);
         }
         
         if (biggerHover)

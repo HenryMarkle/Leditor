@@ -304,7 +304,35 @@ internal class EffectsEditorPage : EditorPage
                                 ImGui.Selectable(
                                     _newEffectNames[_newEffectCategorySelectedValue][index],index == _newEffectSelectedValue);
 
-                            if (selected) _newEffectSelectedValue = index;
+                            if (selected) {
+                                if (_newEffectSelectedValue != index) _newEffectSelectedValue = index;
+                                else {
+                                    var effectToAdd = GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue];
+                                    var matrixToAdd = new double[GLOBALS.Level.Height, GLOBALS.Level.Width];
+
+                                    if (Utils.EffectCoversScreen(effectToAdd)) {
+                                        for (var y = 0; y < GLOBALS.Level.Height; y++) {
+                                            for (var x = 0; x < GLOBALS.Level.Width; x++) {
+                                                matrixToAdd[y, x] = 100;
+                                            }
+                                        }
+                                    }
+
+                                    GLOBALS.Level.Effects = [
+                                        .. GLOBALS.Level.Effects,
+                                        (
+                                            effectToAdd,
+                                            Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
+                                            matrixToAdd
+                                        )
+                                    ];
+
+                                    _addNewEffectMode = false;
+                                    _currentAppliedEffect++;
+
+                                    if (GLOBALS.Level.Effects.Length > 0) _currentAppliedEffect = GLOBALS.Level.Effects.Length - 1;
+                                }
+                            }
                         }
                         
                         ImGui.EndListBox();
@@ -442,6 +470,7 @@ internal class EffectsEditorPage : EditorPage
                     #endif
 
                     var strength = Utils.GetEffectBrushStrength(mtx.Item1);
+                    Utils.Restrict (ref strength, 0, 100);
                     var useStrong = _shortcuts.StrongBrush.Check(ctrl, shift, alt, true);
                     
                     PaintEffectCircular(
@@ -662,7 +691,7 @@ internal class EffectsEditorPage : EditorPage
                                     y * GLOBALS.Scale, 
                                     GLOBALS.Scale, 
                                     GLOBALS.Scale, 
-                                    brushColor with { A = (byte)(GLOBALS.Level.Effects[_currentAppliedEffect].Item3[y, x] * 255 / 100) }
+                                    brushColor with { A = (byte)((GLOBALS.Level.Effects[_currentAppliedEffect].Item3[y, x] * 255 / 100) * 0.9f) }
                                 );
                             }
                         }
