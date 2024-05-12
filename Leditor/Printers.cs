@@ -3643,33 +3643,14 @@ internal static class Printers
             } 
         }
 
-        if (GLOBALS.CamLock == index)
-        {
-            if (CheckCollisionPointRec(mouse, quarter1) || quadLock != 0)
-            {
-                DrawCircleLines((int)pointOrigin1.X, (int)pointOrigin1.Y, quad.TopLeft.radius*100, Color.Green);
-                DrawCircleV(topLeftV, 10, new(0, 255, 0, 255));
-            }
-            
-            if (CheckCollisionPointRec(mouse, quarter2) || quadLock != 0)
-            {
-                DrawCircleLines((int)pointOrigin2.X, (int)pointOrigin2.Y, quad.TopRight.radius*100, Color.Green);
-                DrawCircleV(topRightV, 10, new(0, 255, 0, 255));
-            }
-            
-            if (CheckCollisionPointRec(mouse, quarter3) || quadLock != 0)
-            {
-                DrawCircleLines((int)pointOrigin3.X, (int)pointOrigin3.Y, quad.BottomRight.radius*100, Color.Green);
-                DrawCircleV(bottomRightV, 10, new(0, 255, 0, 255));
-            }
-            
-            if (CheckCollisionPointRec(mouse, quarter4) || quadLock != 0)
-            {
-                DrawCircleLines((int)pointOrigin4.X, (int)pointOrigin4.Y, quad.BottomLeft.radius*100, Color.Green);
-                DrawCircleV(bottomLeftV, 10, new(0, 255, 0, 255));
-            }
-        }
-        
+        DrawCircleLines((int)pointOrigin1.X, (int)pointOrigin1.Y, quad.TopLeft.radius*100, Color.Green);
+        DrawCircleV(topLeftV, 10, new(0, 255, 0, 255));
+        DrawCircleLines((int)pointOrigin2.X, (int)pointOrigin2.Y, quad.TopRight.radius*100, Color.Green);
+        DrawCircleV(topRightV, 10, new(0, 255, 0, 255));
+        DrawCircleLines((int)pointOrigin3.X, (int)pointOrigin3.Y, quad.BottomRight.radius*100, Color.Green);
+        DrawCircleV(bottomRightV, 10, new(0, 255, 0, 255));
+        DrawCircleLines((int)pointOrigin4.X, (int)pointOrigin4.Y, quad.BottomLeft.radius*100, Color.Green);
+        DrawCircleV(bottomLeftV, 10, new(0, 255, 0, 255));
 
         return (hover && (GLOBALS.Settings.Shortcuts.CameraEditor.GrabCamera.Check(ctrl, shift, alt, true) || GLOBALS.Settings.Shortcuts.CameraEditor.GrabCameraAlt.Check(ctrl, shift, alt, true)), biggerHover);
     }
