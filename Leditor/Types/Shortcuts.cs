@@ -383,7 +383,7 @@ public class PropsShortcuts : IEditorShortcuts
     
     public KeyboardShortcut SelectPropsAlt { get; set; } = KeyboardKey.Null;
     
-    public MouseShortcut SelectProps { get; set; } = MouseButton.Left;
+    public MouseShortcut SelectProps { get; set; } = MouseButton.Right;
 
     public MouseShortcut PlaceProp { get; set; } = MouseButton.Left;
     
