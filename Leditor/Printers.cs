@@ -3431,6 +3431,7 @@ internal static class Printers
         int index = 0)
     {
         ref var quadLock = ref GLOBALS.CamQuadLocks[index];
+        var color = GLOBALS.CamColors[index % GLOBALS.CamColors.Length];
         
         var mouse = GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
 
@@ -3467,19 +3468,19 @@ internal static class Printers
         }
 
         if (topLeftHovered || quadLock == 1) {
-            DrawLineEx(topLeftV, center, 2, Color.Green);
+            DrawLineEx(topLeftV, center, 2, color);
         }
 
         if (topRightHovered || quadLock == 2) {
-            DrawLineEx(topRightV, center, 2, Color.Green);
+            DrawLineEx(topRightV, center, 2, color);
         }
 
         if (bottomRightHovered || quadLock == 3) {
-            DrawLineEx(bottomRightV, center, 2, Color.Green);
+            DrawLineEx(bottomRightV, center, 2, color);
         }
 
         if (bottomLeftHovered || quadLock == 4) {
-            DrawLineEx(bottomLeftV, center, 2, Color.Green);
+            DrawLineEx(bottomLeftV, center, 2, color);
         }
         
         if (biggerHover)
@@ -3487,7 +3488,7 @@ internal static class Printers
             DrawRectangleV(
                 origin,
                 new(GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
-                new(0, 255, 150, 70)
+                color with { B = 150, A = 90 }
             );
         }
         else
@@ -3495,7 +3496,7 @@ internal static class Printers
             DrawRectangleV(
                 origin,
                 new(GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
-                new(0, 255, 0, 70)
+                color with { A = 70 }
             );
         }
 
@@ -3562,10 +3563,10 @@ internal static class Printers
         // var quarter4 = new Rectangle(origin.X - 150 , GLOBALS.EditorCameraHeight / 2 + origin.Y, GLOBALS.EditorCameraWidth / 2 + 150, GLOBALS.EditorCameraHeight / 2 + 150);
         
         
-        DrawLineV(topLeftV, topRightV, Color.Green);
-        DrawLineV(topRightV, bottomRightV, Color.Green);
-        DrawLineV(bottomRightV, bottomLeftV, Color.Green);
-        DrawLineV(bottomLeftV, topLeftV, Color.Green);
+        DrawLineV(topLeftV, topRightV, color);
+        DrawLineV(topRightV, bottomRightV, color);
+        DrawLineV(bottomRightV, bottomLeftV, color);
+        DrawLineV(bottomLeftV, topLeftV, color);
         
         if ((IsMouseButtonReleased(GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCamera.Button) || 
              IsKeyReleased(GLOBALS.Settings.Shortcuts.CameraEditor.ManipulateCameraAlt.Key))) quadLock = 0;
@@ -3671,14 +3672,14 @@ internal static class Printers
             } 
         }
 
-        DrawCircleLines((int)pointOrigin1.X, (int)pointOrigin1.Y, quad.TopLeft.radius*100, Color.Green);
-        DrawCircleV(topLeftV, 10, new(0, 255, 0, 255));
-        DrawCircleLines((int)pointOrigin2.X, (int)pointOrigin2.Y, quad.TopRight.radius*100, Color.Green);
-        DrawCircleV(topRightV, 10, new(0, 255, 0, 255));
-        DrawCircleLines((int)pointOrigin3.X, (int)pointOrigin3.Y, quad.BottomRight.radius*100, Color.Green);
-        DrawCircleV(bottomRightV, 10, new(0, 255, 0, 255));
-        DrawCircleLines((int)pointOrigin4.X, (int)pointOrigin4.Y, quad.BottomLeft.radius*100, Color.Green);
-        DrawCircleV(bottomLeftV, 10, new(0, 255, 0, 255));
+        DrawCircleLines((int)pointOrigin1.X, (int)pointOrigin1.Y, quad.TopLeft.radius*100, color);
+        DrawCircleV(topLeftV, 10, color);
+        DrawCircleLines((int)pointOrigin2.X, (int)pointOrigin2.Y, quad.TopRight.radius*100, color);
+        DrawCircleV(topRightV, 10, color);
+        DrawCircleLines((int)pointOrigin3.X, (int)pointOrigin3.Y, quad.BottomRight.radius*100, color);
+        DrawCircleV(bottomRightV, 10, color);
+        DrawCircleLines((int)pointOrigin4.X, (int)pointOrigin4.Y, quad.BottomLeft.radius*100, color);
+        DrawCircleV(bottomLeftV, 10, color);
 
         return (hover && (GLOBALS.Settings.Shortcuts.CameraEditor.GrabCamera.Check(ctrl, shift, alt, true) || GLOBALS.Settings.Shortcuts.CameraEditor.GrabCameraAlt.Check(ctrl, shift, alt, true)), biggerHover);
     }

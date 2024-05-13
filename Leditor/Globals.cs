@@ -213,6 +213,17 @@ internal static class GLOBALS
     internal static int[] CamQuadLocks { get; set; } = [0, 0];
     internal static int CamLock { get; set; }
 
+    internal static Color[] CamColors { get; } = [
+        Color.Green,
+        Color.Blue,
+        Color.Red,
+        Color.Orange,
+        Color.Magenta,
+        Color.Pink,
+        Color.Purple,
+        Color.Gray
+    ];
+
     internal static int InitialMatrixWidth => 72;
     internal static int InitialMatrixHeight => 43;
 
