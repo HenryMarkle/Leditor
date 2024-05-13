@@ -21,9 +21,13 @@ internal class CamerasEditorPage : EditorPage
     private bool _showProps;
     
     private readonly CameraShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.CameraEditor;
+
+    private int _currentCamera;
     
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
+
+    private bool _isCamsWinHovered;
 
     private bool _shouldRedrawLevel = true;
     
@@ -90,7 +94,7 @@ internal class CamerasEditorPage : EditorPage
 
         // handle zoom
         var cameraWheel = GetMouseWheelMove();
-        if (cameraWheel != 0)
+        if (!_isCamsWinHovered && cameraWheel != 0)
         {
             var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
             _camera.Offset = GetMousePosition();
@@ -117,6 +121,7 @@ internal class CamerasEditorPage : EditorPage
             GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new() { Coords = new Vector2(0, 0), Quad = new(new(), new(), new(), new()) }];
             GLOBALS.CamQuadLocks = [..GLOBALS.CamQuadLocks, 0];
             draggedCamera = GLOBALS.Level.Cameras.Count - 1;
+            Utils.Restrict(ref _currentCamera, 0, GLOBALS.Level.Cameras.Count-1);
         }
 
         if (_shortcuts.DeleteCamera.Check(ctrl, shift, alt) && draggedCamera != -1)
@@ -124,15 +129,17 @@ internal class CamerasEditorPage : EditorPage
             GLOBALS.Level.Cameras.RemoveAt(draggedCamera);
             GLOBALS.CamQuadLocks = GLOBALS.CamQuadLocks[..^1];
             draggedCamera = -1;
+            Utils.Restrict(ref _currentCamera, 0, GLOBALS.Level.Cameras.Count-1);
         }
 
-        if (_shortcuts.CreateAndDeleteCamera.Check(ctrl, shift, alt) || _shortcuts.CreateAndDeleteCameraAlt.Check(ctrl, shift, alt))
+        if (!_isCamsWinHovered && _shortcuts.CreateAndDeleteCamera.Check(ctrl, shift, alt) || _shortcuts.CreateAndDeleteCameraAlt.Check(ctrl, shift, alt))
         {
             if (draggedCamera == -1)
             {
                 GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new RenderCamera() { Coords = new Vector2(0, 0), Quad = new(new(), new(), new(), new()) }];
                 GLOBALS.CamQuadLocks = [..GLOBALS.CamQuadLocks, 0];
                 draggedCamera = GLOBALS.Level.Cameras.Count - 1;
+                _currentCamera = draggedCamera;
             }
             else
             {
@@ -140,6 +147,7 @@ internal class CamerasEditorPage : EditorPage
                 GLOBALS.CamQuadLocks = GLOBALS.CamQuadLocks[..^1];
                 draggedCamera = -1;
             }
+            Utils.Restrict(ref _currentCamera, 0, GLOBALS.Level.Cameras.Count-1);
         }
 
         #endregion
@@ -301,6 +309,8 @@ internal class CamerasEditorPage : EditorPage
                         if (clicked && !clickTracker)
                         {
                             draggedCamera = index;
+                            _currentCamera = index;
+                            Utils.Restrict(ref _currentCamera, 0, GLOBALS.Level.Cameras.Count-1);
                             clickTracker = true;
                         }
                     }
@@ -329,6 +339,105 @@ internal class CamerasEditorPage : EditorPage
             // Navigation bar
                 
             GLOBALS.NavSignal = Printers.ImGui.Nav(out _);
+
+            // Cameras
+
+            var camWinOpenned = ImGui.Begin("Cameras##CamerasEditorCamerasWindow");
+            
+            var camWinPos = ImGui.GetWindowPos();
+            var camWinSpace = ImGui.GetWindowSize();
+
+            if (CheckCollisionPointRec(GetMousePosition(), new(camWinPos.X - 5, camWinPos.Y-5, camWinSpace.X + 10, camWinSpace.Y+10)))
+            {
+                _isCamsWinHovered = true;
+
+            }
+            else
+            {
+                _isCamsWinHovered = false;
+            }
+
+            if (camWinOpenned) {
+
+                var listBoxAvail = ImGui.GetContentRegionAvail();
+                if (ImGui.BeginListBox("##CamerasSelector", listBoxAvail with { Y = listBoxAvail.Y - 170 })) {
+                    
+                    for (var i = 0; i < GLOBALS.Level.Cameras.Count; i++) {
+
+                        if (ImGui.Selectable($"Camera #{i}", _currentCamera == i)) {
+                            _currentCamera = i;
+                        }
+
+                    }
+                    
+                    ImGui.EndListBox();
+                }
+
+                //
+
+                if (_currentCamera >= 0 && _currentCamera < GLOBALS.Level.Cameras.Count && ImGui.BeginChild("Camera Quad")) {
+
+                    var currentCam = GLOBALS.Level.Cameras[_currentCamera];
+
+                    ImGui.SeparatorText("Camera Quad Points");
+                    
+                    ImGui.Columns(2);
+
+                    ImGui.SeparatorText("Top Left");
+                    {
+                        var (angle, radius) = currentCam.Quad.TopLeft;
+                        ImGui.SetNextItemWidth(100);
+                        if (ImGui.InputInt("Angle##TopLeftAngle", ref angle)) currentCam.Quad.TopLeft = (angle, radius);
+                        ImGui.SetNextItemWidth(100);
+                        if (ImGui.InputFloat("Radius##TopLeftRadius", ref radius, 0.1f)) {
+                            Utils.Restrict(ref radius, 0, 1);
+                            currentCam.Quad.TopLeft = (angle, radius);
+                        }
+                    }
+
+                    ImGui.SeparatorText("Bottom Left");
+                    {
+                        var (angle, radius) = currentCam.Quad.BottomLeft;
+                        ImGui.SetNextItemWidth(100);
+                        if (ImGui.InputInt("Angle##BottomLeftAngle", ref angle)) currentCam.Quad.BottomLeft = (angle, radius);
+                        ImGui.SetNextItemWidth(100);
+                        if (ImGui.InputFloat("Radius##BottomLeftRadius", ref radius, 0.1f)) {
+                            Utils.Restrict(ref radius, 0, 1);
+                            currentCam.Quad.BottomLeft = (angle, radius);
+                        }
+                    }
+
+                    ImGui.NextColumn();
+                    
+                    ImGui.SeparatorText("Top Right");
+                    {
+                        var (angle, radius) = currentCam.Quad.TopRight;
+                        ImGui.SetNextItemWidth(100);
+                        if (ImGui.InputInt("Angle##TopRightAngle", ref angle)) currentCam.Quad.TopRight = (angle, radius);
+                        ImGui.SetNextItemWidth(100);
+                        if (ImGui.InputFloat("Radius##TopRightRadius", ref radius, 0.1f)) {
+                            Utils.Restrict(ref radius, 0, 1);
+                            currentCam.Quad.TopRight = (angle, radius);
+                        }
+                    }
+
+                    ImGui.SeparatorText("Bottom Right");
+                    {
+                        var (angle, radius) = currentCam.Quad.BottomRight;
+                        ImGui.SetNextItemWidth(100);
+                        if (ImGui.InputInt("Angle##BottomRightAngle", ref angle)) currentCam.Quad.BottomRight = (angle, radius);
+                        ImGui.SetNextItemWidth(100);
+                        if (ImGui.InputFloat("Radius##BottomRightRadius", ref radius, 0.1f)) {
+                            Utils.Restrict(ref radius, 0, 1);
+                            currentCam.Quad.BottomRight = (angle, radius);
+                        }
+                    }
+                    
+                    ImGui.EndChild();
+                }
+
+                ImGui.End();
+            }
             
             // Settings
 
