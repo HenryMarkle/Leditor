@@ -686,14 +686,10 @@ internal class ExperimentalGeometryPage : EditorPage
                                             var id = GeoMenuCategory4ToStackableId[_geoMenuIndex];
                                             cell.Stackables[id] = true;
 
-                                            /*if (id == 4)
+                                            if (id == 4)
                                             {
-                                                /*var context = Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width,
-                                                    GLOBALS.Level.Height, x, y, GLOBALS.Layer);
-                                                var isConnected = Utils.IsConnectionEntranceConnected(context);#1#
-
-                                                cell.Geo = 7;
-                                            }*/
+                                                cell.Geo = 0;
+                                            }
 
                                             _connectionUpdate = true;
                                         }
@@ -1180,7 +1176,10 @@ internal class ExperimentalGeometryPage : EditorPage
 
                                 var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
 
-                                cell.Stackables[id] = !_eraseMode;
+                                cell.Stackables[id] = true;
+                                if (id == 4) {
+                                    cell.Geo = 0;
+                                }
 
                                 var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                                 
