@@ -73,7 +73,7 @@ class Program
         LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/entryblock.png")),
         // 7: NONE
         // 8: NONE
-        LoadTexture("assets/geo/thickglass.png"),
+        LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "geo/thickglass.png")),
     ];
 
 

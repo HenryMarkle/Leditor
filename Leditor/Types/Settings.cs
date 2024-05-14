@@ -181,7 +181,9 @@ public class GeneralSettings(
     bool visiblePrecedingUnfocusedLayers = true,
     bool cropTilePreviews = false,
     int autoSaveSeconds = 120,
-    bool autoSave = false
+    bool autoSave = false,
+    byte waterOpacity = 70,
+    bool water = true
     )
 {
     public bool DeveloperMode { get; set; } = developerMode;
@@ -202,6 +204,8 @@ public class GeneralSettings(
     public bool CropTilePreviews { get; set; } = cropTilePreviews;
     public bool AutoSave { get; set; } = autoSave;
     public int AutoSaveSeconds { get; set; } = autoSaveSeconds < 30 ? 30 : autoSaveSeconds;
+    public byte WaterOpacity { get; set; } = waterOpacity;
+    public bool Water { get; set; } = water;
 }
 
 public class Settings

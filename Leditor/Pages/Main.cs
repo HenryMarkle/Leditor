@@ -744,7 +744,8 @@ internal class MainPage : EditorPage, IContextListener
                     Printers.DrawLevelIntoBufferV2(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
                     {
                         CurrentLayer = 0,
-                        Water = _showWater,
+                        Water = GLOBALS.Settings.GeneralSettings.Water,
+                        WaterOpacity = GLOBALS.Settings.GeneralSettings.WaterOpacity,
                         WaterAtFront = GLOBALS.Level.WaterAtFront,
                         TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
                         PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
@@ -1082,6 +1083,22 @@ internal class MainPage : EditorPage, IContextListener
                         _shouldRedrawLevel = true;
                         GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers = visiblePreceeding;
                     }
+
+                    // Water
+                    var water = GLOBALS.Settings.GeneralSettings.Water;
+                    ImGui.SetNextItemWidth(100);
+                    if (ImGui.Checkbox("Water", ref water)) {
+                        GLOBALS.Settings.GeneralSettings.Water = water;
+                        _shouldRedrawLevel = true;
+                    }
+
+                    var waterOpacity = (int) GLOBALS.Settings.GeneralSettings.WaterOpacity;
+                    if (ImGui.InputInt("Water Opacity", ref waterOpacity)) {
+                        Utils.Restrict(ref waterOpacity, 0, 255);
+                        GLOBALS.Settings.GeneralSettings.WaterOpacity = (byte) waterOpacity;
+                        _shouldRedrawLevel = true;
+                    }
+                    //
 
                     if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Preview) ImGui.BeginDisabled();
 

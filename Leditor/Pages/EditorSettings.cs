@@ -457,6 +457,8 @@ internal class SettingsPage : EditorPage
                         
                         ImGui.Separator();
                         
+                        var assignPickupGeo = ImGui.Button($"Pickup Geo: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.PickupGeo}");
+                        var assignPickupStackable = ImGui.Button($"Pickup Stackable: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.PickupStackable}");
                         var assignCycleLayers = ImGui.Button($"Cycle Layers: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.CycleLayers}");
                         var assignToggleGrid = ImGui.Button($"Show/Hide Grid: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleGrid}"); 
                         var assignToggleCameras = ImGui.Button($"Show/Hide Cameras: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ShowCameras}"); 
@@ -472,6 +474,8 @@ internal class SettingsPage : EditorPage
                         var assignToggleMemoryDumpMode = ImGui.Button($"Toggle Paste{GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleMemoryDumbMode}");
                         var assignAltErase = ImGui.Button($"Erase: {GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.AltErase}");
 
+                        if (assignPickupGeo) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.PickupGeo;
+                        if (assignPickupStackable) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.PickupStackable;
                         if (assignCycleLayers) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.CycleLayers;
                         if (assignToggleGrid) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ToggleGrid;
                         if (assignToggleCameras) _shortcutToAssign = GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.ShowCameras;

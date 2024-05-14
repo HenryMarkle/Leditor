@@ -124,6 +124,9 @@ public class ExperimentalGeoShortcuts : IEditorShortcuts
     public KeyboardShortcut ToggleMemoryLoadMode { get; set; } = new(KeyboardKey.C, ctrl:true);
     public KeyboardShortcut ToggleMemoryDumbMode { get; set; } = new(KeyboardKey.V, ctrl:true);
     
+    public KeyboardShortcut PickupGeo { get; set; } = new(KeyboardKey.Q, ctrl:false, shift:false, alt:false);
+    public KeyboardShortcut PickupStackable { get; set; } = new(KeyboardKey.Q, ctrl:false, shift:true, alt:false);
+
     public MouseShortcut Draw { get; set; } = new(MouseButton.Left);
     public MouseShortcut Erase { get; set; } = new(MouseButton.Right);
     

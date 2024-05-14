@@ -27,6 +27,13 @@ internal class ExperimentalGeometryPage : EditorPage
         if (@next == 2) _shouldRedrawLevel = true;
     }
 
+    // Pickup feature
+    private (int category, int index)[] _pickedGeoIndices = [];
+    private int _currentPickedIndex = -1;
+    private int _pickPosX = -1;
+    private int _pickPosY = -1;
+    //
+
     private bool _multiselect;
     private bool _showGrid = true;
     private bool _clickTracker;
@@ -250,20 +257,6 @@ internal class ExperimentalGeometryPage : EditorPage
         
         var scale = GLOBALS.Scale;
 
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
-        // // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 2;
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 3;
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 4;
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 5;
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
-        // {
-        //     GLOBALS.Page = 6;
-        //     Logger.Debug("go from GLOBALS.Page 2 to GLOBALS.Page 6");
-        // }
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 7;
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
-
         var uiMouse = GetMousePosition();
         var mouse = GetScreenToWorld2D(uiMouse, _camera);
 
@@ -326,6 +319,162 @@ internal class ExperimentalGeometryPage : EditorPage
         if (_shortcuts.ToggleMultiSelect.Check(ctrl, shift, alt)) _allowMultiSelect = !_allowMultiSelect;
 
         _eraseAllMode = _shortcuts.EraseEverything.Check(ctrl, shift, alt, true);
+
+        // handle picking up
+
+        if (inMatrixBounds && canDrawGeo) {
+            var pickupGeo = _shortcuts.PickupGeo.Check(ctrl, shift, alt);
+            var pickupStackables = _shortcuts.PickupStackable.Check(ctrl, shift, alt);
+
+            if (pickupGeo || pickupStackables) {
+                var pickedCell = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+                List<(int, int)> indices = new(23);
+
+                if (_shortcuts.PickupGeo.Key == _shortcuts.PickupStackable.Key) {
+                    if (_pickPosX == matrixX && _pickPosY == matrixY && _currentPickedIndex != _pickedGeoIndices.Length-1) {
+                        if (_pickedGeoIndices is not []) {
+                            _currentPickedIndex++;
+                            Utils.Cycle(ref _currentPickedIndex, 0, _pickedGeoIndices.Length-1);
+                            var (category, index) = _pickedGeoIndices[_currentPickedIndex];
+                            _geoMenuCategory = category;
+                            _geoMenuIndex = index;
+                        }
+                    } else {
+                        // First add geo
+                        indices.Add(pickedCell.Geo switch {
+                            1 => (0, 0),
+                            2 or 3 or 4 or 5 => (0, 1),
+                            6 => (0, 2),
+                            9 => (0, 3),
+                            _ => (0, 0)
+                        });
+
+                        // Then stackables
+                        for (var i = 0; i < 22; i++) {
+                            if (pickedCell.Stackables[i]) indices.Add(i switch {
+                                1 => (1, 1),
+                                2 => (1, 0),
+                                11 => (1, 2),
+
+                                3 => (2, 0),
+                                12 => (2, 1),
+                                18 => (2, 2),
+                                20 => (2, 3),
+                                9 => (2, 4),
+                                10 => (2, 5),
+
+                                4 => (3, 0),
+                                5 => (3, 1),
+                                6 => (3, 2),
+                                7 => (3, 3),
+                                19 => (3, 4),
+                                21 => (3, 5),
+                                13 => (3, 6),
+
+                                _ => (-1, -1)
+                            }); 
+                        }
+
+                        _pickedGeoIndices = [..indices];
+                        _currentPickedIndex = 0;
+
+                        if (_pickedGeoIndices is not []) {
+                            var first = _pickedGeoIndices[0];
+                            _geoMenuCategory = first.category;
+                            _geoMenuIndex = first.index;
+                        }
+
+                        _pickPosX = matrixX;
+                        _pickPosY = matrixY;
+                    }
+
+                } else {
+                    // Geo only
+
+                    if (pickupGeo) {
+                        switch (pickedCell.Geo) {
+                            case 1: // solid
+                            _geoMenuCategory = 0;
+                            _geoMenuIndex = 0;
+                            break;
+
+                            case 2: // slopes
+                            case 3:
+                            case 4:
+                            case 5:
+                            _geoMenuCategory = 0;
+                            _geoMenuIndex = 1;
+                            break;
+                            
+                            case 6: // platform
+                            _geoMenuCategory = 0;
+                            _geoMenuIndex = 2;
+                            break;
+                            
+                            case 9:
+                            _geoMenuCategory = 0;
+                            _geoMenuIndex = 3;
+                            break;
+                        }
+
+                    }
+
+                    // stackables only
+                    else if (pickupStackables) {
+                        if (_pickPosX == matrixX && _pickPosY == matrixY && _currentPickedIndex != _pickedGeoIndices.Length-1) {
+                            if (_pickedGeoIndices is not []) {
+                                _currentPickedIndex++;
+                                Utils.Restrict(ref _currentPickedIndex, 0, _pickedGeoIndices.Length-1);
+                                var (category, index) = _pickedGeoIndices[_currentPickedIndex];
+                                _geoMenuCategory = category;
+                                _geoMenuIndex = index;
+                            }
+                        }
+                        else {
+                            for (var i = 0; i < 22; i++) {
+                                if (pickedCell.Stackables[i]) indices.Add(i switch {
+                                    1 => (1, 1),
+                                    2 => (1, 0),
+                                    11 => (1, 2),
+
+                                    3 => (2, 0),
+                                    12 => (2, 1),
+                                    18 => (2, 2),
+                                    20 => (2, 3),
+                                    9 => (2, 4),
+                                    10 => (2, 5),
+
+                                    4 => (3, 0),
+                                    5 => (3, 1),
+                                    6 => (3, 2),
+                                    7 => (3, 3),
+                                    19 => (3, 4),
+                                    21 => (3, 5),
+                                    13 => (3, 6),
+
+                                    _ => (-1, -1)
+                                }); 
+                            }
+
+                            _pickedGeoIndices = [..indices];
+                            _currentPickedIndex = 0;
+
+                            if (_pickedGeoIndices is not []) {
+                                var first = _pickedGeoIndices[0];
+                                _geoMenuCategory = first.category;
+                                _geoMenuIndex = first.index;
+                            }
+
+                            _pickPosX = matrixX;
+                            _pickPosY = matrixY;
+                        }
+                    }
+                }
+            }
+            
+
+
+        }
 
         // handle changing layers
 
@@ -1236,7 +1385,8 @@ internal class ExperimentalGeometryPage : EditorPage
                     Printers.DrawLevelIntoBufferV2(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
                     {
                         CurrentLayer = GLOBALS.Layer,
-                        Water = true,
+                        Water = GLOBALS.Settings.GeneralSettings.Water,
+                        WaterOpacity = GLOBALS.Settings.GeneralSettings.WaterOpacity,
                         WaterAtFront = GLOBALS.Level.WaterAtFront,
                         TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
                         PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,

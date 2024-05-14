@@ -2594,6 +2594,12 @@ internal static class Utils
         return [.. tmp];
     }
 
+    public static bool IsGeoEqual(ref RunCell g1, ref RunCell g2) {
+        if (g1.Geo != g2.Geo) return false;
+
+        return GeoStackEq(g1.Stackables, g2.Stackables);
+    }
+
     public static bool GeoStackEq(bool[] stc1, bool[] stc2)
     {
         if (stc1.Length != stc2.Length) return false;

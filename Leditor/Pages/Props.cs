@@ -735,6 +735,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
         }
         #endregion
 
+        if (GLOBALS.Settings.GeneralSettings.Water && !GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1) {
+            BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+            DrawRectangle(
+                (-1) * 16,
+                (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * 16,
+                (GLOBALS.Level.Width + 2) * 16,
+                (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * 16,
+                new Color(0, 0, 255, (int)GLOBALS.Settings.GeneralSettings.WaterOpacity)
+            );
+            EndTextureMode();
+        }
+
         #region TileEditorLayer1
         if (_showTileLayer1 && (GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers || GLOBALS.Layer == 0))
         {
@@ -963,6 +975,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                 EndTextureMode();
             }
+        
+        }
+        if (GLOBALS.Settings.GeneralSettings.Water && GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1) {
+            BeginTextureMode(GLOBALS.Textures.GeneralLevel);
+            DrawRectangle(
+                (-1) * 16,
+                (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * 16,
+                (GLOBALS.Level.Width + 2) * 16,
+                (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * 16,
+                new Color(0, 0, 255, (int)GLOBALS.Settings.GeneralSettings.WaterOpacity)
+            );
+            EndTextureMode();
         }
         #endregion
 

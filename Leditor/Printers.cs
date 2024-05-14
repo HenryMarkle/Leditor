@@ -1971,6 +1971,7 @@ internal static class Printers
         internal int Scale { get; init; } = 20;
         internal bool DarkTheme { get; init; } = false;
         internal bool Water { get; init; } = false;
+        internal int WaterOpacity { get; init; } = 70; 
         internal bool WaterAtFront { get; init; } = true;
         internal bool Grid { get; init; } = false;
         internal Texture2D? Palette { get; init; } = null;
@@ -2554,7 +2555,7 @@ internal static class Printers
                         (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * parameters.Scale,
                         (GLOBALS.Level.Width + 2) * parameters.Scale,
                         (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * parameters.Scale,
-                        new Color(0, 0, 255, 110)
+                        new Color(0, 0, 255, parameters.WaterOpacity)
                     );
                 }
             }
@@ -2642,9 +2643,7 @@ internal static class Printers
                         (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                         (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
                         (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                        GLOBALS.Settings.GeneralSettings.DarkTheme 
-                            ? GLOBALS.DarkThemeWaterColor 
-                            : GLOBALS.LightThemeWaterColor
+                        new Color(0, 0, 255, parameters.WaterOpacity)
                     );
                 }
             }
