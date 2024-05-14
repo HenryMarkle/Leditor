@@ -73,7 +73,8 @@ public class TileEditor(
     bool showCameras = false,
     bool drawCurrentTile = true,
     bool drawCurrentSpecs = false,
-    bool useTexturesInTooltip = false
+    bool useTexturesInTooltip = false,
+    bool implicitOverrideMaterials = true
     )
 {
     public bool HoveredTileInfo { get; set; } = hoveredTileInfo;
@@ -85,6 +86,7 @@ public class TileEditor(
     public bool DrawCurrentTile { get; set; } = drawCurrentTile;
     public bool DrawCurrentSpecs { get; set; } = drawCurrentSpecs;
     public bool UseTexturesInTooltip { get; set; } = useTexturesInTooltip;
+    public bool ImplicitOverrideMaterials { get; set; } = implicitOverrideMaterials;
     
     public IEnumerable<AutoTiler.PathPackMeta> AutoTilerPathPacks { get; set; } = [
         new("Thin Pipes", "Vertical Pipe", "Horizontal Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),

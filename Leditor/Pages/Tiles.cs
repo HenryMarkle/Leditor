@@ -138,6 +138,79 @@ internal class TileEditorPage : EditorPage, IDisposable
 
     private bool _isNavbarHovered;
 
+    public static bool IsTileLegal(in TileDefinition? init, Vector2 point)
+    {
+        if (init is null) return false;
+        
+        var (width, height) = init.Size;
+        var specs = init.Specs;
+
+        // get the "middle" point of the tile
+        var head = Utils.GetTileHeadOrigin(init);
+
+        // the top-left of the tile
+        var start = Raymath.Vector2Subtract(point, head);
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var matrixX = x + (int)start.X;
+                var matrixY = y + (int)start.Y;
+
+                // This function depends on the rest of the program to guarantee that all level matrices have the same x and y dimensions
+                if (
+                    matrixX >= 0 &&
+                    matrixX < GLOBALS.Level.GeoMatrix.GetLength(1) &&
+                    matrixY >= 0 &&
+                    matrixY < GLOBALS.Level.GeoMatrix.GetLength(0)
+                )
+                {
+                    var tileCell = GLOBALS.Level.TileMatrix[matrixY, matrixX, GLOBALS.Layer];
+                    var geoCell = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
+                    var specsIndex = (x * height) + y;
+
+
+                    var spec = specs[y, x, 0];
+                    var spec2 = specs[y, x, 1];
+                    var spec3 = specs[y, x, 2];
+
+                    var isLegal = spec == -1 ||
+                                  (geoCell.Geo == spec && tileCell.Type is TileType.Default or TileType.Material);
+
+                    if (tileCell.Type is TileType.Material && !GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials) isLegal = false;
+
+                    if (GLOBALS.Layer != 2)
+                    {
+                        var tileCellNextLayer = GLOBALS.Level.TileMatrix[matrixY, matrixX, GLOBALS.Layer + 1];
+                        var geoCellNextLayer = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer + 1];
+
+                        isLegal = isLegal && (spec2 == -1 || (geoCellNextLayer.Geo == spec2 &&
+                                                     tileCellNextLayer.Type is TileType.Default or TileType.Material));
+
+                        if (tileCellNextLayer.Type is TileType.Material && !GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials) isLegal = false;
+                    }
+
+                    if (GLOBALS.Layer == 0)
+                    {
+                        var tileCellNextLayer = GLOBALS.Level.TileMatrix[matrixY, matrixX, 2];
+                        var geoCellNextLayer = GLOBALS.Level.GeoMatrix[matrixY, matrixX, 2];
+                        
+                        isLegal = isLegal && (spec3 == -1 || (geoCellNextLayer.Geo == spec3 &&
+                                                              tileCellNextLayer.Type is TileType.Default or TileType.Material));
+
+                        if (tileCellNextLayer.Type is TileType.Material && !GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials) isLegal = false;
+                    }
+
+                    if (!isLegal) return false;
+                }
+                else return false;
+            }
+        }
+
+        return true;
+    }
+
     public void ResolveAutoTiler() {
         var resolvedTiles = _autoTilerLinearAlgorithm 
             ? _autoTiler?.ResolvePathLinear(_autoTilerPath) 
@@ -506,6 +579,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 var cell = GLOBALS.Level.TileMatrix[matrixY, matrixX, z];
                 
                 if (cell.Type != TileType.Default && cell.Type != TileType.Material) continue;
+                if (cell.Type == TileType.Material && !GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials) continue;
 
                 var newCell = new TileCell { Type = TileType.Material, Data = new TileMaterial(material.name) }; // waste of space, ik
                 actions.Add(new Gram.TileAction((matrixX, matrixY, z), cell, newCell));
@@ -1113,7 +1187,7 @@ internal class TileEditorPage : EditorPage, IDisposable
 
         var currentMaterialInit = GLOBALS.Materials[_materialCategoryIndex][_materialIndex];
 
-        var isTileLegal = Utils.IsTileLegal(_currentTile, new Vector2(tileMatrixX, tileMatrixY));
+        var isTileLegal = IsTileLegal(_currentTile, new Vector2(tileMatrixX, tileMatrixY));
 
         #region TileEditorShortcuts
         
@@ -2580,6 +2654,7 @@ internal class TileEditorPage : EditorPage, IDisposable
             }
             
             // Settings
+            #region SettingsWindow
 
             var settingsWinOpened = ImGui.Begin("Settings##TilesSettings");
             
@@ -2601,6 +2676,13 @@ internal class TileEditorPage : EditorPage, IDisposable
             
             if (settingsWinOpened)
             {
+                ImGui.SeparatorText("Tooling");
+
+                var overridableMaterials = GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials;
+                if (ImGui.Checkbox("Overridable Materials", ref overridableMaterials)) {
+                    GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials = overridableMaterials;
+                }
+
                 //
 
                 ImGui.Checkbox("Tooltip", ref _tooltip);
@@ -2643,6 +2725,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                 
                 ImGui.End();
             }
+            
+            #endregion
             
             // Shortcuts window
             
