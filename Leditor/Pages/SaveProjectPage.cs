@@ -206,9 +206,9 @@ internal class SaveProjectPage : EditorPage
                 Utils.Restrict(ref _currentIndex, 0, _dirEntries.Length - 1);
             }
 
-            if (_dirEntries.Length > 0 && _currentIndex > -1 && _currentIndex < _dirEntries.Length && IsKeyPressed(KeyboardKey.Enter)) {
-                NavigateToDir(_dirEntries[_currentIndex].path);
-            } 
+            // if (_dirEntries.Length > 0 && _currentIndex > -1 && _currentIndex < _dirEntries.Length && IsKeyPressed(KeyboardKey.Enter)) {
+            //     NavigateToDir(_dirEntries[_currentIndex].path);
+            // } 
         }
 
         BeginDrawing();
@@ -339,15 +339,17 @@ internal class SaveProjectPage : EditorPage
 
                             if (selected) {
                                 if (_currentIndex == i) {
-                                    NavigateToDir(_dirEntries[i].path);
-                                    _currentDirExists = Directory.Exists(_currentDir);
+                                    if (_dirEntries[i].isDir) {
+                                        NavigateToDir(_dirEntries[i].path);
+                                        _currentDirExists = Directory.Exists(_currentDir);
+                                    }
                                 } else {
                                     _currentIndex = i;
+                                    if (!_dirEntries[i].isDir) {
+                                        _projectName = _dirEntries[i].name;
+                                    }
                                 }
 
-                                if (!_dirEntries[i].isDir) {
-                                    _projectName = _dirEntries[i].name;
-                                }
 
                                 _duplicateName = ProjectNameExists(_projectName);
                             }
