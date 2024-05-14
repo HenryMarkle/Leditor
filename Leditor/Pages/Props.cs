@@ -1128,6 +1128,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         if (@next == 8) {
             _shouldRedrawLevel = true;
             _shouldRedrawPropLayer = true;
+            _defaultDepth = -10 * GLOBALS.Layer;
         }
     }
 
