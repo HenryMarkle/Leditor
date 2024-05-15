@@ -240,12 +240,23 @@ internal class EffectsEditorPage : EditorPage
             if ((_shortcuts.AcceptNewEffect.Check(ctrl, shift, alt) || _shortcuts.AcceptNewEffectAlt.Check(ctrl, shift, alt)) && 
                 _newEffectSelectedValue > -1 && _newEffectSelectedValue < GLOBALS.Effects[_newEffectCategorySelectedValue].Length)
             {
+                var effectToAdd = GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue];
+                var matrixToAdd = new double[GLOBALS.Level.Height, GLOBALS.Level.Width];
+
+                if (Utils.EffectCoversScreen(effectToAdd)) {
+                    for (var y = 0; y < GLOBALS.Level.Height; y++) {
+                        for (var x = 0; x < GLOBALS.Level.Width; x++) {
+                            matrixToAdd[y, x] = 100;
+                        }
+                    }
+                }
+
                 GLOBALS.Level.Effects = [
                     .. GLOBALS.Level.Effects,
                     (
-                        GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue],
+                        effectToAdd,
                         Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
-                        new double[GLOBALS.Level.Height, GLOBALS.Level.Width]
+                        matrixToAdd
                     )
                 ];
 
