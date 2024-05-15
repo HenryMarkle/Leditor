@@ -95,7 +95,7 @@ internal class SaveProjectPage : EditorPage
     }
 
     private bool ProjectNameExists(string name) {
-        if (string.IsNullOrEmpty(name)) return false;
+        if (string.IsNullOrEmpty(_currentDir)|| string.IsNullOrEmpty(name)) return false;
 
         return Directory
             .GetFiles(_currentDir)
@@ -105,7 +105,7 @@ internal class SaveProjectPage : EditorPage
     }
 
     private bool FolderExists(string name) {
-        if (string.IsNullOrEmpty(name)) return false;
+        if (string.IsNullOrEmpty(_currentDir)|| string.IsNullOrEmpty(name)) return false;
         
         return Directory
             .GetDirectories(_currentDir)
@@ -347,11 +347,11 @@ internal class SaveProjectPage : EditorPage
                                     _currentIndex = i;
                                     if (!_dirEntries[i].isDir) {
                                         _projectName = _dirEntries[i].name;
+                                        _duplicateName = ProjectNameExists(_projectName);
                                     }
                                 }
 
 
-                                _duplicateName = ProjectNameExists(_projectName);
                             }
                         }
                         
