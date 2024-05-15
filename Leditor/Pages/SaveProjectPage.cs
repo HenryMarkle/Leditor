@@ -87,6 +87,8 @@ internal class SaveProjectPage : EditorPage
     }
 
     private void NavigateUp() {
+        if (string.IsNullOrEmpty(_currentDir)) return;
+
         var parentDir = Directory.GetParent(_currentDir);
 
         if (parentDir is null or { Exists: false }) return;
@@ -186,7 +188,11 @@ internal class SaveProjectPage : EditorPage
     public void OnPageUpdated(int previous, int @next) {
         if (@next == 12) {
             _projectName = GLOBALS.Level.ProjectName;
-            _currentDir = GLOBALS.ProjectPath;  
+            _currentDir = GLOBALS.ProjectPath;
+
+            if (string.IsNullOrEmpty(GLOBALS.ProjectPath)) {
+                _currentDir = GLOBALS.Paths.ProjectsDirectory;
+            }
         }
     }
 
