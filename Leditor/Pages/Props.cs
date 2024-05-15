@@ -177,6 +177,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
         EndTextureMode();
     }
 
+    private bool _lockedPlacement;
+
     private int _hoveredCategoryIndex = -1;
     private int _hoveredIndex = -1;
     private int _previousRootCategory;
@@ -1465,7 +1467,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 // Place Prop
                 if (_noCollisionPropPlacement)
                 {
-                    if (canDrawTile && (_shortcuts.PlaceProp.Check(ctrl, shift, alt, true) ||
+                    if (!_lockedPlacement && canDrawTile && (_shortcuts.PlaceProp.Check(ctrl, shift, alt, true) ||
                                         _shortcuts.PlacePropAlt.Check(ctrl, shift, alt, true)))
                     {
                         // _shouldRedrawLevel = true;
@@ -1704,6 +1706,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         skipPlacement:
                         {
                         }
+                    }
+                
+                    if (_lockedPlacement && (IsMouseButtonReleased(_shortcuts.PlaceProp.Button) || IsKeyReleased(_shortcuts.PlacePropAlt.Key))) {
+                        _lockedPlacement = false;
                     }
                 }
                 else
@@ -3030,6 +3036,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     }   
                     else if (canDrawTile && (_shortcuts.PlaceProp.Check(ctrl, shift, alt, true) ||_shortcuts.PlacePropAlt.Check(ctrl, shift, alt, true))) {
                         _mode = 1;
+                        if (_noCollisionPropPlacement) _lockedPlacement = true;
                     }
                 }
                 
