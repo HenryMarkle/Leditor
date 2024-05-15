@@ -3028,7 +3028,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         _selectedCycleIndices = [..selectedI];
                         _selectedCycleCursor = -1;
                     }   
-                    else if ((_shortcuts.PlaceProp.Check(ctrl, shift, alt, true) ||_shortcuts.PlacePropAlt.Check(ctrl, shift, alt, true))) {
+                    else if (canDrawTile && (_shortcuts.PlaceProp.Check(ctrl, shift, alt, true) ||_shortcuts.PlacePropAlt.Check(ctrl, shift, alt, true))) {
                         _mode = 1;
                     }
                 }
