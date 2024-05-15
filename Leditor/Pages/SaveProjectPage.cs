@@ -146,6 +146,10 @@ internal class SaveProjectPage : EditorPage
 
     internal SaveProjectPage()
     {
+        if (!Directory.Exists(GLOBALS.Paths.ProjectsDirectory)) {
+            Directory.CreateDirectory(GLOBALS.Paths.ProjectsDirectory);
+        }
+
         _newFolderName = string.Empty;
         _projectName = string.Empty;
         _currentDir = GLOBALS.Paths.ProjectsDirectory;
@@ -191,6 +195,9 @@ internal class SaveProjectPage : EditorPage
             _currentDir = GLOBALS.ProjectPath;
 
             if (string.IsNullOrEmpty(GLOBALS.ProjectPath)) {
+                if (!Directory.Exists(GLOBALS.Paths.ProjectsDirectory)) {
+                    Directory.CreateDirectory(GLOBALS.Paths.ProjectsDirectory);
+                }
                 _currentDir = GLOBALS.Paths.ProjectsDirectory;
             }
         }
