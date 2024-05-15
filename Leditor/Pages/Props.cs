@@ -2982,7 +2982,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
                     }
                     
-                    if ((_shortcuts.SelectProps.Check(ctrl, shift, alt, true) || _shortcuts.SelectPropsAlt.Check(ctrl, shift, alt, true)) && !_clickTracker && canDrawTile)
+                    if ((IsMouseButtonDown(_shortcuts.SelectProps.Button) || IsKeyDown(_shortcuts.SelectPropsAlt.Key)) && !_clickTracker && canDrawTile)
                     {
                         _selection1 = GetScreenToWorld2D(GetMousePosition(), _camera);
                         _clickTracker = true;
@@ -3004,7 +3004,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             var current = GLOBALS.Level.Props[i];
                             var propSelectRect = Utils.EncloseQuads(current.prop.Quads);
-                            if (_shortcuts.PropSelectionModifier.Check(ctrl, shift, alt, true))
+                            if (IsKeyDown(_shortcuts.PropSelectionModifier.Key))
                             {
                                 if (CheckCollisionRecs(propSelectRect, _selection) && !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10))
                                 {
@@ -3248,7 +3248,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             }
 
             // TODO: tweak selection cancellation
-            if ((_shortcuts.SelectProps.Check(ctrl, shift, alt, true) || _shortcuts.SelectPropsAlt.Check(ctrl, shift, alt, true)) && _clickTracker)
+            if ((IsMouseButtonDown(_shortcuts.SelectProps.Button) || IsKeyDown(_shortcuts.SelectPropsAlt.Key)) && _clickTracker)
             {
                 var mouse = GetScreenToWorld2D(GetMousePosition(), _camera);
                 var diff = Raymath.Vector2Subtract(mouse, _selection1);
