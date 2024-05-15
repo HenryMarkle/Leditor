@@ -2471,7 +2471,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 }
                             }
 
-                            if (IsMouseButtonReleased(MouseButton.Left) && _bezierHandleLock != -1)
+                            if ((IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) && _bezierHandleLock != -1)
                                 _bezierHandleLock = -1;
                         }
                     }
@@ -2488,7 +2488,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     }
 
                     
-                    if (IsMouseButtonPressed(MouseButton.Left)) _movingProps = false;
+                    if (IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) _movingProps = false;
                     
                     // update mouse delta
                     
@@ -2603,7 +2603,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     }
 
                     
-                    if (IsMouseButtonPressed(MouseButton.Left)) _rotatingProps = false;
+                    if (IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) _rotatingProps = false;
 
                     var delta = GetMouseDelta();
                     
@@ -2632,7 +2632,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     }
 
                     
-                    if (IsMouseButtonPressed(MouseButton.Left))
+                    if (IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key))
                     {
                         _stretchAxes = 0;
                         _scalingProps = false;
@@ -2715,7 +2715,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         _ => tileMouseWorld
                     };
 
-                    if (IsMouseButtonDown(MouseButton.Left))
+                    if (IsMouseButtonDown(_shortcuts.SelectProps.Button) || IsKeyDown(_shortcuts.SelectPropsAlt.Key))
                     {
                         if (fetchedSelected[0].prop.type == InitPropType.Rope)
                         {
@@ -2914,7 +2914,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         
                         GLOBALS.Level.Props[fetchedSelected[0].index].prop.Quads = currentQuads;
                     }
-                    else if (IsMouseButtonReleased(MouseButton.Left) && _quadLock != 0) _quadLock = 0;
+                    else if ((IsMouseButtonReleased(_shortcuts.SelectProps.Button) || IsKeyReleased(_shortcuts.SelectPropsAlt.Key)) && _quadLock != 0) _quadLock = 0;
                 }
                 else if (_editingPropPoints && fetchedSelected.Length == 1)
                 {
@@ -2927,7 +2927,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     
                     var points = fetchedSelected[0].prop.prop.Extras.RopePoints;
                     
-                    if (IsMouseButtonDown(MouseButton.Left))
+                    if (IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key))
                     {
                         // Check Collision of Each Point
 
@@ -2948,7 +2948,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             }
                         }
                     }
-                    else if (IsMouseButtonReleased(MouseButton.Left) && _pointLock != -1) _pointLock = -1;
+                    else if ((IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) && _pointLock != -1) _pointLock = -1;
                 }
                 else if (!_ropeMode)
                 {
