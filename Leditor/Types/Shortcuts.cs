@@ -380,6 +380,8 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut FastRotateClockwise { get; set; } = new(KeyboardKey.Null);
     public KeyboardShortcut FastRotateCounterClockwise { get; set; } = new(KeyboardKey.Null);
 
+    public KeyboardShortcut CycleVariations { get; set; } = new(KeyboardKey.V, shift: false, alt: false, ctrl: false);
+
     public KeyboardShortcut ToggleNoCollisionPropPlacement { get; set; } = KeyboardKey.Null;
 
     public KeyboardShortcut PropSelectionModifier { get; set; } = new(KeyboardKey.LeftControl, ctrl: true);

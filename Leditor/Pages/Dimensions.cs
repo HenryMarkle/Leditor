@@ -46,6 +46,7 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
     {
         var scale = GLOBALS.Scale;
         var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);
+        ImageFlipVertical(ref image);
         UnloadRenderTexture(GLOBALS.Textures.LightMap);
         var texture = LoadTextureFromImage(image);
         UnloadImage(image);
