@@ -2460,7 +2460,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             
                             fetchedSelected[0].prop.prop.Extras.RopePoints = Utils.Casteljau(fetchedSelected[0].prop.prop.Extras.RopePoints.Length, [ ends.pA, ..foundRope.bezierHandles, ends.pB ]);
 
-                            if (IsMouseButtonDown(MouseButton.Left))
+                            if ((IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) && _bezierHandleLock != -1)
+                                _bezierHandleLock = -1;
+
+                            if (IsMouseButtonDown(_shortcuts.SelectProps.Button))
                             {
                                 for (var b = 0; b < foundRope.bezierHandles.Length; b++)
                                 {
@@ -2471,8 +2474,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 }
                             }
 
-                            if ((IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) && _bezierHandleLock != -1)
-                                _bezierHandleLock = -1;
+                            
                         }
                     }
 
