@@ -2928,8 +2928,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                     
                     var points = fetchedSelected[0].prop.prop.Extras.RopePoints;
+
+                    if ((IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) && _pointLock != -1) _pointLock = -1;
                     
-                    if (IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key))
+                    if (IsMouseButtonDown(_shortcuts.SelectProps.Button) || IsKeyDown(_shortcuts.SelectPropsAlt.Key))
                     {
                         // Check Collision of Each Point
 
@@ -2950,7 +2952,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             }
                         }
                     }
-                    else if ((IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) && _pointLock != -1) _pointLock = -1;
                 }
                 else if (!_ropeMode)
                 {
