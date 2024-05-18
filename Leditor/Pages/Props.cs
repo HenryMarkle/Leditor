@@ -1464,6 +1464,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
         {
             case 1: // Place Mode
 
+                if (_shortcuts.CycleVariations.Check(ctrl, shift, alt)) {
+                    if (_menuRootCategoryIndex == 3 && GLOBALS.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex] is IVariableInit v) _defaultVariation = (_defaultVariation + 1) % v.Variations;
+                    else _defaultVariation = 0;
+                }
+
                 // Place Prop
                 if (_noCollisionPropPlacement)
                 {
@@ -1665,6 +1670,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     
                                     _ => (texture.Width / 2f, texture.Height / 2f, new BasicPropSettings())
                                 };
+
+                                if (settings is ICustomDepth cd) {
+                                    cd.CustomDepth = init.Depth * 10;
+                                }
 
                                 if (_newlyCopied)
                                 {
@@ -1901,6 +1910,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     
                                     _ => (texture.Width / 2f, texture.Height / 2f, new BasicPropSettings())
                                 };
+
+                                if (settings is ICustomDepth cd) {
+                                    cd.CustomDepth = init.Depth * 10;
+                                }
 
                                 if (_newlyCopied)
                                 {
@@ -2989,6 +3002,21 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 if (selected.prop.prop.Depth > 0) selected.prop.prop.Depth = 0;
                             }
                         }
+                    
+                        if (_shortcuts.CycleVariations.Check(ctrl, shift, alt)) {
+                            foreach (var selected in fetchedSelected) {
+                                if (selected.prop.prop.Extras.Settings is IVariable vs) {
+                                    var (category, index) = selected.prop.position;
+
+                                    var variations = (GLOBALS.Props[category][index] as IVariableInit).Variations;
+                                
+                                    vs.Variation = (vs.Variation += 1) % variations;
+                                }
+                            }
+
+                            _shouldRedrawPropLayer = true;
+                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette) _shouldRedrawLevel = true;
+                        }
                     }
                     
                     if ((IsMouseButtonDown(_shortcuts.SelectProps.Button) || IsKeyDown(_shortcuts.SelectPropsAlt.Key)) && !_clickTracker && canDrawTile)
@@ -3736,13 +3764,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             // Custom Depth
 
                             if (selectedProp.prop.Extras.Settings is ICustomDepth cd) {
-                                ImGui.SetNextItemWidth(200);
+                                ImGui.SetNextItemWidth(100);
 
                                 var customDepth = cd.CustomDepth;
 
                                 if (ImGui.InputInt("Custom Depth", ref customDepth)) {
-                                    // Utils.Restrict(ref customDepth, -29, 0);
-                                    
                                     cd.CustomDepth = customDepth;
                                 }
                             }

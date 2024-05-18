@@ -805,7 +805,8 @@ internal class SettingsPage : EditorPage
                         var assignPanAlt = ImGui.Button($"Pan: {GLOBALS.Settings.Shortcuts.PropsEditor.EscapeSpinnerControl}");
                         var assignSelectPropsKeyboard = ImGui.Button($"Select Props: {GLOBALS.Settings.Shortcuts.PropsEditor.SelectPropsAlt}");
                         var assignToggleNoCollisionPlacement = ImGui.Button($"Toggle No-Collision Placement: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleNoCollisionPropPlacement}");
-                        
+                        var assignCycleVariations = ImGui.Button($"Cycle Variations: {GLOBALS.Settings.Shortcuts.PropsEditor.CycleVariations}");
+
                         ImGui.SeparatorText("Selected Props Actions");
                         
                         var assignToggleMovingProps = ImGui.Button($"Move: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleMovingPropsMode}");
@@ -826,6 +827,7 @@ internal class SettingsPage : EditorPage
                         var assignFastRotateCounterClockwise = ImGui.Button($"Fast Rotate Counter-Clockwise: {GLOBALS.Settings.Shortcuts.PropsEditor.FastRotateCounterClockwise}");
 
 
+                        if (assignCycleVariations) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleVariations;
                         if (assignCycleLayers) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleLayers;
                         if (assignCycleSnapMode) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleSnapMode;
                         if (assignToggleLayer1) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer1;
