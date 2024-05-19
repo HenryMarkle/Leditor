@@ -1672,7 +1672,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 };
 
                                 if (settings is ICustomDepth cd) {
-                                    cd.CustomDepth = init.Depth * 10;
+                                    cd.CustomDepth = init switch
+                                    {
+                                        InitVariedStandardProp v => v.Repeat.Length,
+                                        InitStandardProp s => s.Repeat.Length,
+                                        _ => init.Depth
+                                    };
                                 }
 
                                 if (_newlyCopied)
@@ -1912,7 +1917,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 };
 
                                 if (settings is ICustomDepth cd) {
-                                    cd.CustomDepth = init.Depth * 10;
+                                    cd.CustomDepth = init switch
+                                    {
+                                        InitVariedStandardProp v => v.Repeat.Length,
+                                        InitStandardProp s => s.Repeat.Length,
+                                        _ => init.Depth
+                                    };
                                 }
 
                                 if (_newlyCopied)
