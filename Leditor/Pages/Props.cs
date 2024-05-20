@@ -1984,7 +1984,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 }
 
                 // Activate Selection Mode Via Mouse
-                {
+                if (_shortcuts.SelectProps.Button != _shortcuts.PlaceProp.Button) {
                     if ((_shortcuts.SelectProps.Check(ctrl, shift, alt, true) || _shortcuts.SelectPropsAlt.Check(ctrl, shift, alt, true)) && !_clickTracker && canDrawTile)
                     {
                         _selection1 = GetScreenToWorld2D(GetMousePosition(), _camera);
@@ -3075,7 +3075,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         _selectedCycleIndices = [..selectedI];
                         _selectedCycleCursor = -1;
                     }   
-                    else if (canDrawTile && (_shortcuts.PlaceProp.Check(ctrl, shift, alt, true) ||_shortcuts.PlacePropAlt.Check(ctrl, shift, alt, true))) {
+                    else if (canDrawTile && _shortcuts.PlaceProp.Button != _shortcuts.SelectProps.Button && (_shortcuts.PlaceProp.Check(ctrl, shift, alt, true) ||_shortcuts.PlacePropAlt.Check(ctrl, shift, alt, true))) {
                         _mode = 1;
                         if (_noCollisionPropPlacement) _lockedPlacement = true;
                     }
