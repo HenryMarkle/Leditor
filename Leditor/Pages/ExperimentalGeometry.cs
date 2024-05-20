@@ -1133,7 +1133,7 @@ internal class ExperimentalGeometryPage : EditorPage
 
                             var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                             
-                            oldCell.Stackables[id] = false;
+                            cell.Stackables[id] = false;
                             
                             var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                             
@@ -1285,8 +1285,6 @@ internal class ExperimentalGeometryPage : EditorPage
                                     matrixY * scale < GLOBALS.Level.Border.Y ||
                                     matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
 
-                                if (_geoMenuIndex == 0 && GLOBALS.Layer != 0 && GLOBALS.Layer != 1) break;
-
                                 var id = GeoMenuCategory3ToStackableId[_geoMenuIndex];
                                 
                                 ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
@@ -1295,7 +1293,7 @@ internal class ExperimentalGeometryPage : EditorPage
 
                                 var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                                 
-                                oldCell.Stackables[id] = true;
+                                cell.Stackables[id] = true;
                                 
                                 var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                                 
