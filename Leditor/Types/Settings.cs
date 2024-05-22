@@ -189,7 +189,8 @@ public class GeneralSettings(
     int autoSaveSeconds = 120,
     bool autoSave = false,
     byte waterOpacity = 70,
-    bool water = true
+    bool water = true,
+    bool navbar = true
     )
 {
     public bool DeveloperMode { get; set; } = developerMode;
@@ -212,6 +213,7 @@ public class GeneralSettings(
     public int AutoSaveSeconds { get; set; } = autoSaveSeconds < 30 ? 30 : autoSaveSeconds;
     public byte WaterOpacity { get; set; } = waterOpacity;
     public bool Water { get; set; } = water;
+    public bool Navbar { get; set; } = navbar;
 }
 
 public class Settings

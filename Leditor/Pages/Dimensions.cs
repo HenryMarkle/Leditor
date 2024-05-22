@@ -91,7 +91,7 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
         
         // Navigation bar
                 
-        GLOBALS.NavSignal = Printers.ImGui.Nav(out _);
+        if (GLOBALS.Settings.GeneralSettings.Navbar) GLOBALS.NavSignal = Printers.ImGui.Nav(out _);
 
         if (ImGui.Begin("Resize##LevelDimensions", ImGuiWindowFlags.NoCollapse))
         {

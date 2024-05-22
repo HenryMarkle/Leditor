@@ -3522,7 +3522,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             
             // Navigation bar
                 
-            GLOBALS.NavSignal = Printers.ImGui.Nav(out _isNavbarHovered);
+            if (GLOBALS.Settings.GeneralSettings.Navbar) GLOBALS.NavSignal = Printers.ImGui.Nav(out _isNavbarHovered);
 
             var menuOpened = ImGui.Begin("Props##PropsPanel");
             

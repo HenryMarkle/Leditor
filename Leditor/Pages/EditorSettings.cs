@@ -136,7 +136,7 @@ internal class SettingsPage : EditorPage
         
         // Navigation bar
                 
-        GLOBALS.NavSignal = Printers.ImGui.Nav(out _);
+        if (GLOBALS.Settings.GeneralSettings.Navbar) GLOBALS.NavSignal = Printers.ImGui.Nav(out _);
 
         if (ImGui.Begin("Settings##EditorSettings", ImGuiWindowFlags.NoCollapse))
         {
@@ -352,6 +352,11 @@ internal class SettingsPage : EditorPage
                         GLOBALS.Settings.GeneralSettings.DefaultZoom = defaultZoom;
                         
                         ImGui.SeparatorText("Menus");
+
+                        var navbar = GLOBALS.Settings.GeneralSettings.Navbar;
+                        if (ImGui.Checkbox("Navigation Bar", ref navbar)) {
+                            GLOBALS.Settings.GeneralSettings.Navbar = navbar;
+                        }
 
                         var cycleMenus = GLOBALS.Settings.GeneralSettings.CycleMenus;
                         if (ImGui.Checkbox("Cycle Menus", ref cycleMenus))

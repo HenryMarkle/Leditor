@@ -94,6 +94,8 @@ internal class NewLevelPage : EditorPage
         #region ImGui
         rlImGui_cs.rlImGui.Begin();
 
+        if (GLOBALS.Settings.GeneralSettings.Navbar) GLOBALS.NavSignal = Printers.ImGui.Nav(out _);
+
         if (ImGui.Begin("Create New Level##NewLevelWindow"))
         {
             if (_advanced)

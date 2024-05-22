@@ -727,7 +727,7 @@ internal class EffectsEditorPage : EditorPage
                 
                 // Navigation bar
                 
-                GLOBALS.NavSignal = Printers.ImGui.Nav(out _isNavbarHovered);
+                if (GLOBALS.Settings.GeneralSettings.Navbar) GLOBALS.NavSignal = Printers.ImGui.Nav(out _isNavbarHovered);
                 
                 // Applied Effects
 
