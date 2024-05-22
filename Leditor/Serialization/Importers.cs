@@ -182,7 +182,7 @@ public static class Importers {
         AstNode.Number? contourExp          = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "contourexp").Value;
 
         InitPropColorTreatment getColorTreatment() => colorTreatment is null
-                    ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(colorTreatment))
+                    ? InitPropColorTreatment.Standard
                     : colorTreatment.Value switch { "standard" => InitPropColorTreatment.Standard, "bevel" => InitPropColorTreatment.Bevel, _ => throw new InvalidInitPropertyValueException("", StringifyBase(@base), "colorTreatment", colorTreatment.Value) };
 
         int getIntProperty(AstNode.Number? property) => property is null
@@ -352,8 +352,12 @@ public static class Importers {
         List<(string, Color)> categories = [];
         List<InitPropBase[]> props = [];
 
+        var counter = 0;
+
         foreach (var line in lines)
         {
+            counter++;
+
             if (string.IsNullOrEmpty(line) || line.StartsWith("--")) continue;
 
             // category
@@ -384,7 +388,13 @@ public static class Importers {
             {
                 var obj = LingoParser.Expression.ParseOrThrow(line);
 
-                var prop = GetInitProp(obj);
+                InitPropBase prop;
+
+                try {
+                    prop = GetInitProp(obj);
+                } catch (Exception e) {
+                    throw new Exception(innerException: e, message: $"Failed to load prop init at line {counter}: {e.Message}");
+                }
 
                 props[^1] = [.. props[^1], prop];
             }

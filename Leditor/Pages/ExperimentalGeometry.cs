@@ -2019,43 +2019,42 @@ internal class ExperimentalGeometryPage : EditorPage
 
                 var waterColor = GLOBALS.Settings.GeometryEditor.WaterColor;
 
-                var layer1ColorVec = new Vector3(layer1Color.R / 255f, layer1Color.G / 255f, layer1Color.B / 255f);
-                var layer2ColorVec = new Vector3(layer2Color.R / 255f, layer2Color.G / 255f, layer2Color.B / 255f);
-                var layer3ColorVec = new Vector3(layer3Color.R / 255f, layer3Color.G / 255f, layer3Color.B / 255f);
+                var layer1ColorVec = new Vector4(layer1Color.R / 255f, layer1Color.G / 255f, layer1Color.B / 255f, layer1Color.A/255f);
+                var layer2ColorVec = new Vector4(layer2Color.R / 255f, layer2Color.G / 255f, layer2Color.B / 255f, layer2Color.A/255f);
+                var layer3ColorVec = new Vector4(layer3Color.R / 255f, layer3Color.G / 255f, layer3Color.B / 255f, layer3Color.A/255f);
                 
-                var waterColorVec = new Vector3(waterColor.R / 255f, waterColor.G / 255f, waterColor.B / 255f);
+                var waterColorVec = new Vector4(waterColor.R / 255f, waterColor.G / 255f, waterColor.B / 255f, waterColor.A/255f);
                 
                 ImGui.SetNextItemWidth(250);
-                if (ImGui.ColorEdit3("Layer 1", ref layer1ColorVec)) {
+                if (ImGui.ColorEdit4("Layer 1", ref layer1ColorVec)) {
                     _shouldRedrawLevel = true;
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer1 = new ConColor((byte)(layer1ColorVec.X * 255),
+                        (byte)(layer1ColorVec.Y * 255), (byte)(layer1ColorVec.Z * 255), (byte)(layer1ColorVec.W * 255));
                 }
                 
                 ImGui.SetNextItemWidth(250);
-                if (ImGui.ColorEdit3("Layer 2", ref layer2ColorVec)) {
+                if (ImGui.ColorEdit4("Layer 2", ref layer2ColorVec)) {
                     _shouldRedrawLevel = true;
-                }
-                
-                ImGui.SetNextItemWidth(250);
-                if (ImGui.ColorEdit3("Layer 3", ref layer3ColorVec)) {
-                    _shouldRedrawLevel = true;
-                }
-                
-                ImGui.SetNextItemWidth(250);
-                if (ImGui.ColorEdit3("Water", ref waterColorVec)) {
-                    _shouldRedrawLevel = true;
-                }
 
-                GLOBALS.Settings.GeometryEditor.LayerColors.Layer1 = new ConColor((byte)(layer1ColorVec.X * 255),
-                    (byte)(layer1ColorVec.Y * 255), (byte)(layer1ColorVec.Z * 255));
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 = new ConColor((byte)(layer2ColorVec.X * 255),
+                        (byte)(layer2ColorVec.Y * 255), (byte)(layer2ColorVec.Z * 255), (byte)(layer2ColorVec.W * 255));
+                }
                 
-                GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 = new ConColor((byte)(layer2ColorVec.X * 255),
-                    (byte)(layer2ColorVec.Y * 255), (byte)(layer2ColorVec.Z * 255), 50);
+                ImGui.SetNextItemWidth(250);
+                if (ImGui.ColorEdit4("Layer 3", ref layer3ColorVec)) {
+                    _shouldRedrawLevel = true;
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 = new ConColor((byte)(layer3ColorVec.X * 255),
+                        (byte)(layer3ColorVec.Y * 255), (byte)(layer3ColorVec.Z * 255), (byte)(layer3ColorVec.W * 255));
+                }
                 
-                GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 = new ConColor((byte)(layer3ColorVec.X * 255),
-                    (byte)(layer3ColorVec.Y * 255), (byte)(layer3ColorVec.Z * 255), 50);
+                ImGui.SetNextItemWidth(250);
+                if (ImGui.ColorEdit4("Water", ref waterColorVec)) {
+                    _shouldRedrawLevel = true;
+
+                    GLOBALS.Settings.GeometryEditor.WaterColor = new ConColor((byte)(waterColorVec.X * 255),
+                        (byte)(waterColorVec.Y * 255), (byte)(waterColorVec.Z * 255), (byte)(waterColorVec.W * 255));
+                }
                 
-                GLOBALS.Settings.GeometryEditor.WaterColor = new ConColor((byte)(waterColorVec.X * 255),
-                    (byte)(waterColorVec.Y * 255), (byte)(waterColorVec.Z * 255), 50);
 
                 var saveColors = ImGui.Button("Save Settings", availableSpace with { Y = 20 });
 
