@@ -29,7 +29,9 @@ jobs:
         dotnet build --configuration Release
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: | 
+        dotnet restore
+        ls -a
 
     - name: Build
       run: dotnet build --configuration Release
