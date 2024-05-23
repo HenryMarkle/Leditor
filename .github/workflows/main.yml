@@ -44,13 +44,13 @@ jobs:
       run: cp -r ./Leditor/assets ./output/assets
 
     - name: Archive output
-      run: zip -r linux-output.zip ./output
+      run: zip -r linux-x64.zip ./output
 
     - name: Upload Linux Artifact
       uses: actions/upload-artifact@v2
       with:
         name: linux-binaries
-        path: ./linux-output.zip
+        path: ./linux-x64.zip
 
 
   build-windows:
@@ -88,13 +88,13 @@ jobs:
       run: Copy-Item -Recurse -Path ./Leditor/assets -Destination ./output/assets
 
     - name: Archive output
-      run: Compress-Archive -Path ./output/* -DestinationPath windows-output.zip
+      run: Compress-Archive -Path ./output/* -DestinationPath windows-x64.zip
 
     - name: Upload Windows Artifact
       uses: actions/upload-artifact@v2
       with:
         name: windows-binaries
-        path: ./windows-output.zip
+        path: ./windows-x64.zip
   
   create-release:
     needs: [build-linux, build-windows]
@@ -134,8 +134,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./artifacts/linux-output.zip
-        asset_name: linux-output.zip
+        asset_path: ./artifacts/linux-x64.zip
+        asset_name: linux-x64.zip
         asset_content_type: application/zip
 
     - name: Upload Windows Release Asset
@@ -144,6 +144,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./artifacts/windows-output.zip
-        asset_name: windows-output.zip
+        asset_path: ./artifacts/windows-x64.zip
+        asset_name: windows-x64.zip
         asset_content_type: application/zip
