@@ -18,6 +18,16 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
+    - name: Clone Drizzle
+      run: git clone --branch embedded https://github.com/HenryMarkle/Drizzle
+
+    - name: Run Drizzle Transpiler
+      run: dotnet run --project Drizzle.Transpiler
+
+    - name: Build Drizzle
+      run: dotnet build --configuration Release
+
+
     - name: Restore dependencies
       run: dotnet restore
 
@@ -69,6 +79,15 @@ jobs:
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: '8.0.x'
+
+    - name: Clone Drizzle
+      run: git clone --branch embedded https://github.com/HenryMarkle/Drizzle
+
+    - name: Run Drizzle Transpiler
+      run: dotnet run --project Drizzle.Transpiler
+
+    - name: Build Drizzle
+      run: dotnet build --configuration Release
 
     - name: Restore dependencies
       run: dotnet restore
