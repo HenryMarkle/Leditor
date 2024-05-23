@@ -21,11 +21,11 @@ jobs:
     - name: Clone Drizzle
       run: git clone --branch embedded https://github.com/HenryMarkle/Drizzle
 
-    - name: checking
-      run: ls -a
-
     - name: Moving into subdirectory
       run: cd ./Drizzle
+
+    - name: checking
+      run: ls -a
 
     - name: Restoring Drizzle
       run: dotnet restore
