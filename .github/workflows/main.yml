@@ -21,29 +21,12 @@ jobs:
     - name: Clone Drizzle
       run: git clone --branch embedded https://github.com/HenryMarkle/Drizzle
 
-    - name: Moving into subdirectory
-      run: cd ./Drizzle
-
-    - name: checking
-      run: ls -a
-
-    - name: Restoring Drizzle
-      run: dotnet restore
-
-    - name: Moving into Transpiler
-      run: cd ./Drizzle.Transpiler
-
-    - name: Run Drizzle Transpiler
-      run: dotnet run
-
-    - name: Moving out of Transpiler
-      run: cd ..
-
-    - name: Build Drizzle
-      run: dotnet build --configuration Release
-
-    - name: Moving out of subdirectory
-      run: cd ..
+    - name: Setting up Drizzle
+      run: |
+        cd ./Drizzle
+        dotnet restore
+        dotnet run --project Drizzle.Transpiler
+        dotnet build --configuration Release
 
     - name: Restore dependencies
       run: dotnet restore
@@ -100,26 +83,12 @@ jobs:
     - name: Clone Drizzle
       run: git clone --branch embedded https://github.com/HenryMarkle/Drizzle
 
-    - name: Moving into Drizzle
-      run: cd ./Drizzle
-
-    - name: Restoring Drizzle
-      run: dotnet restore
-
-    - name: Moving into Transpiler
-      run: cd ./Drizzle.Transpiler
-
-    - name: Run Drizzle Transpiler
-      run: dotnet run
-
-    - name: Moving out of Transpiler
-      run: cd ..
-
-    - name: Build Drizzle
-      run: dotnet build --configuration Release
-
-    - name: Moving out of subdirectory
-      run: cd ..
+    - name: Setting up Drizzle
+      run: |
+        cd ./Drizzle
+        dotnet restore
+        dotnet run --project Drizzle.Transpiler
+        dotnet build --configuration Release
 
     - name: Restore dependencies
       run: dotnet restore
