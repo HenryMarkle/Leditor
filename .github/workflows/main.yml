@@ -29,9 +29,7 @@ jobs:
         dotnet build --configuration Release
 
     - name: Restore dependencies
-      run: | 
-        dotnet restore
-        ls -a
+      run: dotnet restore
 
     - name: Build
       run: dotnet build --configuration Release
@@ -40,7 +38,7 @@ jobs:
       run: dotnet publish --configuration Release --output ./output
 
     - name: Copy assets folder to output directory
-      run: cp -r ./assets ./output/assets
+      run: cp -r ./Leditor/assets ./output/assets
 
     - name: Archive output
       uses: actions/upload-artifact@v2
@@ -102,7 +100,7 @@ jobs:
       run: dotnet publish --configuration Release --output ./output
 
     - name: Copy assets folder to output directory
-      run: Copy-Item -Recurse -Path ./assets -Destination ./output/assets
+      run: Copy-Item -Recurse -Path ./Leditor/assets -Destination ./output/assets
 
     - name: Archive output
       uses: actions/upload-artifact@v2
