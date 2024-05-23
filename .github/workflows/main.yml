@@ -54,7 +54,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ github.run_number }}
-        release_name: Release v0.9.85.`.${{ github.run_number }}
+        release_name: Release v0.9.85.${{ github.run_number }}
         draft: false
         prerelease: false
 
@@ -63,6 +63,16 @@ jobs:
       with:
         name: linux-binaries
         path: ./linux-output.zip
+
+    - name: Upload Linux Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./linux-output.zip
+        asset_name: linux-output.zip
+        asset_content_type: application/zip
 
   build-windows:
     runs-on: windows-latest
@@ -106,3 +116,13 @@ jobs:
       with:
         name: windows-binaries
         path: ./windows-output.zip
+
+    - name: Upload Windows Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.build-linux.outputs.create_release.outputs.upload_url }}
+        asset_path: ./windows-output.zip
+        asset_name: windows-output.zip
+        asset_content_type: application/zip
