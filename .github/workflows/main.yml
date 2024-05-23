@@ -44,10 +44,13 @@ jobs:
       run: cp -r ./Leditor/assets ./output/assets
 
     - name: Archive output
+      run: zip -r linux-output.zip ./output
+
+    - name: Upload Linux Artifact
       uses: actions/upload-artifact@v2
       with:
         name: linux-binaries
-        path: ./output
+        path: ./linux-output.zip
 
     - name: Create GitHub Release
       if: github.ref == 'refs/heads/main'
@@ -106,10 +109,7 @@ jobs:
       run: Copy-Item -Recurse -Path ./Leditor/assets -Destination ./output/assets
 
     - name: Archive output
-      uses: actions/upload-artifact@v2
-      with:
-        name: windows-binaries
-        path: ./output
+      run: Compress-Archive -Path ./output/* -DestinationPath windows-output.zip
 
     - name: Upload Windows Release Asset
       uses: actions/upload-release-asset@v1
