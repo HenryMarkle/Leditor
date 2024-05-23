@@ -235,7 +235,7 @@ public class Settings
         GeneralSettings = new();
         Shortcuts = new();
         Misc = new();
-        GeometryEditor = new(new LayerColors(Color.Black, Color.Green, Color.Red), Color.Blue);
+        GeometryEditor = new(new LayerColors(Color.Black with { A = 70 }, Color.Green with { A = 70 }, Color.Red with { A = 70 }), Color.Blue with { A = 50 });
         TileEditor = new();
         CameraSettings = new();
         LightEditor = new LightEditor(
