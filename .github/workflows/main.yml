@@ -95,9 +95,10 @@ jobs:
         dotnet publish --configuration Release --output ../output
 
     - name: Copy assets folder to output directory
-      run: |
-        Copy-Item -Recurse -Path ./Leditor/assets -Destination ./output/assets
-        Copy-Item -Path ./imgui.init -Destination ./output
+      run: Copy-Item -Recurse -Path ./Leditor/assets -Destination ./output/assets
+
+    - name: Copy ImGui ini file to output directory
+      run: Copy-Item -Path ./imgui.init -Destination ./output
 
     - name: Archive output
       run: Compress-Archive -Path ./output/* -DestinationPath windows-x64.zip
