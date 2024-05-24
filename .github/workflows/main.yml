@@ -98,7 +98,7 @@ jobs:
       run: Copy-Item -Recurse -Path ./Leditor/assets -Destination ./output/assets
 
     - name: Copy ImGui ini file to output directory
-      run: Copy-Item -Path ./imgui.init -Destination ./output
+      run: Copy-Item -Path ./imgui.ini -Destination ./output
 
     - name: Archive output
       run: Compress-Archive -Path ./output/* -DestinationPath windows-x64.zip
@@ -137,7 +137,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ github.run_number }}
-        release_name: Release v0.9.84-3
+        release_name: Release v0.9.84-4
         draft: false
         prerelease: false
 
