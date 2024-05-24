@@ -35,13 +35,19 @@ jobs:
       run: dotnet restore
 
     - name: Build
-      run: dotnet build --configuration Release
+      run: |
+        cd ./Leditor
+        dotnet build --configuration Release
 
     - name: Publish
-      run: dotnet publish --configuration Release --output ./output
+      run: |
+        cd ./Leditor
+        dotnet publish --configuration Release --output ../output
 
     - name: Copy assets folder to output directory
-      run: cp -r ./Leditor/assets ./output/assets
+      run: |
+        cp -r ./Leditor/assets ./output/assets
+        cp ./imgui.ini ./output
 
     - name: Archive output
       run: zip -r linux-x64.zip ./output
@@ -79,13 +85,19 @@ jobs:
       run: dotnet restore
 
     - name: Build
-      run: dotnet build --configuration Release
+      run: |
+        cd ./Leditor
+        dotnet build --configuration Release
 
     - name: Publish
-      run: dotnet publish --configuration Release --output ./output
+      run: |
+        cd ./Leditor
+        dotnet publish --configuration Release --output ../output
 
     - name: Copy assets folder to output directory
-      run: Copy-Item -Recurse -Path ./Leditor/assets -Destination ./output/assets
+      run: |
+        Copy-Item -Recurse -Path ./Leditor/assets -Destination ./output/assets
+        Copy-Item -Path ./imgui.init -Destination ./output
 
     - name: Archive output
       run: Compress-Archive -Path ./output/* -DestinationPath windows-x64.zip
