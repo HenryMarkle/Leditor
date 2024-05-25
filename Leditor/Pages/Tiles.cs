@@ -116,6 +116,8 @@ internal class TileEditorPage : EditorPage, IDisposable
     private RenderTexture2D _previewTooltipRT = new(0, 0);
     private RenderTexture2D _tileSpecsPanelRT = new(0, 0);
     private RenderTexture2D _tileTexturePanelRT = new(0, 0);
+
+    private readonly Dictionary<string, RL.Managed.Texture2D> _materialPreviews = [];
     
     private bool _shouldRedrawLevel = true;
 
@@ -236,11 +238,20 @@ internal class TileEditorPage : EditorPage, IDisposable
         _tileSpecsPanelRT.Dispose();
         _tileTexturePanelRT.Dispose();
         _previewTooltipRT.Dispose();
+
+        foreach (var (_, texture) in _materialPreviews) texture.Dispose();
     }
 
     ~TileEditorPage()
     {
         if (!Disposed) throw new InvalidOperationException("Page not disposed by consumer");
+    }
+
+    internal TileEditorPage() {
+        // var materialTextureFiles = Directory.GetFiles(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "material previews"))
+        //     .Where(f => f.EndsWith(".png"));
+
+        // foreach (var file in materialTextureFiles) _materialPreviews[Path.GetFileNameWithoutExtension(file)] = new(file);
     }
 
     private void Search()

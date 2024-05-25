@@ -186,7 +186,10 @@ class Program
           LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "Bricks.png")),          // 2
           LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "Non-Slip Metal.png")),  // 3
           LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "Asphalt.png")),         // 4
-        //   LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "ConcreteBricks.png")),  // 5
+          LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "Small Pipes.png")),     // 5
+          LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "Chaotic Stone.png")),   // 6
+          LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "Random Machines.png")), // 7
+          LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "materials", "Trash.png")),           // 8
         ]
         
         : [];

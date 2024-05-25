@@ -6903,461 +6903,136 @@ internal static class Printers
         var rect = new Rectangle(x, y, scale, scale);
 
         var tint = Color.White with { A = opacity };
+
+        Texture2D texture;
         
         switch (name) {
             case "Concrete":
             {
-                var texture = GLOBALS.Textures.InternalMaterials[0];
-
-                var tx = (float)x / texture.Width;
-                var ty = (float)y / texture.Height;
-
-                var tsx = ((float)x + scale) / texture.Width;
-                var tsy = ((float)y + scale) / texture.Height;
-
-                switch (geoId) {
-                    case 1:
-                    DrawTexturePro(texture, rect, rect, new(0, 0), 0, tint);
-                    break;
-
-                    case 2:// \
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tx, tsy),
-                            new(tsx, tsy),
-                            new(x, y),
-                            new(x, y + scale),
-                            new(x + scale, y + scale),
-                            tint
-                        );
-                        break;
-
-
-                    case 3:// /
-                        DrawTextureTriangle(
-                            texture,
-                            new(tsx, ty),
-                            new(tx, tsy),
-                            new(tsx, tsy),
-                            new(x + scale, y),
-                            new(x, y + scale),
-                            new(x + scale, y + scale),
-                            tint
-                        );
-                        break;
-
-                    case 5:
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tsx, tsy),
-                            new(tsx, ty),
-                            new(x, y),
-                            new(x + scale, y + scale),
-                            new(x + scale, y),
-                            tint
-                        );
-                        break;
-
-                    case 4:
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tx, tsy),
-                            new(tsx, ty),
-                            new(x, y),
-                            new(x, y + scale),
-                            new(x + scale, y),
-                            tint
-                        );
-                        break;
-
-                    case 6:
-                        DrawTexturePro(texture, rect with { Height = rect.Height / 2.0f }, rect with { Height = rect.Height / 2.0f }, new(0, 0), 0, tint);
-                        break;
-                }
+                texture = GLOBALS.Textures.InternalMaterials[0];
             }
             break;
 
             case "RainStone":
             {
-                var texture = GLOBALS.Textures.InternalMaterials[1];
-
-                var tx = (float)x / texture.Width;
-                var ty = (float)y / texture.Height;
-
-                var tsx = ((float)x + scale) / texture.Width;
-                var tsy = ((float)y + scale) / texture.Height;
-
-                switch (geoId) {
-                    case 1:
-                    DrawTexturePro(texture, rect, rect, new(0, 0), 0, tint);
-                    break;
-
-                    case 2:// \
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tx, tsy),
-                            new(tsx, tsy),
-                            new(x, y),
-                            new(x, y + scale),
-                            new(x + scale, y + scale),
-                            tint
-                        );
-                        break;
-
-
-                    case 3:// /
-                        DrawTextureTriangle(
-                            texture,
-                            new(tsx, ty),
-                            new(tx, tsy),
-                            new(tsx, tsy),
-                            new(x + scale, y),
-                            new(x, y + scale),
-                            new(x + scale, y + scale),
-                            tint
-                        );
-                        break;
-
-                    case 5:
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tsx, tsy),
-                            new(tsx, ty),
-                            new(x, y),
-                            new(x + scale, y + scale),
-                            new(x + scale, y),
-                            tint
-                        );
-                        break;
-
-                    case 4:
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tx, tsy),
-                            new(tsx, ty),
-                            new(x, y),
-                            new(x, y + scale),
-                            new(x + scale, y),
-                            tint
-                        );
-                        break;
-
-                    case 6:
-                        DrawTexturePro(texture, rect with { Height = rect.Height / 2.0f }, rect with { Height = rect.Height / 2.0f }, new(0, 0), 0, tint);
-                        break;
-                }
+                texture = GLOBALS.Textures.InternalMaterials[1];
             }
             break;
 
             case "Bricks":
             case "3DBricks":
             {
-                var texture = GLOBALS.Textures.InternalMaterials[2];
-
-                var tx = (float)x / texture.Width;
-                var ty = (float)y / texture.Height;
-
-                var tsx = ((float)x + scale) / texture.Width;
-                var tsy = ((float)y + scale) / texture.Height;
-
-                switch (geoId) {
-                    case 1:
-                    DrawTexturePro(texture, rect, rect, new(0, 0), 0, tint);
-                    break;
-
-                    case 2:// \
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tx, tsy),
-                            new(tsx, tsy),
-                            new(x, y),
-                            new(x, y + scale),
-                            new(x + scale, y + scale),
-                            tint
-                        );
-                        break;
-
-
-                    case 3:// /
-                        DrawTextureTriangle(
-                            texture,
-                            new(tsx, ty),
-                            new(tx, tsy),
-                            new(tsx, tsy),
-                            new(x + scale, y),
-                            new(x, y + scale),
-                            new(x + scale, y + scale),
-                            tint
-                        );
-                        break;
-
-                    case 5:
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tsx, tsy),
-                            new(tsx, ty),
-                            new(x, y),
-                            new(x + scale, y + scale),
-                            new(x + scale, y),
-                            tint
-                        );
-                        break;
-
-                    case 4:
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tx, tsy),
-                            new(tsx, ty),
-                            new(x, y),
-                            new(x, y + scale),
-                            new(x + scale, y),
-                            tint
-                        );
-                        break;
-
-                    case 6:
-                        DrawTexturePro(texture, rect with { Height = rect.Height / 2.0f }, rect with { Height = rect.Height / 2.0f }, new(0, 0), 0, tint);
-                        break;
-                }
+                texture = GLOBALS.Textures.InternalMaterials[2];
             }
             break;
 
             case "Non-Slip Metal":
             {
-                var texture = GLOBALS.Textures.InternalMaterials[3];
-
-                var tx = (float)x / texture.Width;
-                var ty = (float)y / texture.Height;
-
-                var tsx = ((float)x + scale) / texture.Width;
-                var tsy = ((float)y + scale) / texture.Height;
-
-                switch (geoId) {
-                    case 1:
-                    DrawTexturePro(texture, rect, rect, new(0, 0), 0, tint);
-                    break;
-
-                    case 2:// \
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tx, tsy),
-                            new(tsx, tsy),
-                            new(x, y),
-                            new(x, y + scale),
-                            new(x + scale, y + scale),
-                            tint
-                        );
-                        break;
-
-
-                    case 3:// /
-                        DrawTextureTriangle(
-                            texture,
-                            new(tsx, ty),
-                            new(tx, tsy),
-                            new(tsx, tsy),
-                            new(x + scale, y),
-                            new(x, y + scale),
-                            new(x + scale, y + scale),
-                            tint
-                        );
-                        break;
-
-                    case 5:
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tsx, tsy),
-                            new(tsx, ty),
-                            new(x, y),
-                            new(x + scale, y + scale),
-                            new(x + scale, y),
-                            tint
-                        );
-                        break;
-
-                    case 4:
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tx, tsy),
-                            new(tsx, ty),
-                            new(x, y),
-                            new(x, y + scale),
-                            new(x + scale, y),
-                            tint
-                        );
-                        break;
-
-                    case 6:
-                        DrawTexturePro(texture, rect with { Height = rect.Height / 2.0f }, rect with { Height = rect.Height / 2.0f }, new(0, 0), 0, tint);
-                        break;
-                }
+                texture = GLOBALS.Textures.InternalMaterials[3];
             }
             break;
 
-            // case "ConcreteBricks":
-            // {
-            //     var texture = GLOBALS.Textures.InternalMaterials[5];
+            case "Small Pipes":
+            {
+                texture = GLOBALS.Textures.InternalMaterials[5];
+            }
+            break;
 
-            //     var tx = (float)x / texture.Width;
-            //     var ty = (float)y / texture.Height;
-
-            //     var tsx = ((float)x + scale) / texture.Width;
-            //     var tsy = ((float)y + scale) / texture.Height;
-
-            //     switch (geoId) {
-            //         case 1:
-            //         DrawTexturePro(texture, rect, rect, new(0, 0), 0, tint);
-            //         break;
-
-            //         case 2:// \
-            //             DrawTextureTriangle(
-            //                 texture,
-            //                 new(tx, ty),
-            //                 new(tx, tsy),
-            //                 new(tsx, tsy),
-            //                 new(x, y),
-            //                 new(x, y + scale),
-            //                 new(x + scale, y + scale),
-            //                 tint
-            //             );
-            //             break;
-
-
-            //         case 3:// /
-            //             DrawTextureTriangle(
-            //                 texture,
-            //                 new(tsx, ty),
-            //                 new(tx, tsy),
-            //                 new(tsx, tsy),
-            //                 new(x + scale, y),
-            //                 new(x, y + scale),
-            //                 new(x + scale, y + scale),
-            //                 tint
-            //             );
-            //             break;
-
-            //         case 5:
-            //             DrawTextureTriangle(
-            //                 texture,
-            //                 new(tx, ty),
-            //                 new(tsx, tsy),
-            //                 new(tsx, ty),
-            //                 new(x, y),
-            //                 new(x + scale, y + scale),
-            //                 new(x + scale, y),
-            //                 tint
-            //             );
-            //             break;
-
-            //         case 4:
-            //             DrawTextureTriangle(
-            //                 texture,
-            //                 new(tx, ty),
-            //                 new(tx, tsy),
-            //                 new(tsx, ty),
-            //                 new(x, y),
-            //                 new(x, y + scale),
-            //                 new(x + scale, y),
-            //                 tint
-            //             );
-            //             break;
-
-            //         case 6:
-            //             DrawTexturePro(texture, rect with { Height = rect.Height / 2.0f }, rect with { Height = rect.Height / 2.0f }, new(0, 0), 0, tint);
-            //             break;
-            //     }
-            // }
-            // break;
+            case "Chaotic Stone":
+            {
+                texture = GLOBALS.Textures.InternalMaterials[6];
+            }
+            break;
 
             case "Asphalt":
             {
-                var texture = GLOBALS.Textures.InternalMaterials[4];
-
-                var tx = (float)x / texture.Width;
-                var ty = (float)y / texture.Height;
-
-                var tsx = ((float)x + scale) / texture.Width;
-                var tsy = ((float)y + scale) / texture.Height;
-
-                switch (geoId) {
-                    case 1:
-                    DrawTexturePro(texture, rect, rect, new(0, 0), 0, tint);
-                    break;
-
-                    case 2:// \
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tx, tsy),
-                            new(tsx, tsy),
-                            new(x, y),
-                            new(x, y + scale),
-                            new(x + scale, y + scale),
-                            tint
-                        );
-                        break;
-
-
-                    case 3:// /
-                        DrawTextureTriangle(
-                            texture,
-                            new(tsx, ty),
-                            new(tx, tsy),
-                            new(tsx, tsy),
-                            new(x + scale, y),
-                            new(x, y + scale),
-                            new(x + scale, y + scale),
-                            tint
-                        );
-                        break;
-
-                    case 5:
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tsx, tsy),
-                            new(tsx, ty),
-                            new(x, y),
-                            new(x + scale, y + scale),
-                            new(x + scale, y),
-                            tint
-                        );
-                        break;
-
-                    case 4:
-                        DrawTextureTriangle(
-                            texture,
-                            new(tx, ty),
-                            new(tx, tsy),
-                            new(tsx, ty),
-                            new(x, y),
-                            new(x, y + scale),
-                            new(x + scale, y),
-                            tint
-                        );
-                        break;
-
-                    case 6:
-                        DrawTexturePro(texture, rect with { Height = rect.Height / 2.0f }, rect with { Height = rect.Height / 2.0f }, new(0, 0), 0, tint);
-                        break;
-                }
+                texture = GLOBALS.Textures.InternalMaterials[4];
             }
             break;
         
+            case "Random Machines":
+            {
+                texture = GLOBALS.Textures.InternalMaterials[7];
+            }
+            break;
+            
+            case "Trash":
+            {
+                texture = GLOBALS.Textures.InternalMaterials[8];
+            }
+            break;
+
             default:
                 DrawTileSpec(x, y, geoId, scale, new Color(0, 255, 0, (int)opacity));
+                return;
+        }
+
+        var tx = (float)x / texture.Width;
+        var ty = (float)y / texture.Height;
+
+        var tsx = ((float)x + scale) / texture.Width;
+        var tsy = ((float)y + scale) / texture.Height;
+
+        switch (geoId) {
+            case 1:
+            DrawTexturePro(texture, rect, rect, new(0, 0), 0, tint);
+            break;
+
+            case 2:// \
+                DrawTextureTriangle(
+                    texture,
+                    new(tx, ty),
+                    new(tx, tsy),
+                    new(tsx, tsy),
+                    new(x, y),
+                    new(x, y + scale),
+                    new(x + scale, y + scale),
+                    tint
+                );
+                break;
+
+
+            case 3:// /
+                DrawTextureTriangle(
+                    texture,
+                    new(tsx, ty),
+                    new(tx, tsy),
+                    new(tsx, tsy),
+                    new(x + scale, y),
+                    new(x, y + scale),
+                    new(x + scale, y + scale),
+                    tint
+                );
+                break;
+
+            case 5:
+                DrawTextureTriangle(
+                    texture,
+                    new(tx, ty),
+                    new(tsx, tsy),
+                    new(tsx, ty),
+                    new(x, y),
+                    new(x + scale, y + scale),
+                    new(x + scale, y),
+                    tint
+                );
+                break;
+
+            case 4:
+                DrawTextureTriangle(
+                    texture,
+                    new(tx, ty),
+                    new(tx, tsy),
+                    new(tsx, ty),
+                    new(x, y),
+                    new(x, y + scale),
+                    new(x + scale, y),
+                    tint
+                );
+                break;
+
+            case 6:
+                DrawTexturePro(texture, rect with { Height = rect.Height / 2.0f }, rect with { Height = rect.Height / 2.0f }, new(0, 0), 0, tint);
                 break;
         }
     }
