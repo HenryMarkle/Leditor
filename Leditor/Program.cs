@@ -948,6 +948,7 @@ void main()
         mainPage.ProjectLoaded += dimensionsPage.OnProjectLoaded;
         
         newLevelPage.ProjectCreated += propsPage.OnProjectCreated;
+        newLevelPage.ProjectCreated += dimensionsPage.OnProjectCreated;
 
         GLOBALS.PageUpdated += mainPage.OnPageUpdated;
         GLOBALS.PageUpdated += tilePage.OnPageUpdated;
@@ -957,6 +958,7 @@ void main()
         GLOBALS.PageUpdated += camerasPage.OnPageUpdated;
         GLOBALS.PageUpdated += savePage.OnPageUpdated;
         GLOBALS.PageUpdated += experimentalGeometryPage.OnPageUpdated;
+        GLOBALS.PageUpdated += dimensionsPage.OnPageUpdated;
         //
 
         unsafe

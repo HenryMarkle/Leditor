@@ -117,6 +117,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    - name: Read release notes
+      id: read_release_notes
+      run: |
+        notes=$(cat ./Release_Notes.txt)
+        echo "::set-output name=notes::$notes"
+
     - name: Download Linux Artifact
       uses: actions/download-artifact@v2
       with:
@@ -138,6 +144,7 @@ jobs:
       with:
         tag_name: v${{ github.run_number }}
         release_name: Release v0.9.84-5
+        body: ${{ steps.read_release_notes.outputs.notes }}
         draft: false
         prerelease: false
 

@@ -17,8 +17,8 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
     private int _matrixWidthValue = GLOBALS.InitialMatrixWidth;
     private int _matrixHeightValue = GLOBALS.InitialMatrixHeight;
     
-    private int _leftPadding = 12;
-    private int _rightPadding = 12;
+    private int _leftPadding = 6;
+    private int _rightPadding = 6;
     private int _topPadding = 3;
     private int _bottomPadding = 5;
     private int _editControl;
@@ -66,16 +66,23 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
     {
         _matrixWidthValue = GLOBALS.Level.Width;
         _matrixHeightValue = GLOBALS.Level.Height;
+        (_leftPadding, _topPadding, _rightPadding, _bottomPadding) = GLOBALS.Level.Padding;
     }
 
     public void OnProjectCreated(object? sender, EventArgs e)
     {
-        
+        _matrixWidthValue = GLOBALS.Level.Width;
+        _matrixHeightValue = GLOBALS.Level.Height;
+        (_leftPadding, _topPadding, _rightPadding, _bottomPadding) = GLOBALS.Level.Padding;
     }
     #nullable disable
 
     public void OnPageUpdated(int previous, int @next) {
-        
+        if (@next == 6) {
+            _matrixWidthValue = GLOBALS.Level.Width;
+            _matrixHeightValue = GLOBALS.Level.Height;
+            (_leftPadding, _topPadding, _rightPadding, _bottomPadding) = GLOBALS.Level.Padding;
+        }
     }
 
     public override void Draw()

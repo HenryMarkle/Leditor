@@ -1,0 +1,1 @@
+- Fixed dimensions in the dimensions editor not updating 
