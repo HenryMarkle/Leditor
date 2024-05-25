@@ -6,6 +6,11 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)' == 'Experimental'">
+      <DefineConstants>EXPERIMENTAL;TRACE</DefineConstants>
+      <OutputPath>bin\Experimental\</OutputPath>
+    </PropertyGroup>
+
     <ItemGroup>
       <ProjectReference Include="..\Leditor.Data\Leditor.Data.csproj" />
     </ItemGroup>

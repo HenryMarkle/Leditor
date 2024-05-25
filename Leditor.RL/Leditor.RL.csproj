@@ -7,6 +7,11 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)' == 'Experimental'">
+      <DefineConstants>EXPERIMENTAL;TRACE</DefineConstants>
+      <OutputPath>bin\Experimental\</OutputPath>
+    </PropertyGroup>
+
     <ItemGroup>
       <PackageReference Include="Raylib-cs" Version="6.0.0" />
     </ItemGroup>

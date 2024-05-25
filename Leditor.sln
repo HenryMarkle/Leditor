@@ -14,6 +14,7 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
+		Experimental|Any CPU = Experimental|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{99085254-6DE7-48B1-8345-EAA3E1830163}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -36,6 +37,16 @@ Global
 		{D540F35C-0D43-4836-A5AC-A762A342A4BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D540F35C-0D43-4836-A5AC-A762A342A4BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D540F35C-0D43-4836-A5AC-A762A342A4BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99085254-6DE7-48B1-8345-EAA3E1830163}.Experimental|Any CPU.ActiveCfg = Experimental|Any CPU
+        {99085254-6DE7-48B1-8345-EAA3E1830163}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
+		{265D591D-6EED-467D-A690-8FE8ADF3CC30}.Experimental|Any CPU.ActiveCfg = Experimental|Any CPU
+        {265D591D-6EED-467D-A690-8FE8ADF3CC30}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
+		{6DA4BD27-E60D-4518-BEE2-02E55CE7BF37}.Experimental|Any CPU.ActiveCfg = Experimental|Any CPU
+        {6DA4BD27-E60D-4518-BEE2-02E55CE7BF37}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
+		{1E43BF44-159C-42A4-90E5-42044E0E6E4D}.Experimental|Any CPU.ActiveCfg = Experimental|Any CPU
+        {1E43BF44-159C-42A4-90E5-42044E0E6E4D}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
+		{D540F35C-0D43-4836-A5AC-A762A342A4BB}.Experimental|Any CPU.ActiveCfg = Experimental|Any CPU
+        {D540F35C-0D43-4836-A5AC-A762A342A4BB}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

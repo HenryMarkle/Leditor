@@ -372,9 +372,13 @@ class Program
 
         #if DEBUG
         GLOBALS.BuildConfiguration = "Build Configuration: Debug";
-        #else
+        #elif RELEASE
         GLOBALS.BuildConfiguration = "Build Configuration: Release";
+        #elif EXPERIMENTAL
+        GLOBALS.BuildConfiguration = "Build Configuration: Experimental";
         #endif
+
+        GLOBALS.OperatingSystem = System.Environment.OSVersion.ToString();
 
         // Initialize logging
 

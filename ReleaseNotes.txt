@@ -1,3 +1,5 @@
 - Fixed dimensions in the dimensions editor not updating.
 - Added Small Pipes, Trash, Chaotic Stone, and Random Machines material pre-render.
   - Note: Small Pipes material, when rendering palletes, does not remotely reflect the final result. 
+
+- Fixed the option to place geo features outbounds.

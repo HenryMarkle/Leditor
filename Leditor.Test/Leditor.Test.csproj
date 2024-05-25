@@ -9,6 +9,11 @@
         <IsTestProject>true</IsTestProject>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)' == 'Experimental'">
+      <DefineConstants>EXPERIMENTAL;TRACE</DefineConstants>
+      <OutputPath>bin\Experimental\</OutputPath>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="coverlet.collector" Version="6.0.0"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>

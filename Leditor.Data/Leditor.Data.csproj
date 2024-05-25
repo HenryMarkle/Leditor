@@ -7,6 +7,11 @@
         <NeutralLanguage>en-US</NeutralLanguage>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)' == 'Experimental'">
+      <DefineConstants>EXPERIMENTAL;TRACE</DefineConstants>
+      <OutputPath>bin\Experimental\</OutputPath>
+    </PropertyGroup>
+
     <ItemGroup>
       <ProjectReference Include="..\Leditor.RL\Leditor.RL.csproj" />
     </ItemGroup>

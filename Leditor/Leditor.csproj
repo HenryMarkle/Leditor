@@ -31,6 +31,10 @@
     <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Experimental'">
+    <DefineConstants>EXPERIMENTAL;TRACE</DefineConstants>
+    <OutputPath>bin\Experimental\</OutputPath>
+  </PropertyGroup>
 
   <ItemGroup>
     <Using Include="System"/> 
