@@ -809,11 +809,11 @@ internal class ExperimentalGeometryPage : EditorPage
 
                                     case 2:
                                         {
-                                            if (
-                                                x * scale < GLOBALS.Level.Border.X ||
+                                            if (!GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement && 
+                                                (x * scale < GLOBALS.Level.Border.X ||
                                                 x * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
                                                 y * scale < GLOBALS.Level.Border.Y ||
-                                                y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
+                                                y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y)) break;
 
                                             if (_geoMenuIndex == 0 && GLOBALS.Layer != 0 && GLOBALS.Layer != 1) break;
 
@@ -825,10 +825,10 @@ internal class ExperimentalGeometryPage : EditorPage
                                     case 3:
                                         {
                                             if (
-                                                x * scale < GLOBALS.Level.Border.X ||
+                                                !GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement && (x * scale < GLOBALS.Level.Border.X ||
                                                 x * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
                                                 y * scale < GLOBALS.Level.Border.Y ||
-                                                y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
+                                                y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y)) break;
 
                                             if (GLOBALS.Layer != 0) break;
 
@@ -943,11 +943,11 @@ internal class ExperimentalGeometryPage : EditorPage
 
                                 case 2:
                                     {
-                                        if (
-                                            x * scale < GLOBALS.Level.Border.X ||
-                                            x * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
-                                            y * scale < GLOBALS.Level.Border.Y ||
-                                            y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
+                                        // if (
+                                        //     x * scale < GLOBALS.Level.Border.X ||
+                                        //     x * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
+                                        //     y * scale < GLOBALS.Level.Border.Y ||
+                                        //     y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
 
                                         // if (_geoMenuIndex == 0 && GLOBALS.Layer != 0) break;
 
@@ -958,11 +958,11 @@ internal class ExperimentalGeometryPage : EditorPage
 
                                 case 3:
                                     {
-                                        if (
-                                            x * scale < GLOBALS.Level.Border.X ||
-                                            x * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
-                                            y * scale < GLOBALS.Level.Border.Y ||
-                                            y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
+                                        // if (
+                                        //     x * scale < GLOBALS.Level.Border.X ||
+                                        //     x * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
+                                        //     y * scale < GLOBALS.Level.Border.Y ||
+                                        //     y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
 
                                         if (GLOBALS.Layer != 0) break;
 
@@ -1117,11 +1117,11 @@ internal class ExperimentalGeometryPage : EditorPage
                     case 2:
                         {
                             // Wtf why is this scaled?
-                            if (
-                                matrixX * scale < GLOBALS.Level.Border.X ||
-                                matrixX * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
-                                matrixY * scale < GLOBALS.Level.Border.Y ||
-                                matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
+                            // if (
+                            //     !GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement && (matrixX * scale < GLOBALS.Level.Border.X ||
+                            //     matrixX * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
+                            //     matrixY * scale < GLOBALS.Level.Border.Y ||
+                            //     matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y)) break;
 
                             if (_geoMenuIndex == 0 && GLOBALS.Layer != 0 && GLOBALS.Layer != 1) break;
 
@@ -1147,11 +1147,11 @@ internal class ExperimentalGeometryPage : EditorPage
 
                     case 3:
                         {
-                            if (
-                                matrixX * scale < GLOBALS.Level.Border.X ||
-                                matrixX * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
-                                matrixY * scale < GLOBALS.Level.Border.Y ||
-                                matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
+                            // if (!GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement && 
+                            //     (matrixX * scale < GLOBALS.Level.Border.X ||
+                            //     matrixX * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
+                            //     matrixY * scale < GLOBALS.Level.Border.Y ||
+                            //     matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y)) break;
 
                             if (GLOBALS.Layer != 0) break;
 
@@ -1279,11 +1279,11 @@ internal class ExperimentalGeometryPage : EditorPage
                         case 2:
                             {
                                 // Wtf why is this scaled?
-                                if (
-                                    matrixX * scale < GLOBALS.Level.Border.X ||
+                                if (!GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement &&
+                                    (matrixX * scale < GLOBALS.Level.Border.X ||
                                     matrixX * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
                                     matrixY * scale < GLOBALS.Level.Border.Y ||
-                                    matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
+                                    matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y)) break;
 
                                 var id = GeoMenuCategory3ToStackableId[_geoMenuIndex];
                                 
@@ -1307,11 +1307,11 @@ internal class ExperimentalGeometryPage : EditorPage
 
                         case 3:
                             {
-                                if (
-                                    matrixX * scale < GLOBALS.Level.Border.X ||
+                                if (!GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement &&
+                                    (matrixX * scale < GLOBALS.Level.Border.X ||
                                     matrixX * scale >= GLOBALS.Level.Border.Width + GLOBALS.Level.Border.X ||
                                     matrixY * scale < GLOBALS.Level.Border.Y ||
-                                    matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y) break;
+                                    matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y)) break;
 
                                 if (GLOBALS.Layer != 0) break;
 
