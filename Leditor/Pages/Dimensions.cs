@@ -100,8 +100,11 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
                 
         if (GLOBALS.Settings.GeneralSettings.Navbar) GLOBALS.NavSignal = Printers.ImGui.Nav(out _);
 
-        if (ImGui.Begin("Resize##LevelDimensions", ImGuiWindowFlags.NoCollapse))
+        if (ImGui.Begin("Resize##LevelDimensions", ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse))
         {
+            ImGui.SetWindowSize(new Vector2(GetScreenWidth() - 80, GetScreenHeight() - 80));
+            ImGui.SetWindowPos(new Vector2(40, 40));
+
             ImGui.Columns(2);
             ImGui.SetColumnWidth(0, 300);
             

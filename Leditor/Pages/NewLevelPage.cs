@@ -96,8 +96,12 @@ internal class NewLevelPage : EditorPage
 
         if (GLOBALS.Settings.GeneralSettings.Navbar) GLOBALS.NavSignal = Printers.ImGui.Nav(out _);
 
-        if (ImGui.Begin("Create New Level##NewLevelWindow"))
+
+        if (ImGui.Begin("Create New Level##NewLevelWindow", ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse))
         {
+            ImGui.SetWindowSize(new Vector2(GetScreenWidth() - 80, GetScreenHeight() - 80));
+            ImGui.SetWindowPos(new Vector2(40, 40));
+            
             if (_advanced)
             {
                 ImGui.Columns(2);
