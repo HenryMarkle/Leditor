@@ -6,9 +6,11 @@ namespace Leditor;
 
 #nullable enable
 
-public class LevelLoadedEventArgs(bool undefinedTiles) : EventArgs
+public class LevelLoadedEventArgs(bool undefinedTiles, bool missingTileTextures, bool undefinedMaterials) : EventArgs
 {
     public bool UndefinedTiles { get; set; } = undefinedTiles;
+    public bool MissingTileTextures { get; set; } = missingTileTextures;
+    public bool UndefinedMaterials { get; set; } = undefinedMaterials;
 }
 
 public sealed class QuadVectors
@@ -312,9 +314,15 @@ public record struct TileInitLoadInfo(
 
 
 /// Used to report the tile check status when loading a project
-public enum TileCheckResult
+public enum TileCheckResultEnum
 {
     Ok, Missing, NotFound, MissingTexture, MissingMaterial
+}
+
+public readonly struct TileCheckResult {
+    public HashSet<string> MissingTileDefinitions { get; init; }
+    public HashSet<string> MissingTileTextures { get; init; }
+    public HashSet<string> MissingMaterialDefinitions { get; init; }
 }
 
 /// Used to report the tile check status when loading a project

@@ -36,6 +36,11 @@ internal class MainPage : EditorPage, IContextListener
     private bool _failedToSave;
     private bool _undefinedTilesAlert;
 
+    // Only overriden when _undefinedTilesAlert is set to true.
+    private bool _missingTileDef;
+    private bool _missingTileText;
+    private bool _missingMatDef;
+
     private bool _isGuiLocked;
 
     private Task<string>? _openFileDialog;
@@ -78,7 +83,10 @@ internal class MainPage : EditorPage, IContextListener
     {
         if (e is LevelLoadedEventArgs l)
         {
-            _undefinedTilesAlert = l.UndefinedTiles;
+            _undefinedTilesAlert = l.UndefinedTiles || l.MissingTileTextures || l.UndefinedMaterials;
+            _missingMatDef = l.UndefinedMaterials;
+            _missingTileDef = l.UndefinedTiles;
+            _missingTileText = l.MissingTileTextures;
         }
 
         _shouldRedrawLevel = true;
@@ -133,7 +141,9 @@ internal class MainPage : EditorPage, IContextListener
        
     private TileCheckResult CheckTileIntegrity(in LoadFileResult res)
     {
-        var result = TileCheckResult.Ok;
+        HashSet<string> missingDefs = [];
+        HashSet<string> missingTextures = [];
+        HashSet<string> missingMaterials = [];
         
         for (int y = 0; y < res.Height; y++)
         {
@@ -145,8 +155,12 @@ internal class MainPage : EditorPage, IContextListener
 
                     if (cell.Data is TileHead h)
                     {
-                        if (h.Definition is null) result = TileCheckResult.Missing;
-                        else if (h.Definition.Texture.Id == 0) result = TileCheckResult.MissingTexture;
+                        if (h.Definition is null) {
+                            missingDefs.Add(h.Name);    
+                        }
+                        else if (h.Definition.Texture.Id == 0) {
+                            missingTextures.Add(h.Name);
+                        }
                     }
                     else if (cell.Type == TileType.Material)
                     {
@@ -155,7 +169,7 @@ internal class MainPage : EditorPage, IContextListener
                         if (!GLOBALS.MaterialColors.ContainsKey(materialName))
                         {
                             Logger.Warning($"missing material: matrix index: ({x}, {y}, {z}); Name: \"{materialName}\"");
-                            result = TileCheckResult.MissingMaterial;
+                            missingMaterials.Add(materialName);
                         }
                     }
 
@@ -167,7 +181,11 @@ internal class MainPage : EditorPage, IContextListener
 
         Logger.Debug("tile check passed");
 
-        return result;
+        return new TileCheckResult {
+            MissingMaterialDefinitions = missingMaterials,
+            MissingTileDefinitions = missingDefs,
+            MissingTileTextures = missingTextures
+        };
     }
 
     // TODO: Fix
@@ -601,12 +619,9 @@ internal class MainPage : EditorPage, IContextListener
                         }
                         
                         // Tile check failure
-                        if (GLOBALS.TileCheck.Result != TileCheckResult.Ok)
+                        if (GLOBALS.TileCheck.Result.MissingTileDefinitions.Count > 0 || GLOBALS.TileCheck.Result.MissingTileTextures.Count > 0 || GLOBALS.TileCheck.Result.MissingMaterialDefinitions.Count > 0)
                         {
-                            if (GLOBALS.TileCheck.Result == TileCheckResult.Missing && GLOBALS.Settings.TileEditor.AllowUndefinedTiles)
-                            {
-                            }
-                            else
+                            if (!GLOBALS.Settings.TileEditor.AllowUndefinedTiles)
                             {
                                 GLOBALS.Page = 13;
                                 _isGuiLocked = false;
@@ -615,6 +630,15 @@ internal class MainPage : EditorPage, IContextListener
                                 EndDrawing();
                                 return;
                             }
+
+                            Logger.Error($"{GLOBALS.TileCheck.Result.MissingTileDefinitions.Count} tile definistions missing");
+                            Logger.Error($"{GLOBALS.TileCheck.Result.MissingTileTextures.Count} tile textures missing");
+                            Logger.Error($"{GLOBALS.TileCheck.Result.MissingMaterialDefinitions.Count} materials missing");
+
+                            foreach (var missingDef in GLOBALS.TileCheck.Result.MissingTileDefinitions) Logger.Error($"Missing tile definition: {missingDef}");
+                            foreach (var missingTexture in GLOBALS.TileCheck.Result.MissingTileTextures) Logger.Error($"Missing tile texture: {missingTexture}");
+                            foreach (var missingMaterial in GLOBALS.TileCheck.Result.MissingMaterialDefinitions) Logger.Error($"Missing material definition: {missingMaterial}");
+                    
                         }
 
                         // Prop check failure
@@ -690,13 +714,12 @@ internal class MainPage : EditorPage, IContextListener
                         GLOBALS.Level.ProjectName = result.Name;
                         GLOBALS.Page = 1;
 
-                        var undefinedTiles = GLOBALS.TileCheck.Result == TileCheckResult.Missing;
-                        _undefinedTilesAlert = undefinedTiles;
+                        _undefinedTilesAlert = GLOBALS.TileCheck?.Result.MissingTileDefinitions.Count > 0 || GLOBALS.TileCheck?.Result.MissingTileTextures.Count > 0 || GLOBALS.TileCheck?.Result.MissingMaterialDefinitions.Count > 0;
                         
                         GLOBALS.Textures.GeneralLevel =
                             LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20);
 
-                        ProjectLoaded?.Invoke(this, new LevelLoadedEventArgs(undefinedTiles));
+                        ProjectLoaded?.Invoke(this, new LevelLoadedEventArgs(GLOBALS.TileCheck?.Result.MissingTileDefinitions.Count > 0, GLOBALS.TileCheck?.Result.MissingTileTextures.Count > 0, GLOBALS.TileCheck?.Result.MissingMaterialDefinitions.Count > 0));
                         
                         GLOBALS.TileCheck = null;
                         GLOBALS.PropCheck = null;
@@ -976,7 +999,9 @@ internal class MainPage : EditorPage, IContextListener
                         var screenSize = new Vector2(width, height);
                         
                         ImGui.SetWindowPos((screenSize - winSize)/2);
-                        ImGui.Text("This  project contains undefined tiles.");
+                        if (_missingTileDef) ImGui.Text("This  project contains undefined tiles.");
+                        if (_missingTileText) ImGui.Text("This  project contains tiles with no textures.");
+                        if (_missingMatDef) ImGui.Text("This  project contains undefined materials.");
                         
                         var okSelected = ImGui.Button("Ok");
                         

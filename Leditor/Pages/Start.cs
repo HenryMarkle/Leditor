@@ -43,7 +43,10 @@ internal class StartPage : EditorPage
     
     private TileCheckResult CheckTileIntegrity(in LoadFileResult res)
     {
-        var result = TileCheckResult.Ok;
+        var result = TileCheckResultEnum.Ok;
+        HashSet<string> missingDefs = [];
+        HashSet<string> missingTextures = [];
+        HashSet<string> missingMaterials = [];
         
         for (int y = 0; y < res.Height; y++)
         {
@@ -55,8 +58,14 @@ internal class StartPage : EditorPage
 
                     if (cell.Data is TileHead h)
                     {
-                        if (h.Definition is null) result = TileCheckResult.Missing;
-                        else if (h.Definition.Texture.Id == 0) result = TileCheckResult.MissingTexture;
+                        if (h.Definition is null) {
+                            result = TileCheckResultEnum.Missing;
+                            missingDefs.Add(h.Name);    
+                        }
+                        else if (h.Definition.Texture.Id == 0) {
+                            result = TileCheckResultEnum.MissingTexture;
+                            missingTextures.Add(h.Name);
+                        }
                     }
                     else if (cell.Type == TileType.Material)
                     {
@@ -65,7 +74,8 @@ internal class StartPage : EditorPage
                         if (!GLOBALS.MaterialColors.ContainsKey(materialName))
                         {
                             Logger.Warning($"missing material: matrix index: ({x}, {y}, {z}); Name: \"{materialName}\"");
-                            result = TileCheckResult.MissingMaterial;
+                            result = TileCheckResultEnum.MissingMaterial;
+                            missingMaterials.Add(materialName);
                         }
                     }
 
@@ -77,7 +87,11 @@ internal class StartPage : EditorPage
 
         Logger.Debug("tile check passed");
 
-        return result;
+        return new TileCheckResult {
+            MissingMaterialDefinitions = missingMaterials,
+            MissingTileDefinitions = missingDefs,
+            MissingTileTextures = missingTextures
+        };
     }
 
     private PropCheckResult CheckPropIntegrity(in LoadFileResult res)
@@ -314,7 +328,7 @@ internal class StartPage : EditorPage
                     _loadFailed = true;
                     _loadException = _loadFileTask.Exception;
 
-                    if (_loadException is not null) Logger.Error($"Failed to load a level: {_loadException.Message}");
+                    if (_loadException is not null) Logger.Error(_loadException, "Failed to load level");
 
                     _loadFileTask = null;
                     _openFileDialog = null;
@@ -339,6 +353,7 @@ internal class StartPage : EditorPage
                 // Validate if tiles are defined in Init.txt
                 if (GLOBALS.TileCheck is null)
                 {
+                    // var res = Task.Factory.StartNew(() => CheckTileIntegrity(result));
                     GLOBALS.TileCheck = Task.Factory.StartNew(() => CheckTileIntegrity(result));
 
                     EndDrawing();
@@ -368,13 +383,36 @@ internal class StartPage : EditorPage
                 }
 
                 // Tile check failure
-                if (GLOBALS.TileCheck.Result != TileCheckResult.Ok && !GLOBALS.Settings.TileEditor.AllowUndefinedTiles)
+                if (GLOBALS.TileCheck.Result.MissingTileDefinitions.Count > 0 || 
+                        GLOBALS.TileCheck.Result.MissingMaterialDefinitions.Count > 0 || 
+                        GLOBALS.TileCheck.Result.MissingTileTextures.Count > 0)
                 {
-                    GLOBALS.Page = 13;
-                    _uiLocked = false;
-                    
-                    EndDrawing();
-                    return;
+                    if (!GLOBALS.Settings.TileEditor.AllowUndefinedTiles) {
+                        GLOBALS.Page = 13;
+                        _uiLocked = false;
+                        EndDrawing();
+                        return;
+                    }
+
+
+                    Logger.Error($"{GLOBALS.TileCheck.Result.MissingTileDefinitions.Count} tile definistions missing");
+                    Logger.Error($"{GLOBALS.TileCheck.Result.MissingTileTextures.Count} tile textures missing");
+                    Logger.Error($"{GLOBALS.TileCheck.Result.MissingMaterialDefinitions.Count} materials missing");
+
+                    foreach (var missingDef in GLOBALS.TileCheck.Result.MissingTileDefinitions) {
+                        Logger.Error($"Missing tile definition: {missingDef}");
+                        // GLOBALS.TileCheck.Result.MissingTileDefinitions.Remove(missingDef);
+                    }
+
+                    foreach (var missingTexture in GLOBALS.TileCheck.Result.MissingTileTextures) {
+                        Logger.Error($"Missing tile texture: {missingTexture}");
+                        // GLOBALS.TileCheck.Result.MissingTileTextures.Remove(missingTexture);
+                    }
+
+                    foreach (var missingMaterial in GLOBALS.TileCheck.Result.MissingMaterialDefinitions) {
+                        Logger.Error($"Missing material definition: {missingMaterial}");
+                        // GLOBALS.TileCheck.Result.MissingMaterialDefinitions.Remove(missingMaterial);
+                    }
                 }
                 
 
@@ -455,7 +493,7 @@ internal class StartPage : EditorPage
                 GLOBALS.Textures.GeneralLevel =
                     LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20);
                 
-                ProjectLoaded?.Invoke(this, new LevelLoadedEventArgs(GLOBALS.TileCheck?.Result is TileCheckResult.Missing or TileCheckResult.MissingTexture));
+                ProjectLoaded?.Invoke(this, new LevelLoadedEventArgs(GLOBALS.TileCheck?.Result.MissingTileDefinitions.Count > 0, GLOBALS.TileCheck?.Result.MissingTileTextures.Count > 0, GLOBALS.TileCheck?.Result.MissingMaterialDefinitions.Count > 0));
 
                 GLOBALS.TileCheck = null;
                 GLOBALS.PropCheck = null;
@@ -567,6 +605,8 @@ internal class StartPage : EditorPage
                     var cancelClicked = ImGui.Button("Cancel", ImGui.GetContentRegionAvail() with { Y = 20 });
 
                     if (openLevelClicked) {
+                        // GLOBALS.TileCheck = null;
+                        // GLOBALS.PropCheck = null;
                         _uiLocked = true;
                             
                     }

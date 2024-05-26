@@ -114,7 +114,6 @@ public static class Importers {
             ((AstNode.Number)colorGlobalCall.Arguments[2]).Value.IntValue, 
             255
             );
-#nullable disable
 
         return (((AstNode.String)nameBase).Value, color);
     }
@@ -411,8 +410,12 @@ public static class Importers {
     /// <returns>a list of (type, position, prop) tuples, where 'position' points to the definition index in the appropriate definitions array depending on the type (prop/tile)</returns>
     /// <exception cref="PropNotFoundException">prop not not found in neither the prop definitions nor the tile definitions</exception>
     /// <exception cref="MissingInitPropertyException">retrieved prop is missing a setting</exception>
-    public static List<(InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)>GetProps(AstNode.Base @base)
+    public static List<(InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)>GetProps(AstNode.Base? @base)
     {
+        if (@base is null) {
+            return [];
+        }
+
         var list = (AstNode.List)((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "props").Value;
 
         List<(InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)> props = [];
@@ -573,7 +576,6 @@ public static class Importers {
 
             props.Add((type, tileDefinition, position, parsedProp));
         }
-#nullable disable
         return props;
     }
 
@@ -593,12 +595,10 @@ public static class Importers {
             })
             .ToArray();
 
-        var quads = ((AstNode.List) props.Values
-            .Single(p => ((AstNode.Symbol)p.Key).Value == "quads")
-            .Value)
-            .Values
-            .Cast<AstNode.List>()
-            .Select(l => {
+        var quads = ((AstNode.List?) props.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "quads").Value)
+            ?.Values
+            ?.Cast<AstNode.List>()
+            ?.Select(l => {
                 var currentQuads = l.Values.Cast<AstNode.List>().Select(q => {
                     var angle = NumberToInteger(q.Values[0]);
                     var radius = NumberToFloat(q.Values[1]);
@@ -608,7 +608,7 @@ public static class Importers {
 
                 return (currentQuads[0], currentQuads[1], currentQuads[2], currentQuads[3]);
             })
-            .ToArray();
+            ?.ToArray() ?? [ ((0, 0), (0, 0), (0, 0), (0, 0)) ];
 
         var result = new RenderCamera[cameras.Length];
 
@@ -640,7 +640,6 @@ public static class Importers {
     }
 
     public static (string Name, EffectOptions[] options, double[,] Matrix)[] GetEffects(AstNode.Base @base, int width, int height) {
-        #nullable enable
         var matrixProp = ((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "effects").Value;
 
         var effectList = ((AstNode.List)matrixProp).Values.Select(e => {
@@ -687,7 +686,6 @@ public static class Importers {
             return (name, options, matrix);
         }).ToArray();
         
-        #nullable disable
 
         return effectList;
     }
@@ -719,9 +717,7 @@ public static class Importers {
         }).ToArray();
         var specs2Extracted = propList.Values.First(p => ((AstNode.Symbol)p.Key).Value == "specs2").Value;
 
-        #nullable enable
         AstNode.Base? specs3Extracted = propList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "specs3").Value;
-        #nullable disable
         
         int[] specs2;
 
@@ -1015,8 +1011,10 @@ public static class Importers {
 
     public static bool GetLightMode(AstNode.Base @base)
     {
-        var light = (AstNode.Number)((AstNode.PropertyList)@base).Values
-            .Single(p => ((AstNode.Symbol)p.Key).Value == "light").Value;
+        var light = (AstNode.Number?)((AstNode.PropertyList)@base).Values
+            .SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "light").Value;
+
+        if (light is null) return true;
 
         return light.Value.IntValue == 1;
     }

@@ -200,18 +200,74 @@ internal static class Utils
             Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[6]));
         var waterObjTask = Task.Factory.StartNew(() =>
             Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[7]));
-        var propsObjTask = Task.Factory.StartNew(() =>
+        
+        var propsObjTask = string.IsNullOrEmpty(text[8]) ? null : Task.Factory.StartNew(() =>
             Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[8]));
 
-        var obj = await objTask;
-        var tilesObj = await tilesObjTask;
-        var terrainModeObj = await terrainObjTask;
-        var obj2 = await obj2Task;
-        var effObj = await effObjTask;
-        var lightObj = await lightObjTask;
-        var camsObj = await camsObjTask;
-        var waterObj = await waterObjTask;
-        var propsObj = await propsObjTask;
+        Drizzle.Lingo.Runtime.Parser.AstNode.Base obj;
+        Drizzle.Lingo.Runtime.Parser.AstNode.Base tilesObj;
+        Drizzle.Lingo.Runtime.Parser.AstNode.Base terrainModeObj;
+        Drizzle.Lingo.Runtime.Parser.AstNode.Base obj2;
+        Drizzle.Lingo.Runtime.Parser.AstNode.Base effObj;
+        Drizzle.Lingo.Runtime.Parser.AstNode.Base lightObj;
+        Drizzle.Lingo.Runtime.Parser.AstNode.Base camsObj;
+        Drizzle.Lingo.Runtime.Parser.AstNode.Base waterObj;
+        Drizzle.Lingo.Runtime.Parser.AstNode.Base? propsObj;
+
+        try {
+            obj = await objTask;
+        } catch (Exception e) {
+            throw new Exception("Failed to parse level project file at line 1", e);
+        }
+
+        try {
+            tilesObj = await tilesObjTask;
+        } catch (Exception e) {
+            throw new Exception("Failed to parse level project file at line 2", e);
+        }
+
+        try {
+            terrainModeObj = await terrainObjTask;
+        } catch (Exception e) {
+            throw new Exception("Failed to parse level project file at line 5", e);
+        }
+
+        try {
+            obj2 = await obj2Task;
+        } catch (Exception e) {
+            throw new Exception("Failed to parse level project file at line 6", e);
+        }
+
+        try {
+            effObj = await effObjTask;
+        } catch (Exception e) {
+            throw new Exception("Failed to parse level project file at line 3", e);
+        }
+
+        try {
+            lightObj = await lightObjTask;
+        } catch (Exception e) {
+            throw new Exception("Failed to parse level project file at line 4", e);
+        }
+
+        try {
+            camsObj = await camsObjTask;
+        } catch (Exception e) {
+            throw new Exception("Failed to parse level project file at line 7", e);
+        }
+
+        try {
+            waterObj = await waterObjTask;
+        } catch (Exception e) {
+            throw new Exception("Failed to parse level project file at line 8", e);
+        }
+
+        try {
+            propsObj = propsObjTask is null ? null : await propsObjTask;
+        } catch {
+            propsObj = null;
+            // throw new Exception("Failed to parse level project file at line 9", e);
+        }
 
         var mtx = Serialization.Importers.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
         var tlMtx = Serialization.Importers.GetTileMatrix(tilesObj, out _, out _);
@@ -225,7 +281,14 @@ internal static class Utils
         var cams = Serialization.Importers.GetCameras(camsObj);
 
         // TODO: catch PropNotFoundException
-        var props = Serialization.Importers.GetProps(propsObj);
+        List<(InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)>  props;
+
+        try {
+            props = Serialization.Importers.GetProps(propsObj);
+        } catch {
+            props = [];
+        }
+
         var lightSettings = Serialization.Importers.GetLightSettings(lightObj);
 
         // map material colors

@@ -4,3 +4,6 @@
 
 - Fixed the option to place geo features outbounds.
 - Fixed tiles-as-props not being detected properly.
+- Fixed loading issues of old levels.
+- Undefined tiles/materials are now logged.
+- Renamed some of tiles textures to match their init names (Linux is case-sensitive with file names).

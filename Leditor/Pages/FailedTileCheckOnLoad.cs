@@ -32,58 +32,40 @@ internal class FailedTileCheckOnLoadPage : EditorPage
         {
             ClearBackground(new(0, 0, 0, 255));
 
-            switch (GLOBALS.TileCheck!.Result)
-            {
-                case TileCheckResult.Missing:
-                    DrawText(
-                        MissingTileWarnTitleText,
-                        (width - MeasureText(MissingTileWarnTitleText, 50)) / 2,
-                        200,
-                        50,
-                        new(255, 255, 255, 255)
-                    );
-                    DrawText(MissingTileWarnSubtitleText, (width - MeasureText(MissingTileWarnSubtitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
-                    break;
+            if (GLOBALS.TileCheck?.Result.MissingTileDefinitions.Count > 0) {
+                DrawText(
+                    MissingTileWarnTitleText,
+                    (width - MeasureText(MissingTileWarnTitleText, 50)) / 2,
+                    200,
+                    50,
+                    new(255, 255, 255, 255)
+                );
+                DrawText(MissingTileWarnSubtitleText, (width - MeasureText(MissingTileWarnSubtitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
+            } else if (GLOBALS.TileCheck?.Result.MissingTileTextures.Count > 0) {
+                DrawText(
+                    MissingTileTextureWarnTitleText,
+                    (width - MeasureText(MissingTileTextureWarnTitleText, 50)) / 2,
+                    200,
+                    50,
+                    new(255, 255, 255, 255)
+                );
+                DrawText(MissingTileTextureWarnSubTitleText, (width - MeasureText(MissingTileTextureWarnSubTitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
+            } else if (GLOBALS.TileCheck.Result.MissingMaterialDefinitions.Count > 0) {
+                DrawText(
+                    MissingMaterialWarnTitleText,
+                    (width - MeasureText(MissingMaterialWarnTitleText, 50)) / 2,
+                    200,
+                    50,
+                    new(255, 255, 255, 255)
+                );
 
-                case TileCheckResult.NotFound:
-                    DrawText(
-                        NotFoundTileWarnTitleText,
-                        (width - MeasureText(NotFoundTileWarnTitleText, 50)) / 2,
-                        200,
-                        50,
-                        new(255, 255, 255, 255)
-                    );
-                    DrawText(MissingTileWarnSubtitleText, (width - MeasureText(MissingTileWarnSubtitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
-                    break;
-
-                case TileCheckResult.MissingTexture:
-                    DrawText(
-                        MissingTileTextureWarnTitleText,
-                        (width - MeasureText(MissingTileTextureWarnTitleText, 50)) / 2,
-                        200,
-                        50,
-                        new(255, 255, 255, 255)
-                    );
-                    DrawText(MissingTileTextureWarnSubTitleText, (width - MeasureText(MissingTileTextureWarnSubTitleText, 20)) / 2, 400, 20, new(255, 255, 255, 255));
-                    break;
-
-                case TileCheckResult.MissingMaterial:
-                    DrawText(
-                        MissingMaterialWarnTitleText,
-                        (width - MeasureText(MissingMaterialWarnTitleText, 50)) / 2,
-                        200,
-                        50,
-                        new(255, 255, 255, 255)
-                    );
-
-                    DrawText(
-                        MissingMaterialWarnSubtitleText,
-                        (width - MeasureText(MissingMaterialWarnSubtitleText, 20)) / 2,
-                        400,
-                        20,
-                        new(255, 255, 255, 255)
-                    );
-                    break;
+                DrawText(
+                    MissingMaterialWarnSubtitleText,
+                    (width - MeasureText(MissingMaterialWarnSubtitleText, 20)) / 2,
+                    400,
+                    20,
+                    new(255, 255, 255, 255)
+                );
             }
 
 
