@@ -3,3 +3,4 @@
   - Note: Small Pipes material, when rendering palletes, does not remotely reflect the final result. 
 
 - Fixed the option to place geo features outbounds.
+- Fixed tiles-as-props not being detected properly.
