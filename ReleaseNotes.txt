@@ -1,10 +1,1 @@
-- Fixed dimensions in the dimensions editor not updating.
-- Added Small Pipes, Trash, Chaotic Stone, and Random Machines material pre-render.
-  - Note: Small Pipes material, when rendering palletes, does not remotely reflect the final result. 
-
-- Fixed the option to place geo features outbounds.
-- Fixed tiles-as-props not being detected properly.
-- Fixed loading issues of old levels.
-- Undefined tiles/materials are now logged.
-- Renamed some of tiles textures to match their init names (Linux is case-sensitive with file names).
-- Level loading has been made more fault-tolerant.
+- Water level has been visually raised by one unit.
