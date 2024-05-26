@@ -120,7 +120,7 @@ jobs:
     - name: Read release notes
       id: read_release_notes
       run: |
-        notes=$(cat ./Release_Notes.txt)
+        notes=$(cat ./ReleaseNotes.txt)
         echo "::set-output name=notes::$notes"
 
     - name: Download Linux Artifact
