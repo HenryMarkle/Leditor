@@ -490,29 +490,11 @@ public static class Importers {
             
             // if not found, then check if it's a tile
 
-            for (var c = 0; c < GLOBALS.Tiles.Length; c++)
-            {
-                for (var t = 0; t < GLOBALS.Tiles[c].Length; t++)
-                {
-                    if (GLOBALS.TileDex is null)
-                    {
-                        position = (-1, -1);
-                        continue;
-                    }
-                    
-                    var found = GLOBALS.TileDex.TryGetTile(name, out var def);
-                    
-                    position = (-1, -1);
-                    
-                    if (!found) continue;
-
-                    tileDefinition = def;
-                    
-                    goto end_check;
-                }
-            }
+            var found = GLOBALS.TileDex?.TryGetTile(name, out tileDefinition) ?? false;
             
-            throw new PropNotFoundException($"prop not found: {name}", name);
+            if (!found) throw new PropNotFoundException($"prop not found: \"{name}\"{(GLOBALS.TileDex is null ? ". (TileDex is null)" : "")}", name);
+
+            position = (-1, -1);
 
         end_check:
 

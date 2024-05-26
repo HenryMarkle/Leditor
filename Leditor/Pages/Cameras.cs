@@ -390,7 +390,7 @@ internal class CamerasEditorPage : EditorPage
                         if (ImGui.InputInt("Angle##TopLeftAngle", ref angle)) currentCam.Quad.TopLeft = (angle, radius);
                         ImGui.SetNextItemWidth(100);
                         if (ImGui.InputFloat("Radius##TopLeftRadius", ref radius, 0.1f)) {
-                            Utils.Restrict(ref radius, 0, 1);
+                            Utils.Restrict(ref radius, 0);
                             currentCam.Quad.TopLeft = (angle, radius);
                         }
                     }
@@ -402,7 +402,7 @@ internal class CamerasEditorPage : EditorPage
                         if (ImGui.InputInt("Angle##BottomLeftAngle", ref angle)) currentCam.Quad.BottomLeft = (angle, radius);
                         ImGui.SetNextItemWidth(100);
                         if (ImGui.InputFloat("Radius##BottomLeftRadius", ref radius, 0.1f)) {
-                            Utils.Restrict(ref radius, 0, 1);
+                            Utils.Restrict(ref radius, 0);
                             currentCam.Quad.BottomLeft = (angle, radius);
                         }
                     }
@@ -416,7 +416,7 @@ internal class CamerasEditorPage : EditorPage
                         if (ImGui.InputInt("Angle##TopRightAngle", ref angle)) currentCam.Quad.TopRight = (angle, radius);
                         ImGui.SetNextItemWidth(100);
                         if (ImGui.InputFloat("Radius##TopRightRadius", ref radius, 0.1f)) {
-                            Utils.Restrict(ref radius, 0, 1);
+                            Utils.Restrict(ref radius, 0);
                             currentCam.Quad.TopRight = (angle, radius);
                         }
                     }
@@ -428,7 +428,7 @@ internal class CamerasEditorPage : EditorPage
                         if (ImGui.InputInt("Angle##BottomRightAngle", ref angle)) currentCam.Quad.BottomRight = (angle, radius);
                         ImGui.SetNextItemWidth(100);
                         if (ImGui.InputFloat("Radius##BottomRightRadius", ref radius, 0.1f)) {
-                            Utils.Restrict(ref radius, 0, 1);
+                            Utils.Restrict(ref radius, 0);
                             currentCam.Quad.BottomRight = (angle, radius);
                         }
                     }

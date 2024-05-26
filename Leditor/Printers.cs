@@ -3592,14 +3592,16 @@ internal static class Printers
                     {
                         var radius = Raymath.Vector2Distance(mouse, pointOrigin1);
 
-                        if (radius > 100)
-                        {
-                            radius = 100;
-                        }
-                        else
-                        {
-                            topLeftV = mouse;
-                        }
+                        // if (radius > 100)
+                        // {
+                        //     radius = 100;
+                        // }
+                        // else
+                        // {
+                        //     topLeftV = mouse;
+                        // }
+
+                        topLeftV = mouse;
 
                         var angle = (int)float.RadiansToDegrees(Raymath.Vector2Angle(pointOrigin1 with { Y = pointOrigin1.Y - 1 } - pointOrigin1,
                             mouse - pointOrigin1));
@@ -3612,14 +3614,16 @@ internal static class Printers
                     {
                         var radius = Raymath.Vector2Distance(mouse, pointOrigin2);
 
-                        if (radius > 100)
-                        {
-                            radius = 100;
-                        }
-                        else
-                        {
-                            topRightV = mouse;
-                        }
+                        // if (radius > 100)
+                        // {
+                        //     radius = 100;
+                        // }
+                        // else
+                        // {
+                        //     topRightV = mouse;
+                        // }
+
+                        topRightV = mouse;
 
                         var angle = (int)float.RadiansToDegrees(Raymath.Vector2Angle(pointOrigin2 with { Y = pointOrigin2.Y - 1 } - pointOrigin2,
                             mouse - pointOrigin2));
@@ -3632,14 +3636,16 @@ internal static class Printers
                     {
                         var radius = Raymath.Vector2Distance(mouse, pointOrigin3);
 
-                        if (radius > 100)
-                        {
-                            radius = 100;
-                        }
-                        else
-                        {
-                            bottomRightV = mouse;
-                        }
+                        // if (radius > 100)
+                        // {
+                        //     radius = 100;
+                        // }
+                        // else
+                        // {
+                        //     bottomRightV = mouse;
+                        // }
+
+                        bottomRightV = mouse;
 
                         var angle = (int)float.RadiansToDegrees(Raymath.Vector2Angle(pointOrigin3 with { Y = pointOrigin3.Y - 1 } - pointOrigin3,
                             mouse - pointOrigin3));
@@ -3652,14 +3658,16 @@ internal static class Printers
                     {
                         var radius = Raymath.Vector2Distance(mouse, pointOrigin4);
 
-                        if (radius > 100)
-                        {
-                            radius = 100;
-                        }
-                        else
-                        {
-                            topLeftV = mouse;
-                        }
+                        // if (radius > 100)
+                        // {
+                        //     radius = 100;
+                        // }
+                        // else
+                        // {
+                        //     topLeftV = mouse;
+                        // }
+
+                        topLeftV = mouse;
 
                         var angle = (int)float.RadiansToDegrees(Raymath.Vector2Angle(pointOrigin4 with { Y = pointOrigin4.Y - 1 } - pointOrigin4,
                             mouse - pointOrigin4));
