@@ -1,1 +1,2 @@
 - Water level has been visually raised by one unit.
+- Varied soft props now have `#applyColor` enabled by default.
