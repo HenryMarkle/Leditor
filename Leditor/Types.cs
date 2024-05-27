@@ -875,6 +875,10 @@ public interface ICustomDepth {
     int CustomDepth { get; set; }
 }
 
+public interface IApplyColor {
+    int? ApplyColor { get; set; }
+}
+
 public class BasicPropSettings(int renderOrder = 0, int seed = 0, int renderTime = 0)
 {
     public int RenderOrder { get; set; } = renderOrder;
@@ -901,7 +905,7 @@ public class PropVariedSettings(int renderOrder = 0, int seed = 200, int renderT
 
 public enum PropRopeRelease { Left, Right, None }
 
-public class PropRopeSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, PropRopeRelease release = PropRopeRelease.None, float? thickness = null, int? applyColor = null) : BasicPropSettings(renderOrder, seed, renderTime)
+public class PropRopeSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, PropRopeRelease release = PropRopeRelease.None, float? thickness = null, int? applyColor = null) : BasicPropSettings(renderOrder, seed, renderTime), IApplyColor
 {
     public PropRopeRelease Release { get; set; } = release;
     public float? Thickness { get; set; } = thickness;
@@ -923,7 +927,7 @@ public class PropVariedDecalSettings(int renderOrder = 0, int seed = 0, int rend
         return new PropVariedDecalSettings(RenderOrder, Seed, RenderTime, Variation, CustomDepth);
     }
 }
-public class PropVariedSoftSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0, int? applyColor = null) : BasicPropSettings(renderOrder, seed, renderTime), IVariable, ICustomDepth
+public class PropVariedSoftSettings(int renderOrder = 0, int seed = 0, int renderTime = 0, int variation = 0, int customDepth = 0, int? applyColor = null) : BasicPropSettings(renderOrder, seed, renderTime), IVariable, ICustomDepth, IApplyColor
 {
     public int Variation { get; set; } = variation;
     public int CustomDepth { get; set; } = customDepth;

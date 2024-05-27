@@ -1671,6 +1671,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     _ => (texture.Width / 2f, texture.Height / 2f, new BasicPropSettings())
                                 };
 
+                                if (settings is PropVariedSoftSettings vs && init is InitVariedSoftProp i && i.Colorize == 1) {
+                                    vs.ApplyColor = 1;
+                                }
+
                                 if (settings is ICustomDepth cd) {
                                     cd.CustomDepth = init switch
                                     {
@@ -1915,6 +1919,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     
                                     _ => (texture.Width / 2f, texture.Height / 2f, new BasicPropSettings())
                                 };
+
+                                if (settings is PropVariedSoftSettings vs && init is InitVariedSoftProp i && i.Colorize == 1) {
+                                    vs.ApplyColor = 1;
+                                }
 
                                 if (settings is ICustomDepth cd) {
                                     cd.CustomDepth = init switch
