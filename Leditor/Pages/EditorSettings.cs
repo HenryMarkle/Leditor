@@ -138,8 +138,11 @@ internal class SettingsPage : EditorPage
                 
         if (GLOBALS.Settings.GeneralSettings.Navbar) GLOBALS.NavSignal = Printers.ImGui.Nav(out _);
 
-        if (ImGui.Begin("Settings##EditorSettings", ImGuiWindowFlags.NoCollapse))
+        if (ImGui.Begin("Settings##EditorSettings", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove))
         {
+            ImGui.SetWindowSize(new Vector2(GetScreenWidth() - 80, GetScreenHeight() - 80));
+            ImGui.SetWindowPos(new Vector2(40, 40));
+            
             ImGui.Columns(2);
             ImGui.SetColumnWidth(0, 200);
 
@@ -822,6 +825,7 @@ internal class SettingsPage : EditorPage
                         var assignDeleteProps = ImGui.Button($"Delete: {GLOBALS.Settings.Shortcuts.PropsEditor.DeleteSelectedProps}");
                         var assignEditRopePoints = ImGui.Button($"Edit Rope Points: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopePointsEditingMode}");
                         var assignToggleRopeEditing = ImGui.Button($"Rope Simulation: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopeEditingMode}");
+                        var assiginSimulationBeizerSwitch = ImGui.Button($"Rope Simulation: {GLOBALS.Settings.Shortcuts.PropsEditor.SimulationBeizerSwitch}");
                         var assignDeepenProps = ImGui.Button($"Deepen Prop: {GLOBALS.Settings.Shortcuts.PropsEditor.DeepenSelectedProps}");
                         var assignUndeepenProps = ImGui.Button($"Undeepen Prop: {GLOBALS.Settings.Shortcuts.PropsEditor.UndeepenSelectedProps}");
                         var assignDuplicate = ImGui.Button($"Duplicate: {GLOBALS.Settings.Shortcuts.PropsEditor.DuplicateProps}");
@@ -856,6 +860,7 @@ internal class SettingsPage : EditorPage
                         if (assignDeleteProps) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DeleteSelectedProps;
                         if (assignEditRopePoints) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopePointsEditingMode;
                         if (assignToggleRopeEditing) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToggleRopeEditingMode;
+                        if (assiginSimulationBeizerSwitch) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.SimulationBeizerSwitch;
                         if (assignDeepenProps) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DeepenSelectedProps;
                         if (assignUndeepenProps) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.UndeepenSelectedProps;
                         if (assignDuplicate) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DuplicateProps;

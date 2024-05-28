@@ -368,6 +368,69 @@ class Program
     // MAIN FUNCTION
     private static void Main()
     {
+        float initialFrames = 0;
+        Texture2D? screenshotTexture = null;
+        Task<List<Action>> loadPropImagesTask = default!;
+        Task<List<Action>> loadLightImagesTask = default!;
+        var isLingoRuntimeInit = false;
+        string[] ropePropImagePaths;
+        string[] longPropImagePaths;
+        string[][] otherPropImagePaths;
+        string[] lightImagePaths;
+        var propTextures = new PropTexturesLoader();
+        var lightTextures = new LightTexturesLoader();
+
+        List<Action> loadPropTexturesList = [];
+        List<Action> loadLightTexturesList = [];
+
+        var tileTexturesLoadProgress = 0;
+        var propTexturesLoadProgress = 0;
+        var lightTexturesLoadProgress = 0;
+
+        Image icon = new();
+
+        var fatalException = false;
+        
+        var paletteLoadProgress = 0;
+
+        Task<Data.Tiles.TileDex>? tileDexTask = null;
+        Task<Data.Props.PropDex>? propDexTask = null;
+
+        var tileLoadProgress = 0;
+        var propLoadProgress = 0;
+
+        var totalPropTexturesLoadProgress = 0;
+        var totalLightTexturesLoadProgress = 0;
+
+        List<Action>.Enumerator loadPropTexturesEnumerator = default!;
+        List<Action>.Enumerator loadLightTexturesEnumerator = default!;
+
+        var isLoadingTexturesDone = false;
+
+        GeoEditorPage? geoPage = null;
+        TileEditorPage? tilePage = null;
+        CamerasEditorPage? camerasPage = null;
+        LightEditorPage? lightPage = null;
+        DimensionsEditorPage? dimensionsPage = null;
+        NewLevelPage? newLevelPage = null;
+        DeathScreen? deathScreen = null;
+        EffectsEditorPage? effectsPage = null;
+        PropsEditorPage? propsPage = null;
+        MainPage? mainPage = null;
+        StartPage? startPage = null;
+        SaveProjectPage? savePage = null;
+        FailedTileCheckOnLoadPage? failedTileCheckOnLoadPage = null;
+        AssetsNukedPage? assetsNukedPage = null;
+        MissingAssetsPage? missingAssetsPage = null;
+        MissingTexturesPage? missingTexturesPage = null;
+        MissingPropTexturesPage? missingPropTexturesPage = null;
+        MissingInitFilePage? missingInitFilePage = null;
+        ExperimentalGeometryPage? experimentalGeometryPage = null;
+        SettingsPage? settingsPage = null;
+
+        Task allCacheTasks = default!;
+
+
         Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
 
         #if DEBUG
@@ -392,6 +455,8 @@ class Program
             // The program should halt here..
         }
 
+        // Set the custom renderer path
+
         using var logger = new LoggerConfiguration().WriteTo.File(
             Path.Combine(GLOBALS.Paths.ExecutableDirectory, "logs/logs.txt"),
             fileSizeLimitBytes: 50000000,
@@ -415,39 +480,6 @@ class Program
                 logger.Error($"failed to create cache directory: {e}");
             }
         }
-
-        // Check for the assets folder and subfolders
-        
-        // Check /assets. A common mistake when building is to forget to copy the 
-        // assets folder
-
-        var missingAssetsDirectory = !Directory.Exists(GLOBALS.Paths.AssetsDirectory);
-        
-        var failedIntegrity = missingAssetsDirectory;
-        
-        if (failedIntegrity) goto skip_file_check;
-        
-        foreach (var (directory, exists) in GLOBALS.Paths.DirectoryIntegrity)
-        {
-            if (!exists)
-            {
-                logger.Fatal($"Critical directory not found: \"{directory}\"");
-                failedIntegrity = true;
-            }
-            
-            if (failedIntegrity) goto skip_file_check;
-        }
-
-        foreach (var (file, exists) in GLOBALS.Paths.FileIntegrity)
-        {
-            if (!exists)
-            {
-                logger.Fatal($"critical file not found: \"{file}]\"");
-                failedIntegrity = true;
-            }
-        }
-        
-        skip_file_check:
 
         // Import settings
 
@@ -489,6 +521,54 @@ class Program
             }
         }
 
+        var gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
+        var loadRate = GLOBALS.Settings.Misc.TileImageScansPerFrame;
+
+
+        if (!string.IsNullOrEmpty(GLOBALS.Settings.GeneralSettings.RenderingAssetsPath)) {
+            GLOBALS.Paths.RendererDirectory = GLOBALS.Settings.GeneralSettings.RenderingAssetsPath;
+        }
+
+        var palettesDirExists = Directory.Exists(GLOBALS.Paths.PalettesDirectory);
+
+        PaletteLoader? paletteLoader = palettesDirExists 
+            ? new(GLOBALS.Paths.PalettesDirectory) 
+            : null;
+
+        // Check for the assets folder and subfolders
+        
+        // Check /assets. A common mistake when building is to forget to copy the 
+        // assets folder
+
+        var missingAssetsDirectory = !Directory.Exists(GLOBALS.Paths.AssetsDirectory);
+        var missingRenderingAssetsDirecotry = !Directory.Exists(GLOBALS.Paths.RendererDirectory);
+        
+        var failedIntegrity = missingAssetsDirectory;
+        
+        if (failedIntegrity) goto right_before_gl_context;
+        
+        foreach (var ed in GLOBALS.Paths.EssentialDirectories)
+        {
+            if (!Directory.Exists(ed))
+            {
+                logger.Fatal($"Critical directory not found: \"{ed}\"");
+                failedIntegrity = true;
+            }
+            
+            if (failedIntegrity) goto right_before_gl_context;
+        }
+
+        foreach (var ef in GLOBALS.Paths.EssentialFiles)
+        {
+            if (!File.Exists(ef))
+            {
+                logger.Fatal($"Critical file not found: \"{ef}]\"");
+                failedIntegrity = true;
+            }
+
+            if (failedIntegrity) goto right_before_gl_context;
+        }
+        
         // Check for projects folder
         
         if (!failedIntegrity && !Directory.Exists(GLOBALS.Paths.ProjectsDirectory))
@@ -527,7 +607,7 @@ class Program
                 }
             });
 
-        var allCacheTasks = Task.WhenAll([loadRecentProjectsTask]);
+        allCacheTasks = Task.WhenAll([loadRecentProjectsTask]);
 
         var tilePackagesTask = Task.FromResult<TileInitLoadInfo[]>([]);
 
@@ -621,25 +701,24 @@ class Program
         
         // Load Tile Textures
 
-        var propTextures = new PropTexturesLoader();
-        var lightTextures = new LightTexturesLoader();
+        
         
         // 1. Get all texture paths
         
-        var ropePropImagePaths = GLOBALS.RopeProps
+        ropePropImagePaths = GLOBALS.RopeProps
             .Select(r => Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", r.Name + ".png"))
             .ToArray();
         
-        var longPropImagePaths = GLOBALS.LongProps
+        longPropImagePaths = GLOBALS.LongProps
             .Select(l => Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", l.Name + ".png"))
             .ToArray();
         
-        var otherPropImagePaths = GLOBALS.Props.Select(category =>
+        otherPropImagePaths = GLOBALS.Props.Select(category =>
             category.Select(prop => Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png")
             ).ToArray()
         ).ToArray();
         
-        var lightImagePaths = failedIntegrity ? [] : Directory
+        lightImagePaths = failedIntegrity ? [] : Directory
             .GetFileSystemEntries(GLOBALS.Paths.LightAssetsDirectory)
             .Where(e => e.EndsWith(".png"))
             .Select(e =>
@@ -657,17 +736,21 @@ class Program
         GLOBALS.Tiles = [..GLOBALS.Tiles, ..loadedPackageTiles];
         
         // 3. Load the images
-
-        var loadPropImagesTask = propTextures.PrepareFromPathsAsync(ropePropImagePaths, longPropImagePaths, otherPropImagePaths);
-        var loadLightImagesTask = lightTextures.PrepareFromPathsAsync(lightImagePaths);
         
+        if (!failedIntegrity) {
+            loadPropImagesTask = propTextures.PrepareFromPathsAsync(ropePropImagePaths, longPropImagePaths, otherPropImagePaths);
+            loadLightImagesTask = lightTextures.PrepareFromPathsAsync(lightImagePaths);
+        }
+
         // 4. Await loading in later stages
+
+        right_before_gl_context:
         
         //
 
         logger.Information("Initializing window");
 
-        var icon = LoadImage(GLOBALS.Paths.IconPath);
+        icon = LoadImage(GLOBALS.Paths.IconPath);
 
         SetConfigFlags(ConfigFlags.ResizableWindow);
         SetConfigFlags(ConfigFlags.Msaa4xHint);
@@ -688,8 +771,9 @@ class Program
         SetWindowIcon(icon);
         SetWindowMinSize(GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight);
         SetExitKey(KeyboardKey.Null);
+
         
-        if (failedIntegrity) goto skip_gl_init;
+        if (failedIntegrity) goto skip_loading;
 
         // The splashscreen
         GLOBALS.Textures.SplashScreen = LoadTexture(GLOBALS.Paths.SplashScreenPath);
@@ -879,34 +963,30 @@ void main()
         
         skip_gl_init:
 
-        float initialFrames = 0;
-
-        Texture2D? screenshotTexture = null;
-
         logger.Information("Initializing pages");
         
         // Initialize pages
 
-        GeoEditorPage geoPage = new() { Logger = logger };
-        TileEditorPage tilePage = new() { Logger = logger };
-        CamerasEditorPage camerasPage = new() { Logger = logger };
-        LightEditorPage lightPage = new() { Logger = logger };
-        DimensionsEditorPage dimensionsPage = new() { Logger = logger };
-        NewLevelPage newLevelPage = new() { Logger = logger };
-        DeathScreen deathScreen = new() { Logger = logger };
-        EffectsEditorPage effectsPage = new() { Logger = logger };
-        PropsEditorPage propsPage = new() { Logger = logger };
-        MainPage mainPage = new() { Logger = logger };
-        StartPage startPage = new() { Logger = logger };
-        SaveProjectPage savePage = new() { Logger = logger };
-        FailedTileCheckOnLoadPage failedTileCheckOnLoadPage = new() { Logger = logger };
-        AssetsNukedPage assetsNukedPage = new() { Logger = logger };
-        MissingAssetsPage missingAssetsPage = new() { Logger = logger };
-        MissingTexturesPage missingTexturesPage = new() { Logger = logger };
-        MissingPropTexturesPage missingPropTexturesPage = new() { Logger = logger };
-        MissingInitFilePage missingInitFilePage = new() { Logger = logger };
-        ExperimentalGeometryPage experimentalGeometryPage = new() { Logger = logger };
-        SettingsPage settingsPage = new() { Logger = logger };
+        geoPage = new() { Logger = logger };
+        tilePage = new() { Logger = logger };
+        camerasPage = new() { Logger = logger };
+        lightPage = new() { Logger = logger };
+        dimensionsPage = new() { Logger = logger };
+        newLevelPage = new() { Logger = logger };
+        deathScreen = new() { Logger = logger };
+        effectsPage = new() { Logger = logger };
+        propsPage = new() { Logger = logger };
+        mainPage = new() { Logger = logger };
+        startPage = new() { Logger = logger };
+        savePage = new() { Logger = logger };
+        failedTileCheckOnLoadPage = new() { Logger = logger };
+        assetsNukedPage = new() { Logger = logger };
+        missingAssetsPage = new() { Logger = logger };
+        missingTexturesPage = new() { Logger = logger };
+        missingPropTexturesPage = new() { Logger = logger };
+        missingInitFilePage = new() { Logger = logger };
+        experimentalGeometryPage = new() { Logger = logger };
+        settingsPage = new() { Logger = logger };
 
         // GLOBALS.Pager = new Pager(logger, new Context(logger, null));
         //
@@ -940,9 +1020,7 @@ void main()
             LingoRuntime.CastPath = Path.Combine(LingoRuntime.MovieBasePath, "Cast");
         }
         
-        //
-        var isLingoRuntimeInit = false;
-        //
+        
         
         logger.Information("Initializing events");
         
@@ -972,10 +1050,6 @@ void main()
         {
             GLOBALS.WindowHandle = new IntPtr(GetWindowHandle());
         }
-        
-        // Quick save task
-
-        Task<(bool success, Exception? exception)>? quickSaveTask = null;
         
         //
         rlImGui.Setup(GLOBALS.Settings.GeneralSettings.DarkTheme, true);
@@ -1019,53 +1093,22 @@ void main()
 
         // Tile & Prop Textures
 
-        Task.WaitAll([loadPropImagesTask, loadLightImagesTask]);
+        if (!failedIntegrity) Task.WaitAll([loadPropImagesTask, loadLightImagesTask]);
 
-        var loadPropTexturesList = loadPropImagesTask.Result;
-        var loadLightTexturesList = loadLightImagesTask.Result;
         
-        using var loadPropTexturesEnumerator = loadPropTexturesList.GetEnumerator();
-        using var loadLightTexturesEnumerator = loadLightTexturesList.GetEnumerator();
 
-        var tileTexturesLoadProgress = 0;
-        var propTexturesLoadProgress = 0;
-        var lightTexturesLoadProgress = 0;
-
-        var totalPropTexturesLoadProgress = loadPropTexturesList.Count;
-        var totalLightTexturesLoadProgress = loadLightTexturesList.Count;
-
-        var loadRate = GLOBALS.Settings.Misc.TileImageScansPerFrame;
-
-        var isLoadingTexturesDone = false;
+        if (!failedIntegrity) {
+            loadPropTexturesList = loadPropImagesTask.Result;
+            loadLightTexturesList = loadLightImagesTask.Result;
+            totalPropTexturesLoadProgress = loadPropTexturesList.Count;
+            totalLightTexturesLoadProgress = loadLightTexturesList.Count;
+        }
+        
+        loadPropTexturesEnumerator = loadPropTexturesList.GetEnumerator();
+        loadLightTexturesEnumerator = loadLightTexturesList.GetEnumerator();
         
         logger.Information("Begin main loop");
 
-        var gShortcuts = GLOBALS.Settings.Shortcuts.GlobalShortcuts;
-
-        // Doesn't seem to work
-        _tileLoader.Logger = logger;
-        
-        _tileLoader.Start();
-
-        _propLoader.Start();
-        _propLoader.IncludeDefined(("Ropes", new Data.Color(0, 0, 0)), GLOBALS.Ropes, GLOBALS.Paths.PropsAssetsDirectory);
-        _propLoader.IncludeDefined(("Longs", new Data.Color(0, 0, 0)), GLOBALS.Longs, GLOBALS.Paths.PropsAssetsDirectory);
-
-        var tileLoadProgress = 0;
-        var propLoadProgress = 0;
-        
-        Task<Data.Tiles.TileDex>? tileDexTask = null;
-        Task<Data.Props.PropDex>? propDexTask = null;
-
-        var palettesDirExists = Directory.Exists(GLOBALS.Paths.PalettesDirectory);
-
-        PaletteLoader? paletteLoader = palettesDirExists 
-            ? new(GLOBALS.Paths.PalettesDirectory) 
-            : null;
-        
-        var paletteLoadProgress = 0;
-
-        var fatalException = false;
 
         // Timer
 
@@ -1084,6 +1127,19 @@ void main()
 
         GLOBALS.AutoSaveTimer.AutoReset = true;
         GLOBALS.AutoSaveTimer.Enabled = GLOBALS.Settings.GeneralSettings.AutoSave;
+
+        if (failedIntegrity) goto skip_loading;
+
+        // Doesn't seem to work
+        _tileLoader.Logger = logger;
+        
+        _tileLoader.Start();
+
+        _propLoader.Start();
+        _propLoader.IncludeDefined(("Ropes", new Data.Color(0, 0, 0)), GLOBALS.Ropes, GLOBALS.Paths.PropsAssetsDirectory);
+        _propLoader.IncludeDefined(("Longs", new Data.Color(0, 0, 0)), GLOBALS.Longs, GLOBALS.Paths.PropsAssetsDirectory);
+
+        skip_loading:
         
         while (!WindowShouldClose())
         {
@@ -1128,13 +1184,40 @@ void main()
                     
                     DrawText(GLOBALS.Version, 10, GetScreenHeight() - 25, 20, Color.White);
                     EndDrawing();
+                    continue;
+                } else if (missingRenderingAssetsDirecotry) {
+                    BeginDrawing();
+                    ClearBackground(Color.Black);
+                    
+                    DrawText("Could Not Find The Rendering Assets Folder", 50, 50, 35, Color.White);
+                    
+                    DrawText("This folder is required by the editor, in order to render tiles and props.", 
+                        50, 
+                        200, 
+                        20, 
+                        Color.White
+                    );
+
+                    DrawText("If you've set the 'RenderingAssetsPath' setting, you might have set the wrong folder.\n", 
+                        50, 
+                        230, 
+                        20, 
+                        Color.White
+                    );
+
+                    DrawText("If you've built this program yourself, you might have forgot to include the folder from the repository.", 
+                        50, 
+                        260, 
+                        20, 
+                        Color.White
+                    );
+                    
+                    DrawText(GLOBALS.Version, 10, GetScreenHeight() - 25, 20, Color.White);
+                    EndDrawing();
+                    continue;
                 }
-                GLOBALS.Page = 15;
-                continue;
                 #endregion
                 skip_failed_integrity:
-                
-                
                 
                 #region Splashscreen
                 if (initialFrames < 180 && GLOBALS.Settings.Misc.SplashScreen)
@@ -1186,7 +1269,7 @@ void main()
                 
                 // Temporary solution
                 if (fatalException) {
-                    deathScreen.Draw();
+                    deathScreen?.Draw();
                     continue;
                 }
 
@@ -1375,12 +1458,12 @@ void main()
 
                     loadLoop:
                     
-                    if (loadPropTexturesEnumerator.MoveNext())
+                    if (loadPropTexturesEnumerator.MoveNext() is true)
                     {
                         loadPropTexturesEnumerator.Current?.Invoke();
                         propTexturesLoadProgress++;
 
-                        while (propTexturesLoadProgress % loadRate != 0 && loadPropTexturesEnumerator.MoveNext())
+                        while (propTexturesLoadProgress % loadRate != 0 && loadPropTexturesEnumerator.MoveNext() is true)
                         {
                             loadPropTexturesEnumerator.Current?.Invoke();
                             propTexturesLoadProgress++;
@@ -1486,7 +1569,7 @@ void main()
                     isLoadingTexturesDone = true;
                     // Enabled = true;
                 }
-                else if (!allCacheTasks.IsCompleted)
+                else if (allCacheTasks?.IsCompleted is not true)
                 {
                     var width = GetScreenWidth();
                     var height = GetScreenHeight();
@@ -2036,26 +2119,26 @@ void main()
                     switch (GLOBALS.Page)
                     {
 
-                        case 0: startPage.Draw(); break;
-                        case 1: mainPage.Draw(); break;
-                        case 2: experimentalGeometryPage.Draw(); break;
-                        case 3: tilePage.Draw(); break;
-                        case 4: camerasPage.Draw(); break;
-                        case 5: lightPage.Draw(); break;
-                        case 6: dimensionsPage.Draw(); break;
-                        case 7: effectsPage.Draw(); break;
-                        case 8: propsPage.Draw(); break;
-                        case 9: settingsPage.Draw(); break;
-                        case 11: newLevelPage.Draw(); break;
-                        case 12: savePage.Draw(); break;
-                        case 13: failedTileCheckOnLoadPage.Draw(); break;
-                        case 14: assetsNukedPage.Draw(); break;
-                        case 15: missingAssetsPage.Draw(); break;
-                        case 16: missingTexturesPage.Draw(); break;
-                        case 17: missingInitFilePage.Draw(); break;
-                        case 18: geoPage.Draw(); break;
-                        case 19: missingPropTexturesPage.Draw(); break;
-                        case 99: deathScreen.Draw(); break;
+                        case 0: startPage?.Draw(); break;
+                        case 1: mainPage?.Draw(); break;
+                        case 2: experimentalGeometryPage?.Draw(); break;
+                        case 3: tilePage?.Draw(); break;
+                        case 4: camerasPage?.Draw(); break;
+                        case 5: lightPage?.Draw(); break;
+                        case 6: dimensionsPage?.Draw(); break;
+                        case 7: effectsPage?.Draw(); break;
+                        case 8: propsPage?.Draw(); break;
+                        case 9: settingsPage?.Draw(); break;
+                        case 11: newLevelPage?.Draw(); break;
+                        case 12: savePage?.Draw(); break;
+                        case 13: failedTileCheckOnLoadPage?.Draw(); break;
+                        case 14: assetsNukedPage?.Draw(); break;
+                        case 15: missingAssetsPage?.Draw(); break;
+                        case 16: missingTexturesPage?.Draw(); break;
+                        case 17: missingInitFilePage?.Draw(); break;
+                        case 18: geoPage?.Draw(); break;
+                        case 19: missingPropTexturesPage?.Draw(); break;
+                        case 99: deathScreen?.Draw(); break;
                         
                         default:
                             GLOBALS.Page = GLOBALS.PreviousPage;
@@ -2103,6 +2186,12 @@ void main()
         }
 
         logger.Debug("Exiting main loop");
+        
+        if (failedIntegrity) {
+            CloseWindow();
+            return;
+        }
+        
         logger.Information("unloading textures");
         
         UnloadImage(icon);
@@ -2175,26 +2264,29 @@ void main()
         logger.Debug("Unloading Pages");
         
         // GLOBALS.Pager.Dispose();
+
+        loadPropTexturesEnumerator.Dispose();
+        loadLightTexturesEnumerator.Dispose();
         
-        geoPage.Dispose();
-        tilePage.Dispose();
-        camerasPage.Dispose();
-        lightPage.Dispose();
-        dimensionsPage.Dispose();
-        deathScreen.Dispose();
-        effectsPage.Dispose();
-        propsPage.Dispose();
-        mainPage.Dispose();
-        startPage.Dispose();
-        savePage.Dispose();
-        failedTileCheckOnLoadPage.Dispose();
-        assetsNukedPage.Dispose();
-        missingAssetsPage.Dispose();
-        missingTexturesPage.Dispose();
-        missingPropTexturesPage.Dispose();
-        missingInitFilePage.Dispose();
-        experimentalGeometryPage.Dispose();
-        settingsPage.Dispose();
+        geoPage?.Dispose();
+        tilePage?.Dispose();
+        camerasPage?.Dispose();
+        lightPage?.Dispose();
+        dimensionsPage?.Dispose();
+        deathScreen?.Dispose();
+        effectsPage?.Dispose();
+        propsPage?.Dispose();
+        mainPage?.Dispose();
+        startPage?.Dispose();
+        savePage?.Dispose();
+        failedTileCheckOnLoadPage?.Dispose();
+        assetsNukedPage?.Dispose();
+        missingAssetsPage?.Dispose();
+        missingTexturesPage?.Dispose();
+        missingPropTexturesPage?.Dispose();
+        missingInitFilePage?.Dispose();
+        experimentalGeometryPage?.Dispose();
+        settingsPage?.Dispose();
 
         paletteLoader?.Dispose();
 

@@ -1,2 +1,9 @@
 - Water level has been visually raised by one unit.
 - Varied soft props now have `#applyColor` enabled by default.
+- Newly created ropes are now set to simulation rather than beizer by default.
+- New ropes now come with one beizer control handle by default. 
+- Added box placement in the tiles editor.
+- Adjusted the tiles editor menu a bit.
+- Fixed a crash when attempting to paste tiles with geo.
+- Fixed the size of the settings window.
+- Added the ability to set a pointer to the renderer's assets directory.

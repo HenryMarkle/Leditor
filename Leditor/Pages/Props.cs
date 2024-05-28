@@ -1145,7 +1145,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
             if (current.type != InitPropType.Rope) continue;
             
             var newModel = new RopeModel(current.prop, GLOBALS.RopeProps[current.position.index], current.prop.Extras.RopePoints.Length);
-            models.Add((r, false, newModel, []));
+           
+            var quad = current.prop.Quads;
+            var quadCenter = Utils.QuadsCenter(ref quad);
+
+            models.Add((r, true, newModel, [ quadCenter ]));
         }
 
         _models = [..models];
@@ -1806,7 +1810,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 };
 
                                 var ropeEnds = Utils.RopeEnds(newQuads);
-
                                 
                                 PropRopeSettings settings;
                                 Vector2[] ropePoints;
@@ -2143,6 +2146,24 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         _selectedPropsEncloser.Y + 
                         _selectedPropsEncloser.Height/2
                     );
+
+                    if (fetchedSelected[0].prop.type == InitPropType.Rope) {
+                        if (_shortcuts.SimulationBeizerSwitch.Check(ctrl, shift, alt)) {
+                            
+                            // Find the rope model
+                            var modelIndex = -1;
+
+                            for (var i = 0; i < _models.Length; i++)
+                            {
+                                if (_models[i].index == fetchedSelected[0].index) modelIndex = i;
+                            }
+
+                            if (modelIndex != -1) {
+                                ref var currentModel = ref _models[modelIndex];
+                                currentModel.simSwitch = !currentModel.simSwitch;
+                            }
+                        }
+                    }
                 }
                 else
                 {

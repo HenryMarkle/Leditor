@@ -21,7 +21,7 @@ public class AutoTiler
         string RightBottomLeft,
         string BottomLeftTop);
 
-    public record RectPackMeta(
+    public record BoxPackMeta(
         string Name,
 
         string Left,
@@ -52,7 +52,7 @@ public class AutoTiler
         TileDefinition? RightBottomLeft = null,
         TileDefinition? BottomLeftTop = null);
 
-    public record RectPack(
+    public record BoxPack(
         string Name,
 
         TileDefinition Left,
@@ -65,7 +65,7 @@ public class AutoTiler
         TileDefinition BottomRight,
         TileDefinition BottomLeft,
 
-        TileDefinition[] Inside
+        (TileDefinition, TileCell[,,])[] Inside
     );
 
     internal struct Node
@@ -84,7 +84,7 @@ public class AutoTiler
     
     //
 
-    internal AutoTiler(IEnumerable<PathPackMeta> pathPacks, IEnumerable<RectPackMeta> rectPacks)
+    internal AutoTiler(IEnumerable<PathPackMeta> pathPacks, IEnumerable<BoxPackMeta> boxPacks)
     {
         if (GLOBALS.TileDex is null) throw new NullReferenceException("TileDex is not set");
 
@@ -133,9 +133,9 @@ public class AutoTiler
             packs.Add(newPack);
         }
 
-        List<RectPack> parsedRectPacks = [];
+        List<BoxPack> parsedBoxPacks = [];
 
-        foreach (var pack in rectPacks)
+        foreach (var pack in boxPacks)
         {
             if (string.IsNullOrEmpty(pack.Name)) 
                 throw new NullReferenceException("Rect pack name cannot be null or empty");
@@ -150,9 +150,16 @@ public class AutoTiler
             var bottomRight = GLOBALS.TileDex.GetTile(pack.BottomRight);
             var bottomLeft = GLOBALS.TileDex.GetTile(pack.BottomLeft);
 
-            var insideTiles = pack.Inside.Select(i => GLOBALS.TileDex.GetTile(i)).ToArray();
+            var insideTiles = pack.Inside.Select(i => {
+                var tile = GLOBALS.TileDex.GetTile(i);
+                var mtx = new TileCell[tile.Size.Height, tile.Size.Width, 3];
+                var center = Utils.GetTileHeadOrigin(tile);
+                Utils.ForcePlaceTileWithoutGeo(mtx, tile, ((int)center.X, (int)center.Y, 0));
 
-            var newPack = new RectPack(pack.Name,
+                return (tile, mtx);
+            }).ToArray();
+
+            var newPack = new BoxPack(pack.Name,
                 left,
                 top,
                 right,
@@ -164,21 +171,21 @@ public class AutoTiler
                 insideTiles
             );
 
-            parsedRectPacks.Add(newPack);
+            parsedBoxPacks.Add(newPack);
         }
 
         PathPacks = packs;
-        RectPacks = parsedRectPacks;
+        BoxPacks = parsedBoxPacks;
 
         SelectedPathPack = packs is [] ? null : packs[0];
-        SelectedRectPack = parsedRectPacks is [] ? null : parsedRectPacks[0];
+        SelectedBoxPack = parsedBoxPacks is [] ? null : parsedBoxPacks[0];
     }
     
     internal List<PathPack> PathPacks { get; private set; }
-    internal List<RectPack> RectPacks { get; private set;}
+    internal List<BoxPack> BoxPacks { get; private set;}
 
     internal PathPack? SelectedPathPack { get; set; }
-    internal RectPack? SelectedRectPack { get; set; }
+    internal BoxPack? SelectedBoxPack { get; set; }
 
     private TileDefinition? ResolvePathNode(Node node, PathPack pack) => node switch
     {
@@ -316,6 +323,98 @@ public class AutoTiler
         return tiles;
     }
 
+    // Generate Rect
+    internal TileCell[,,] GenerateBox(int width, int height) {
+        if (width == 0 || height == 0) 
+            throw new ArgumentException($"Cannot supply zero dimensions (width: {width}, height: {height}).");
+
+        var matrix = new TileCell[height, width, 3];
+
+        for (var y = 0; y < height; y++) {
+            for (var x = 0; x < width; x++) {
+                for (var z = 0; z < 3; z++) {
+                    matrix[y, x, z] = new TileCell();
+                }
+            }
+        }
+
+        var rnd = new Random();
+
+        for (var y = 0; y < height; y++) {
+            for (var x = 0; x < width; x++) {
+                // Corners
+                if (y == 0 && x == 0) {
+                    Utils.ForcePlaceTileWithoutGeo(matrix, SelectedBoxPack!.TopLeft, (x, y, 0));
+                    continue;
+                } else if (y == 0 && x == width - 1) {
+                    Utils.ForcePlaceTileWithoutGeo(matrix, SelectedBoxPack!.TopRight, (x, y, 0));
+                    continue;
+                } else if (x == 0 && y == height - 1) {
+                    Utils.ForcePlaceTileWithoutGeo(matrix, SelectedBoxPack!.BottomLeft, (x, y, 0));
+                    continue;
+                } else if (x == width - 1 && y == height - 1) {
+                    Utils.ForcePlaceTileWithoutGeo(matrix, SelectedBoxPack!.BottomRight, (x, y, 0));
+                    continue;
+                }
+
+                // Sides
+
+                if (y == 0) {
+                    Utils.ForcePlaceTileWithoutGeo(matrix, SelectedBoxPack!.Top, (x, y, 0));
+                    continue;
+                } else if (y == height - 1) {
+                    Utils.ForcePlaceTileWithoutGeo(matrix, SelectedBoxPack!.Bottom, (x, y, 0));
+                    continue;
+                }
+
+                if (x == 0) {
+                    Utils.ForcePlaceTileWithoutGeo(matrix, SelectedBoxPack!.Left, (x, y, 0));
+                    continue;
+                } else if (x == width - 1) {
+                    Utils.ForcePlaceTileWithoutGeo(matrix, SelectedBoxPack!.Right, (x, y, 0));
+                    continue;
+                }
+
+                // Inside
+
+                if (SelectedBoxPack!.Inside is []) continue;
+
+                if (matrix[y, x, 0].Data is not TileDefault) continue;
+
+                var (tile, mtx) = SelectedBoxPack!.Inside[rnd.Next(SelectedBoxPack!.Inside.Length)];
+                
+                for (var ty = 0; ty < tile.Size.Height; ty++) {
+                    for (var tx = 0; tx < tile.Size.Width; tx++) {
+                        for (var tz = 0; tz < 3; tz++) {
+                            var sy = ty + y;
+                            var sx = tx + x;
+
+                            if (sy < 1 || sy >= matrix.GetLength(0) - 1 || sx < 1 || sx >= matrix.GetLength(1) - 1) continue;
+
+                            var cell = mtx[ty, tx, tz];
+                            
+                            if (cell.Data is TileBody b) {
+                                var (bx, by, bz) = b.HeadPosition;
+
+                                b.HeadPosition = (x + bx, y + by, bz);
+
+                                cell.Data = b;
+                            }
+
+                            matrix[y + ty, x + tx, tz] = cell;
+                        }
+                    }
+                }
+
+                // for (var z = 0; z < 3; z++) {
+                //     if (Utils.IsStrayTileBodyFragment(matrix, x, y, z)) matrix[y, x, z] = new TileCell();
+                // }
+            }
+        }
+
+        return matrix;
+    }
+
     /// <summary>
     /// Coordinates in matrix units
     /// </summary>
@@ -333,21 +432,21 @@ public class AutoTiler
         // Top & Bottom
         for (var i = x; i <= x2; i++) {
             if (i == x) {
-                tiles.Add(new ResolvedTile { Coords = new(x, y), Tile = SelectedRectPack!.TopLeft });
-                tiles.Add(new ResolvedTile { Coords = new(x, y2), Tile = SelectedRectPack!.BottomLeft });
+                tiles.Add(new ResolvedTile { Coords = new(x, y), Tile = SelectedBoxPack!.TopLeft });
+                tiles.Add(new ResolvedTile { Coords = new(x, y2), Tile = SelectedBoxPack!.BottomLeft });
             } else if (i == x2) {
-                tiles.Add(new ResolvedTile { Coords = new(i, y), Tile = SelectedRectPack!.TopRight });
-                tiles.Add(new ResolvedTile { Coords = new(i, y2), Tile = SelectedRectPack!.BottomRight });
+                tiles.Add(new ResolvedTile { Coords = new(i, y), Tile = SelectedBoxPack!.TopRight });
+                tiles.Add(new ResolvedTile { Coords = new(i, y2), Tile = SelectedBoxPack!.BottomRight });
             } else {
-                tiles.Add(new ResolvedTile { Coords = new(i, y), Tile = SelectedRectPack!.Top });
-                tiles.Add(new ResolvedTile { Coords = new(i, y2), Tile = SelectedRectPack!.Bottom });
+                tiles.Add(new ResolvedTile { Coords = new(i, y), Tile = SelectedBoxPack!.Top });
+                tiles.Add(new ResolvedTile { Coords = new(i, y2), Tile = SelectedBoxPack!.Bottom });
             }
         }
 
         // Left & Right
         for (var k = y + 1; k < y2; k++) {
-            tiles.Add(new ResolvedTile { Coords = new(x, k), Tile = SelectedRectPack!.Left });
-            tiles.Add(new ResolvedTile { Coords = new(x, y2 - 1), Tile = SelectedRectPack!.Right });
+            tiles.Add(new ResolvedTile { Coords = new(x, k), Tile = SelectedBoxPack!.Left });
+            tiles.Add(new ResolvedTile { Coords = new(x, y2 - 1), Tile = SelectedBoxPack!.Right });
         }
 
         // Inside
@@ -355,12 +454,7 @@ public class AutoTiler
 
         for (var i = x + 1; i < x2; i++) {
             for (var k = y + 1; k < y2; k++) {
-                var index = rnd.Next(0, SelectedRectPack!.Inside.Length);
-                var tile = SelectedRectPack!.Inside is [] 
-                    ? null 
-                    : SelectedRectPack!.Inside[index];
-
-                tiles.Add(new ResolvedTile { Coords = new(i, x), Tile = tile });
+                
             }
         }
 
