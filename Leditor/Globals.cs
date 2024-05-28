@@ -128,7 +128,7 @@ internal static class GLOBALS
         internal static string PackagesDirectory => Path.Combine(AssetsDirectory, "packs");
         internal static string TilePackagesDirectory => Path.Combine(PackagesDirectory, "tiles");
         internal static string FontsDirectory => Path.Combine(AssetsDirectory, "fonts");
-        internal static string RendererDirectory => Path.Combine(AssetsDirectory, "renderer");
+        internal static string RendererDirectory { get; set; } = Path.Combine(AssetsDirectory, "renderer");
         internal static string PalettesDirectory => Path.Combine(AssetsDirectory, "palettes");
 
         internal static string LevelsDirectory => Path.Combine(ExecutableDirectory, "levels");
@@ -136,10 +136,10 @@ internal static class GLOBALS
         internal static string ScreenshotsDirectory => Path.Combine(ExecutableDirectory, "screenshots");
         
         
-        internal static string TilesInitPath => Path.Combine(IndexDirectory, "tiles.txt");
+        internal static string TilesInitPath => Path.Combine(RendererDirectory, "Graphics", "Init.txt");
         internal static string MaterialsInitPath => Path.Combine(RendererDirectory, "Materials", "Init.txt");
         internal static string EffectsInitPath => Path.Combine(IndexDirectory, "effects.txt");
-        internal static string PropsInitPath => Path.Combine(IndexDirectory, "props.txt");
+        internal static string PropsInitPath => Path.Combine(RendererDirectory, "Props", "Init.txt");
         
         internal static string SettingsPath => Path.Combine(ExecutableDirectory, "settings.json");
 
@@ -150,7 +150,7 @@ internal static class GLOBALS
 
 
 
-        private static IEnumerable<string> EssentialDirectories =>
+        internal static IEnumerable<string> EssentialDirectories =>
         [
             IndexDirectory, 
             AssetsDirectory, 
@@ -161,21 +161,11 @@ internal static class GLOBALS
             RendererDirectory
         ];
 
-        private static IEnumerable<string> EssentialFiles =>
+        internal static IEnumerable<string> EssentialFiles =>
         [
-            MaterialsInitPath,
-            EffectsInitPath,
+            TilesInitPath,
+            PropsInitPath
         ];
-        
-        internal static readonly IEnumerable<(string, bool)> DirectoryIntegrity =
-            from directory 
-                in EssentialDirectories 
-            select (directory, Directory.Exists(directory));
-
-        internal static readonly IEnumerable<(string, bool)> FileIntegrity =
-            from file 
-                in EssentialFiles 
-            select (file, File.Exists(file));
     }
 
     internal static Data.Tiles.TileDex? TileDex { get; set; }

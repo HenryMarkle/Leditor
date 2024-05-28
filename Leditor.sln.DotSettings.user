@@ -4,6 +4,7 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=99085254_002D6DE7_002D48B1_002D8345_002DEAA3E1830163_002Fd_003APages_002Ff_003AStart_002Ecs/@EntryIndexedValue">ExplicitlyExcluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=99085254_002D6DE7_002D48B1_002D8345_002DEAA3E1830163_002Fd_003APages_002Ff_003ATiles_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=99085254_002D6DE7_002D48B1_002D8345_002DEAA3E1830163_002Ff_003AAutoTiler_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=99085254_002D6DE7_002D48B1_002D8345_002DEAA3E1830163_002Ff_003APrinters_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/Highlighting/AnalysisEnabled/@EntryValue">VISIBLE_FILES</s:String>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=bftiles/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Bruh/@EntryIndexedValue">True</s:Boolean>

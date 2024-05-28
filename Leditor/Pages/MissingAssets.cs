@@ -10,7 +10,7 @@ internal class MissingAssetsPage : EditorPage
     }
     
     private const string MissingAssetsSubfoldersWarnTitleText = "The editor is missing some essential assets";
-    private const string MissingAssetsSubfoldersWarnSubtitleText = "The program cannot function without them; Please restore them before trying again.";
+    private const string MissingAssetsSubfoldersWarnSubtitleText = "The program cannot function without them.\nCheck the logs and restore the missing resources before trying again.";
 
     public override void Draw()
     {
@@ -33,36 +33,6 @@ internal class MissingAssetsPage : EditorPage
             20,
             Color.White
         );
-
-        if (GLOBALS.Paths.DirectoryIntegrity.Any(d => !d.Item2))
-        {
-            DrawText(
-                "Missing folders:\n\n" + 
-                string.Join(
-                    "\n\t-", 
-                    GLOBALS.Paths.DirectoryIntegrity.Where(d => !d.Item2).Select(d => d.Item1)
-                ),
-                200,
-                500,
-                20,
-                Color.White
-            );
-        }
-
-        if (GLOBALS.Paths.FileIntegrity.Any(d => !d.Item2))
-        {
-            DrawText(
-                "Missing files:\n\n" + 
-                string.Join(
-                    "\n\t-", 
-                    GLOBALS.Paths.FileIntegrity.Where(d => !d.Item2).Select(d => d.Item1)
-                ),
-                600,
-                500,
-                20,
-                Color.White
-            );
-        }
         
         EndDrawing();
     }

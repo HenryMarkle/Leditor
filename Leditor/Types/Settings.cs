@@ -99,7 +99,7 @@ public class TileEditor(
         new("Inside Thin Pipes", "insidePipeVertical", "insidePipeHorizontal", "insidePipeRD", "insidePipeLD", "insidePipeLU", "insidePipeRU", "", "", "", "", ""),
     ];
 
-    public IEnumerable<AutoTiler.RectPackMeta> AutoTilerRectPacks { get; set; } = [
+    public IEnumerable<AutoTiler.BoxPackMeta> AutoTilerBoxPacks { get; set; } = [
         new("Su Patterns", "Block Edge W", "Block Edge N", "Block Edge E", "Block Edge S", "Block Corner NW", "Block Corner NE", "Block Corner SE", "Block Corner SW", [])
     ];
 }
@@ -190,7 +190,8 @@ public class GeneralSettings(
     bool autoSave = false,
     byte waterOpacity = 70,
     bool water = true,
-    bool navbar = true
+    bool navbar = true,
+    string renderingAssetsPath = ""
     )
 {
     public bool DeveloperMode { get; set; } = developerMode;
@@ -214,6 +215,7 @@ public class GeneralSettings(
     public byte WaterOpacity { get; set; } = waterOpacity;
     public bool Water { get; set; } = water;
     public bool Navbar { get; set; } = navbar;
+    public string RenderingAssetsPath { get; set; } = renderingAssetsPath;
 }
 
 public class Settings
