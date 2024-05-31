@@ -179,6 +179,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
 
     private bool _ropeInitialPlacement;
+    private int _additionalInitialRopeSegments;
     
     
     private bool _lockedPlacement;
@@ -1019,8 +1020,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
     private int _propsMenuOthersCategoryIndex;
     private int _propsMenuOthersIndex;
 
-    private int _spinnerLock;
-    
     private int _snapMode;
 
     private int _quadLock;
@@ -1459,7 +1458,17 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                 if (_ropeInitialPlacement) {
                     var (index, _, model, _) = _models.LastOrDefault();
+                    
                     if (model is not null && index < GLOBALS.Level.Props.Length) {
+                        if (_shortcuts.IncrementRopSegmentCount.Check(ctrl, shift, alt, true)) {
+                            _additionalInitialRopeSegments++;
+                        }
+
+                        if (_shortcuts.DecrementRopSegmentCount.Check(ctrl, shift, alt, true)) {
+                            _additionalInitialRopeSegments--;
+                            Utils.Restrict(ref _additionalInitialRopeSegments, 0);
+                        }
+
                         var (_, _, (_, initIndex), foundProp) = GLOBALS.Level.Props[index];
 
                         var middleLeft = Raymath.Vector2Divide(
@@ -1508,7 +1517,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         var endsDistance = (int)Raymath.Vector2Distance(middleLeft, middleRight) / (10 + init.SegmentLength);
                         if (endsDistance > 0 && ++_ropeSimulationFrame % 6 == 0) {
                             var ropePoints = foundProp.Extras.RopePoints;
-                            var targetCount = (int) (endsDistance);
+                            var targetCount = endsDistance + _additionalInitialRopeSegments;
 
                             var deficit = targetCount - ropePoints.Length;
                             
@@ -1614,58 +1623,68 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                             case 1: // Ropes
                             {
-                                var current = GLOBALS.RopeProps[_propsMenuRopesIndex];
-                                var newQuads = new PropQuads
-                                {
-                                    TopLeft = new(posV.X - 100, posV.Y - 30),
-                                    BottomLeft = new(posV.X - 100, posV.Y + 30),
-                                    TopRight = new(posV.X + 100, tileMouseWorld.Y - 30),
-                                    BottomRight = new(posV.X + 100, posV.Y + 30)
-                                };
+                                if (_ropeInitialPlacement) {
+                                    _ropeInitialPlacement = false;
 
-                                var ropeEnds = Utils.RopeEnds(newQuads);
-
-                                
-                                PropRopeSettings settings;
-                                Vector2[] ropePoints;
-
-                                if (_newlyCopied)
-                                {
-                                    _newlyCopied = false;
-
-                                    ropePoints = _copiedRopePoints;
-                                    settings = (PropRopeSettings)_copiedPropSettings;
-                                    _defaultDepth = _copiedDepth;
-                                }
-                                else
-                                {
-                                    ropePoints = Utils.GenerateRopePoints(ropeEnds.pA, ropeEnds.pB, 30);
-                                    settings = new();
-                                }
-
+                                } else {
+                                    _ropeInitialPlacement = true;
+                                    _additionalInitialRopeSegments = 0;
                                     
-                                GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
-                                    (
-                                        InitPropType.Rope, 
-                                        null,
-                                        (-1, _propsMenuRopesIndex), 
-                                        new Prop(
-                                            _defaultDepth, 
-                                            current.Name, 
-                                            false, 
-                                            newQuads
-                                        )
-                                        {
-                                            Extras = new PropExtras(
-                                                settings, 
-                                                ropePoints
-                                            )
-                                        }
-                                    ) 
-                                ];
+                                    var current = GLOBALS.RopeProps[_propsMenuRopesIndex];
+                                    var newQuads = new PropQuads
+                                    {
+                                        TopLeft = new(tileMouseWorld.X, tileMouseWorld.Y),
+                                        BottomLeft = new(tileMouseWorld.X, tileMouseWorld.Y),
+                                        TopRight = new(tileMouseWorld.X, tileMouseWorld.Y),
+                                        BottomRight = new(tileMouseWorld.X, tileMouseWorld.Y)
+                                    };
 
-                                _selected = new bool[GLOBALS.Level.Props.Length];
-                                ImportRopeModels();
+                                    var ropeEnds = Utils.RopeEnds(newQuads);
+                                    
+                                    PropRopeSettings settings;
+                                    Vector2[] ropePoints;
+
+                                    if (_newlyCopied)
+                                    {
+                                        _newlyCopied = false;
+
+                                        ropePoints = _copiedRopePoints;
+                                        settings = (PropRopeSettings)_copiedPropSettings;
+                                        _defaultDepth = _copiedDepth;
+                                    }
+                                    else
+                                    {
+                                        // ropePoints = Utils.GenerateRopePoints(ropeEnds.pA, ropeEnds.pB, 30);
+                                        ropePoints = [tileMouseWorld];
+                                        settings = new(thickness: current.Name is "Wire" or "Zero-G Wire" ? 2 : null);
+                                    }
+
+                                        
+                                    GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
+                                        (
+                                            InitPropType.Rope, 
+                                            null,
+                                            (-1, _propsMenuRopesIndex), 
+                                            new Prop(
+                                                _defaultDepth, 
+                                                current.Name, 
+                                                false, 
+                                                newQuads
+                                            )
+                                            {
+                                                Extras = new PropExtras(
+                                                    settings, 
+                                                    ropePoints
+                                                )
+                                            }
+                                        ) 
+                                    ];
+
+                                    _selected = new bool[GLOBALS.Level.Props.Length];
+                                    _selected[^1] = true;
+
+                                    ImportRopeModels();
+                                }
                             }
                                 break;
 
@@ -1874,6 +1893,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                                 } else {
                                     _ropeInitialPlacement = true;
+                                    _additionalInitialRopeSegments = 0;
                                     
                                     var current = GLOBALS.RopeProps[_propsMenuRopesIndex];
                                     var newQuads = new PropQuads
