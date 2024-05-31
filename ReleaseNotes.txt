@@ -7,3 +7,4 @@
 - Fixed a crash when attempting to paste tiles with geo.
 - Fixed the size of the settings window.
 - Added the ability to set a pointer to the renderer's assets directory.
+- Added the original tile/material deletion behavior as an option.
