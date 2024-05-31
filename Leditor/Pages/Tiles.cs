@@ -1772,7 +1772,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                     {
                         case TileHead:
                         case TileBody:
-                            if ((GLOBALS.Settings.TileEditor.UnifiedDeletion || _materialTileSwitch) && (!_eraseClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY)) {
+                            if ((GLOBALS.Settings.TileEditor.OriginalDeletionBehavior || GLOBALS.Settings.TileEditor.UnifiedDeletion || _materialTileSwitch) && (!_eraseClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY)) {
                                 var actions = RemoveTile(tileMatrixX, tileMatrixY, GLOBALS.Layer);
                                         
                                 foreach (var action in actions) _tempActions.Add(action);
@@ -1781,7 +1781,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             break;
 
                         case TileMaterial:
-                            if ((GLOBALS.Settings.TileEditor.UnifiedDeletion || !_materialTileSwitch) && (!_eraseClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY)) {
+                            if ((GLOBALS.Settings.TileEditor.OriginalDeletionBehavior || GLOBALS.Settings.TileEditor.UnifiedDeletion || !_materialTileSwitch) && (!_eraseClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY)) {
                                 var actions = RemoveMaterial(tileMatrixX, tileMatrixY, GLOBALS.Layer, _materialBrushRadius);
                                         
                                 foreach (var action in actions) _tempActions.Add(action);
@@ -1789,7 +1789,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             }
                             break;
                     }
-                } else if (!GLOBALS.Settings.TileEditor.ExactHoverDeletion || GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer].Data is not TileDefault) { 
+                } else if (!GLOBALS.Settings.TileEditor.OriginalDeletionBehavior || !GLOBALS.Settings.TileEditor.ExactHoverDeletion || GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer].Data is not TileDefault) { 
                     for (var lx = -_materialBrushRadius; lx < _materialBrushRadius+1; lx++)
                     {
                         var matrixX = tileMatrixX + lx;
@@ -1808,11 +1808,20 @@ internal class TileEditorPage : EditorPage, IDisposable
                             {
                                 case TileHead:
                                 case TileBody:
-                                    if ((GLOBALS.Settings.TileEditor.UnifiedDeletion || _materialTileSwitch) && (!_eraseClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY)) {
-                                        var actions = RemoveTile(matrixX, matrixY, GLOBALS.Layer);
+                                    if (!_eraseClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY) {
+                                        if (GLOBALS.Settings.TileEditor.OriginalDeletionBehavior) {
+                                            if (matrixX == tileMatrixX && matrixY == tileMatrixY) {
+                                                var actions = RemoveTile(matrixX, matrixY, GLOBALS.Layer);
+                                                    
+                                                foreach (var action in actions) _tempActions.Add(action);
+                                                _shouldRedrawLevel = true;
+                                            }
+                                        } else if (GLOBALS.Settings.TileEditor.UnifiedDeletion || _materialTileSwitch) {
+                                            var actions = RemoveTile(matrixX, matrixY, GLOBALS.Layer);
                                                 
-                                        foreach (var action in actions) _tempActions.Add(action);
-                                        _shouldRedrawLevel = true;
+                                            foreach (var action in actions) _tempActions.Add(action);
+                                            _shouldRedrawLevel = true;
+                                        }
                                     }
                                     break;
 
@@ -2880,6 +2889,13 @@ internal class TileEditorPage : EditorPage, IDisposable
                     GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials = overridableMaterials;
                 }
 
+                var ogDelete = GLOBALS.Settings.TileEditor.OriginalDeletionBehavior;
+                if (ImGui.Checkbox("Original Deletion Bahvior", ref ogDelete)) {
+                    GLOBALS.Settings.TileEditor.OriginalDeletionBehavior = ogDelete;
+                }
+
+                if (ogDelete) ImGui.BeginDisabled();
+
                 var unifiedDeletion = GLOBALS.Settings.TileEditor.UnifiedDeletion;
                 if (ImGui.Checkbox("Unified Deletion", ref unifiedDeletion)) {
                    GLOBALS.Settings.TileEditor.UnifiedDeletion = unifiedDeletion;
@@ -2889,6 +2905,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                 if (ImGui.Checkbox("Exact hover deletion", ref exactHoverDeletion)) {
                     GLOBALS.Settings.TileEditor.ExactHoverDeletion = exactHoverDeletion;
                 }
+
+                if (ogDelete) ImGui.EndDisabled();
 
                 //
 

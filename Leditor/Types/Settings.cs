@@ -76,7 +76,8 @@ public class TileEditor(
     bool useTexturesInTooltip = false,
     bool implicitOverrideMaterials = true,
     bool unifiedDeletion = true,
-    bool exactHoverDeletion = false
+    bool exactHoverDeletion = false,
+    bool originalDeletionBhavior = true
     )
 {
     public bool HoveredTileInfo { get; set; } = hoveredTileInfo;
@@ -91,6 +92,7 @@ public class TileEditor(
     public bool ImplicitOverrideMaterials { get; set; } = implicitOverrideMaterials;
     public bool UnifiedDeletion { get; set; } = unifiedDeletion;
     public bool ExactHoverDeletion { get; set; } = exactHoverDeletion;
+    public bool OriginalDeletionBehavior { get; set; } = originalDeletionBhavior;
     
     public IEnumerable<AutoTiler.PathPackMeta> AutoTilerPathPacks { get; set; } = [
         new("Thin Pipes", "Vertical Pipe", "Horizontal Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),
