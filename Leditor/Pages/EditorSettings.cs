@@ -834,6 +834,8 @@ internal class SettingsPage : EditorPage
                         var assignRotateCounterClockwise = ImGui.Button($"Rotate Counter-Clockwise: {GLOBALS.Settings.Shortcuts.PropsEditor.RotateCounterClockwise}");
                         var assignFastRotateClockwise = ImGui.Button($"Fast Rotate Clockwise: {GLOBALS.Settings.Shortcuts.PropsEditor.FastRotateClockwise}");
                         var assignFastRotateCounterClockwise = ImGui.Button($"Fast Rotate Counter-Clockwise: {GLOBALS.Settings.Shortcuts.PropsEditor.FastRotateCounterClockwise}");
+                        var assignIncrementRopeSegmentCount = ImGui.Button($"Increment Rope Segment Count: {GLOBALS.Settings.Shortcuts.PropsEditor.IncrementRopSegmentCount}");
+                        var assignDecrementRopeSegmentCount = ImGui.Button($"Decrement Rope Segment Count: {GLOBALS.Settings.Shortcuts.PropsEditor.DecrementRopSegmentCount}");
 
 
                         if (assignCycleVariations) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.CycleVariations;
@@ -869,6 +871,8 @@ internal class SettingsPage : EditorPage
                         if (assignRotateCounterClockwise) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.RotateCounterClockwise;
                         if (assignFastRotateClockwise) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.FastRotateClockwise;
                         if (assignFastRotateCounterClockwise) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.FastRotateCounterClockwise;
+                        if(assignIncrementRopeSegmentCount) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.IncrementRopSegmentCount;
+                        if(assignDecrementRopeSegmentCount) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DecrementRopSegmentCount;
                     }
                         break;
                     case 8: // Style

@@ -22,6 +22,42 @@ public class RopeModel
             
         }
     }
+
+    internal void UpdateSegments(Vector2[] segments) {
+        var oldLength = Rope.Extras.RopePoints.Length;
+        var newLength = segments.Length;
+
+        var deficit = newLength - oldLength;
+
+        if (deficit == 0) return;
+
+        var newVelocities = new Vector2[newLength];
+        var newLastPositions = new Vector2[newLength];
+        
+        if (deficit > 0) {
+            for (var i = 0; i < oldLength; i++) {
+                newVelocities[i] = _segmentVelocities[i];
+                newLastPositions[i] = Rope.Extras.RopePoints[i];
+            }
+
+            for (var k = oldLength; k < newLength; k++) {
+                newVelocities[k] = new Vector2(0, 0);
+                newLastPositions[k] = segments[k];
+            }
+        } else {
+            for (var j = 0; j < newLength; j ++) {
+                newVelocities[j] = _segmentVelocities[j];
+                newLastPositions[j] = Rope.Extras.RopePoints[j];
+            }
+        }
+
+        SegmentCount = newLength;
+
+        Rope.Extras.RopePoints = segments;
+        _segmentVelocities = newVelocities;
+        _lastPositions = newLastPositions;
+    }
+
     private PropRopeSettings Settings { get; init; }
 
     private Vector2[] _segmentVelocities;

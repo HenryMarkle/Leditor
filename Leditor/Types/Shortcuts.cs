@@ -377,6 +377,9 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut RotateClockwise { get; set; } = new(KeyboardKey.Null);
     public KeyboardShortcut RotateCounterClockwise { get; set; } = new(KeyboardKey.Null);
 
+    public KeyboardShortcut IncrementRopSegmentCount { get; set; } = new(KeyboardKey.Null);
+    public KeyboardShortcut DecrementRopSegmentCount { get; set; } = new(KeyboardKey.Null);
+
     public KeyboardShortcut SimulationBeizerSwitch { get; set; } = new(KeyboardKey.Null);
     
     public KeyboardShortcut FastRotateClockwise { get; set; } = new(KeyboardKey.Null);
