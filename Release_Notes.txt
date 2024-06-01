@@ -10,3 +10,7 @@
 - Do note that the dynamic segment count is not optimal (yet), and you may need to manually edit it later.
 
 - Added two new keyboard shortcuts to decrement and increment segment count (`J` and `K` respectively).
+
+### Fixes
+
+- Fixed settings failing to load.
