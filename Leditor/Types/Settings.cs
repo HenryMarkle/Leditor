@@ -64,46 +64,82 @@ public class GeoEditor
     public bool BasicView { get; set; }
 }
 
-public class TileEditor(
-    bool hoveredTileInfo = false, 
-    bool tintedTiles = false, 
-    bool useTextures = false,
-    bool allowUndefinedTiles = true,
-    bool grid = false,
-    bool showCameras = false,
-    bool drawCurrentTile = true,
-    bool drawCurrentSpecs = false,
-    bool useTexturesInTooltip = false,
-    bool implicitOverrideMaterials = true,
-    bool unifiedDeletion = true,
-    bool exactHoverDeletion = false,
-    bool originalDeletionBhavior = true
-    )
+public class TileEditor
 {
-    public bool HoveredTileInfo { get; set; } = hoveredTileInfo;
-    public bool TintedTiles { get; set; } = tintedTiles;
-    public bool UseTextures { get; set; } = useTextures;
-    public bool AllowUndefinedTiles { get; set; } = allowUndefinedTiles;
-    public bool Grid { get; set; } = grid;
-    public bool ShowCameras { get; set; } = showCameras;
-    public bool DrawCurrentTile { get; set; } = drawCurrentTile;
-    public bool DrawCurrentSpecs { get; set; } = drawCurrentSpecs;
-    public bool UseTexturesInTooltip { get; set; } = useTexturesInTooltip;
-    public bool ImplicitOverrideMaterials { get; set; } = implicitOverrideMaterials;
-    public bool UnifiedDeletion { get; set; } = unifiedDeletion;
-    public bool ExactHoverDeletion { get; set; } = exactHoverDeletion;
-    public bool OriginalDeletionBehavior { get; set; } = originalDeletionBhavior;
+    public bool HoveredTileInfo { get; set; } 
+    public bool TintedTiles { get; set; }
+    public bool UseTextures { get; set; }
+    public bool AllowUndefinedTiles { get; set; }
+    public bool Grid { get; set; }
+    public bool ShowCameras { get; set; }
+    public bool DrawCurrentTile { get; set; }
+    public bool DrawCurrentSpecs { get; set; }
+    public bool UseTexturesInTooltip { get; set; }
+    public bool ImplicitOverrideMaterials { get; set; }
+    public bool UnifiedDeletion { get; set; }
+    public bool ExactHoverDeletion { get; set; }
+    public bool OriginalDeletionBehavior { get; set; }
     
-    public IEnumerable<AutoTiler.PathPackMeta> AutoTilerPathPacks { get; set; } = [
-        new("Thin Pipes", "Vertical Pipe", "Horizontal Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),
-        new("Thin Plain Pipes", "Vertical Plain Pipe", "Horizontal Plain Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),
-        new("Wall Wires",  "WallWires Vertical A", "WallWires Horizontal A", "WallWires Square SE", "WallWires Square SW", "WallWires Square NW", "WallWires Square NE", "WallWires X Section", "WallWires T Section S", "WallWires T Section W", "WallWires T Section N", "WallWires T Section E"),
-        new("Inside Thin Pipes", "insidePipeVertical", "insidePipeHorizontal", "insidePipeRD", "insidePipeLD", "insidePipeLU", "insidePipeRU", "", "", "", "", ""),
-    ];
+    public IEnumerable<AutoTiler.PathPackMeta> AutoTilerPathPacks { get; set; }
 
-    public IEnumerable<AutoTiler.BoxPackMeta> AutoTilerBoxPacks { get; set; } = [
-        new("Su Patterns", "Block Edge W", "Block Edge N", "Block Edge E", "Block Edge S", "Block Corner NW", "Block Corner NE", "Block Corner SE", "Block Corner SW", [])
-    ];
+    public IEnumerable<AutoTiler.BoxPackMeta> AutoTilerBoxPacks { get; set; }
+
+    public TileEditor() {
+        HoveredTileInfo = false;
+        TintedTiles = false;
+        UseTextures = false;
+        AllowUndefinedTiles = true;
+        Grid = false;
+        ShowCameras = false;
+        DrawCurrentTile = true;
+        DrawCurrentSpecs = false;
+        UseTexturesInTooltip = false;
+        ImplicitOverrideMaterials = true;
+        UnifiedDeletion = true;
+        ExactHoverDeletion = false;
+        OriginalDeletionBehavior = true;
+    }
+
+    public TileEditor(
+        bool hoveredTileInfo = false, 
+        bool tintedTiles = false, 
+        bool useTextures = false,
+        bool allowUndefinedTiles = true,
+        bool grid = false,
+        bool showCameras = false,
+        bool drawCurrentTile = true,
+        bool drawCurrentSpecs = false,
+        bool useTexturesInTooltip = false,
+        bool implicitOverrideMaterials = true,
+        bool unifiedDeletion = true,
+        bool exactHoverDeletion = false,
+        bool originalDeletionBhavior = true
+    ) {
+        HoveredTileInfo = hoveredTileInfo;
+        TintedTiles = tintedTiles;
+        UseTextures = useTextures;
+        AllowUndefinedTiles = allowUndefinedTiles;
+        Grid = grid;
+        ShowCameras = showCameras;
+        DrawCurrentTile = drawCurrentTile;
+        DrawCurrentSpecs = drawCurrentSpecs;
+        UseTexturesInTooltip = useTexturesInTooltip;
+        ImplicitOverrideMaterials = implicitOverrideMaterials;
+        UnifiedDeletion = unifiedDeletion;
+        ExactHoverDeletion = exactHoverDeletion;
+        OriginalDeletionBehavior = originalDeletionBhavior;
+
+        AutoTilerPathPacks = [
+            new("Thin Pipes", "Vertical Pipe", "Horizontal Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),
+            new("Thin Plain Pipes", "Vertical Plain Pipe", "Horizontal Plain Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),
+            new("Wall Wires",  "WallWires Vertical A", "WallWires Horizontal A", "WallWires Square SE", "WallWires Square SW", "WallWires Square NW", "WallWires Square NE", "WallWires X Section", "WallWires T Section S", "WallWires T Section W", "WallWires T Section N", "WallWires T Section E"),
+            new("Inside Thin Pipes", "insidePipeVertical", "insidePipeHorizontal", "insidePipeRD", "insidePipeLD", "insidePipeLU", "insidePipeRU", "", "", "", "", ""),
+        ];
+
+        AutoTilerBoxPacks = [
+            new("Su Patterns", "Block Edge W", "Block Edge N", "Block Edge E", "Block Edge S", "Block Corner NW", "Block Corner NE", "Block Corner SE", "Block Corner SW", [])
+        ];
+    }
 }
 
 public class LightEditor(
