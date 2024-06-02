@@ -3021,28 +3021,47 @@ internal static class Printers
     
     internal static void DrawTextureQuad(
         in Texture2D texture, 
-        in QuadVectors quads
+        in QuadVectors quad
     )
     {
+        var flippedX = quad.TopLeft.X > quad.TopRight.X && quad.BottomLeft.X > quad.BottomRight.X;
+        var flippedY = quad.TopLeft.Y > quad.BottomLeft.Y && quad.TopRight.Y > quad.BottomRight.Y;
+
+        var (topRight, topLeft, bottomLeft, bottomRight) = (flippedX, flippedY) switch
+        {
+            (false, false) => (quad.TopRight, quad.TopLeft, quad.BottomLeft, quad.BottomRight),
+            (false, true ) => (quad.BottomRight, quad.BottomLeft, quad.TopLeft, quad.TopRight),
+            (true , false) => (quad.TopLeft, quad.TopRight, quad.BottomRight, quad.BottomLeft),
+            (true , true ) => (quad.BottomLeft, quad.BottomRight, quad.TopRight, quad.TopLeft)
+        };
+
+        var ((vTopRightX, vTopRightY), (vTopLeftX, vTopLeftY), (vBottomLeftX, vBottomLeftY), (vBottomRightX, vBottomRightY)) = (flippedX, flippedY) switch
+        {
+            (false, false) => ((1.0f, 0.0f), (0.0f, 0.0f), (0.0f, 1.0f), (1.0f, 1.0f)),
+            (false, true) => ((1.0f, 1.0f), (0.0f, 1.0f), (0.0f, 0.0f), (1.0f, 0.0f)),
+            (true, false) => ((0.0f, 0.0f), (1.0f, 0.0f), (1.0f, 1.0f), (0.0f, 1.0f)),
+            (true, true) => ((0.0f, 1.0f), (1.0f, 1.0f), (1.0f, 0.0f), (0.0f, 0.0f))
+        };
+
         Rlgl.SetTexture(texture.Id);
 
         Rlgl.Begin(0x0007);
         Rlgl.Color4ub(Color.White.R, Color.White.G, Color.White.B, Color.White.A);
 
-        Rlgl.TexCoord2f(1.0f, 0.0f);
-        Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
+        Rlgl.TexCoord2f(vTopRightX, vTopRightY);
+        Rlgl.Vertex2f(topRight.X, topRight.Y);
         
-        Rlgl.TexCoord2f(0.0f, 0.0f);
-        Rlgl.Vertex2f(quads.TopLeft.X, quads.TopLeft.Y);
+        Rlgl.TexCoord2f(vTopLeftX, vTopLeftY);
+        Rlgl.Vertex2f(topLeft.X, topLeft.Y);
         
-        Rlgl.TexCoord2f(0.0f, 1.0f);
-        Rlgl.Vertex2f(quads.BottomLeft.X, quads.BottomLeft.Y);
+        Rlgl.TexCoord2f(vBottomLeftX, vBottomLeftY);
+        Rlgl.Vertex2f(bottomLeft.X, bottomLeft.Y);
         
-        Rlgl.TexCoord2f(1.0f, 1.0f);
-        Rlgl.Vertex2f(quads.BottomRight.X, quads.BottomRight.Y);
+        Rlgl.TexCoord2f(vBottomRightX, vBottomRightY);
+        Rlgl.Vertex2f(bottomRight.X, bottomRight.Y);
         
-        Rlgl.TexCoord2f(1.0f, 0.0f);
-        Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
+        Rlgl.TexCoord2f(vTopRightX, vTopRightY);
+        Rlgl.Vertex2f(topRight.X, topRight.Y);
         Rlgl.End();
 
         Rlgl.SetTexture(0);
@@ -3115,17 +3134,17 @@ internal static class Printers
     
     internal static void DrawTextureQuad(
         in Texture2D texture, 
-        in PropQuads quads,
+        in PropQuads quad,
         bool flipX,
         bool flipY
     )
     {
         var (topRight, topLeft, bottomLeft, bottomRight) = (flipX, flipY) switch
         {
-            (false, false) => (quads.TopRight, quads.TopLeft, quads.BottomLeft, quads.BottomRight),
-            (false, true ) => (quads.BottomRight, quads.BottomLeft, quads.TopLeft, quads.TopRight),
-            (true , false) => (quads.TopLeft, quads.TopRight, quads.BottomRight, quads.BottomLeft),
-            (true , true ) => (quads.BottomLeft, quads.BottomRight, quads.TopRight, quads.TopLeft)
+            (false, false) => (quad.TopRight, quad.TopLeft, quad.BottomLeft, quad.BottomRight),
+            (false, true ) => (quad.BottomRight, quad.BottomLeft, quad.TopLeft, quad.TopRight),
+            (true , false) => (quad.TopLeft, quad.TopRight, quad.BottomRight, quad.BottomLeft),
+            (true , true ) => (quad.BottomLeft, quad.BottomRight, quad.TopRight, quad.TopLeft)
         };
 
         var ((trX, trY), (tlX, tlY), (blX, blY), (brX, brY)) = (flipX, flipY) switch
@@ -7697,6 +7716,7 @@ internal static class Printers
             var isEffects = GLOBALS.Page == 7;
             var isProps = GLOBALS.Page == 8;
             var isSettings = GLOBALS.Page == 9;
+            var isL4Maker = GLOBALS.Page == 10;
             
             if (ImGuiNET.ImGui.MenuItem("Main", string.Empty, ref isMain)) {GLOBALS.Page = 1;}
             if (ImGuiNET.ImGui.MenuItem("Geometry", string.Empty, ref isGeo)) {GLOBALS.Page = 2;}
@@ -7706,6 +7726,7 @@ internal static class Printers
             if (ImGuiNET.ImGui.MenuItem("Dimensions", string.Empty, ref isDimensions)) {GLOBALS.Page = 6;}
             if (ImGuiNET.ImGui.MenuItem("Effects", string.Empty, ref isEffects)) {GLOBALS.Page = 7;}
             if (ImGuiNET.ImGui.MenuItem("Props", string.Empty, ref isProps)) {GLOBALS.Page = 8;}
+            if (ImGuiNET.ImGui.MenuItem("L4 Maker", string.Empty, ref isL4Maker)) {GLOBALS.Page = 10;}
             if (ImGuiNET.ImGui.MenuItem("Settings", string.Empty, ref isSettings)) {GLOBALS.Page = 9;}
 
             var selected = 0;

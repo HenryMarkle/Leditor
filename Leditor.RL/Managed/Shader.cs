@@ -7,7 +7,7 @@ public class Shader : IDisposable
     // ReSharper disable once MemberCanBePrivate.Global
     public Raylib_cs.Shader Raw;
 
-    public Shader(string vertexPath, string fragmentPath)
+    public Shader(string? vertexPath, string fragmentPath)
     {
         Raw = Raylib.LoadShader(vertexPath, fragmentPath);
     }

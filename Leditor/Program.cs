@@ -416,6 +416,7 @@ class Program
         DeathScreen? deathScreen = null;
         EffectsEditorPage? effectsPage = null;
         PropsEditorPage? propsPage = null;
+        L4MakerPage? l4MakerPage = null;
         MainPage? mainPage = null;
         StartPage? startPage = null;
         SaveProjectPage? savePage = null;
@@ -976,6 +977,7 @@ void main()
         deathScreen = new() { Logger = logger };
         effectsPage = new() { Logger = logger };
         propsPage = new() { Logger = logger };
+        l4MakerPage = new() { Logger = logger };
         mainPage = new() { Logger = logger };
         startPage = new() { Logger = logger };
         savePage = new() { Logger = logger };
@@ -1028,12 +1030,15 @@ void main()
         startPage.ProjectLoaded += propsPage.OnProjectLoaded;
         startPage.ProjectLoaded += mainPage.OnProjectLoaded;
         startPage.ProjectLoaded += dimensionsPage.OnProjectLoaded;
+        startPage.ProjectLoaded += l4MakerPage.OnProjectLoaded;
         
         mainPage.ProjectLoaded += propsPage.OnProjectLoaded;
         mainPage.ProjectLoaded += dimensionsPage.OnProjectLoaded;
+        mainPage.ProjectLoaded += l4MakerPage.OnProjectLoaded;
         
         newLevelPage.ProjectCreated += propsPage.OnProjectCreated;
         newLevelPage.ProjectCreated += dimensionsPage.OnProjectCreated;
+        newLevelPage.ProjectCreated += l4MakerPage.OnProjectCreated;
 
         GLOBALS.PageUpdated += mainPage.OnPageUpdated;
         GLOBALS.PageUpdated += tilePage.OnPageUpdated;
@@ -1044,6 +1049,7 @@ void main()
         GLOBALS.PageUpdated += savePage.OnPageUpdated;
         GLOBALS.PageUpdated += experimentalGeometryPage.OnPageUpdated;
         GLOBALS.PageUpdated += dimensionsPage.OnPageUpdated;
+        GLOBALS.PageUpdated += l4MakerPage.OnPageUpdated;
         //
 
         unsafe
@@ -2129,6 +2135,7 @@ void main()
                         case 7: effectsPage?.Draw(); break;
                         case 8: propsPage?.Draw(); break;
                         case 9: settingsPage?.Draw(); break;
+                        case 10: l4MakerPage?.Draw(); break;
                         case 11: newLevelPage?.Draw(); break;
                         case 12: savePage?.Draw(); break;
                         case 13: failedTileCheckOnLoadPage?.Draw(); break;
@@ -2276,6 +2283,7 @@ void main()
         deathScreen?.Dispose();
         effectsPage?.Dispose();
         propsPage?.Dispose();
+        l4MakerPage?.Dispose();
         mainPage?.Dispose();
         startPage?.Dispose();
         savePage?.Dispose();

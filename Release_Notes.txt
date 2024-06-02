@@ -1,16 +1,13 @@
-### Ropes
+### Layer 4 Maker
 
-- When placing ropes, you need to place each end of the rope sequentially.
-  - The new rope will be simulated while doing so.
-  - The segment count will adapt depending on the distance between the two ends.
+Introducing the Layer 4 Maker.
+Contrary to popular belief, there's no such thing as a fourth layer in Rain World. However, an image can be set in the background to give the illusion of distant terrain.
+While making the image is possible, this feature was introduced to make it more accessible to construct the image with the game's tiles and geometry.
 
-- When selecting a single rope, it gets be simulated automatically.
-  - Simulation can still be paused from the window.
+- The level is rendered in shades of gray.
+  - The further the layer, the dimmer it becomes.
+  - The closer the layer, the brighter it becomes.
 
-- Do note that the dynamic segment count is not optimal (yet), and you may need to manually edit it later.
-
-- Added two new keyboard shortcuts to decrement and increment segment count (`J` and `K` respectively).
-
-### Fixes
-
-- Fixed settings failing to load.
+- You can move around the quad points of each layer separately.
+- You can disable individual layers.
+- Generated images are exported to the new `l4` folder.
