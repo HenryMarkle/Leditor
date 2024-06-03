@@ -537,15 +537,21 @@ void main() {
 
         #region Shortcuts
 
-        if (!isWinBusy) {
+        if (!isWinBusy || _quadLock != 0 || _clickLock) {
 
             // Drag
 
             if (IsMouseButtonDown(MouseButton.Middle))
             {
+                _clickLock = true;
+
                 var delta = GetMouseDelta();
                 delta = Raymath.Vector2Scale(delta, -1.0f / _camera.Zoom);
                 _camera.Target = Raymath.Vector2Add(_camera.Target, delta);
+            }
+
+            if (IsMouseButtonReleased(MouseButton.Middle)) {
+                _clickLock = false;
             }
 
             // Zoom
@@ -754,6 +760,8 @@ void main() {
             #region ImGui
             {
                 rlImGui_cs.rlImGui.Begin();
+
+                ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
 
                 // Navigation bar
                 
