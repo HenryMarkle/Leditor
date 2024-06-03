@@ -229,7 +229,9 @@ internal class TileEditorPage : EditorPage, IDisposable
             ? _autoTiler?.ResolvePathLinear(_autoTilerPath) 
             : _autoTiler?.ResolvePath(_autoTilerPath);
 
-        foreach (var resolved in resolvedTiles!)
+        if (resolvedTiles == null) return;
+
+        foreach (var resolved in resolvedTiles)
         {
             if (!Utils.InBounds(resolved.Coords, GLOBALS.Level.TileMatrix) || resolved.Tile is null) continue;
 
@@ -2407,15 +2409,16 @@ internal class TileEditorPage : EditorPage, IDisposable
                         }
 
                         if (ImGui.BeginListBox("##AutoTilerTemplates", ImGui.GetContentRegionAvail() - new Vector2(0, 90))) {
-                        
-                            for (var index = 0; index < (_autoTiler?.PathPacks.Count ?? 0); index++) 
-                            {
-                                var pack = _autoTiler!.PathPacks[index];
-                                if (!string.IsNullOrEmpty(_searchText) && !pack.Name.Contains(_searchText)) continue;
+                            if (_autoTiler is not null) {
+                                for (var index = 0; index < _autoTiler.PathPacks.Count; index++) 
+                                {
+                                    var pack = _autoTiler.PathPacks[index];
+                                    if (!string.IsNullOrEmpty(_searchText) && !pack.Name.Contains(_searchText)) continue;
 
-                                var packSelected = ImGui.Selectable(pack.Name, _autoTiler.SelectedPathPack == pack);
+                                    var packSelected = ImGui.Selectable(pack.Name, _autoTiler.SelectedPathPack == pack);
 
-                                if (packSelected) _autoTiler.SelectedPathPack = pack;
+                                    if (packSelected) _autoTiler.SelectedPathPack = pack;
+                                }
                             }
                             
                             ImGui.EndListBox();
@@ -2461,16 +2464,19 @@ internal class TileEditorPage : EditorPage, IDisposable
                         }
                         
                         if (ImGui.BeginListBox("##AutoBoxTemplates", ImGui.GetContentRegionAvail() - new Vector2(0, 90))) {
-                        
-                            for (var index = 0; index < (_autoTiler?.BoxPacks.Count ?? 0); index++) 
-                            {
-                                var pack = _autoTiler!.BoxPacks[index];
-                                if (!string.IsNullOrEmpty(_searchText) && !pack.Name.Contains(_searchText)) continue;
 
-                                var packSelected = ImGui.Selectable(pack.Name, _autoTiler.SelectedBoxPack == pack);
+                            if (_autoTiler is not null) {
+                                for (var index = 0; index < _autoTiler.BoxPacks.Count; index++) 
+                                {
+                                    var pack = _autoTiler.BoxPacks[index];
+                                    if (!string.IsNullOrEmpty(_searchText) && !pack.Name.Contains(_searchText)) continue;
 
-                                if (packSelected) _autoTiler.SelectedBoxPack = pack;
+                                    var packSelected = ImGui.Selectable(pack.Name, _autoTiler.SelectedBoxPack == pack);
+
+                                    if (packSelected) _autoTiler.SelectedBoxPack = pack;
+                                }
                             }
+                        
                             
                             ImGui.EndListBox();
                         }
