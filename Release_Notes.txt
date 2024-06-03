@@ -11,3 +11,8 @@ While making the image is possible, this feature was introduced to make it more 
 - You can move around the quad points of each layer separately.
 - You can disable individual layers.
 - Generated images are exported to the new `l4` folder.
+
+### Other
+
+- Props editor panel are now split, and can be viewed independantly.
+- Fixed a crash that was caused by not having a `settings.json` file.
