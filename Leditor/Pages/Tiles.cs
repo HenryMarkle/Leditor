@@ -1156,8 +1156,8 @@ internal class TileEditorPage : EditorPage, IDisposable
         if (_autoTiler is null)
         {
             _autoTiler = new AutoTiler(
-                GLOBALS.Settings.TileEditor.AutoTilerPathPacks, 
-                GLOBALS.Settings.TileEditor.AutoTilerBoxPacks
+                GLOBALS.Settings.TileEditor.AutoTilerPathPacks ?? [], 
+                GLOBALS.Settings.TileEditor.AutoTilerBoxPacks ?? []
             );
         }
         
