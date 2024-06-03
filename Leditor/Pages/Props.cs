@@ -1101,6 +1101,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
     private bool _isNavbarHovered;
 
+    private bool _isPropsListHovered;
+
     public PropsEditorPage()
     {
         _camera = new Camera2D { Zoom = 0.8f };
@@ -1356,7 +1358,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         var tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / previewScale;
         var tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / previewScale;
 
-        var canDrawTile = !_isNavbarHovered && 
+        var canDrawTile = !_isPropsListHovered && !_isNavbarHovered && 
                         !_isPropsWinHovered && 
                           !_isPropsWinDragged && 
                           !_isShortcutsWinHovered && 
@@ -2095,7 +2097,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                 // Activate Selection Mode Via Mouse
                 if (_shortcuts.SelectProps.Button != _shortcuts.PlaceProp.Button) {
-                    if ((_shortcuts.SelectProps.Check(ctrl, shift, alt, true) || _shortcuts.SelectPropsAlt.Check(ctrl, shift, alt, true)) && !_clickTracker && canDrawTile)
+                    if (!_isPropsListHovered && !_isPropsWinHovered && (_shortcuts.SelectProps.Check(ctrl, shift, alt, true) || _shortcuts.SelectPropsAlt.Check(ctrl, shift, alt, true)) && !_clickTracker && canDrawTile)
                     {
                         _selection1 = GetScreenToWorld2D(GetMousePosition(), _camera);
                         _clickTracker = true;
@@ -3230,7 +3232,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         _selectedCycleIndices = [..selectedI];
                         _selectedCycleCursor = -1;
                     }   
-                    else if (canDrawTile && _shortcuts.PlaceProp.Button != _shortcuts.SelectProps.Button && (_shortcuts.PlaceProp.Check(ctrl, shift, alt, true) ||_shortcuts.PlacePropAlt.Check(ctrl, shift, alt, true))) {
+                    else if (!_isPropsListHovered && !_isPropsWinHovered && canDrawTile && _shortcuts.PlaceProp.Button != _shortcuts.SelectProps.Button && (_shortcuts.PlaceProp.Check(ctrl, shift, alt, true) ||_shortcuts.PlacePropAlt.Check(ctrl, shift, alt, true))) {
                         _mode = 1;
                         if (_noCollisionPropPlacement) _lockedPlacement = true;
                     }
@@ -3679,7 +3681,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 
             if (GLOBALS.Settings.GeneralSettings.Navbar) GLOBALS.NavSignal = Printers.ImGui.Nav(out _isNavbarHovered);
 
-            var menuOpened = ImGui.Begin("Props##PropsPanel");
+            var menuOpened = ImGui.Begin("Props Menu##PropsPlacementPanel");
             
             var menuPos = ImGui.GetWindowPos();
             var menuWinSpace = ImGui.GetWindowSize();
@@ -3704,34 +3706,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 var halfWidth = availableSpace.X / 2f;
                 var halfSize = new Vector2(halfWidth, 20);
                 
-                ImGui.SeparatorText("Mode");
-                
-                if (ImGui.Selectable(
-                        "Selection", 
-                        _mode == 0, 
-                        ImGuiSelectableFlags.None, 
-                        halfSize)
-                )
-                {
-                    _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                    _mode = 0;
-                }
-                
-                ImGui.SameLine();
-                
-                if (ImGui.Selectable(
-                        "Placement", 
-                        _mode == 1, 
-                        ImGuiSelectableFlags.None, 
-                        halfSize)
-                )
-                {
-                    _shouldRedrawLevel = true;
-                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                    _mode = 1;
-                }
-                
                 ImGui.Spacing();
 
                 if (ImGui.Button($"Grid: {_showGrid}",
@@ -3752,687 +3726,690 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 
                 ImGui.Spacing();
                 
-                switch (_mode)
                 {
-                    case 0: // Selection
-                    {
-                        ImGui.SeparatorText("Placed Props");
-                        
-                        if (ImGui.Button("Select All", availableSpace with { Y = 20 }))
-                        {
-                            _shouldRedrawLevel = true;
-                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                            
-                            for (var i = 0; i < _selected.Length; i++) _selected[i] = true;
-                        }
+                    if (ImGui.Button($"{(_noCollisionPropPlacement? "Continuous Placement" : "Single Placement")}", availableSpace with { Y = 20 }))
+                        _noCollisionPropPlacement = !_noCollisionPropPlacement;
+                    
+                    ImGui.Spacing();
+                    
+                    ImGui.SeparatorText("Categories");
 
-                        if (ImGui.BeginListBox("Props", availableSpace with { Y = availableSpace.Y - 440 }))
+                    var quarterSpace = availableSpace with { X = availableSpace.X / 4f, Y = 20 };
+
+                    var tilesSelected = ImGui.Selectable("Tiles", _menuRootCategoryIndex == 0, ImGuiSelectableFlags.None, quarterSpace);
+                    ImGui.SameLine();
+                    var ropesSelected = ImGui.Selectable("Ropes", _menuRootCategoryIndex == 1, ImGuiSelectableFlags.None, quarterSpace);
+                    ImGui.SameLine();
+                    var longsSelected = ImGui.Selectable("Longs", _menuRootCategoryIndex == 2, ImGuiSelectableFlags.None, quarterSpace);
+                    ImGui.SameLine();
+                    var othersSelected = ImGui.Selectable("Others", _menuRootCategoryIndex == 3, ImGuiSelectableFlags.None, quarterSpace);
+
+                    if (tilesSelected) _menuRootCategoryIndex = 0;
+                    if (ropesSelected) _menuRootCategoryIndex = 1;
+                    if (longsSelected) _menuRootCategoryIndex = 2;
+                    if (othersSelected) _menuRootCategoryIndex = 3;
+
+                    var listSize = new Vector2(halfWidth, availableSpace.Y - 340);
+                    
+                    switch (_menuRootCategoryIndex)
+                    {
+                        case 0: // Tiles-As-Props
                         {
-                            for (var index = 0; index < GLOBALS.Level.Props.Length; index++)
+                            if (GLOBALS.TileDex is null) break;
+                            
+                            if (ImGui.BeginListBox("##TileCategories", listSize))
                             {
-                                ref var currentProp = ref GLOBALS.Level.Props[index];
-                                
-                                var selected = ImGui.Selectable(
-                                    $"{index}. {currentProp.prop.Name}{(_hidden[index] ? " [hidden]" : "")}", 
-                                    _selected[index]);
-                                
-                                if (selected)
+                                for (var index = 0; index < GLOBALS.TileDex.OrderedTileAsPropCategories.Length; index++)
                                 {
-                                    _shouldRedrawLevel = true;
-                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                                    var selected = ImGui.Selectable(GLOBALS.TileDex.OrderedTileAsPropCategories[index],
+                                        index == _propsMenuTilesCategoryIndex);
                                     
-                                    if (IsKeyDown(KeyboardKey.LeftControl))
+                                    if (selected)
                                     {
-                                        _selected[index] = !_selected[index];
+                                        _propsMenuTilesCategoryIndex = index;
+                                        Utils.Restrict(
+                                            ref _propsMenuTilesIndex, 
+                                            0, 
+                                            GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length-1);
+                                        _currentTile =
+                                            GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][
+                                                _propsMenuTilesIndex];
                                     }
-                                    else if (IsKeyDown(KeyboardKey.LeftShift))
+                                }
+                                ImGui.EndListBox();
+                            }
+                            
+                            ImGui.SameLine();
+
+                            if (ImGui.BeginListBox("##Tiles", listSize))
+                            {
+                                for (var index = 0; index < GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length; index++)
+                                {
+                                    var currentTilep =
+                                        GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][index];
+                                    
+                                    var selected = ImGui.Selectable(
+                                        currentTilep.Name, 
+                                        index == _propsMenuTilesIndex
+                                    );
+                                    
+                                    if (ImGui.IsItemHovered())
                                     {
-                                        var otherSelected = Array.IndexOf(_selected, true);
-                                        
-                                        if (otherSelected == -1) _selected = _selected.Select((p, i) => i == index).ToArray();
-
-                                        var first = Math.Min(otherSelected, index);
-                                        var second = Math.Max(otherSelected, index);
-
-                                        for (var i = 0; i < _selected.Length; i++)
+                                        if (_hoveredCategoryIndex != _propsMenuTilesCategoryIndex ||
+                                            _hoveredIndex != index ||
+                                            _previousRootCategory != _menuRootCategoryIndex)
                                         {
-                                            _selected[i] = i >= first && i <= second;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        _selected = _selected.Select((p, i) => i == index).ToArray();
-                                    }
-                                }
-                            }
-                            
-                            ImGui.EndListBox();
-                        }
+                                            _hoveredCategoryIndex = _propsMenuTilesCategoryIndex;
+                                            _hoveredIndex = index;
+                                            _previousRootCategory = _menuRootCategoryIndex;
 
-                        var hideSelected = ImGui.Button("Hide Selected", availableSpace with { Y = 20 });
-
-                        if (hideSelected)
-                        {
-                            _shouldRedrawLevel = true;
-                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                            
-                            for (var i = 0; i < _hidden.Length; i++)
-                            {
-                                if (_selected[i]) _hidden[i] = !_hidden[i];
-                            }
-                        }
-
-                        var deleteSelected = ImGui.Button("Delete Selected", availableSpace with { Y = 20 });
-
-                        if (deleteSelected)
-                        {
-                            _shouldRedrawLevel = true;
-                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                            
-                            GLOBALS.Level.Props = _selected
-                                .Select((s, i) => (s, i))
-                                .Where(v => !v.s)
-                                .Select(v => GLOBALS.Level.Props[v.i])
-                                .ToArray();
-
-                            _selected = new bool [GLOBALS.Level.Props.Length];
-                            _hidden = new bool[GLOBALS.Level.Props.Length]; // Update hidden
-
-
-                            fetchedSelected = GLOBALS.Level.Props
-                                .Select((prop, index) => (prop, index))
-                                .Where(p => _selected[p.index])
-                                .Select(p => p)
-                                .ToArray();
-
-                            ImportRopeModels();
-                        }
-                        
-                        ImGui.SeparatorText("Selected Prop Options");
-                        
-                        if (fetchedSelected.Length == 1)
-                        {
-                            var (selectedProp, _) = fetchedSelected[0];
-                            
-                            // Render Order
-
-                            var renderOrder = selectedProp.prop.Extras.Settings.RenderOrder;
-                            ImGui.SetNextItemWidth(100);
-                            if (ImGui.InputInt("Render Order", ref renderOrder))
-                                selectedProp.prop.Extras.Settings.RenderOrder = renderOrder;
-                    
-                            // Seed
-
-                            var seed = selectedProp.prop.Extras.Settings.Seed;
-                    
-                            ImGui.SetNextItemWidth(100);
-                            ImGui.InputInt("Seed", ref seed);
-
-                            selectedProp.prop.Extras.Settings.Seed = seed;
-                    
-                            // Depth
-                    
-                            ImGui.Image(new IntPtr(GLOBALS.Textures.PropDepth.Texture.Id), new Vector2(290, 20));
-
-                            var depth = selectedProp.prop.Depth;
-                    
-                            ImGui.SetNextItemWidth(100);
-                            if (ImGui.InputInt("Depth", ref depth))
-                            {
-                                _shouldRedrawLevel = true;
-                                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                            }
-                    
-                            Utils.Restrict(ref depth, -29, 0);
-                    
-                            selectedProp.prop.Depth = depth;
-                    
-                            // Variation
-
-                            if (selectedProp.prop.Extras.Settings is IVariable v)
-                            {
-                                var init = GLOBALS.Props[selectedProp.position.category][selectedProp.position.index];
-                                var variations = (init as IVariableInit).Variations;
-
-                                if (variations > 1) {
-                                    ImGui.SetNextItemWidth(100);
-                                    var variation = v.Variation;
-                                    if (ImGui.InputInt("Variation", ref variation))
-                                    {
-                                        // _shouldRedrawLevel = true;
-                                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                                        else _shouldRedrawLevel = true;
-                                        
-                                        Utils.Restrict(ref variation, 0, variations -1);
-
-                                        v.Variation = variation;
-                                    }
-                                } else {
-                                    v.Variation = 0;
-                                }
-                            }
-                            
-                            // Colored
-
-                            if (selectedProp.type == InitPropType.VariedSoft && 
-                                selectedProp.prop.Extras.Settings is PropVariedSoftSettings vs &&
-                                ((InitVariedSoftProp) GLOBALS.Props[selectedProp.position.category][selectedProp.position.index]).Colorize != 0)
-                            {
-                                var applyColor = vs.ApplyColor is 1;
-
-                                if (ImGui.Checkbox("Apply Color", ref applyColor))
-                                {
-                                    vs.ApplyColor = applyColor ? 1 : 0;
-                                }
-                            }
-
-                            // Custom Depth
-
-                            if (selectedProp.prop.Extras.Settings is ICustomDepth cd) {
-                                ImGui.SetNextItemWidth(100);
-
-                                var customDepth = cd.CustomDepth;
-
-                                if (ImGui.InputInt("Custom Depth", ref customDepth)) {
-                                    cd.CustomDepth = customDepth;
-                                }
-                            }
-                            
-                            // Rope
-                            
-                            if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.type == InitPropType.Rope)
-                            {
-                                ImGui.SeparatorText("Rope Options");
-                                
-                                //
-
-                                if (fetchedSelected[0].prop.prop.Name == "Zero-G Tube")
-                                {
-                                    var ropeSettings = ((PropRopeSettings)fetchedSelected[0].prop.prop.Extras.Settings);
-                                    var applyColor = ropeSettings.ApplyColor is 1;
-
-                                    if (ImGui.Checkbox("Apply Color", ref applyColor))
-                                    {
-                                        ropeSettings.ApplyColor = applyColor ? 1 : 0;
-                                    }
-                                }
-                                else if (fetchedSelected[0].prop.prop.Name is "Wire" or "Zero-G Wire")
-                                {
-                                    var ropeSettings = ((PropRopeSettings)fetchedSelected[0].prop.prop.Extras.Settings);
-                                    var thickness = ropeSettings.Thickness ?? 2f;
-
-                                    ImGui.SetNextItemWidth(100);
-                                    var thicknessUpdated = ImGui.InputFloat("Thickness", ref thickness, 0.5f, 1f);
-                                    if (thicknessUpdated)
-                                    {
-                                        ropeSettings.Thickness = thickness;
-                                    }
-                                }
-                                
-                                var modelIndex = -1;
-
-                                for (var i = 0; i < _models.Length; i++)
-                                {
-                                    if (_models[i].index == fetchedSelected[0].index) modelIndex = i;
-                                }
-
-                                if (modelIndex == -1)
-                                {
-#if DEBUG
-                                    Logger.Fatal(
-                                        $"failed to fetch selected rope from {nameof(_models)}: no element with index [{fetchedSelected[0].index}] was found");
-                                    throw new Exception(
-                                        message:
-                                        $"failed to fetch selected rope from {nameof(_models)}: no element with index [{fetchedSelected[0].index}] was found");
-#else
-                            goto ropeNotFound;
-#endif
-                                }
-
-                                ref var currentModel = ref _models[modelIndex];
-
-                                var oldSegmentCount = GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints.Length;
-                                var segmentCount = oldSegmentCount;
-                                
-                                var switchSimSelected = ImGui.Button(currentModel.simSwitch ? "Simulation" : "Bezier Path");
-
-                                if (switchSimSelected)
-                                {
-                                    _shouldRedrawLevel = true;
-                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                                    currentModel.simSwitch = !currentModel.simSwitch;
-                                }
-
-                                ImGui.SetNextItemWidth(100);
-
-                                if (ImGui.InputInt("Segment Count", ref segmentCount))
-                                {
-                                    _shouldRedrawLevel = true;
-                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                                }
-
-                                // Update segment count if needed
-
-                                if (segmentCount < 1) segmentCount = 1;
-
-                                if (segmentCount > oldSegmentCount)
-                                {
-                                    GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
-                                    [
-                                        ..GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints, new Vector2()
-                                    ];
-                                }
-                                else if (segmentCount < oldSegmentCount)
-                                {
-                                    GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
-                                        GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints[..^1];
-                                }
-
-                                if (segmentCount != oldSegmentCount)
-                                {
-                                    UpdateRopeModelSegments();
-                                    // _shouldRedrawLevel = true;
-                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                                    else _shouldRedrawLevel = true;
-                                }
-                                
-                                //
-
-                                if (ImGui.Checkbox("Simulate Rope", ref _ropeMode))
-                                {
-                                    // _shouldRedrawLevel = true;
-                                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                                    else _shouldRedrawLevel = true;
-                                }
-
-                                if (currentModel.simSwitch) // Simulation mode
-                                {
-                                    var cycleFpsSelected = ImGui.Button($"{60 / _ropeSimulationFrameCut} FPS");
-
-                                    if (cycleFpsSelected)
-                                    {
-                                        _ropeSimulationFrameCut = ++_ropeSimulationFrameCut % 3 + 1;
-                                        // _shouldRedrawLevel = true;
-                                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                                        else _shouldRedrawLevel = true;
-                                    }
-
-                                    var release = (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings)
-                                        .Release;
-
-                                    var releaseClicked = ImGui.Button(release switch
-                                    {
-                                        PropRopeRelease.Left => "Release Left",
-                                        PropRopeRelease.None => "Release None",
-                                        PropRopeRelease.Right => "Release Right",
-                                        _ => "Error"
-                                    });
-
-                                    if (releaseClicked)
-                                    {
-                                        // _shouldRedrawLevel = true;
-                                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                                        else _shouldRedrawLevel = true;
-                                        
-                                        release = (PropRopeRelease)((int)release + 1);
-                                        if ((int)release > 2) release = 0;
-
-                                        (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings).Release =
-                                            release;
-                                    }
-                                }
-                                else // Bezier mode
-                                {
-                                    var oldHandlePointNumber = currentModel.bezierHandles.Length;
-                                    var handlePointNumber = oldHandlePointNumber;
-
-                                    ImGui.SetNextItemWidth(100);
-                                    if (ImGui.InputInt("Control Points", ref handlePointNumber))
-                                    {
-                                        _shouldRedrawLevel = true;
-                                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                                    }
-
-                                    var quads = GLOBALS.Level.Props[currentModel.index].prop.Quads;
-                                    var center = Utils.QuadsCenter(ref quads);
-
-                                    if (handlePointNumber > oldHandlePointNumber)
-                                    {
-                                        currentModel.bezierHandles = [..currentModel.bezierHandles, center];
-                                    }
-                                    else if (handlePointNumber < oldHandlePointNumber)
-                                    {
-                                        currentModel.bezierHandles = currentModel.bezierHandles[..^1];
-                                    }
-                                }
-
-                                ropeNotFound:
-                                {
-                                }
-                            }
-                        }
-                        else if (fetchedSelected.Length > 1 && 
-                                 Utils.AllEqual(fetchedSelected.Select(f => f.prop.prop.Depth),
-                                     fetchedSelected[0].prop.prop.Depth))
-                        {
-                            ImGui.Image(new IntPtr(GLOBALS.Textures.PropDepth.Texture.Id), new Vector2(290, 20));
-
-                            var depth = fetchedSelected[0].prop.prop.Depth;
-                    
-                            ImGui.SetNextItemWidth(100);
-                            if (ImGui.InputInt("Depth", ref depth))
-                            {
-                                _shouldRedrawLevel = true;
-                                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                            }
-                    
-                            Utils.Restrict(ref depth, -29, 0);
-                    
-                            foreach (var selected in fetchedSelected)
-                                selected.prop.prop.Depth = depth;
-                        }
-                        
-                    }
-                        break;
-
-                    case 1: // Placement
-                    {
-                        if (ImGui.Button($"{(_noCollisionPropPlacement? "Continuous Placement" : "Single Placement")}", availableSpace with { Y = 20 }))
-                            _noCollisionPropPlacement = !_noCollisionPropPlacement;
-                        
-                        ImGui.Spacing();
-                        
-                        ImGui.SeparatorText("Categories");
-
-                        var quarterSpace = availableSpace with { X = availableSpace.X / 4f, Y = 20 };
-
-                        var tilesSelected = ImGui.Selectable("Tiles", _menuRootCategoryIndex == 0, ImGuiSelectableFlags.None, quarterSpace);
-                        ImGui.SameLine();
-                        var ropesSelected = ImGui.Selectable("Ropes", _menuRootCategoryIndex == 1, ImGuiSelectableFlags.None, quarterSpace);
-                        ImGui.SameLine();
-                        var longsSelected = ImGui.Selectable("Longs", _menuRootCategoryIndex == 2, ImGuiSelectableFlags.None, quarterSpace);
-                        ImGui.SameLine();
-                        var othersSelected = ImGui.Selectable("Others", _menuRootCategoryIndex == 3, ImGuiSelectableFlags.None, quarterSpace);
-
-                        if (tilesSelected) _menuRootCategoryIndex = 0;
-                        if (ropesSelected) _menuRootCategoryIndex = 1;
-                        if (longsSelected) _menuRootCategoryIndex = 2;
-                        if (othersSelected) _menuRootCategoryIndex = 3;
-
-                        var listSize = new Vector2(halfWidth, availableSpace.Y - 340);
-                        
-                        switch (_menuRootCategoryIndex)
-                        {
-                            case 0: // Tiles-As-Props
-                            {
-                                if (GLOBALS.TileDex is null) break;
-                                
-                                if (ImGui.BeginListBox("##TileCategories", listSize))
-                                {
-                                    for (var index = 0; index < GLOBALS.TileDex.OrderedTileAsPropCategories.Length; index++)
-                                    {
-                                        var selected = ImGui.Selectable(GLOBALS.TileDex.OrderedTileAsPropCategories[index],
-                                            index == _propsMenuTilesCategoryIndex);
-                                        
-                                        if (selected)
-                                        {
-                                            _propsMenuTilesCategoryIndex = index;
-                                            Utils.Restrict(
-                                                ref _propsMenuTilesIndex, 
-                                                0, 
-                                                GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length-1);
-                                            _currentTile =
-                                                GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][
-                                                    _propsMenuTilesIndex];
-                                        }
-                                    }
-                                    ImGui.EndListBox();
-                                }
-                                
-                                ImGui.SameLine();
-
-                                if (ImGui.BeginListBox("##Tiles", listSize))
-                                {
-                                    for (var index = 0; index < GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length; index++)
-                                    {
-                                        var currentTilep =
-                                            GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][index];
-                                        
-                                        var selected = ImGui.Selectable(
-                                            currentTilep.Name, 
-                                            index == _propsMenuTilesIndex
-                                        );
-                                        
-                                        if (ImGui.IsItemHovered())
-                                        {
-                                            if (_hoveredCategoryIndex != _propsMenuTilesCategoryIndex ||
-                                                _hoveredIndex != index ||
-                                                _previousRootCategory != _menuRootCategoryIndex)
-                                            {
-                                                _hoveredCategoryIndex = _propsMenuTilesCategoryIndex;
-                                                _hoveredIndex = index;
-                                                _previousRootCategory = _menuRootCategoryIndex;
-
-                                                _hoveredTile =
-                                                    GLOBALS.TileDex.OrderedTilesAsProps[_hoveredCategoryIndex][
-                                                        _hoveredIndex];
-                                                
-                                                UpdatePropTooltip();
-                                            }
+                                            _hoveredTile =
+                                                GLOBALS.TileDex.OrderedTilesAsProps[_hoveredCategoryIndex][
+                                                    _hoveredIndex];
                                             
-                                            ImGui.BeginTooltip();
-                                            rlImGui.ImageRenderTexture(_propTooltip);
-                                            ImGui.EndTooltip();
+                                            UpdatePropTooltip();
                                         }
                                         
-                                        if (selected)
-                                        {
-                                            _propsMenuTilesIndex = index;
-                                            _currentTile = currentTilep;
-                                        }
+                                        ImGui.BeginTooltip();
+                                        rlImGui.ImageRenderTexture(_propTooltip);
+                                        ImGui.EndTooltip();
                                     }
-                                    ImGui.EndListBox();
-                                }
-                            }
-                                break;
-                            case 1: // Ropes
-                            {
-                                if (ImGui.BeginListBox("##Ropes", listSize))
-                                {
-                                    for (var index = 0; index < _ropeNames.Length; index++)
+                                    
+                                    if (selected)
                                     {
-                                        var selected = ImGui.Selectable(_ropeNames[index], index == _propsMenuRopesIndex);
-                                        
-                                        // if (ImGui.IsItemHovered())
-                                        // {
-                                        //     if (_hoveredIndex != _propsMenuRopesIndex ||
-                                        //         _previousRootCategory != _menuRootCategoryIndex)
-                                        //     {
-                                        //         _hoveredIndex = index;
-                                        //         _previousRootCategory = _menuRootCategoryIndex;
-                                        //         
-                                        //         UpdatePropTooltip();
-                                        //     }
-                                        //     
-                                        //     ImGui.BeginTooltip();
-                                        //     rlImGui.ImageRenderTexture(_propTooltip);
-                                        //     ImGui.EndTooltip();
-                                        // }
-                                        
-                                        if (selected) _propsMenuRopesIndex = index;
+                                        _propsMenuTilesIndex = index;
+                                        _currentTile = currentTilep;
                                     }
-                                    ImGui.EndListBox();
                                 }
+                                ImGui.EndListBox();
                             }
-                                break;
-                            case 2: // Longs
-                            {
-                                if (ImGui.BeginListBox("##Longs", listSize))
-                                {
-                                    for (var index = 0; index < _longNames.Length; index++)
-                                    {
-                                        var selected = ImGui.Selectable(_longNames[index], index == _propsMenuLongsIndex);
-                                        
-                                        // if (ImGui.IsItemHovered())
-                                        // {
-                                        //     if (_hoveredIndex != index ||
-                                        //         _previousRootCategory != _menuRootCategoryIndex)
-                                        //     {
-                                        //         _hoveredIndex = index;
-                                        //         _previousRootCategory = _menuRootCategoryIndex;
-                                        //         
-                                        //         UpdatePropTooltip();
-                                        //     }
-                                        //     
-                                        //     ImGui.BeginTooltip();
-                                        //     rlImGui.ImageRenderTexture(_propTooltip);
-                                        //     ImGui.EndTooltip();
-                                        // }
-                                        
-                                        if (selected) _propsMenuLongsIndex = index;
-                                    }
-                                    ImGui.EndListBox();
-                                }
-                            }
-                                break;
-                            case 3: // Others
-                            {
-                                if (ImGui.BeginListBox("##OtherPropCategories", listSize))
-                                {
-                                    for (var index = 0; index < _otherCategoryNames.Length; index++)
-                                    {
-                                        var selected = ImGui.Selectable(_otherCategoryNames[index],
-                                            index == _propsMenuOthersCategoryIndex);
-                                        
-                                        if (selected)
-                                        {
-                                            _propsMenuOthersCategoryIndex = index;
-                                            Utils.Restrict(ref _propsMenuOthersIndex, 0, _otherNames[_propsMenuOthersCategoryIndex].Length-1);
-                                        }
-                                    }
-                                    ImGui.EndListBox();
-                                }
-                                
-                                ImGui.SameLine();
-
-                                if (ImGui.BeginListBox("##OtherProps", listSize))
-                                {
-                                    var array = _otherNames[_propsMenuOthersCategoryIndex];
-
-                                    for (var index = 0; index < array.Length; index++)
-                                    {
-                                        var selected = ImGui.Selectable(array[index], index == _propsMenuOthersIndex);
-                                        
-                                        if (ImGui.IsItemHovered())
-                                        {
-                                            if (_hoveredCategoryIndex != _propsMenuOthersCategoryIndex ||
-                                                _hoveredIndex != index ||
-                                                _previousRootCategory != _menuRootCategoryIndex)
-                                            {
-                                                _hoveredCategoryIndex = _propsMenuOthersCategoryIndex;
-                                                _hoveredIndex = index;
-                                                _previousRootCategory = _menuRootCategoryIndex;
-                                                
-                                                UpdatePropTooltip();
-                                            }
-
-                                            ImGui.BeginTooltip();
-                                            rlImGui.ImageRenderTexture(_propTooltip);
-                                            ImGui.EndTooltip();
-                                        }
-                                        
-                                        if (selected) _propsMenuOthersIndex = index;
-                                    }
-                                    ImGui.EndListBox();
-                                }
-                            }
-                                break;
                         }
-
-                        ImGui.SeparatorText("Placement Options");
-                        
-                        // Seed
-
-                        ImGui.SetNextItemWidth(100);
-                        ImGui.InputInt("Seed", ref _defaultSeed);
-                        
-                        // Rotation
-                        
-                        ImGui.SetNextItemWidth(100);
-                        if (ImGui.InputInt("Rotation", ref _placementRotation))
+                            break;
+                        case 1: // Ropes
                         {
-                            // _shouldRedrawLevel = true;
-                            _shouldRedrawPropLayer = true;
+                            if (ImGui.BeginListBox("##Ropes", listSize))
+                            {
+                                for (var index = 0; index < _ropeNames.Length; index++)
+                                {
+                                    var selected = ImGui.Selectable(_ropeNames[index], index == _propsMenuRopesIndex);
+                                    
+                                    // if (ImGui.IsItemHovered())
+                                    // {
+                                    //     if (_hoveredIndex != _propsMenuRopesIndex ||
+                                    //         _previousRootCategory != _menuRootCategoryIndex)
+                                    //     {
+                                    //         _hoveredIndex = index;
+                                    //         _previousRootCategory = _menuRootCategoryIndex;
+                                    //         
+                                    //         UpdatePropTooltip();
+                                    //     }
+                                    //     
+                                    //     ImGui.BeginTooltip();
+                                    //     rlImGui.ImageRenderTexture(_propTooltip);
+                                    //     ImGui.EndTooltip();
+                                    // }
+                                    
+                                    if (selected) _propsMenuRopesIndex = index;
+                                }
+                                ImGui.EndListBox();
+                            }
                         }
-                        
-                        ImGui.SetNextItemWidth(100);
-                        ImGui.SliderInt("Rotation Steps", ref _placementRotationSteps, 1, 10);
-                
-                        // Depth
-                
-                        var currentTile = GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
-                        var currentRope = GLOBALS.RopeProps[_propsMenuRopesIndex];
-                        var currentLong = GLOBALS.LongProps[_propsMenuLongsIndex];
-                        var currentOther = GLOBALS.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
-                
-                        var depth = _defaultDepth;
+                            break;
+                        case 2: // Longs
+                        {
+                            if (ImGui.BeginListBox("##Longs", listSize))
+                            {
+                                for (var index = 0; index < _longNames.Length; index++)
+                                {
+                                    var selected = ImGui.Selectable(_longNames[index], index == _propsMenuLongsIndex);
+                                    
+                                    // if (ImGui.IsItemHovered())
+                                    // {
+                                    //     if (_hoveredIndex != index ||
+                                    //         _previousRootCategory != _menuRootCategoryIndex)
+                                    //     {
+                                    //         _hoveredIndex = index;
+                                    //         _previousRootCategory = _menuRootCategoryIndex;
+                                    //         
+                                    //         UpdatePropTooltip();
+                                    //     }
+                                    //     
+                                    //     ImGui.BeginTooltip();
+                                    //     rlImGui.ImageRenderTexture(_propTooltip);
+                                    //     ImGui.EndTooltip();
+                                    // }
+                                    
+                                    if (selected) _propsMenuLongsIndex = index;
+                                }
+                                ImGui.EndListBox();
+                            }
+                        }
+                            break;
+                        case 3: // Others
+                        {
+                            if (ImGui.BeginListBox("##OtherPropCategories", listSize))
+                            {
+                                for (var index = 0; index < _otherCategoryNames.Length; index++)
+                                {
+                                    var selected = ImGui.Selectable(_otherCategoryNames[index],
+                                        index == _propsMenuOthersCategoryIndex);
+                                    
+                                    if (selected)
+                                    {
+                                        _propsMenuOthersCategoryIndex = index;
+                                        Utils.Restrict(ref _propsMenuOthersIndex, 0, _otherNames[_propsMenuOthersCategoryIndex].Length-1);
+                                    }
+                                }
+                                ImGui.EndListBox();
+                            }
                             
-                        ImGui.SetNextItemWidth(100);
-                        if (ImGui.InputInt("Depth", ref depth))
-                        {
-                            _shouldRedrawLevel = true;
-                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                        }
+                            ImGui.SameLine();
 
-                        Utils.Restrict(ref depth, -29, 0);
+                            if (ImGui.BeginListBox("##OtherProps", listSize))
+                            {
+                                var array = _otherNames[_propsMenuOthersCategoryIndex];
 
-                        _defaultDepth = depth;
-
-                        var propDepthTo = _menuRootCategoryIndex switch
-                        {
-                            0 => Utils.GetPropDepth(currentTile),
-                            1 => Utils.GetPropDepth(currentRope),
-                            2 => Utils.GetPropDepth(currentLong),
-                            3 => Utils.GetPropDepth(currentOther),
-                            _ => 0
-                        };
-                
-                        ImGui.Text($"From {_defaultDepth} to {_defaultDepth - propDepthTo}");
-                
-                        // Variation
-
-                        if (_menuRootCategoryIndex == 3 && currentOther is IVariableInit v)
-                        {
-                            var variations = v.Variations;
-
-                            if (variations > 1) {
-                                var variation = _defaultVariation;
-                        
-                                ImGui.SetNextItemWidth(100);
-                                if (ImGui.InputInt("Variation", ref variation))
+                                for (var index = 0; index < array.Length; index++)
                                 {
-                                    // _shouldRedrawLevel = true;
-                                    _shouldRedrawPropLayer = true;
+                                    var selected = ImGui.Selectable(array[index], index == _propsMenuOthersIndex);
+                                    
+                                    if (ImGui.IsItemHovered())
+                                    {
+                                        if (_hoveredCategoryIndex != _propsMenuOthersCategoryIndex ||
+                                            _hoveredIndex != index ||
+                                            _previousRootCategory != _menuRootCategoryIndex)
+                                        {
+                                            _hoveredCategoryIndex = _propsMenuOthersCategoryIndex;
+                                            _hoveredIndex = index;
+                                            _previousRootCategory = _menuRootCategoryIndex;
+                                            
+                                            UpdatePropTooltip();
+                                        }
+
+                                        ImGui.BeginTooltip();
+                                        rlImGui.ImageRenderTexture(_propTooltip);
+                                        ImGui.EndTooltip();
+                                    }
+                                    
+                                    if (selected) _propsMenuOthersIndex = index;
                                 }
-
-                                Utils.Restrict(ref variation, 0, variations-1);
-
-                                _defaultVariation = variation;
-                            } else {
-                                _defaultVariation = 0;
+                                ImGui.EndListBox();
                             }
                         }
-                        
-                        // Misc
-                        
-                        ImGui.SeparatorText("Misc");
-
-                        ImGui.Checkbox("Tooltip", ref _tooltip);
+                            break;
                     }
-                        break;
+
+                    ImGui.SeparatorText("Placement Options");
+                    
+                    // Seed
+
+                    ImGui.SetNextItemWidth(100);
+                    ImGui.InputInt("Seed", ref _defaultSeed);
+                    
+                    // Rotation
+                    
+                    ImGui.SetNextItemWidth(100);
+                    if (ImGui.InputInt("Rotation", ref _placementRotation))
+                    {
+                        // _shouldRedrawLevel = true;
+                        _shouldRedrawPropLayer = true;
+                    }
+                    
+                    ImGui.SetNextItemWidth(100);
+                    ImGui.SliderInt("Rotation Steps", ref _placementRotationSteps, 1, 10);
+            
+                    // Depth
+            
+                    var currentTile = GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
+                    var currentRope = GLOBALS.RopeProps[_propsMenuRopesIndex];
+                    var currentLong = GLOBALS.LongProps[_propsMenuLongsIndex];
+                    var currentOther = GLOBALS.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
+            
+                    var depth = _defaultDepth;
+                        
+                    ImGui.SetNextItemWidth(100);
+                    if (ImGui.InputInt("Depth", ref depth))
+                    {
+                        _shouldRedrawLevel = true;
+                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                    }
+
+                    Utils.Restrict(ref depth, -29, 0);
+
+                    _defaultDepth = depth;
+
+                    var propDepthTo = _menuRootCategoryIndex switch
+                    {
+                        0 => Utils.GetPropDepth(currentTile),
+                        1 => Utils.GetPropDepth(currentRope),
+                        2 => Utils.GetPropDepth(currentLong),
+                        3 => Utils.GetPropDepth(currentOther),
+                        _ => 0
+                    };
+            
+                    ImGui.Text($"From {_defaultDepth} to {_defaultDepth - propDepthTo}");
+            
+                    // Variation
+
+                    if (_menuRootCategoryIndex == 3 && currentOther is IVariableInit v)
+                    {
+                        var variations = v.Variations;
+
+                        if (variations > 1) {
+                            var variation = _defaultVariation;
+                    
+                            ImGui.SetNextItemWidth(100);
+                            if (ImGui.InputInt("Variation", ref variation))
+                            {
+                                // _shouldRedrawLevel = true;
+                                _shouldRedrawPropLayer = true;
+                            }
+
+                            Utils.Restrict(ref variation, 0, variations-1);
+
+                            _defaultVariation = variation;
+                        } else {
+                            _defaultVariation = 0;
+                        }
+                    }
+                    
+                    // Misc
+                    
+                    ImGui.SeparatorText("Misc");
+
+                    ImGui.Checkbox("Tooltip", ref _tooltip);
                 }
 
                 ImGui.End();
+            }
+
+            //
+
+            var listOpened = ImGui.Begin("Props List##PropsListWindow");
+            
+            var listPos = ImGui.GetWindowPos();
+            var listSpace = ImGui.GetWindowSize();
+
+            _isPropsListHovered = CheckCollisionPointRec(tileMouse, new(menuPos.X - 5, menuPos.Y, menuWinSpace.X + 10, menuWinSpace.Y));
+
+            if (listOpened)
+            {
+                ImGui.SeparatorText("Placed Props");
+                
+                if (ImGui.Button("Select All", ImGui.GetContentRegionAvail() with { Y = 20 }))
+                {
+                    _shouldRedrawLevel = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                    
+                    for (var i = 0; i < _selected.Length; i++) _selected[i] = true;
+                }
+
+                if (ImGui.BeginListBox("Props", ImGui.GetContentRegionAvail() with { Y = ImGui.GetContentRegionAvail().Y - 440 }))
+                {
+                    for (var index = 0; index < GLOBALS.Level.Props.Length; index++)
+                    {
+                        ref var currentProp = ref GLOBALS.Level.Props[index];
+                        
+                        var selected = ImGui.Selectable(
+                            $"{index}. {currentProp.prop.Name}{(_hidden[index] ? " [hidden]" : "")}", 
+                            _selected[index]);
+                        
+                        if (selected)
+                        {
+                            _shouldRedrawLevel = true;
+                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                            
+                            if (IsKeyDown(KeyboardKey.LeftControl))
+                            {
+                                _selected[index] = !_selected[index];
+                            }
+                            else if (IsKeyDown(KeyboardKey.LeftShift))
+                            {
+                                var otherSelected = Array.IndexOf(_selected, true);
+                                
+                                if (otherSelected == -1) _selected = _selected.Select((p, i) => i == index).ToArray();
+
+                                var first = Math.Min(otherSelected, index);
+                                var second = Math.Max(otherSelected, index);
+
+                                for (var i = 0; i < _selected.Length; i++)
+                                {
+                                    _selected[i] = i >= first && i <= second;
+                                }
+                            }
+                            else
+                            {
+                                _selected = _selected.Select((p, i) => i == index).ToArray();
+                            }
+                        }
+                    }
+                    
+                    ImGui.EndListBox();
+                }
+
+                var hideSelected = ImGui.Button("Hide Selected", ImGui.GetContentRegionAvail() with { Y = 20 });
+
+                if (hideSelected)
+                {
+                    _shouldRedrawLevel = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                    
+                    for (var i = 0; i < _hidden.Length; i++)
+                    {
+                        if (_selected[i]) _hidden[i] = !_hidden[i];
+                    }
+                }
+
+                var deleteSelected = ImGui.Button("Delete Selected", ImGui.GetContentRegionAvail() with { Y = 20 });
+
+                if (deleteSelected)
+                {
+                    _shouldRedrawLevel = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                    
+                    GLOBALS.Level.Props = _selected
+                        .Select((s, i) => (s, i))
+                        .Where(v => !v.s)
+                        .Select(v => GLOBALS.Level.Props[v.i])
+                        .ToArray();
+
+                    _selected = new bool [GLOBALS.Level.Props.Length];
+                    _hidden = new bool[GLOBALS.Level.Props.Length]; // Update hidden
+
+
+                    fetchedSelected = GLOBALS.Level.Props
+                        .Select((prop, index) => (prop, index))
+                        .Where(p => _selected[p.index])
+                        .Select(p => p)
+                        .ToArray();
+
+                    ImportRopeModels();
+                }
+                
+                ImGui.SeparatorText("Selected Prop Options");
+                
+                if (fetchedSelected.Length == 1)
+                {
+                    var (selectedProp, _) = fetchedSelected[0];
+                    
+                    // Render Order
+
+                    var renderOrder = selectedProp.prop.Extras.Settings.RenderOrder;
+                    ImGui.SetNextItemWidth(100);
+                    if (ImGui.InputInt("Render Order", ref renderOrder))
+                        selectedProp.prop.Extras.Settings.RenderOrder = renderOrder;
+            
+                    // Seed
+
+                    var seed = selectedProp.prop.Extras.Settings.Seed;
+            
+                    ImGui.SetNextItemWidth(100);
+                    ImGui.InputInt("Seed", ref seed);
+
+                    selectedProp.prop.Extras.Settings.Seed = seed;
+            
+                    // Depth
+            
+                    ImGui.Image(new IntPtr(GLOBALS.Textures.PropDepth.Texture.Id), new Vector2(290, 20));
+
+                    var depth = selectedProp.prop.Depth;
+            
+                    ImGui.SetNextItemWidth(100);
+                    if (ImGui.InputInt("Depth", ref depth))
+                    {
+                        _shouldRedrawLevel = true;
+                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                    }
+            
+                    Utils.Restrict(ref depth, -29, 0);
+            
+                    selectedProp.prop.Depth = depth;
+            
+                    // Variation
+
+                    if (selectedProp.prop.Extras.Settings is IVariable v)
+                    {
+                        var init = GLOBALS.Props[selectedProp.position.category][selectedProp.position.index];
+                        var variations = (init as IVariableInit).Variations;
+
+                        if (variations > 1) {
+                            ImGui.SetNextItemWidth(100);
+                            var variation = v.Variation;
+                            if (ImGui.InputInt("Variation", ref variation))
+                            {
+                                // _shouldRedrawLevel = true;
+                                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                                else _shouldRedrawLevel = true;
+                                
+                                Utils.Restrict(ref variation, 0, variations -1);
+
+                                v.Variation = variation;
+                            }
+                        } else {
+                            v.Variation = 0;
+                        }
+                    }
+                    
+                    // Colored
+
+                    if (selectedProp.type == InitPropType.VariedSoft && 
+                        selectedProp.prop.Extras.Settings is PropVariedSoftSettings vs &&
+                        ((InitVariedSoftProp) GLOBALS.Props[selectedProp.position.category][selectedProp.position.index]).Colorize != 0)
+                    {
+                        var applyColor = vs.ApplyColor is 1;
+
+                        if (ImGui.Checkbox("Apply Color", ref applyColor))
+                        {
+                            vs.ApplyColor = applyColor ? 1 : 0;
+                        }
+                    }
+
+                    // Custom Depth
+
+                    if (selectedProp.prop.Extras.Settings is ICustomDepth cd) {
+                        ImGui.SetNextItemWidth(100);
+
+                        var customDepth = cd.CustomDepth;
+
+                        if (ImGui.InputInt("Custom Depth", ref customDepth)) {
+                            cd.CustomDepth = customDepth;
+                        }
+                    }
+                    
+                    // Rope
+                    
+                    if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.type == InitPropType.Rope)
+                    {
+                        ImGui.SeparatorText("Rope Options");
+                        
+                        //
+
+                        if (fetchedSelected[0].prop.prop.Name == "Zero-G Tube")
+                        {
+                            var ropeSettings = ((PropRopeSettings)fetchedSelected[0].prop.prop.Extras.Settings);
+                            var applyColor = ropeSettings.ApplyColor is 1;
+
+                            if (ImGui.Checkbox("Apply Color", ref applyColor))
+                            {
+                                ropeSettings.ApplyColor = applyColor ? 1 : 0;
+                            }
+                        }
+                        else if (fetchedSelected[0].prop.prop.Name is "Wire" or "Zero-G Wire")
+                        {
+                            var ropeSettings = ((PropRopeSettings)fetchedSelected[0].prop.prop.Extras.Settings);
+                            var thickness = ropeSettings.Thickness ?? 2f;
+
+                            ImGui.SetNextItemWidth(100);
+                            var thicknessUpdated = ImGui.InputFloat("Thickness", ref thickness, 0.5f, 1f);
+                            if (thicknessUpdated)
+                            {
+                                ropeSettings.Thickness = thickness;
+                            }
+                        }
+                        
+                        var modelIndex = -1;
+
+                        for (var i = 0; i < _models.Length; i++)
+                        {
+                            if (_models[i].index == fetchedSelected[0].index) modelIndex = i;
+                        }
+
+                        if (modelIndex == -1)
+                        {
+#if DEBUG
+                            Logger.Fatal(
+                                $"failed to fetch selected rope from {nameof(_models)}: no element with index [{fetchedSelected[0].index}] was found");
+                            throw new Exception(
+                                message:
+                                $"failed to fetch selected rope from {nameof(_models)}: no element with index [{fetchedSelected[0].index}] was found");
+#else
+                    goto ropeNotFound;
+#endif
+                        }
+
+                        ref var currentModel = ref _models[modelIndex];
+
+                        var oldSegmentCount = GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints.Length;
+                        var segmentCount = oldSegmentCount;
+                        
+                        var switchSimSelected = ImGui.Button(currentModel.simSwitch ? "Simulation" : "Bezier Path");
+
+                        if (switchSimSelected)
+                        {
+                            _shouldRedrawLevel = true;
+                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                            currentModel.simSwitch = !currentModel.simSwitch;
+                        }
+
+                        ImGui.SetNextItemWidth(100);
+
+                        if (ImGui.InputInt("Segment Count", ref segmentCount))
+                        {
+                            _shouldRedrawLevel = true;
+                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                        }
+
+                        // Update segment count if needed
+
+                        if (segmentCount < 1) segmentCount = 1;
+
+                        if (segmentCount > oldSegmentCount)
+                        {
+                            GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
+                            [
+                                ..GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints, new Vector2()
+                            ];
+                        }
+                        else if (segmentCount < oldSegmentCount)
+                        {
+                            GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
+                                GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints[..^1];
+                        }
+
+                        if (segmentCount != oldSegmentCount)
+                        {
+                            UpdateRopeModelSegments();
+                            // _shouldRedrawLevel = true;
+                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                            else _shouldRedrawLevel = true;
+                        }
+                        
+                        //
+
+                        if (ImGui.Checkbox("Simulate Rope", ref _ropeMode))
+                        {
+                            // _shouldRedrawLevel = true;
+                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                            else _shouldRedrawLevel = true;
+                        }
+
+                        if (currentModel.simSwitch) // Simulation mode
+                        {
+                            var cycleFpsSelected = ImGui.Button($"{60 / _ropeSimulationFrameCut} FPS");
+
+                            if (cycleFpsSelected)
+                            {
+                                _ropeSimulationFrameCut = ++_ropeSimulationFrameCut % 3 + 1;
+                                // _shouldRedrawLevel = true;
+                                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                                else _shouldRedrawLevel = true;
+                            }
+
+                            var release = (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings)
+                                .Release;
+
+                            var releaseClicked = ImGui.Button(release switch
+                            {
+                                PropRopeRelease.Left => "Release Left",
+                                PropRopeRelease.None => "Release None",
+                                PropRopeRelease.Right => "Release Right",
+                                _ => "Error"
+                            });
+
+                            if (releaseClicked)
+                            {
+                                // _shouldRedrawLevel = true;
+                                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                                else _shouldRedrawLevel = true;
+                                
+                                release = (PropRopeRelease)((int)release + 1);
+                                if ((int)release > 2) release = 0;
+
+                                (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings).Release =
+                                    release;
+                            }
+                        }
+                        else // Bezier mode
+                        {
+                            var oldHandlePointNumber = currentModel.bezierHandles.Length;
+                            var handlePointNumber = oldHandlePointNumber;
+
+                            ImGui.SetNextItemWidth(100);
+                            if (ImGui.InputInt("Control Points", ref handlePointNumber))
+                            {
+                                _shouldRedrawLevel = true;
+                                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                            }
+
+                            var quads = GLOBALS.Level.Props[currentModel.index].prop.Quads;
+                            var center = Utils.QuadsCenter(ref quads);
+
+                            if (handlePointNumber > oldHandlePointNumber)
+                            {
+                                currentModel.bezierHandles = [..currentModel.bezierHandles, center];
+                            }
+                            else if (handlePointNumber < oldHandlePointNumber)
+                            {
+                                currentModel.bezierHandles = currentModel.bezierHandles[..^1];
+                            }
+                        }
+
+                        ropeNotFound:
+                        {
+                        }
+                    }
+                }
+                else if (fetchedSelected.Length > 1 && 
+                            Utils.AllEqual(fetchedSelected.Select(f => f.prop.prop.Depth),
+                                fetchedSelected[0].prop.prop.Depth))
+                {
+                    ImGui.Image(new IntPtr(GLOBALS.Textures.PropDepth.Texture.Id), new Vector2(290, 20));
+
+                    var depth = fetchedSelected[0].prop.prop.Depth;
+            
+                    ImGui.SetNextItemWidth(100);
+                    if (ImGui.InputInt("Depth", ref depth))
+                    {
+                        _shouldRedrawLevel = true;
+                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                    }
+            
+                    Utils.Restrict(ref depth, -29, 0);
+            
+                    foreach (var selected in fetchedSelected)
+                        selected.prop.prop.Depth = depth;
+                }
+                
             }
 
             // Shortcuts window
