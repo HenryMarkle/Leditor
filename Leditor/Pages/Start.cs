@@ -261,6 +261,9 @@ internal class StartPage : EditorPage
         if (!Disposed) throw new InvalidOperationException("StartPage was not disposed by consumer");
     }
 
+    private bool _columnWidthSetOnce;
+    private bool _isPathBufferActive;
+
     public override void Draw()
     {
         if (!_uiLocked) {
@@ -523,6 +526,10 @@ internal class StartPage : EditorPage
                     }
                 }
 
+                if (!_isPathBufferActive && IsKeyPressed(KeyboardKey.N)) {
+                    GLOBALS.Page = 11;
+                }
+
                 #region ImGui
                 rlImGui.Begin();
 
@@ -535,7 +542,18 @@ internal class StartPage : EditorPage
                     
                     ImGui.Columns(2);
 
+                    if (!_columnWidthSetOnce) {
+                        ImGui.SetColumnWidth(0, 300);
+                        _columnWidthSetOnce = true;
+                    }
+
                     var createClicked = ImGui.Button("Create", ImGui.GetContentRegionAvail() with { Y = 20 });
+
+                    if (ImGui.IsItemHovered()) {
+                        ImGui.BeginTooltip();
+                        ImGui.Text("Press N to create a new level");
+                        ImGui.EndTooltip();
+                    }
 
                     ImGui.Separator();
 
@@ -552,9 +570,11 @@ internal class StartPage : EditorPage
 
                     var pathUpdated = ImGui.InputText("##FilePathBuffer", ref _currentDir, 260, ImGuiInputTextFlags.AutoSelectAll);
 
+                    _isPathBufferActive = ImGui.IsItemActive();
+
                     var listAvailSpace = ImGui.GetContentRegionAvail();
 
-                    if (ImGui.BeginListBox("##StartPageFileExplorerList", listAvailSpace with { Y = listAvailSpace.Y - 60 })) {
+                    if (ImGui.BeginListBox("##StartPageFileExplorerList", listAvailSpace with { Y = listAvailSpace.Y - 260 })) {
                         
                         for (var i = 0; i < _dirEntries.Length; i++) {
 
@@ -572,6 +592,33 @@ internal class StartPage : EditorPage
                                 } else {
                                     _currentIndex = i;
                                     _shouldRedrawLevelReview = true;
+                                }
+                            }
+                        }
+                        
+                        ImGui.EndListBox();
+                    }
+
+                    ImGui.Spacing();
+
+                    ImGui.SeparatorText("Recently Opened Levels");
+
+                    if (ImGui.BeginListBox("##RecentlyOpenedList", listAvailSpace with { Y = 180 })) {
+                        foreach (var (path, name) in GLOBALS.RecentProjects) {
+                            var selected = ImGui.Selectable(name);
+
+                            if (selected) {
+                                var parent = Directory.GetParent(path)?.FullName;
+
+                                if (parent is not null) {
+                                    NavigateToDir(parent);
+
+                                    for (var i = 0; i < _dirEntries.Length; i++) {
+                                        if (_dirEntries[i].name == name) {
+                                            _currentIndex = i;
+                                            _shouldRedrawLevelReview = true;
+                                        }
+                                    }
                                 }
                             }
                         }

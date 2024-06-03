@@ -150,10 +150,12 @@ internal static class Utils
 
     internal static void AppendRecentProjectPath(string path)
     {
-        GLOBALS.RecentProjects.AddLast((path, Path.GetFileNameWithoutExtension(path)));
+        if (GLOBALS.RecentProjects.SingleOrDefault(pair => pair.path == path).path != null) return;
+
+        GLOBALS.RecentProjects.AddFirst((path, Path.GetFileNameWithoutExtension(path)));
 
         if (GLOBALS.RecentProjects.Count > GLOBALS.RecentProjectsLimit)
-            GLOBALS.RecentProjects.RemoveFirst();
+            GLOBALS.RecentProjects.RemoveLast();
     }
 
     internal static RunCell[,,] GetGeometryMatrixFromFile(string path) {

@@ -64,6 +64,8 @@ internal class MainPage : EditorPage, IContextListener
 
     private bool _isNavbarHovered;
 
+    private bool _isRecentlyWinHovered;
+
 
     // 0 - Preview
     // 1 - Tinted Texture
@@ -336,7 +338,7 @@ internal class MainPage : EditorPage, IContextListener
         var height = GetScreenHeight();
 
 
-        var isWinBusy = _isNavbarHovered || 
+        var isWinBusy = _isRecentlyWinHovered || _isNavbarHovered || 
                 _isVisualsWinHovered || 
                 _isVisualsWinDragged || 
                 _isShortcutsWinHovered || 
@@ -965,6 +967,13 @@ internal class MainPage : EditorPage, IContextListener
                     ImGui.End();
                 }
 
+                var recentlyOpened = ImGui.Begin("Recently Opened Projects##MainRecentProjects");
+                
+                var recentlyPos = ImGui.GetWindowPos();
+                var recentlySpace = ImGui.GetWindowSize();
+
+                _isRecentlyWinHovered = CheckCollisionPointRec(GetMousePosition(), new(recentlyPos.X - 5, recentlyPos.Y, recentlySpace.X + 10, recentlySpace.Y));
+
                 if (ImGui.Begin("Recently Opened Projects##MainRecentProjects"))
                 {
                     var availableSpace = ImGui.GetContentRegionAvail();
@@ -982,6 +991,11 @@ internal class MainPage : EditorPage, IContextListener
                             if (selected)
                             {
                                 // TODO: Load Project Protocol
+
+                                GLOBALS.LockNavigation = true;
+                                _fileDialogMode = 1;
+                                _openFileDialog = Task.FromResult(path);
+                                _isGuiLocked = true;
                             }
                         }
                         ImGui.EndListBox();

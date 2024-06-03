@@ -601,14 +601,16 @@ class Program
             : Task.Factory.StartNew(() => {
                 if (!File.Exists(GLOBALS.Paths.RecentProjectsPath)) return;
                 
-                var lines = File.ReadAllLines(GLOBALS.Paths.RecentProjectsPath);
+                var lines = File.ReadAllLines(GLOBALS.Paths.RecentProjectsPath).ToHashSet();
 
                 foreach (var path in lines)
                 {
-                    GLOBALS.RecentProjects.AddLast((path, Path.GetFileNameWithoutExtension(path)));
+                    if (!File.Exists(path)) continue;
+
+                    GLOBALS.RecentProjects.AddFirst((path, Path.GetFileNameWithoutExtension(path)));
                     
                     if (GLOBALS.RecentProjects.Count > GLOBALS.RecentProjectsLimit) 
-                        GLOBALS.RecentProjects.RemoveFirst();
+                        GLOBALS.RecentProjects.RemoveLast();
                 }
             });
 

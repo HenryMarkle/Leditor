@@ -2,4 +2,6 @@
 - Removed the leading pixel of most, if not all, tiles and props.
 - Minor under-the-hood changes to tile rendering logic.
 - Selecting a prop from the placement menu automatically sets the mode to placement.
-- Selecting a prop from the placed props list automatically sets the mode to selection. 
+- Selecting a prop from the placed props list automatically sets the mode to selection.
+- Added the keyboard shortcut `N` in the start screen to automatically navigate to the creation screen.
+- Added the keyboard shortrcut `Enter` in the creation screen to create the project.

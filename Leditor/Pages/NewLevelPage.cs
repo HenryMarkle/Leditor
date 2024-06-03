@@ -33,6 +33,8 @@ internal class NewLevelPage : EditorPage
     
     private bool _advanced;
 
+    private bool _isBufferControlActive;
+
     public override void Draw()
     {
         BeginDrawing();
@@ -41,6 +43,14 @@ internal class NewLevelPage : EditorPage
             ? new Color(100, 100, 100, 255) 
             :  Color.Gray
         );
+
+        _isBufferControlActive = false;
+
+        var createTriggered = false;
+
+        if (!_isBufferControlActive && IsKeyPressed(KeyboardKey.Enter)) {
+            createTriggered = true;
+        }
         
         if (_advanced)
         {
@@ -111,9 +121,13 @@ internal class NewLevelPage : EditorPage
                 
                 ImGui.SetNextItemWidth(200);
                 ImGui.InputInt("Width", ref _matrixWidthValue);
+
+                _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 ImGui.SetNextItemWidth(200);
                 ImGui.InputInt("Height", ref _matrixHeightValue);
+
+                _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 Utils.Restrict(ref _matrixWidthValue, 1);
                 Utils.Restrict(ref _matrixHeightValue, 1);
@@ -122,15 +136,23 @@ internal class NewLevelPage : EditorPage
 
                 ImGui.SetNextItemWidth(200);
                 ImGui.InputInt("Left", ref _leftPadding);
+
+                _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 ImGui.SetNextItemWidth(200);
                 ImGui.InputInt("Top", ref _topPadding);
+
+                _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 ImGui.SetNextItemWidth(200);
                 ImGui.InputInt("Right", ref _rightPadding);
+
+                _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 ImGui.SetNextItemWidth(200);
                 ImGui.InputInt("Bottom", ref _bottomPadding);
+
+                _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 Utils.Restrict(ref _leftPadding, 0);
                 Utils.Restrict(ref _topPadding, 0);
@@ -155,7 +177,7 @@ internal class NewLevelPage : EditorPage
 
                     GLOBALS.Page = GLOBALS.PreviousPage;
                 }
-                if (ImGui.Button("Create", col1Space with { Y = 20 }))
+                if (ImGui.Button("Create", col1Space with { Y = 20 }) || createTriggered)
                 {
                     Logger.Debug("page 6: Ok button clicked");
 
@@ -199,9 +221,13 @@ internal class NewLevelPage : EditorPage
 
                 ImGui.SetNextItemWidth(100);
                 ImGui.InputInt("Rows", ref _rows);
+
+                _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 ImGui.SetNextItemWidth(100);
                 ImGui.InputInt("Columns", ref _columns);
+
+                _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 Utils.Restrict(ref _rows, 1);
                 Utils.Restrict(ref _columns, 1);
@@ -235,7 +261,7 @@ internal class NewLevelPage : EditorPage
                     GLOBALS.Page = GLOBALS.PreviousPage;
                 }
 
-                if (ImGui.Button("Create", col1Space with { Y = 20}))
+                if (ImGui.Button("Create", col1Space with { Y = 20}) || createTriggered)
                 {
                     _advanced = true;
                     
