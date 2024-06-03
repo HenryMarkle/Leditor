@@ -1452,6 +1452,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         switch (_mode)
         {
             case 1: // Place Mode
+                if (!canDrawTile) break;
 
                 if (_shortcuts.CycleVariations.Check(ctrl, shift, alt)) {
                     if (_menuRootCategoryIndex == 3 && GLOBALS.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex] is IVariableInit v) _defaultVariation = (_defaultVariation + 1) % v.Variations;
@@ -2231,6 +2232,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 break;
             
             case 0: // Select Mode
+                if (!canDrawTile) break;
                 var anySelected = _selected.Any(s => s);
                 var fetchedSelected = GLOBALS.Level.Props
                     .Select((prop, index) => (prop, index))
@@ -4030,7 +4032,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             var listPos = ImGui.GetWindowPos();
             var listSpace = ImGui.GetWindowSize();
 
-            _isPropsListHovered = CheckCollisionPointRec(tileMouse, new(menuPos.X - 5, menuPos.Y, menuWinSpace.X + 10, menuWinSpace.Y));
+            _isPropsListHovered = CheckCollisionPointRec(tileMouse, new(listPos.X - 5, listPos.Y, listSpace.X + 10, listSpace.Y));
 
             if (listOpened)
             {
@@ -4044,7 +4046,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     for (var i = 0; i < _selected.Length; i++) _selected[i] = true;
                 }
 
-                if (ImGui.BeginListBox("Props", ImGui.GetContentRegionAvail() with { Y = ImGui.GetContentRegionAvail().Y - 440 }))
+                if (ImGui.BeginListBox("Props", ImGui.GetContentRegionAvail() with { Y = ImGui.GetContentRegionAvail().Y - 330 }))
                 {
                     for (var index = 0; index < GLOBALS.Level.Props.Length; index++)
                     {
