@@ -841,7 +841,7 @@ public class InitColoredSoftProp(
 }
 #endregion
 
-public struct PropQuads(
+public struct PropQuad(
     Vector2 topLeft, 
     Vector2 topRight, 
     Vector2 bottomRight, 
@@ -853,12 +853,12 @@ public struct PropQuads(
     public Vector2 BottomLeft { get; set; } = bottomLeft;
 }
 
-public class Prop(int depth, string name, bool isTile, PropQuads quads)
+public class Prop(int depth, string name, bool isTile, PropQuad quads)
 {
     public int Depth { get; set; } = depth;
     public string Name { get; set; } = name;
     public bool IsTile { get; set; } = isTile;
-    public PropQuads Quads { get; set; } = quads;
+    public PropQuad Quads { get; set; } = quads;
     
     public PropExtras Extras { get; set; }
 }

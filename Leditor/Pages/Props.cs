@@ -250,13 +250,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 ClearBackground(Color.White with { A = 0 });
 
                 var quad = (width, height) is (-1, -1) 
-                    ? new PropQuads(
+                    ? new PropQuad(
                         new Vector2(0, 0),
                         new Vector2(texture.Width, 0),
                         new Vector2(texture.Width, texture.Height),
                         new Vector2(0, texture.Height)
                     )
-                    : new PropQuads(
+                    : new PropQuad(
                     new Vector2(0, 0),
                     new Vector2(width, 0),
                     new Vector2(width, height),
@@ -1590,7 +1590,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     settings = new();
                                 }
 
-                                var placementQuad = new PropQuads(
+                                var placementQuad = new PropQuad(
                                     new Vector2(posV.X - width, posV.Y - height),
                                     new Vector2(posV.X + width, posV.Y - height),
                                     new Vector2(posV.X + width, posV.Y + height),
@@ -1634,7 +1634,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     _additionalInitialRopeSegments = 0;
                                     
                                     var current = GLOBALS.RopeProps[_propsMenuRopesIndex];
-                                    var newQuads = new PropQuads
+                                    var newQuads = new PropQuad
                                     {
                                         TopLeft = new(tileMouseWorld.X, tileMouseWorld.Y),
                                         BottomLeft = new(tileMouseWorld.X, tileMouseWorld.Y),
@@ -1698,7 +1698,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 var current = GLOBALS.LongProps[_propsMenuLongsIndex];
                                 ref var texture = ref GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
                                 var height = texture.Height / 2f;
-                                var newQuads = new PropQuads
+                                var newQuads = new PropQuad
                                 {
                                     TopLeft = new(posV.X - 100, posV.Y - height),
                                     BottomLeft = new(posV.X - 100, posV.Y + height),
@@ -1792,7 +1792,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             _defaultDepth, 
                                             init.Name, 
                                             false, 
-                                            new PropQuads(
+                                            new PropQuad(
                                             new(posV.X - width, posV.Y - height), 
                                             new(posV.X + width, posV.Y - height), 
                                             new(posV.X + width, posV.Y + height), 
@@ -1861,7 +1861,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     settings = new();
                                 }
 
-                                var quads = new PropQuads(
+                                var quads = new PropQuad(
                                     new Vector2(posV.X - width, posV.Y - height),
                                     new Vector2(posV.X + width, posV.Y - height),
                                     new Vector2(posV.X + width, posV.Y + height),
@@ -1899,7 +1899,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     _additionalInitialRopeSegments = 0;
                                     
                                     var current = GLOBALS.RopeProps[_propsMenuRopesIndex];
-                                    var newQuads = new PropQuads
+                                    var newQuads = new PropQuad
                                     {
                                         TopLeft = new(tileMouseWorld.X, tileMouseWorld.Y),
                                         BottomLeft = new(tileMouseWorld.X, tileMouseWorld.Y),
@@ -1961,7 +1961,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 var current = GLOBALS.LongProps[_propsMenuLongsIndex];
                                 ref var texture = ref GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
                                 var height = texture.Height / 2f;
-                                var newQuads = new PropQuads
+                                var newQuads = new PropQuad
                                 {
                                     TopLeft = new(posV.X - 100, posV.Y - height),
                                     BottomLeft = new(posV.X - 100, posV.Y + height),
@@ -2046,7 +2046,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     _defaultDepth = _copiedDepth;
                                 }
 
-                                var quads = new PropQuads(
+                                var quads = new PropQuad(
                                     new(posV.X - width, posV.Y - height),
                                     new(posV.X + width, posV.Y - height),
                                     new(posV.X + width, posV.Y + height),
@@ -2554,7 +2554,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 prop.prop.Depth,
                                 prop.prop.Name,
                                 prop.prop.IsTile,
-                                new PropQuads(
+                                new PropQuad(
                                     prop.prop.Quads.TopLeft,
                                     prop.prop.Quads.TopRight,
                                     prop.prop.Quads.BottomRight,
@@ -3366,7 +3366,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 new PropLongSettings(), 
                                 prop, 
                                 texture, 
-                                new PropQuads
+                                new PropQuad
                                 {
                                     TopLeft = new(posV.X - 100, posV.Y - height),
                                     BottomLeft = new(posV.X - 100, posV.Y + height),
@@ -3408,7 +3408,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 _ => tileMouseWorld,
                             };
                             
-                            Printers.DrawProp(settings, prop, texture, new PropQuads(
+                            Printers.DrawProp(settings, prop, texture, new PropQuad(
                                 new Vector2(posV.X - width, posV.Y - height), 
                                 new Vector2(posV.X + width, posV.Y - height), 
                                 new Vector2(posV.X + width, posV.Y + height), 
@@ -3819,6 +3819,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     
                                     if (selected)
                                     {
+                                        _mode = 1;
                                         _propsMenuTilesIndex = index;
                                         _currentTile = currentTilep;
                                     }
@@ -3835,23 +3836,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 {
                                     var selected = ImGui.Selectable(_ropeNames[index], index == _propsMenuRopesIndex);
                                     
-                                    // if (ImGui.IsItemHovered())
-                                    // {
-                                    //     if (_hoveredIndex != _propsMenuRopesIndex ||
-                                    //         _previousRootCategory != _menuRootCategoryIndex)
-                                    //     {
-                                    //         _hoveredIndex = index;
-                                    //         _previousRootCategory = _menuRootCategoryIndex;
-                                    //         
-                                    //         UpdatePropTooltip();
-                                    //     }
-                                    //     
-                                    //     ImGui.BeginTooltip();
-                                    //     rlImGui.ImageRenderTexture(_propTooltip);
-                                    //     ImGui.EndTooltip();
-                                    // }
-                                    
-                                    if (selected) _propsMenuRopesIndex = index;
+                                    if (selected) {
+                                        _mode = 1;
+                                        _propsMenuRopesIndex = index;
+                                    }
                                 }
                                 ImGui.EndListBox();
                             }
@@ -3865,23 +3853,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 {
                                     var selected = ImGui.Selectable(_longNames[index], index == _propsMenuLongsIndex);
                                     
-                                    // if (ImGui.IsItemHovered())
-                                    // {
-                                    //     if (_hoveredIndex != index ||
-                                    //         _previousRootCategory != _menuRootCategoryIndex)
-                                    //     {
-                                    //         _hoveredIndex = index;
-                                    //         _previousRootCategory = _menuRootCategoryIndex;
-                                    //         
-                                    //         UpdatePropTooltip();
-                                    //     }
-                                    //     
-                                    //     ImGui.BeginTooltip();
-                                    //     rlImGui.ImageRenderTexture(_propTooltip);
-                                    //     ImGui.EndTooltip();
-                                    // }
-                                    
-                                    if (selected) _propsMenuLongsIndex = index;
+                                    if (selected) {
+                                        _mode = 1;
+                                        _propsMenuLongsIndex = index;
+                                    }
                                 }
                                 ImGui.EndListBox();
                             }
@@ -3933,7 +3908,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         ImGui.EndTooltip();
                                     }
                                     
-                                    if (selected) _propsMenuOthersIndex = index;
+                                    if (selected) {
+                                        _mode = 1;
+                                        _propsMenuOthersIndex = index;
+                                    }
                                 }
                                 ImGui.EndListBox();
                             }
@@ -4058,6 +4036,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         
                         if (selected)
                         {
+                            _mode = 0;
+
                             _shouldRedrawLevel = true;
                             if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                             

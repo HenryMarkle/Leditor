@@ -207,7 +207,7 @@ public static class Importers {
             "long"              => InitPropType.Long,
             "coloredSoft"       => InitPropType.ColoredSoft,
 
-            _ => throw new InvalidPropTypeException(typeStr, StringifyBase(@base), typeStr)
+            _ => throw new InvalidPropTypeException(typeStr, StringifyBase(@base))
         };
 
         InitPropBase init = type switch
@@ -314,7 +314,7 @@ public static class Importers {
                 getFloatProperty(shadowBorder),
                 getIntProperty(smoothShading),
                 getIntProperty(colorize)),
-            _ => throw new InvalidPropTypeException("", StringifyBase(@base), typeStr)
+            _ => throw new InvalidPropTypeException(typeStr, StringifyBase(@base))
         };
 
         return init;
@@ -392,7 +392,7 @@ public static class Importers {
                 try {
                     prop = GetInitProp(obj);
                 } catch (Exception e) {
-                    throw new Exception(innerException: e, message: $"Failed to load prop init at line {counter}: {e.Message}");
+                    throw new InitParseException($"Failed to load prop init at line {counter}.", StringifyBase(obj), e);
                 }
 
                 props[^1] = [.. props[^1], prop];
@@ -495,7 +495,7 @@ public static class Importers {
 
             var found = GLOBALS.TileDex?.TryGetTile(name, out tileDefinition) ?? false;
             
-            if (!found) throw new PropNotFoundException($"prop not found: \"{name}\"{(GLOBALS.TileDex is null ? ". (TileDex is null)" : "")}", name);
+            if (!found) throw new PropNotFoundException(name);
 
             position = (-1, -1);
 

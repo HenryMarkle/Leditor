@@ -88,7 +88,7 @@ public class RopeModel
         _lastPositions = [..lastPositions];
     }
     
-    public void Reset(PropQuads quads)
+    public void Reset(PropQuad quads)
     {
         var (pointA, pointB) = Utils.RopeEnds(quads);
     
@@ -200,7 +200,7 @@ public class RopeModel
             _segmentVelocities[b] += val;
         }
     }
-    private Vector2 SmoothedPos(int indexA, ref PropQuads quads)
+    private Vector2 SmoothedPos(int indexA, ref PropQuad quads)
     {
         var segments = Rope.Extras.RopePoints;
         var (pA, pB) = Utils.RopeEnds(quads);
@@ -391,7 +391,7 @@ public class RopeModel
         return rectHeight*rectHeight + rectWidth * rectWidth < dig * dig;
     }
     
-    public void Update(PropQuads quads, int layer)
+    public void Update(PropQuad quads, int layer)
     {
         var (pA, pB) = Utils.RopeEnds(quads);
         var segments = Rope.Extras.RopePoints;

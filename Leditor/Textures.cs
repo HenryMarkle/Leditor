@@ -102,6 +102,7 @@ public class PropTexturesLoader
                 
             actions.Add(() =>
             {
+                Raylib.ImageCrop(ref _tempLongsImages[indexCopy], new Rectangle(0, 1, _tempLongsImages[indexCopy].Width, _tempLongsImages[indexCopy].Height - 1));
                 _longs[indexCopy] = Raylib.LoadTextureFromImage(_tempLongsImages[indexCopy]);
                 Raylib.UnloadImage(_tempLongsImages[indexCopy]);
             });
@@ -123,8 +124,12 @@ public class PropTexturesLoader
                 
                 actions.Add(() =>
                 {
-                    _others[categoryCopy][indexCopy] = Raylib.LoadTextureFromImage(_tempOthersImages[categoryCopy][indexCopy]);
-                    Raylib.UnloadImage(_tempOthersImages[categoryCopy][indexCopy]);
+                    ref var img = ref _tempOthersImages[categoryCopy][indexCopy];
+
+                    Raylib.ImageCrop(ref img, new Rectangle(0, 1, img.Width, img.Height - 1));
+
+                    _others[categoryCopy][indexCopy] = Raylib.LoadTextureFromImage(img);
+                    Raylib.UnloadImage(img);
                 });
             }
         }

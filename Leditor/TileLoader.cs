@@ -178,8 +178,20 @@ internal sealed class TileLoader : IDisposable
             }
             var tile = pack.Tiles[_textureCategoryCursor][_textureCursor];
 
-            pack.Textures[_textureCategoryCursor][_textureCursor] = 
-                new RL.Managed.Texture2D(Path.Combine(pack.Directory, $"{tile.Name}.png"));
+            if (tile.Type != Data.Tiles.TileType.Box) {
+                var image = Raylib.LoadImage(Path.Combine(pack.Directory, $"{tile.Name}.png"));
+                if (image.Height != 0 && image.Width != 0) {
+                    Raylib.ImageCrop(ref image, new Rectangle(0, 1, image.Width, image.Height - 1));
+                    
+                    pack.Textures[_textureCategoryCursor][_textureCursor] = new RL.Managed.Texture2D(image);
+                } else {
+                    pack.Textures[_textureCategoryCursor][_textureCursor] = 
+                        new RL.Managed.Texture2D(Path.Combine(pack.Directory, $"{tile.Name}.png"));
+                }
+            } else {
+                pack.Textures[_textureCategoryCursor][_textureCursor] = 
+                    new RL.Managed.Texture2D(Path.Combine(pack.Directory, $"{tile.Name}.png"));
+            }
 
             _textureCursor++;
             return false;

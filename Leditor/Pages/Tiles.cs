@@ -1022,19 +1022,25 @@ internal class TileEditorPage : EditorPage, IDisposable
 
         if (GLOBALS.Settings.TileEditor.UseTexturesInTooltip) {
             var (width, height) = _hoveredTile.Size;
-                
-            _previewTooltipRT = new RenderTexture2D(20 * width + 20, 20 * height + 20);
+            var buffer = _hoveredTile.BufferTiles * 2;
+
+            var totalWidth = (width + buffer) * 20;
+            var totalHeight = (height + buffer) * 20;
+
+            _previewTooltipRT = new RenderTexture2D(totalWidth, totalHeight);
             
             BeginTextureMode(_previewTooltipRT);
             ClearBackground(Color.White with { A = 0 });
                 
             Printers.DrawTileAsPropColored(
                 _hoveredTile, 
-                new Vector2(0, 0), 
-                new  Vector2(-10, -10), 
-                Color.LightGray, 
-                0, 
-                20
+                new PropQuad(
+                    new Vector2(0, 0),
+                    new Vector2(totalWidth, 0),
+                    new Vector2(totalWidth, totalHeight),
+                    new Vector2(0, totalHeight)
+                ),
+                Color.LightGray
             );
             EndTextureMode();
         } else {
@@ -1124,22 +1130,28 @@ internal class TileEditorPage : EditorPage, IDisposable
         if (!string.IsNullOrEmpty(_currentCategory.name)) color = _currentCategory.color;
 
         var (width, height) = _currentTile.Size;
-        
+        var buffer = _currentTile.BufferTiles * 2;
+
+        var totalWidth = (width + buffer) * 20;
+        var totalHeight = (height + buffer) * 20;
+
         _tileTexturePanelRT.Dispose();
         _tileTexturePanelRT = new RenderTexture2D(
-            width*20 + 20, 
-            height*20 + 20);
+            totalWidth, 
+            totalHeight);
                     
         BeginTextureMode(_tileTexturePanelRT);
         ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 0 } : Color.Gray);
 
         Printers.DrawTileAsPropColored(
             _currentTile, 
-            new Vector2(0, 0), 
-            new  Vector2(-10, -10), 
-            color, 
-            0, 
-            20
+            new PropQuad(
+                new Vector2(0, 0),
+                new Vector2(totalWidth, 0),
+                new Vector2(totalWidth, totalHeight),
+                new Vector2(0, totalHeight)
+            ), 
+            color
         );
 
         EndTextureMode();

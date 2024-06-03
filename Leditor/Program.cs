@@ -353,7 +353,8 @@ class Program
         return Importers.GetPropsInit(text);
     }
     
-    // Unused
+
+
     private static ((string category, Color color)[] categories, InitPropBase[][] init) LoadPropInitFromRenderer()
     {
         var text = File.ReadAllText(Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", "Init.txt")).ReplaceLineEndings();
@@ -545,6 +546,9 @@ class Program
         var missingRenderingAssetsDirecotry = !Directory.Exists(GLOBALS.Paths.RendererDirectory);
         
         var failedIntegrity = missingAssetsDirectory;
+
+        var failedTileInitLoad = false;
+        var failedPropInitLoad = false;
         
         if (failedIntegrity) goto right_before_gl_context;
         
@@ -665,7 +669,9 @@ class Program
             catch (Exception e)
             {
                 logger.Fatal($"Failed to load props init: {e}");
-                throw new Exception(innerException: e, message: $"Failed to load props init: {e}");
+                // throw new Exception(innerException: e, message: $"Failed to load props init: {e}");s
+                failedPropInitLoad = true;
+                goto right_before_gl_context;
             }
             
             //
@@ -774,7 +780,7 @@ class Program
         SetExitKey(KeyboardKey.Null);
 
         
-        if (failedIntegrity) goto skip_loading;
+        if (failedIntegrity || failedTileInitLoad || failedPropInitLoad) goto skip_loading;
 
         // The splashscreen
         GLOBALS.Textures.SplashScreen = LoadTexture(GLOBALS.Paths.SplashScreenPath);
@@ -1224,6 +1230,33 @@ void main()
                 }
                 #endregion
                 skip_failed_integrity:
+
+                if (!failedPropInitLoad) goto skip_failed_prop_init_load;
+                #region FailedPropInitLoad 
+                BeginDrawing();
+                ClearBackground(Color.Black);
+                
+                DrawText("Corrupted Props Assets Index", 50, 50, 50, Color.White);
+                DrawText("The /assets/renderer/Props/Init.txt folder contains invalid data.", 
+                    50, 
+                    200, 
+                    20, 
+                    Color.White
+                );
+                
+                DrawText("Check the logs for more information.", 
+                    50, 
+                    230, 
+                    20, 
+                    Color.White
+                );
+                
+                
+                DrawText(GLOBALS.Version, 10, GetScreenHeight() - 25, 20, Color.White);
+                EndDrawing();
+                continue;
+                #endregion
+                skip_failed_prop_init_load:
                 
                 #region Splashscreen
                 if (initialFrames < 180 && GLOBALS.Settings.Misc.SplashScreen)

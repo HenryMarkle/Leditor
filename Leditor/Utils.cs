@@ -2369,7 +2369,7 @@ internal static class Utils
         return offset;
     }
 
-    internal static Rectangle EncloseQuads(PropQuads quads)
+    internal static Rectangle EncloseQuads(PropQuad quads)
     {
         var nearestX = Math.Min(Math.Min(quads.TopLeft.X, quads.TopRight.X), Math.Min(quads.BottomLeft.X, quads.BottomRight.X));
         var nearestY = Math.Min(Math.Min(quads.TopLeft.Y, quads.TopRight.Y), Math.Min(quads.BottomLeft.Y, quads.BottomRight.Y));
@@ -2381,7 +2381,7 @@ internal static class Utils
     }
     
     [Obsolete]
-    internal static Rectangle EncloseQuads(in PropQuads quads)
+    internal static Rectangle EncloseQuads(in PropQuad quads)
     {
         var nearestX = Math.Min(Math.Min(quads.TopLeft.X, quads.TopRight.X), Math.Min(quads.BottomLeft.X, quads.BottomRight.X));
         var nearestY = Math.Min(Math.Min(quads.TopLeft.Y, quads.TopRight.Y), Math.Min(quads.BottomLeft.Y, quads.BottomRight.Y));
@@ -2392,7 +2392,7 @@ internal static class Utils
         return new Rectangle(nearestX, nearestY, furthestX - nearestX, furthestY - nearestY);
     }
     
-    internal static Rectangle EncloseProps(IEnumerable<PropQuads> quadsList)
+    internal static Rectangle EncloseProps(IEnumerable<PropQuad> quadsList)
     {
         float 
             minX = float.MaxValue, 
@@ -2438,7 +2438,7 @@ internal static class Utils
         return new Rectangle(minX, minY, maxX - minX, maxY - minY);
     }
 
-    internal static PropQuads RotatePropQuads(PropQuads quads, float angle)
+    internal static PropQuad RotatePropQuads(PropQuad quads, float angle)
     {
         // Convert angle to radians
 
@@ -2505,7 +2505,7 @@ internal static class Utils
         return new(newTopLeft, newTopRight, newBottomRight, newBottomLeft);
     }
     
-    internal static PropQuads RotatePropQuads(PropQuads quads, float angle, Vector2 center)
+    internal static PropQuad RotatePropQuads(PropQuad quads, float angle, Vector2 center)
     {
         // Convert angle to radians
 
@@ -2593,7 +2593,7 @@ internal static class Utils
         }
     }
 
-    internal static Vector2 QuadsCenter(ref PropQuads quads)
+    internal static Vector2 QuadsCenter(ref PropQuad quads)
     {
         var rect = EncloseQuads(quads);
         return new(rect.X + rect.Width/2, rect.Y + rect.Height/2);
@@ -2602,7 +2602,7 @@ internal static class Utils
     internal static Vector2 RectangleCenter(ref Rectangle rectangle) => new(rectangle.X + rectangle.Width / 2, rectangle.Y + rectangle.Height / 2);
 
     [Obsolete]
-    internal static void ScaleQuads(ref PropQuads quads, float factor)
+    internal static void ScaleQuads(ref PropQuad quads, float factor)
     {
         var enclose = EncloseQuads(quads);
         var center = RectangleCenter(ref enclose);
@@ -2640,7 +2640,7 @@ internal static class Utils
         );
     }
     
-    internal static void ScaleQuads(ref PropQuads quads, Vector2 center, float factor)
+    internal static void ScaleQuads(ref PropQuad quads, Vector2 center, float factor)
     {
         quads.TopLeft = Raymath.Vector2Add(
             Raymath.Vector2Scale(
@@ -2675,7 +2675,7 @@ internal static class Utils
         );
     }
 
-    internal static void ScaleQuadsX(ref PropQuads quads, Vector2 center, float factor)
+    internal static void ScaleQuadsX(ref PropQuad quads, Vector2 center, float factor)
     {
         quads.TopLeft = quads.TopLeft with { X = (quads.TopLeft.X - center.X) * factor + center.X };
         quads.BottomLeft = quads.BottomLeft with { X = (quads.BottomLeft.X - center.X) * factor + center.X };
@@ -2683,7 +2683,7 @@ internal static class Utils
         quads.BottomRight = quads.BottomRight with { X = (quads.BottomRight.X - center.X) * factor + center.X };
     }
 
-    internal static void ScaleQuadsY(ref PropQuads quads, Vector2 center, float factor)
+    internal static void ScaleQuadsY(ref PropQuad quads, Vector2 center, float factor)
     {
         quads.TopLeft = quads.TopLeft with { Y = (quads.TopLeft.Y - center.Y) * factor + center.Y };
         quads.BottomLeft = quads.BottomLeft with { Y = (quads.BottomLeft.Y - center.Y) * factor + center.Y };
@@ -2692,7 +2692,7 @@ internal static class Utils
     }
 
     [Obsolete]
-    internal static (Vector2 pA, Vector2 pB) RopeEnds(in PropQuads quads)
+    internal static (Vector2 pA, Vector2 pB) RopeEnds(in PropQuad quads)
     {
         return (
             Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), new(2f, 2f)), 
@@ -2700,7 +2700,7 @@ internal static class Utils
         );
     }
     
-    internal static (Vector2 pA, Vector2 pB) RopeEnds(PropQuads quads)
+    internal static (Vector2 pA, Vector2 pB) RopeEnds(PropQuad quads)
     {
         return (
             Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), new(2f, 2f)), 
@@ -2708,7 +2708,7 @@ internal static class Utils
         );
     }
 
-    internal static (Vector2 left, Vector2 top, Vector2 right, Vector2 bottom) LongSides(in PropQuads quad)
+    internal static (Vector2 left, Vector2 top, Vector2 right, Vector2 bottom) LongSides(in PropQuad quad)
     {
         var (left, right) = RopeEnds(quad);
 

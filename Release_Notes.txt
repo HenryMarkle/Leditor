@@ -1,18 +1,5 @@
-### Layer 4 Maker
-
-Introducing the Layer 4 Maker.
-Contrary to popular belief, there's no such thing as a fourth layer in Rain World. However, an image can be set in the background to give the illusion of distant terrain.
-While making the image is possible, this feature was introduced to make it more accessible to construct the image with the game's tiles and geometry.
-
-- The level is rendered in shades of gray.
-  - The further the layer, the dimmer it becomes.
-  - The closer the layer, the brighter it becomes.
-
-- You can move around the quad points of each layer separately.
-- You can disable individual layers.
-- Generated images are exported to the new `l4` folder.
-
-### Other
-
-- Props editor panel are now split, and can be viewed independantly.
-- Fixed a crash that was caused by not having a `settings.json` file.
+- Fixed some tiles not loading textures on Linux machines.
+- Removed the leading pixel of most, if not all, tiles and props.
+- Minor under-the-hood changes to tile rendering logic.
+- Selecting a prop from the placement menu automatically sets the mode to placement.
+- Selecting a prop from the placed props list automatically sets the mode to selection. 
