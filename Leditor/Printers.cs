@@ -7570,7 +7570,7 @@ internal static class Printers
             var isEffects = GLOBALS.Page == 7;
             var isProps = GLOBALS.Page == 8;
             var isSettings = GLOBALS.Page == 9;
-            var isL4Maker = GLOBALS.Page == 10;
+            var isMisc = GLOBALS.Page is 10 or 20;
             
             if (ImGuiNET.ImGui.MenuItem("Main", string.Empty, ref isMain)) {GLOBALS.Page = 1;}
             if (ImGuiNET.ImGui.MenuItem("Geometry", string.Empty, ref isGeo)) {GLOBALS.Page = 2;}
@@ -7580,8 +7580,14 @@ internal static class Printers
             if (ImGuiNET.ImGui.MenuItem("Dimensions", string.Empty, ref isDimensions)) {GLOBALS.Page = 6;}
             if (ImGuiNET.ImGui.MenuItem("Effects", string.Empty, ref isEffects)) {GLOBALS.Page = 7;}
             if (ImGuiNET.ImGui.MenuItem("Props", string.Empty, ref isProps)) {GLOBALS.Page = 8;}
-            if (ImGuiNET.ImGui.MenuItem("L4 Maker", string.Empty, ref isL4Maker)) {GLOBALS.Page = 10;}
             if (ImGuiNET.ImGui.MenuItem("Settings", string.Empty, ref isSettings)) {GLOBALS.Page = 9;}
+
+            if (ImGuiNET.ImGui.BeginMenu("Misc")) {
+                if (ImGuiNET.ImGui.MenuItem("L4 Maker")) GLOBALS.Page = 10;
+                if (ImGuiNET.ImGui.MenuItem("Tile Viewer")) GLOBALS.Page = 20;
+
+                ImGuiNET.ImGui.EndMenu();
+            }
 
             var selected = 0;
             

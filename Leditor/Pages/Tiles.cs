@@ -1231,13 +1231,9 @@ internal class TileEditorPage : EditorPage, IDisposable
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
         
-        // Handle wheel event
-        
-        // handle zoom
-        
         if (canDrawTile || _clickTracker)
         {
-            // handle mouse drag
+            // Drag
             if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true))
             {
                 _clickTracker = true;
@@ -1247,7 +1243,9 @@ internal class TileEditorPage : EditorPage, IDisposable
             }
 
             if (IsMouseButtonReleased(_shortcuts.DragLevel.Button)) _clickTracker = false;
-       
+
+
+            // Zoom
             var tileWheel = GetMouseWheelMove();
             if (tileWheel != 0)
             {

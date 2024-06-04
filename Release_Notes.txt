@@ -1,3 +1,9 @@
+### Tile Viewer
+
+Added a tile viewer that allows you to display each tile individually.
+
+### Other
+
 - Fixed some tiles not loading textures on Linux machines.
 - Removed the leading pixel of most, if not all, tiles and props.
 - Minor under-the-hood changes to tile rendering logic.

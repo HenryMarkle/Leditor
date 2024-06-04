@@ -2359,13 +2359,13 @@ internal static class Utils
 
         var offset = init.Type switch
         {
-            Data.Tiles.TileType.VoxelStruct => 1 + scale * ((bufferTiles * 2) + height) * repeatL,
-            Data.Tiles.TileType.VoxelStructRockType => 1 + scale * ((bufferTiles * 2) + height),
+            Data.Tiles.TileType.VoxelStruct => scale * ((bufferTiles * 2) + height) * repeatL,
+            Data.Tiles.TileType.VoxelStructRockType => scale * ((bufferTiles * 2) + height),
             Data.Tiles.TileType.Box => scale * height * width + (scale * (height + (2 * bufferTiles))),
-            Data.Tiles.TileType.VoxelStructRandomDisplaceVertical => 1 + scale * ((bufferTiles * 2) + height) * repeatL,
-            Data.Tiles.TileType.VoxelStructRandomDisplaceHorizontal => 1 + scale * ((bufferTiles * 2) + height) * repeatL,
+            Data.Tiles.TileType.VoxelStructRandomDisplaceVertical => scale * ((bufferTiles * 2) + height) * repeatL,
+            Data.Tiles.TileType.VoxelStructRandomDisplaceHorizontal => scale * ((bufferTiles * 2) + height) * repeatL,
 
-            _ => 1 + scale * ((bufferTiles * 2) + height) * repeatL
+            _ => scale * ((bufferTiles * 2) + height) * repeatL
         };
 
         return offset;

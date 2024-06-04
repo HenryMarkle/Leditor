@@ -1187,10 +1187,6 @@ internal class MainPage : EditorPage, IContextListener
                             if (ImGui.BeginListBox("##Visuals", ImGui.GetContentRegionAvail())) {
                                 
                                 for (var index = 0; index < GLOBALS.Textures.Palettes.Length; index++) {
-                                    var size = ImGui.GetContentRegionAvail();
-
-                                    var ratioX = (size.X - 10) / 32;
-
                                     var selected = ImGui.Selectable(GLOBALS.Textures.PaletteNames[index], index == _selectedPaletteIndex);
                                     
                                     if (selected) {

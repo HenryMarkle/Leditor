@@ -429,6 +429,7 @@ class Program
         MissingInitFilePage? missingInitFilePage = null;
         ExperimentalGeometryPage? experimentalGeometryPage = null;
         SettingsPage? settingsPage = null;
+        TileViewerPage? tileViewerPage = null;
 
         Task allCacheTasks = default!;
 
@@ -851,6 +852,7 @@ class Program
 
         logger.Information("loading shaders");
 
+        // GLOBALS.Shaders.OppositeBrightness = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "opposite_brightness.frag"));
         GLOBALS.Shaders.Palette = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "palette.frag"));
         GLOBALS.Shaders.GeoPalette = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "geo_palette2.frag"));
         GLOBALS.Shaders.TilePreview = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "tile_preview2.frag"));
@@ -997,6 +999,7 @@ void main()
         missingInitFilePage = new() { Logger = logger };
         experimentalGeometryPage = new() { Logger = logger };
         settingsPage = new() { Logger = logger };
+        tileViewerPage = new() { Logger = logger };
 
         // GLOBALS.Pager = new Pager(logger, new Context(logger, null));
         //
@@ -1154,7 +1157,7 @@ void main()
         _propLoader.IncludeDefined(("Longs", new Data.Color(0, 0, 0)), GLOBALS.Longs, GLOBALS.Paths.PropsAssetsDirectory);
 
         skip_loading:
-        
+
         while (!WindowShouldClose())
         {
             try
@@ -2180,6 +2183,7 @@ void main()
                         case 17: missingInitFilePage?.Draw(); break;
                         case 18: geoPage?.Draw(); break;
                         case 19: missingPropTexturesPage?.Draw(); break;
+                        case 20: tileViewerPage?.Draw(); break;
                         case 99: deathScreen?.Draw(); break;
                         
                         default:
@@ -2264,6 +2268,7 @@ void main()
         
         logger.Debug("Unloading shaders");
 
+        // UnloadShader(GLOBALS.Shaders.OppositeBrightness);
         UnloadShader(GLOBALS.Shaders.Palette);
         UnloadShader(GLOBALS.Shaders.GeoPalette);
         UnloadShader(GLOBALS.Shaders.TilePreview);
@@ -2330,6 +2335,7 @@ void main()
         missingInitFilePage?.Dispose();
         experimentalGeometryPage?.Dispose();
         settingsPage?.Dispose();
+        tileViewerPage?.Dispose();
 
         paletteLoader?.Dispose();
 

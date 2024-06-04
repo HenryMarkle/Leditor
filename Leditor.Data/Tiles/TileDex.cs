@@ -77,8 +77,7 @@ public class TileDex : IDisposable
     /// </summary>
     /// <param name="name">The name of the common category</param>
     /// <returns>An array of the tile definitions; If not found then an empty array will be returned</returns>
-    public TileDefinition[] TryGetTilesOfCategory(string name) 
-        => _categories.TryGetValue(name, out var tiles) ? tiles : [];
+    public bool TryGetTilesOfCategory(string name, out TileDefinition[]? tiles) => _categories.TryGetValue(name, out tiles);
     
     /// <summary>
     /// Get the color associated to the category
