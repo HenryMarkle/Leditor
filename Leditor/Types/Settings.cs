@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Security.Authentication.ExtendedProtection;
 using System.Text.Json.Serialization;
 namespace Leditor.Types;
@@ -22,6 +23,7 @@ public class GeoEditor
         ShowCurrentGeoIndicator = true;
         LegacyInterface = false;
         PasteAir = false;
+        LayerIndicatorPosition = ScreenRelativePosition.TopLeft;
     }
 
     public GeoEditor(
@@ -35,7 +37,8 @@ public class GeoEditor
         bool showCurrentGeoIndicator = true,
         bool legacyInterface = false,
         bool pasteAir = false,
-        bool basicView = true
+        bool basicView = true,
+        ScreenRelativePosition layerIndicatorPosition = ScreenRelativePosition.TopLeft
     )
     {
         LayerColors = layerColors;
@@ -49,6 +52,7 @@ public class GeoEditor
         LegacyInterface = legacyInterface;
         PasteAir = pasteAir;
         BasicView = basicView;
+        LayerIndicatorPosition = layerIndicatorPosition;
     }
     
     public LayerColors LayerColors { get; set; }
@@ -62,10 +66,21 @@ public class GeoEditor
     public bool LegacyInterface { get; set; }
     public bool PasteAir { get; set; }
     public bool BasicView { get; set; }
+
+    public enum ScreenRelativePosition { 
+        TopLeft, 
+        TopRight, 
+        BottomLeft, 
+        BottomRight, 
+        MiddleBottom, 
+        MiddleTop 
+    }
+
+    public ScreenRelativePosition LayerIndicatorPosition { get; set; }
 }
 
-public class TileEditor
-{
+public class TileEditorSettings
+{    
     public bool HoveredTileInfo { get; set; } 
     public bool TintedTiles { get; set; }
     public bool UseTextures { get; set; }
@@ -79,12 +94,24 @@ public class TileEditor
     public bool UnifiedDeletion { get; set; }
     public bool ExactHoverDeletion { get; set; }
     public bool OriginalDeletionBehavior { get; set; }
+
+    public enum ScreenRelativePosition { 
+        TopLeft, 
+        TopRight, 
+        BottomLeft, 
+        BottomRight, 
+        MiddleBottom, 
+        MiddleTop 
+    }
+
+    public ScreenRelativePosition LayerIndicatorPosition { get; set; }
     
+
     public IEnumerable<AutoTiler.PathPackMeta> AutoTilerPathPacks { get; set; }
 
     public IEnumerable<AutoTiler.BoxPackMeta> AutoTilerBoxPacks { get; set; }
 
-    public TileEditor() {
+    public TileEditorSettings() {
         HoveredTileInfo = false;
         TintedTiles = false;
         UseTextures = false;
@@ -99,6 +126,8 @@ public class TileEditor
         ExactHoverDeletion = false;
         OriginalDeletionBehavior = true;
 
+        LayerIndicatorPosition = ScreenRelativePosition.TopLeft;
+
         AutoTilerPathPacks = [
             new("Thin Pipes", "Vertical Pipe", "Horizontal Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),
             new("Thin Plain Pipes", "Vertical Plain Pipe", "Horizontal Plain Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),
@@ -111,7 +140,7 @@ public class TileEditor
         ];
     }
 
-    public TileEditor(
+    public TileEditorSettings(
         bool hoveredTileInfo = false, 
         bool tintedTiles = false, 
         bool useTextures = false,
@@ -124,7 +153,8 @@ public class TileEditor
         bool implicitOverrideMaterials = true,
         bool unifiedDeletion = true,
         bool exactHoverDeletion = false,
-        bool originalDeletionBhavior = true
+        bool originalDeletionBhavior = true,
+        ScreenRelativePosition layerIndicatorPosition = ScreenRelativePosition.TopLeft
     ) {
         HoveredTileInfo = hoveredTileInfo;
         TintedTiles = tintedTiles;
@@ -139,6 +169,8 @@ public class TileEditor
         UnifiedDeletion = unifiedDeletion;
         ExactHoverDeletion = exactHoverDeletion;
         OriginalDeletionBehavior = originalDeletionBhavior;
+
+        LayerIndicatorPosition = layerIndicatorPosition;
 
         AutoTilerPathPacks = [
             new("Thin Pipes", "Vertical Pipe", "Horizontal Pipe", "Pipe ES", "Pipe WS", "Pipe WN", "Pipe EN", "Pipe XJunct", "Pipe TJunct S", "Pipe TJunct W", "Pipe TJunct N", "Pipe TJunct E"),
@@ -169,9 +201,30 @@ public class Experimental(bool newGeometryEditor = false)
     public bool NewGeometryEditor { get; set; } = newGeometryEditor;
 }
 
-public class PropEditor(bool tintedTextures = false)
+public class PropEditor
 {
-    public bool TintedTextures { get; set; } = tintedTextures;
+    public enum ScreenRelativePosition { 
+        TopLeft, 
+        TopRight, 
+        BottomLeft, 
+        BottomRight, 
+        MiddleBottom, 
+        MiddleTop 
+    }
+
+    public ScreenRelativePosition LayerIndicatorPosition { get; set; }
+
+    //
+
+    public PropEditor()
+    {
+        LayerIndicatorPosition = ScreenRelativePosition.TopLeft;
+    }
+
+    public PropEditor(ScreenRelativePosition layerIndicatorPosition)
+    {
+        LayerIndicatorPosition = layerIndicatorPosition;
+    }
 }
 
 public class CameraEditorSettings(bool snap = true, bool alignment = false)
@@ -273,7 +326,7 @@ public class Settings
     public Shortcuts Shortcuts { get; set; }
     public Misc Misc { get; set; }
     public GeoEditor GeometryEditor { get; set; }
-    public TileEditor TileEditor { get; set; }
+    public TileEditorSettings TileEditor { get; set; }
     public CameraEditorSettings CameraSettings { get; set; }
     public LightEditor LightEditor { get; set; }
     public EffectsSettings EffectsSettings { get; set; }
@@ -309,7 +362,7 @@ public class Settings
         Shortcuts shortcuts,
         Misc misc,
         GeoEditor geometryEditor,
-        TileEditor tileEditor,
+        TileEditorSettings tileEditor,
         CameraEditorSettings cameraEditorSettings,
         LightEditor lightEditor,
         EffectsSettings effectsSettings,
@@ -343,6 +396,7 @@ public class Shortcuts
         LightEditor = new LightShortcuts();
         EffectsEditor = new EffectsShortcuts();
         PropsEditor = new PropsShortcuts();
+        TileViewer = new TileViewerShortcuts();
     }
     
     public Shortcuts(
@@ -353,7 +407,8 @@ public class Shortcuts
         CameraShortcuts cameraEditor,
         LightShortcuts lightEditor,
         EffectsShortcuts effectsEditor,
-        PropsShortcuts propsEditor
+        PropsShortcuts propsEditor,
+        TileViewerShortcuts tileViewer
     )
     {
         GlobalShortcuts = globalShortcuts;
@@ -365,6 +420,7 @@ public class Shortcuts
         LightEditor = lightEditor;
         EffectsEditor = effectsEditor;
         PropsEditor = propsEditor;
+        TileViewer = tileViewer;
     }
     
     public GlobalShortcuts GlobalShortcuts { get; set; }
@@ -376,6 +432,7 @@ public class Shortcuts
     public LightShortcuts LightEditor { get; set; }
     public EffectsShortcuts EffectsEditor { get; set; }
     public PropsShortcuts PropsEditor { get; set; }
+    public TileViewerShortcuts TileViewer { get; set; }
 }
 
 public class Misc(

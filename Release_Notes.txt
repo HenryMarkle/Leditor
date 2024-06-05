@@ -11,3 +11,6 @@ Added a tile viewer that allows you to display each tile individually.
 - Selecting a prop from the placed props list automatically sets the mode to selection.
 - Added the keyboard shortcut `N` in the start screen to automatically navigate to the creation screen.
 - Added the keyboard shortrcut `Enter` in the creation screen to create the project.
+- Made the shortcuts window a little nicer.
+- Fixed voxel flat rendering with pallete.
+- The position of the layer indicator can now be customized.

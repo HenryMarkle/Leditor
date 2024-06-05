@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.ComponentModel.DataAnnotations;
 using System.Numerics;
 using SixLabors.ImageSharp.Memory;
+using Leditor.Types;
 
 namespace Leditor.Pages;
 
@@ -23,7 +24,7 @@ internal class TileViewerPage : EditorPage {
     }
 
     internal TileViewerPage() {
-        
+        _shortcuts = GLOBALS.Settings.Shortcuts.TileViewer;
     }
 
     #region Resources
@@ -54,7 +55,7 @@ internal class TileViewerPage : EditorPage {
     private enum Coloring { Untinted, Tinted, Palette, Custom }
     private Coloring _coloring = Coloring.Tinted;
 
-    private Vector3 _customColor = new(170, 170, 170);
+    private Vector3 _customColor = new(.5f, .5f, .5f);
 
 
     private int _categoryIndex = -1;
@@ -72,6 +73,7 @@ internal class TileViewerPage : EditorPage {
     private bool _isPropertiesWinHovered;
     private bool _isToolsWinHovered;
     private bool _isColorsWinHovered;
+    private bool _isShortcutsWinHovered;
 
     private bool _clickLock;
 
@@ -86,6 +88,9 @@ internal class TileViewerPage : EditorPage {
     private int _tileDepth;
 
     private bool _showTileHead;
+    private bool _showBackground = true;
+
+    private TileViewerShortcuts _shortcuts;
 
     #endregion
 
@@ -151,15 +156,17 @@ internal class TileViewerPage : EditorPage {
 
         BeginTextureMode(_mainCanvasRT);
 
-        ClearBackground(Color.Gray);
+        ClearBackground(_showBackground ? Color.Gray : Color.Black with { A = 0 });
 
         // Background
 
         DrawRectangleLinesEx(new Rectangle(0, 0, scaledWidth + 8, scaledHeight + 8), 4f, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
 
-        for (var w = 0; w < bufferedWidth; w++) {
-            for (var h = 0; h < bufferedHeight; h++) {
-                DrawRectangle(4 + w * 20, 4 + h * 20, 20, 20, (w + h) % 2 == 0 ? Color.Gray : Color.LightGray);
+        if (_showBackground) {
+            for (var w = 0; w < bufferedWidth; w++) {
+                for (var h = 0; h < bufferedHeight; h++) {
+                    DrawRectangle(4 + w * 20, 4 + h * 20, 20, 20, (w + h) % 2 == 0 ? Color.Gray : Color.LightGray);
+                }
             }
         }
 
@@ -335,7 +342,8 @@ internal class TileViewerPage : EditorPage {
             _isSpecsWinHovered ||
             _isPropertiesWinHovered ||
             _isToolsWinHovered ||
-            _isColorsWinHovered;
+            _isColorsWinHovered ||
+            _isShortcutsWinHovered;
 
         if (!isWinBusy || _clickLock) {
             
@@ -361,6 +369,172 @@ internal class TileViewerPage : EditorPage {
                 if (_camera.Zoom < GLOBALS.ZoomIncrement) _camera.Zoom = GLOBALS.ZoomIncrement;
             }
         }
+
+        var ctrl = IsKeyDown(KeyboardKey.LeftControl | KeyboardKey.RightControl);
+        var shift = IsKeyDown(KeyboardKey.LeftShift | KeyboardKey.RightShift);
+        var alt = IsKeyDown(KeyboardKey.LeftAlt | KeyboardKey.RightAlt);
+
+        #region Menu Traversal
+
+        // Category traversal
+
+        if (_shortcuts.MoveMenuCategoryUp.Check(ctrl, shift, alt)) {
+
+            // Not searching
+            if (_searchResult is null) {
+                if (GLOBALS.TileDex is { OrderedCategoryNames.Length: > 0 }) {
+                    _categoryIndex--;
+
+                    if (settings.CycleMenus) Utils.Cycle(ref _categoryIndex, 0, GLOBALS.TileDex.OrderedCategoryNames.Length - 1);
+                    else Utils.Restrict(ref _categoryIndex, 0, GLOBALS.TileDex.OrderedCategoryNames.Length - 1);
+
+                    _ = GLOBALS.TileDex.TryGetTilesOfCategory(GLOBALS.TileDex.OrderedCategoryNames[_categoryIndex], out _currentCategoryTiles);
+
+                    if (settings.ChangingCategoriesResetsIndex) {
+                        _tileIndex = -1;
+                        _currentTile = null;
+                    } else if (_currentCategoryTiles is { Length: > 0 }) {
+                        Utils.Restrict(ref _tileIndex, 0, _currentCategoryTiles.Length - 1);
+                        _currentTile = _currentCategoryTiles[_tileIndex];
+                    }
+                }
+            } 
+            // Searching
+            else {
+                if (_searchResult.Tiles.Length > 0) {
+                    _searchCategoryInedx--;
+
+                    if (settings.CycleMenus) Utils.Cycle(ref _searchCategoryInedx, 0, _searchResult.Tiles.Length - 1);
+                    else Utils.Restrict(ref _searchCategoryInedx, 0, _searchResult.Tiles.Length - 1);
+
+                    _categoryIndex = _searchResult.Categories[_searchCategoryInedx].originalIndex;
+                    _ = GLOBALS.TileDex?.TryGetTilesOfCategory(_searchResult.Categories[_searchCategoryInedx].name, out _currentCategoryTiles);
+
+                    if (settings.ChangingCategoriesResetsIndex) {
+                        _tileIndex = -1;
+                        _currentTile = null;
+                    } else if (_currentCategoryTiles is { Length: > 0 }) {
+                        Utils.Restrict(ref _tileIndex, 0, _currentCategoryTiles.Length - 1);
+                        _currentTile = _currentCategoryTiles[_tileIndex];
+                    }
+                }
+            }
+
+            _shouldRedrawTile = true;
+
+        } else if (_shortcuts.MoveMenuCategoryDown.Check(ctrl, shift, alt)) {
+
+            // Not searching
+            if (_searchResult is null) {
+                if (GLOBALS.TileDex is { OrderedCategoryNames.Length: > 0 }) {
+                    _categoryIndex++;
+
+                    if (settings.CycleMenus) Utils.Cycle(ref _categoryIndex, 0, GLOBALS.TileDex.OrderedCategoryNames.Length - 1);
+                    else Utils.Restrict(ref _categoryIndex, 0, GLOBALS.TileDex.OrderedCategoryNames.Length - 1);
+
+                    _ = GLOBALS.TileDex.TryGetTilesOfCategory(GLOBALS.TileDex.OrderedCategoryNames[_categoryIndex], out _currentCategoryTiles);
+
+                    if (settings.ChangingCategoriesResetsIndex) {
+                        _tileIndex = -1;
+                        _currentTile = null;
+                    } else if (_currentCategoryTiles is { Length: > 0 }) {
+                        Utils.Restrict(ref _tileIndex, 0, _currentCategoryTiles.Length - 1);
+                        _currentTile = _currentCategoryTiles[_tileIndex];
+                    }
+                }
+            } 
+            // Searching
+            else {
+                if (_searchResult.Tiles.Length > 0) {
+                    _searchCategoryInedx++;
+
+                    if (settings.CycleMenus) Utils.Cycle(ref _searchCategoryInedx, 0, _searchResult.Tiles.Length - 1);
+                    else Utils.Restrict(ref _searchCategoryInedx, 0, _searchResult.Tiles.Length - 1);
+
+                    _categoryIndex = _searchResult.Categories[_searchCategoryInedx].originalIndex;
+                    _ = GLOBALS.TileDex?.TryGetTilesOfCategory(_searchResult.Categories[_searchCategoryInedx].name, out _currentCategoryTiles);
+
+                    if (settings.ChangingCategoriesResetsIndex) {
+                        _tileIndex = -1;
+                        _currentTile = null;
+                    } else if (_currentCategoryTiles is { Length: > 0 }) {
+                        Utils.Restrict(ref _tileIndex, 0, _currentCategoryTiles.Length - 1);
+                        _currentTile = _currentCategoryTiles[_tileIndex];
+                    }
+                }
+            }
+
+            _shouldRedrawTile = true;
+        }
+
+        if (_shortcuts.MoveMenuUp.Check(ctrl, shift, alt)) {
+
+            // Not searching
+            if (_searchResult is null) {
+                if (_currentCategoryTiles is { Length: > 0 }) {
+                    _tileIndex--;
+
+                    if (settings.CycleMenus) Utils.Cycle(ref _tileIndex, 0, _currentCategoryTiles.Length - 1);
+                    else Utils.Restrict(ref _tileIndex, 0, _currentCategoryTiles.Length - 1);
+
+                    _currentTile = _currentCategoryTiles[_tileIndex];
+                } else {
+                    _tileIndex = -1;
+                    _currentTile = null;
+                }
+            } 
+            // Searching
+            else {
+                if (_searchResult.Tiles is { Length: > 0 } && _searchCategoryInedx < _searchResult.Tiles.Length && _searchCategoryInedx >= 0 && _searchResult.Tiles[_searchCategoryInedx].Length > 0) {
+                    _searchTileIndex--;
+
+                    if (settings.CycleMenus) Utils.Cycle(ref _searchTileIndex, 0, _searchResult.Tiles[_searchCategoryInedx].Length - 1);
+                    else Utils.Restrict(ref _searchTileIndex, 0, _searchResult.Tiles[_searchCategoryInedx].Length - 1);
+
+                    _categoryIndex = _searchResult.Categories[_searchCategoryInedx].originalIndex;
+                    (_currentTile, _tileIndex) =  _searchResult.Tiles[_searchCategoryInedx][_searchTileIndex];
+                } else {
+                    _searchTileIndex = -1;
+                    _currentTile = null;
+                }
+            }
+
+            _shouldRedrawTile = true;
+        } else if (_shortcuts.MoveMenuDown.Check(ctrl, shift, alt)) {
+            // Not searching
+            if (_searchResult is null) {
+                if (_currentCategoryTiles is { Length: > 0 }) {
+                    _tileIndex++;
+
+                    if (settings.CycleMenus) Utils.Cycle(ref _tileIndex, 0, _currentCategoryTiles.Length - 1);
+                    else Utils.Restrict(ref _tileIndex, 0, _currentCategoryTiles.Length - 1);
+
+                    _currentTile = _currentCategoryTiles[_tileIndex];
+                } else {
+                    _tileIndex = -1;
+                    _currentTile = null;
+                }
+            } 
+            // Searching
+            else {
+                if (_searchResult.Tiles is { Length: > 0 } && _searchCategoryInedx < _searchResult.Tiles.Length && _searchCategoryInedx >= 0 && _searchResult.Tiles[_searchCategoryInedx].Length > 0) {
+                    _searchTileIndex++;
+
+                    if (settings.CycleMenus) Utils.Cycle(ref _searchTileIndex, 0, _searchResult.Tiles[_searchCategoryInedx].Length - 1);
+                    else Utils.Restrict(ref _searchTileIndex, 0, _searchResult.Tiles[_searchCategoryInedx].Length - 1);
+
+                    _categoryIndex = _searchResult.Categories[_searchCategoryInedx].originalIndex;
+                    (_currentTile, _tileIndex) =  _searchResult.Tiles[_searchCategoryInedx][_searchTileIndex];
+                } else {
+                    _searchTileIndex = -1;
+                    _currentTile = null;
+                }
+            }
+
+            _shouldRedrawTile = true;
+        }
+
+        #endregion
 
         #region Drawing
         BeginDrawing();
@@ -420,6 +594,20 @@ internal class TileViewerPage : EditorPage {
                         var textUpdated = ImGui.InputTextWithHint("##Search", "Search..", ref _searchText, 100, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EscapeClearsAll);
 
                         _isSearchContorlActive = ImGui.IsItemActive();
+
+                        if (!_isSearchContorlActive) {
+                            if (_shortcuts.ActivateSearch.Check(ctrl, shift, alt)) {
+                                ImGui.SetItemDefaultFocus();
+                                ImGui.SetKeyboardFocusHere(-1);
+                            }
+                        } else {
+                            if (IsKeyPressed(KeyboardKey.Enter) && _searchResult is not null) {
+                                if (_searchResult.Tiles.Length > 0 && _searchResult.Tiles[0].Length > 0) {
+                                    _searchCategoryInedx = 0;
+                                    _searchTileIndex = 0;
+                                }
+                            }
+                        }
 
                         var availableSpace = ImGui.GetContentRegionAvail();
 
@@ -625,7 +813,7 @@ internal class TileViewerPage : EditorPage {
                             ImGui.TableNextRow();
 
                             ImGui.TableSetColumnIndex(0);
-                            ImGui.Text("With Buffers");
+                            ImGui.Text("Buffered");
 
                             ImGui.TableSetColumnIndex(1);
                             ImGui.Text($"{_currentTile.Size.Width + bufferSpace * 2}");
@@ -650,6 +838,10 @@ internal class TileViewerPage : EditorPage {
                 
                 if (toolsWinOpened) {
                     if (_currentTile is not null) {
+                        if (ImGui.Checkbox("Background", ref _showBackground)) {
+                            _shouldRedrawTile = true;
+                        }
+
                         if (ImGui.Checkbox("Head", ref _showTileHead)) {
                             _shouldRedrawTile = true;
                         }
@@ -761,6 +953,21 @@ internal class TileViewerPage : EditorPage {
                     rlImGui_cs.rlImGui.ImageRenderTextureFit(_tileSpecsPanelRT);
                     
                     ImGui.End();
+                }
+
+                // Shortcuts
+
+                if (settings.ShortcutWindow) {
+                    var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.TileEditor);
+
+                    _isShortcutsWinHovered = CheckCollisionPointRec(
+                        GetMousePosition(), 
+                        shortcutWindowRect with
+                        {
+                            Y = shortcutWindowRect.Y - 5, Height = shortcutWindowRect.Height + 10,
+                            X = shortcutWindowRect.X - 5, Width = shortcutWindowRect.Width + 10
+                        }
+                    );
                 }
             }
             rlImGui_cs.rlImGui.End();

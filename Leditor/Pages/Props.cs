@@ -1320,6 +1320,41 @@ internal class PropsEditorPage : EditorPage, IContextListener
         }
     }
 
+    private Rectangle GetLayerIndicator(int layer) => layer switch {
+        0 => GLOBALS.Settings.PropEditor.LayerIndicatorPosition switch { 
+            PropEditor.ScreenRelativePosition.TopLeft       => new Rectangle( 40,                        50 + 25,                     40, 40 ), 
+            PropEditor.ScreenRelativePosition.TopRight      => new Rectangle( GetScreenWidth() - 70,     50 + 25,                     40, 40 ),
+            PropEditor.ScreenRelativePosition.BottomRight   => new Rectangle( GetScreenWidth() - 70,     GetScreenHeight() - 90 - 25, 40, 40 ),
+            PropEditor.ScreenRelativePosition.BottomLeft    => new Rectangle( 40,                        GetScreenHeight() - 90 - 25, 40, 40 ),
+            PropEditor.ScreenRelativePosition.MiddleTop     => new Rectangle((GetScreenWidth() - 40)/2f, 50 + 25,                     40, 40 ),
+            PropEditor.ScreenRelativePosition.MiddleBottom  => new Rectangle((GetScreenWidth() - 40)/2f, GetScreenHeight() - 90 - 25, 40, 40 ),
+
+            _ => new Rectangle(40, GetScreenHeight() - 80, 40, 40)
+        },
+        1 => GLOBALS.Settings.PropEditor.LayerIndicatorPosition switch { 
+            PropEditor.ScreenRelativePosition.TopLeft       => new Rectangle( 30,                        40 + 25,                     40, 40 ), 
+            PropEditor.ScreenRelativePosition.TopRight      => new Rectangle( GetScreenWidth() - 60,     40 + 25,                     40, 40 ),
+            PropEditor.ScreenRelativePosition.BottomRight   => new Rectangle( GetScreenWidth() - 60,     GetScreenHeight() - 80 - 25, 40, 40 ),
+            PropEditor.ScreenRelativePosition.BottomLeft    => new Rectangle( 30,                        GetScreenHeight() - 80 - 25, 40, 40 ),
+            PropEditor.ScreenRelativePosition.MiddleTop     => new Rectangle((GetScreenWidth() - 40)/2f, 40 + 25,                     40, 40 ),
+            PropEditor.ScreenRelativePosition.MiddleBottom  => new Rectangle((GetScreenWidth() - 40)/2f, GetScreenHeight() - 80 - 25, 40, 40 ),
+
+            _ => new Rectangle(30, GetScreenHeight() - 70, 40, 40)
+        },
+        2 => GLOBALS.Settings.PropEditor.LayerIndicatorPosition switch { 
+            PropEditor.ScreenRelativePosition.TopLeft       => new Rectangle( 20,                        30 + 25,                     40, 40 ), 
+            PropEditor.ScreenRelativePosition.TopRight      => new Rectangle( GetScreenWidth() - 50,     30 + 25,                     40, 40 ),
+            PropEditor.ScreenRelativePosition.BottomRight   => new Rectangle( GetScreenWidth() - 50,     GetScreenHeight() - 70 - 25, 40, 40 ),
+            PropEditor.ScreenRelativePosition.BottomLeft    => new Rectangle( 20,                        GetScreenHeight() - 70 - 25, 40, 40 ),
+            PropEditor.ScreenRelativePosition.MiddleTop     => new Rectangle((GetScreenWidth() - 40)/2f, 30 + 25,                     40, 40 ),
+            PropEditor.ScreenRelativePosition.MiddleBottom  => new Rectangle((GetScreenWidth() - 40)/2f, GetScreenHeight() - 70 - 25, 40, 40 ),
+
+            _ => new Rectangle(20, GetScreenHeight() - 60, 40, 40)
+        },
+        
+        _ => new Rectangle(0, 0, 40, 40)
+    };
+
     public override void Draw()
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
@@ -1345,9 +1380,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
         var sWidth = GetScreenWidth();
         var sHeight = GetScreenHeight();
         
-        var layer3Rect = new Rectangle(10, sHeight - 50, 40, 40);
-        var layer2Rect = new Rectangle(20, sHeight - 60, 40, 40);
-        var layer1Rect = new Rectangle(30, sHeight - 70, 40, 40);
+        var layer3Rect = GetLayerIndicator(2);
+        var layer2Rect = GetLayerIndicator(1);
+        var layer1Rect = GetLayerIndicator(0);
 
         var tileMouse = GetMousePosition();
         var tileMouseWorld = GetScreenToWorld2D(tileMouse, _camera);
@@ -3539,9 +3574,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
             );
 
-            DrawRectangleLines(10, sHeight - 50, 40, 40, Color.Gray);
+            DrawRectangleLines((int)layer3Rect.X, (int)layer3Rect.Y, 40, 40, Color.Gray);
 
-            if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
+            if (GLOBALS.Layer == 2) DrawText("3", (int)layer3Rect.X + 15, (int)layer3Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
 
             if (GLOBALS.Layer is 1 or 0)
             {
@@ -3559,9 +3594,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
                 );
 
-                DrawRectangleLines(20, sHeight - 60, 40, 40, Color.Gray);
+                DrawRectangleLines((int)layer2Rect.X, (int)layer2Rect.Y, 40, 40, Color.Gray);
 
-                if (GLOBALS.Layer == 1) DrawText("2", 35, sHeight - 50, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
+                if (GLOBALS.Layer == 1) DrawText("2", (int)layer2Rect.X + 15, (int)layer2Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             }
 
             if (GLOBALS.Layer == 0)
@@ -3580,9 +3615,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 );
 
                 DrawRectangleLines(
-                    30, sHeight - 70, 40, 40, Color.Gray);
+                    (int)layer1Rect.X, (int)layer1Rect.Y, 40, 40, Color.Gray);
 
-                DrawText("1", 48, sHeight - 60, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
+                DrawText("1", (int)layer1Rect.X + 15, (int)layer1Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             }
 
             if (newLayer != GLOBALS.Layer)

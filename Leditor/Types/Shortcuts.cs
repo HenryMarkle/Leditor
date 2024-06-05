@@ -35,7 +35,7 @@ public class KeyboardShortcut(
         return $"{(Ctrl is not null and not false ? "CTRL + " : "")}" +
                $"{(Shift is not null and not false ? "SHIFT + " : "")}" +
                $"{(Alt is not null and not false ? "ALT + " : "")}" +
-               $"{Key switch {KeyboardKey.Space => "SPACE", KeyboardKey.Enter => "ENTER", KeyboardKey.LeftAlt => "ALT", KeyboardKey.LeftShift => "SHIT", KeyboardKey.LeftControl => "CTRL", KeyboardKey.Null => "NONE", KeyboardKey.Escape => "ESCAPE", var k => (char)k}}";
+               $"{Key switch {KeyboardKey.Space => "SPACE", KeyboardKey.Enter => "ENTER", KeyboardKey.LeftAlt => "ALT", KeyboardKey.LeftShift => "SHIFT", KeyboardKey.LeftControl => "CTRL", KeyboardKey.Null => "NONE", KeyboardKey.Escape => "ESCAPE", var k => (char)k}}";
     }
 }
 
@@ -433,6 +433,35 @@ public class GlobalShortcuts : IEditorShortcuts
     
     public GlobalShortcuts()
     {
+        CachedStrings = Utils.GetShortcutStrings(this);
+    }
+}
+
+public class TileViewerShortcuts : IEditorShortcuts {
+    private KeyboardShortcut _activateSearch;
+    private KeyboardShortcut _moveMenuUp;
+    private KeyboardShortcut _moveMenuDown;
+    private KeyboardShortcut _moveMenuCategoryDown;
+    private KeyboardShortcut _moveMenuCategoryUp;
+
+    //
+
+    public KeyboardShortcut ActivateSearch          { get => _activateSearch;           set { _activateSearch = value;          CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut MoveMenuUp              { get => _moveMenuUp;               set { _moveMenuUp = value;              CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut MoveMenuDown            { get => _moveMenuDown;             set { _moveMenuDown = value;            CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut MoveMenuCategoryUp      { get => _moveMenuCategoryUp;       set { _moveMenuCategoryUp = value;      CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut MoveMenuCategoryDown    { get => _moveMenuCategoryDown;     set { _moveMenuCategoryDown = value;    CachedStrings = Utils.GetShortcutStrings(this); } }
+
+    public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
+
+    public TileViewerShortcuts() {
+        ActivateSearch          = new(KeyboardKey.F,     ctrl:true,  shift:false, alt:false);
+
+        MoveMenuUp              = new(KeyboardKey.Up,    ctrl:false, shift:false, alt:false);
+        MoveMenuDown            = new(KeyboardKey.Down,  ctrl:false, shift:false, alt:false);
+        MoveMenuCategoryUp      = new(KeyboardKey.Left,  ctrl:false, shift:false, alt:false);
+        MoveMenuCategoryDown    = new(KeyboardKey.Right, ctrl:false, shift:false, alt:false);
+
         CachedStrings = Utils.GetShortcutStrings(this);
     }
 }

@@ -3660,167 +3660,6 @@ internal static class Printers
         return (hover && (GLOBALS.Settings.Shortcuts.CameraEditor.GrabCamera.Check(ctrl, shift, alt, true) || GLOBALS.Settings.Shortcuts.CameraEditor.GrabCameraAlt.Check(ctrl, shift, alt, true)), biggerHover);
     }
 
-    /// <summary>
-    /// Draws the texture of the tile, layer by layer, from the bottom up.
-    /// </summary>
-    /// <param name="texture">a reference to the tile texture</param>
-    /// <param name="init">a reference to the tile definition</param>
-    /// <param name="center">the center origin of the target position to draw on</param>
-    /// <param name="quads">target placement quads</param>
-    /// <param name="alpha">opacity, from 0 to 255</param>
-    [Obsolete]
-    internal static void DrawTileAsProp(
-        ref Texture2D texture,
-        ref InitTile init,
-        ref Vector2 center,
-        Span<Vector2> quads,
-        int alpha = 255
-    )
-    {
-        var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * 20;
-        var calLayerHeight = (float)layerHeight / (float)texture.Height;
-        var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * 20;
-        var calTextureCutWidth = (float)textureCutWidth / (float)texture.Width;
-
-        var textureLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "inputTexture");
-        var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerNum");
-        var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerHeight");
-        var layerWidthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerWidth");
-        var alphaLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "alpha");
-
-        BeginShaderMode(GLOBALS.Shaders.Prop);
-
-        SetShaderValueTexture(GLOBALS.Shaders.Prop, textureLoc, texture);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.Int);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerHeightLoc, calLayerHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerWidthLoc, calTextureCutWidth, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.Prop, alphaLoc, alpha / 255f, ShaderUniformDataType.Float);
-
-        var vecs = new Span<Vector2>([
-            new Vector2(1, 0), 
-            new Vector2(0, 0), 
-            new Vector2(0, 1), 
-            new Vector2(1, 1), 
-            new Vector2(1, 0)
-        ]);
-        
-        DrawTexturePoly(
-            texture,
-            center,
-            quads,
-            vecs,
-            5,
-            Color.White
-        );
-        
-        EndShaderMode();
-    }
-    
-    /// <summary>
-    /// Draws the texture of the tile, layer by layer, from the bottom up.
-    /// </summary>
-    /// <param name="init">a reference to the tile definition</param>
-    /// <param name="center">the center origin of the target position to draw on</param>
-    /// <param name="quads">target placement quads</param>
-    /// <param name="alpha">opacity, from 0 to 255</param>
-    [Obsolete]
-    internal static void DrawTileAsProp(
-        in TileDefinition init,
-        in Vector2 center,
-        Span<Vector2> quads,
-        int alpha = 255
-    )
-    {
-        var texture = init.Texture;
-        
-        var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * 20;
-        var calLayerHeight = (float)layerHeight / (float)texture.Height;
-        var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * 20;
-        var calTextureCutWidth = (float)textureCutWidth / (float)texture.Width;
-
-        var textureLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "inputTexture");
-        var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerNum");
-        var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerHeight");
-        var layerWidthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerWidth");
-        var alphaLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "alpha");
-
-        BeginShaderMode(GLOBALS.Shaders.Prop);
-
-        SetShaderValueTexture(GLOBALS.Shaders.Prop, textureLoc, texture);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.Int);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerHeightLoc, calLayerHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerWidthLoc, calTextureCutWidth, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.Prop, alphaLoc, alpha / 255f, ShaderUniformDataType.Float);
-
-        var vecs = new Span<Vector2>([
-            new Vector2(1, 0), 
-            new Vector2(0, 0), 
-            new Vector2(0, 1), 
-            new Vector2(1, 1), 
-            new Vector2(1, 0)
-        ]);
-        
-        DrawTexturePoly(
-            texture,
-            center,
-            quads,
-            vecs,
-            5,
-            Color.White
-        );
-        
-        EndShaderMode();
-    }
-    
-    /// <summary>
-    /// Draws the texture of the tile, layer by layer, from the bottom up.
-    /// </summary>
-    /// <param name="texture">a reference to the tile texture</param>
-    /// <param name="init">a reference to the tile definition</param>
-    /// <param name="center">the center origin of the target position to draw on</param>
-    /// <param name="rotation">rotation angle</param>
-    [Obsolete]
-    internal static void DrawTileAsProp(
-        in Texture2D texture,
-        in InitTile init,
-        in Vector2 center,
-        int rotation
-    )
-    {
-        var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * 20;
-        var calLayerHeight = (float)layerHeight / (float)texture.Height;
-        var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * 20;
-        var calTextureCutWidth = (float)textureCutWidth / (float)texture.Width;
-
-        var textureLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "inputTexture");
-        var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerNum");
-        var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerHeight");
-        var layerWidthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerWidth");
-        var alphaLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "alpha");
-
-        BeginShaderMode(GLOBALS.Shaders.Prop);
-
-        SetShaderValueTexture(GLOBALS.Shaders.Prop, textureLoc, texture);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.Int);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerHeightLoc, calLayerHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerWidthLoc, calTextureCutWidth, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.Prop, alphaLoc, 1.0f, ShaderUniformDataType.Float);
-
-        var size = new Vector2(init.Size.Item1+init.BufferTiles*2, init.Size.Item2+init.BufferTiles*2)*8;
-        
-        var quads = new PropQuad(
-            center - size,
-            new Vector2(center.X + size.X, center.Y - size.Y),
-            center + size,
-            new Vector2(center.X - size.X, center.Y + size.Y)
-        );
-
-        quads = Utils.RotatePropQuads(quads, rotation, center);
-        
-        DrawTextureQuad(texture, quads);
-        
-        EndShaderMode();
-    }
     
     /// <summary>
     /// Draws the texture of the tile, layer by layer, from the bottom up.
@@ -3875,96 +3714,6 @@ internal static class Printers
     /// <summary>
     /// Draws the texture of the tile, layer by layer, from the bottom up.
     /// </summary>
-    /// <param name="texture">a reference to the tile texture</param>
-    /// <param name="init">a reference to the tile definition</param>
-    /// <param name="center">the center origin of the target position to draw on</param>
-    /// <param name="quads">target placement quads</param>
-    /// <param name="alpha">opacity, from 0 to 255</param>
-    internal static void DrawTileAsProp(
-        in Texture2D texture,
-        in InitTile init,
-        in Vector2 center,
-        int alpha = 255,
-        int scale = 20
-    )
-    {
-        var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * 20;
-        var calLayerHeight = (float)layerHeight / (float)texture.Height;
-        var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * 20;
-        var calTextureCutWidth = (float)textureCutWidth / (float)texture.Width;
-
-        var textureLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "inputTexture");
-        var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerNum");
-        var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerHeight");
-        var layerWidthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerWidth");
-        var alphaLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "alpha");
-
-        BeginShaderMode(GLOBALS.Shaders.Prop);
-
-        SetShaderValueTexture(GLOBALS.Shaders.Prop, textureLoc, texture);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.Int);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerHeightLoc, calLayerHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerWidthLoc, calTextureCutWidth, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.Prop, alphaLoc, alpha / 255f, ShaderUniformDataType.Float);
-        
-        var scaledQuads = new PropQuad
-        {
-            TopLeft = (center - Utils.GetTileHeadOrigin(init)) * scale,
-            TopRight = (center + new Vector2(init.Size.Item1, 0) - Utils.GetTileHeadOrigin(init)) * scale,
-            BottomRight = (center + new Vector2(init.Size.Item1, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale,
-            BottomLeft = (center + new Vector2(0, init.Size.Item2) - Utils.GetTileHeadOrigin(init)) * scale
-        };
-        
-        DrawTextureQuad(texture, scaledQuads);
-        
-        EndShaderMode();
-    }
-    
-    /// <summary>
-    /// Draws the texture of the tile, layer by layer, from the bottom up.
-    /// </summary>
-    /// <param name="texture">a reference to the tile texture</param>
-    /// <param name="init">a reference to the tile definition</param>
-    /// <param name="quads">target placement quads</param>
-    internal static void DrawTileAsProp(
-        ref Texture2D texture,
-        ref InitTile init,
-        PropQuad quads,
-        int depth = 0,
-        int alpha = 255
-    )
-    {
-        var scale = GLOBALS.Scale;
-
-        var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * scale;
-        float calLayerHeight = (float)layerHeight / (float)texture.Height;
-        var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * scale;
-        float calTextureCutWidth = (float)textureCutWidth / (float)texture.Width;
-
-        var textureLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "inputTexture");
-        var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerNum");
-        var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerHeight");
-        var layerWidthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerWidth");
-        var depthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "depth");
-        var alphaLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "alpha");
-
-        BeginShaderMode(GLOBALS.Shaders.Prop);
-
-        SetShaderValueTexture(GLOBALS.Shaders.Prop, textureLoc, texture);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.Int);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerHeightLoc, calLayerHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerWidthLoc, calTextureCutWidth, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.Prop, depthLoc, depth, ShaderUniformDataType.Int);
-        SetShaderValue(GLOBALS.Shaders.Prop, alphaLoc, alpha/255f, ShaderUniformDataType.Float);
-        
-        DrawTextureQuad(texture, quads);
-        
-        EndShaderMode();
-    }
-    
-    /// <summary>
-    /// Draws the texture of the tile, layer by layer, from the bottom up.
-    /// </summary>
     /// <param name="init">a reference to the tile definition</param>
     /// <param name="quads">target placement quads</param>
     internal static void DrawTileAsProp(
@@ -4003,153 +3752,10 @@ internal static class Printers
         EndShaderMode();
     }
     
-    /// <summary>
-    /// Draws the texture of the tile, layer by layer, from the bottom up.
-    /// </summary>
-    /// <param name="texture">a reference to the tile texture</param>
-    /// <param name="init">a reference to the tile definition</param>
-    /// <param name="quads">target placement quads</param>
-    internal static void DrawTileAsProp(
-        in Texture2D texture,
-        in InitTile init,
-        in Vector2 position,
-        in int depth = 0,
-        in int alpha = 255
-    )
-    {
-        var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * 20;
-        var calLayerHeight = (float)layerHeight / (float)texture.Height;
-        var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * 20;
-        var calTextureCutWidth = (float)textureCutWidth / (float)texture.Width;
-
-        var textureLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "inputTexture");
-        var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerNum");
-        var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerHeight");
-        var layerWidthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerWidth");
-        var depthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "depth");
-        var alphaLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "alpha");
-
-        BeginShaderMode(GLOBALS.Shaders.Prop);
-
-        SetShaderValueTexture(GLOBALS.Shaders.Prop, textureLoc, texture);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.Int);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerHeightLoc, calLayerHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerWidthLoc, calTextureCutWidth, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.Prop, depthLoc, depth, ShaderUniformDataType.Int);
-        SetShaderValue(GLOBALS.Shaders.Prop, alphaLoc, alpha/255f, ShaderUniformDataType.Float);
-        
-        DrawTextureV(texture, position, Color.White);
-        
-        EndShaderMode();
-    }
-    
-    /// Same as DrawTileAsProp() except it applies a tint to the base texture
-    internal static void DrawTileAsPropColored(
-        ref Texture2D texture, 
-        ref InitTile init, 
-        ref Vector2 center, 
-        Span<Vector2> quads,
-        Color tint,
-        int depth = 0
-    )
-    {
-        var scale = GLOBALS.Scale;
-
-        if (init.Type == InitTileType.Box)
-        {
-            var shader = GLOBALS.Shaders.ColoredBoxTileProp;
-
-            var (tWidth, tHeight) = init.Size;
-            var bufferPixels = init.BufferTiles * 20;
-            
-            var height = tHeight * 20;
-            var offset = new Vector2(bufferPixels,tHeight*20*tWidth + bufferPixels);
-            
-            var calcHeight = (float)height / (float)texture.Height;
-            var calcOffset = Raymath.Vector2Divide(offset, new(texture.Width, texture.Height));
-            var calcWidth = (float)tWidth*20 / texture.Width;
-
-            var textureLoc = GetShaderLocation(shader, "inputTexture");
-
-            var widthLoc = GetShaderLocation(shader, "width");
-            var heightLoc = GetShaderLocation(shader, "height");
-            var offsetLoc = GetShaderLocation(shader, "offset");
-            var colorLoc = GetShaderLocation(shader, "tint");
-            var depthLoc = GetShaderLocation(shader, "depth");
-
-            BeginShaderMode(shader);
-
-            SetShaderValueTexture(shader, textureLoc, texture);
-            
-            SetShaderValue(shader, widthLoc, calcWidth, ShaderUniformDataType.Float);
-            
-            SetShaderValue(shader, heightLoc, calcHeight,
-                ShaderUniformDataType.Float);
-            
-            SetShaderValue(shader, offsetLoc, calcOffset,
-                ShaderUniformDataType.Vec2);
-            
-            SetShaderValue(shader, colorLoc,
-                new Vector4(tint.R / 255f, tint.G / 255f, tint.B / 255f, tint.A / 255f),
-                ShaderUniformDataType.Vec4);
-            
-            SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
-
-            DrawTexturePoly(
-                texture,
-                center,
-                quads,
-                new Span<Vector2>([new Vector2(1, 0), new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0)]),
-                5,
-                Color.White
-            );
-            EndShaderMode();
-        }
-        else
-        {
-            var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * scale;
-            float calLayerHeight = (float)layerHeight / (float)texture.Height;
-            var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * scale;
-            float calTextureCutWidth = (float)textureCutWidth / (float)texture.Width;
-
-            var textureLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "inputTexture");
-            var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "layerNum");
-            var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "layerHeight");
-            var layerWidthLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "layerWidth");
-            var colorLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "tint");
-            var depthLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "depth");
-
-            BeginShaderMode(GLOBALS.Shaders.ColoredTileProp);
-
-            SetShaderValueTexture(GLOBALS.Shaders.ColoredTileProp, textureLoc, texture);
-            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, layerNumLoc, init.Type == InitTileType.VoxelStructRockType ? 1 : init.Repeat.Length,
-                ShaderUniformDataType.Int);
-            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, layerHeightLoc, calLayerHeight,
-                ShaderUniformDataType.Float);
-            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, layerWidthLoc, calTextureCutWidth,
-                ShaderUniformDataType.Float);
-            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, colorLoc,
-                new Vector4(tint.R / 255f, tint.G / 255f, tint.B / 255f, tint.A / 255f),
-                ShaderUniformDataType.Vec4);
-            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, depthLoc, depth, ShaderUniformDataType.Int);
-
-            DrawTexturePoly(
-                texture,
-                center,
-                quads,
-                new Span<Vector2>([new(1, 0), new(0, 0), new(0, 1), new(1, 1), new(1, 0)]),
-                5,
-                Color.White
-            );
-            EndShaderMode();
-        }
-    }
-    
-    // TODO: Fix opacity inconsistency
     internal static void DrawTileAsProp(
         in TileDefinition init, 
         in Vector2 center, 
-        Span<Vector2> quads,
+        Span<Vector2> quad,
         int depth,
         byte opacity
     )
@@ -4195,7 +3801,7 @@ internal static class Printers
             DrawTexturePoly(
                 texture,
                 center,
-                quads,
+                quad,
                 new Span<Vector2>([new Vector2(1, 0), new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0)]),
                 5,
                 Color.White with { A = opacity }
@@ -4206,9 +3812,9 @@ internal static class Printers
         {
             var shader = GLOBALS.Shaders.Prop;
 
-            var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * scale;
+            var layerHeight = (init.Size.Height + (init.BufferTiles * 2)) * scale;
             float calLayerHeight = (float)layerHeight / (float)texture.Height;
-            var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * scale;
+            var textureCutWidth = (init.Size.Width + (init.BufferTiles * 2)) * scale;
             float calTextureCutWidth = (float)textureCutWidth / (float)texture.Width;
 
             var textureLoc = GetShaderLocation(shader, "inputTexture");
@@ -4234,7 +3840,7 @@ internal static class Printers
             DrawTexturePoly(
                 texture,
                 center,
-                quads,
+                quad,
                 new Span<Vector2>([new(1, 0), new(0, 0), new(0, 1), new(1, 1), new(1, 0)]),
                 5,
                 Color.White
@@ -7500,7 +7106,7 @@ internal static class Printers
     {
         internal static Rectangle ShortcutsWindow(IEditorShortcuts editorShortcuts)
         {
-            var strings = editorShortcuts.CachedStrings;
+            var shortcuts = editorShortcuts.CachedStrings;
 
             var expanded = ImGuiNET.ImGui.Begin("Shortcuts");
             var pos = ImGuiNET.ImGui.GetWindowPos();
@@ -7508,10 +7114,28 @@ internal static class Printers
             
             if (expanded)
             {
-                foreach (var (nameStr, shortcutStr) in strings)
-                {
-                    ImGuiNET.ImGui.Text($"{nameStr}: {shortcutStr}");
+                if (ImGuiNET.ImGui.BeginTable("##Shortcuts", 2, ImGuiNET.ImGuiTableFlags.RowBg)) {
+                    
+                    ImGuiNET.ImGui.TableSetupColumn("Name");
+                    ImGuiNET.ImGui.TableSetupColumn("Combination");
+
+                    ImGuiNET.ImGui.TableHeadersRow();
+                    
+                    foreach (var (name, shortcut) in shortcuts) {
+
+                        ImGuiNET.ImGui.TableNextRow();
+
+                        ImGuiNET.ImGui.TableSetColumnIndex(0);
+                        ImGuiNET.ImGui.Text(name);
+
+                        ImGuiNET.ImGui.TableSetColumnIndex(1);
+                        ImGuiNET.ImGui.Text(shortcut);
+                    }
+                    
+                    ImGuiNET.ImGui.EndTable();
                 }
+
+                
             }
             ImGuiNET.ImGui.End();
 

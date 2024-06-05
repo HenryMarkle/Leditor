@@ -241,7 +241,42 @@ internal class ExperimentalGeometryPage : EditorPage
 
         return [..actions];
     }
-    
+
+    private Rectangle GetLayerIndicator(int layer) => layer switch {
+        0 => GLOBALS.Settings.GeometryEditor.LayerIndicatorPosition switch { 
+            GeoEditor.ScreenRelativePosition.TopLeft       => new Rectangle( 40,                        50 + 25,                     40, 40 ), 
+            GeoEditor.ScreenRelativePosition.TopRight      => new Rectangle( GetScreenWidth() - 70,     50 + 25,                     40, 40 ),
+            GeoEditor.ScreenRelativePosition.BottomRight   => new Rectangle( GetScreenWidth() - 70,     GetScreenHeight() - 90 - 25, 40, 40 ),
+            GeoEditor.ScreenRelativePosition.BottomLeft    => new Rectangle( 40,                        GetScreenHeight() - 90 - 25, 40, 40 ),
+            GeoEditor.ScreenRelativePosition.MiddleTop     => new Rectangle((GetScreenWidth() - 40)/2f, 50 + 25,                     40, 40 ),
+            GeoEditor.ScreenRelativePosition.MiddleBottom  => new Rectangle((GetScreenWidth() - 40)/2f, GetScreenHeight() - 90 - 25, 40, 40 ),
+
+            _ => new Rectangle(40, GetScreenHeight() - 80, 40, 40)
+        },
+        1 => GLOBALS.Settings.GeometryEditor.LayerIndicatorPosition switch { 
+            GeoEditor.ScreenRelativePosition.TopLeft       => new Rectangle( 30,                        40 + 25,                     40, 40 ), 
+            GeoEditor.ScreenRelativePosition.TopRight      => new Rectangle( GetScreenWidth() - 60,     40 + 25,                     40, 40 ),
+            GeoEditor.ScreenRelativePosition.BottomRight   => new Rectangle( GetScreenWidth() - 60,     GetScreenHeight() - 80 - 25, 40, 40 ),
+            GeoEditor.ScreenRelativePosition.BottomLeft    => new Rectangle( 30,                        GetScreenHeight() - 80 - 25, 40, 40 ),
+            GeoEditor.ScreenRelativePosition.MiddleTop     => new Rectangle((GetScreenWidth() - 40)/2f, 40 + 25,                     40, 40 ),
+            GeoEditor.ScreenRelativePosition.MiddleBottom  => new Rectangle((GetScreenWidth() - 40)/2f, GetScreenHeight() - 80 - 25, 40, 40 ),
+
+            _ => new Rectangle(30, GetScreenHeight() - 70, 40, 40)
+        },
+        2 => GLOBALS.Settings.GeometryEditor.LayerIndicatorPosition switch { 
+            GeoEditor.ScreenRelativePosition.TopLeft       => new Rectangle( 20,                        30 + 25,                     40, 40 ), 
+            GeoEditor.ScreenRelativePosition.TopRight      => new Rectangle( GetScreenWidth() - 50,     30 + 25,                     40, 40 ),
+            GeoEditor.ScreenRelativePosition.BottomRight   => new Rectangle( GetScreenWidth() - 50,     GetScreenHeight() - 70 - 25, 40, 40 ),
+            GeoEditor.ScreenRelativePosition.BottomLeft    => new Rectangle( 20,                        GetScreenHeight() - 70 - 25, 40, 40 ),
+            GeoEditor.ScreenRelativePosition.MiddleTop     => new Rectangle((GetScreenWidth() - 40)/2f, 30 + 25,                     40, 40 ),
+            GeoEditor.ScreenRelativePosition.MiddleBottom  => new Rectangle((GetScreenWidth() - 40)/2f, GetScreenHeight() - 70 - 25, 40, 40 ),
+
+            _ => new Rectangle(20, GetScreenHeight() - 60, 40, 40)
+        },
+        
+        _ => new Rectangle(0, 0, 40, 40)
+    };
+
     public override void Draw()
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
@@ -267,15 +302,14 @@ internal class ExperimentalGeometryPage : EditorPage
         var sWidth = GetScreenWidth();
         var sHeight = GetScreenHeight();
         
-        var layer3Rect = new Rectangle(10, sHeight - 50, 40, 40);
-        var layer2Rect = new Rectangle(20, sHeight - 60, 40, 40);
-        var layer1Rect = new Rectangle(30, sHeight - 70, 40, 40);
+        var layer3Rect = GetLayerIndicator(2);
+        var layer2Rect = GetLayerIndicator(1);
+        var layer1Rect = GetLayerIndicator(0);
 
         var toggleCameraRect = new Rectangle(90, sHeight - 60, 50, 50);
         var toggleCameraHovered = CheckCollisionPointRec(uiMouse, toggleCameraRect);
 
         var canDrawGeo = !_isNavbarHovered && 
-                            !toggleCameraHovered &&
                          !_isMenuWinHovered &&
                          !_isMenuWinDragged &&
                          !_isSettingsWinHovered && 
@@ -1380,7 +1414,7 @@ internal class ExperimentalGeometryPage : EditorPage
                 if (GLOBALS.Settings.GeometryEditor.BasicView) {
                     RedrawLevelBasicView(); 
                 } else {
-                    Printers.DrawLevelIntoBufferV2(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
+                    Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
                     {
                         CurrentLayer = GLOBALS.Layer,
                         Water = GLOBALS.Settings.GeneralSettings.Water,
@@ -1736,9 +1770,9 @@ internal class ExperimentalGeometryPage : EditorPage
                 GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
             );
 
-            DrawRectangleLines(10, sHeight - 50, 40, 40, Color.Gray);
+            DrawRectangleLines((int)layer3Rect.X, (int)layer3Rect.Y, 40, 40, Color.Gray);
 
-            if (GLOBALS.Layer == 2) DrawText("3", 26, sHeight - 40, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
+            if (GLOBALS.Layer == 2) DrawText("3", (int)layer3Rect.X + 15, (int)layer3Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             
             if (GLOBALS.Layer is 1 or 0)
             {
@@ -1756,9 +1790,9 @@ internal class ExperimentalGeometryPage : EditorPage
                     GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
                 );
 
-                DrawRectangleLines(20, sHeight - 60, 40, 40, Color.Gray);
+                DrawRectangleLines((int)layer2Rect.X, (int)layer2Rect.Y, 40, 40, Color.Gray);
 
-                if (GLOBALS.Layer == 1) DrawText("2", 35, sHeight - 50, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
+                if (GLOBALS.Layer == 1) DrawText("2", (int)layer2Rect.X + 15, (int)layer2Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             }
 
             if (GLOBALS.Layer == 0)
@@ -1777,40 +1811,15 @@ internal class ExperimentalGeometryPage : EditorPage
                 );
 
                 DrawRectangleLines(
-                    30, sHeight - 70, 40, 40, Color.Gray);
+                    (int)layer1Rect.X, (int)layer1Rect.Y, 40, 40, Color.Gray);
 
-                DrawText("1", 48, sHeight - 60, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
+                DrawText("1", (int)layer1Rect.X + 15, (int)layer1Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             }
 
             if (newLayer != GLOBALS.Layer) {
                 GLOBALS.Layer = newLayer;
                 _shouldRedrawLevel = true;
             }
-            
-            // Show Camera Indicator
-
-            ref var toggleCameraTexture = ref GLOBALS.Textures.GeoInterface[8];
-            
-            DrawRectangleRec(toggleCameraRect, Color.White);
-
-            if (toggleCameraHovered)
-            {
-                DrawRectangleRec(toggleCameraRect, Color.Blue with { A = 100 });
-
-                if (toggleCameraHovered && IsMouseButtonPressed(MouseButton.Left))
-                {
-                    GLOBALS.Settings.GeometryEditor.ShowCameras = !GLOBALS.Settings.GeometryEditor.ShowCameras;
-                }
-            }
-            
-            DrawTexturePro(
-                toggleCameraTexture, 
-                new Rectangle(0, 0, toggleCameraTexture.Width, toggleCameraTexture.Height),
-                toggleCameraRect,
-                new Vector2(0, 0),
-                0,
-                Color.Black
-            );
             
             rlImGui.Begin();
             
@@ -2077,6 +2086,15 @@ internal class ExperimentalGeometryPage : EditorPage
                 // Visibility
 
                 ImGui.SeparatorText("Visibility");
+
+                var liPos = (int)GLOBALS.Settings.GeometryEditor.LayerIndicatorPosition;
+                ImGui.SetNextItemWidth(100);
+                var liPosChanged = ImGui.Combo("Layer Indicator Position", ref liPos, "Top Left\0Top Right\0Bottom Left\0Bottom Right\0Middle Bottom\0Middle Top\0");
+
+                if (liPosChanged) {
+                    GLOBALS.Settings.GeometryEditor.LayerIndicatorPosition = (GeoEditor.ScreenRelativePosition)liPos;
+                }
+
 
                 ImGui.Checkbox("Grid", ref _showGrid);
                 

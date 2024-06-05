@@ -766,7 +766,7 @@ internal class MainPage : EditorPage, IContextListener
 
                 if (_shouldRedrawLevel)
                 {
-                    Printers.DrawLevelIntoBufferV2(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
+                    Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
                     {
                         CurrentLayer = 0,
                         Water = GLOBALS.Settings.GeneralSettings.Water,

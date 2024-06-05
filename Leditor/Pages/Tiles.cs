@@ -1165,6 +1165,52 @@ internal class TileEditorPage : EditorPage, IDisposable
         }
     }
 
+    private Rectangle GetLayerIndicator(int layer) => layer switch {
+        0 => GLOBALS.Settings.TileEditor.LayerIndicatorPosition switch { 
+            TileEditorSettings.ScreenRelativePosition.TopLeft       => new Rectangle( 40,                        50 + 25,                     40, 40 ), 
+            TileEditorSettings.ScreenRelativePosition.TopRight      => new Rectangle( GetScreenWidth() - 70,     50 + 25,                     40, 40 ),
+            TileEditorSettings.ScreenRelativePosition.BottomRight   => new Rectangle( GetScreenWidth() - 70,     GetScreenHeight() - 90 - 25, 40, 40 ),
+            TileEditorSettings.ScreenRelativePosition.BottomLeft    => new Rectangle( 40,                        GetScreenHeight() - 90 - 25, 40, 40 ),
+            TileEditorSettings.ScreenRelativePosition.MiddleTop     => new Rectangle((GetScreenWidth() - 40)/2f, 50 + 25,                     40, 40 ),
+            TileEditorSettings.ScreenRelativePosition.MiddleBottom  => new Rectangle((GetScreenWidth() - 40)/2f, GetScreenHeight() - 90 - 25, 40, 40 ),
+
+            _ => new Rectangle(40, GetScreenHeight() - 80, 40, 40)
+        },
+        1 => GLOBALS.Settings.TileEditor.LayerIndicatorPosition switch { 
+            TileEditorSettings.ScreenRelativePosition.TopLeft       => new Rectangle( 30,                        40 + 25,                     40, 40 ), 
+            TileEditorSettings.ScreenRelativePosition.TopRight      => new Rectangle( GetScreenWidth() - 60,     40 + 25,                     40, 40 ),
+            TileEditorSettings.ScreenRelativePosition.BottomRight   => new Rectangle( GetScreenWidth() - 60,     GetScreenHeight() - 80 - 25, 40, 40 ),
+            TileEditorSettings.ScreenRelativePosition.BottomLeft    => new Rectangle( 30,                        GetScreenHeight() - 80 - 25, 40, 40 ),
+            TileEditorSettings.ScreenRelativePosition.MiddleTop     => new Rectangle((GetScreenWidth() - 40)/2f, 40 + 25,                     40, 40 ),
+            TileEditorSettings.ScreenRelativePosition.MiddleBottom  => new Rectangle((GetScreenWidth() - 40)/2f, GetScreenHeight() - 80 - 25, 40, 40 ),
+
+            _ => new Rectangle(30, GetScreenHeight() - 70, 40, 40)
+        },
+        2 => GLOBALS.Settings.TileEditor.LayerIndicatorPosition switch { 
+            TileEditorSettings.ScreenRelativePosition.TopLeft       => new Rectangle( 20,                        30 + 25,                     40, 40 ), 
+            TileEditorSettings.ScreenRelativePosition.TopRight      => new Rectangle( GetScreenWidth() - 50,     30 + 25,                     40, 40 ),
+            TileEditorSettings.ScreenRelativePosition.BottomRight   => new Rectangle( GetScreenWidth() - 50,     GetScreenHeight() - 70 - 25, 40, 40 ),
+            TileEditorSettings.ScreenRelativePosition.BottomLeft    => new Rectangle( 20,                        GetScreenHeight() - 70 - 25, 40, 40 ),
+            TileEditorSettings.ScreenRelativePosition.MiddleTop     => new Rectangle((GetScreenWidth() - 40)/2f, 30 + 25,                     40, 40 ),
+            TileEditorSettings.ScreenRelativePosition.MiddleBottom  => new Rectangle((GetScreenWidth() - 40)/2f, GetScreenHeight() - 70 - 25, 40, 40 ),
+
+            _ => new Rectangle(20, GetScreenHeight() - 60, 40, 40)
+        },
+        
+        _ => new Rectangle(0, 0, 40, 40)
+    };
+
+    private Vector2 GetLabelPosition(int length, int height) => GLOBALS.Settings.TileEditor.LayerIndicatorPosition switch {
+        TileEditorSettings.ScreenRelativePosition.TopLeft           => new Vector2( 20,                                                         20 ), 
+        TileEditorSettings.ScreenRelativePosition.TopRight          => new Vector2( GetScreenWidth() - length,                                  20 ),
+        TileEditorSettings.ScreenRelativePosition.BottomRight       => new Vector2( GetScreenWidth() - length,     GetScreenHeight() - height - 10 ),
+        TileEditorSettings.ScreenRelativePosition.BottomLeft        => new Vector2( 20,                            GetScreenHeight() - height - 10 ),
+        TileEditorSettings.ScreenRelativePosition.MiddleTop         => new Vector2((GetScreenWidth() - length)/2f,                              20 ),
+        TileEditorSettings.ScreenRelativePosition.MiddleBottom      => new Vector2((GetScreenWidth() - length)/2f, GetScreenHeight() - height - 10 ),
+
+        _ => new Vector2( 20, GetScreenHeight() - height - 10 )
+    };
+
     public override void Draw()
     {
         if (_autoTiler is null)
@@ -1187,9 +1233,9 @@ internal class TileEditorPage : EditorPage, IDisposable
         var panelMenuHeight = tilePanelRect.Height - 270;
         var specsRect = new Rectangle(teWidth - 200, teHeight - 200, 200, 200);
         
-        var layer3Rect = new Rectangle(10, teHeight - 80, 40, 40);
-        var layer2Rect = new Rectangle(20, teHeight - 90, 40, 40);
-        var layer1Rect = new Rectangle(30, teHeight - 100, 40, 40);
+        var layer3Rect = GetLayerIndicator(2);
+        var layer2Rect = GetLayerIndicator(1);
+        var layer1Rect = GetLayerIndicator(0);
         
         //                        v this was done to avoid rounding errors
         var tileMatrixY = tileMouseWorld.Y < 0 
@@ -2057,7 +2103,7 @@ internal class TileEditorPage : EditorPage, IDisposable
         
         if (_shouldRedrawLevel)
         {
-            Printers.DrawLevelIntoBufferV2(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
+            Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
             {
                 DarkTheme = GLOBALS.Settings.GeneralSettings.DarkTheme,
                 CurrentLayer = GLOBALS.Layer,
@@ -2898,6 +2944,14 @@ internal class TileEditorPage : EditorPage, IDisposable
             
             if (settingsWinOpened)
             {
+                var liPos = (int)GLOBALS.Settings.TileEditor.LayerIndicatorPosition;
+                ImGui.SetNextItemWidth(100);
+                var liPosChanged = ImGui.Combo("Layer Incdicator Position", ref liPos, "Top Left\0Top Right\0Bottom Left\0Bottom Right\0Middle Bottom\0Middle Top\0");
+
+                if (liPosChanged) {
+                    GLOBALS.Settings.TileEditor.LayerIndicatorPosition = (TileEditorSettings.ScreenRelativePosition)liPos;
+                }
+
                 ImGui.SeparatorText("Tooling");
 
                 var overridableMaterials = GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials;
@@ -3016,9 +3070,9 @@ internal class TileEditorPage : EditorPage, IDisposable
                 GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
             );
 
-            DrawRectangleLines(10, (int)layer3Rect.Y, 40, 40, Color.Gray);
+            DrawRectangleLines((int)layer3Rect.X, (int)layer3Rect.Y, 40, 40, Color.Gray);
 
-            if (GLOBALS.Layer == 2) DrawText("3", 26, (int)layer3Rect.Y+10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
+            if (GLOBALS.Layer == 2) DrawText("3", (int)layer3Rect.X + 15, (int)layer3Rect.Y+10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             
             if (GLOBALS.Layer is 1 or 0)
             {
@@ -3036,9 +3090,9 @@ internal class TileEditorPage : EditorPage, IDisposable
                     GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White
                 );
 
-                DrawRectangleLines(20, (int)layer2Rect.Y, 40, 40, Color.Gray);
+                DrawRectangleLines((int)layer2Rect.X, (int)layer2Rect.Y, 40, 40, Color.Gray);
 
-                if (GLOBALS.Layer == 1) DrawText("2", 35, (int)layer2Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
+                if (GLOBALS.Layer == 1) DrawText("2", (int)layer2Rect.X + 15, (int)layer2Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             }
 
             if (GLOBALS.Layer == 0)
@@ -3057,9 +3111,9 @@ internal class TileEditorPage : EditorPage, IDisposable
                 );
 
                 DrawRectangleLines(
-                    30, (int)layer1Rect.Y, 40, 40, Color.Gray);
+                    (int)layer1Rect.X, (int)layer1Rect.Y, 40, 40, Color.Gray);
 
-                DrawText("1", 48, (int)layer1Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
+                DrawText("1", (int)layer1Rect.X + 15, (int)layer1Rect.Y + 10, 22, GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : Color.Black);
             }
 
             if (newLayer != GLOBALS.Layer) {
@@ -3097,20 +3151,24 @@ internal class TileEditorPage : EditorPage, IDisposable
                     {
                         if (GLOBALS.Font is null)
                         {
+                            var labelPos = GetLabelPosition(MeasureText(GLOBALS.Level.DefaultMaterial, 20), 20);
+                            
                             DrawText(
                                 GLOBALS.Level.DefaultMaterial,
-                                0,
-                                (int)(specsRect.Y + specsRect.Height - 20),
+                                (int)labelPos.X,
+                                (int)labelPos.Y,
                                 20,
                                 Color.White
                             );
                         }
                         else
                         {
+                            var labelPos = GetLabelPosition(MeasureText(GLOBALS.Level.DefaultMaterial, 30), 30);
+
                             DrawTextEx(
                                 GLOBALS.Font.Value,
                                 GLOBALS.Level.DefaultMaterial,
-                                new Vector2(10, specsRect.Y + specsRect.Height - 30),
+                                labelPos,
                                 30,
                                 1,
                                 Color.White
@@ -3122,20 +3180,28 @@ internal class TileEditorPage : EditorPage, IDisposable
                     case TileHead h:
                     {
                         if (GLOBALS.Font is null) {
+                            var text = h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\"";
+
+                            var labelPos = GetLabelPosition(MeasureText(text, 20), 20);
+
                             DrawText(
-                                h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\"",
-                                0,
-                                (int)(specsRect.Y + specsRect.Height - 20),
+                                text,
+                                (int)labelPos.X,
+                                (int)labelPos.Y,
                                 20,
                                 Color.White
                             );
                         }
                         else
                         {
+                            var text = h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\"";
+
+                            var labelPos = GetLabelPosition(MeasureText(text, 30), 30);
+
                             DrawTextEx(
                                 GLOBALS.Font.Value,
-                                h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\"",
-                                new Vector2(10, specsRect.Y + specsRect.Height - 30),
+                                text,
+                                labelPos,
                                 30,
                                 1,
                                 Color.White
@@ -3154,12 +3220,16 @@ internal class TileEditorPage : EditorPage, IDisposable
 
                             if (GLOBALS.Font is null)
                             {
-                                DrawText(
-                                    supposedHead.Data is TileHead h
+                                var text = supposedHead.Data is TileHead h
                                         ? h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\""
-                                        : "Stray Tile Fragment",
-                                    0,
-                                    (int)(specsRect.Y + specsRect.Height - 20),
+                                        : "Stray Tile Fragment";
+
+                                var labelPos = GetLabelPosition(MeasureText(text, 20), 20);
+
+                                DrawText(
+                                    text,
+                                    (int)labelPos.X,
+                                    (int)labelPos.Y,
                                     20,
                                     Color.White
                                 );
@@ -3167,13 +3237,16 @@ internal class TileEditorPage : EditorPage, IDisposable
                             }
                             else
                             {
+                                var text = supposedHead.Data is TileHead h
+                                        ? h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\""
+                                        : "Stray Tile Fragment";
+
+                                var labelPos = GetLabelPosition(MeasureText(text, 30), 30);
+
                                 DrawTextEx(
                                     GLOBALS.Font.Value,
-                                    supposedHead.Data is TileHead h
-                                        ? h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\""
-                                        : "Stray Tile Fragment",
-                                    new Vector2(10,
-                                        specsRect.Y + specsRect.Height - 30),
+                                    text,
+                                    labelPos,
                                     30,
                                     1,
                                     Color.White
@@ -3183,21 +3256,26 @@ internal class TileEditorPage : EditorPage, IDisposable
                         }
                         catch (IndexOutOfRangeException)
                         {
+                            var text = "Stray Tile Fragment";
+
                             if (GLOBALS.Font is null) {
-                                DrawText("Stray Tile Fragment",
-                                    0,
-                                    (int) (specsRect.Y + specsRect.Height - 20),
+                                var labelPos = GetLabelPosition(MeasureText(text, 20), 20);
+
+                                DrawText(text,
+                                    (int)labelPos.X,
+                                    (int)labelPos.Y,
                                     20,
                                     Color.White
                                 );
                             }
                             else
                             {
+                                var labelPos = GetLabelPosition(MeasureText(text, 30), 30);
+
                                 DrawTextEx(
                                     GLOBALS.Font.Value,
-                                    "Stray Tile Fragment",
-                                    new Vector2(10,
-                                        specsRect.Y + specsRect.Height - 30),
+                                    text,
+                                    labelPos,
                                     30,
                                     1,
                                     Color.White
@@ -3209,20 +3287,27 @@ internal class TileEditorPage : EditorPage, IDisposable
                     
                     case TileMaterial m:
                     {
+                        var text = m.Name;
+
                         if (GLOBALS.Font is null) {
+
+                            var labelPos = GetLabelPosition(MeasureText(text, 20), 20);
+
                             DrawText(m.Name,
-                                0,
-                                (int)(specsRect.Y + specsRect.Height - 20),
+                                (int)labelPos.X,
+                                (int)labelPos.Y,
                                 20,
                                 Color.White
                             );
                         }
                         else
                         {
+                            var labelPos = GetLabelPosition(MeasureText(text, 30), 30);
+                            
                             DrawTextEx(
                                 GLOBALS.Font.Value,
-                                m.Name,
-                                new Vector2(10, specsRect.Y + specsRect.Height - 30),
+                                text,
+                                labelPos,
                                 30,
                                 1,
                                 Color.White

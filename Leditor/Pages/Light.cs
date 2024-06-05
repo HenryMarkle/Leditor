@@ -757,7 +757,7 @@ internal class LightEditorPage : EditorPage
             
             if (GLOBALS.Settings.GeneralSettings.ShortcutWindow)
             {
-                var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.TileEditor);
+                var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.LightEditor);
 
                 _isShortcutsWinHovered = CheckCollisionPointRec(
                     mouse, 
