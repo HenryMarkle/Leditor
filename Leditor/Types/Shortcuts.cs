@@ -35,7 +35,7 @@ public class KeyboardShortcut(
         return $"{(Ctrl is not null and not false ? "CTRL + " : "")}" +
                $"{(Shift is not null and not false ? "SHIFT + " : "")}" +
                $"{(Alt is not null and not false ? "ALT + " : "")}" +
-               $"{Key switch {KeyboardKey.Space => "SPACE", KeyboardKey.Enter => "ENTER", KeyboardKey.LeftAlt => "ALT", KeyboardKey.LeftShift => "SHIFT", KeyboardKey.LeftControl => "CTRL", KeyboardKey.Null => "NONE", KeyboardKey.Escape => "ESCAPE", var k => (char)k}}";
+               $"{Key switch {KeyboardKey.Space => "SPACE", KeyboardKey.Enter => "ENTER", KeyboardKey.LeftAlt => "ALT", KeyboardKey.LeftShift => "SHIFT", KeyboardKey.LeftControl => "CTRL", KeyboardKey.Null => "NONE", KeyboardKey.Escape => "ESCAPE", var k => k}}";
     }
 }
 
@@ -377,8 +377,8 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut RotateClockwise { get; set; } = new(KeyboardKey.Null);
     public KeyboardShortcut RotateCounterClockwise { get; set; } = new(KeyboardKey.Null);
 
-    public KeyboardShortcut IncrementRopSegmentCount { get; set; } = new(KeyboardKey.Null);
-    public KeyboardShortcut DecrementRopSegmentCount { get; set; } = new(KeyboardKey.Null);
+    public KeyboardShortcut IncrementRopSegmentCount { get; set; } = new(KeyboardKey.K);
+    public KeyboardShortcut DecrementRopSegmentCount { get; set; } = new(KeyboardKey.J);
 
     public KeyboardShortcut SimulationBeizerSwitch { get; set; } = new(KeyboardKey.Null);
     
@@ -443,6 +443,9 @@ public class TileViewerShortcuts : IEditorShortcuts {
     private KeyboardShortcut _moveMenuDown;
     private KeyboardShortcut _moveMenuCategoryDown;
     private KeyboardShortcut _moveMenuCategoryUp;
+    private KeyboardShortcut _altDragView;
+
+    private MouseShortcut _dragView;
 
     //
 
@@ -451,6 +454,11 @@ public class TileViewerShortcuts : IEditorShortcuts {
     public KeyboardShortcut MoveMenuDown            { get => _moveMenuDown;             set { _moveMenuDown = value;            CachedStrings = Utils.GetShortcutStrings(this); } }
     public KeyboardShortcut MoveMenuCategoryUp      { get => _moveMenuCategoryUp;       set { _moveMenuCategoryUp = value;      CachedStrings = Utils.GetShortcutStrings(this); } }
     public KeyboardShortcut MoveMenuCategoryDown    { get => _moveMenuCategoryDown;     set { _moveMenuCategoryDown = value;    CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut AltDragView             { get => _altDragView;              set { _altDragView = value;             CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    
+    public MouseShortcut DragView                   { get => _dragView;                 set { _dragView = value;                CachedStrings = Utils.GetShortcutStrings(this); } }
+
 
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
 
@@ -461,6 +469,9 @@ public class TileViewerShortcuts : IEditorShortcuts {
         MoveMenuDown            = new(KeyboardKey.Down,  ctrl:false, shift:false, alt:false);
         MoveMenuCategoryUp      = new(KeyboardKey.Left,  ctrl:false, shift:false, alt:false);
         MoveMenuCategoryDown    = new(KeyboardKey.Right, ctrl:false, shift:false, alt:false);
+        AltDragView             = new(KeyboardKey.Null,  ctrl:false, shift:false, alt:false);
+
+        DragView = new(MouseButton.Middle, ctrl:false, shift:false, alt:false);
 
         CachedStrings = Utils.GetShortcutStrings(this);
     }

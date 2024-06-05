@@ -3208,7 +3208,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
                     }
                     
-                    if ((IsMouseButtonDown(_shortcuts.SelectProps.Button) || IsKeyDown(_shortcuts.SelectPropsAlt.Key)) && !_clickTracker && canDrawTile)
+                    if (_bezierHandleLock == -1 && (IsMouseButtonDown(_shortcuts.SelectProps.Button) || IsKeyDown(_shortcuts.SelectPropsAlt.Key)) && !_clickTracker && canDrawTile)
                     {
                         _selection1 = GetScreenToWorld2D(GetMousePosition(), _camera);
                         _clickTracker = true;

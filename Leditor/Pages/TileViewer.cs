@@ -348,7 +348,7 @@ internal class TileViewerPage : EditorPage {
         if (!isWinBusy || _clickLock) {
             
             // Drag
-            if (IsMouseButtonDown(MouseButton.Middle))
+            if (IsMouseButtonDown(_shortcuts.DragView.Button) || IsKeyDown(_shortcuts.AltDragView.Key))
             {
                 _clickLock = true;
                 var delta = GetMouseDelta();
@@ -593,8 +593,6 @@ internal class TileViewerPage : EditorPage {
                         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                         var textUpdated = ImGui.InputTextWithHint("##Search", "Search..", ref _searchText, 100, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EscapeClearsAll);
 
-                        _isSearchContorlActive = ImGui.IsItemActive();
-
                         if (!_isSearchContorlActive) {
                             if (_shortcuts.ActivateSearch.Check(ctrl, shift, alt)) {
                                 ImGui.SetItemDefaultFocus();
@@ -608,6 +606,9 @@ internal class TileViewerPage : EditorPage {
                                 }
                             }
                         }
+
+                        _isSearchContorlActive = ImGui.IsItemActive();
+
 
                         var availableSpace = ImGui.GetContentRegionAvail();
 
@@ -958,7 +959,7 @@ internal class TileViewerPage : EditorPage {
                 // Shortcuts
 
                 if (settings.ShortcutWindow) {
-                    var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.TileEditor);
+                    var shortcutWindowRect = Printers.ImGui.ShortcutsWindow(GLOBALS.Settings.Shortcuts.TileViewer);
 
                     _isShortcutsWinHovered = CheckCollisionPointRec(
                         GetMousePosition(), 
