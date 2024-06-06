@@ -14,4 +14,10 @@ Added a tile viewer that allows you to display each tile individually.
 - Made the shortcuts window a little nicer.
 - Fixed voxel flat rendering with pallete.
 - The position of the layer indicator can now be customized.
-- Fixed not being able to move rope bezier control handles. 
+- Fixed not being able to move rope bezier control handles.
+- Longs are now placed the same way ropes are - by placing each end individually.
+- You can now duplicate selected ropes.
+- Moved prop edit mode indicators into the prop list window.
+- The position of the light indicator can be customized, in the light editor.
+- Fixed a crash that could be caused when setting bezier control point count to a negative number, in the props editor.
+- Added search bar to the props editor for `tiles-as-props` and other `categories`

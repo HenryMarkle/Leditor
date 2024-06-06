@@ -22,6 +22,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         
         _propTooltip.Dispose();
         _propLayerRT.Dispose();
+        _propModeIndicatorsRT.Dispose();
     }
 
     ~PropsEditorPage()
@@ -180,6 +181,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
     private bool _ropeInitialPlacement;
     private int _additionalInitialRopeSegments;
+
+    private bool _longInitialPlacement;
     
     
     private bool _lockedPlacement;
@@ -191,6 +194,40 @@ internal class PropsEditorPage : EditorPage, IContextListener
     private bool _tooltip = true;
     
     private RenderTexture2D _propTooltip = new(0, 0);
+
+    private RenderTexture2D _propModeIndicatorsRT = new(40 * 5, 40);
+
+    private bool _shouldUpdateModeIndicatorsRT = true;
+
+    private void UpdateModeIndicators() {
+        var darkTheme = GLOBALS.Settings.GeneralSettings.DarkTheme;
+
+        var color = darkTheme ? Color.White : Color.Black;
+
+        BeginTextureMode(_propModeIndicatorsRT);
+
+        ClearBackground(darkTheme ? Color.Black : Color.White);
+
+        if (_movingProps)           DrawRectangle(  0, 0, 40, 40, Color.Blue);
+        if (_rotatingProps)         DrawRectangle( 40, 0, 40, 40, Color.Blue);
+        if (_scalingProps)          DrawRectangle( 80, 0, 40, 40, Color.Blue);
+        if (_stretchingProp)        DrawRectangle(120, 0, 40, 40, Color.Blue);
+        if (_editingPropPoints)     DrawRectangle(160, 0, 40, 40, Color.Blue);
+
+        var texture1 = GLOBALS.Textures.PropEditModes[0];
+        var texture2 = GLOBALS.Textures.PropEditModes[1];
+        var texture3 = GLOBALS.Textures.PropEditModes[2];
+        var texture4 = GLOBALS.Textures.PropEditModes[3];
+        var texture5 = GLOBALS.Textures.PropEditModes[4];
+
+        DrawTexturePro(texture1, new Rectangle(0, 0, texture1.Width, texture1.Height), new Rectangle(  0, 0, 40, 40), new Vector2(0, 0), 0, _movingProps       ? Color.White : color);
+        DrawTexturePro(texture2, new Rectangle(0, 0, texture2.Width, texture1.Height), new Rectangle( 40, 0, 40, 40), new Vector2(0, 0), 0, _rotatingProps     ? Color.White : color);
+        DrawTexturePro(texture3, new Rectangle(0, 0, texture3.Width, texture1.Height), new Rectangle( 80, 0, 40, 40), new Vector2(0, 0), 0, _scalingProps      ? Color.White : color);
+        DrawTexturePro(texture4, new Rectangle(0, 0, texture4.Width, texture1.Height), new Rectangle(120, 0, 40, 40), new Vector2(0, 0), 0, _stretchingProp    ? Color.White : color);
+        DrawTexturePro(texture5, new Rectangle(0, 0, texture5.Width, texture1.Height), new Rectangle(160, 0, 40, 40), new Vector2(0, 0), 0, _editingPropPoints ? Color.White : color);
+
+        EndTextureMode();
+    }
 
     private void UpdatePropTooltip()
     {
@@ -273,6 +310,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
     }
 
 
+    private RenderTexture2D _tempGeoL = new(0, 0);
+
     private bool _shouldRedrawLevel = true;
 
     private void RedrawLevel()
@@ -281,8 +320,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
         var lHeight = GLOBALS.Level.Height * 16;
 
         var paletteTiles = GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette;
-
-        var geoL = LoadRenderTexture(lWidth, lHeight);
 
         BeginTextureMode(GLOBALS.Textures.GeneralLevel);
         ClearBackground(new(170, 170, 170, 255));
@@ -293,7 +330,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         {
             // Draw geos first
             if (paletteTiles) {
-                Printers.DrawGeoLayerWithMaterialsIntoBuffer(geoL, 2, 16, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
+                Printers.DrawGeoLayerWithMaterialsIntoBuffer(_tempGeoL, 2, 16, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
 
                 // BeginTextureMode(geoL);
                 // ClearBackground(Color.White with { A = 0 });
@@ -318,13 +355,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 var depthLoc = GetShaderLocation(shader, "depth");
                 var shadingLoc = GetShaderLocation(shader, "shading");
 
-                SetShaderValueTexture(shader, textureLoc, geoL.Texture);
+                SetShaderValueTexture(shader, textureLoc, _tempGeoL.Raw.Texture);
                 SetShaderValueTexture(shader, paletteLoc, GLOBALS.SelectedPalette!.Value);
 
                 SetShaderValue(shader, depthLoc, 20, ShaderUniformDataType.Int);
                 SetShaderValue(shader, shadingLoc, 1, ShaderUniformDataType.Int);
 
-                DrawTexture(geoL.Texture, 0, 0, GLOBALS.Layer == 2 ? Color.Black : Color.Black with { A = 120 });
+                DrawTexture(_tempGeoL.Raw.Texture, 0, 0, GLOBALS.Layer == 2 ? Color.Black : Color.Black with { A = 120 });
 
                 EndShaderMode();
 
@@ -519,7 +556,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         if (_showTileLayer2 && (GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers || GLOBALS.Layer is 0 or 1))
         {
             if (paletteTiles) {
-                Printers.DrawGeoLayerWithMaterialsIntoBuffer(geoL, 1, 16, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
+                Printers.DrawGeoLayerWithMaterialsIntoBuffer(_tempGeoL, 1, 16, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
 
                 // BeginTextureMode(geoL);
                 // ClearBackground(Color.White with { A = 0 });
@@ -544,13 +581,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 var depthLoc = GetShaderLocation(shader, "depth");
                 var shadingLoc = GetShaderLocation(shader, "shading");
 
-                SetShaderValueTexture(shader, textureLoc, geoL.Texture);
+                SetShaderValueTexture(shader, textureLoc, _tempGeoL.Raw.Texture);
                 SetShaderValueTexture(shader, paletteLoc, GLOBALS.SelectedPalette!.Value);
 
                 SetShaderValue(shader, depthLoc, 10, ShaderUniformDataType.Int);
                 SetShaderValue(shader, shadingLoc, 1, ShaderUniformDataType.Int);
 
-                DrawTexture(geoL.Texture, 0, 0, GLOBALS.Layer == 1 ? Color.Black : Color.Black with { A = 140 });
+                DrawTexture(_tempGeoL.Raw.Texture, 0, 0, GLOBALS.Layer == 1 ? Color.Black : Color.Black with { A = 140 });
 
                 EndShaderMode();
 
@@ -758,7 +795,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         if (_showTileLayer1 && (GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers || GLOBALS.Layer == 0))
         {
             if (paletteTiles) {
-                Printers.DrawGeoLayerWithMaterialsIntoBuffer(geoL, 0, 16, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
+                Printers.DrawGeoLayerWithMaterialsIntoBuffer(_tempGeoL, 0, 16, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
 
                 // BeginTextureMode(geoL);
                 // ClearBackground(Color.White with { A = 0 });
@@ -783,13 +820,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 var depthLoc = GetShaderLocation(shader, "depth");
                 var shadingLoc = GetShaderLocation(shader, "shading");
 
-                SetShaderValueTexture(shader, textureLoc, geoL.Texture);
+                SetShaderValueTexture(shader, textureLoc, _tempGeoL.Raw.Texture);
                 SetShaderValueTexture(shader, paletteLoc, GLOBALS.SelectedPalette!.Value);
 
                 SetShaderValue(shader, depthLoc, 0, ShaderUniformDataType.Int);
                 SetShaderValue(shader, shadingLoc, 1, ShaderUniformDataType.Int);
 
-                DrawTexture(geoL.Texture, 0, 0, GLOBALS.Layer == 0 ? Color.Black : Color.Black with { A = 120 });
+                DrawTexture(_tempGeoL.Raw.Texture, 0, 0, GLOBALS.Layer == 0 ? Color.Black : Color.Black with { A = 120 });
 
                 EndShaderMode();
 
@@ -996,8 +1033,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
             EndTextureMode();
         }
         #endregion
-
-        UnloadRenderTexture(geoL);
     }
     
     private bool _showLayer1Tiles = true;
@@ -1048,6 +1083,106 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
     private int _ropeSimulationFrameCut = 1;
     private int _ropeSimulationFrame;
+
+    //
+    private string _tileAsPropSearchText = "";
+
+    private int _tileAsPropSearchCategoryIndex = -1;
+    private int _tileAsPropSearchIndex = -1;
+    private record TileAsPropSearchResult(
+        (string name, int originalIndex)[] Categories,
+        (TileDefinition tile, int originalIndex)[][] Tiles
+    );
+
+    private TileAsPropSearchResult? _tileAsPropSearchResult = null;
+
+    private void SearchTiles() {
+        if (GLOBALS.TileDex is null || string.IsNullOrEmpty(_tileAsPropSearchText)) {
+            _tileAsPropSearchResult = null;
+            _tileAsPropSearchCategoryIndex = -1;
+            return;
+        }
+
+        var dex = GLOBALS.TileDex;
+
+        List<(string, int)> categories = [];
+        List<(TileDefinition, int)[]> tiles = [];
+
+        for (var c = 0; c < dex.OrderedTilesAsProps.Length; c++) {
+            List<(TileDefinition, int)> foundTiles = [];
+
+            for (var t = 0; t < dex.OrderedTilesAsProps[c].Length; t++) {
+                var tile = dex.OrderedTilesAsProps[c][t];
+
+                if (tile.Name.Contains(_tileAsPropSearchText, StringComparison.InvariantCultureIgnoreCase)) {
+                    foundTiles.Add((tile, t));
+                }
+            }
+
+            if (foundTiles is not []) {
+                categories.Add((dex.OrderedTileAsPropCategories[c], c));
+                tiles.Add([..foundTiles]);
+            }
+        }
+
+        _tileAsPropSearchResult = new([..categories], [..tiles]);
+
+        if (categories.Count > 0) {
+            _tileAsPropSearchCategoryIndex = 0;
+        } else {
+            _tileAsPropSearchCategoryIndex = -1;
+        }
+    }
+    //
+
+    //
+    private string _propSearchText = "";
+
+    private int _propSearchCategoryIndex = -1;
+    private int _propSearchIndex = -1;
+    private record PropSearchResult(
+        (string name, int originalIndex)[] Categories,
+        (InitPropBase prop, int originalIndex)[][] Props
+    );
+
+    private PropSearchResult? _propSearchResult = null;
+
+    private void SearchProps() {
+        if (GLOBALS.PropCategories is null or { Length: 0 } || GLOBALS.Props is null or { Length: 0 } || string.IsNullOrEmpty(_propSearchText)) {
+            _propSearchResult = null;
+            _propSearchCategoryIndex = -1;
+            return;
+        }
+
+        List<(string, int)> categories = [];
+        List<(InitPropBase, int)[]> props = [];
+
+        for (var c = 0; c < GLOBALS.Props.Length; c++) {
+            List<(InitPropBase, int)> foundProps = [];
+            
+            for (var p = 0; p < GLOBALS.Props[c].Length; p++) {
+                var prop = GLOBALS.Props[c][p];
+
+                if (prop.Name.Contains(_propSearchText, StringComparison.InvariantCultureIgnoreCase)) {
+                    foundProps.Add((prop, p));
+                }
+            }
+
+            if (foundProps is not []) {
+                categories.Add((GLOBALS.PropCategories[c].Item1, c));
+                props.Add([..foundProps]);
+            }
+        }
+
+        _propSearchResult = new([..categories], [..props]);
+
+        if (categories.Count > 0) {
+            _propSearchCategoryIndex = 0;
+        } else {
+            _propSearchCategoryIndex = -1;
+        }
+    }
+    //
     
     private Vector2 _selection1 = new(-100, -100);
     private Rectangle _selection;
@@ -1114,20 +1249,43 @@ internal class PropsEditorPage : EditorPage, IContextListener
     #nullable enable
     public void OnProjectLoaded(object? sender, EventArgs e)
     {
+        var lWidth = GLOBALS.Level.Width * 16;
+        var lHeight = GLOBALS.Level.Height * 16;
+
         ImportRopeModels();
         _selected = new bool[GLOBALS.Level.Props.Length];
 
-        _propLayerRT.Dispose();
-        _propLayerRT = new RenderTexture2D(GLOBALS.Level.Width * 16, GLOBALS.Level.Height * 16);
+        if (lWidth != _propLayerRT.Raw.Texture.Width || lHeight != _propLayerRT.Raw.Texture.Height) {
+            _propLayerRT.Dispose();
+            _propLayerRT = new RenderTexture2D(lWidth, lHeight);
+        }
+
+
+        if (lWidth != _tempGeoL.Raw.Texture.Width || lHeight != _tempGeoL.Raw.Texture.Height) {
+            _tempGeoL.Dispose();
+            _tempGeoL = new(lWidth, lHeight);
+        }
     }
 
     public void OnProjectCreated(object? sender, EventArgs e)
     {
+        var lWidth = GLOBALS.Level.Width * 16;
+        var lHeight = GLOBALS.Level.Height * 16;
+
         ImportRopeModels();
         _selected = new bool[GLOBALS.Level.Props.Length];
 
-        _propLayerRT.Dispose();
-        _propLayerRT = new RenderTexture2D(GLOBALS.Level.Width * 16, GLOBALS.Level.Height * 16);
+        if (lWidth != _propLayerRT.Raw.Texture.Width || lHeight != _propLayerRT.Raw.Texture.Height) {
+            _propLayerRT.Dispose();
+            _propLayerRT = new RenderTexture2D(lWidth, lHeight);
+
+        }
+
+
+        if (lWidth != _tempGeoL.Raw.Texture.Width || lHeight != _tempGeoL.Raw.Texture.Height) {
+            _tempGeoL.Dispose();
+            _tempGeoL = new(lWidth, lHeight);
+        }
     }
     #nullable disable
 
@@ -1504,7 +1662,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         if (_shortcuts.DecrementRopSegmentCount.Check(ctrl, shift, alt, true)) {
                             _additionalInitialRopeSegments--;
-                            Utils.Restrict(ref _additionalInitialRopeSegments, 0);
+                            // Utils.Restrict(ref _additionalInitialRopeSegments, 0);
                         }
 
                         var (_, _, (_, initIndex), foundProp) = GLOBALS.Level.Props[index];
@@ -1557,6 +1715,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             var ropePoints = foundProp.Extras.RopePoints;
                             var targetCount = endsDistance + _additionalInitialRopeSegments;
 
+                            Utils.Restrict(ref targetCount, 3);
+
                             var deficit = targetCount - ropePoints.Length;
                             
                             if (targetCount > ropePoints.Length) {
@@ -1580,6 +1740,42 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         else {
                             _shouldRedrawLevel = true;
                         }
+                    }
+                }
+
+                if (_longInitialPlacement && GLOBALS.Level.Props is { Length: > 0 }) {
+                    var currentQuads = GLOBALS.Level.Props[^1].prop.Quads;
+                    var (left, top, right, bottom) = Utils.LongSides(currentQuads);
+                            
+                    var beta = Raymath.Vector2Angle(Raymath.Vector2Subtract(left, right), new(1.0f, 0.0f));
+                    
+                    var r = Raymath.Vector2Length(Raymath.Vector2Subtract(currentQuads.TopLeft, left));
+
+                    currentQuads.BottomLeft = Raymath.Vector2Add(
+                        left, 
+                        new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
+                    );
+                
+                    currentQuads.TopLeft = Raymath.Vector2Add(
+                        left, 
+                        new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
+                    );
+                
+                    currentQuads.BottomRight = Raymath.Vector2Add(
+                        tileMouseWorld, 
+                        new(r * (float) Math.Cos(-beta - float.DegreesToRadians(90)), r * (float) Math.Sin(-beta - float.DegreesToRadians(90)))
+                    );
+                
+                    currentQuads.TopRight = Raymath.Vector2Add(
+                        tileMouseWorld, 
+                        new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
+                    );
+
+                    GLOBALS.Level.Props[^1].prop.Quads = currentQuads;
+
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                    else {
+                        _shouldRedrawLevel = true;
                     }
                 }
 
@@ -1730,49 +1926,57 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             {
                                 if (_clickTracker) break;
                                 _clickTracker = true;
-                                var current = GLOBALS.LongProps[_propsMenuLongsIndex];
-                                ref var texture = ref GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
-                                var height = texture.Height / 2f;
-                                var newQuads = new PropQuad
-                                {
-                                    TopLeft = new(posV.X - 100, posV.Y - height),
-                                    BottomLeft = new(posV.X - 100, posV.Y + height),
-                                    TopRight = new(posV.X + 100, posV.Y - height),
-                                    BottomRight = new(posV.X + 100, posV.Y + height)
-                                };
-                                
-                                PropLongSettings settings;
 
-                                if (_newlyCopied)
-                                {
-                                    _newlyCopied = false;
+                                if (_longInitialPlacement) {
+                                    _longInitialPlacement = false;
+                                } else {
+                                    _longInitialPlacement = true;
 
-                                    settings = (PropLongSettings)_copiedPropSettings;
-                                    _defaultDepth = _copiedDepth;
+                                    var current = GLOBALS.LongProps[_propsMenuLongsIndex];
+                                    ref var texture = ref GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
+                                    var height = texture.Height / 2f;
+                                    var newQuads = new PropQuad
+                                    {
+                                        TopLeft = new(tileMouseWorld.X, tileMouseWorld.Y - height),
+                                        BottomLeft = new(tileMouseWorld.X, tileMouseWorld.Y + height),
+                                        TopRight = new(tileMouseWorld.X, tileMouseWorld.Y - height),
+                                        BottomRight = new(tileMouseWorld.X, tileMouseWorld.Y + height)
+                                    };
+                                    
+                                    PropLongSettings settings;
+
+                                    if (_newlyCopied)
+                                    {
+                                        _newlyCopied = false;
+
+                                        settings = (PropLongSettings)_copiedPropSettings;
+                                        _defaultDepth = _copiedDepth;
+                                    }
+                                    else
+                                    {
+                                        settings = new();
+                                    }
+                                    
+                                    GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
+                                        (
+                                            InitPropType.Long, 
+                                            null,
+                                            (-1, _propsMenuLongsIndex), 
+                                            new Prop(
+                                                _defaultDepth, 
+                                                current.Name, 
+                                                false, 
+                                                newQuads
+                                            )
+                                            {
+                                                Extras = new PropExtras(settings, [])
+                                            }
+                                        ) 
+                                    ];
+
+                                    _selected = new bool[GLOBALS.Level.Props.Length];
+                                    _selected[^1] = true;
                                 }
-                                else
-                                {
-                                    settings = new();
-                                }
-                                
-                                GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
-                                    (
-                                        InitPropType.Long, 
-                                        null,
-                                        (-1, _propsMenuLongsIndex), 
-                                        new Prop(
-                                            _defaultDepth, 
-                                            current.Name, 
-                                            false, 
-                                            newQuads
-                                        )
-                                        {
-                                            Extras = new PropExtras(settings, [])
-                                        }
-                                    ) 
-                                ];
-
-                                _selected = new bool[GLOBALS.Level.Props.Length];
                             }
                                 break;
 
@@ -1934,12 +2138,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     _additionalInitialRopeSegments = 0;
                                     
                                     var current = GLOBALS.RopeProps[_propsMenuRopesIndex];
+                                    const float height = 10f;
                                     var newQuads = new PropQuad
                                     {
-                                        TopLeft = new(tileMouseWorld.X, tileMouseWorld.Y),
-                                        BottomLeft = new(tileMouseWorld.X, tileMouseWorld.Y),
-                                        TopRight = new(tileMouseWorld.X, tileMouseWorld.Y),
-                                        BottomRight = new(tileMouseWorld.X, tileMouseWorld.Y)
+                                        TopLeft = new(tileMouseWorld.X, tileMouseWorld.Y - height),
+                                        BottomLeft = new(tileMouseWorld.X, tileMouseWorld.Y + height),
+                                        TopRight = new(tileMouseWorld.X, tileMouseWorld.Y - height),
+                                        BottomRight = new(tileMouseWorld.X, tileMouseWorld.Y + height)
                                     };
 
                                     var ropeEnds = Utils.RopeEnds(newQuads);
@@ -1993,49 +2198,56 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                             case 2: // Long Props
                             {
-                                var current = GLOBALS.LongProps[_propsMenuLongsIndex];
-                                ref var texture = ref GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
-                                var height = texture.Height / 2f;
-                                var newQuads = new PropQuad
-                                {
-                                    TopLeft = new(posV.X - 100, posV.Y - height),
-                                    BottomLeft = new(posV.X - 100, posV.Y + height),
-                                    TopRight = new(posV.X + 100, posV.Y - height),
-                                    BottomRight = new(posV.X + 100, posV.Y + height)
-                                };
-                                
-                                PropLongSettings settings;
+                                if (_longInitialPlacement) {
+                                    _longInitialPlacement = false;
+                                } else {
+                                    _longInitialPlacement = true;
 
-                                if (_newlyCopied)
-                                {
-                                    _newlyCopied = false;
+                                    var current = GLOBALS.LongProps[_propsMenuLongsIndex];
+                                    ref var texture = ref GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
+                                    var height = texture.Height / 2f;
+                                    var newQuads = new PropQuad
+                                    {
+                                        TopLeft = new(tileMouseWorld.X, tileMouseWorld.Y - height),
+                                        BottomLeft = new(tileMouseWorld.X, tileMouseWorld.Y + height),
+                                        TopRight = new(tileMouseWorld.X, tileMouseWorld.Y - height),
+                                        BottomRight = new(tileMouseWorld.X, tileMouseWorld.Y + height)
+                                    };
+                                    
+                                    PropLongSettings settings;
 
-                                    settings = (PropLongSettings)_copiedPropSettings;
-                                    _defaultDepth = _copiedDepth;
+                                    if (_newlyCopied)
+                                    {
+                                        _newlyCopied = false;
+
+                                        settings = (PropLongSettings)_copiedPropSettings;
+                                        _defaultDepth = _copiedDepth;
+                                    }
+                                    else
+                                    {
+                                        settings = new();
+                                    }
+                                    
+                                    GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
+                                        (
+                                            InitPropType.Long, 
+                                            null,
+                                            (-1, _propsMenuLongsIndex), 
+                                            new Prop(
+                                                _defaultDepth, 
+                                                current.Name, 
+                                                false, 
+                                                newQuads
+                                            )
+                                            {
+                                                Extras = new PropExtras(settings, [])
+                                            }
+                                        ) 
+                                    ];
+
+                                    _selected = new bool[GLOBALS.Level.Props.Length];
+                                    _selected[^1] = true;
                                 }
-                                else
-                                {
-                                    settings = new();
-                                }
-                                
-                                GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
-                                    (
-                                        InitPropType.Long, 
-                                        null,
-                                        (-1, _propsMenuLongsIndex), 
-                                        new Prop(
-                                            _defaultDepth, 
-                                            current.Name, 
-                                            false, 
-                                            newQuads
-                                        )
-                                        {
-                                            Extras = new PropExtras(settings, [])
-                                        }
-                                    ) 
-                                ];
-
-                                _selected = new bool[GLOBALS.Level.Props.Length];
                             }
                                 break;
 
@@ -2428,6 +2640,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                     _selected = new bool[GLOBALS.Level.Props.Length];
                     _selected[_selectedCycleIndices[_selectedCycleCursor]] = true;
+                    _shouldUpdateModeIndicatorsRT = true;
                 }
                 // Move
                 else if (_shortcuts.ToggleMovingPropsMode.Check(ctrl, shift, alt) && anySelected)
@@ -2440,6 +2653,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     // _ropeMode = false;
 
                     _propsMoveMousePos = _propsMoveMouseAnchor = GetScreenToWorld2D(GetMousePosition(), _camera);
+                    _shouldUpdateModeIndicatorsRT = true;
                 }
                 // Rotate
                 else if (_shortcuts.ToggleRotatingPropsMode.Check(ctrl, shift, alt) && anySelected)
@@ -2450,6 +2664,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     _stretchingProp = false;
                     _editingPropPoints = false;
                     // _ropeMode = false;
+                    _shouldUpdateModeIndicatorsRT = true;
                 }
                 // Scale
                 else if (_shortcuts.ToggleScalingPropsMode.Check(ctrl, shift, alt) && anySelected)
@@ -2463,6 +2678,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     // _ropeMode = false;
                     
                     SetMouseCursor(MouseCursor.ResizeNesw);
+                    _shouldUpdateModeIndicatorsRT = true;
                 }
                 // Hide
                 else if (_shortcuts.TogglePropsVisibility.Check(ctrl, shift, alt) && anySelected)
@@ -2478,6 +2694,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         if (_selected[i]) _hidden[i] = !_hidden[i];
                     }
+                    _shouldUpdateModeIndicatorsRT = true;
                 }
                 // Edit Quads
                 else if (_shortcuts.ToggleEditingPropQuadsMode.Check(ctrl, shift, alt) && fetchedSelected.Length == 1)
@@ -2495,6 +2712,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     _stretchingProp = !_stretchingProp;
                     _editingPropPoints = false;
                     // _ropeMode = false;
+                    _shouldUpdateModeIndicatorsRT = true;
                 }
                 // Delete
                 else if (_shortcuts.DeleteSelectedProps.Check(ctrl, shift, alt) && anySelected)
@@ -2530,6 +2748,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         .ToArray();
                     
                     ImportRopeModels(); // don't forget to update the list when props list is modified
+                    _shouldUpdateModeIndicatorsRT = true;
                 }
                 // Rope-only actions
                 else if (
@@ -2553,6 +2772,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         _stretchingProp = false;
                         _editingPropPoints = !_editingPropPoints;
                         _ropeMode = false;
+                        _shouldUpdateModeIndicatorsRT = true;
                     }
                     // Rope mode
                     else if (_shortcuts.ToggleRopeEditingMode.Check(ctrl, shift, alt))
@@ -2569,6 +2789,57 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         // _stretchingProp = false;
                         // _editingPropPoints = false;
                         _ropeMode = !_ropeMode;
+                        _shouldUpdateModeIndicatorsRT = true;
+                    }
+                    else if (_shortcuts.DuplicateProps.Check(ctrl, shift, alt)) {
+                        // _shouldRedrawLevel = true;
+                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                        else {
+                            _shouldRedrawLevel = true;
+                        }
+
+                        List<(InitPropType, TileDefinition?, (int, int), Prop)> dProps = [];
+                    
+                        foreach (var (prop, _) in fetchedSelected)
+                        {
+                            dProps.Add((prop.type, prop.tile, prop.position, new Prop(
+                                    prop.prop.Depth,
+                                    prop.prop.Name,
+                                    prop.prop.IsTile,
+                                    new PropQuad(
+                                        prop.prop.Quads.TopLeft,
+                                        prop.prop.Quads.TopRight,
+                                        prop.prop.Quads.BottomRight,
+                                        prop.prop.Quads.BottomLeft
+                                    ))
+                                {
+                                    Extras = new PropExtras(
+                                        prop.prop.Extras.Settings.Clone(),
+                                        [..prop.prop.Extras.RopePoints])
+                                })
+                            );
+
+                        }
+                        
+                        GLOBALS.Level.Props = [..GLOBALS.Level.Props, ..dProps];
+
+                        var newSelected = new bool[GLOBALS.Level.Props.Length]; // Update selected
+                        var newHidden = new bool[GLOBALS.Level.Props.Length]; // Update hidden
+
+                        for (var i = 0; i < _selected.Length; i++)
+                        {
+                            newSelected[i] = _selected[i];
+                            newHidden[i] = _hidden[i];
+                        }
+
+                        _selected = newSelected;
+                        _hidden = newHidden;
+                    
+                        fetchedSelected = GLOBALS.Level.Props
+                            .Select((prop, index) => (prop, index))
+                            .Where(p => _selected[p.index])
+                            .Select(p => p)
+                            .ToArray();
                     }
                 }
                 // Duplicate
@@ -2629,6 +2900,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                 if (_ropeMode && fetchedSelected.Length == 1)
                 {
+                    _shouldUpdateModeIndicatorsRT = true;
+
                     // _shouldRedrawLevel = true;
                     if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     else {
@@ -3260,10 +3533,14 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             }
                         }
 
-                        if (selectCount == 1 && GLOBALS.Level.Props[lastSelected].type == InitPropType.Rope) {
-                            _ropeMode = true;
-                        } else {
-                            _ropeMode = false;
+                        // if (selectCount == 1 && GLOBALS.Level.Props[lastSelected].type == InitPropType.Rope) {
+                        //     _ropeMode = true;
+                        // } else {
+                        //     _ropeMode = false;
+                        // }
+
+                        if (selectCount == 0) {
+                            _shouldUpdateModeIndicatorsRT = true;
                         }
 
                         _selectedCycleIndices = [..selectedI];
@@ -3291,7 +3568,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
             DrawPropLayerRT();
 
             _shouldRedrawPropLayer = false;
-        } 
+        }
+
+        if (_shouldUpdateModeIndicatorsRT) {
+            UpdateModeIndicators();
+            _shouldUpdateModeIndicatorsRT = false;
+        }
 
         ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
             ? Color.Black 
@@ -3640,74 +3922,74 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 EndTextureMode();
             }
 
-            // Edit Mode Indicators
-            if (_mode == 0) {
-                 var moveTexture = GLOBALS.Textures.PropEditModes[0];
-                 var rotateTexture = GLOBALS.Textures.PropEditModes[1];
-                 var scaleTexture = GLOBALS.Textures.PropEditModes[2];
-                 var warpTexture = GLOBALS.Textures.PropEditModes[3];
-                 var editPointsTexture = GLOBALS.Textures.PropEditModes[4];
+            // // Edit Mode Indicators
+            // if (_mode == 0) {
+            //      var moveTexture = GLOBALS.Textures.PropEditModes[0];
+            //      var rotateTexture = GLOBALS.Textures.PropEditModes[1];
+            //      var scaleTexture = GLOBALS.Textures.PropEditModes[2];
+            //      var warpTexture = GLOBALS.Textures.PropEditModes[3];
+            //      var editPointsTexture = GLOBALS.Textures.PropEditModes[4];
 
-                 var moveRect = new Rectangle(135, sHeight - 50, 40, 40);
-                 var rotateRect = new Rectangle(180, sHeight - 50, 40, 40);
-                 var scaleRect = new Rectangle(225, sHeight - 50, 40, 40);
-                 var warpRect = new Rectangle(270, sHeight - 50, 40, 40);
-                 var editPointsRect = new Rectangle(315, sHeight - 50, 40, 40);
+            //      var moveRect = new Rectangle(135, sHeight - 50, 40, 40);
+            //      var rotateRect = new Rectangle(180, sHeight - 50, 40, 40);
+            //      var scaleRect = new Rectangle(225, sHeight - 50, 40, 40);
+            //      var warpRect = new Rectangle(270, sHeight - 50, 40, 40);
+            //      var editPointsRect = new Rectangle(315, sHeight - 50, 40, 40);
 
-                 var rectColor = GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White;
+            //      var rectColor = GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White;
 
-                 DrawRectangleRec(moveRect, rectColor);
-                 DrawRectangleRec(rotateRect, rectColor);
-                 DrawRectangleRec(scaleRect, rectColor);
-                 DrawRectangleRec(warpRect, rectColor);
-                 DrawRectangleRec(editPointsRect, rectColor);
+            //      DrawRectangleRec(moveRect, rectColor);
+            //      DrawRectangleRec(rotateRect, rectColor);
+            //      DrawRectangleRec(scaleRect, rectColor);
+            //      DrawRectangleRec(warpRect, rectColor);
+            //      DrawRectangleRec(editPointsRect, rectColor);
                  
-                 if (_movingProps) DrawRectangleRec(moveRect, Color.Blue);
-                 if (_rotatingProps) DrawRectangleRec(rotateRect, Color.Blue);
-                 if (_scalingProps) DrawRectangleRec(scaleRect, Color.Blue);
-                 if (_stretchingProp) DrawRectangleRec(warpRect, Color.Blue);
-                 if (_editingPropPoints) DrawRectangleRec(editPointsRect, Color.Blue);
+            //      if (_movingProps) DrawRectangleRec(moveRect, Color.Blue);
+            //      if (_rotatingProps) DrawRectangleRec(rotateRect, Color.Blue);
+            //      if (_scalingProps) DrawRectangleRec(scaleRect, Color.Blue);
+            //      if (_stretchingProp) DrawRectangleRec(warpRect, Color.Blue);
+            //      if (_editingPropPoints) DrawRectangleRec(editPointsRect, Color.Blue);
 
-                 DrawTexturePro(
-                     moveTexture,
-                     new Rectangle(0, 0, moveTexture.Width, moveTexture.Height),
-                     moveRect,
-                     new Vector2(0, 0),
-                     0,
-                     GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _movingProps ? Color.White : Color.Black);
+            //      DrawTexturePro(
+            //          moveTexture,
+            //          new Rectangle(0, 0, moveTexture.Width, moveTexture.Height),
+            //          moveRect,
+            //          new Vector2(0, 0),
+            //          0,
+            //          GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _movingProps ? Color.White : Color.Black);
 
-                 DrawTexturePro(
-                     rotateTexture,
-                     new Rectangle(0, 0, rotateTexture.Width, rotateTexture.Height),
-                     rotateRect,
-                     new Vector2(0, 0),
-                     0,
-                     GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _rotatingProps ? Color.White : Color.Black);
+            //      DrawTexturePro(
+            //          rotateTexture,
+            //          new Rectangle(0, 0, rotateTexture.Width, rotateTexture.Height),
+            //          rotateRect,
+            //          new Vector2(0, 0),
+            //          0,
+            //          GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _rotatingProps ? Color.White : Color.Black);
 
-                 DrawTexturePro(
-                     scaleTexture,
-                     new Rectangle(0, 0, scaleTexture.Width, scaleTexture.Height),
-                     scaleRect,
-                     new Vector2(0, 0),
-                     0,
-                     GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _scalingProps ? Color.White : Color.Black);
+            //      DrawTexturePro(
+            //          scaleTexture,
+            //          new Rectangle(0, 0, scaleTexture.Width, scaleTexture.Height),
+            //          scaleRect,
+            //          new Vector2(0, 0),
+            //          0,
+            //          GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _scalingProps ? Color.White : Color.Black);
 
-                 DrawTexturePro(
-                     warpTexture,
-                     new Rectangle(0, 0, warpTexture.Width, warpTexture.Height),
-                     warpRect,
-                     new Vector2(0, 0),
-                     0,
-                     GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _stretchingProp ? Color.White : Color.Black);
+            //      DrawTexturePro(
+            //          warpTexture,
+            //          new Rectangle(0, 0, warpTexture.Width, warpTexture.Height),
+            //          warpRect,
+            //          new Vector2(0, 0),
+            //          0,
+            //          GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _stretchingProp ? Color.White : Color.Black);
 
-                 DrawTexturePro(
-                     editPointsTexture,
-                     new Rectangle(0, 0, editPointsTexture.Width, editPointsTexture.Height),
-                     editPointsRect,
-                     new Vector2(0, 0),
-                     0,
-                     GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _editingPropPoints ? Color.White : Color.Black);
-            }
+            //      DrawTexturePro(
+            //          editPointsTexture,
+            //          new Rectangle(0, 0, editPointsTexture.Width, editPointsTexture.Height),
+            //          editPointsRect,
+            //          new Vector2(0, 0),
+            //          0,
+            //          GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _editingPropPoints ? Color.White : Color.Black);
+            // }
             //
 
             rlImGui.Begin();
@@ -3793,24 +4075,67 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         case 0: // Tiles-As-Props
                         {
                             if (GLOBALS.TileDex is null) break;
+
+                            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                            var textChanged = ImGui.InputTextWithHint(
+                                "##TileAsPropSearch", 
+                                "Search tiles..", 
+                                ref _tileAsPropSearchText, 
+                                100, 
+                                ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EscapeClearsAll
+                            );
+
+                            // if (_shortcuts.ActivateSearch.Check(ctrl, shift, alt)) {
+                            //     ImGui.SetItemDefaultFocus();
+                            //     ImGui.SetKeyboardFocusHere(-1);
+                            // }
                             
+                            if (textChanged) {
+                                SearchTiles();
+                            }
+
                             if (ImGui.BeginListBox("##TileCategories", listSize))
                             {
-                                for (var index = 0; index < GLOBALS.TileDex.OrderedTileAsPropCategories.Length; index++)
-                                {
-                                    var selected = ImGui.Selectable(GLOBALS.TileDex.OrderedTileAsPropCategories[index],
-                                        index == _propsMenuTilesCategoryIndex);
-                                    
-                                    if (selected)
+                                // Not searching
+                                if (_tileAsPropSearchResult is null) {
+                                    for (var index = 0; index < GLOBALS.TileDex.OrderedTileAsPropCategories.Length; index++)
                                     {
-                                        _propsMenuTilesCategoryIndex = index;
-                                        Utils.Restrict(
-                                            ref _propsMenuTilesIndex, 
-                                            0, 
-                                            GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length-1);
-                                        _currentTile =
-                                            GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][
-                                                _propsMenuTilesIndex];
+                                        var selected = ImGui.Selectable(GLOBALS.TileDex.OrderedTileAsPropCategories[index],
+                                            index == _propsMenuTilesCategoryIndex);
+                                        
+                                        if (selected)
+                                        {
+                                            _propsMenuTilesCategoryIndex = index;
+                                            Utils.Restrict(
+                                                ref _propsMenuTilesIndex, 
+                                                0, 
+                                                GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length-1);
+                                            _currentTile =
+                                                GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][
+                                                    _propsMenuTilesIndex];
+                                        }
+                                    }
+                                }
+                                // Searching
+                                else {
+                                    for (var c = 0; c < _tileAsPropSearchResult.Categories.Length; c++) {
+                                        var (name, originalIndex) = _tileAsPropSearchResult.Categories[c];
+
+                                        var selected = ImGui.Selectable(name, _tileAsPropSearchCategoryIndex == c);
+
+                                        if (selected) {
+                                            _tileAsPropSearchCategoryIndex = c;
+                                            _tileAsPropSearchIndex = -1;
+
+                                            _propsMenuTilesCategoryIndex = originalIndex;
+                                            Utils.Restrict(
+                                                ref _propsMenuTilesIndex, 
+                                                0, 
+                                                GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length-1);
+                                            _currentTile =
+                                                GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][
+                                                    _propsMenuTilesIndex];
+                                        }
                                     }
                                 }
                                 ImGui.EndListBox();
@@ -3820,45 +4145,84 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                             if (ImGui.BeginListBox("##Tiles", listSize))
                             {
-                                for (var index = 0; index < GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length; index++)
-                                {
-                                    var currentTilep =
-                                        GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][index];
-                                    
-                                    var selected = ImGui.Selectable(
-                                        currentTilep.Name, 
-                                        index == _propsMenuTilesIndex
-                                    );
-                                    
-                                    if (ImGui.IsItemHovered())
+                                // Not searching
+                                if (_tileAsPropSearchResult is null) {
+                                    for (var index = 0; index < GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex].Length; index++)
                                     {
-                                        if (_hoveredCategoryIndex != _propsMenuTilesCategoryIndex ||
-                                            _hoveredIndex != index ||
-                                            _previousRootCategory != _menuRootCategoryIndex)
+                                        var currentTilep =
+                                            GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][index];
+                                        
+                                        var selected = ImGui.Selectable(
+                                            currentTilep.Name, 
+                                            index == _propsMenuTilesIndex
+                                        );
+                                        
+                                        if (ImGui.IsItemHovered())
                                         {
-                                            _hoveredCategoryIndex = _propsMenuTilesCategoryIndex;
-                                            _hoveredIndex = index;
-                                            _previousRootCategory = _menuRootCategoryIndex;
+                                            if (_hoveredCategoryIndex != _propsMenuTilesCategoryIndex ||
+                                                _hoveredIndex != index ||
+                                                _previousRootCategory != _menuRootCategoryIndex)
+                                            {
+                                                _hoveredCategoryIndex = _propsMenuTilesCategoryIndex;
+                                                _hoveredIndex = index;
+                                                _previousRootCategory = _menuRootCategoryIndex;
 
-                                            _hoveredTile =
-                                                GLOBALS.TileDex.OrderedTilesAsProps[_hoveredCategoryIndex][
-                                                    _hoveredIndex];
+                                                _hoveredTile =
+                                                    GLOBALS.TileDex.OrderedTilesAsProps[_hoveredCategoryIndex][
+                                                        _hoveredIndex];
+                                                
+                                                UpdatePropTooltip();
+                                            }
                                             
-                                            UpdatePropTooltip();
+                                            ImGui.BeginTooltip();
+                                            rlImGui.ImageRenderTexture(_propTooltip);
+                                            ImGui.EndTooltip();
                                         }
                                         
-                                        ImGui.BeginTooltip();
-                                        rlImGui.ImageRenderTexture(_propTooltip);
-                                        ImGui.EndTooltip();
-                                    }
-                                    
-                                    if (selected)
-                                    {
-                                        _mode = 1;
-                                        _propsMenuTilesIndex = index;
-                                        _currentTile = currentTilep;
+                                        if (selected)
+                                        {
+                                            _mode = 1;
+                                            _propsMenuTilesIndex = index;
+                                            _currentTile = currentTilep;
+                                        }
                                     }
                                 }
+                                // Searching
+                                else {
+                                    for (var t = 0; t < _tileAsPropSearchResult.Tiles[_tileAsPropSearchCategoryIndex].Length; t++) {
+                                        var (tile, originalIndex) = _tileAsPropSearchResult.Tiles[_tileAsPropSearchCategoryIndex][t];
+
+                                        var selected = ImGui.Selectable(tile.Name, _tileAsPropSearchIndex == t);
+
+                                        if (selected) {
+                                            _mode = 1;
+                                            _tileAsPropSearchIndex = t;
+                                            _propsMenuTilesIndex = originalIndex;
+                                            _currentTile = tile;
+                                        }
+
+                                        if (ImGui.IsItemHovered())
+                                        {
+                                            if (_hoveredCategoryIndex != _propsMenuTilesCategoryIndex ||
+                                                _hoveredIndex != originalIndex ||
+                                                _previousRootCategory != _menuRootCategoryIndex)
+                                            {
+                                                _hoveredCategoryIndex = _propsMenuTilesCategoryIndex;
+                                                _hoveredIndex = originalIndex;
+                                                _previousRootCategory = _menuRootCategoryIndex;
+
+                                                _hoveredTile = tile;
+                                                
+                                                UpdatePropTooltip();
+                                            }
+                                            
+                                            ImGui.BeginTooltip();
+                                            rlImGui.ImageRenderTexture(_propTooltip);
+                                            ImGui.EndTooltip();
+                                        }
+                                    }
+                                }
+
                                 ImGui.EndListBox();
                             }
                         }
@@ -3899,17 +4263,45 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             break;
                         case 3: // Others
                         {
+                            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                            var textChanged = ImGui.InputTextWithHint(
+                                "##OtherPropsSearch", 
+                                "Search props..", 
+                                ref _propSearchText, 
+                                100, 
+                                ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EscapeClearsAll
+                            );
+
+                            if (textChanged) {
+                                SearchProps();
+                            }
+
                             if (ImGui.BeginListBox("##OtherPropCategories", listSize))
                             {
-                                for (var index = 0; index < _otherCategoryNames.Length; index++)
-                                {
-                                    var selected = ImGui.Selectable(_otherCategoryNames[index],
-                                        index == _propsMenuOthersCategoryIndex);
-                                    
-                                    if (selected)
+                                // Not searching 
+                                if (_propSearchResult is null) {
+                                    for (var index = 0; index < _otherCategoryNames.Length; index++)
                                     {
-                                        _propsMenuOthersCategoryIndex = index;
-                                        Utils.Restrict(ref _propsMenuOthersIndex, 0, _otherNames[_propsMenuOthersCategoryIndex].Length-1);
+                                        var selected = ImGui.Selectable(_otherCategoryNames[index],
+                                            index == _propsMenuOthersCategoryIndex);
+                                        
+                                        if (selected)
+                                        {
+                                            _propsMenuOthersCategoryIndex = index;
+                                            Utils.Restrict(ref _propsMenuOthersIndex, 0, _otherNames[_propsMenuOthersCategoryIndex].Length-1);
+                                        }
+                                    }
+                                } else {
+                                    for (var c = 0; c < _propSearchResult.Categories.Length; c++) {
+                                        var (categoryName, originalIndex) = _propSearchResult.Categories[c];
+
+                                        var selected = ImGui.Selectable(categoryName, _propSearchCategoryIndex == c);
+
+                                        if (selected) {
+                                            _propSearchCategoryIndex = c;
+                                            _propsMenuOthersCategoryIndex = originalIndex;
+                                            Utils.Restrict(ref _propsMenuOthersIndex, 0, _otherNames[_propsMenuOthersCategoryIndex].Length-1);
+                                        }
                                     }
                                 }
                                 ImGui.EndListBox();
@@ -3919,33 +4311,66 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                             if (ImGui.BeginListBox("##OtherProps", listSize))
                             {
-                                var array = _otherNames[_propsMenuOthersCategoryIndex];
+                                // Not searching
+                                if (_propSearchResult is null) {
+                                    var array = _otherNames[_propsMenuOthersCategoryIndex];
 
-                                for (var index = 0; index < array.Length; index++)
-                                {
-                                    var selected = ImGui.Selectable(array[index], index == _propsMenuOthersIndex);
-                                    
-                                    if (ImGui.IsItemHovered())
+                                    for (var index = 0; index < array.Length; index++)
                                     {
-                                        if (_hoveredCategoryIndex != _propsMenuOthersCategoryIndex ||
-                                            _hoveredIndex != index ||
-                                            _previousRootCategory != _menuRootCategoryIndex)
+                                        var selected = ImGui.Selectable(array[index], index == _propsMenuOthersIndex);
+                                        
+                                        if (ImGui.IsItemHovered())
                                         {
-                                            _hoveredCategoryIndex = _propsMenuOthersCategoryIndex;
-                                            _hoveredIndex = index;
-                                            _previousRootCategory = _menuRootCategoryIndex;
-                                            
-                                            UpdatePropTooltip();
+                                            if (_hoveredCategoryIndex != _propsMenuOthersCategoryIndex ||
+                                                _hoveredIndex != index ||
+                                                _previousRootCategory != _menuRootCategoryIndex)
+                                            {
+                                                _hoveredCategoryIndex = _propsMenuOthersCategoryIndex;
+                                                _hoveredIndex = index;
+                                                _previousRootCategory = _menuRootCategoryIndex;
+                                                
+                                                UpdatePropTooltip();
+                                            }
+
+                                            ImGui.BeginTooltip();
+                                            rlImGui.ImageRenderTexture(_propTooltip);
+                                            ImGui.EndTooltip();
+                                        }
+                                        
+                                        if (selected) {
+                                            _mode = 1;
+                                            _propsMenuOthersIndex = index;
+                                        }
+                                    }
+                                } else {
+                                    for (var p = 0; p < _propSearchResult.Props[_propSearchCategoryIndex].Length; p++) {
+                                        var (prop, originalIndex) = _propSearchResult.Props[_propSearchCategoryIndex][p];
+
+                                        var selected = ImGui.Selectable(prop.Name, _propSearchIndex == p);
+
+                                        if (selected) {
+                                            _propSearchIndex = p;
+                                            _mode = 1;
+                                            _propsMenuOthersIndex = originalIndex;
                                         }
 
-                                        ImGui.BeginTooltip();
-                                        rlImGui.ImageRenderTexture(_propTooltip);
-                                        ImGui.EndTooltip();
-                                    }
-                                    
-                                    if (selected) {
-                                        _mode = 1;
-                                        _propsMenuOthersIndex = index;
+                                        if (ImGui.IsItemHovered())
+                                        {
+                                            if (_hoveredCategoryIndex != _propsMenuOthersCategoryIndex ||
+                                                _hoveredIndex != originalIndex ||
+                                                _previousRootCategory != _menuRootCategoryIndex)
+                                            {
+                                                _hoveredCategoryIndex = _propsMenuOthersCategoryIndex;
+                                                _hoveredIndex = originalIndex;
+                                                _previousRootCategory = _menuRootCategoryIndex;
+                                                
+                                                UpdatePropTooltip();
+                                            }
+
+                                            ImGui.BeginTooltip();
+                                            rlImGui.ImageRenderTexture(_propTooltip);
+                                            ImGui.EndTooltip();
+                                        }
                                     }
                                 }
                                 ImGui.EndListBox();
@@ -4059,7 +4484,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     for (var i = 0; i < _selected.Length; i++) _selected[i] = true;
                 }
 
-                if (ImGui.BeginListBox("Props", ImGui.GetContentRegionAvail() with { Y = ImGui.GetContentRegionAvail().Y - 330 }))
+                if (ImGui.BeginListBox("Props", ImGui.GetContentRegionAvail() with { Y = ImGui.GetContentRegionAvail().Y - 350 }))
                 {
                     for (var index = 0; index < GLOBALS.Level.Props.Length; index++)
                     {
@@ -4142,6 +4567,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                     ImportRopeModels();
                 }
+
+                //
+
+                rlImGui.ImageRenderTexture(_propModeIndicatorsRT);
+
+                //
                 
                 ImGui.SeparatorText("Selected Prop Options");
                 
@@ -4386,6 +4817,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             {
                                 _shouldRedrawLevel = true;
                                 if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+
+                                Utils.Restrict(ref handlePointNumber, 1);
                             }
 
                             var quads = GLOBALS.Level.Props[currentModel.index].prop.Quads;

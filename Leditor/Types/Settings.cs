@@ -185,15 +185,45 @@ public class TileEditorSettings
     }
 }
 
-public class LightEditor(
-    ConColor background, 
-    ConColor levelBackgroundLight, 
-    ConColor levelBackgroundDark
-)
+public class LightEditorSettings
 {
-    public ConColor Background { get; set; } = background;
-    public ConColor LevelBackgroundLight { get; set; } = levelBackgroundLight;
-    public ConColor LevelBackgroundDark { get; set; } = levelBackgroundDark;
+    public ConColor Background { get; set; }
+    public ConColor LevelBackgroundLight { get; set; }
+    public ConColor LevelBackgroundDark { get; set; }
+
+    public enum ScreenRelativePosition { 
+        TopLeft, 
+        TopRight, 
+        BottomLeft, 
+        BottomRight, 
+        MiddleBottom, 
+        MiddleTop 
+    }
+
+    public ScreenRelativePosition LightIndicatorPosition { get; set; }
+
+    public LightEditorSettings()
+    {
+        Background = Color.Blue;
+        LevelBackgroundLight = Color.Green;
+        LevelBackgroundDark = Color.Yellow;
+
+        LightIndicatorPosition = ScreenRelativePosition.TopLeft;
+    }
+
+    public LightEditorSettings(
+        ConColor background, 
+        ConColor levelBackgroundLight, 
+        ConColor levelBackgroundDark,
+        ScreenRelativePosition lightIndicatorPos
+    )
+    {
+        Background = background;
+        LevelBackgroundLight = levelBackgroundLight;
+        LevelBackgroundDark = levelBackgroundDark;
+
+        LightIndicatorPosition = lightIndicatorPos;
+    }
 }
 
 public class Experimental(bool newGeometryEditor = false)
@@ -328,7 +358,7 @@ public class Settings
     public GeoEditor GeometryEditor { get; set; }
     public TileEditorSettings TileEditor { get; set; }
     public CameraEditorSettings CameraSettings { get; set; }
-    public LightEditor LightEditor { get; set; }
+    public LightEditorSettings LightEditor { get; set; }
     public EffectsSettings EffectsSettings { get; set; }
     public PropEditor PropEditor { get; set; }
     public Experimental Experimental { get; set; }
@@ -342,10 +372,11 @@ public class Settings
         GeometryEditor = new(new LayerColors(Color.Black with { A = 255 }, Color.Green with { A = 70 }, Color.Red with { A = 70 }), Color.Blue with { A = 50 });
         TileEditor = new();
         CameraSettings = new();
-        LightEditor = new LightEditor(
+        LightEditor = new LightEditorSettings(
             background: new ConColor(66, 108, 245, 255),
             levelBackgroundLight: Color.White,
-            levelBackgroundDark: new Color(200, 0, 0, 255));
+            levelBackgroundDark: new Color(200, 0, 0, 255),
+            LightEditorSettings.ScreenRelativePosition.TopLeft);
         EffectsSettings = new(
             Color.Green, 
             Color.Yellow, 
@@ -364,7 +395,7 @@ public class Settings
         GeoEditor geometryEditor,
         TileEditorSettings tileEditor,
         CameraEditorSettings cameraEditorSettings,
-        LightEditor lightEditor,
+        LightEditorSettings lightEditor,
         EffectsSettings effectsSettings,
         PropEditor propEditor,
         Experimental experimental

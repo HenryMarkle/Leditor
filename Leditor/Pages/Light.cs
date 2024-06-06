@@ -105,6 +105,18 @@ internal class LightEditorPage : EditorPage
         _shouldRedrawLevel = true;
     }
 
+    private Vector2 GetIndicatorPosition() => GLOBALS.Settings.LightEditor.LightIndicatorPosition switch
+    {
+        LightEditorSettings.ScreenRelativePosition.TopLeft => new Vector2(100, 130),
+        LightEditorSettings.ScreenRelativePosition.TopRight => new Vector2(GetScreenWidth() - 100, 130),
+        LightEditorSettings.ScreenRelativePosition.BottomLeft => new Vector2(100, GetScreenHeight() - 100),
+        LightEditorSettings.ScreenRelativePosition.BottomRight => new Vector2(GetScreenWidth() - 100, GetScreenHeight() - 100),
+        LightEditorSettings.ScreenRelativePosition.MiddleBottom => new Vector2((GetScreenWidth() - 100)/2f, GetScreenHeight() - 100),
+        LightEditorSettings.ScreenRelativePosition.MiddleTop => new Vector2((GetScreenWidth() - 100)/2f, 130),
+
+        _ => new Vector2(100, 100)
+    };
+
     public override void Draw()
     {
         
@@ -113,7 +125,7 @@ internal class LightEditorPage : EditorPage
         var mouse = GetMousePosition();
         var worldMouse = GetScreenToWorld2D(mouse, _camera);
         
-        var indicatorOrigin = new Vector2(100, GetScreenHeight() - 100);
+        var indicatorOrigin = GetIndicatorPosition();
 
         var indicatorPoint = new Vector2(
             indicatorOrigin.X + (float)((15 + GLOBALS.Level.LightFlatness * 7) * Math.Cos(float.DegreesToRadians(GLOBALS.Level.LightAngle + 90))),
@@ -510,15 +522,15 @@ internal class LightEditorPage : EditorPage
             #region Indicator
 
             DrawCircleLines(
-                100,
-                GetScreenHeight() - 100,
+                (int)indicatorOrigin.X,
+                (int)indicatorOrigin.Y,
                 50.0f,
                 new(255, 0, 0, 255)
             );
 
             DrawCircleLines(
-                100,
-                GetScreenHeight() - 100,
+                (int)indicatorOrigin.X,
+                (int)indicatorOrigin.Y,
                 15 + (GLOBALS.Level.LightFlatness * 7),
                 new(255, 0, 0, 255)
             );
@@ -689,6 +701,12 @@ internal class LightEditorPage : EditorPage
                 if (settingsOpened)
                 {
                     var availableSpace = ImGui.GetContentRegionAvail();
+
+                    var liPos = (int)GLOBALS.Settings.LightEditor.LightIndicatorPosition;
+                    ImGui.SetNextItemWidth(100);
+                    if (ImGui.Combo("Light Indicator Position", ref liPos, "Normal\0Copy\0Paste With Geo\0Paste Without Geo\0Auto Pipes\0Auto Box")) {
+                        GLOBALS.Settings.LightEditor.LightIndicatorPosition = (LightEditorSettings.ScreenRelativePosition)liPos;
+                    }
                     
                     Vector3 bgColorVec = GLOBALS.Settings.LightEditor.Background;
                     
