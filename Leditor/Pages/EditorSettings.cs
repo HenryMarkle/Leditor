@@ -298,6 +298,12 @@ internal class SettingsPage : EditorPage
                         if (ImGui.Checkbox("Allow Undefined Tiles", ref allowUndefinedTiles)) {
                             GLOBALS.Settings.TileEditor.AllowUndefinedTiles = allowUndefinedTiles;
                         }
+
+                        //
+
+                        ImGui.SeparatorText("TESTING");
+
+                        Printers.ImGui.ParseObject(GLOBALS.Settings.GeneralSettings);
                     }
                         break;
 

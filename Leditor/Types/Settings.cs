@@ -326,27 +326,72 @@ public class GeneralSettings(
     string renderingAssetsPath = ""
     )
 {
+    [SettingName("Developer Mode", Hidden = true)]
     public bool DeveloperMode { get; set; } = developerMode;
+
+    [SettingName("Default Font")]
     public bool DefaultFont { get; set; } = defaultFont;
+    
+    [SettingName("Global Camera")]
     public bool GlobalCamera { get; set; } = globalCamera;
+
+    [SettingName("Shortcuts Window")]
     public bool ShortcutWindow { get; set; } = shortcutWindow;
+    
+    [SettingName("Dark Theme")]
     public bool DarkTheme { get; set; } = darkTheme;
+    
+    [SettingName("Cache Rendering Runtime", Description = "Initializes the renderer ahead of time for faster rendering, at the cost of longer program startup time.")]
     public bool CacheRendererRuntime { get; set; } = cacheRendererRuntime;
+    
+    [SettingName("Linear Zooming", Disabled = true)]
     public bool LinearZooming { get; set; } = linearZooming;
+
+    [SettingName("Default Zoom")]
     public float DefaultZoom { get; set; } = defaultZoom;
+
+    [SettingName("Cycle Menus")]
     public bool CycleMenus { get; set; } = cycleMenus;
+
+    [SettingName("Changing Categories Resets Index")]
     public bool ChangingCategoriesResetsIndex { get; set; } = changingCategoriesResetsIndex;
+
+    [SettingName("Draw Tile Mode", Hidden = true)]
     public TileDrawMode DrawTileMode { get; set; } = drawTileMode;
+
+    [SettingName("Draw Prop Mode", Hidden = true)]
     public PropDrawMode DrawPropMode { get; set; } = drawPropMode;
+
+    [SettingName("Ruler")]
     public bool IndexHint { get; set; } = indexHint;
+
+    [SettingName("High Layer Contrast", Hidden = true)]
     public bool HighLayerContrast { get; set; } = highLayerContrast;
+
+    [SettingName("Show Preceeding Layers", Hidden = true)]
     public bool VisiblePrecedingUnfocusedLayers { get; set; } = visiblePrecedingUnfocusedLayers;
+
+    [SettingName("Crop Tile Previews", Hidden = true)]
     public bool CropTilePreviews { get; set; } = cropTilePreviews;
+
+    [SettingName("Auto-Save")]
     public bool AutoSave { get; set; } = autoSave;
+
+    [SettingName("Auto-Save (in seconds)")]
+    [IntBounds(30)]
     public int AutoSaveSeconds { get; set; } = autoSaveSeconds < 30 ? 30 : autoSaveSeconds;
+    
+    [SettingName("Water Opacity", Hidden = true)]
     public byte WaterOpacity { get; set; } = waterOpacity;
+
+    [SettingName("Water", Hidden = true)]
     public bool Water { get; set; } = water;
+
+    [SettingName("Navigation Bar")]
     public bool Navbar { get; set; } = navbar;
+
+    [SettingName("Rendering Assets Path", Description = "Leave empty for default directory")]
+    [StringBounds(0, MaxLength = 256)]
     public string RenderingAssetsPath { get; set; } = renderingAssetsPath;
 }
 

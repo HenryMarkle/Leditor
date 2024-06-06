@@ -7244,5 +7244,100 @@ internal static class Printers
 
             return selected;
         }
+    
+        internal static void ParseObject(object? obj) {
+            if (obj is null) return;
+
+            var properties = obj
+                .GetType()
+                .GetProperties()
+                .Select(property => {
+                    var attr = (SettingName?)property.GetCustomAttributes(typeof(SettingName), false).FirstOrDefault();
+
+                    return (attr, property);
+                })
+                .Where(p => (p.attr?.Hidden ?? false) != true)
+                .GroupBy(p => p.attr?.Group ?? "");
+
+
+
+            foreach (var group in properties) {
+                if (!string.IsNullOrEmpty(group.Key)) ImGuiNET.ImGui.SeparatorText(group.Key);
+
+                foreach (var (attribute, setting) in group) {
+                    var type = setting.PropertyType;
+
+                    if (type == typeof(bool)) {
+                        var value = ((bool?) setting.GetValue(obj)) ?? false;
+                        
+                        if (attribute?.Disabled ?? false) ImGuiNET.ImGui.BeginDisabled();
+
+                        if (ImGuiNET.ImGui.Checkbox(attribute?.Name ?? setting.Name, ref value)) {
+                            setting.SetValue(obj, value);
+                        }
+                    } else if (type == typeof(int)) {
+                        var value = ((int?) setting.GetValue(obj)) ?? 0;
+                        
+                        if (attribute?.Disabled ?? false) ImGuiNET.ImGui.BeginDisabled();
+
+                        if (ImGuiNET.ImGui.InputInt(attribute?.Name ?? setting.Name, ref value)) {
+                            var bounds = (IntBounds?) setting.GetCustomAttributes(typeof(IntBounds), false).FirstOrDefault();
+                            
+                            if (bounds is not null) {
+
+                                if (bounds.Max >= bounds.Min) {
+                                    Utils.Restrict(ref value, bounds.Min, bounds.Max);
+                                } else {
+                                    Utils.Restrict(ref value, bounds.Min);
+                                }
+                            }
+                            
+                            setting.SetValue(obj, value);
+                        }
+
+                    } else if (type == typeof(float)) {
+                        var value = ((float?) setting.GetValue(obj)) ?? 0;
+                        
+                        if (attribute?.Disabled ?? false) ImGuiNET.ImGui.BeginDisabled();
+
+                        if (ImGuiNET.ImGui.InputFloat(attribute?.Name ?? setting.Name, ref value)) {
+                            var bounds = (FloatBounds?) setting.GetCustomAttributes(typeof(FloatBounds), false).FirstOrDefault();
+                            
+                            if (bounds is not null) {
+
+                                if (bounds.Max >= bounds.Min) {
+                                    Utils.Restrict(ref value, bounds.Min, bounds.Max);
+                                } else {
+                                    Utils.Restrict(ref value, bounds.Min);
+                                }
+                            }
+                            
+                            setting.SetValue(obj, value);
+                        }
+                    } else if (type == typeof(string)) {
+                        var value = ((string?) setting.GetValue(obj)) ?? "";
+                        
+                        if (attribute?.Disabled ?? false) ImGuiNET.ImGui.BeginDisabled();
+
+                        var bounds = (StringBounds?) setting.GetCustomAttributes(typeof(StringBounds), false).FirstOrDefault();
+
+                        if (ImGuiNET.ImGui.InputText(attribute?.Name ?? setting.Name, ref value, bounds?.MaxLength ?? 256)) {
+                            setting.SetValue(obj, value);
+                        }
+                    }
+
+
+                    if (!string.IsNullOrEmpty(attribute?.Description) && ImGuiNET.ImGui.IsItemHovered()) {
+                        ImGuiNET.ImGui.BeginTooltip();
+
+                        ImGuiNET.ImGui.Text(attribute!.Description);
+
+                        ImGuiNET.ImGui.EndTooltip();
+                    }
+
+                    if (attribute?.Disabled ?? false) ImGuiNET.ImGui.EndDisabled();
+                }
+            }
+        }
     }
 }
