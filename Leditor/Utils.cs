@@ -2826,6 +2826,8 @@ internal static class Utils
 
     internal static IEnumerable<(string, string)> GetShortcutStrings(object? obj)
     {
+        if (obj is null) return [];
+
         var properties = obj.GetType().GetProperties();
 
         List<(string, string)> pairs = [];
@@ -2835,9 +2837,14 @@ internal static class Utils
             if (property.PropertyType != typeof(KeyboardShortcut) && property.PropertyType != typeof(MouseShortcut)) continue;
             {
                 var name = property.Name;
+                
+                var attr = (ShortcutName?) property
+                    .GetCustomAttributes(typeof(ShortcutName), false)
+                    .FirstOrDefault();
+
                 var shortcut = property.GetValue(obj);
                     
-                pairs.Add((name, shortcut?.ToString() ?? ""));
+                pairs.Add((attr?.Name ?? name ?? "Unknown", shortcut?.ToString() ?? ""));
             }
         }
 

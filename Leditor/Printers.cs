@@ -7108,14 +7108,14 @@ internal static class Printers
         {
             var shortcuts = editorShortcuts.CachedStrings;
 
-            var expanded = ImGuiNET.ImGui.Begin("Shortcuts");
+            var expanded = ImGuiNET.ImGui.Begin("Shortcuts##EditorShortcuts");
             var pos = ImGuiNET.ImGui.GetWindowPos();
             var size = ImGuiNET.ImGui.GetWindowSize();
             
             if (expanded)
             {
-                if (ImGuiNET.ImGui.BeginTable("##Shortcuts", 2, ImGuiNET.ImGuiTableFlags.RowBg)) {
-                    
+                if (ImGuiNET.ImGui.BeginTable($"##Shortcuts", 2, ImGuiNET.ImGuiTableFlags.RowBg)) {
+
                     ImGuiNET.ImGui.TableSetupColumn("Name");
                     ImGuiNET.ImGui.TableSetupColumn("Combination");
 
@@ -7130,14 +7130,15 @@ internal static class Printers
 
                         ImGuiNET.ImGui.TableSetColumnIndex(1);
                         ImGuiNET.ImGui.Text(shortcut);
+
                     }
                     
                     ImGuiNET.ImGui.EndTable();
                 }
 
                 
+                ImGuiNET.ImGui.End();
             }
-            ImGuiNET.ImGui.End();
 
             return new Rectangle(pos.X, pos.Y, size.X, size.Y);
         }
