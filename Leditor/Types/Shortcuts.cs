@@ -1,3 +1,5 @@
+using System.Net.Mail;
+
 namespace Leditor.Types;
 
 public interface IShortcut { 
@@ -392,6 +394,10 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut PropSelectionModifier { get; set; } = new(KeyboardKey.LeftControl, ctrl: true);
     
     public KeyboardShortcut SelectPropsAlt { get; set; } = KeyboardKey.Null;
+
+
+    public KeyboardShortcut ActivateSearch { get; set; } = new(KeyboardKey.F, ctrl:true, shift:false, alt:false);
+    
     
     public MouseShortcut SelectProps { get; set; } = MouseButton.Right;
 

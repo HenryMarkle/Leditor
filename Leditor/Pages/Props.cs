@@ -4085,10 +4085,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EscapeClearsAll
                             );
 
-                            // if (_shortcuts.ActivateSearch.Check(ctrl, shift, alt)) {
-                            //     ImGui.SetItemDefaultFocus();
-                            //     ImGui.SetKeyboardFocusHere(-1);
-                            // }
+                            if (_shortcuts.ActivateSearch.Check(ctrl, shift, alt)) {
+                                ImGui.SetItemDefaultFocus();
+                                ImGui.SetKeyboardFocusHere(-1);
+                            }
                             
                             if (textChanged) {
                                 SearchTiles();
@@ -4271,6 +4271,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 100, 
                                 ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EscapeClearsAll
                             );
+
+                            if (_shortcuts.ActivateSearch.Check(ctrl, shift, alt)) {
+                                ImGui.SetItemDefaultFocus();
+                                ImGui.SetKeyboardFocusHere(-1);
+                            }
 
                             if (textChanged) {
                                 SearchProps();
