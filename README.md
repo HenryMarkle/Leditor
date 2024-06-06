@@ -11,26 +11,36 @@ This project is still work-in-progress (WIP). Expect bugs and missing features, 
 Clone the repository
 
 ```bash
-git clone https://github.com/HenryMarkle/Leditor.git
+git clone --recursive https://github.com/HenryMarkle/Leditor.git
 ```
-
-And inside the solution, clone the renderer submodule
-
-```bash
-git clone --branch embedded https://github.com/HenryMarkle/Drizzle
-```
-
-Note: Make sure the build is in `release` mode.
 
 ### Step Two: Build the renderer
 
-Inside the /Drizzle directory, run the two commands in sequence:
+Move to the newly cloned repo
+
+```bash
+cd Leditor
+```
+
+Then into the `/Drizzle` directory
+
+```bash
+cd Drizzle
+```
+
+Run the two commands in sequence:
 
 ```bash
 dotnet run --project Drizzle.Transpiler
 ```
 ```bash
 dotnet build --configuration Release
+```
+
+Go back to the top level.
+
+```bash
+cd ..
 ```
 
 ### Step Three: Build the entire solution
@@ -40,4 +50,7 @@ Run the command at the top level of the solution:
 dotnet build --configuration Release
 ```
 
-Finally, copy the `/assets` folder to the newly built's direcroty.
+### Step Four: Copy the assets
+
+Finally, copy the `/assets` folder to the newly built's directory.
+Which is usually placed in `/Leditor/bin/Release/net8.0/`.
