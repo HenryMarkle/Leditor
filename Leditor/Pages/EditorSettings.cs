@@ -814,6 +814,9 @@ internal class SettingsPage : EditorPage
                         var assignSelectPropsKeyboard = ImGui.Button($"Select Props: {GLOBALS.Settings.Shortcuts.PropsEditor.SelectPropsAlt}");
                         var assignToggleNoCollisionPlacement = ImGui.Button($"Toggle No-Collision Placement: {GLOBALS.Settings.Shortcuts.PropsEditor.ToggleNoCollisionPropPlacement}");
                         var assignCycleVariations = ImGui.Button($"Cycle Variations: {GLOBALS.Settings.Shortcuts.PropsEditor.CycleVariations}");
+                        var assignActivateSearch = ImGui.Button($"Cycle Variations: {GLOBALS.Settings.Shortcuts.PropsEditor.ActivateSearch}");
+                        var assignUndo = ImGui.Button($"Undo: {GLOBALS.Settings.Shortcuts.PropsEditor.Undo}");
+                        var assignRedo = ImGui.Button($"Redo: {GLOBALS.Settings.Shortcuts.PropsEditor.Redo}");
 
                         ImGui.SeparatorText("Selected Props Actions");
                         
@@ -849,6 +852,9 @@ internal class SettingsPage : EditorPage
                         if (assignToggleLayer3Tiles) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToggleLayer3Tiles;
                         if (assignToNextInnerCategory) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToNextInnerCategory;
                         if (assignToPreviousInnerCategory) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ToPreviousInnerCategory;
+                        if (assignActivateSearch) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.ActivateSearch;
+                        if (assignUndo) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.Undo;
+                        if (assignRedo) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.Redo;
                         
                         if (assignPlacePropAlt) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.PlacePropAlt;
                         if (assignPanAlt) _shortcutToAssign = GLOBALS.Settings.Shortcuts.PropsEditor.DragLevelAlt;

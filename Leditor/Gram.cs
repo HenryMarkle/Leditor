@@ -104,7 +104,7 @@ public class GeoGram(int limit)
     }
 }
 
-public class Gram(int limit)
+public class TileGram(int limit)
 {
     public interface IAction { }
 
@@ -180,4 +180,50 @@ public class Gram(int limit)
         : ISingleMatrixAction<(TileCell, RunCell)>;
     public record struct GroupAction<TG>(IEnumerable<ISingleAction<TG>> Actions) : IGroupAction<TG>;
 
+}
+
+public class PropGram {
+    private LinkedList<(InitPropType type, Data.Tiles.TileDefinition? tile, (int category, int index) position, Prop prop)[]> _snapshots;
+    private LinkedListNode<(InitPropType type, Data.Tiles.TileDefinition? tile, (int category, int index) position, Prop prop)[]>? _current;
+
+    public (InitPropType type, Data.Tiles.TileDefinition? tile, (int category, int index) position, Prop prop)[]? CurrentAction => _current?.Value;
+
+    public int Limit { get; set; }
+
+    public PropGram(int limit) {
+        _snapshots = [];
+        Limit = limit;
+    }
+
+    public void Proceed((InitPropType type, Data.Tiles.TileDefinition? tile, (int category, int index) position, Prop prop)[] snapshot) {
+        var newArray = new (InitPropType type, Data.Tiles.TileDefinition? tile, (int category, int index) position, Prop prop)[snapshot.Length];
+
+        for (var i = 0; i < snapshot.Length; i++) {
+            newArray[i] = snapshot[i];
+            newArray[i].prop = new Prop(snapshot[i].prop.Depth, snapshot[i].prop.Name, snapshot[i].prop.IsTile, snapshot[i].prop.Quads) {
+                Extras = new PropExtras(snapshot[i].prop.Extras.Settings.Clone(), [..snapshot[i].prop.Extras.RopePoints])
+            };
+        }
+        
+        if (_current is null or { Next: null }) {
+            _snapshots.AddLast(newArray);
+            _current = _snapshots.Last;
+            return;
+        }
+
+        _snapshots.AddAfter(_current, newArray);
+        _current = _current.Next;
+
+        if (_snapshots.Count > Limit) {
+            _snapshots.RemoveFirst();
+        }
+    }
+
+    public void Undo() {
+        _current = _current?.Previous ?? _current;
+    }
+
+    public void Redo() {
+        _current = _current?.Next ?? _current;
+    }
 }

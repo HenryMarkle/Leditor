@@ -394,10 +394,14 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut PropSelectionModifier { get; set; } = new(KeyboardKey.LeftControl, ctrl: true);
     
     public KeyboardShortcut SelectPropsAlt { get; set; } = KeyboardKey.Null;
+    
+
+    public KeyboardShortcut Undo { get; set; } = new(KeyboardKey.Z, ctrl:true, shift:false, alt:false);
+    public KeyboardShortcut Redo { get; set; } = new(KeyboardKey.Z, ctrl:true, shift:true, alt:false);
 
 
     public KeyboardShortcut ActivateSearch { get; set; } = new(KeyboardKey.F, ctrl:true, shift:false, alt:false);
-    
+
     
     public MouseShortcut SelectProps { get; set; } = MouseButton.Right;
 

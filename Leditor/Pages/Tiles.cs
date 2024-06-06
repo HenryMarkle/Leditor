@@ -239,7 +239,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 ? ForcePlaceTileWithGeo(resolved.Tile, resolved.Coords) 
                 : ForcePlaceTileWithoutGeo(resolved.Tile, resolved.Coords);
             
-            GLOBALS.Gram.Proceed(new Gram.GroupAction<TileCell>(actions));
+            GLOBALS.Gram.Proceed(new TileGram.GroupAction<TileCell>(actions));
         }        
     }
     
@@ -346,7 +346,7 @@ internal class TileEditorPage : EditorPage, IDisposable
         }
     }
 
-    private readonly List<Gram.ISingleMatrixAction<TileCell>> _tempActions = [];
+    private readonly List<TileGram.ISingleMatrixAction<TileCell>> _tempActions = [];
 
     /// <summary>
     /// Has no regard to matrix bounds and gets unscaled coords of a matrix
@@ -471,11 +471,11 @@ internal class TileEditorPage : EditorPage, IDisposable
         GLOBALS.Gram.Undo();
         return;
 
-        void UndoThis(Gram.IAction action)
+        void UndoThis(TileGram.IAction action)
         {
             switch (action)
             {
-                case Gram.TileAction tileAction:
+                case TileGram.TileAction tileAction:
                 {
                     if (!IsCoordsInBounds(tileAction.Position)) return;
 
@@ -489,7 +489,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 }
                     break;
 
-                case Gram.TileGeoAction tileGeoAction:
+                case TileGram.TileGeoAction tileGeoAction:
                 {
                     if (!IsCoordsInBounds(tileGeoAction.Position)) return;
 
@@ -500,7 +500,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 }
                     break;
                 
-                case Gram.GroupAction<TileCell> groupAction:
+                case TileGram.GroupAction<TileCell> groupAction:
                     foreach (var a in groupAction.Actions.Reverse()) UndoThis(a);
                     break;
             }
@@ -515,11 +515,11 @@ internal class TileEditorPage : EditorPage, IDisposable
         UndoThis(currentAction);
         return;
 
-        void UndoThis(Gram.IAction action)
+        void UndoThis(TileGram.IAction action)
         {
             switch (action)
             {
-                case Gram.TileAction tileAction:
+                case TileGram.TileAction tileAction:
                 {
                     if (!IsCoordsInBounds(tileAction.Position)) return;
 
@@ -533,7 +533,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 }
                     break;
 
-                case Gram.TileGeoAction tileGeoAction:
+                case TileGram.TileGeoAction tileGeoAction:
                 {
                     if (!IsCoordsInBounds(tileGeoAction.Position)) return;
                     
@@ -544,16 +544,16 @@ internal class TileEditorPage : EditorPage, IDisposable
                 }
                     break;
                 
-                case Gram.GroupAction<TileCell> groupAction:
+                case TileGram.GroupAction<TileCell> groupAction:
                     foreach (var a in groupAction.Actions) UndoThis(a);
                     break;
             }
         }
     }
     
-    private static List<Gram.ISingleMatrixAction<TileCell>> RemoveMaterial(int x, int y, int z, int radius)
+    private static List<TileGram.ISingleMatrixAction<TileCell>> RemoveMaterial(int x, int y, int z, int radius)
     {
-        List<Gram.ISingleMatrixAction<TileCell>> actions = [];
+        List<TileGram.ISingleMatrixAction<TileCell>> actions = [];
         
         for (var lx = -radius; lx < radius+1; lx++)
         {
@@ -573,7 +573,7 @@ internal class TileEditorPage : EditorPage, IDisposable
 
                 var newCell = new TileCell { Type = TileType.Default, Data = new TileDefault() };
                 
-                actions.Add(new Gram.TileAction((lx, ly, x), cell, newCell));
+                actions.Add(new TileGram.TileAction((lx, ly, x), cell, newCell));
                 
                 GLOBALS.Level.TileMatrix[matrixY, matrixX, z] = newCell;
             }
@@ -582,11 +582,11 @@ internal class TileEditorPage : EditorPage, IDisposable
         return actions;
     }
     
-    private static List<Gram.ISingleMatrixAction<TileCell>> PlaceMaterial((string name, Color color) material, (int x, int y, int z) position, int radius)
+    private static List<TileGram.ISingleMatrixAction<TileCell>> PlaceMaterial((string name, Color color) material, (int x, int y, int z) position, int radius)
     {
         var (x, y, z) = position;
 
-        List<Gram.ISingleMatrixAction<TileCell>> actions = [];
+        List<TileGram.ISingleMatrixAction<TileCell>> actions = [];
 
         for (var lx = -radius; lx < radius+1; lx++)
         {
@@ -606,7 +606,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 if (cell.Type == TileType.Material && !GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials) continue;
 
                 var newCell = new TileCell { Type = TileType.Material, Data = new TileMaterial(material.name) }; // waste of space, ik
-                actions.Add(new Gram.TileAction((matrixX, matrixY, z), cell, newCell));
+                actions.Add(new TileGram.TileAction((matrixX, matrixY, z), cell, newCell));
                 
                 GLOBALS.Level.TileMatrix[matrixY, matrixX, z] = newCell;
                 GLOBALS.Level.MaterialColors[matrixY, matrixX, z] = material.color;
@@ -616,13 +616,13 @@ internal class TileEditorPage : EditorPage, IDisposable
         return actions;
     }
 
-    private static List<Gram.ISingleMatrixAction<TileCell>> RemoveTile(int mx, int my, int mz)
+    private static List<TileGram.ISingleMatrixAction<TileCell>> RemoveTile(int mx, int my, int mz)
     {
         while (true)
         {
             var cell = GLOBALS.Level.TileMatrix[my, mx, mz];
 
-            List<Gram.ISingleMatrixAction<TileCell>> actions = [];
+            List<TileGram.ISingleMatrixAction<TileCell>> actions = [];
 
             if (cell.Data is TileHead h)
             {
@@ -634,7 +634,7 @@ internal class TileEditorPage : EditorPage, IDisposable
 
                     GLOBALS.Level.TileMatrix[my, mx, mz] = newCell;
 
-                    return [new Gram.TileAction((mx, my, mz), oldCell, newCell)];
+                    return [new TileGram.TileAction((mx, my, mz), oldCell, newCell)];
                 }
 
                 var data = h;
@@ -669,7 +669,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             var oldCell = GLOBALS.Level.TileMatrix[matrixY, matrixX, mz];
                             var newCell = new TileCell { Type = TileType.Default, Data = new TileDefault() };
 
-                            actions.Add(new Gram.TileAction((matrixX, matrixY, mz), oldCell, newCell));
+                            actions.Add(new TileGram.TileAction((matrixX, matrixY, mz), oldCell, newCell));
 
                             GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = newCell;
                         }
@@ -679,7 +679,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             var oldCell2 = GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1];
                             var newCell2 = new TileCell { Type = TileType.Default, Data = new TileDefault() };
 
-                            actions.Add(new Gram.TileAction((matrixX, matrixY, mz + 1), oldCell2, newCell2));
+                            actions.Add(new TileGram.TileAction((matrixX, matrixY, mz + 1), oldCell2, newCell2));
 
                             GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = newCell2;
                         }
@@ -689,7 +689,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             var oldCell3 = GLOBALS.Level.TileMatrix[matrixY, matrixX, 2];
                             var newCell3 = new TileCell { Type = TileType.Default, Data = new TileDefault() };
 
-                            actions.Add(new Gram.TileAction((matrixX, matrixY, 2), oldCell3, newCell3));
+                            actions.Add(new TileGram.TileAction((matrixX, matrixY, 2), oldCell3, newCell3));
 
                             GLOBALS.Level.TileMatrix[matrixY, matrixX, 2] = newCell3;
                         }
@@ -720,7 +720,7 @@ internal class TileEditorPage : EditorPage, IDisposable
         }
     }
     
-    private static List<Gram.ISingleMatrixAction<TileCell>> ForcePlaceTileWithGeo(
+    private static List<TileGram.ISingleMatrixAction<TileCell>> ForcePlaceTileWithGeo(
         in TileDefinition init,
         (int x, int y, int z) matrixPosition
     )
@@ -736,7 +736,7 @@ internal class TileEditorPage : EditorPage, IDisposable
         // the top-left of the tile
         var start = Raymath.Vector2Subtract(new Vector2(mx, my), head);
         
-        List<Gram.ISingleMatrixAction<TileCell>> actions = [];
+        List<TileGram.ISingleMatrixAction<TileCell>> actions = [];
         
         // remove pre-existing tiles in the way
 
@@ -809,7 +809,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             Data = new TileHead(init)
                         };
                         
-                        actions.Add(new Gram.TileAction(matrixPosition, CopyTileCell(GLOBALS.Level.TileMatrix[my, mx, mz]), CopyTileCell(newHead)));
+                        actions.Add(new TileGram.TileAction(matrixPosition, CopyTileCell(GLOBALS.Level.TileMatrix[my, mx, mz]), CopyTileCell(newHead)));
                         
                         GLOBALS.Level.TileMatrix[my, mx, mz] = newHead;
                     }
@@ -826,7 +826,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                 Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
                             };
                             
-                            actions.Add(new Gram.TileAction((matrixX, matrixY, mz),
+                            actions.Add(new TileGram.TileAction((matrixX, matrixY, mz),
                                 CopyTileCell(GLOBALS.Level.TileMatrix[matrixY, matrixX, mz]), CopyTileCell(newCell)));
                             
                             GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = newCell;
@@ -843,7 +843,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
                         };
                         
-                        actions.Add(new Gram.TileAction((matrixX, matrixY, mz+1),
+                        actions.Add(new TileGram.TileAction((matrixX, matrixY, mz+1),
                             CopyTileCell(GLOBALS.Level.TileMatrix[matrixY, matrixX, mz+1]), CopyTileCell(newerCell)));
                         
                         GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = newerCell;
@@ -859,7 +859,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             Data = new TileBody(mx + 1, my + 1, 3) // <- Indices are incremented by 1 because Lingo is 1-based indexed
                         };
                         
-                        actions.Add(new Gram.TileAction((matrixX, matrixY, 2),
+                        actions.Add(new TileGram.TileAction((matrixX, matrixY, 2),
                             CopyTileCell(GLOBALS.Level.TileMatrix[matrixY, matrixX, 2]), CopyTileCell(newerCell)));
                         
                         GLOBALS.Level.TileMatrix[matrixY, matrixX, 2] = newerCell;
@@ -871,7 +871,7 @@ internal class TileEditorPage : EditorPage, IDisposable
         return actions;
     }
     
-    private static List<Gram.ISingleMatrixAction<TileCell>> ForcePlaceTileWithoutGeo(
+    private static List<TileGram.ISingleMatrixAction<TileCell>> ForcePlaceTileWithoutGeo(
         in TileDefinition init,
         (int x, int y, int z) matrixPosition
     )
@@ -886,7 +886,7 @@ internal class TileEditorPage : EditorPage, IDisposable
         // the top-left of the tile
         var start = Raymath.Vector2Subtract(new(mx, my), head);
         
-        List<Gram.ISingleMatrixAction<TileCell>> actions = [];
+        List<TileGram.ISingleMatrixAction<TileCell>> actions = [];
         
         // Remove pre-existing tile in the way
         for (var y = 0; y < height; y++)
@@ -954,7 +954,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             Data = new TileHead(init)
                         };
                         
-                        actions.Add(new Gram.TileAction(matrixPosition, CopyTileCell(GLOBALS.Level.TileMatrix[my, mx, mz]), CopyTileCell(newHead)));
+                        actions.Add(new TileGram.TileAction(matrixPosition, CopyTileCell(GLOBALS.Level.TileMatrix[my, mx, mz]), CopyTileCell(newHead)));
                         
                         GLOBALS.Level.TileMatrix[my, mx, mz] = newHead;
                     }
@@ -972,7 +972,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             
                             GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = newCell;
                             
-                            actions.Add(new Gram.TileAction(
+                            actions.Add(new TileGram.TileAction(
                                 (matrixX, matrixY, mz),
                                 CopyTileCell(GLOBALS.Level.TileMatrix[matrixY, matrixX, mz]),
                                 CopyTileCell(newCell)));
@@ -988,7 +988,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                         };
                         
                         GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = newerCell;
-                        actions.Add(new Gram.TileAction(
+                        actions.Add(new TileGram.TileAction(
                             (matrixX, matrixY, mz+1),
                             CopyTileCell(GLOBALS.Level.TileMatrix[matrixY, matrixX, mz]),
                             CopyTileCell(newerCell)));
@@ -1457,7 +1457,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                     }
                     if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw.Key)) && _drawClickTracker)
                     {
-                        GLOBALS.Gram.Proceed(new Gram.GroupAction<TileCell>([.._tempActions]));
+                        GLOBALS.Gram.Proceed(new TileGram.GroupAction<TileCell>([.._tempActions]));
                         _tempActions.Clear();
                         
                         _prevPosX = -1;
@@ -1553,7 +1553,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 {
                     if (_shortcuts.Draw.Check(ctrl, shift, alt) || _shortcuts.AltDraw.Check(ctrl, shift, alt))
                     {
-                        List<Gram.ISingleAction<(TileCell, RunCell)>> actions = [];
+                        List<TileGram.ISingleAction<(TileCell, RunCell)>> actions = [];
                         
                         var difX = (int) _prevCopiedRectangle.X - tileMatrixX;
                         var difY = (int) _prevCopiedRectangle.Y - tileMatrixY;
@@ -1576,7 +1576,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                     l1Copy.Data = new TileBody(pos.x - difX, pos.y - difY, GLOBALS.Layer + 1);
                                 }
                                 
-                                actions.Add(new Gram.TileGeoAction(
+                                actions.Add(new TileGram.TileGeoAction(
                                     (mx, my, GLOBALS.Layer), 
                                     (CopyTileCell(GLOBALS.Level.TileMatrix[my, mx, GLOBALS.Layer]), Utils.CopyGeoCell(GLOBALS.Level.GeoMatrix[my, mx, GLOBALS.Layer])), 
                                     (CopyTileCell(l1Copy), Utils.CopyGeoCell(_copyGeoBuffer[y, x, 0]))));
@@ -1596,7 +1596,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                         l2Copy.Data = new TileBody(pos.x - difX, pos.y - difY, GLOBALS.Layer + 1);
                                     }
                                     
-                                    actions.Add(new Gram.TileGeoAction(
+                                    actions.Add(new TileGram.TileGeoAction(
                                         (mx, my, GLOBALS.Layer + 1), 
                                         (CopyTileCell(GLOBALS.Level.TileMatrix[my, mx, GLOBALS.Layer + 1]), Utils.CopyGeoCell(GLOBALS.Level.GeoMatrix[my, mx, GLOBALS.Layer + 1])), 
                                         (CopyTileCell(l2Copy), Utils.CopyGeoCell(_copyGeoBuffer[y, x, 1]))));
@@ -1607,7 +1607,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             }
                         }
                         
-                        GLOBALS.Gram.Proceed(new Gram.GroupAction<(TileCell, RunCell)>(actions));
+                        GLOBALS.Gram.Proceed(new TileGram.GroupAction<(TileCell, RunCell)>(actions));
                         _shouldRedrawLevel = true;
                     }
                 }
@@ -1617,7 +1617,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 {
                     if (_shortcuts.Draw.Check(ctrl, shift, alt) || _shortcuts.AltDraw.Check(ctrl, shift, alt))
                     {
-                        List<Gram.ISingleAction<TileCell>> actions = [];
+                        List<TileGram.ISingleAction<TileCell>> actions = [];
                         
                         var difX = (int) _prevCopiedRectangle.X - tileMatrixX;
                         var difY = (int) _prevCopiedRectangle.Y - tileMatrixY;
@@ -1640,7 +1640,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                     l1Copy.Data = new TileBody(pos.x - difX, pos.y - difY, GLOBALS.Layer + 1);
                                 }
                                 
-                                actions.Add(new Gram.TileAction(
+                                actions.Add(new TileGram.TileAction(
                                     (mx, my, GLOBALS.Layer), 
                                     CopyTileCell(GLOBALS.Level.TileMatrix[my, mx, GLOBALS.Layer]),
                                     CopyTileCell(l1Copy))
@@ -1659,7 +1659,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                                         l2Copy.Data = new TileBody(pos.x - difX, pos.y - difY, GLOBALS.Layer + 1);
                                     }
                                     
-                                    actions.Add(new Gram.TileAction(
+                                    actions.Add(new TileGram.TileAction(
                                         (mx, my, GLOBALS.Layer + 1), 
                                         CopyTileCell(GLOBALS.Level.TileMatrix[my, mx, GLOBALS.Layer + 1]),
                                         CopyTileCell(l2Copy))
@@ -1670,7 +1670,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             }
                         }
                         
-                        GLOBALS.Gram.Proceed(new Gram.GroupAction<TileCell>(actions));
+                        GLOBALS.Gram.Proceed(new TileGram.GroupAction<TileCell>(actions));
                         _shouldRedrawLevel = true;
                     }
                 }
@@ -1776,7 +1776,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                     
                         if (box is null) break;
 
-                        List<Gram.ISingleMatrixAction<TileCell>> actions = [];
+                        List<TileGram.ISingleMatrixAction<TileCell>> actions = [];
 
                         for (var y = 0; y < box.GetLength(0); y ++) {
                             for (var x = 0; x < box.GetLength(1); x++) {
@@ -1797,14 +1797,14 @@ internal class TileEditorPage : EditorPage, IDisposable
 
                                 var oldCell = GLOBALS.Level.TileMatrix[sy, sx, 0];
                                 
-                                var action = new Gram.TileAction(new(x, y, 0), CopyTileCell(oldCell), CopyTileCell(cell));
+                                var action = new TileGram.TileAction(new(x, y, 0), CopyTileCell(oldCell), CopyTileCell(cell));
                                 actions.Add(action);
 
                                 GLOBALS.Level.TileMatrix[sy, sx, 0] = cell;
                             }
                         }
 
-                        GLOBALS.Gram.Proceed(new Gram.GroupAction<TileCell>(actions));
+                        GLOBALS.Gram.Proceed(new TileGram.GroupAction<TileCell>(actions));
 
                         _boxRectangle.X = -1;
                         _boxRectangle.Y = -1;
@@ -1904,7 +1904,7 @@ internal class TileEditorPage : EditorPage, IDisposable
         }
         if (IsMouseButtonReleased(_shortcuts.Erase.Button) && _eraseClickTracker)
         {
-            GLOBALS.Gram.Proceed(new Gram.GroupAction<TileCell>([.._tempActions]));
+            GLOBALS.Gram.Proceed(new TileGram.GroupAction<TileCell>([.._tempActions]));
             _tempActions.Clear();
                         
             _prevPosX = -1;

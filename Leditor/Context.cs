@@ -36,7 +36,7 @@ public sealed class Context(Serilog.ILogger logger, TileDex tileDex) : IDisposab
     private TileDex _tileDex = tileDex;
     private LevelState _level = new(72, 43, (12, 3, 12, 5));
     private string _projectPath = string.Empty;
-    private Gram _gram = new(100);
+    private TileGram _gram = new(100);
     
     private RenderTexture2D _lightMap = Raylib.LoadRenderTexture(72 * 20 + 300, 43 * 20 + 300);
     private RenderTexture2D _levelRender = Raylib.LoadRenderTexture(72 * 20, 43 * 20);
@@ -114,7 +114,7 @@ public sealed class Context(Serilog.ILogger logger, TileDex tileDex) : IDisposab
             _logger?.Debug("Tile dex was updated");
         }
     }
-    public Gram Gram
+    public TileGram Gram
     {
         get => _gram;
         set

@@ -661,5 +661,5 @@ internal static class GLOBALS
     internal static Color LightThemeWaterColor { get; set; } = new(0, 0, 255, 110);
     
     // Should probably be localized
-    internal static Gram Gram { get; set; } = new(100);
+    internal static TileGram Gram { get; set; } = new(100);
 }

@@ -1238,15 +1238,54 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
     private bool _isPropsListHovered;
 
+    private PropGram _gram = new(30);
+
     public PropsEditorPage()
     {
         _camera = new Camera2D { Zoom = 0.8f };
 
         _otherCategoryNames = [..from c in _propCategoriesOnly select c.name];
         _otherNames = GLOBALS.Props.Select(c => c.Select(p => p.Name).ToArray()).ToArray();
+
+        _gram.Proceed(GLOBALS.Level.Props);
     }
 
-    #nullable enable
+    private void Undo() {
+        if (_gram.CurrentAction is null) return;
+
+        _gram.Undo();
+
+        GLOBALS.Level.Props = [.._gram.CurrentAction]; 
+
+        ImportRopeModels();
+
+        _selected = new bool[GLOBALS.Level.Props.Length];
+        _hidden = new bool[GLOBALS.Level.Props.Length];
+
+        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+        else {
+            _shouldRedrawLevel = true;
+        }
+    }
+
+    private void Redo() {
+        _gram.Redo();
+
+        if (_gram.CurrentAction is null) return;
+
+        GLOBALS.Level.Props = [.._gram.CurrentAction];
+
+        ImportRopeModels();
+
+        _selected = new bool[GLOBALS.Level.Props.Length];
+        _hidden = new bool[GLOBALS.Level.Props.Length];
+
+        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+        else {
+            _shouldRedrawLevel = true;
+        }
+    }
+
     public void OnProjectLoaded(object? sender, EventArgs e)
     {
         var lWidth = GLOBALS.Level.Width * 16;
@@ -1563,6 +1602,17 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
         var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
 
+        // Undo
+
+        if (_shortcuts.Undo.Check(ctrl, shift, alt)) {
+            Undo();
+        }
+        
+        // Redo
+
+        if (_shortcuts.Redo.Check(ctrl, shift, alt)) {
+            Redo();
+        }
 
         // handle mouse drag
         if (_shortcuts.DragLevel.Check(ctrl, shift, alt, true) || _shortcuts.DragLevelAlt.Check(ctrl, shift, alt, true))
@@ -2056,12 +2106,16 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
                     }
 
-                    if (_clickTracker && (IsMouseButtonReleased(_shortcuts.PlaceProp.Button) || IsKeyReleased(_shortcuts.PlacePropAlt.Key))) {
-                        _clickTracker = false;
-                    }
-                
-                    if (_lockedPlacement && (IsMouseButtonReleased(_shortcuts.PlaceProp.Button) || IsKeyReleased(_shortcuts.PlacePropAlt.Key))) {
-                        _lockedPlacement = false;
+                    if (IsMouseButtonReleased(_shortcuts.PlaceProp.Button) || IsKeyReleased(_shortcuts.PlacePropAlt.Key)) {
+                        _gram.Proceed(GLOBALS.Level.Props);
+
+                        if (_lockedPlacement) {
+                            _lockedPlacement = false;
+                        }
+
+                        if (_clickTracker) {
+                            _clickTracker = false;
+                        }
                     }
                 }
                 else
@@ -2324,6 +2378,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         _selected = [.._selected, false];
                         _hidden = [.._hidden, false];
+
+                        _gram.Proceed(GLOBALS.Level.Props);
                     }
                 }
                 
@@ -2654,6 +2710,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                     _propsMoveMousePos = _propsMoveMouseAnchor = GetScreenToWorld2D(GetMousePosition(), _camera);
                     _shouldUpdateModeIndicatorsRT = true;
+
+                    if (!_movingProps) {
+                        _gram.Proceed(GLOBALS.Level.Props);
+                    }
                 }
                 // Rotate
                 else if (_shortcuts.ToggleRotatingPropsMode.Check(ctrl, shift, alt) && anySelected)
@@ -2665,6 +2725,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     _editingPropPoints = false;
                     // _ropeMode = false;
                     _shouldUpdateModeIndicatorsRT = true;
+
+                    if (!_rotatingProps) {
+                        _gram.Proceed(GLOBALS.Level.Props);
+                    }
                 }
                 // Scale
                 else if (_shortcuts.ToggleScalingPropsMode.Check(ctrl, shift, alt) && anySelected)
@@ -2679,6 +2743,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     
                     SetMouseCursor(MouseCursor.ResizeNesw);
                     _shouldUpdateModeIndicatorsRT = true;
+
+                    if (_scalingProps) {
+                        _gram.Proceed(GLOBALS.Level.Props);
+                    }
                 }
                 // Hide
                 else if (_shortcuts.TogglePropsVisibility.Check(ctrl, shift, alt) && anySelected)
@@ -2713,6 +2781,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     _editingPropPoints = false;
                     // _ropeMode = false;
                     _shouldUpdateModeIndicatorsRT = true;
+
+                    if (!_stretchingProp) {
+                        _gram.Proceed(GLOBALS.Level.Props);
+                    }
                 }
                 // Delete
                 else if (_shortcuts.DeleteSelectedProps.Check(ctrl, shift, alt) && anySelected)
@@ -2722,8 +2794,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     else {
                         _shouldRedrawLevel = true;
                     }
-
-                    
+   
                     _scalingProps = false;
                     _movingProps = false;
                     _rotatingProps = false;
@@ -2736,6 +2807,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         .Where(v => !v.Item1)
                         .Select(v => GLOBALS.Level.Props[v.Item2])
                         .ToArray();
+
+                    if (_selected.Length != GLOBALS.Level.Props.Length) {
+                        _gram.Proceed(GLOBALS.Level.Props);
+                    }
                     
                     _selected = new bool[GLOBALS.Level.Props.Length]; // Update selected
                     _hidden = new bool[GLOBALS.Level.Props.Length]; // Update hidden
@@ -2773,6 +2848,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         _editingPropPoints = !_editingPropPoints;
                         _ropeMode = false;
                         _shouldUpdateModeIndicatorsRT = true;
+
+                        if (!_editingPropPoints) {
+                            _gram.Proceed(GLOBALS.Level.Props);
+                        }
                     }
                     // Rope mode
                     else if (_shortcuts.ToggleRopeEditingMode.Check(ctrl, shift, alt))
@@ -2790,6 +2869,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         // _editingPropPoints = false;
                         _ropeMode = !_ropeMode;
                         _shouldUpdateModeIndicatorsRT = true;
+
+                        if (!_ropeMode) {
+                            _gram.Proceed(GLOBALS.Level.Props);
+                        }
                     }
                     else if (_shortcuts.DuplicateProps.Check(ctrl, shift, alt)) {
                         // _shouldRedrawLevel = true;
@@ -2825,6 +2908,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         var newSelected = new bool[GLOBALS.Level.Props.Length]; // Update selected
                         var newHidden = new bool[GLOBALS.Level.Props.Length]; // Update hidden
+
+                        if (newSelected.Length != _selected.Length) {
+                            _gram.Proceed(GLOBALS.Level.Props);
+                        }
 
                         for (var i = 0; i < _selected.Length; i++)
                         {
@@ -2879,6 +2966,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                     var newSelected = new bool[GLOBALS.Level.Props.Length]; // Update selected
                     var newHidden = new bool[GLOBALS.Level.Props.Length]; // Update hidden
+
+                    if (newSelected.Length != _selected.Length) {
+                        _gram.Proceed(GLOBALS.Level.Props);
+                    }
 
                     for (var i = 0; i < _selected.Length; i++)
                     {
@@ -2963,9 +3054,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     else {
                         _shouldRedrawLevel = true;
                     }
-
-                    
-                    if (IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) _movingProps = false;
                     
                     // update mouse delta
                     
@@ -3070,6 +3158,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             }
                         }
                     }
+
+                    if (IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) {
+                        _gram.Proceed(GLOBALS.Level.Props);
+
+                        _movingProps = false;
+                    }
                 }
                 else if (_rotatingProps && anySelected)
                 {
@@ -3080,7 +3174,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     }
 
                     
-                    if (IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) _rotatingProps = false;
+                    if (IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) {
+                        _gram.Proceed(GLOBALS.Level.Props);
+                        _rotatingProps = false;
+                    }
 
                     var delta = GetMouseDelta();
                     
