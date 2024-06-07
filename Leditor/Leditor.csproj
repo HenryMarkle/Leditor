@@ -14,6 +14,7 @@
     <!-- <IsAotCompatible>true</IsAotCompatible> -->
     <!-- <PublishSingleFile>true</PublishSingleFile> -->
     <PublishAot>false</PublishAot>
+    <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
