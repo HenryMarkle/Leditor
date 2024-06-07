@@ -2,30 +2,37 @@
 
 Added a tile viewer that allows you to display each tile individually.
 
-### Other
+### New Features
 
-- Fixed some tiles not loading textures on Linux machines.
+- Added the keyboard shortcut `N` in the start screen to automatically navigate to the creation screen.
+- Added the keyboard shortrcut `Enter` in the creation screen to create the project.
+- The position of the layer indicator can now be customized.
+- You can now duplicate selected ropes.
+- The position of the light indicator can be customized, in the light editor.
+- Added search bar to the props editor for `tiles-as-props` and other `categories`.
+- Added undo/redo to the props editor (incomplete).
+- Added a shortcut to toggle `basic view` in the geometry editor.
+- Camera boundries can now use different colors to better differentiate them.
+- You can choose to display camera's inner boundries instead of the outer ones.
+- You can now disable gravity for any type of rope among simulation.
+
+### Changes
+
+- Shortcuts now have saner names.
 - Removed the leading pixel of most, if not all, tiles and props.
 - Minor under-the-hood changes to tile rendering logic.
 - Selecting a prop from the placement menu automatically sets the mode to placement.
 - Selecting a prop from the placed props list automatically sets the mode to selection.
-- Added the keyboard shortcut `N` in the start screen to automatically navigate to the creation screen.
-- Added the keyboard shortrcut `Enter` in the creation screen to create the project.
 - Made the shortcuts window a little nicer.
-- Fixed voxel flat rendering with pallete.
-- The position of the layer indicator can now be customized.
-- Fixed not being able to move rope bezier control handles.
-- Longs are now placed the same way ropes are - by placing each end individually.
-- You can now duplicate selected ropes.
+- Long props are now placed the same way ropes are - by placing each end individually.
 - Moved prop edit mode indicators into the prop list window.
-- The position of the light indicator can be customized, in the light editor.
-- Fixed a crash that could be caused when setting bezier control point count to a negative number, in the props editor.
-- Added search bar to the props editor for `tiles-as-props` and other `categories`.
-- Added undo/redo to the props editor (incomplete).
-- Shortcuts now have saner names.
-- Shortcuts windows now updates properly.
-- Added a shortcut to toggle `basic view` in the geometry editor.
+
+### Fixed
+
+- Fixed some tiles not loading textures on Linux machines.
+- Fixed voxel flat rendering with pallete.
+- Fixed not being able to move rope bezier control handles.
 - Fixed a bug when attempting to toggle props drawing, it'd instead toggle tiles in the geometry editor.
-- Camera boundries now use different colors to better differentiate them.
-- You can choose to display camera's inner boundries instead of the outer ones.
 - Fixed simulation of ropes with zero gravity (thanks, chromosoze!).
+- Fixed a crash that could be caused when setting bezier control point count to a negative number, in the props editor.
+- Shortcuts windows now updates properly.
