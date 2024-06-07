@@ -699,6 +699,7 @@ public class PropsShortcuts : IEditorShortcuts
     private KeyboardShortcut deleteSelectedProps = new(KeyboardKey.D, ctrl: false, shift: false, alt: false);
     private KeyboardShortcut toggleRopePointsEditingMode = new(KeyboardKey.P, ctrl: false, shift: false, alt: false);
     private KeyboardShortcut toggleRopeEditingMode = new(KeyboardKey.B, ctrl: false, shift: false, alt: false);
+    private KeyboardShortcut toggleRopeGravity = new(KeyboardKey.G);
     private KeyboardShortcut cycleSelected = new(KeyboardKey.Null);
     private KeyboardShortcut duplicateProps = new(KeyboardKey.Null);
     private KeyboardShortcut deepenSelectedProps = new(KeyboardKey.Null);
@@ -778,10 +779,14 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut ToggleEditingPropQuadsMode { get => toggleEditingPropQuadsMode; set { toggleEditingPropQuadsMode = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     [ShortcutName("Delete", Group = "Selected Prop Actions")]
     public KeyboardShortcut DeleteSelectedProps { get => deleteSelectedProps; set { deleteSelectedProps = value; CachedStrings = Utils.GetShortcutStrings(this); } }
-    [ShortcutName("Move Rope Segments", Group = "Selected Prop Actions")]
+    [ShortcutName("Move Rope Segments", Group = "Rope Actions")]
     public KeyboardShortcut ToggleRopePointsEditingMode { get => toggleRopePointsEditingMode; set { toggleRopePointsEditingMode = value; CachedStrings = Utils.GetShortcutStrings(this); } }
-    [ShortcutName("Simulate Rope", Group = "Selected Prop Actions")]
+    [ShortcutName("Simulate Rope", Group = "Prop Actions")]
     public KeyboardShortcut ToggleRopeEditingMode { get => toggleRopeEditingMode; set { toggleRopeEditingMode = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Toggle Rope Simulation Gravity", Group = "Prop Actions")]
+    public KeyboardShortcut ToggleRopeGravity { get => toggleRopeGravity; set { toggleRopeGravity = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
     [ShortcutName("Cycle Selected", Group = "Selected Prop Actions")]
     public KeyboardShortcut CycleSelected { get => cycleSelected; set { cycleSelected = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     [ShortcutName("Duplicate", Group = "Selected Prop Actions")]
@@ -796,9 +801,9 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut RotateCounterClockwise { get => rotateCounterClockwise; set { rotateCounterClockwise = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     [ShortcutName("Increase Rope Segments", Group = "Selection or Placement")]
     public KeyboardShortcut IncrementRopSegmentCount { get => incrementRopSegmentCount; set { incrementRopSegmentCount = value; CachedStrings = Utils.GetShortcutStrings(this); } }
-    [ShortcutName("Decrease Rope Segments", Group = "Selection or Placement")]
+    [ShortcutName("Decrease Rope Segments", Group = "Rope Actions")]
     public KeyboardShortcut DecrementRopSegmentCount { get => decrementRopSegmentCount; set { decrementRopSegmentCount = value; CachedStrings = Utils.GetShortcutStrings(this); } }
-    [ShortcutName("Rope Simulation/Bezier Switch", Group = "Selected Prop Actions")]
+    [ShortcutName("Rope Simulation/Bezier Switch", Group = "Rope Actions")]
     public KeyboardShortcut SimulationBeizerSwitch { get => simulationBeizerSwitch; set { simulationBeizerSwitch = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     [ShortcutName("Fast Rotate Clockwise", Group = "Selection or Placement")]
     public KeyboardShortcut FastRotateClockwise { get => fastRotateClockwise; set { fastRotateClockwise = value; CachedStrings = Utils.GetShortcutStrings(this); } }

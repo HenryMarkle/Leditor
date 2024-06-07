@@ -7243,7 +7243,7 @@ internal static class Printers
             return selected;
         }
     
-        internal static void ParseObject(object? obj) {
+        internal static void BindObject(object? obj) {
             if (obj is null) return;
 
             var properties = obj

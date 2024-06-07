@@ -28,3 +28,4 @@ Added a tile viewer that allows you to display each tile individually.
 - Fixed a bug when attempting to toggle props drawing, it'd instead toggle tiles in the geometry editor.
 - Camera boundries now use different colors to better differentiate them.
 - You can choose to display camera's inner boundries instead of the outer ones.
+- Fixed simulation of ropes with zero gravity (thanks, chromosoze!).

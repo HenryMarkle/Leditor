@@ -218,7 +218,7 @@ internal class SettingsPage : EditorPage
                         _ => GLOBALS.Settings.GeneralSettings
                     };
 
-                    Printers.ImGui.ParseObject(settings);
+                    Printers.ImGui.BindObject(settings);
                 } else if (_settingsActiveCategory is 7) {
                     ImGui.ShowStyleEditor();
                 } else {

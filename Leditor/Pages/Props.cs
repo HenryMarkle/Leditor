@@ -1072,6 +1072,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
     private bool _editingPropPoints;
     private bool _ropeMode;
 
+    private bool _ropeModelGravity = true;
+
     private bool _noCollisionPropPlacement;
 
     private byte _stretchAxes;
@@ -1706,6 +1708,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     var (index, _, model, _) = _models.LastOrDefault();
                     
                     if (model is not null && index < GLOBALS.Level.Props.Length) {
+                        if (_shortcuts.ToggleRopeGravity.Check(ctrl, shift, alt)) {
+                            _ropeModelGravity = !_ropeModelGravity;
+                        }
+
                         if (_shortcuts.IncrementRopSegmentCount.Check(ctrl, shift, alt, true)) {
                             _additionalInitialRopeSegments++;
                         }
@@ -1784,7 +1790,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     < -19 => 2,
                                     < -9 => 1,
                                     _ => 0
-                                });
+                                },
+                                _ropeModelGravity);
 
                         if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                         else {
@@ -2554,6 +2561,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     );
 
                     if (fetchedSelected[0].prop.type == InitPropType.Rope) {
+                        if (_shortcuts.ToggleRopeGravity.Check(ctrl, shift, alt)) {
+                            _ropeModelGravity = !_ropeModelGravity;
+                        }
+                        
                         if (_shortcuts.SimulationBeizerSwitch.Check(ctrl, shift, alt)) {
                             
                             // Find the rope model
@@ -2998,7 +3009,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     else {
                         _shouldRedrawLevel = true;
                     }
-
                     
                     var foundRopeList = _models.Where(rope => rope.index == fetchedSelected[0].index);
 
@@ -3017,7 +3027,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     < -19 => 2,
                                     < -9 => 1,
                                     _ => 0
-                                });
+                                }, 
+                                _ropeModelGravity);
                             }
                         }
                         else // bezier
@@ -4892,6 +4903,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                             else _shouldRedrawLevel = true;
                         }
+
+                        ImGui.Checkbox("Gravity", ref _ropeModelGravity);
 
                         if (currentModel.simSwitch) // Simulation mode
                         {
