@@ -216,6 +216,8 @@ internal static class Utils
         Drizzle.Lingo.Runtime.Parser.AstNode.Base waterObj;
         Drizzle.Lingo.Runtime.Parser.AstNode.Base? propsObj;
 
+        Exception? propsLoadException = null;
+
         try {
             obj = await objTask;
         } catch (Exception e) {
@@ -266,8 +268,9 @@ internal static class Utils
 
         try {
             propsObj = propsObjTask is null ? null : await propsObjTask;
-        } catch {
+        } catch (Exception e) {
             propsObj = null;
+            propsLoadException = e;
             // throw new Exception("Failed to parse level project file at line 9", e);
         }
 
@@ -287,8 +290,9 @@ internal static class Utils
 
         try {
             props = Serialization.Importers.GetProps(propsObj);
-        } catch {
+        } catch ( Exception e) {
             props = [];
+            propsLoadException = e;
         }
 
         var lightSettings = Serialization.Importers.GetLightSettings(lightObj);
@@ -337,7 +341,8 @@ internal static class Utils
             Cameras = cams,
             PropsArray = props.ToArray(),
             LightSettings = lightSettings,
-            Name = Path.GetFileNameWithoutExtension(filePath)
+            Name = Path.GetFileNameWithoutExtension(filePath),
+            PropsLoadException = propsLoadException
         };
     }
 

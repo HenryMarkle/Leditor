@@ -27,8 +27,7 @@ internal class SettingsPage : EditorPage
     
     private readonly string[] _settingsCategories = [
         "Global",
-        "Old Geometry Editor",
-        "New Geometry Editor",
+        "Geometry Editor",
         "Tile Editor",
         "Camera Editor",
         "Light Editor",
@@ -206,292 +205,151 @@ internal class SettingsPage : EditorPage
 
             if (ImGui.BeginChild("##SettingsPanel", col2Space))
             {
-                switch (_settingsActiveCategory)
-                {
-                    case 0: // global
-                    {
-                        ImGui.SeparatorText("Misc");
+                if (_settingsActiveCategory is not 7 or 8) {
+                    var settings = _settingsActiveCategory switch {
+                        0 => GLOBALS.Settings.GeneralSettings as object,
+                        1 => GLOBALS.Settings.GeometryEditor,
+                        2 => GLOBALS.Settings.TileEditor,
+                        3 => GLOBALS.Settings.CameraSettings,
+                        4 => GLOBALS.Settings.LightEditor,
+                        5 => GLOBALS.Settings.EffectsSettings,
+                        6 => GLOBALS.Settings.PropEditor,
 
-                        var defaultFont = GLOBALS.Settings.GeneralSettings.DefaultFont;
-                        if (ImGui.Checkbox("Use Default Fonts (requires restart)", ref defaultFont))
-                            GLOBALS.Settings.GeneralSettings.DefaultFont = defaultFont;
-                        
+                        _ => GLOBALS.Settings.GeneralSettings
+                    };
 
-                        var cacheRendererRuntime = GLOBALS.Settings.GeneralSettings.CacheRendererRuntime;
-                        ImGui.Checkbox("Cache Renderer Runtime at Startup", ref cacheRendererRuntime);
-                        if (cacheRendererRuntime != GLOBALS.Settings.GeneralSettings.CacheRendererRuntime)
-                             GLOBALS.Settings.GeneralSettings.CacheRendererRuntime = cacheRendererRuntime;
+                    Printers.ImGui.ParseObject(settings);
+                } else if (_settingsActiveCategory is 7) {
+                    ImGui.ShowStyleEditor();
+                } else {
+                    if (ImGui.BeginChild("##ShortcutsPanel")) {
+                        ImGui.Columns(2);
+                        ImGui.SetColumnWidth(0, 200);
 
-                        if (ImGui.IsItemHovered())
+                        var avail = ImGui.GetContentRegionAvail();
+                        ImGui.SeparatorText("Shortcut Categories");
+                        if (ImGui.BeginListBox("##ShortcutCategories", avail with { Y = avail.Y - 90 })) {
+                            
+                            for (var c = 0; c < _shortcutsCategories.Length; c++) {
+                                var selected = ImGui.Selectable(_shortcutsCategories[c], _shortcutsActiveCategory == c);
+
+                                if (selected) _shortcutsActiveCategory = c;
+                            }
+
+                            ImGui.EndListBox();
+                        }
+
+                        ImGui.Spacing();
+
+                        var resetSelected = ImGui.Button("Reset Shortcuts", col1Space with { Y = 20 });
+                        var saveSelected = ImGui.Button("Save Shortcuts", col1Space with { Y = 20 });
+
+                        if (resetSelected)
                         {
-                            ImGui.BeginTooltip();
-                            ImGui.Text("Initializes the renderer ahead of time for faster rendering, at the cost of longer program startup time.");
-                            ImGui.EndTooltip();
+                            _assigningShortcut = false;
+                            GLOBALS.LockNavigation = false;
+                            _shortcutToAssign = null;
+                            _mouseShortcutToAssign = null;
+
+                            GLOBALS.Settings.Shortcuts = new Shortcuts();
                         }
 
-                        var autoSave = GLOBALS.Settings.GeneralSettings.AutoSave;
-                        if (ImGui.Checkbox("Auto-save", ref autoSave)) {
-                            GLOBALS.AutoSaveTimer.Enabled = GLOBALS.Settings.GeneralSettings.AutoSave = autoSave;
-                        }
-
-                        if (ImGui.IsItemHovered()) {
-                            ImGui.BeginTooltip();
-                            ImGui.Text("Warning: experimental feature");
-                            ImGui.EndTooltip();
-                        }
-
-                        var autoSaveSeconds = GLOBALS.Settings.GeneralSettings.AutoSaveSeconds;
-                        ImGui.SetNextItemWidth(300);
-                        if (ImGui.InputInt("Auto-save in seconds", ref autoSaveSeconds)) {
-                            Utils.Restrict(ref autoSaveSeconds, 30);
-
-                            GLOBALS.Settings.GeneralSettings.AutoSaveSeconds = autoSaveSeconds;
-
-                            GLOBALS.AutoSaveTimer.Interval = autoSaveSeconds * 1000;
-                        }
-                        
-                        var indexHint = GLOBALS.Settings.GeneralSettings.IndexHint;
-                        if (ImGui.Checkbox("Index Hint", ref indexHint))
+                        if (saveSelected)
                         {
-                            GLOBALS.Settings.GeneralSettings.IndexHint = indexHint;
+                            _assigningShortcut = false;
+                            GLOBALS.LockNavigation = false;
+                            _shortcutToAssign = null;
+                            _mouseShortcutToAssign = null;
+                        
+                            try
+                            {
+                                File.WriteAllText(
+                                    GLOBALS.Paths.SettingsPath, 
+                                    JsonSerializer.Serialize(GLOBALS.Settings, GLOBALS.JsonSerializerOptions)
+                                );
+                            }
+                            catch (Exception e)
+                            {
+                                Logger.Error($"Failed to save settings: {e}");
+                            }
                         }
 
-                        var legacyGeo = GLOBALS.Settings.GeometryEditor.LegacyInterface;
-                        if (ImGui.Checkbox("Legacy Geometry Editor", ref legacyGeo))
-                            GLOBALS.Settings.GeometryEditor.LegacyInterface = legacyGeo;
+                        ImGui.NextColumn();
 
-                        var globalCamera = GLOBALS.Settings.GeneralSettings.GlobalCamera;
-                        ImGui.Checkbox("Global Camera", ref globalCamera);
-                        if (globalCamera != GLOBALS.Settings.GeneralSettings.GlobalCamera)
-                            GLOBALS.Settings.GeneralSettings.GlobalCamera = globalCamera;
-
-                        ImGui.BeginDisabled();
-                        var linearZooming = GLOBALS.Settings.GeneralSettings.LinearZooming;
-                        ImGui.Checkbox("Linear Zooming", ref linearZooming);
-                        if (linearZooming != GLOBALS.Settings.GeneralSettings.LinearZooming)
-                            GLOBALS.Settings.GeneralSettings.LinearZooming = linearZooming;
-                        ImGui.EndDisabled();
+                        if (ImGui.BeginChild("##ActiveShortcutPanel")) {
                         
-                        ImGui.SetNextItemWidth(150);
+                            var settings = GLOBALS.Settings;
 
-                        var defaultZoom = GLOBALS.Settings.GeneralSettings.DefaultZoom;
-                        ImGui.InputFloat("Default Zoom", ref defaultZoom, 1f);
-                        GLOBALS.Settings.GeneralSettings.DefaultZoom = defaultZoom;
-                        
-                        ImGui.SeparatorText("Menus");
+                            var shortcutsContainer = _shortcutsActiveCategory switch { 
+                                0 => settings.Shortcuts.GlobalShortcuts as object,
+                                1 => settings.Shortcuts.GeoEditor as object,
+                                2 => settings.Shortcuts.ExperimentalGeoShortcuts as object,
+                                3 => settings.Shortcuts.TileEditor as object,
+                                4 => settings.Shortcuts.CameraEditor as object,
+                                5 => settings.Shortcuts.LightEditor as object,
+                                6 => settings.Shortcuts.EffectsEditor as object,
+                                7 => settings.Shortcuts.PropsEditor as object,
 
-                        var navbar = GLOBALS.Settings.GeneralSettings.Navbar;
-                        if (ImGui.Checkbox("Navigation Bar", ref navbar)) {
-                            GLOBALS.Settings.GeneralSettings.Navbar = navbar;
-                        }
+                                _ => settings.Shortcuts.GlobalShortcuts as object
+                            };
 
-                        var cycleMenus = GLOBALS.Settings.GeneralSettings.CycleMenus;
-                        if (ImGui.Checkbox("Cycle Menus", ref cycleMenus))
-                            GLOBALS.Settings.GeneralSettings.CycleMenus = cycleMenus;
+                            var shortcuts = shortcutsContainer
+                                .GetType()
+                                .GetProperties()
+                                .Where(p => p.PropertyType == typeof(KeyboardShortcut) || p.PropertyType == typeof(MouseShortcut))
+                                .Select(property => {
+                                    var attr = (ShortcutName?) property.GetCustomAttributes(typeof(ShortcutName), false).FirstOrDefault();
 
-                        var resetsIndex = GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex;
-                        if (ImGui.Checkbox("Changing Categories Resets Index", ref resetsIndex))
-                            GLOBALS.Settings.GeneralSettings.ChangingCategoriesResetsIndex = resetsIndex;
+                                    var name = attr?.Name ?? property.Name;
+                                    var combination = property.GetValue(shortcutsContainer);
+                                    var group = attr?.Group ?? "";
+                                    var isMouse = property.PropertyType == typeof(MouseShortcut);
 
-                        var allowUndefinedTiles = GLOBALS.Settings.TileEditor.AllowUndefinedTiles;
+                                    return (property, name, combination, group, isMouse);
+                                });
 
-                        if (ImGui.Checkbox("Allow Undefined Tiles", ref allowUndefinedTiles)) {
-                            GLOBALS.Settings.TileEditor.AllowUndefinedTiles = allowUndefinedTiles;
-                        }
 
-                        //
+                            var mouseShortcuts = shortcuts.Where(s => s.isMouse).GroupBy(s => s.group);
 
-                        ImGui.SeparatorText("TESTING");
+                            if (mouseShortcuts.Any()) ImGui.SeparatorText("Mouse Shortcuts");
 
-                        Printers.ImGui.ParseObject(GLOBALS.Settings.GeneralSettings);
-                    }
-                        break;
+                            foreach (var group in mouseShortcuts) {
+                                foreach (var (property, name, combination, _, isMouse) in group) {
+                                    var clicked =  ImGui.Button($"{name}: {combination}");
 
-                    case 1: // old geometry
-                    {
-                        
-                    }
-                        break;
+                                    if (clicked) {
+                                        _mouseShortcutToAssign = (MouseShortcut?)combination;
+                                    }
+                                }
+                            }
 
-                    case 2: // new geometry
-                    {
-                        ImGui.SeparatorText("Controls");
+                            //
 
-                        var allowOutbounds = GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement;
-                        if (ImGui.Checkbox("Allow features outbounds", ref allowOutbounds)) {
-                            GLOBALS.Settings.GeometryEditor.AllowOutboundsPlacement = allowOutbounds;
-                        }
-                    }
-                        break;
+                            var keyboardShortcuts = shortcuts.Where(s => !s.isMouse).GroupBy(s => s.group);
 
-                    case 3: // tiles
-                    {
-                        
-                    }
-                        break;
+                            if (keyboardShortcuts.Any()) {
+                                ImGui.Spacing();
+                                ImGui.SeparatorText("Keyboard Shortcuts");
+                                ImGui.Spacing();
+                            }
 
-                    case 4: // cameras
-                    {
-                        
-                    }
-                        break;
+                            foreach (var group in keyboardShortcuts) {
 
-                    case 5: // light
-                    {
-                        
-                    }
-                        break;
-
-                    case 6: // effects
-                    {
-                        
-                    }
-                        break;
-
-                    case 7: // props
-                    {
-                        
-
-                    }
-                        break;
-                    case 8: // Style
-                    {
-                        ImGui.ShowStyleEditor();
-                    }
-                        break;
-
-                    case 9: // Shortcuts
-                    {
-                        if (ImGui.BeginChild("##ShortcutsPanel")) {
-                            ImGui.Columns(2);
-                            ImGui.SetColumnWidth(0, 200);
-
-                            var avail = ImGui.GetContentRegionAvail();
-                            ImGui.SeparatorText("Shortcut Categories");
-                            if (ImGui.BeginListBox("##ShortcutCategories", avail with { Y = avail.Y - 90 })) {
+                                if (!string.IsNullOrEmpty(group.Key)) ImGui.SeparatorText($"{group.Key}");
                                 
-                                for (var c = 0; c < _shortcutsCategories.Length; c++) {
-                                    var selected = ImGui.Selectable(_shortcutsCategories[c], _shortcutsActiveCategory == c);
+                                foreach (var (property, name, combination, _, isMouse) in group) {
 
-                                    if (selected) _shortcutsActiveCategory = c;
-                                }
+                                    var clicked =  ImGui.Button($"{name}: {combination}");
 
-                                ImGui.EndListBox();
-                            }
-
-                            ImGui.Spacing();
-
-                            var resetSelected = ImGui.Button("Reset Shortcuts", col1Space with { Y = 20 });
-                            var saveSelected = ImGui.Button("Save Shortcuts", col1Space with { Y = 20 });
-
-                            if (resetSelected)
-                            {
-                                _assigningShortcut = false;
-                                GLOBALS.LockNavigation = false;
-                                _shortcutToAssign = null;
-                                _mouseShortcutToAssign = null;
-
-                                GLOBALS.Settings.Shortcuts = new Shortcuts();
-                            }
-
-                            if (saveSelected)
-                            {
-                                _assigningShortcut = false;
-                                GLOBALS.LockNavigation = false;
-                                _shortcutToAssign = null;
-                                _mouseShortcutToAssign = null;
-                            
-                                try
-                                {
-                                    File.WriteAllText(
-                                        GLOBALS.Paths.SettingsPath, 
-                                        JsonSerializer.Serialize(GLOBALS.Settings, GLOBALS.JsonSerializerOptions)
-                                    );
-                                }
-                                catch (Exception e)
-                                {
-                                    Logger.Error($"Failed to save settings: {e}");
-                                }
-                            }
-
-                            ImGui.NextColumn();
-
-                            if (ImGui.BeginChild("##ActiveShortcutPanel")) {
-                            
-                                var settings = GLOBALS.Settings;
-
-                                var shortcutsContainer = _shortcutsActiveCategory switch { 
-                                    0 => settings.Shortcuts.GlobalShortcuts as object,
-                                    1 => settings.Shortcuts.GeoEditor as object,
-                                    2 => settings.Shortcuts.ExperimentalGeoShortcuts as object,
-                                    3 => settings.Shortcuts.TileEditor as object,
-                                    4 => settings.Shortcuts.CameraEditor as object,
-                                    5 => settings.Shortcuts.LightEditor as object,
-                                    6 => settings.Shortcuts.EffectsEditor as object,
-                                    7 => settings.Shortcuts.PropsEditor as object,
-
-                                    _ => settings.Shortcuts.GlobalShortcuts as object
-                                };
-
-                                var shortcuts = shortcutsContainer
-                                    .GetType()
-                                    .GetProperties()
-                                    .Where(p => p.PropertyType == typeof(KeyboardShortcut) || p.PropertyType == typeof(MouseShortcut))
-                                    .Select(property => {
-                                        var attr = (ShortcutName?) property.GetCustomAttributes(typeof(ShortcutName), false).FirstOrDefault();
-
-                                        var name = attr?.Name ?? property.Name;
-                                        var combination = property.GetValue(shortcutsContainer);
-                                        var group = attr?.Group ?? "";
-                                        var isMouse = property.PropertyType == typeof(MouseShortcut);
-
-                                        return (property, name, combination, group, isMouse);
-                                    });
-
-
-                                var mouseShortcuts = shortcuts.Where(s => s.isMouse).GroupBy(s => s.group);
-
-                                if (mouseShortcuts.Any()) ImGui.SeparatorText("Mouse Shortcuts");
-
-                                foreach (var group in mouseShortcuts) {
-                                    foreach (var (property, name, combination, _, isMouse) in group) {
-                                        var clicked =  ImGui.Button($"{name}: {combination}");
-
-                                        if (clicked) {
-                                            _mouseShortcutToAssign = (MouseShortcut?)combination;
-                                        }
+                                    if (clicked) {
+                                        _shortcutToAssign = (KeyboardShortcut?)combination;
                                     }
                                 }
-
-                                //
-
-                                var keyboardShortcuts = shortcuts.Where(s => !s.isMouse).GroupBy(s => s.group);
-
-                                if (keyboardShortcuts.Any()) {
-                                    ImGui.Spacing();
-                                    ImGui.SeparatorText("Keyboard Shortcuts");
-                                    ImGui.Spacing();
-                                }
-
-                                foreach (var group in keyboardShortcuts) {
-
-                                    if (!string.IsNullOrEmpty(group.Key)) ImGui.SeparatorText($"{group.Key}");
-                                    
-                                    foreach (var (property, name, combination, _, isMouse) in group) {
-
-                                        var clicked =  ImGui.Button($"{name}: {combination}");
-
-                                        if (clicked) {
-                                            _shortcutToAssign = (KeyboardShortcut?)combination;
-                                        }
-                                    }
-                                }
-                                ImGui.EndChild();
                             }
                             ImGui.EndChild();
                         }
+                        ImGui.EndChild();
                     }
-                    break;
                 }
                 ImGui.EndChild();
             }

@@ -3712,8 +3712,28 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 DrawRectangleLines(0, 0, GLOBALS.Level.Width*16, GLOBALS.Level.Height*16, Color.White);
             }
             
-            // Draw the enclosing rectangle for selected props
-            // DEBUG: DrawRectangleLinesEx(_selectedPropsEncloser, 3f, Color.White);
+            if (GLOBALS.Settings.PropEditor.Cameras) {
+                var counter = 0;
+                var ratio = 16f/20f;
+
+                foreach (var cam in GLOBALS.Level.Cameras)
+                {
+                    var critRect = Utils.CameraCriticalRectangle(cam.Coords);
+
+                    DrawRectangleLinesEx(
+                        GLOBALS.Settings.PropEditor.CamerasInnerBoundries 
+                            ? critRect with { X = critRect.X * ratio, Y = critRect.Y * ratio, Width = critRect.Width * ratio, Height = critRect.Height * ratio }
+                            : new(cam.Coords.X * ratio, cam.Coords.Y * ratio, GLOBALS.EditorCameraWidth  * ratio, GLOBALS.EditorCameraHeight  * ratio),
+                        4f,
+                        GLOBALS.Settings.GeneralSettings.ColorfulCameras 
+                            ? GLOBALS.CamColors[counter] 
+                            : Color.Pink
+                    );
+
+                    counter++;
+                    Utils.Cycle(ref counter, 0, GLOBALS.CamColors.Length - 1);
+                }
+            }
 
             switch (_mode)
             {

@@ -644,7 +644,7 @@ internal class ExperimentalGeometryPage : EditorPage
 
         if (_shortcuts.TogglePropVisibility.Check(ctrl, shift, alt))
         {
-            GLOBALS.Settings.GeometryEditor.ShowTiles = !GLOBALS.Settings.GeometryEditor.ShowProps;
+            GLOBALS.Settings.GeometryEditor.ShowProps = !GLOBALS.Settings.GeometryEditor.ShowProps;
             _shouldRedrawLevel = true;
         }
 
@@ -656,6 +656,11 @@ internal class ExperimentalGeometryPage : EditorPage
 
         if (IsKeyReleased(GLOBALS.Settings.Shortcuts.ExperimentalGeoShortcuts.TempActivateMultiSelect.Key)) {
             _allowMultiSelect = false;
+        }
+
+        if (_shortcuts.ToggleBasicView.Check(ctrl, shift, alt)) {
+            GLOBALS.Settings.GeometryEditor.BasicView = !GLOBALS.Settings.GeometryEditor.BasicView;
+            _shouldRedrawLevel = true;
         }
 
         if (_allowMultiSelect)
@@ -1740,13 +1745,22 @@ internal class ExperimentalGeometryPage : EditorPage
 
                 if (GLOBALS.Settings.GeometryEditor.ShowCameras)
                 {
+                    var counter = 0;
+
                     foreach (var cam in GLOBALS.Level.Cameras)
                     {
                         DrawRectangleLinesEx(
-                            new(cam.Coords.X, cam.Coords.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
+                            GLOBALS.Settings.TileEditor.CameraInnerBoundires 
+                                ? Utils.CameraCriticalRectangle(cam.Coords) 
+                                : new(cam.Coords.X, cam.Coords.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
                             4f,
-                            Color.Pink
+                            GLOBALS.Settings.GeneralSettings.ColorfulCameras 
+                                ? GLOBALS.CamColors[counter] 
+                                : Color.Pink
                         );
+
+                        counter++;
+                        Utils.Cycle(ref counter, 0, GLOBALS.CamColors.Length - 1);
                     }
                 }
             }
@@ -2122,6 +2136,15 @@ internal class ExperimentalGeometryPage : EditorPage
                 ImGui.Checkbox("Cameras", ref showCameras);
 
                 GLOBALS.Settings.GeometryEditor.ShowCameras = showCameras;
+
+                var innerCamBounds = GLOBALS.Settings.GeometryEditor.CameraInnerBoundires;
+                
+                if (!showCameras) ImGui.BeginDisabled();
+                if (ImGui.Checkbox("Camera's Inner Boundries", ref innerCamBounds)) {
+                    GLOBALS.Settings.GeometryEditor.CameraInnerBoundires = innerCamBounds;
+                }
+                if (!showCameras) ImGui.EndDisabled();
+
 
                 var basicView = GLOBALS.Settings.GeometryEditor.BasicView;
 

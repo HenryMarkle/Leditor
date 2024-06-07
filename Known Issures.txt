@@ -1,0 +1,1 @@
+- Failure to load props will implicitly result in an empty prop arrray.

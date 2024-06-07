@@ -429,6 +429,12 @@ internal class StartPage : EditorPage
                     return;
                 }
                 
+                if (result.PropsLoadException is not null) {
+                    Logger.Error($"Failed to load props: {result.PropsLoadException}");
+
+                    GLOBALS.PropCheck = Task.FromResult(PropCheckResult.NotOk);
+                }
+
                 Utils.AppendRecentProjectPath(_dirEntries[_currentIndex].path);
                 
                 Logger.Debug("Globals.Level.Import()");

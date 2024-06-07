@@ -328,7 +328,7 @@ public readonly struct TileCheckResult {
 /// Used to report the tile check status when loading a project
 public enum PropCheckResult
 {
-    Ok, Undefined, MissingTexture
+    Ok, Undefined, MissingTexture, NotOk
 }
 
 
@@ -367,6 +367,8 @@ public class LoadFileResult
     public List<RenderCamera> Cameras { get; set; } = [];
 
     public string Name { get; init; } = "New Project";
+
+    public Exception? PropsLoadException { get; init; } = null;
 }
 
 /// Effect option for effects that apply to multiple layers

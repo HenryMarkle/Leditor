@@ -2236,10 +2236,10 @@ internal static class Printers
                 {
                     DrawRectangle(
                         (-1) * parameters.Scale,
-                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * parameters.Scale,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom - 1) * parameters.Scale,
                         (GLOBALS.Level.Width + 2) * parameters.Scale,
-                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * parameters.Scale,
-                        new Color(0, 0, 255, 110)
+                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom + 1) * parameters.Scale,
+                        new Color(0, 0, 255, parameters.WaterOpacity)
                     );
                 }
             }
@@ -2375,13 +2375,11 @@ internal static class Printers
                 if (parameters.WaterAtFront && GLOBALS.Level.WaterLevel != -1)
                 {
                     DrawRectangle(
-                        (-1) * GLOBALS.Scale,
-                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                        (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                        GLOBALS.Settings.GeneralSettings.DarkTheme 
-                            ? GLOBALS.DarkThemeWaterColor 
-                            : GLOBALS.LightThemeWaterColor
+                        (-1) * parameters.Scale,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom - 1) * parameters.Scale,
+                        (GLOBALS.Level.Width + 2) * parameters.Scale,
+                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom + 1) * parameters.Scale,
+                        new Color(0, 0, 255, parameters.WaterOpacity)
                     );
                 }
             }
@@ -7256,21 +7254,30 @@ internal static class Printers
 
                     return (attr, property);
                 })
-                .Where(p => (p.attr?.Hidden ?? false) != true)
-                .GroupBy(p => p.attr?.Group ?? "");
+                .Where(p => (p.attr?.Hidden ?? false) != true);
+
+            var groupedProperties = properties.GroupBy(p => p.attr?.Group ?? "");
 
 
-
-            foreach (var group in properties) {
+            foreach (var group in groupedProperties) {
                 if (!string.IsNullOrEmpty(group.Key)) ImGuiNET.ImGui.SeparatorText(group.Key);
 
                 foreach (var (attribute, setting) in group) {
                     var type = setting.PropertyType;
+                    var dependancies = setting
+                        .GetCustomAttributes(typeof(SettingDependancy), false)
+                        .Cast<SettingDependancy>()
+                        .Select(d => properties.SingleOrDefault(p => p.property.Name == d.SettingName && p.property.Name != setting.Name))
+                        .Where(d => d.property is not null && d.property.PropertyType == typeof(bool))
+                        .Select(d => ((bool?) d.property.GetValue(obj)) ?? false);
+
+
+                    var resolvedDeps = dependancies.Any() && dependancies.Aggregate((first, second) => first && second);
 
                     if (type == typeof(bool)) {
                         var value = ((bool?) setting.GetValue(obj)) ?? false;
                         
-                        if (attribute?.Disabled ?? false) ImGuiNET.ImGui.BeginDisabled();
+                        if ((attribute?.Disabled ?? false) || (dependancies.Any() && !resolvedDeps)) ImGuiNET.ImGui.BeginDisabled();
 
                         if (ImGuiNET.ImGui.Checkbox(attribute?.Name ?? setting.Name, ref value)) {
                             setting.SetValue(obj, value);
@@ -7324,6 +7331,18 @@ internal static class Printers
                         if (ImGuiNET.ImGui.InputText(attribute?.Name ?? setting.Name, ref value, bounds?.MaxLength ?? 256)) {
                             setting.SetValue(obj, value);
                         }
+                    } else if (type == typeof(ConColor)) {
+                        var value = ((ConColor?) setting.GetValue(obj)) ?? new(0, 0, 0, 255);
+
+                        var valueVec = new Vector4(value.R/255f, value.G/255f, value.B/255f, value.A/255f);
+
+                        if (attribute?.Disabled ?? false) ImGuiNET.ImGui.BeginDisabled();
+
+                        if (ImGuiNET.ImGui.ColorEdit4($"{attribute?.Name ?? ""}##{setting.Name}", ref valueVec)) {
+                            value = new ConColor((byte)(valueVec.X * 255), (byte)(valueVec.Y * 255), (byte)(valueVec.Z * 255), (byte)(valueVec.W * 255));
+
+                            setting.SetValue(obj, value);
+                        }
                     }
 
 
@@ -7335,7 +7354,7 @@ internal static class Printers
                         ImGuiNET.ImGui.EndTooltip();
                     }
 
-                    if (attribute?.Disabled ?? false) ImGuiNET.ImGui.EndDisabled();
+                    if ((attribute?.Disabled ?? false) || (dependancies.Any() && !resolvedDeps)) ImGuiNET.ImGui.EndDisabled();
                 }
             }
         }

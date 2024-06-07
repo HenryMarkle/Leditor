@@ -56,16 +56,42 @@ public class GeoEditor
     }
     
     public LayerColors LayerColors { get; set; }
+
+    [SettingName("Water Color")]
     public ConColor WaterColor { get; set; }
+
+    [SettingName("Lgacy Geo Tools", Hidden = true)]
     public bool LegacyGeoTools { get; set; }
+
+    [SettingName("Show/Hide Cameras")]
     public bool ShowCameras { get; set; }
+
+    [SettingName("Camera's Inner Boundries")]
+    [SettingDependancy("ShowCameras")]
+    public bool CameraInnerBoundires { get; set; }
+
+    [SettingName("Show/Hide Tiles")]
     public bool ShowTiles { get; set; }
+
+    [SettingName("Show/Hide Props")]
     public bool ShowProps { get; set; }
+
+    [SettingName("Allow Placing Features Out of Bounds")]
     public bool AllowOutboundsPlacement { get; set; }
+
+    [SettingName("Currently-Held Geometry Indicator")]
     public bool ShowCurrentGeoIndicator { get; set; }
+
+    [SettingName("Legacy Interface")]
     public bool LegacyInterface { get; set; }
+
+    [SettingName("Paste Air")]
     public bool PasteAir { get; set; }
+
+    [SettingName("Basic View")]
     public bool BasicView { get; set; }
+
+
 
     public enum ScreenRelativePosition { 
         TopLeft, 
@@ -81,18 +107,41 @@ public class GeoEditor
 
 public class TileEditorSettings
 {    
+    [SettingName("Hovered Tile Debug Info", Group = "Brush")]
     public bool HoveredTileInfo { get; set; } 
-    public bool TintedTiles { get; set; }
-    public bool UseTextures { get; set; }
+
+    [SettingName("Allow Undefined Tiles", Description = "When disabled, the level won't load if it has undefined tiles")]
     public bool AllowUndefinedTiles { get; set; }
+
+    [SettingName("Show/Hide Grid")]
     public bool Grid { get; set; }
+
+    [SettingName("Show/Hide Cameras")]
     public bool ShowCameras { get; set; }
+
+    [SettingName("Camera's Inner Boundries")]
+    [SettingDependancy("ShowCameras")]
+    public bool CameraInnerBoundires { get; set; }
+
+    [SettingName("Show/Hide Currently-Held Tile", Group = "Brush")]
     public bool DrawCurrentTile { get; set; }
+
+    [SettingName("Show/Hide Currently-Held Tile Specs", Group = "Brush")]
     public bool DrawCurrentSpecs { get; set; }
+
+    [SettingName("Tooltips Use Tile Textures")]
     public bool UseTexturesInTooltip { get; set; }
+
+    [SettingName("Paint Over Materials", Group = "Brush")]
     public bool ImplicitOverrideMaterials { get; set; }
+
+    [SettingName("Eraser Tool Erases Both Tiles and Materials", Group = "Brush")]
     public bool UnifiedDeletion { get; set; }
+
+    [SettingName("Only Start Deleting When There's a Tile or a Material Under The Cursor", Group = "Brush")]
     public bool ExactHoverDeletion { get; set; }
+
+    [SettingName("Restore Original Deletion Behavior", Description = "Will disable exact hover and unified deletion settings", Group = "Brush")]
     public bool OriginalDeletionBehavior { get; set; }
 
     public enum ScreenRelativePosition { 
@@ -113,8 +162,6 @@ public class TileEditorSettings
 
     public TileEditorSettings() {
         HoveredTileInfo = false;
-        TintedTiles = false;
-        UseTextures = false;
         AllowUndefinedTiles = true;
         Grid = false;
         ShowCameras = false;
@@ -142,8 +189,6 @@ public class TileEditorSettings
 
     public TileEditorSettings(
         bool hoveredTileInfo = false, 
-        bool tintedTiles = false, 
-        bool useTextures = false,
         bool allowUndefinedTiles = true,
         bool grid = false,
         bool showCameras = false,
@@ -157,8 +202,6 @@ public class TileEditorSettings
         ScreenRelativePosition layerIndicatorPosition = ScreenRelativePosition.TopLeft
     ) {
         HoveredTileInfo = hoveredTileInfo;
-        TintedTiles = tintedTiles;
-        UseTextures = useTextures;
         AllowUndefinedTiles = allowUndefinedTiles;
         Grid = grid;
         ShowCameras = showCameras;
@@ -187,8 +230,13 @@ public class TileEditorSettings
 
 public class LightEditorSettings
 {
+    [SettingName("View Background Color")]
     public ConColor Background { get; set; }
+
+    [SettingName("Level Background Color (Light Mode)")]
     public ConColor LevelBackgroundLight { get; set; }
+    
+    [SettingName("Level Background Color (Dark Mode)")]
     public ConColor LevelBackgroundDark { get; set; }
 
     public enum ScreenRelativePosition { 
@@ -244,6 +292,13 @@ public class PropEditor
 
     public ScreenRelativePosition LayerIndicatorPosition { get; set; }
 
+    [SettingName("Show/Hide Cameras' Boundries")]
+    public bool Cameras { get; set; }
+
+    [SettingName("Show Cameras' Inner boundries")]
+    [SettingDependancy("Cameras")]
+    public bool CamerasInnerBoundries { get; set; }
+
     //
 
     public PropEditor()
@@ -295,104 +350,85 @@ public class EffectsSettings
     public ConColor EffectsCanvasColorLight { get; set; }
     public ConColor EffectsCanvasColorDark { get; set; }
 
+    [SettingName("Blocky Brush")]
     public bool BlockyBrush { get; set; }
 }
 
 public enum TileDrawMode { Preview, Tinted, Palette }
 public enum PropDrawMode { Untinted, Tinted, Palette }
 
-public class GeneralSettings(
-    bool developerMode = false, 
-    bool defaultFont = false, 
-    bool globalCamera = true,
-    bool shortcutWindow = true,
-    bool darkTheme = false,
-    bool cacheRendererRuntime = false,
-    bool linearZooming = false,
-    float defaultZoom = 1,
-    bool cycleMenus = true,
-    bool changingCategoriesResetsIndex = true,
-    TileDrawMode drawTileMode = TileDrawMode.Preview,
-    PropDrawMode drawPropMode = PropDrawMode.Untinted,
-    bool indexHint = true,
-    bool highLayerContrast = true,
-    bool visiblePrecedingUnfocusedLayers = true,
-    bool cropTilePreviews = false,
-    int autoSaveSeconds = 120,
-    bool autoSave = false,
-    byte waterOpacity = 70,
-    bool water = true,
-    bool navbar = true,
-    string renderingAssetsPath = ""
-    )
+public class GeneralSettings
 {
     [SettingName("Developer Mode", Hidden = true)]
-    public bool DeveloperMode { get; set; } = developerMode;
+    public bool DeveloperMode { get; set; } = false;
 
     [SettingName("Default Font")]
-    public bool DefaultFont { get; set; } = defaultFont;
+    public bool DefaultFont { get; set; } = false;
     
     [SettingName("Global Camera")]
-    public bool GlobalCamera { get; set; } = globalCamera;
+    public bool GlobalCamera { get; set; } = true;
 
     [SettingName("Shortcuts Window")]
-    public bool ShortcutWindow { get; set; } = shortcutWindow;
+    public bool ShortcutWindow { get; set; } = true;
     
     [SettingName("Dark Theme")]
-    public bool DarkTheme { get; set; } = darkTheme;
+    public bool DarkTheme { get; set; } = false;
     
     [SettingName("Cache Rendering Runtime", Description = "Initializes the renderer ahead of time for faster rendering, at the cost of longer program startup time.")]
-    public bool CacheRendererRuntime { get; set; } = cacheRendererRuntime;
+    public bool CacheRendererRuntime { get; set; } = false;
     
     [SettingName("Linear Zooming", Disabled = true)]
-    public bool LinearZooming { get; set; } = linearZooming;
+    public bool LinearZooming { get; set; } = false;
 
     [SettingName("Default Zoom")]
-    public float DefaultZoom { get; set; } = defaultZoom;
+    public float DefaultZoom { get; set; } = 1;
 
     [SettingName("Cycle Menus")]
-    public bool CycleMenus { get; set; } = cycleMenus;
+    public bool CycleMenus { get; set; } = true;
 
     [SettingName("Changing Categories Resets Index")]
-    public bool ChangingCategoriesResetsIndex { get; set; } = changingCategoriesResetsIndex;
+    public bool ChangingCategoriesResetsIndex { get; set; } = true;
 
     [SettingName("Draw Tile Mode", Hidden = true)]
-    public TileDrawMode DrawTileMode { get; set; } = drawTileMode;
+    public TileDrawMode DrawTileMode { get; set; } = TileDrawMode.Preview;
 
     [SettingName("Draw Prop Mode", Hidden = true)]
-    public PropDrawMode DrawPropMode { get; set; } = drawPropMode;
+    public PropDrawMode DrawPropMode { get; set; } = PropDrawMode.Untinted;
 
     [SettingName("Ruler")]
-    public bool IndexHint { get; set; } = indexHint;
+    public bool IndexHint { get; set; } = true;
+
+    [SettingName("Colorful Cameras")]
+    public bool ColorfulCameras { get; set; }
 
     [SettingName("High Layer Contrast", Hidden = true)]
-    public bool HighLayerContrast { get; set; } = highLayerContrast;
+    public bool HighLayerContrast { get; set; } = true;
 
     [SettingName("Show Preceeding Layers", Hidden = true)]
-    public bool VisiblePrecedingUnfocusedLayers { get; set; } = visiblePrecedingUnfocusedLayers;
+    public bool VisiblePrecedingUnfocusedLayers { get; set; } = true;
 
     [SettingName("Crop Tile Previews", Hidden = true)]
-    public bool CropTilePreviews { get; set; } = cropTilePreviews;
+    public bool CropTilePreviews { get; set; } = false;
 
     [SettingName("Auto-Save")]
-    public bool AutoSave { get; set; } = autoSave;
+    public bool AutoSave { get; set; } = false;
 
     [SettingName("Auto-Save (in seconds)")]
     [IntBounds(30)]
-    public int AutoSaveSeconds { get; set; } = autoSaveSeconds < 30 ? 30 : autoSaveSeconds;
+    public int AutoSaveSeconds { get; set; } = 30;
     
     [SettingName("Water Opacity", Hidden = true)]
-    public byte WaterOpacity { get; set; } = waterOpacity;
+    public byte WaterOpacity { get; set; } = 70;
 
     [SettingName("Water", Hidden = true)]
-    public bool Water { get; set; } = water;
+    public bool Water { get; set; } = true;
 
     [SettingName("Navigation Bar")]
-    public bool Navbar { get; set; } = navbar;
+    public bool Navbar { get; set; } = true;
 
     [SettingName("Rendering Assets Path", Description = "Leave empty for default directory")]
     [StringBounds(0, MaxLength = 256)]
-    public string RenderingAssetsPath { get; set; } = renderingAssetsPath;
+    public string RenderingAssetsPath { get; set; } = "";
 }
 
 public class Settings

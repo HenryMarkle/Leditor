@@ -110,38 +110,115 @@ public class GeoShortcuts : IEditorShortcuts
 
 public class ExperimentalGeoShortcuts : IEditorShortcuts
 {
-    public KeyboardShortcut ToRightGeo { get; set; } = new(KeyboardKey.D);
-    public KeyboardShortcut ToLeftGeo { get; set; } = new(KeyboardKey.A);
-    public KeyboardShortcut ToTopGeo { get; set; } = new(KeyboardKey.W);
-    public KeyboardShortcut ToBottomGeo { get; set; } = new(KeyboardKey.S);
-    public KeyboardShortcut CycleLayers { get; set; } = new(KeyboardKey.L);
-    public KeyboardShortcut ToggleGrid { get; set; } = new(KeyboardKey.M);
-    public KeyboardShortcut ShowCameras { get; set; } = new(KeyboardKey.K);
-    public KeyboardShortcut ToggleMultiSelect { get; set; } = new(KeyboardKey.E);
-    public KeyboardShortcut TempActivateMultiSelect { get; set; } = new(KeyboardKey.LeftShift, shift: true, ctrl: false, alt: false);
-    public KeyboardShortcut EraseEverything { get; set; } = new(KeyboardKey.X);
+    private KeyboardShortcut toRightGeo = new(KeyboardKey.D);
+    private KeyboardShortcut toLeftGeo = new(KeyboardKey.A);
+    private KeyboardShortcut toTopGeo = new(KeyboardKey.W);
+    private KeyboardShortcut toBottomGeo = new(KeyboardKey.S);
+    private KeyboardShortcut cycleLayers = new(KeyboardKey.L);
+    private KeyboardShortcut toggleGrid = new(KeyboardKey.M);
+    private KeyboardShortcut showCameras = new(KeyboardKey.K);
+    private KeyboardShortcut toggleMultiSelect = new(KeyboardKey.E);
+    private KeyboardShortcut tempActivateMultiSelect = new(KeyboardKey.LeftShift, shift: true, ctrl: false, alt: false);
+    private KeyboardShortcut eraseEverything = new(KeyboardKey.X);
+    private KeyboardShortcut toggleTileVisibility = new(KeyboardKey.T);
+    private KeyboardShortcut togglePropVisibility = new(KeyboardKey.P);
+    private KeyboardShortcut toggleBasicView = new(KeyboardKey.R);
+    private KeyboardShortcut toggleMemoryLoadMode = new(KeyboardKey.C, ctrl: true);
+    private KeyboardShortcut toggleMemoryDumbMode = new(KeyboardKey.V, ctrl: true);
+    private KeyboardShortcut pickupGeo = new(KeyboardKey.Q, ctrl: false, shift: false, alt: false);
+    private KeyboardShortcut pickupStackable = new(KeyboardKey.Q, ctrl: false, shift: true, alt: false);
+    private MouseShortcut draw = new(MouseButton.Left);
+    private MouseShortcut erase = new(MouseButton.Right);
+    private MouseShortcut dragLevel = new(MouseButton.Middle);
+    private KeyboardShortcut altDraw = new(KeyboardKey.Null);
+    private KeyboardShortcut altErase = new(KeyboardKey.F);
+    private KeyboardShortcut altDragLevel = new(KeyboardKey.G);
+    private KeyboardShortcut undo = new(ctrl: true, shift: false, key: KeyboardKey.Z);
+    private KeyboardShortcut redo = new(ctrl: true, shift: true, key: KeyboardKey.Z);
 
-    public KeyboardShortcut ToggleTileVisibility { get; set; } = new(KeyboardKey.T);
-    public KeyboardShortcut TogglePropVisibility { get; set; } = new(KeyboardKey.P);
+    //
 
-    public KeyboardShortcut ToggleMemoryLoadMode { get; set; } = new(KeyboardKey.C, ctrl: true);
-    public KeyboardShortcut ToggleMemoryDumbMode { get; set; } = new(KeyboardKey.V, ctrl: true);
+    [ShortcutName("Navigate To Next Menu Category", Group = "Menu")]
+    public KeyboardShortcut ToRightGeo { get => toRightGeo; set {toRightGeo = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Navigate To Previous Menu Category", Group = "Menu")]
+    public KeyboardShortcut ToLeftGeo { get => toLeftGeo; set {toLeftGeo = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Navigate Menu Up", Group = "Menu")]
+    public KeyboardShortcut ToTopGeo { get => toTopGeo; set {toTopGeo = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Navigate Menu Down", Group = "Menu")]
+    public KeyboardShortcut ToBottomGeo { get => toBottomGeo; set {toBottomGeo = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Cycle Layers")]
+    public KeyboardShortcut CycleLayers { get => cycleLayers; set {cycleLayers = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Show/Hide Grid")]
+    public KeyboardShortcut ToggleGrid { get => toggleGrid; set {toggleGrid = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Show/Hide Cameras")]
+    public KeyboardShortcut ShowCameras { get => showCameras; set {showCameras = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
 
-    public KeyboardShortcut PickupGeo { get; set; } = new(KeyboardKey.Q, ctrl: false, shift: false, alt: false);
-    public KeyboardShortcut PickupStackable { get; set; } = new(KeyboardKey.Q, ctrl: false, shift: true, alt: false);
+    [ShortcutName("Toggle Multi-Select", Group = "Brush")]
+    public KeyboardShortcut ToggleMultiSelect { get => toggleMultiSelect; set {toggleMultiSelect = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Temporarily Enable Multi-Select", Group = "Brush")]
+    public KeyboardShortcut TempActivateMultiSelect { get => tempActivateMultiSelect; set {tempActivateMultiSelect = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Allow Erasing Everything", Group = "Brush")]
+    public KeyboardShortcut EraseEverything { get => eraseEverything; set {eraseEverything = value; CachedStrings = Utils.GetShortcutStrings(this);} }
 
-    public MouseShortcut Draw { get; set; } = new(MouseButton.Left);
-    public MouseShortcut Erase { get; set; } = new(MouseButton.Right);
+    [ShortcutName("Show/Hide Tiles")]
+    public KeyboardShortcut ToggleTileVisibility { get => toggleTileVisibility; set {toggleTileVisibility = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Show/Hide Props")]
+    public KeyboardShortcut TogglePropVisibility { get => togglePropVisibility; set {togglePropVisibility = value; CachedStrings = Utils.GetShortcutStrings(this);} }
 
-    public MouseShortcut DragLevel { get; set; } = new(MouseButton.Middle);
 
-    public KeyboardShortcut AltDraw { get; set; } = new(KeyboardKey.Null);
-    public KeyboardShortcut AltErase { get; set; } = new(KeyboardKey.F);
-    public KeyboardShortcut AltDragLevel { get; set; } = new(KeyboardKey.G);
+    [ShortcutName("Toggle Basic View")]
+    public KeyboardShortcut ToggleBasicView { get => toggleBasicView; set { toggleBasicView = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
-    public KeyboardShortcut Undo { get; set; } = new(ctrl: true, shift: false, key: KeyboardKey.Z);
-    public KeyboardShortcut Redo { get; set; } = new(ctrl: true, shift: true, key: KeyboardKey.Z);
+    
+    [ShortcutName("Toggle Copy Mode", Group = "Brush")]
+    public KeyboardShortcut ToggleMemoryLoadMode { get => toggleMemoryLoadMode; set {toggleMemoryLoadMode = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Toggle Paste Mode", Group = "Brush")]
+    public KeyboardShortcut ToggleMemoryDumbMode { get => toggleMemoryDumbMode; set {toggleMemoryDumbMode = value; CachedStrings = Utils.GetShortcutStrings(this);} }
 
+
+    [ShortcutName("Pickup Geometry", Group = "Brush")]
+    public KeyboardShortcut PickupGeo { get => pickupGeo; set {pickupGeo = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Pickup Geometry Feature", Group = "Brush")]
+    public KeyboardShortcut PickupStackable { get => pickupStackable; set {pickupStackable = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+
+
+    [ShortcutName("Draw", Group = "Brush")]
+    public MouseShortcut Draw { get => draw; set {draw = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Erase", Group = "Brush")]
+    public MouseShortcut Erase { get => erase; set {erase = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+
+    [ShortcutName("Drag View")]
+    public MouseShortcut DragLevel { get => dragLevel; set {dragLevel = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+
+    [ShortcutName("Draw")]
+    public KeyboardShortcut AltDraw { get => altDraw; set {altDraw = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Erase")]
+    public KeyboardShortcut AltErase { get => altErase; set {altErase = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Drag View")]
+    public KeyboardShortcut AltDragLevel { get => altDragLevel; set {altDragLevel = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+
+    [ShortcutName("Undo")]
+    public KeyboardShortcut Undo { get => undo; set {undo = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    [ShortcutName("Redo")]
+    public KeyboardShortcut Redo { get => redo; set {redo = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+    
+    
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
 
     public ExperimentalGeoShortcuts()
@@ -152,8 +229,6 @@ public class ExperimentalGeoShortcuts : IEditorShortcuts
 
 public record TileShortcuts : IEditorShortcuts
 {
-    private KeyboardShortcut focusOnTileMenu = new(KeyboardKey.Null);
-    private KeyboardShortcut focusOnTileCategoryMenu = new(KeyboardKey.Null);
     private KeyboardShortcut moveToNextCategory = new(KeyboardKey.D);
     private KeyboardShortcut moveToPreviousCategory = new(KeyboardKey.A);
     private KeyboardShortcut moveDown = new(KeyboardKey.S);
@@ -168,6 +243,7 @@ public record TileShortcuts : IEditorShortcuts
     private KeyboardShortcut activateSearch = new(KeyboardKey.F, ctrl: true, shift: false, alt: false);
     private KeyboardShortcut undo = new(KeyboardKey.Z, ctrl: true, shift: false);
     private KeyboardShortcut redo = new(KeyboardKey.Z, ctrl: true, shift: true);
+    private KeyboardShortcut showCameras = new(KeyboardKey.K, ctrl: false, shift: false, alt:false);
     private KeyboardShortcut copyTiles = new(KeyboardKey.C, ctrl: true, shift: false);
     private KeyboardShortcut pasteTilesWithGeo = new(KeyboardKey.V, ctrl: true, shift: true);
     private KeyboardShortcut pasteTilesWithoutGeo = new(KeyboardKey.V, ctrl: true);
@@ -189,51 +265,112 @@ public record TileShortcuts : IEditorShortcuts
 
     //
 
-    public KeyboardShortcut FocusOnTileMenu { get => focusOnTileMenu; set {focusOnTileMenu = value; CachedStrings = Utils.GetShortcutStrings(this); } }
-    public KeyboardShortcut FocusOnTileCategoryMenu { get => focusOnTileCategoryMenu; set {focusOnTileCategoryMenu = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    [ShortcutName("Navigate Menu Category Down", Group = "Menu")]
     public KeyboardShortcut MoveToNextCategory { get => moveToNextCategory; set {moveToNextCategory = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Navigate Menu Category Up", Group = "Menu")]
     public KeyboardShortcut MoveToPreviousCategory { get => moveToPreviousCategory; set {moveToPreviousCategory = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
+    [ShortcutName("Navigate Menu Down", Group = "Menu")]
     public KeyboardShortcut MoveDown { get => moveDown; set {moveDown = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Navigate Menu Up", Group = "Menu")]
     public KeyboardShortcut MoveUp { get => moveUp; set {moveUp = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Cycle Layer")]
     public KeyboardShortcut CycleLayers { get => cycleLayers; set {cycleLayers = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Pickup Tile/Material")]
     public KeyboardShortcut PickupItem { get => pickupItem; set {pickupItem = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Force-Place Tile With Geometry")]
     public KeyboardShortcut ForcePlaceTileWithGeo { get => forcePlaceTileWithGeo; set {forcePlaceTileWithGeo = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Force-Place Tile Without Geometry")]
     public KeyboardShortcut ForcePlaceTileWithoutGeo { get => forcePlaceTileWithoutGeo; set {forcePlaceTileWithoutGeo = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Switch Between Tiles and Materials")]
     public KeyboardShortcut TileMaterialSwitch { get => tileMaterialSwitch; set {tileMaterialSwitch = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Hovered Item Debugging Info")]
     public KeyboardShortcut HoveredItemInfo { get => hoveredItemInfo; set {hoveredItemInfo = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
+
+    [ShortcutName("Set Current Material As The Default")]
     public KeyboardShortcut SetMaterialDefault { get => setMaterialDefault; set {setMaterialDefault = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+
+    [ShortcutName("Activate Search")]
     public KeyboardShortcut ActivateSearch { get => activateSearch; set {activateSearch = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
+
+    [ShortcutName("Undo")]
     public KeyboardShortcut Undo { get => undo; set {undo = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Redo")]
     public KeyboardShortcut Redo { get => redo; set {redo = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
+    [ShortcutName("Show/Hide Cameras")]
+    public KeyboardShortcut ShowCameras { get => showCameras; set { showCameras = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+
+    [ShortcutName("Toggle Tile Copying")]
     public KeyboardShortcut CopyTiles { get => copyTiles; set {copyTiles = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Toggle Tile Pasting With Geometry")]
     public KeyboardShortcut PasteTilesWithGeo { get => pasteTilesWithGeo; set {pasteTilesWithGeo = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Toggle Tile Pasting Without Geometry")]
     public KeyboardShortcut PasteTilesWithoutGeo { get => pasteTilesWithoutGeo; set {pasteTilesWithoutGeo = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
+    [ShortcutName("Cycle Auto-Piper Macro Axis Order")]
     public KeyboardShortcut CycleAutoTilerMacroAxisPriority { get => cycleAutoTilerMacroAxisPriority; set {cycleAutoTilerMacroAxisPriority = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
+ 
+    [ShortcutName("Show/Hide Layer 1")]
     public KeyboardShortcut ToggleLayer1 { get => toggleLayer1; set {toggleLayer1 = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Show/Hide Layer 2")]
     public KeyboardShortcut ToggleLayer2 { get => toggleLayer2; set {toggleLayer2 = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Show/Hide Layer 3")]
     public KeyboardShortcut ToggleLayer3 { get => toggleLayer3; set {toggleLayer3 = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
+
+    [ShortcutName("Show/Hide Layer 1 Tiles")]
     public KeyboardShortcut ToggleLayer1Tiles { get => toggleLayer1Tiles; set {toggleLayer1Tiles = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Show/Hide Layer 2 Tiles")]
     public KeyboardShortcut ToggleLayer2Tiles { get => toggleLayer2Tiles; set {toggleLayer2Tiles = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+
+    [ShortcutName("Show/Hide Layer 3 Tiles")]
     public KeyboardShortcut ToggleLayer3Tiles { get => toggleLayer3Tiles; set {toggleLayer3Tiles = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
+
+    [ShortcutName("Resize Material Brush (+ Mouse Wheel)")]
     public KeyboardShortcut ResizeMaterialBrush { get => resizeMaterialBrush; set {resizeMaterialBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
+    [ShortcutName("Highlight Geometry Shortcuts")]
     public KeyboardShortcut TogglePathsView { get => togglePathsView; set {togglePathsView = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
+    [ShortcutName("Draw")]
     public KeyboardShortcut AltDraw { get => altDraw; set {altDraw = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Erase")]
     public KeyboardShortcut AltErase { get => altErase; set {altErase = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Drag View")]
     public KeyboardShortcut AltDragLevel { get => altDragLevel; set {altDragLevel = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
+
+    [ShortcutName("Draw")]
     public MouseShortcut Draw { get => draw; set {draw = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Erase")]
     public MouseShortcut Erase { get => erase; set {erase = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Drag View")]
     public MouseShortcut DragLevel { get => dragLevel; set {dragLevel = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+
+
  
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
 
@@ -583,6 +720,7 @@ public class PropsShortcuts : IEditorShortcuts
     private MouseShortcut selectProps = MouseButton.Right;
     private MouseShortcut placeProp = MouseButton.Left;
     private MouseShortcut dragLevel = MouseButton.Middle;
+    private KeyboardShortcut showCameras = KeyboardKey.Null;
 
     //
 
@@ -687,6 +825,11 @@ public class PropsShortcuts : IEditorShortcuts
     public MouseShortcut PlaceProp { get => placeProp; set { placeProp = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     [ShortcutName("Drag View")]
     public MouseShortcut DragLevel { get => dragLevel; set { dragLevel = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Show/Hide Cameras")]
+    public KeyboardShortcut ShowCameras { get => showCameras; set { showCameras = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+
+
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
 
     public PropsShortcuts()

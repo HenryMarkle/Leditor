@@ -2091,6 +2091,10 @@ internal class TileEditorPage : EditorPage, IDisposable
             _shouldRedrawLevel = true;
         }
 
+        if (_shortcuts.ShowCameras.Check(ctrl, shift, alt)) {
+            GLOBALS.Settings.TileEditor.ShowCameras = !GLOBALS.Settings.TileEditor.ShowCameras;
+        }
+
         #endregion
         
         skipShortcuts:
@@ -2139,13 +2143,21 @@ internal class TileEditorPage : EditorPage, IDisposable
 
             if (GLOBALS.Settings.TileEditor.ShowCameras)
             {
+                var counter = 0;
                 foreach (var cam in GLOBALS.Level.Cameras)
                 {
                     DrawRectangleLinesEx(
-                        new(cam.Coords.X, cam.Coords.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
+                        GLOBALS.Settings.TileEditor.CameraInnerBoundires 
+                            ? Utils.CameraCriticalRectangle(cam.Coords) 
+                            : new(cam.Coords.X, cam.Coords.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
                         4f,
-                        Color.Pink
+                        GLOBALS.Settings.GeneralSettings.ColorfulCameras 
+                            ? GLOBALS.CamColors[counter] 
+                            : Color.Pink
                     );
+
+                    counter++;
+                    Utils.Cycle(ref counter, 0, GLOBALS.CamColors.Length - 1);
                 }
             }
             
@@ -2922,7 +2934,7 @@ internal class TileEditorPage : EditorPage, IDisposable
             }
             
             // Settings
-            #region SettingsWindow
+            #region Settings Window
 
             var settingsWinOpened = ImGui.Begin("Settings##TilesSettings");
             
@@ -3010,6 +3022,15 @@ internal class TileEditorPage : EditorPage, IDisposable
 
                 var showCameras = GLOBALS.Settings.TileEditor.ShowCameras;
                 if (ImGui.Checkbox("Cameras", ref showCameras)) GLOBALS.Settings.TileEditor.ShowCameras = showCameras;
+
+                if (!showCameras) ImGui.BeginDisabled();
+
+                var innerCamBounds = GLOBALS.Settings.TileEditor.CameraInnerBoundires;
+                if (ImGui.Checkbox("Camera's Inner Boundries", ref innerCamBounds)) {
+                    GLOBALS.Settings.TileEditor.CameraInnerBoundires = innerCamBounds;
+                }
+
+                if (!showCameras) ImGui.EndDisabled();
 
                 var grid = GLOBALS.Settings.TileEditor.Grid;
                 if (ImGui.Checkbox("Grid", ref grid))
