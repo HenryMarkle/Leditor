@@ -21,6 +21,13 @@ public class RopeModel
         }
     }
 
+    public Vector2[] BezierHandles { get; set; }
+
+    public enum EditTypeEnum { Simulation, BezierPaths }
+    public EditTypeEnum EditType { get; set; }
+
+    public bool Gravity { get; set; }
+
     internal void UpdateSegments(Vector2[] segments) {
         var oldLength = Rope.Extras.RopePoints.Length;
         var newLength = segments.Length;
@@ -66,11 +73,11 @@ public class RopeModel
         (0, 0), (-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (1, 1), (-1, 1)
     ];
 
-    public RopeModel(Prop prop, InitRopeProp init, int segmentCount = 15)
+    public RopeModel(Prop prop, InitRopeProp init)
     {
         Rope = prop;
         Init = init;
-        SegmentCount = segmentCount;
+        SegmentCount = prop.Extras.RopePoints.Length;
         Settings = (PropRopeSettings)prop.Extras.Settings;
 
         List<Vector2> velocities = [];
@@ -84,6 +91,16 @@ public class RopeModel
 
         _segmentVelocities = [..velocities];
         _lastPositions = [..lastPositions];
+
+        EditType = EditTypeEnum.Simulation;
+        BezierHandles = [];
+        Gravity = true;
+    }
+
+    public void ResetBezierHandles() {
+        var quad = Rope.Quads;
+        
+        BezierHandles = [ Utils.QuadsCenter(ref quad) ];
     }
     
     public void Reset(PropQuad quads)
@@ -204,7 +221,7 @@ public class RopeModel
             return 1;
     }
 
-    public void Update(PropQuad quad, int layer, bool gravity = true) 
+    public void Update(PropQuad quad, int layer) 
     {
         var (posA, posB) = Utils.RopeEnds(quad);
         var segments = Rope.Extras.RopePoints;
@@ -266,7 +283,7 @@ public class RopeModel
             _lastPositions[i] = segments[i];
             segments[i] += _segmentVelocities[i];
             _segmentVelocities[i] *= Init.AirFriction;
-            if (gravity) _segmentVelocities[i].Y += Init.Gravity;
+            if (Gravity) _segmentVelocities[i].Y += Init.Gravity;
         }
 
         for (int i = 1; i < segments.Length; i++)

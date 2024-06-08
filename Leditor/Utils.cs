@@ -130,7 +130,7 @@ internal static class Utils
         Stackables = [..cell.Stackables]
     };
 
-    internal static int GetPropDepth(in TileDefinition tile) => tile.Repeat.Sum();
+    internal static int GetPropDepth(in TileDefinition? tile) => tile?.Repeat.Sum() ?? 0;
 
     internal static int GetPropDepth(in InitPropBase prop) => prop switch
     {

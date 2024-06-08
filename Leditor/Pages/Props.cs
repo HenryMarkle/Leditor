@@ -160,15 +160,14 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
                     }
 
-                    if (_ropeMode)
-                    {
-                        // p is copied as suggested by the code editor..
-                        var p1 = p;
-                        var model = _models.Single(r => r.index == p1);
+                    var p1 = p;
+                    var model = _models.SingleOrDefault(r => r.index == p1);
 
-                        if (!model.simSwitch)
-                        {
-                            foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
+                    if (model.model?.EditType is RopeModel.EditTypeEnum.BezierPaths && model.simulate)
+                    {
+                        foreach (var handle in model.model.BezierHandles) {
+                            DrawCircleV(handle, 6f, Color.White);
+                            DrawCircleV(handle, 4f, Color.Green);
                         }
                     }
                 }
@@ -531,15 +530,14 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 }
                             }
                             
-                            if (_ropeMode)
-                            {
-                                // p is copied as suggested by the code editor..
-                                var p1 = p;
-                                var model = _models.Single(r => r.index == p1);
+                            var p1 = p;
+                            var model = _models.SingleOrDefault(r => r.index == p1);
 
-                                if (!model.simSwitch)
-                                {
-                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
+                            if (model.model?.EditType is RopeModel.EditTypeEnum.BezierPaths && model.simulate)
+                            {
+                                foreach (var handle in model.model.BezierHandles) {
+                                    DrawCircleV(handle, 6f, Color.White);
+                                    DrawCircleV(handle, 4f, Color.Green);
                                 }
                             }
                         }
@@ -757,15 +755,14 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 }
                             }
                             
-                            if (_ropeMode)
-                            {
-                                // p is copied as suggested by the code editor..
-                                var p1 = p;
-                                var model = _models.Single(r => r.index == p1);
+                            var p1 = p;
+                            var model = _models.SingleOrDefault(r => r.index == p1);
 
-                                if (!model.simSwitch)
-                                {
-                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
+                            if (model.model?.EditType is RopeModel.EditTypeEnum.BezierPaths && model.simulate)
+                            {
+                                foreach (var handle in model.model.BezierHandles) {
+                                    DrawCircleV(handle, 6f, Color.White);
+                                    DrawCircleV(handle, 4f, Color.Green);
                                 }
                             }
                         }
@@ -1002,15 +999,14 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 }
                             }
 
-                            if (_ropeMode)
-                            {
-                                // p is copied as suggested by the code editor..
-                                var p1 = p;
-                                var model = _models.Single(r => r.index == p1);
+                            var p1 = p;
+                            var model = _models.SingleOrDefault(r => r.index == p1);
 
-                                if (!model.simSwitch)
-                                {
-                                    foreach (var handle in model.bezierHandles) DrawCircleV(handle, 3f, Color.Green);
+                            if (model.model?.EditType is RopeModel.EditTypeEnum.BezierPaths && model.simulate)
+                            {
+                                foreach (var handle in model.model.BezierHandles) {
+                                    DrawCircleV(handle, 6f, Color.White);
+                                    DrawCircleV(handle, 4f, Color.Green);
                                 }
                             }
                         }
@@ -1070,9 +1066,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
     private bool _scalingProps;
     private bool _stretchingProp;
     private bool _editingPropPoints;
-    private bool _ropeMode;
+    // private bool _ropeMode;
 
-    private bool _ropeModelGravity = true;
+    // private bool _ropeModelGravity = true;
 
     private bool _noCollisionPropPlacement;
 
@@ -1228,7 +1224,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
     private Vector2? _propsMoveMousePos;
     private Vector2 _propsMoveMouseDelta = new(0, 0);
     
-    private (int index, bool simSwitch, RopeModel model, Vector2[] bezierHandles)[] _models;
+    private (int index, bool simulate, RopeModel model)[] _models = [];
     
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
@@ -1328,7 +1324,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
             _tempGeoL = new(lWidth, lHeight);
         }
     }
-    #nullable disable
 
     public void OnPageUpdated(int previous, int @next) {
         if (@next == 8) {
@@ -1340,28 +1335,59 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
     private void ImportRopeModels()
     {
-        List<(int, bool, RopeModel, Vector2[])> models = [];
-        
-        for (var r = 0; r < GLOBALS.Level.Props.Length; r++)
-        {
-            var current = GLOBALS.Level.Props[r];
-            
-            if (current.type != InitPropType.Rope) continue;
-            
-            var newModel = new RopeModel(current.prop, GLOBALS.RopeProps[current.position.index], current.prop.Extras.RopePoints.Length);
-           
-            var quad = current.prop.Quads;
-            var quadCenter = Utils.QuadsCenter(ref quad);
-
-            models.Add((r, true, newModel, [ quadCenter ]));
+        if (GLOBALS.Level.Props.Length == 0) {
+            _models = [];
+            return;
         }
 
-        _models = [..models];
+        var ropes = GLOBALS.Level.Props
+            .Select((rope, index) => (rope, index))
+            .Where(ropeInfo => ropeInfo.rope.type == InitPropType.Rope);
+
+        if (!ropes.Any()) {
+            _models = [];
+            return;
+        }
+
+        if (_models.Length == 0) {
+            List<(int, bool, RopeModel)> models = [];
+        
+            for (var r = 0; r < GLOBALS.Level.Props.Length; r++)
+            {
+                var current = GLOBALS.Level.Props[r];
+                
+                if (current.type != InitPropType.Rope) continue;
+                
+                var newModel = new RopeModel(current.prop, GLOBALS.RopeProps[current.position.index]);
+            
+                // var quad = current.prop.Quads;
+                // var quadCenter = Utils.QuadsCenter(ref quad);
+
+                models.Add((r, false, newModel));
+            }
+
+            _models = [..models];
+        } else {
+            var models = ropes.Select(ropeInfo => {
+                var foundModel = _models.SingleOrDefault(m => m.index == ropeInfo.index);
+
+                if (foundModel.model != null) return foundModel;
+
+                var newModel = new RopeModel(ropeInfo.rope.prop, GLOBALS.RopeProps[ropeInfo.rope.position.index]);
+
+                // var quad = ropeInfo.rope.prop.Quads;
+                // var quadCenter = Utils.QuadsCenter(ref quad);
+
+                return (ropeInfo.index, false, newModel);
+            });
+
+            _models = [..models];
+        }
     }
 
     private void UpdateRopeModelSegments()
     {
-        List<(int, bool, RopeModel, Vector2[])> models = [];
+        List<(int, bool, RopeModel)> models = [];
         
         for (var r = 0; r < _models.Length; r++)
         {
@@ -1369,12 +1395,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
             
             models.Add((
                 current.index, 
-                current.simSwitch, 
+                false, 
                 new RopeModel(
                     GLOBALS.Level.Props[current.index].prop, 
-                    GLOBALS.RopeProps[GLOBALS.Level.Props[current.index].position.index], 
-                    GLOBALS.Level.Props[current.index].prop.Extras.RopePoints.Length), 
-                current.bezierHandles
+                    GLOBALS.RopeProps[GLOBALS.Level.Props[current.index].position.index])
+                    {
+                        BezierHandles = current.model.BezierHandles
+                    }
             ));
         }
 
@@ -1558,7 +1585,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
     {
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) _camera = GLOBALS.Camera;
 
-        if (_currentTile is null) _currentTile = GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
+        _currentTile ??= GLOBALS.TileDex?.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
         
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
@@ -1705,11 +1732,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 }
 
                 if (_ropeInitialPlacement) {
-                    var (index, _, model, _) = _models.LastOrDefault();
+                    var (index, _, model) = _models.LastOrDefault();
                     
                     if (model is not null && index < GLOBALS.Level.Props.Length) {
                         if (_shortcuts.ToggleRopeGravity.Check(ctrl, shift, alt)) {
-                            _ropeModelGravity = !_ropeModelGravity;
+                            model.Gravity = !model.Gravity;
                         }
 
                         if (_shortcuts.IncrementRopSegmentCount.Check(ctrl, shift, alt, true)) {
@@ -1790,8 +1817,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     < -19 => 2,
                                     < -9 => 1,
                                     _ => 0
-                                },
-                                _ropeModelGravity);
+                                });
 
                         if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                         else {
@@ -2103,6 +2129,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 break;
                         }
                         
+                        if (GLOBALS.Level.Props.Length > 0 && 
+                            GLOBALS.Level.Props[^1].type != InitPropType.Rope) _ropeInitialPlacement = false;
+
                         // Do not forget to update _selected and _hidden
 
                         _selected = [.._selected, false];
@@ -2380,6 +2409,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             }
                                 break;
                         }
+
+                        if (GLOBALS.Level.Props.Length > 0 && 
+                            GLOBALS.Level.Props[^1].type != InitPropType.Rope) _ropeInitialPlacement = false;
                         
                         // Do not forget to update _selected and _hidden
 
@@ -2413,6 +2445,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         _selection1 = GetScreenToWorld2D(GetMousePosition(), _camera);
                         _clickTracker = true;
                         _mode = 0;
+                        _ropeInitialPlacement = false;
                     }
 
                     if ((IsMouseButtonReleased(_shortcuts.SelectProps.Button) || IsKeyReleased(_shortcuts.SelectPropsAlt.Key)) && _clickTracker && !(_isPropsWinHovered || _isPropsWinDragged))
@@ -2562,7 +2595,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                     if (fetchedSelected[0].prop.type == InitPropType.Rope) {
                         if (_shortcuts.ToggleRopeGravity.Check(ctrl, shift, alt)) {
-                            _ropeModelGravity = !_ropeModelGravity;
+                            for (var i = 0; i < _models.Length; i++)
+                            {
+                                if (_models[i].index == fetchedSelected[0].index) {
+                                    _models[i].model.Gravity = !_models[i].model.Gravity;
+                                    break;
+                                }
+                            }
                         }
                         
                         if (_shortcuts.SimulationBeizerSwitch.Check(ctrl, shift, alt)) {
@@ -2577,21 +2616,24 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                             if (modelIndex != -1) {
                                 ref var currentModel = ref _models[modelIndex];
-                                currentModel.simSwitch = !currentModel.simSwitch;
+                                currentModel.model.EditType = (RopeModel.EditTypeEnum)(((int)currentModel.model.EditType + 1) % 2);
                             }
                         }
 
-                        if (_shortcuts.IncrementRopSegmentCount.Check(ctrl, shift, alt)) {
-                            fetchedSelected[0].prop.prop.Extras.RopePoints = [..fetchedSelected[0].prop.prop.Extras.RopePoints, new Vector2(0, 0)];
+                        var foundRope = _models.SingleOrDefault(rope => rope.index == fetchedSelected[0].index);
 
-                            ImportRopeModels();
+                        if (_shortcuts.IncrementRopSegmentCount.Check(ctrl, shift, alt)) {
+                            foundRope.model.UpdateSegments([..fetchedSelected[0].prop.prop.Extras.RopePoints, new Vector2(0, 0)]);
+
+                            // ImportRopeModels();
                         }
 
                         if (_shortcuts.DecrementRopSegmentCount.Check(ctrl, shift, alt)) {
-                            fetchedSelected[0].prop.prop.Extras.RopePoints = fetchedSelected[0].prop.prop.Extras.RopePoints.Take(fetchedSelected[0].prop.prop.Extras.RopePoints.Length - 1).ToArray();
+                            foundRope.model.UpdateSegments(fetchedSelected[0].prop.prop.Extras.RopePoints.Take(fetchedSelected[0].prop.prop.Extras.RopePoints.Length - 1).ToArray());
 
-                            ImportRopeModels();
+                            // ImportRopeModels();
                         }
+
                     }
                 }
                 else
@@ -2811,7 +2853,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     _rotatingProps = false;
                     _stretchingProp = false;
                     _editingPropPoints = false;
-                    _ropeMode = false;
+                    // _ropeMode = false;
                     
                     GLOBALS.Level.Props = _selected
                         .Select((s, i) => (s, i))
@@ -2857,7 +2899,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         _rotatingProps = false;
                         _stretchingProp = false;
                         _editingPropPoints = !_editingPropPoints;
-                        _ropeMode = false;
+                        // _ropeMode = false;
                         _shouldUpdateModeIndicatorsRT = true;
 
                         if (!_editingPropPoints) {
@@ -2878,12 +2920,20 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         // _rotatingProps = false;
                         // _stretchingProp = false;
                         // _editingPropPoints = false;
-                        _ropeMode = !_ropeMode;
-                        _shouldUpdateModeIndicatorsRT = true;
+                        // _ropeMode = !_ropeMode;
 
-                        if (!_ropeMode) {
-                            _gram.Proceed(GLOBALS.Level.Props);
+                        if (fetchedSelected.Length == 1 && _models.Length > 0) {
+                            var found = Array.FindIndex(_models, (m) => m.index == fetchedSelected[0].index);
+
+                            if (found != -1) { 
+                                _models[found].simulate = !_models[found].simulate;
+                                if (!_models[found].simulate) {
+                                    _gram.Proceed(GLOBALS.Level.Props);
+                                    _bezierHandleLock = -1; // Must be set!
+                                };
+                            }
                         }
+                        _shouldUpdateModeIndicatorsRT = true;
                     }
                     else if (_shortcuts.DuplicateProps.Check(ctrl, shift, alt)) {
                         // _shouldRedrawLevel = true;
@@ -3000,7 +3050,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 else SetMouseCursor(MouseCursor.Default);
                 #endregion
 
-                if (_ropeMode && fetchedSelected.Length == 1)
+                if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.type == InitPropType.Rope && _models.Length > 0)
                 {
                     _shouldUpdateModeIndicatorsRT = true;
 
@@ -3010,48 +3060,46 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         _shouldRedrawLevel = true;
                     }
                     
-                    var foundRopeList = _models.Where(rope => rope.index == fetchedSelected[0].index);
+                    var foundRope = _models.SingleOrDefault(rope => rope.index == fetchedSelected[0].index);
 
-                    if (foundRopeList.Any()) {
-                        var (_, simSwitch, model, bezierHandles) = foundRopeList.First();
+                    if (foundRope.model != null) {
+                        var (_, simulate, model) = foundRope;
 
-
-                        if (simSwitch) // simulate
-                        {
-                            if (++_ropeSimulationFrame % _ropeSimulationFrameCut == 0)
+                        if (simulate) {
+                            if (model.EditType == RopeModel.EditTypeEnum.Simulation) // simulate
                             {
-                                model.Update(
-                                fetchedSelected[0].prop.prop.Quads, 
-                                fetchedSelected[0].prop.prop.Depth switch
+                                if (++_ropeSimulationFrame % _ropeSimulationFrameCut == 0)
                                 {
-                                    < -19 => 2,
-                                    < -9 => 1,
-                                    _ => 0
-                                }, 
-                                _ropeModelGravity);
-                            }
-                        }
-                        else // bezier
-                        {
-                            var ends = Utils.RopeEnds(fetchedSelected[0].prop.prop.Quads);
-                            
-                            fetchedSelected[0].prop.prop.Extras.RopePoints = Utils.Casteljau(fetchedSelected[0].prop.prop.Extras.RopePoints.Length, [ ends.pA, ..bezierHandles, ends.pB ]);
-
-                            if ((IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) && _bezierHandleLock != -1)
-                                _bezierHandleLock = -1;
-
-                            if (IsMouseButtonDown(_shortcuts.SelectProps.Button))
-                            {
-                                for (var b = 0; b < bezierHandles.Length; b++)
-                                {
-                                    if (_bezierHandleLock == -1 && CheckCollisionPointCircle(tileMouseWorld, bezierHandles[b], 3f))
-                                        _bezierHandleLock = b;
-
-                                    if (_bezierHandleLock == b) bezierHandles[b] = tileMouseWorld;
+                                    model.Update(
+                                    fetchedSelected[0].prop.prop.Quads, 
+                                    fetchedSelected[0].prop.prop.Depth switch
+                                    {
+                                        < -19 => 2,
+                                        < -9 => 1,
+                                        _ => 0
+                                    });
                                 }
                             }
+                            else if (model.EditType == RopeModel.EditTypeEnum.BezierPaths) // bezier
+                            {
+                                var (pA, pB) = Utils.RopeEnds(fetchedSelected[0].prop.prop.Quads);
+                                
+                                fetchedSelected[0].prop.prop.Extras.RopePoints = Utils.Casteljau(fetchedSelected[0].prop.prop.Extras.RopePoints.Length, [ pA, ..model.BezierHandles, pB ]);
 
-                            
+                                if ((IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) && _bezierHandleLock != -1)
+                                    _bezierHandleLock = -1;
+
+                                if (IsMouseButtonDown(_shortcuts.SelectProps.Button))
+                                {
+                                    for (var b = 0; b < model.BezierHandles.Length; b++)
+                                    {
+                                        if (_bezierHandleLock == -1 && CheckCollisionPointCircle(tileMouseWorld, model.BezierHandles[b], 3f))
+                                            _bezierHandleLock = b;
+
+                                        if (_bezierHandleLock == b) model.BezierHandles[b] = tileMouseWorld;
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -3072,29 +3120,21 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     
                     _propsMoveMouseDelta = newMousePos - _propsMoveMousePos.Value;
 
-                    Vector2 gridDelta, preciseDelta;
+                    // Vector2 gridDelta, preciseDelta;
 
-                    // Grid delta
-                    {
-                        var gridScaled = new Vector2((int)(_propsMoveMousePos.Value.X / 16), (int)(_propsMoveMousePos.Value.Y / 16));
-                        var gridScaledBack = gridScaled * 16;
-                        
-                        var newGridScaled = new Vector2((int)(newMousePos.X / 16), (int)(newMousePos.Y / 16));
-                        var newGridScaledBack = newGridScaled * 16;
+                    var deltaFactor = _snapMode switch {
+                        1 => 16,
+                        2 => 8,
+                        _ => 1
+                    };
 
-                        gridDelta = newGridScaledBack - gridScaledBack;
-                    }
+                    var gridScaled = new Vector2((int)(_propsMoveMousePos.Value.X / deltaFactor), (int)(_propsMoveMousePos.Value.Y / deltaFactor));
+                    var gridScaledBack = gridScaled * deltaFactor;
                     
-                    // Precise delta
-                    {
-                        var gridScaled = new Vector2((int)(_propsMoveMousePos.Value.X / 8), (int)(_propsMoveMousePos.Value.Y / 8));
-                        var gridScaledBack = gridScaled * 8;
-                        
-                        var newGridScaled = new Vector2((int)(newMousePos.X / 8), (int)(newMousePos.Y / 8));
-                        var newGridScaledBack = newGridScaled * 8;
+                    var newGridScaled = new Vector2((int)(newMousePos.X / deltaFactor), (int)(newMousePos.Y / deltaFactor));
+                    var newGridScaledBack = newGridScaled * deltaFactor;
 
-                        preciseDelta = newGridScaledBack - gridScaledBack;
-                    }
+                    var delta = newGridScaledBack - gridScaledBack;
 
                     _propsMoveMousePos = newMousePos;
                     
@@ -3110,60 +3150,35 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         var quads = GLOBALS.Level.Props[s].prop.Quads;
                         var center = Utils.QuadsCenter(ref quads);
 
-                        switch (_snapMode)
-                        {
-                            case 0: // Free
-                            {
-                                quads.TopLeft = Raymath.Vector2Add(quads.TopLeft, _propsMoveMouseDelta);
-                                quads.TopRight = Raymath.Vector2Add(quads.TopRight, _propsMoveMouseDelta);
-                                quads.BottomRight = Raymath.Vector2Add(quads.BottomRight, _propsMoveMouseDelta);
-                                quads.BottomLeft = Raymath.Vector2Add(quads.BottomLeft, _propsMoveMouseDelta);
-                            }
-                                break;
+                        Vector2 deltaToAdd = _snapMode switch {
+                            1 or 2 => delta,
 
-                            case 1: // Grid
-                            {
-                                quads.TopLeft = Raymath.Vector2Add(quads.TopLeft, gridDelta);
-                                quads.TopRight = Raymath.Vector2Add(quads.TopRight, gridDelta);
-                                quads.BottomRight = Raymath.Vector2Add(quads.BottomRight, gridDelta);
-                                quads.BottomLeft = Raymath.Vector2Add(quads.BottomLeft, gridDelta);
-                            }
-                                break;
+                            _ => _propsMoveMouseDelta
+                        };
 
-                            case 2: // Precise
-                            {
-                                var gridScaled = new Vector2((int)(_propsMoveMousePos.Value.X / 8), (int)(_propsMoveMousePos.Value.Y / 8));
-                                var gridScaledBack = gridScaled * 8;
-
-                                var centerDelta = gridScaledBack - center;
-                                
-                                quads.TopLeft = Raymath.Vector2Add(quads.TopLeft, preciseDelta);
-                                quads.TopRight = Raymath.Vector2Add(quads.TopRight, preciseDelta);
-                                quads.BottomRight = Raymath.Vector2Add(quads.BottomRight, preciseDelta);
-                                quads.BottomLeft = Raymath.Vector2Add(quads.BottomLeft, preciseDelta);
-                            }
-                                break;
-                        }
+                        quads.TopLeft = Raymath.Vector2Add(quads.TopLeft, deltaToAdd);
+                        quads.TopRight = Raymath.Vector2Add(quads.TopRight, deltaToAdd);
+                        quads.BottomRight = Raymath.Vector2Add(quads.BottomRight, deltaToAdd);
+                        quads.BottomLeft = Raymath.Vector2Add(quads.BottomLeft, deltaToAdd);
 
                         GLOBALS.Level.Props[s].prop.Quads = quads;
 
                         if (GLOBALS.Level.Props[s].type == InitPropType.Rope)
                         {
-                            if (!_ropeMode)
-                            {
-                                for (var p = 0; p < GLOBALS.Level.Props[s].prop.Extras.RopePoints.Length; p++)
-                                {
-                                    GLOBALS.Level.Props[s].prop.Extras.RopePoints[p] = Raymath.Vector2Add(GLOBALS.Level.Props[s].prop.Extras.RopePoints[p], _propsMoveMouseDelta);
-                                }
-                            }
-
                             for (var r = 0; r < _models.Length; r++)
                             {
+                                if (!_models[r].simulate) {
+                                    for (var p = 0; p < GLOBALS.Level.Props[s].prop.Extras.RopePoints.Length; p++)
+                                    {
+                                        GLOBALS.Level.Props[s].prop.Extras.RopePoints[p] = Raymath.Vector2Add(GLOBALS.Level.Props[s].prop.Extras.RopePoints[p], deltaToAdd);
+                                    }
+                                }
+
                                 if (_models[r].index == s)
                                 {
-                                    for (var h = 0; h < _models[r].bezierHandles.Length; h++)
+                                    for (var h = 0; h < _models[r].model.BezierHandles.Length; h++)
                                     {
-                                        _models[r].bezierHandles[h] += _propsMoveMouseDelta;
+                                        _models[r].model.BezierHandles[h] += deltaToAdd;
                                     }
                                 }
                             }
@@ -3594,6 +3609,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         _selection1 = GetScreenToWorld2D(GetMousePosition(), _camera);
                         _clickTracker = true;
                     }
+
 
                     if ((IsMouseButtonReleased(_shortcuts.SelectProps.Button) || IsKeyReleased(_shortcuts.SelectPropsAlt.Key)) && _clickTracker && !(_isPropsWinHovered || _isPropsWinDragged))
                     {
@@ -4533,7 +4549,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             
                     // Depth
             
-                    var currentTile = GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
+                    var currentTile = GLOBALS.TileDex?.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][_propsMenuTilesIndex];
                     var currentRope = GLOBALS.RopeProps[_propsMenuRopesIndex];
                     var currentLong = GLOBALS.LongProps[_propsMenuLongsIndex];
                     var currentOther = GLOBALS.Props[_propsMenuOthersCategoryIndex][_propsMenuOthersIndex];
@@ -4751,7 +4767,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     if (selectedProp.prop.Extras.Settings is IVariable v)
                     {
                         var init = GLOBALS.Props[selectedProp.position.category][selectedProp.position.index];
-                        var variations = (init as IVariableInit).Variations;
+                        var variations = (init as IVariableInit)?.Variations ?? 1;
 
                         if (variations > 1) {
                             ImGui.SetNextItemWidth(100);
@@ -4853,13 +4869,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         var oldSegmentCount = GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints.Length;
                         var segmentCount = oldSegmentCount;
                         
-                        var switchSimSelected = ImGui.Button(currentModel.simSwitch ? "Simulation" : "Bezier Path");
+                        var switchSimSelected = ImGui.Button(currentModel.model.EditType == RopeModel.EditTypeEnum.Simulation ? "Simulation" : "Bezier Path");
 
                         if (switchSimSelected)
                         {
                             _shouldRedrawLevel = true;
                             if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                            currentModel.simSwitch = !currentModel.simSwitch;
+                            currentModel.model.EditType = (RopeModel.EditTypeEnum)(((int)(currentModel.model.EditType) + 1) % 2);
                         }
 
                         ImGui.SetNextItemWidth(100);
@@ -4897,17 +4913,25 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         
                         //
 
-                        if (ImGui.Checkbox("Simulate Rope", ref _ropeMode))
+                        if (ImGui.Checkbox("Simulate Rope", ref currentModel.simulate))
                         {
                             // _shouldRedrawLevel = true;
                             if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                             else _shouldRedrawLevel = true;
+
+                            if (!currentModel.simulate) {
+                                _bezierHandleLock = -1;
+                            }
                         }
 
-                        ImGui.Checkbox("Gravity", ref _ropeModelGravity);
 
-                        if (currentModel.simSwitch) // Simulation mode
+                        if (currentModel.model.EditType == RopeModel.EditTypeEnum.Simulation) // Simulation mode
                         {
+                            var grav = currentModel.model.Gravity;
+                            if (ImGui.Checkbox("Gravity", ref grav)) {
+                                currentModel.model.Gravity = grav;
+                            }
+                            
                             var cycleFpsSelected = ImGui.Button($"{60 / _ropeSimulationFrameCut} FPS");
 
                             if (cycleFpsSelected)
@@ -4944,29 +4968,34 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
                         else // Bezier mode
                         {
-                            var oldHandlePointNumber = currentModel.bezierHandles.Length;
+                            var oldHandlePointNumber = currentModel.model.BezierHandles.Length;
                             var handlePointNumber = oldHandlePointNumber;
 
+                            Utils.Restrict(ref handlePointNumber, 1);
+                            
                             ImGui.SetNextItemWidth(100);
-                            if (ImGui.InputInt("Control Points", ref handlePointNumber))
-                            {
+                            ImGui.InputInt("Control Points", ref handlePointNumber);
+
+
+                            if (handlePointNumber != oldHandlePointNumber) {
+                                var quads = GLOBALS.Level.Props[currentModel.index].prop.Quads;
+                                var center = Utils.QuadsCenter(ref quads);
+        
+                                Utils.Restrict(ref handlePointNumber, 1);
+
                                 _shouldRedrawLevel = true;
                                 if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-
-                                Utils.Restrict(ref handlePointNumber, 1);
+                                
+                                if (handlePointNumber > oldHandlePointNumber)
+                                {
+                                    currentModel.model.BezierHandles = [..currentModel.model.BezierHandles, center];
+                                }
+                                else if (handlePointNumber < oldHandlePointNumber)
+                                {
+                                    currentModel.model.BezierHandles = currentModel.model.BezierHandles[..^1];
+                                }
                             }
 
-                            var quads = GLOBALS.Level.Props[currentModel.index].prop.Quads;
-                            var center = Utils.QuadsCenter(ref quads);
-
-                            if (handlePointNumber > oldHandlePointNumber)
-                            {
-                                currentModel.bezierHandles = [..currentModel.bezierHandles, center];
-                            }
-                            else if (handlePointNumber < oldHandlePointNumber)
-                            {
-                                currentModel.bezierHandles = currentModel.bezierHandles[..^1];
-                            }
                         }
 
                         ropeNotFound:
