@@ -672,12 +672,12 @@ void main() {
 
         var quads = prop.Quads;
 
-        const float ratio = 20f / 16f;
+        // const float ratio = 20f / 16f;
 
-        quads.TopLeft *= ratio;
-        quads.TopRight *= ratio;
-        quads.BottomRight *= ratio;
-        quads.BottomLeft *= ratio;
+        // quads.TopLeft *= ratio;
+        // quads.TopRight *= ratio;
+        // quads.BottomRight *= ratio;
+        // quads.BottomLeft *= ratio;
 
         switch (type)
         {

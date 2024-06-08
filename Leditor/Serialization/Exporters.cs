@@ -233,7 +233,7 @@ public static class Exporters
             builder.Append(", ");
             builder.Append($"point(1, 1)");
             builder.Append(", ");
-            builder.Append($"[point({prop.Quads.TopLeft.X:0.0000}, {prop.Quads.TopLeft.Y:0.0000}), point({prop.Quads.TopRight.X:0.0000}, {prop.Quads.TopRight.Y:0.0000}), point({prop.Quads.BottomRight.X:0.0000}, {prop.Quads.BottomRight.Y:0.0000}), point({prop.Quads.BottomLeft.X:0.0000}, {prop.Quads.BottomLeft.Y:0.0000})]");
+            builder.Append($"[point({prop.Quads.TopLeft.X/1.25f:0.0000}, {prop.Quads.TopLeft.Y/1.25f:0.0000}), point({prop.Quads.TopRight.X/1.25f:0.0000}, {prop.Quads.TopRight.Y/1.25f:0.0000}), point({prop.Quads.BottomRight.X/1.25f:0.0000}, {prop.Quads.BottomRight.Y/1.25f:0.0000}), point({prop.Quads.BottomLeft.X/1.25f:0.0000}, {prop.Quads.BottomLeft.Y/1.25f:0.0000})]");
             builder.Append(", ");
 
             var settingsString = prop.Extras.Settings switch
@@ -249,7 +249,7 @@ public static class Exporters
                 { } basic => $"[#renderorder: {basic.RenderOrder}, #seed: {basic.Seed}, #renderTime: {basic.RenderTime}]"
             };
 
-            var pointsString = string.Join(", ", prop.Extras.RopePoints.Select(point => $"point({point.X*1.25f:0.0000}, {point.Y*1.25f:0.0000})"));
+            var pointsString = string.Join(", ", prop.Extras.RopePoints.Select(point => $"point({point.X*1.25f:0.0000}, {point.Y:0.0000})"));
             
             builder.Append($"[#settings: {settingsString}{(type == InitPropType.Rope ? $", #points: [{pointsString}]" : "")}]");
             

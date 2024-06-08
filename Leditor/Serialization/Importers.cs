@@ -435,7 +435,7 @@ public static class Importers {
             {
                 var globalCallArgs = ((AstNode.GlobalCall)q).Arguments;
 
-                return new Vector2(NumberToInteger(globalCallArgs[0]), NumberToInteger(globalCallArgs[1]));
+                return new Vector2(NumberToInteger(globalCallArgs[0]) * 1.25f, NumberToInteger(globalCallArgs[1]) * 1.25f);
             }).ToArray();
 
             var type = InitPropType.Tile;
@@ -568,7 +568,7 @@ public static class Importers {
                     ropePoints: (ropePoints?.Values.Select(p =>
                     {
                         var args = ((AstNode.GlobalCall)p).Arguments;
-                        return new Vector2(NumberToInteger(args[0])/1.25f, NumberToInteger(args[1])/1.25f);
+                        return new Vector2(NumberToInteger(args[0]), NumberToInteger(args[1]));
                     }).ToArray() ?? [])
                 ),
                 IsTile = type == InitPropType.Tile

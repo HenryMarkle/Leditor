@@ -4465,10 +4465,10 @@ internal static class Printers
 
         var quads = prop.Quads;
 
-        quads.TopLeft *= scale / 16f;
-        quads.TopRight *= scale / 16f;
-        quads.BottomRight *= scale / 16f;
-        quads.BottomLeft *= scale / 16f;
+        // quads.TopLeft *= scale / 16f;
+        // quads.TopRight *= scale / 16f;
+        // quads.BottomRight *= scale / 16f;
+        // quads.BottomLeft *= scale / 16f;
 
         switch (type)
         {

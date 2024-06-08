@@ -58,7 +58,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
             
             // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-            Printers.DrawProp(current.type, current.tile, category, index, current.prop, 16, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+            Printers.DrawProp(current.type, current.tile, category, index, current.prop, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
 
             // Draw Rope Point
             if (current.type == InitPropType.Rope)
@@ -315,8 +315,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
     private void RedrawLevel()
     {
-        var lWidth = GLOBALS.Level.Width * 16;
-        var lHeight = GLOBALS.Level.Height * 16;
+        var lWidth = GLOBALS.Level.Width * 20;
+        var lHeight = GLOBALS.Level.Height * 20;
 
         var paletteTiles = GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette;
 
@@ -329,7 +329,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         {
             // Draw geos first
             if (paletteTiles) {
-                Printers.DrawGeoLayerWithMaterialsIntoBuffer(_tempGeoL, 2, 16, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
+                Printers.DrawGeoLayerWithMaterialsIntoBuffer(_tempGeoL, 2, 20, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
 
                 // BeginTextureMode(geoL);
                 // ClearBackground(Color.White with { A = 0 });
@@ -370,7 +370,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                 Printers.DrawGeoLayer(
                     2, 
-                    16, 
+                    20, 
                     false, 
                     GLOBALS.Layer == 2 ? Color.Black : Color.Black with { A = 120 }
                 );
@@ -395,7 +395,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     //     GLOBALS.SelectedPalette!.Value,
                     //     70
                     // );
-                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 2, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true);
+                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 2, 20, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true);
 
                 } else {
                     BeginTextureMode(GLOBALS.Textures.GeneralLevel);
@@ -403,7 +403,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     Printers.DrawTileLayer(
                         GLOBALS.Layer,
                         2, 
-                        16, 
+                        20, 
                         false, 
                         GLOBALS.Settings.GeneralSettings.DrawTileMode,
                         (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255)
@@ -436,7 +436,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
                     // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                    Printers.DrawProp(current.type, current.tile, category, index, current.prop, 16, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+                    Printers.DrawProp(current.type, current.tile, category, index, current.prop, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
 
 
                     // Draw Rope Point
@@ -554,7 +554,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         if (_showTileLayer2 && (GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers || GLOBALS.Layer is 0 or 1))
         {
             if (paletteTiles) {
-                Printers.DrawGeoLayerWithMaterialsIntoBuffer(_tempGeoL, 1, 16, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
+                Printers.DrawGeoLayerWithMaterialsIntoBuffer(_tempGeoL, 1, 20, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
 
                 // BeginTextureMode(geoL);
                 // ClearBackground(Color.White with { A = 0 });
@@ -595,7 +595,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                 Printers.DrawGeoLayer(
                     1, 
-                    16, 
+                    20, 
                     false, 
                     GLOBALS.Layer == 1
                         ? Color.Black 
@@ -612,7 +612,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             if (_showLayer2Tiles)
             {
                 if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
-                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 1, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true);
+                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 1, 20, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true);
                     
                     
                     // Printers.DrawTileLayer(
@@ -630,7 +630,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     Printers.DrawTileLayer(
                         GLOBALS.Layer,
                         1, 
-                        16, 
+                        20, 
                         false, 
                         GLOBALS.Settings.GeneralSettings.DrawTileMode,
                         (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255)
@@ -662,7 +662,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
                     // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                    Printers.DrawProp(current.type, current.tile, category, index, current.prop, 16, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+                    Printers.DrawProp(current.type, current.tile, category, index, current.prop, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
 
                     // Draw Rope Point
                     if (current.type == InitPropType.Rope)
@@ -779,10 +779,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
         if (GLOBALS.Settings.GeneralSettings.Water && !GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1) {
             BeginTextureMode(GLOBALS.Textures.GeneralLevel);
             DrawRectangle(
-                (-1) * 16,
-                (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * 16,
-                (GLOBALS.Level.Width + 2) * 16,
-                (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * 16,
+                (-1) * 20,
+                (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * 20,
+                (GLOBALS.Level.Width + 2) * 20,
+                (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * 20,
                 new Color(0, 0, 255, (int)GLOBALS.Settings.GeneralSettings.WaterOpacity)
             );
             EndTextureMode();
@@ -792,7 +792,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         if (_showTileLayer1 && (GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers || GLOBALS.Layer == 0))
         {
             if (paletteTiles) {
-                Printers.DrawGeoLayerWithMaterialsIntoBuffer(_tempGeoL, 0, 16, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
+                Printers.DrawGeoLayerWithMaterialsIntoBuffer(_tempGeoL, 0, 20, GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette);
 
                 // BeginTextureMode(geoL);
                 // ClearBackground(Color.White with { A = 0 });
@@ -833,7 +833,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                 Printers.DrawGeoLayer(
                     0, 
-                    16, 
+                    20, 
                     false, 
                     GLOBALS.Layer == 0
                         ? Color.Black 
@@ -849,7 +849,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             if (_showLayer1Tiles)
             {
                 if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
-                        Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 0, 16, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true);
+                        Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 0, 20, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true);
                     
                     // Printers.DrawTileLayer(
                     //     GLOBALS.Layer,
@@ -865,7 +865,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     Printers.DrawTileLayer(
                         GLOBALS.Layer,
                         0, 
-                        16, 
+                        20, 
                         false, 
                         GLOBALS.Settings.GeneralSettings.DrawTileMode,
                         (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255)
@@ -897,7 +897,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
                     // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                    Printers.DrawProp(current.type, current.tile, category, index, current.prop, 16, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+                    Printers.DrawProp(current.type, current.tile, category, index, current.prop, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
 
                     // Draw Rope Point
                     if (current.type == InitPropType.Rope)
@@ -1020,10 +1020,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
         if (GLOBALS.Settings.GeneralSettings.Water && GLOBALS.Level.WaterAtFront && GLOBALS.Level.WaterLevel != -1) {
             BeginTextureMode(GLOBALS.Textures.GeneralLevel);
             DrawRectangle(
-                (-1) * 16,
-                (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * 16,
-                (GLOBALS.Level.Width + 2) * 16,
-                (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * 16,
+                (-1) * 20,
+                (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * 20,
+                (GLOBALS.Level.Width + 2) * 20,
+                (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * 20,
                 new Color(0, 0, 255, (int)GLOBALS.Settings.GeneralSettings.WaterOpacity)
             );
             EndTextureMode();
@@ -1286,8 +1286,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
     public void OnProjectLoaded(object? sender, EventArgs e)
     {
-        var lWidth = GLOBALS.Level.Width * 16;
-        var lHeight = GLOBALS.Level.Height * 16;
+        var lWidth = GLOBALS.Level.Width * 20;
+        var lHeight = GLOBALS.Level.Height * 20;
 
         ImportRopeModels();
         _selected = new bool[GLOBALS.Level.Props.Length];
@@ -1306,8 +1306,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
     public void OnProjectCreated(object? sender, EventArgs e)
     {
-        var lWidth = GLOBALS.Level.Width * 16;
-        var lHeight = GLOBALS.Level.Height * 16;
+        var lWidth = GLOBALS.Level.Width * 20;
+        var lHeight = GLOBALS.Level.Height * 20;
 
         ImportRopeModels();
         _selected = new bool[GLOBALS.Level.Props.Length];
@@ -3123,8 +3123,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     // Vector2 gridDelta, preciseDelta;
 
                     var deltaFactor = _snapMode switch {
-                        1 => 16,
-                        2 => 8,
+                        1 => 20,
+                        2 => 10,
                         _ => 1
                     };
 
@@ -3705,13 +3705,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
         BeginMode2D(_camera);
         {
-            DrawRectangleLinesEx(new Rectangle(-3, -3, GLOBALS.Level.Width * 16 + 6, GLOBALS.Level.Height * 16 + 6), 3, Color.White);
+            DrawRectangleLinesEx(new Rectangle(-3, -3, GLOBALS.Level.Width * 20 + 6, GLOBALS.Level.Height * 20 + 6), 3, Color.White);
             
             BeginShaderMode(GLOBALS.Shaders.VFlip);
             SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), GLOBALS.Textures.GeneralLevel.Texture);
             DrawTexturePro(GLOBALS.Textures.GeneralLevel.Texture, 
-                new Rectangle(0, 0, GLOBALS.Level.Width * 16, GLOBALS.Level.Height * 16), 
-                new Rectangle(0, 0, GLOBALS.Level.Width * 16, GLOBALS.Level.Height * 16), 
+                new Rectangle(0, 0, GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20), 
+                new Rectangle(0, 0, GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20), 
                 new Vector2(0, 0), 
                 0, 
                 Color.White);
@@ -3731,17 +3731,16 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
             if (_showGrid)
             {
-                Printers.DrawGrid(16);
+                Printers.DrawGrid(20);
             }
             
             if (GLOBALS.Settings.GeneralSettings.DarkTheme)
             {
-                DrawRectangleLines(0, 0, GLOBALS.Level.Width*16, GLOBALS.Level.Height*16, Color.White);
+                DrawRectangleLines(0, 0, GLOBALS.Level.Width*20, GLOBALS.Level.Height*20, Color.White);
             }
             
             if (GLOBALS.Settings.PropEditor.Cameras) {
                 var counter = 0;
-                var ratio = 16f/20f;
 
                 foreach (var cam in GLOBALS.Level.Cameras)
                 {
@@ -3749,8 +3748,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                     DrawRectangleLinesEx(
                         GLOBALS.Settings.PropEditor.CamerasInnerBoundries 
-                            ? critRect with { X = critRect.X * ratio, Y = critRect.Y * ratio, Width = critRect.Width * ratio, Height = critRect.Height * ratio }
-                            : new(cam.Coords.X * ratio, cam.Coords.Y * ratio, GLOBALS.EditorCameraWidth  * ratio, GLOBALS.EditorCameraHeight  * ratio),
+                            ? critRect with { X = critRect.X, Y = critRect.Y, Width = critRect.Width, Height = critRect.Height }
+                            : new(cam.Coords.X, cam.Coords.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
                         4f,
                         GLOBALS.Settings.GeneralSettings.ColorfulCameras 
                             ? GLOBALS.CamColors[counter] 
