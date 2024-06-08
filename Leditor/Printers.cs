@@ -4035,7 +4035,7 @@ internal static class Printers
     
     internal static void DrawTileAsPropColored(
         in TileDefinition init, 
-        PropQuad quads,
+        PropQuad quad,
         Color tint,
         int depth = 0
     )
@@ -4083,7 +4083,7 @@ internal static class Printers
             
             SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
 
-            DrawTextureQuad(texture, quads);
+            DrawTextureQuad(texture, quad);
             EndShaderMode();
         }
         else
@@ -4115,7 +4115,7 @@ internal static class Printers
                 ShaderUniformDataType.Vec4);
             SetShaderValue(GLOBALS.Shaders.ColoredTileProp, depthLoc, depth, ShaderUniformDataType.Int);
 
-            DrawTextureQuad(texture, quads);
+            DrawTextureQuad(texture, quad);
             EndShaderMode();
         }
     }

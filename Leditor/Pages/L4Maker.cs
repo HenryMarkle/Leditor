@@ -17,6 +17,10 @@ internal class L4MakerPage : EditorPage, IContextListener {
         _tileShader.Dispose();
         _boxTileShader.Dispose();
         _whiteEraser.Dispose();
+        _variedStandardPropShader.Dispose();
+        _standardPropShader.Dispose();
+        _variedSoftPropShader.Dispose();
+        _softPropShader.Dispose();
     }
 
     public void OnProjectCreated(object? sender, EventArgs e)
@@ -64,7 +68,7 @@ in vec4 fragColor;
 out vec4 FragColor;
 
 void main() {
-	vec4 newColor = texture(inputTexture, vec2(fragTexCoord.x * width + offset.x, fragTexCoord.y * height + offset.y));
+	vec4 newColor = texture(inputTexture, vec2(fragTexCoord.x * width, fragTexCoord.y * height + offset.y));
 
 	if (newColor.r == 1.0 && newColor.g == 1.0 && newColor.b == 1.0) discard;
 
@@ -147,6 +151,170 @@ void main() {
 
 	FragColor = newColor;
 }"));
+    
+        _variedStandardPropShader = new(LoadShaderFromMemory(null, @"#version 330
+
+uniform sampler2D inputTexture;
+uniform int layerNum;
+uniform float layerHeight;
+uniform float varWidth;
+uniform int variation;
+uniform int depth;
+uniform in flatShading;
+
+in vec2 fragTexCoord;
+in vec4 fragColor;
+
+out vec4 FragColor;
+
+void main() {
+    vec4 newColor = vec4(0);
+    float newXCoord = fragTexCoord.x * varWidth + (variation * varWidth);
+
+    for (int l = layerNum - 1; l > -1; l--) {
+        float currentHeight = fragTexCoord.y * layerHeight + (l * layerHeight);
+
+        vec2 newFragTexCoord = vec2(newXCoord, currentHeight);
+
+        vec4 c = texture(inputTexture, newFragTexCoord);
+        
+        if (c.r == 1.0 && c.g == 1.0 && c.b == 1.0) continue;
+
+        float shade = 1.0;
+
+        if (flatShading == 0) {
+            shade -= ((depth + l) / 30.0); 
+        } else {
+            if (depth >= 0 && depth < 10) {
+                shade -= 0.1;
+            } else if (depth >= 10 && depth < 20) {
+                shade -= 0.4;
+            } else if (depth >= 20) {
+                shade -= 0.8;
+            }
+        }
+		
+		newColor = vec4(shade, shade, shade, 1.0);
+    }
+
+    FragColor = newColor;
+}"));
+    
+        _standardPropShader = new(LoadShaderFromMemory(null, @"#version 330
+
+uniform sampler2D inputTexture;
+uniform int layerNum;
+uniform float layerHeight;
+uniform float width;
+uniform int depth;
+uniform int flatShading;
+
+in vec2 fragTexCoord;
+in vec4 fragColor;
+
+out vec4 FragColor;
+
+void main() {
+    vec4 newColor = vec4(0);
+
+    for (int l = layerNum - 1; l > -1; l--) {
+        float currentHeight = fragTexCoord.y * layerHeight + (l * layerHeight);
+
+        vec2 newFragTexCoord = vec2(fragTexCoord.x * width, currentHeight);
+
+        vec4 c = texture(inputTexture, newFragTexCoord);
+
+        if (c.r == 1.0 && c.g == 1.0 && c.b == 1.0) continue;
+    
+        float shade = 1.0;
+
+        if (flatShading == 0) {
+            shade -= ((depth + l) / 30.0); 
+        } else {
+            if (depth >= 0 && depth < 10) {
+                shade -= 0.1;
+            } else if (depth >= 10 && depth < 20) {
+                shade -= 0.4;
+            } else if (depth >= 20) {
+                shade -= 0.8;
+            }
+        }
+		
+		newColor = vec4(shade, shade, shade, 1.0);
+    }
+
+if (newColor.a == 0.0) discard;
+
+    FragColor = newColor;
+}"));
+    
+        _variedSoftPropShader = new(LoadShaderFromMemory(null, @"#version 330
+
+uniform sampler2D inputTexture;
+uniform float varWidth;
+uniform float height;
+uniform int variation;
+uniform int depth;
+uniform int flatShading;
+
+in vec2 fragTexCoord;
+in vec4 fragColor;
+
+out vec4 FragColor;
+
+void main() {
+    float newXCoord = fragTexCoord.x * varWidth + (variation * varWidth);
+    float newYCoord = fragTexCoord.y * height;
+    
+    vec4 c = texture(inputTexture, vec2(newXCoord, newYCoord));
+
+    if ((c.r == 1.0 && c.g == 1.0 && c.b == 1.0) || (c.r == 0.0 && c.g == 0.0 && c.b == 0.0)) {
+        discard;
+    }
+
+    float shade = 1.0;
+
+    if (flatShading == 0) {
+        shade = c.g - depth/30.0;
+
+        if (shade < 0.1) shade = 0.01;
+    } else {
+        shade = 1.0 -  depth / 30.0;
+    }
+
+    FragColor = vec4(shade, shade, shade, fragColor.a);
+}"));
+    
+        _softPropShader = new(LoadShaderFromMemory(null, @"#version 330
+
+uniform sampler2D inputTexture;
+uniform int depth;
+uniform int flatShading;
+
+in vec2 fragTexCoord;
+in vec4 fragColor;
+
+out vec4 FragColor;
+
+void main() {
+    vec4 c = texture(inputTexture, fragTexCoord);
+    
+    if ((c.r == 1.0 && c.g == 1.0 && c.b == 1.0) || (c.r == 0.0 && c.g == 0.0 && c.b == 0.0)) {
+        discard;
+    }
+
+    float shade = 1.0;
+
+    if (flatShading == 0) {
+        shade = c.g - depth/30.0;
+
+        if (shade < 0.1) shade = 0.01;
+    } else {
+        shade = 1.0 -  depth / 30.0;
+    }
+
+    FragColor = vec4(shade, shade, shade, fragColor.a);
+}"));
     }
 
     ~L4MakerPage() {
@@ -165,6 +333,10 @@ void main() {
 
     private RL.Managed.Shader _tileShader;
     private RL.Managed.Shader _boxTileShader;
+    private RL.Managed.Shader _standardPropShader;
+    private RL.Managed.Shader _variedStandardPropShader;
+    private RL.Managed.Shader _variedSoftPropShader;
+    private RL.Managed.Shader _softPropShader;
     private RL.Managed.Shader? _propShader;
 
 
@@ -187,9 +359,15 @@ void main() {
     private Vector2 _l3BottomRightQuadHandle = new();
     private Vector2 _l3BottomLeftQuadHandle = new();
 
+    private bool _cameras;
+    private bool _camerasInnerBounds;
+
     private bool _layer1 = true;
     private bool _layer2 = true;
     private bool _layer3 = true;
+
+    private bool _genWholeLevel;
+    private bool _genEachCamera = true;
 
     private bool _flatShading = true;
 
@@ -259,8 +437,7 @@ void main() {
 
     private void DrawTileAsProp(
         in TileDefinition init, 
-        in Vector2 center, 
-        Span<Vector2> quads,
+        in PropQuad quad,
         int depth,
         bool flat
     )
@@ -278,12 +455,12 @@ void main() {
             var bufferPixels = init.BufferTiles * 20;
             
             var height = tHeight * 20;
-            var offset = new Vector2(bufferPixels,tHeight*20*tWidth + bufferPixels);
+            var offset = new Vector2(bufferPixels, tHeight * tWidth * 20);
             
-            var calcHeight = (float)height / (float)texture.Height;
+            var calcHeight = (float)(height + bufferPixels*2) / (float)texture.Height;
             var calcOffset = Raymath.Vector2Divide(offset, new(texture.Width, texture.Height));
-            var calcWidth = (float)tWidth*20 / texture.Width;
-
+            var calcWidth = (float)(tWidth + init.BufferTiles*2)*20 / texture.Width;
+            
             var textureLoc = GetShaderLocation(shader, "inputTexture");
 
             var widthLoc = GetShaderLocation(shader, "width");
@@ -305,14 +482,7 @@ void main() {
             
             SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
 
-            Printers.DrawTexturePoly(
-                texture,
-                center,
-                quads,
-                new Span<Vector2>([new Vector2(1, 0), new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0)]),
-                5,
-                Color.White
-            );
+            Printers.DrawTextureQuad(texture, quad);
             EndShaderMode();
         }
         else
@@ -348,15 +518,208 @@ void main() {
             SetShaderValue(shader, alphaLoc, 1.0f, ShaderUniformDataType.Float);
             SetShaderValue(shader, flatLoc, flat ? 1 : 0, ShaderUniformDataType.Int);
 
-            Printers.DrawTexturePoly(
-                texture,
-                center,
-                quads,
-                new Span<Vector2>([new(1, 0), new(0, 0), new(0, 1), new(1, 1), new(1, 0)]),
-                5,
-                Color.White
-            );
+            Printers.DrawTextureQuad(texture, quad);
             EndShaderMode();
+        }
+    }
+
+    internal void DrawVariedStandardProp(
+        InitVariedStandardProp init, 
+        in Texture2D texture, 
+        PropQuad quads,
+        int variation,
+        int depth,
+        bool flat
+    )
+    {
+        var shader = _variedStandardPropShader.Raw;
+
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+        
+        var layerHeight = (float) init.Size.y * GLOBALS.Scale;
+        var variationWidth = (float) init.Size.x * GLOBALS.Scale;
+        
+        var calcLayerHeight = layerHeight / texture.Height;
+        var calcVariationWidth = variationWidth / texture.Width;
+        
+        var textureLoc = GetShaderLocation(shader, "inputTexture");
+        
+        var layerNumLoc = GetShaderLocation(shader, "layerNum");
+        var layerHeightLoc = GetShaderLocation(shader, "layerHeight");
+        var variationWidthLoc = GetShaderLocation(shader, "varWidth");
+        var variationLoc = GetShaderLocation(shader, "variation");
+        var depthLoc = GetShaderLocation(shader, "depth");
+        var flatLoc = GetShaderLocation(shader, "flatShading");
+
+        BeginShaderMode(shader);
+
+        SetShaderValueTexture(shader, textureLoc, texture);
+       
+        SetShaderValue(shader, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.Int);
+        SetShaderValue(shader, layerHeightLoc, calcLayerHeight, ShaderUniformDataType.Float);
+        SetShaderValue(shader, variationWidthLoc, calcVariationWidth, ShaderUniformDataType.Float);
+        SetShaderValue(shader, variationLoc, variation, ShaderUniformDataType.Int);
+        SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
+        SetShaderValue(shader, flatLoc, flat ? 1 : 0, ShaderUniformDataType.Int);
+        
+        Printers.DrawTextureQuad(texture, quads, flippedX, flippedY);
+        EndShaderMode();
+    }
+
+    internal void DrawStandardProp(
+        InitStandardProp init, 
+        in Texture2D texture, 
+        PropQuad quads,
+        int depth,
+        bool flat
+    )
+    {
+        var shader = _standardPropShader.Raw;
+
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+        
+        var layerHeight = (float)texture.Height / (float)init.Repeat.Length;
+        var calcLayerHeight = layerHeight / texture.Height;
+        var calcWidth = (float) init.Size.x * GLOBALS.Scale / texture.Width;
+
+        calcWidth = calcWidth > 1.00000f ? 1.0f : calcWidth;
+        
+        var textureLoc = GetShaderLocation(shader, "inputTexture");
+        var layerNumLoc = GetShaderLocation(shader, "layerNum");
+        var layerHeightLoc = GetShaderLocation(shader, "layerHeight");
+        var widthLoc = GetShaderLocation(shader, "width");
+        var depthLoc = GetShaderLocation(shader, "depth");
+        var flatLoc = GetShaderLocation(shader, "flatShading");
+
+        BeginShaderMode(shader);
+        
+        SetShaderValueTexture(shader, textureLoc, texture);
+        SetShaderValue(shader, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.Int);
+        SetShaderValue(shader, layerHeightLoc, calcLayerHeight, ShaderUniformDataType.Float);
+        SetShaderValue(shader, widthLoc, calcWidth, ShaderUniformDataType.Float);
+        SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
+        SetShaderValue(shader, flatLoc, flat ? 1 : 0, ShaderUniformDataType.Int);
+        
+        Printers.DrawTextureQuad(texture, quads, flippedX, flippedY);
+
+        EndShaderMode();
+    }
+
+    internal void DrawVariedSoftProp(
+        InitVariedSoftProp init, 
+        in Texture2D texture, 
+        PropQuad quads,
+        int variation,
+        int depth,
+        bool flat
+    )
+    {
+        var shader = _variedSoftPropShader.Raw;
+
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+        
+        var calcHeight = (float) init.SizeInPixels.y / texture.Height;
+        var calcVariationWidth = (float) init.SizeInPixels.x / texture.Width;
+
+        var textureLoc = GetShaderLocation(shader, "inputTexture");
+
+        var heightLoc = GetShaderLocation(shader, "height");
+        var variationWidthLoc = GetShaderLocation(shader, "varWidth");
+        var variationLoc = GetShaderLocation(shader, "variation");
+        var depthLoc = GetShaderLocation(shader, "depth");
+        var flatLoc = GetShaderLocation(shader, "flatShading");
+
+        BeginShaderMode(shader);
+
+        SetShaderValueTexture(shader, textureLoc, texture);
+
+        SetShaderValue(shader, variationWidthLoc, calcVariationWidth, ShaderUniformDataType.Float);
+        SetShaderValue(shader, heightLoc, calcHeight, ShaderUniformDataType.Float);
+        SetShaderValue(shader, variationLoc, variation, ShaderUniformDataType.Int);
+        SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
+        SetShaderValue(shader, flatLoc, flat ? 1 : 0, ShaderUniformDataType.Int);
+        
+        Printers.DrawTextureQuad(texture, quads, flippedX, flippedY);
+        EndShaderMode();
+    }
+
+    internal void DrawSoftProp(in Texture2D texture, in PropQuad quads, int depth, bool flat)
+    {
+        var shader = _softPropShader.Raw;
+
+        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
+        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
+        
+        var textureLoc = GetShaderLocation(shader, "inputTexture");
+        var depthLoc = GetShaderLocation(shader, "depth");
+        var flatLoc = GetShaderLocation(shader, "flatShading");
+
+        BeginShaderMode(shader);
+
+        SetShaderValueTexture(shader, textureLoc, texture);
+        SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
+        SetShaderValue(shader, flatLoc, flat ? 1 : 0, ShaderUniformDataType.Int);
+        
+        Printers.DrawTextureQuad(texture, quads, flippedX, flippedY);
+        EndShaderMode();
+    }
+
+    private void DrawProp(InitPropType type, TileDefinition? tile, int category, int index, Prop prop, bool flat) {
+        var depth = -prop.Depth + GLOBALS.Layer*10;
+
+        var quads = prop.Quads;
+
+        const float ratio = 20f / 16f;
+
+        quads.TopLeft *= ratio;
+        quads.TopRight *= ratio;
+        quads.BottomRight *= ratio;
+        quads.BottomLeft *= ratio;
+
+        switch (type)
+        {
+            case InitPropType.Tile:
+            {
+                if (GLOBALS.TileDex is null || tile is null) return;
+                
+                DrawTileAsProp(tile, quads, depth, flat);
+            }
+                break;
+
+            case InitPropType.Rope:
+            case InitPropType.Long:
+            break;
+
+
+            default:
+            {
+                var texture = GLOBALS.Textures.Props[category][index];
+                var init = GLOBALS.Props[category][index];
+
+                // TODO: Could be simplified
+                switch (init)
+                {
+                    case InitVariedStandardProp variedStandard:
+                        DrawVariedStandardProp(variedStandard, texture, quads, ((PropVariedSettings)prop.Extras.Settings).Variation, depth, flat);
+                        break;
+
+                    case InitStandardProp standard:
+                        DrawStandardProp(standard, texture, quads, depth, flat);
+                        break;
+
+                    case InitVariedSoftProp variedSoft:
+                        DrawVariedSoftProp(variedSoft, texture, quads,  ((PropVariedSoftSettings)prop.Extras.Settings).Variation, depth, flat);
+                        break;
+
+                    case InitSoftProp:
+                        DrawSoftProp(texture, quads, depth, flat);
+                        break;
+                }
+            }
+                break;
         }
     }
 
@@ -460,16 +823,33 @@ void main() {
                             var depth2 = Utils.SpecHasDepth(init.Specs);
                             var depth3 = Utils.SpecHasDepth(init.Specs, 2);
                             
+                            // DrawTileAsProp(
+                            //     init,
+                            //     center,
+                            //     [
+                            //         new(width, -height),
+                            //         new(-width, -height),
+                            //         new(-width, height),
+                            //         new(width, height),
+                            //         new(width, -height)
+                            //     ],
+                            //     layer * 10,
+                            //     flat
+                            // );
+
+                            var quadOrigin = (new Vector2(x, y) - Vector2.One * init.BufferTiles - Utils.GetTileHeadOrigin(init))*scale;
+
+                            var quad = new PropQuad(
+                                quadOrigin,
+                                quadOrigin + new Vector2(init.Size.Width + init.BufferTiles * 2,                0) * scale,
+                                quadOrigin + new Vector2(init.Size.Width + init.BufferTiles * 2, init.Size.Height + init.BufferTiles * 2) * scale,
+                                quadOrigin + new Vector2(0,               init.Size.Height + init.BufferTiles * 2) * scale
+                            );
+
+
                             DrawTileAsProp(
-                                init,
-                                center,
-                                [
-                                    new(width, -height),
-                                    new(-width, -height),
-                                    new(-width, height),
-                                    new(width, height),
-                                    new(width, -height)
-                                ],
+                                init, 
+                                quad,
                                 layer * 10,
                                 flat
                             );
@@ -509,21 +889,49 @@ void main() {
         EndTextureMode();
     }
 
+    private void DrawPropLayer(RenderTexture2D renderTexture, int layer, bool flat) {
+        BeginTextureMode(renderTexture);
+
+        var scopeNear = -layer * 10;
+        var scopeFar = -(layer*10 + 9);
+        
+        foreach (var current in GLOBALS.Level.Props)
+        {
+            // Filter based on depth
+            if (current.prop.Depth > scopeNear || current.prop.Depth < scopeFar) continue;
+
+            var (category, index) = current.position;
+            
+            DrawProp(current.type, current.tile, category, index, current.prop, flat);
+        }
+
+        EndTextureMode();
+    }
+
     /// <summary>
     /// Requires a drawing context.
     /// </summary>
     private void DrawLayers() {
         // Layer 3
 
-        if (_layer3) DrawGeoAndTileLayer(_layer3Buffer, 2, 20, _flatShading);
+        if (_layer3) {
+            DrawGeoAndTileLayer(_layer3Buffer, 2, 20, _flatShading);
+            DrawPropLayer(_layer3Buffer, 2, _flatShading);
+        }
         
         // Layer 2
 
-        if (_layer2) DrawGeoAndTileLayer(_layer2Buffer, 1, 20, _flatShading);
+        if (_layer2) {
+            DrawGeoAndTileLayer(_layer2Buffer, 1, 20, _flatShading);
+            DrawPropLayer(_layer2Buffer, 1, _flatShading);
+        }
         
         // Layer 1
 
-        if (_layer1) DrawGeoAndTileLayer(_layer1Buffer, 0, 20, _flatShading);
+        if (_layer1) {
+            DrawGeoAndTileLayer(_layer1Buffer, 0, 20, _flatShading);
+            DrawPropLayer(_layer1Buffer, 0, _flatShading);
+        }
     }
 
     #endregion
@@ -676,7 +1084,18 @@ void main() {
                     Directory.CreateDirectory(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "l4"));
                 }
 
-                ExportImage(image, Path.Combine(GLOBALS.Paths.ExecutableDirectory, "l4", $"{GLOBALS.Level.ProjectName}.png"));
+                if (_genEachCamera) {
+                    for (var c = 0; c < GLOBALS.Level.Cameras.Count; c++) {
+                        var camera = GLOBALS.Level.Cameras[c];
+
+                        var imageCopy = ImageCopy(image);
+                        ImageCrop(ref imageCopy, new Rectangle(camera.Coords, new Vector2(GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight)));
+                        ExportImage(imageCopy, Path.Combine(GLOBALS.Paths.ExecutableDirectory, "l4", $"{GLOBALS.Level.ProjectName}_{c+1}.png"));
+                        UnloadImage(imageCopy);
+                    }
+                }
+
+                if (_genWholeLevel) ExportImage(image, Path.Combine(GLOBALS.Paths.ExecutableDirectory, "l4", $"{GLOBALS.Level.ProjectName}.png"));
 
                 UnloadImage(image);
 
@@ -732,6 +1151,28 @@ void main() {
                     EndShaderMode();
                 }
 
+                // Cameras
+
+                if (_cameras)
+                {
+                    var counter = 0;
+                    foreach (var cam in GLOBALS.Level.Cameras)
+                    {
+                        DrawRectangleLinesEx(
+                            _camerasInnerBounds 
+                                ? Utils.CameraCriticalRectangle(cam.Coords) 
+                                : new(cam.Coords.X, cam.Coords.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
+                            4f,
+                            GLOBALS.Settings.GeneralSettings.ColorfulCameras 
+                                ? GLOBALS.CamColors[counter] 
+                                : Color.Pink
+                        );
+
+                        counter++;
+                        Utils.Cycle(ref counter, 0, GLOBALS.CamColors.Length - 1);
+                    }
+                }
+
                 // Draw the handles
 
                 if (_layer1) {
@@ -777,9 +1218,20 @@ void main() {
                 _isOptionsWinHovered = CheckCollisionPointRec(GetMousePosition(), new(optionsPos.X - 5, optionsPos.Y, optionsWinSpace.X + 10, optionsWinSpace.Y));
 
                 if (optionsWinOpened) {
+                    var neither = !(_genWholeLevel || _genEachCamera);
+
+                    if (neither) ImGui.BeginDisabled();
+                    
                     if (ImGui.Button("Generate Image", ImGui.GetContentRegionAvail() with { Y = 20 })) {
                         _generateSignal = true;
                     }
+
+                    if (neither) ImGui.EndDisabled();
+
+                    ImGui.Spacing();
+
+                    ImGui.Checkbox("Generate Whole Level", ref _genWholeLevel);
+                    ImGui.Checkbox("Generate Each Camera", ref _genEachCamera);
 
                     ImGui.Spacing();
 
@@ -791,6 +1243,14 @@ void main() {
 
                     if (ImGui.Checkbox("Layer 3", ref _layer3)) {
                     }
+
+                    ImGui.Spacing();
+
+                    ImGui.Checkbox("Cameras", ref _cameras);
+
+                    if (!_cameras) ImGui.BeginDisabled();
+                    ImGui.Checkbox("Cameras' Inner Boundries", ref _camerasInnerBounds);
+                    if (!_cameras) ImGui.EndDisabled();
 
                     ImGui.Spacing();
 

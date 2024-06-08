@@ -15,6 +15,9 @@ Added a tile viewer that allows you to display each tile individually.
 - Camera boundries can now use different colors to better differentiate them.
 - You can choose to display camera's inner boundries instead of the outer ones.
 - You can now disable gravity for any type of rope among simulation.
+- In L4 Maker, you now generate images for each camera, rather than the whole level.
+- Added visible camera boundries to l4 maker.
+- Added props to l4 maker.
 
 ### Changes
 
