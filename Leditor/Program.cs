@@ -966,6 +966,52 @@ void main()
 }
 ");
 
+        GLOBALS.Shaders.LightMapMask = LoadShaderFromMemory(null, @"#version 330
+        
+in vec2 fragTexCoord;
+in vec4 fragColor;
+
+out vec4 FragColor;
+
+uniform sampler2D inputTexture;
+uniform int vflip = 0;
+
+void main() {
+    vec4 color = vec4(0, 0, 0, 0);
+
+    if (vflip == 0) {
+        color = texture(inputTexture, fragTexCoord);
+    } else {
+        color = texture(inputTexture, vec2(fragTexCoord.x, 1.0 - fragTexCoord.y));
+    }
+
+    if (color.r == 1.0 && color.g == 1.0 && color.b == 1.0) { discard; }
+
+    FragColor = fragColor;
+}");
+
+//         GLOBALS.Shaders.LightMapCroppedMask = LoadShaderFromMemory(null, @"#version 330
+        
+// in vec2 fragTexCoord;
+// in vec4 fragColor;
+
+// out vec4 FragColor;
+
+// uniform sampler2D level;
+// uniform sampler2D lightmap;
+
+// uniform vec2 offset;
+// uniform vec2 marginOffset;
+
+// void main() {
+//     vec4 levelColor = texture(level, fragTexCoord);
+//     vec4 lightColor = texture(level, fragTexCoord);
+
+//     if (levelColor.r + lightColor.r > 0.0 || levelColor.g + lightColor.g > 0 || levelColor.b + lightColor.b > 0) { discard; }
+
+//     FragColor = fragColor;
+// }");
+
         //
 
         SetTargetFPS(GLOBALS.Settings.Misc.FPS);
@@ -2302,6 +2348,8 @@ void main()
         UnloadShader(GLOBALS.Shaders.LightMapStretch);
         UnloadShader(GLOBALS.Shaders.TilePreviewFragment);
         
+        UnloadShader(GLOBALS.Shaders.LightMapMask);
+        // UnloadShader(GLOBALS.Shaders.LightMapCroppedMask);
         UnloadShader(GLOBALS.Shaders.VFlip);
         
         UnloadRenderTexture(GLOBALS.Textures.GeneralLevel);

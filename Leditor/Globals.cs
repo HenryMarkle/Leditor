@@ -60,6 +60,9 @@ internal static class GLOBALS
     internal class ShaderService
     {
         internal Shader OppositeBrightness { get; set; }
+
+        internal Shader LightMapMask { get; set; }
+        // internal Shader LightMapCroppedMask { get; set; }
         
         internal Shader TilePreviewFragment { get; set; }
         internal Shader Palette { get; set; }

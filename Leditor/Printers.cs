@@ -1996,6 +1996,7 @@ internal static class Printers
         internal bool HighLayerContrast { get; init; } = true;
         internal bool VisiblePreceedingUnfocusedLayers { get; init; } = true;
         internal bool CropTilePrevious { get; init; } = false;
+        internal bool Shadows { get; init; } = false;
     }
     
     internal static void DrawLevelIntoBuffer(in RenderTexture2D texture, DrawLevelParams parameters)
@@ -2099,6 +2100,28 @@ internal static class Printers
         {
             BeginTextureMode(texture);
             DrawPropLayer(2, parameters.PropDrawMode, parameters.Palette, parameters.Scale);
+            EndTextureMode();
+        }
+
+        if (parameters.Shadows) {
+            var degree = GLOBALS.Level.LightAngle + 90;
+            degree *= -1;
+            
+            var rad = degree/360f * Math.PI*2;
+
+            var offset = new Vector2((float)Math.Cos(rad) * -1, (float)Math.Sin(rad));
+
+            var mask = GLOBALS.Shaders.LightMapMask;
+
+            BeginTextureMode(texture);
+            BeginShaderMode(mask);
+
+            SetShaderValueTexture(mask, GetShaderLocation(mask, "inputTexture"), GLOBALS.Textures.LightMap.Texture);
+            SetShaderValue(mask, GetShaderLocation(mask, "vflip"), 1, ShaderUniformDataType.Int);
+
+            DrawTextureV(GLOBALS.Textures.LightMap.Texture, new Vector2(-300, -300) + (offset * GLOBALS.Level.LightFlatness * 30), new Color(10, 10, 10, 180));
+            
+            EndShaderMode();
             EndTextureMode();
         }
 
@@ -2226,6 +2249,28 @@ internal static class Printers
             {
 
                 DrawPropLayer(1, parameters.PropDrawMode, parameters.Palette, parameters.Scale);
+            }
+
+            if (parameters.Shadows) {
+                var degree = GLOBALS.Level.LightAngle + 90;
+                degree *= -1;
+                
+                var rad = degree/360f * Math.PI*2;
+
+                var offset = new Vector2((float)Math.Cos(rad) * -1, (float)Math.Sin(rad));
+
+                var mask = GLOBALS.Shaders.LightMapMask;
+
+                BeginTextureMode(texture);
+                BeginShaderMode(mask);
+
+                SetShaderValueTexture(mask, GetShaderLocation(mask, "inputTexture"), GLOBALS.Textures.LightMap.Texture);
+                SetShaderValue(mask, GetShaderLocation(mask, "vflip"), 1, ShaderUniformDataType.Int);
+
+                DrawTextureV(GLOBALS.Textures.LightMap.Texture, new Vector2(-300, -300) + (offset * GLOBALS.Level.LightFlatness * 20), new Color(10, 10, 10, 180));
+                
+                EndShaderMode();
+                EndTextureMode();
             }
             
             //
@@ -2368,6 +2413,28 @@ internal static class Printers
             if (parameters.PropsLayer1)
             {
                 DrawPropLayer(0, parameters.PropDrawMode, parameters.Palette, parameters.Scale);
+            }
+
+            if (parameters.Shadows) {
+                var degree = GLOBALS.Level.LightAngle + 90;
+                degree *= -1;
+                
+                var rad = degree/360f * Math.PI*2;
+
+                var offset = new Vector2((float)Math.Cos(rad) * -1, (float)Math.Sin(rad));
+
+                var mask = GLOBALS.Shaders.LightMapMask;
+
+                BeginTextureMode(texture);
+                BeginShaderMode(mask);
+
+                SetShaderValueTexture(mask, GetShaderLocation(mask, "inputTexture"), GLOBALS.Textures.LightMap.Texture);
+                SetShaderValue(mask, GetShaderLocation(mask, "vflip"), 1, ShaderUniformDataType.Int);
+
+                DrawTextureV(GLOBALS.Textures.LightMap.Texture, new Vector2(-300, -300) + (offset * GLOBALS.Level.LightFlatness * 10), new Color(10, 10, 10, 180));
+                
+                EndShaderMode();
+                EndTextureMode();
             }
 
             if (parameters.Water)
@@ -5476,7 +5543,8 @@ internal static class Printers
         DrawTextureQuad(texture, Utils.RotatePropQuads(quads, rotation), flippedX, flippedY);
         EndShaderMode();
     }
-    
+
+
     internal static void DrawVariedDecalProp(
         InitVariedDecalProp init, 
         ref Texture2D texture, 

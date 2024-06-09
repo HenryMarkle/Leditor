@@ -19,6 +19,7 @@ Added a tile viewer that allows you to display each tile individually.
 - In L4 Maker, you now generate images for each camera, rather than the whole level.
 - Added visible camera boundries to l4 maker.
 - Added props to l4 maker.
+- Added a new view to the light editor that projects shadows on all three layers, although it makes it harder to see the level.
 
 ### Changes
 

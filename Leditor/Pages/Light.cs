@@ -70,10 +70,17 @@ internal class LightEditorPage : EditorPage, IContextListener
         
         out vec4 FragColor;
         
-        uniform sampler2D lightmap;
+        uniform sampler2D inputTexture;
+        uniform int vflip = 0;
         
         void main() {
-            vec4 color = texture(lightmap, fragTexCoord);
+            vec4 color = vec4(0, 0, 0, 0);
+
+            if (vflip == 0) {
+                color = texture(inputTexture, fragTexCoord);
+            } else {
+                color = texture(inputTexture, vec2(fragTexCoord.x, 1.0 - fragTexCoord.y));
+            }
 
             if (color.r == 1.0 && color.g == 1.0 && color.b == 1.0) { discard; }
 
@@ -118,52 +125,49 @@ internal class LightEditorPage : EditorPage, IContextListener
         var shader = _mask;
 
         BeginTextureMode(_layer3);
-        ClearBackground(Color.White with { A = 0 });
-        
-        BeginShaderMode(shader);
+        ClearBackground(Color.White);
 
-        SetShaderValueTexture(shader, GetShaderLocation(shader, "lightmap"), GLOBALS.Textures.LightMap.Texture);
+        DrawTextureV(GLOBALS.Textures.LightMap.Texture, GLOBALS.Level.LightFlatness * 30 * DegreeToVector(GLOBALS.Level.LightAngle), Color.White);
 
-
-        DrawTextureRec(
-            GLOBALS.Textures.LightMap.Texture,
-            new Rectangle(GLOBALS.Level.LightFlatness * 30 * DegreeToVector(GLOBALS.Level.LightAngle), new Vector2(GLOBALS.Textures.LightMap.Texture.Width, GLOBALS.Textures.LightMap.Texture.Height)),
-            new Vector2(0, 0),
-            Color.Black with { A = 130 }
-        );
-        EndShaderMode();
         EndTextureMode();
-        
+
+
         BeginTextureMode(_layer2);
-        ClearBackground(Color.White with { A = 0 });
+        {
+            ClearBackground(Color.White with { A = 0 });
 
-        BeginShaderMode(shader);
+            BeginShaderMode(shader);
+            {
+                SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), GLOBALS.Textures.LightMap.Texture);
 
-        SetShaderValueTexture(shader, GetShaderLocation(shader, "lightmap"), GLOBALS.Textures.LightMap.Texture);
-
-        DrawTextureRec(
-            GLOBALS.Textures.LightMap.Texture,
-            new Rectangle(GLOBALS.Level.LightFlatness * 20 * DegreeToVector(GLOBALS.Level.LightAngle), new Vector2(GLOBALS.Textures.LightMap.Texture.Width, GLOBALS.Textures.LightMap.Texture.Height)),
-            new Vector2(0, 0),
-            Color.Black with { A = 150 }
-        );
-        EndShaderMode();
+                DrawTextureRec(
+                    GLOBALS.Textures.LightMap.Texture,
+                    new Rectangle(GLOBALS.Level.LightFlatness * 20 * DegreeToVector(GLOBALS.Level.LightAngle), new Vector2(GLOBALS.Textures.LightMap.Texture.Width, GLOBALS.Textures.LightMap.Texture.Height)),
+                    new Vector2(0, 0),
+                    Color.Gray
+                );
+            }
+            EndShaderMode();
+        }
         EndTextureMode();
         
         BeginTextureMode(_layer1);
-        ClearBackground(Color.White with { A = 0 });
+        {
+            ClearBackground(Color.White with { A = 0 });
 
-        BeginShaderMode(shader);
+            BeginShaderMode(shader);
+            {
+                SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), GLOBALS.Textures.LightMap.Texture);
 
-        SetShaderValueTexture(shader, GetShaderLocation(shader, "lightmap"), GLOBALS.Textures.LightMap.Texture);
-
-        DrawTextureRec(
-            GLOBALS.Textures.LightMap.Texture,
-            new Rectangle(GLOBALS.Level.LightFlatness * 10 * DegreeToVector(GLOBALS.Level.LightAngle), new Vector2(GLOBALS.Textures.LightMap.Texture.Width, GLOBALS.Textures.LightMap.Texture.Height)),
-            new Vector2(0, 0),
-            Color.Black with { A = 170 }
-        );
-        EndShaderMode();
+                DrawTextureRec(
+                    GLOBALS.Textures.LightMap.Texture,
+                    new Rectangle(GLOBALS.Level.LightFlatness * 10 * DegreeToVector(GLOBALS.Level.LightAngle), new Vector2(GLOBALS.Textures.LightMap.Texture.Width, GLOBALS.Textures.LightMap.Texture.Height)),
+                    new Vector2(0, 0),
+                    Color.Black with { A = 170 }
+                );
+            }
+            EndShaderMode();
+        }
         EndTextureMode();
     }
     
@@ -249,6 +253,17 @@ internal class LightEditorPage : EditorPage, IContextListener
         return new Vector2((float)Math.Cos(rad) * -1, (float)Math.Sin(rad));
     }
 
+    private static Vector2 DegreeToVector2(int degree) {
+        degree += 90;
+        degree *= -1;
+        
+        var rad = degree/360f * Math.PI*2;
+
+        return new Vector2((float)Math.Cos(rad) * -1, (float)Math.Sin(rad));
+    }
+
+    private bool _clickLock = false;
+
     public override void Draw()
     {
         
@@ -264,12 +279,27 @@ internal class LightEditorPage : EditorPage, IContextListener
             indicatorOrigin.Y + (float)((15 + GLOBALS.Level.LightFlatness * 7) * Math.Sin(float.DegreesToRadians(GLOBALS.Level.LightAngle + 90)))
         );
         
-        var indHovered = CheckCollisionPointCircle(mouse, indicatorPoint, 10f);
+        var indHovered = CheckCollisionPointCircle(mouse, indicatorPoint, 10f); 
 
         if (IsMouseButtonReleased(MouseButton.Left) && _isDraggingIndicator)
-            _isDraggingIndicator = false;
+            {
+                _isDraggingIndicator = false;
 
-        if (indHovered && IsMouseButtonDown(MouseButton.Left)) _isDraggingIndicator = true;
+                if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+                    _shouldRedrawLevel = true;
+                }              
+
+                _clickLock = false;  
+            }
+
+        if ((indHovered && IsMouseButtonDown(MouseButton.Left)) || _clickLock) {
+            _isDraggingIndicator = true;
+            _clickLock = true;
+
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+                _shouldRedrawLevel = true;
+            }
+        }
 
         var panelHeight = GetScreenHeight() - 100;
         var brushPanel = new Rectangle(10, 50, 120, panelHeight);
@@ -299,10 +329,16 @@ internal class LightEditorPage : EditorPage, IContextListener
             GLOBALS.Level.LightAngle--;
 
             if (GLOBALS.Level.LightAngle == 0) GLOBALS.Level.LightAngle = 360;
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+                _shouldRedrawLevel = true;
+            }
         }
         if (_shortcuts.DecreaseAngle.Check(ctrl, shift, alt, true))
         {
             GLOBALS.Level.LightAngle = ++GLOBALS.Level.LightAngle % 360;
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+                _shouldRedrawLevel = true;
+            }
         }
 
         // handle mouse drag
@@ -349,59 +385,71 @@ internal class LightEditorPage : EditorPage, IContextListener
         if (_shortcuts.RotateBrushCounterClockwise.Check(ctrl, shift, alt, true))
         {
             _lightBrushRotation -= 0.2f;
+            
         }
         if (_shortcuts.RotateBrushClockwise.Check(ctrl, shift, alt, true))
         {
             
             _lightBrushRotation += 0.2f;
+            
         }
         if (_shortcuts.StretchBrushVertically.Check(ctrl, shift, alt, true))
         {
             _lightBrushHeight += 2;
+            
         }
         if (_shortcuts.SqueezeBrushVertically.Check(ctrl, shift, alt, true))
         {
             _lightBrushHeight -= 2;
+            
         }
         if (_shortcuts.StretchBrushHorizontally.Check(ctrl, shift, alt, true))
         {
             _lightBrushWidth += 2;
+            
         }
         if (_shortcuts.SqueezeBrushHorizontally.Check(ctrl, shift, alt, true))
         {
             
             _lightBrushWidth -= 2;
+            
         }
         
         if (_shortcuts.FastRotateBrushCounterClockwise.Check(ctrl, shift, alt, true))
         {
             _lightBrushRotation -= 1 + _growthFactor;
             IncreaseGrowthFactor();
+            
         }
         else if (_shortcuts.FastRotateBrushClockwise.Check(ctrl, shift, alt, true))
         {
             _lightBrushRotation += 1+_growthFactor;
             IncreaseGrowthFactor();
+            
         }
         else if (_shortcuts.FastStretchBrushVertically.Check(ctrl, shift, alt, true))
         {
             _lightBrushHeight += 5+_growthFactor;
             IncreaseGrowthFactor();
+            
         }
         else if (_shortcuts.FastSqueezeBrushVertically.Check(ctrl, shift, alt, true))
         {
             _lightBrushHeight -= 5+_growthFactor;
             IncreaseGrowthFactor();
+            
         }
         else if (_shortcuts.FastStretchBrushHorizontally.Check(ctrl, shift, alt, true))
         {
             _lightBrushWidth += 5+_growthFactor;
             IncreaseGrowthFactor();
+            
         }
         else if (_shortcuts.FastSqueezeBrushHorizontally.Check(ctrl, shift, alt, true))
         {
             _lightBrushWidth -= 5+_growthFactor;
             IncreaseGrowthFactor();
+            
         }
         else ResetGrowthFactor();
 
@@ -429,6 +477,10 @@ internal class LightEditorPage : EditorPage, IContextListener
                 EndShaderMode();
             }
             EndTextureMode();
+
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+                _shouldRedrawLevel = true;
+            }
         }
 
         if (canPaint && !_stretchMode && (_shortcuts.Erase.Check(ctrl, shift, alt, true) ||
@@ -453,6 +505,10 @@ internal class LightEditorPage : EditorPage, IContextListener
                 EndShaderMode();
             }
             EndTextureMode();
+
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+                _shouldRedrawLevel = true;
+            }
         }
         else _eraseShadow = false;
 
@@ -497,6 +553,8 @@ internal class LightEditorPage : EditorPage, IContextListener
                 case 4: _quadPoints.BottomLeft = worldMouse; break;
             }
         }
+
+        DrawLayers();
         
         BeginDrawing();
         {
@@ -504,7 +562,6 @@ internal class LightEditorPage : EditorPage, IContextListener
                 ? Color.Black 
                 : GLOBALS.Settings.LightEditor.Background);
 
-            DrawLayers();
 
             if (_shouldRedrawLevel)
             {
@@ -524,7 +581,9 @@ internal class LightEditorPage : EditorPage, IContextListener
                     
                     TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
                     PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
-                    Palette = GLOBALS.SelectedPalette
+                    HighLayerContrast = GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette,
+                    Palette = GLOBALS.SelectedPalette,
+                    Shadows = GLOBALS.Settings.LightEditor.Projection == LightEditorSettings.LightProjection.ThreeLayers
                 });
                 _shouldRedrawLevel = false;
             }
@@ -580,39 +639,46 @@ internal class LightEditorPage : EditorPage, IContextListener
                         Color.White with { A = 150 }
                     );
                 }
-                else if (GLOBALS.Settings.LightEditor.Projection == LightEditorSettings.LightProjection.ThreeLayers) {
-                    BeginShaderMode(GLOBALS.Shaders.VFlip);
+                else if (GLOBALS.Settings.LightEditor.Projection == LightEditorSettings.LightProjection.ThreeLayers && GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette) {
+                    var vflip = GLOBALS.Shaders.VFlip;
+                    
+                    BeginShaderMode(_mask);
                     {
-                        SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), _layer3.Raw.Texture);
+                        SetShaderValueTexture(_mask, GetShaderLocation(_mask, "inputTexture"), GLOBALS.Textures.LightMap.Texture);
+                        SetShaderValue(_mask, GetShaderLocation(_mask, "vflip"), 1, ShaderUniformDataType.Int);
 
-                        DrawTexture(
-                            _layer3.Raw.Texture,
-                            0, 0,
+                        DrawTextureV(
+                            GLOBALS.Textures.LightMap.Texture, 
+                            GLOBALS.Level.LightFlatness * 30 * DegreeToVector2(GLOBALS.Level.LightAngle), 
                             Color.Black
                         );
                     }
                     EndShaderMode();
 
-                    BeginShaderMode(GLOBALS.Shaders.VFlip);
+                    
+                    BeginShaderMode(_mask);
                     {
-                        SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), _layer2.Raw.Texture);
+                        SetShaderValueTexture(_mask, GetShaderLocation(_mask, "inputTexture"), GLOBALS.Textures.LightMap.Texture);
+                        SetShaderValue(_mask, GetShaderLocation(_mask, "vflip"), 1, ShaderUniformDataType.Int);
 
-                        DrawTexture(
-                            _layer2.Raw.Texture, 
-                            0, 0,
-                            Color.Black
+                        DrawTextureV(
+                            GLOBALS.Textures.LightMap.Texture, 
+                            GLOBALS.Level.LightFlatness * 20 * DegreeToVector2(GLOBALS.Level.LightAngle), 
+                            Color.DarkGray
                         );
                     }
                     EndShaderMode();
 
-                    BeginShaderMode(GLOBALS.Shaders.VFlip);
+                    
+                    BeginShaderMode(_mask);
                     {
-                        SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), _layer1.Raw.Texture);
+                        SetShaderValueTexture(_mask, GetShaderLocation(_mask, "inputTexture"), GLOBALS.Textures.LightMap.Texture);
+                        SetShaderValue(_mask, GetShaderLocation(_mask, "vflip"), 1, ShaderUniformDataType.Int);
 
-                        DrawTexture(
-                            _layer1.Raw.Texture,
-                            0, 0,
-                            Color.Black
+                        DrawTextureV(
+                            GLOBALS.Textures.LightMap.Texture, 
+                            GLOBALS.Level.LightFlatness * 10 * DegreeToVector2(GLOBALS.Level.LightAngle), 
+                            Color.Gray
                         );
                     }
                     EndShaderMode();
@@ -909,6 +975,7 @@ internal class LightEditorPage : EditorPage, IContextListener
 
                     if (projectionChanged) {
                         GLOBALS.Settings.LightEditor.Projection = (LightEditorSettings.LightProjection)projectionIndex;
+                        _shouldRedrawLevel = true;
                     }
 
                     ImGui.Spacing();
