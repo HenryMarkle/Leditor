@@ -136,6 +136,22 @@ public class ExperimentalGeoShortcuts : IEditorShortcuts
     private KeyboardShortcut undo = new(ctrl: true, shift: false, key: KeyboardKey.Z);
     private KeyboardShortcut redo = new(ctrl: true, shift: true, key: KeyboardKey.Z);
 
+    private KeyboardShortcut moveViewLeft = new(KeyboardKey.Left);
+    private KeyboardShortcut moveViewTop = new(KeyboardKey.Up);
+    private KeyboardShortcut moveViewRight = new(KeyboardKey.Right);
+    private KeyboardShortcut moveViewBottom = new(KeyboardKey.Down);
+
+    private KeyboardShortcut fastMoveViewLeft = new(KeyboardKey.Left, shift:true);
+    private KeyboardShortcut fastMoveViewTop = new(KeyboardKey.Up, shift:true);
+    private KeyboardShortcut fastMoveViewRight = new(KeyboardKey.Right, shift:true);
+    private KeyboardShortcut fastMoveViewBottom = new(KeyboardKey.Down, shift:true);
+
+    private KeyboardShortcut reallyFastMoveViewLeft = new(KeyboardKey.Left, alt:true);
+    private KeyboardShortcut reallyFastMoveViewTop = new(KeyboardKey.Up, alt:true);
+    private KeyboardShortcut reallyFastMoveViewRight = new(KeyboardKey.Right, alt:true);
+    private KeyboardShortcut reallyFastMoveViewBottom = new(KeyboardKey.Down, alt:true);
+
+
     //
 
     [ShortcutName("Navigate To Next Menu Category", Group = "Menu")]
@@ -217,6 +233,46 @@ public class ExperimentalGeoShortcuts : IEditorShortcuts
     
     [ShortcutName("Redo")]
     public KeyboardShortcut Redo { get => redo; set {redo = value; CachedStrings = Utils.GetShortcutStrings(this);} }
+
+
+    [ShortcutName("Move View Left", Group = "Movement")]
+    public KeyboardShortcut MoveViewLeft { get => moveViewLeft; set { moveViewLeft = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Move View Top", Group = "Movement")]
+    public KeyboardShortcut MoveViewTop { get => moveViewTop; set { moveViewTop = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Move View Right", Group = "Movement")]
+    public KeyboardShortcut MoveViewRight { get => moveViewRight; set { moveViewRight = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Move View Bottom", Group = "Movement")]
+    public KeyboardShortcut MoveViewBottom { get => moveViewBottom; set { moveViewBottom = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+
+    [ShortcutName("Move View Left Quickly", Group = "Movement")]
+    public KeyboardShortcut FastMoveViewLeft { get => fastMoveViewLeft; set { fastMoveViewLeft = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Move View Top Quicky", Group = "Movement")]
+    public KeyboardShortcut FastMoveViewTop { get => fastMoveViewTop; set { fastMoveViewTop = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Move View Right Quickly", Group = "Movement")]
+    public KeyboardShortcut FastMoveViewRight { get => fastMoveViewRight; set { fastMoveViewRight = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Move View Bottom Quickly", Group = "Movement")]
+    public KeyboardShortcut FastMoveViewBottom { get => fastMoveViewBottom; set { fastMoveViewBottom = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    
+
+    [ShortcutName("Move View Left Really Quickly", Group = "Movement")]
+    public KeyboardShortcut ReallyFastMoveViewLeft { get => reallyFastMoveViewLeft; set { reallyFastMoveViewLeft = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Move View Top Really Quicky", Group = "Movement")]
+    public KeyboardShortcut ReallyFastMoveViewTop { get => reallyFastMoveViewTop; set { reallyFastMoveViewTop = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Move View Right Really Quickly", Group = "Movement")]
+    public KeyboardShortcut ReallyFastMoveViewRight { get => reallyFastMoveViewRight; set { reallyFastMoveViewRight = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Move View Bottom Really Quickly", Group = "Movement")]
+    public KeyboardShortcut ReallyFastMoveViewBottom { get => reallyFastMoveViewBottom; set { reallyFastMoveViewBottom = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     
     
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }

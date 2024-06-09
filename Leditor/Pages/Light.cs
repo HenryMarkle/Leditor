@@ -712,37 +712,147 @@ internal class LightEditorPage : EditorPage, IContextListener
                 {
                     if (_eraseShadow)
                     {
-                        BeginShaderMode(GLOBALS.Shaders.LightBrush);
-                        SetShaderValueTexture(GLOBALS.Shaders.LightBrush,
-                            GetShaderLocation(GLOBALS.Shaders.LightBrush, "inputTexture"),
-                            GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex]);
+                        if (GLOBALS.Settings.LightEditor.Projection == LightEditorSettings.LightProjection.ThreeLayers) {
+                            var offset = GLOBALS.Level.LightFlatness * DegreeToVector2(GLOBALS.Level.LightAngle);
 
-                        DrawTexturePro(
-                            GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex],
-                            _lightBrushSource,
-                            _lightBrushDest,
-                            _lightBrushOrigin,
-                            _lightBrushRotation,
-                            Color.White
-                        );
-                        EndShaderMode();
+                            var offset1 = offset * 10;
+                            var offset2 = offset * 20;
+                            var offset3 = offset * 30;
+
+                            BeginShaderMode(GLOBALS.Shaders.LightBrush);
+                            SetShaderValueTexture(GLOBALS.Shaders.LightBrush,
+                                GetShaderLocation(GLOBALS.Shaders.LightBrush, "inputTexture"),
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex]);
+
+                            DrawTexturePro(
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex],
+                                _lightBrushSource,
+                                _lightBrushDest with { X = _lightBrushDest.X + offset3.X, Y = _lightBrushDest.Y + offset3.Y },
+                                _lightBrushOrigin,
+                                _lightBrushRotation,
+                                Color.White
+                            );
+                            EndShaderMode();
+                            
+                            BeginShaderMode(GLOBALS.Shaders.LightBrush);
+                            SetShaderValueTexture(GLOBALS.Shaders.LightBrush,
+                                GetShaderLocation(GLOBALS.Shaders.LightBrush, "inputTexture"),
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex]);
+
+                            DrawTexturePro(
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex],
+                                _lightBrushSource,
+                                _lightBrushDest with { X = _lightBrushDest.X + offset2.X, Y = _lightBrushDest.Y + offset2.Y },
+                                _lightBrushOrigin,
+                                _lightBrushRotation,
+                                Color.White
+                            );
+                            EndShaderMode();
+                            
+                            BeginShaderMode(GLOBALS.Shaders.LightBrush);
+                            SetShaderValueTexture(GLOBALS.Shaders.LightBrush,
+                                GetShaderLocation(GLOBALS.Shaders.LightBrush, "inputTexture"),
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex]);
+
+                            DrawTexturePro(
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex],
+                                _lightBrushSource,
+                                _lightBrushDest with { X = _lightBrushDest.X + offset1.X, Y = _lightBrushDest.Y + offset1.Y },
+                                _lightBrushOrigin,
+                                _lightBrushRotation,
+                                Color.White
+                            );
+                            EndShaderMode();
+                        } else {
+
+                            BeginShaderMode(GLOBALS.Shaders.LightBrush);
+                            SetShaderValueTexture(GLOBALS.Shaders.LightBrush,
+                                GetShaderLocation(GLOBALS.Shaders.LightBrush, "inputTexture"),
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex]);
+
+                            DrawTexturePro(
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex],
+                                _lightBrushSource,
+                                _lightBrushDest,
+                                _lightBrushOrigin,
+                                _lightBrushRotation,
+                                Color.White
+                            );
+                            EndShaderMode();
+                        }
+
                     }
                     else
                     {
-                        BeginShaderMode(GLOBALS.Shaders.ShadowBrush);
-                        SetShaderValueTexture(GLOBALS.Shaders.ShadowBrush,
-                            GetShaderLocation(GLOBALS.Shaders.ShadowBrush, "inputTexture"),
-                            GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex]);
+                        if (GLOBALS.Settings.LightEditor.Projection == LightEditorSettings.LightProjection.ThreeLayers) {
+                            var offset = GLOBALS.Level.LightFlatness * DegreeToVector2(GLOBALS.Level.LightAngle);
 
-                        DrawTexturePro(
-                            GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex],
-                            _lightBrushSource,
-                            _lightBrushDest,
-                            _lightBrushOrigin,
-                            _lightBrushRotation,
-                            Color.White
-                        );
-                        EndShaderMode();
+                            var offset1 = offset * 10;
+                            var offset2 = offset * 20;
+                            var offset3 = offset * 30;
+
+                            BeginShaderMode(GLOBALS.Shaders.ShadowBrush);
+                            SetShaderValueTexture(GLOBALS.Shaders.ShadowBrush,
+                                GetShaderLocation(GLOBALS.Shaders.ShadowBrush, "inputTexture"),
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex]);
+
+                            DrawTexturePro(
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex],
+                                _lightBrushSource,
+                                _lightBrushDest with { X = _lightBrushDest.X + offset3.X, Y = _lightBrushDest.Y + offset3.Y },
+                                _lightBrushOrigin,
+                                _lightBrushRotation,
+                                Color.White
+                            );
+                            EndShaderMode();
+                            
+                            BeginShaderMode(GLOBALS.Shaders.ShadowBrush);
+                            SetShaderValueTexture(GLOBALS.Shaders.ShadowBrush,
+                                GetShaderLocation(GLOBALS.Shaders.ShadowBrush, "inputTexture"),
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex]);
+
+                            DrawTexturePro(
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex],
+                                _lightBrushSource,
+                                _lightBrushDest with { X = _lightBrushDest.X + offset2.X, Y = _lightBrushDest.Y + offset2.Y },
+                                _lightBrushOrigin,
+                                _lightBrushRotation,
+                                Color.White
+                            );
+                            EndShaderMode();
+                            
+                            BeginShaderMode(GLOBALS.Shaders.ShadowBrush);
+                            SetShaderValueTexture(GLOBALS.Shaders.ShadowBrush,
+                                GetShaderLocation(GLOBALS.Shaders.ShadowBrush, "inputTexture"),
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex]);
+
+                            DrawTexturePro(
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex],
+                                _lightBrushSource,
+                                _lightBrushDest with { X = _lightBrushDest.X + offset1.X, Y = _lightBrushDest.Y + offset1.Y },
+                                _lightBrushOrigin,
+                                _lightBrushRotation,
+                                Color.White
+                            );
+                            EndShaderMode();
+                        } else {
+
+                            BeginShaderMode(GLOBALS.Shaders.ShadowBrush);
+                            SetShaderValueTexture(GLOBALS.Shaders.ShadowBrush,
+                                GetShaderLocation(GLOBALS.Shaders.ShadowBrush, "inputTexture"),
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex]);
+
+                            DrawTexturePro(
+                                GLOBALS.Textures.LightBrushes[_lightBrushTextureIndex],
+                                _lightBrushSource,
+                                _lightBrushDest,
+                                _lightBrushOrigin,
+                                _lightBrushRotation,
+                                Color.White
+                            );
+                            EndShaderMode();
+                        }
+
                     }
                 }
             }

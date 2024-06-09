@@ -205,7 +205,7 @@ internal class SettingsPage : EditorPage
 
             if (ImGui.BeginChild("##SettingsPanel", col2Space))
             {
-                if (_settingsActiveCategory is not 7 or 8) {
+                if (_settingsActiveCategory != 7 && _settingsActiveCategory != 8) {
                     var settings = _settingsActiveCategory switch {
                         0 => GLOBALS.Settings.GeneralSettings as object,
                         1 => GLOBALS.Settings.GeometryEditor,

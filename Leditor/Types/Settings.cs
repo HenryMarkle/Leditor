@@ -406,6 +406,15 @@ public class GeneralSettings
     [SettingName("Draw Prop Mode", Hidden = true)]
     public PropDrawMode DrawPropMode { get; set; } = PropDrawMode.Untinted;
 
+    [SettingName("Keyboard Movement Steps", Group = "Movement")]
+    public int KeyboardMovementSteps { get; set; } = 1;
+
+    [SettingName("Fast Keyboard Movement Steps", Group = "Movement")]
+    public int FastKeyboardMovementSteps { get; set; } = 5;
+
+    [SettingName("Really Keyboard Movement Steps", Group = "Movement")]
+    public int ReallyKeyboardMovementSteps { get; set; } = 10;
+
     [SettingName("Ruler")]
     public bool IndexHint { get; set; } = true;
 
