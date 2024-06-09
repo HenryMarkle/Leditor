@@ -442,6 +442,22 @@ public class GeneralSettings
     public string RenderingAssetsPath { get; set; } = "";
 }
 
+
+public class L4MakerSettings {
+
+    [SettingName("Background Color")]
+    public ConColor BackgroundColor { get; set; } = new(0, 0, 0, 255);
+
+    [SettingName("Layer 3 Color")]
+    public ConColor Layer3Color { get; set; } = new(50, 50, 50, 255);
+    
+    [SettingName("Layer 2 Color")]
+    public ConColor Layer2Color { get; set; } = new(100, 100, 100, 255);
+    
+    [SettingName("Layer 1 Color")]
+    public ConColor Layer1Color { get; set; } = new(150, 150, 150, 255);
+}
+
 public class Settings
 {
     public GeneralSettings GeneralSettings { get; set; }
@@ -453,6 +469,7 @@ public class Settings
     public LightEditorSettings LightEditor { get; set; }
     public EffectsSettings EffectsSettings { get; set; }
     public PropEditor PropEditor { get; set; }
+    public L4MakerSettings L4Maker { get; set; }
     public Experimental Experimental { get; set; }
 
     [JsonConstructor]
@@ -478,6 +495,7 @@ public class Settings
             true
         );
         PropEditor = new();
+        L4Maker = new();
         Experimental = new();
     }
     
@@ -491,6 +509,7 @@ public class Settings
         LightEditorSettings lightEditor,
         EffectsSettings effectsSettings,
         PropEditor propEditor,
+        L4MakerSettings l4Maker,
         Experimental experimental
     )
     {
@@ -503,6 +522,7 @@ public class Settings
          LightEditor = lightEditor;
          EffectsSettings = effectsSettings;
          PropEditor = propEditor;
+         L4Maker = l4Maker;
          Experimental = experimental;
     }
 }

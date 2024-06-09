@@ -4,6 +4,7 @@ Added a tile viewer that allows you to display each tile individually.
 
 ### New Features
 
+- Added the ability to customize L4 layer colors.
 - Added the keyboard shortcut `N` in the start screen to automatically navigate to the creation screen.
 - Added the keyboard shortrcut `Enter` in the creation screen to create the project.
 - The position of the layer indicator can now be customized.

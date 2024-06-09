@@ -2974,8 +2974,7 @@ internal static class Printers
     
     internal static void DrawTextureQuad(
         in Texture2D texture, 
-        in PropQuad quads,
-        float heightCut = 0
+        in PropQuad quads
     )
     {
         Rlgl.SetTexture(texture.Id);
@@ -2983,10 +2982,10 @@ internal static class Printers
         Rlgl.Begin(0x0007);
         Rlgl.Color4ub(Color.White.R, Color.White.G, Color.White.B, Color.White.A);
 
-        Rlgl.TexCoord2f(1.0f, heightCut);
+        Rlgl.TexCoord2f(1.0f, 0);
         Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
         
-        Rlgl.TexCoord2f(0.0f, heightCut);
+        Rlgl.TexCoord2f(0.0f, 0);
         Rlgl.Vertex2f(quads.TopLeft.X, quads.TopLeft.Y);
         
         Rlgl.TexCoord2f(0.0f, 1.0f);
@@ -2995,7 +2994,37 @@ internal static class Printers
         Rlgl.TexCoord2f(1.0f, 1.0f);
         Rlgl.Vertex2f(quads.BottomRight.X, quads.BottomRight.Y);
         
-        Rlgl.TexCoord2f(1.0f, heightCut);
+        Rlgl.TexCoord2f(1.0f, 0);
+        Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
+        Rlgl.End();
+
+        Rlgl.SetTexture(0);
+    }
+
+    internal static void DrawTextureQuad(
+        in Texture2D texture, 
+        in PropQuad quads,
+        in Color color
+    )
+    {
+        Rlgl.SetTexture(texture.Id);
+
+        Rlgl.Begin(0x0007);
+        Rlgl.Color4ub(color.R, color.G, color.B, color.A);
+
+        Rlgl.TexCoord2f(1.0f, 0);
+        Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
+        
+        Rlgl.TexCoord2f(0.0f, 0);
+        Rlgl.Vertex2f(quads.TopLeft.X, quads.TopLeft.Y);
+        
+        Rlgl.TexCoord2f(0.0f, 1.0f);
+        Rlgl.Vertex2f(quads.BottomLeft.X, quads.BottomLeft.Y);
+        
+        Rlgl.TexCoord2f(1.0f, 1.0f);
+        Rlgl.Vertex2f(quads.BottomRight.X, quads.BottomRight.Y);
+        
+        Rlgl.TexCoord2f(1.0f, 0);
         Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
         Rlgl.End();
 
@@ -7243,8 +7272,10 @@ internal static class Printers
             return selected;
         }
     
-        internal static void BindObject(object? obj) {
-            if (obj is null) return;
+        internal static bool BindObject(object? obj) {
+            if (obj is null) return false;
+
+            var updated = false;
 
             var properties = obj
                 .GetType()
@@ -7282,6 +7313,7 @@ internal static class Printers
 
                         if (ImGuiNET.ImGui.Checkbox(attribute?.Name ?? setting.Name, ref value)) {
                             setting.SetValue(obj, value);
+                            updated = true;
                         }
                     } else if (type == typeof(int)) {
                         var value = ((int?) setting.GetValue(obj)) ?? 0;
@@ -7299,6 +7331,8 @@ internal static class Printers
                             }
                             
                             setting.SetValue(obj, value);
+
+                            updated = true;
                         }
 
                     } else if (type == typeof(float)) {
@@ -7317,6 +7351,7 @@ internal static class Printers
                             }
                             
                             setting.SetValue(obj, value);
+                            updated = true;
                         }
                     } else if (type == typeof(string)) {
                         var value = ((string?) setting.GetValue(obj)) ?? "";
@@ -7325,6 +7360,7 @@ internal static class Printers
 
                         if (ImGuiNET.ImGui.InputText(attribute?.Name ?? setting.Name, ref value, bounds?.MaxLength ?? 256)) {
                             setting.SetValue(obj, value);
+                            updated = true;
                         }
                     } else if (type == typeof(ConColor)) {
                         var value = ((ConColor?) setting.GetValue(obj)) ?? new(0, 0, 0, 255);
@@ -7335,6 +7371,7 @@ internal static class Printers
                             value = new ConColor((byte)(valueVec.X * 255), (byte)(valueVec.Y * 255), (byte)(valueVec.Z * 255), (byte)(valueVec.W * 255));
 
                             setting.SetValue(obj, value);
+                            updated = true;
                         }
                     } else if (type.IsEnum) {
                         var enumNames = Enum.GetNames(type);
@@ -7349,6 +7386,7 @@ internal static class Printers
                         for (var i = 0; i < enumNames.Length; i++) {
                             if (name == enumNames[i]) {
                                 selectionIndex = i;
+                                break;
                             }
                         }
 
@@ -7357,6 +7395,7 @@ internal static class Printers
                         if (selectionChanged) {
                             var newValue = enums.GetValue(selectionIndex);
                             setting.SetValue(obj, newValue);
+                            updated = true;
                         }
                     }
 
@@ -7372,6 +7411,8 @@ internal static class Printers
                     if ((attribute?.Disabled ?? false) || (dependancies.Any() && !resolvedDeps)) ImGuiNET.ImGui.EndDisabled();
                 }
             }
+
+            return updated;
         }
     }
 }

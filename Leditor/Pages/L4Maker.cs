@@ -72,9 +72,7 @@ void main() {
 
 	if (newColor.r == 1.0 && newColor.g == 1.0 && newColor.b == 1.0) discard;
 
-    float shade = 1.0 - (depth / 30.0);
-
-	FragColor = vec4(shade, shade, shade, 1.0);
+	FragColor = fragColor;
 }"));
 
         _tileShader = new(LoadShaderFromMemory(null, @"#version 330
@@ -107,18 +105,12 @@ void main() {
         float shade = 1.0;
 
         if (flatShading == 0) {
-            shade -= ((depth + l) / 30.0); 
+            shade -= ((depth + l) / 30.0);
+
+            newColor = vec4(fragColor.r * shade, fragColor.g * shade, fragColor.b * shade, fragColor.a);
         } else {
-            if (depth >= 0 && depth < 10) {
-                shade -= 0.1;
-            } else if (depth >= 10 && depth < 20) {
-                shade -= 0.4;
-            } else if (depth >= 20) {
-                shade -= 0.8;
-            }
+            newColor = fragColor;
         }
-		
-		newColor = vec4(shade, shade, shade, 1.0);
 	}
 
     if (newColor.a == 0.0) { discard; }
@@ -183,18 +175,12 @@ void main() {
         float shade = 1.0;
 
         if (flatShading == 0) {
-            shade -= ((depth + l) / 30.0); 
+            shade -= ((depth + l) / 30.0);
+
+            newColor = vec4(fragColor.r * shade, fragColor.g * shade, fragColor.b * shade, fragColor.a);
         } else {
-            if (depth >= 0 && depth < 10) {
-                shade -= 0.1;
-            } else if (depth >= 10 && depth < 20) {
-                shade -= 0.4;
-            } else if (depth >= 20) {
-                shade -= 0.8;
-            }
+            newColor = fragColor;
         }
-		
-		newColor = vec4(shade, shade, shade, 1.0);
     }
 
     FragColor = newColor;
@@ -229,18 +215,12 @@ void main() {
         float shade = 1.0;
 
         if (flatShading == 0) {
-            shade -= ((depth + l) / 30.0); 
+            shade -= ((depth + l) / 30.0);
+
+            newColor = vec4(fragColor.r * shade, fragColor.g * shade, fragColor.b * shade, fragColor.a); 
         } else {
-            if (depth >= 0 && depth < 10) {
-                shade -= 0.1;
-            } else if (depth >= 10 && depth < 20) {
-                shade -= 0.4;
-            } else if (depth >= 20) {
-                shade -= 0.8;
-            }
+            newColor = fragColor;
         }
-		
-		newColor = vec4(shade, shade, shade, 1.0);
     }
 
 if (newColor.a == 0.0) discard;
@@ -274,15 +254,19 @@ void main() {
 
     float shade = 1.0;
 
+    vec4 newColor = vec4(0, 0, 0, 0);
+
     if (flatShading == 0) {
         shade = c.g - depth/30.0;
 
         if (shade < 0.1) shade = 0.01;
+
+        newColor = vec4(fragColor.r * shade, fragColor.g * shade, fragColor.b * shade, fragColor.a);
     } else {
-        shade = 1.0 -  depth / 30.0;
+        newColor = fragColor;
     }
 
-    FragColor = vec4(shade, shade, shade, fragColor.a);
+    FragColor = newColor;
 }"));
     
         _softPropShader = new(LoadShaderFromMemory(null, @"#version 330
@@ -305,12 +289,16 @@ void main() {
 
     float shade = 1.0;
 
+    vec4 newColor = vec4(0, 0, 0, 0);
+
     if (flatShading == 0) {
         shade = c.g - depth/30.0;
 
         if (shade < 0.1) shade = 0.01;
+
+        newColor = vec4(fragColor.r * shade, fragColor.g * shade, fragColor.b * shade, fragColor.a);
     } else {
-        shade = 1.0 -  depth / 30.0;
+        newColor = fragColor;
     }
 
     FragColor = vec4(shade, shade, shade, fragColor.a);
@@ -438,6 +426,7 @@ void main() {
     private void DrawTileAsProp(
         in TileDefinition init, 
         in PropQuad quad,
+        in Color color,
         int depth,
         bool flat
     )
@@ -482,7 +471,7 @@ void main() {
             
             SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
 
-            Printers.DrawTextureQuad(texture, quad);
+            Printers.DrawTextureQuad(texture, quad, color);
             EndShaderMode();
         }
         else
@@ -518,7 +507,7 @@ void main() {
             SetShaderValue(shader, alphaLoc, 1.0f, ShaderUniformDataType.Float);
             SetShaderValue(shader, flatLoc, flat ? 1 : 0, ShaderUniformDataType.Int);
 
-            Printers.DrawTextureQuad(texture, quad);
+            Printers.DrawTextureQuad(texture, quad, color);
             EndShaderMode();
         }
     }
@@ -527,6 +516,7 @@ void main() {
         InitVariedStandardProp init, 
         in Texture2D texture, 
         PropQuad quads,
+        Color color,
         int variation,
         int depth,
         bool flat
@@ -563,7 +553,7 @@ void main() {
         SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
         SetShaderValue(shader, flatLoc, flat ? 1 : 0, ShaderUniformDataType.Int);
         
-        Printers.DrawTextureQuad(texture, quads, flippedX, flippedY);
+        Printers.DrawTextureQuad(texture, quads, color, flippedX, flippedY);
         EndShaderMode();
     }
 
@@ -571,6 +561,7 @@ void main() {
         InitStandardProp init, 
         in Texture2D texture, 
         PropQuad quads,
+        Color color,
         int depth,
         bool flat
     )
@@ -602,7 +593,7 @@ void main() {
         SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
         SetShaderValue(shader, flatLoc, flat ? 1 : 0, ShaderUniformDataType.Int);
         
-        Printers.DrawTextureQuad(texture, quads, flippedX, flippedY);
+        Printers.DrawTextureQuad(texture, quads, color, flippedX, flippedY);
 
         EndShaderMode();
     }
@@ -611,6 +602,7 @@ void main() {
         InitVariedSoftProp init, 
         in Texture2D texture, 
         PropQuad quads,
+        Color color,
         int variation,
         int depth,
         bool flat
@@ -642,11 +634,11 @@ void main() {
         SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
         SetShaderValue(shader, flatLoc, flat ? 1 : 0, ShaderUniformDataType.Int);
         
-        Printers.DrawTextureQuad(texture, quads, flippedX, flippedY);
+        Printers.DrawTextureQuad(texture, quads, color, flippedX, flippedY);
         EndShaderMode();
     }
 
-    internal void DrawSoftProp(in Texture2D texture, in PropQuad quads, int depth, bool flat)
+    internal void DrawSoftProp(in Texture2D texture, in PropQuad quads, Color color, int depth, bool flat)
     {
         var shader = _softPropShader.Raw;
 
@@ -663,11 +655,11 @@ void main() {
         SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
         SetShaderValue(shader, flatLoc, flat ? 1 : 0, ShaderUniformDataType.Int);
         
-        Printers.DrawTextureQuad(texture, quads, flippedX, flippedY);
+        Printers.DrawTextureQuad(texture, quads, color, flippedX, flippedY);
         EndShaderMode();
     }
 
-    private void DrawProp(InitPropType type, TileDefinition? tile, int category, int index, Prop prop, bool flat) {
+    private void DrawProp(InitPropType type, TileDefinition? tile, Color color, int category, int index, Prop prop, bool flat) {
         var depth = -prop.Depth + GLOBALS.Layer*10;
 
         var quads = prop.Quads;
@@ -685,7 +677,7 @@ void main() {
             {
                 if (GLOBALS.TileDex is null || tile is null) return;
                 
-                DrawTileAsProp(tile, quads, depth, flat);
+                DrawTileAsProp(tile, quads, color, depth, flat);
             }
                 break;
 
@@ -703,19 +695,19 @@ void main() {
                 switch (init)
                 {
                     case InitVariedStandardProp variedStandard:
-                        DrawVariedStandardProp(variedStandard, texture, quads, ((PropVariedSettings)prop.Extras.Settings).Variation, depth, flat);
+                        DrawVariedStandardProp(variedStandard, texture, quads, color, ((PropVariedSettings)prop.Extras.Settings).Variation, depth, flat);
                         break;
 
                     case InitStandardProp standard:
-                        DrawStandardProp(standard, texture, quads, depth, flat);
+                        DrawStandardProp(standard, texture, quads, color, depth, flat);
                         break;
 
                     case InitVariedSoftProp variedSoft:
-                        DrawVariedSoftProp(variedSoft, texture, quads,  ((PropVariedSoftSettings)prop.Extras.Settings).Variation, depth, flat);
+                        DrawVariedSoftProp(variedSoft, texture, quads, color,  ((PropVariedSoftSettings)prop.Extras.Settings).Variation, depth, flat);
                         break;
 
                     case InitSoftProp:
-                        DrawSoftProp(texture, quads, depth, flat);
+                        DrawSoftProp(texture, quads, color, depth, flat);
                         break;
                 }
             }
@@ -725,12 +717,9 @@ void main() {
 
     /// <summary></summary>
     /// <param name="layer">must be 0, 1, or 2</param>
-    private void DrawGeoAndTileLayer(RenderTexture2D renderTexture, int layer, int scale, bool flat) {
+    private void DrawGeoAndTileLayer(RenderTexture2D renderTexture, Color color, int layer, int scale, bool flat) {
         BeginTextureMode(renderTexture);
         ClearBackground(Color.Black);
-
-        var whiteShade = LayerToShadeInt(layer);
-        var color = new Color(whiteShade, whiteShade, whiteShade, 255);
 
         for (var y = 0; y < GLOBALS.Level.Height; y++)
         {
@@ -850,6 +839,7 @@ void main() {
                             DrawTileAsProp(
                                 init, 
                                 quad,
+                                color,
                                 layer * 10,
                                 flat
                             );
@@ -889,7 +879,7 @@ void main() {
         EndTextureMode();
     }
 
-    private void DrawPropLayer(RenderTexture2D renderTexture, int layer, bool flat) {
+    private void DrawPropLayer(RenderTexture2D renderTexture, Color color, int layer, bool flat) {
         BeginTextureMode(renderTexture);
 
         var scopeNear = -layer * 10;
@@ -902,7 +892,7 @@ void main() {
 
             var (category, index) = current.position;
             
-            DrawProp(current.type, current.tile, category, index, current.prop, flat);
+            DrawProp(current.type, current.tile, color, category, index, current.prop, flat);
         }
 
         EndTextureMode();
@@ -915,22 +905,22 @@ void main() {
         // Layer 3
 
         if (_layer3) {
-            DrawGeoAndTileLayer(_layer3Buffer, 2, 20, _flatShading);
-            DrawPropLayer(_layer3Buffer, 2, _flatShading);
+            DrawGeoAndTileLayer(_layer3Buffer, GLOBALS.Settings.L4Maker.Layer3Color, 2, 20, _flatShading);
+            DrawPropLayer(_layer3Buffer, GLOBALS.Settings.L4Maker.Layer3Color, 2, _flatShading);
         }
         
         // Layer 2
 
         if (_layer2) {
-            DrawGeoAndTileLayer(_layer2Buffer, 1, 20, _flatShading);
-            DrawPropLayer(_layer2Buffer, 1, _flatShading);
+            DrawGeoAndTileLayer(_layer2Buffer, GLOBALS.Settings.L4Maker.Layer2Color, 1, 20, _flatShading);
+            DrawPropLayer(_layer2Buffer, GLOBALS.Settings.L4Maker.Layer2Color, 1, _flatShading);
         }
         
         // Layer 1
 
         if (_layer1) {
-            DrawGeoAndTileLayer(_layer1Buffer, 0, 20, _flatShading);
-            DrawPropLayer(_layer1Buffer, 0, _flatShading);
+            DrawGeoAndTileLayer(_layer1Buffer, GLOBALS.Settings.L4Maker.Layer1Color, 0, 20, _flatShading);
+            DrawPropLayer(_layer1Buffer, GLOBALS.Settings.L4Maker.Layer1Color, 0, _flatShading);
         }
     }
 
@@ -1037,7 +1027,7 @@ void main() {
                 }
 
                 BeginTextureMode(_levelBuffer);
-                ClearBackground(Color.Black);
+                ClearBackground(GLOBALS.Settings.L4Maker.BackgroundColor);
 
                 var shader = _whiteEraser;
 
@@ -1112,7 +1102,7 @@ void main() {
             
             BeginMode2D(_camera);
             {
-                DrawRectangle(0, 0, GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20, Color.Black);
+                DrawRectangle(0, 0, GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20, GLOBALS.Settings.L4Maker.BackgroundColor);
 
                 var shader = _whiteEraser;
 
@@ -1263,7 +1253,11 @@ void main() {
                     }
 
                     //
-                    
+
+                    var updated = Printers.ImGui.BindObject(GLOBALS.Settings.L4Maker);
+
+                    if (updated) _shouldRedrawLevel = true;
+
                     ImGui.End();
                 }
 
