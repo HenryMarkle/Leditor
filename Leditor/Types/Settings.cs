@@ -250,6 +250,14 @@ public class LightEditorSettings
 
     public ScreenRelativePosition LightIndicatorPosition { get; set; }
 
+    public enum LightProjection { 
+        None, 
+        Basic, 
+        ThreeLayers 
+    }
+
+    public LightProjection Projection { get; set; } 
+
     public LightEditorSettings()
     {
         Background = Color.Blue;
@@ -257,13 +265,15 @@ public class LightEditorSettings
         LevelBackgroundDark = Color.Yellow;
 
         LightIndicatorPosition = ScreenRelativePosition.TopLeft;
+        Projection = LightProjection.Basic;
     }
 
     public LightEditorSettings(
         ConColor background, 
         ConColor levelBackgroundLight, 
         ConColor levelBackgroundDark,
-        ScreenRelativePosition lightIndicatorPos
+        ScreenRelativePosition lightIndicatorPos,
+        LightProjection projection
     )
     {
         Background = background;
@@ -271,6 +281,7 @@ public class LightEditorSettings
         LevelBackgroundDark = levelBackgroundDark;
 
         LightIndicatorPosition = lightIndicatorPos;
+        Projection = projection;
     }
 }
 
@@ -457,7 +468,8 @@ public class Settings
             background: new ConColor(66, 108, 245, 255),
             levelBackgroundLight: Color.White,
             levelBackgroundDark: new Color(200, 0, 0, 255),
-            LightEditorSettings.ScreenRelativePosition.TopLeft);
+            LightEditorSettings.ScreenRelativePosition.TopLeft,
+            LightEditorSettings.LightProjection.Basic);
         EffectsSettings = new(
             Color.Green, 
             Color.Yellow, 

@@ -44,3 +44,4 @@ Added a tile viewer that allows you to display each tile individually.
 - Shortcuts windows now updates properly.
 - Fixed a bug that occurs when attempting to selecting something, while placing a rope.
 - Fixed a bug that prevented selecting props after turning off rope bezier paths mode. 
+- Fixed a case of shortcut entrances looking valid when they're not.

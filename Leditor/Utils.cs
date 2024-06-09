@@ -1423,7 +1423,7 @@ internal static class Utils
 
             var geoPattern = (
                 context[0][0].Geo, context[0][1].Geo, context[0][2].Geo,
-                context[1][0].Geo, 0, context[1][2].Geo,
+                context[1][0].Geo, 0,                 context[1][2].Geo,
                 context[2][0].Geo, context[2][1].Geo, context[2][2].Geo
             );
 
@@ -1434,25 +1434,33 @@ internal static class Utils
                     1, _, 1,
                     1, _, 1,
                     1, 1, 1
-                ) => context[0][1].Geo is 0 or 6 ? directionIndex : 26,
+                ) => (context[0][1].Geo is 0 or 6 
+                    && !(context[1][0].Stackables[5] || context[1][0].Stackables[6] || context[1][0].Stackables[7] || context[1][0].Stackables[19] || context[1][0].Stackables[21])
+                    && !(context[1][2].Stackables[5] || context[1][2].Stackables[6] || context[1][2].Stackables[7] || context[1][2].Stackables[19] || context[1][2].Stackables[21])) ? directionIndex : 26,
 
                 (
                     1, 1, 1,
                     1, _, _,
                     1, 1, 1
-                ) => context[1][2].Geo is 0 or 6 ? directionIndex : 26,
+                ) => (context[1][2].Geo is 0 or 6 
+                    && !(context[0][1].Stackables[5] || context[0][1].Stackables[6] || context[0][1].Stackables[7] || context[0][1].Stackables[19] || context[0][1].Stackables[21])
+                    && !(context[2][1].Stackables[5] || context[2][1].Stackables[6] || context[2][1].Stackables[7] || context[2][1].Stackables[19] || context[2][1].Stackables[21])) ? directionIndex : 26,
 
                 (
                     1, 1, 1,
                     1, _, 1,
                     1, _, 1
-                ) => context[2][1].Geo is 0 or 6 ? directionIndex : 26,
+                ) => (context[2][1].Geo is 0 or 6
+                    && !(context[1][0].Stackables[5] || context[1][0].Stackables[6] || context[1][0].Stackables[7] || context[1][0].Stackables[19] || context[1][0].Stackables[21])
+                    && !(context[1][2].Stackables[5] || context[1][2].Stackables[6] || context[1][2].Stackables[7] || context[1][2].Stackables[19] || context[1][2].Stackables[21])) ? directionIndex : 26,
 
                 (
                     1, 1, 1,
                     _, _, 1,
                     1, 1, 1
-                ) => context[1][0].Geo is 0 or 6 ? directionIndex : 26,
+                ) => (context[1][0].Geo is 0 or 6
+                    && !(context[0][1].Stackables[5] || context[0][1].Stackables[6] || context[0][1].Stackables[7] || context[0][1].Stackables[19] || context[0][1].Stackables[21])
+                    && !(context[2][1].Stackables[5] || context[2][1].Stackables[6] || context[2][1].Stackables[7] || context[2][1].Stackables[19] || context[2][1].Stackables[21])) ? directionIndex : 26,
 
                 _ => 26
             };

@@ -7,26 +7,95 @@ using Leditor.Types;
 
 namespace Leditor.Pages;
 
-internal class LightEditorPage : EditorPage
+internal class LightEditorPage : EditorPage, IContextListener
 {
     public override void Dispose()
     {
         if (Disposed) return;
         Disposed = true;
         _stretchTexture?.Dispose();
+
+        _layer1.Dispose();
+        _layer2.Dispose();
+        _layer3.Dispose();
+
+        UnloadShader(_mask);
+    }
+
+    private void ResetRTs() {
+        _layer1.Dispose();
+        _layer2.Dispose();
+        _layer3.Dispose();
+
+        var width = GLOBALS.Level.Width * 20 + 300;
+        var height = GLOBALS.Level.Height * 20 + 300;
+
+        _layer1 = new(width, height);
+        _layer2 = new(width, height);
+        _layer3 = new(width, height);
+
+        BeginTextureMode(_layer1);
+        ClearBackground(Color.White);
+        EndTextureMode();
+
+        BeginTextureMode(_layer2);
+        ClearBackground(Color.White);
+        EndTextureMode();
+
+        BeginTextureMode(_layer3);
+        ClearBackground(Color.White);
+        EndTextureMode();
+    }
+
+    public void OnProjectCreated(object sender, EventArgs e)
+    {
+        ResetRTs();
+    }
+
+    public void OnProjectLoaded(object sender, EventArgs e)
+    {
+        ResetRTs();
+    }
+
+    public LightEditorPage()
+    {
+        _layer1 = new(0, 0);
+        _layer2 = new(0, 0);
+        _layer3 = new(0, 0);
+
+        _mask = LoadShaderFromMemory(null, @"#version 330
+        
+        in vec2 fragTexCoord;
+        in vec4 fragColor;
+        
+        out vec4 FragColor;
+        
+        uniform sampler2D lightmap;
+        
+        void main() {
+            vec4 color = texture(lightmap, fragTexCoord);
+
+            if (color.r == 1.0 && color.g == 1.0 && color.b == 1.0) { discard; }
+
+            FragColor = fragColor;
+        }");
     }
     
     private Camera2D _camera = new() { Zoom = 0.5f, Target = new(-500, -200) };
     
+    private RL.Managed.RenderTexture2D _layer1;
+    private RL.Managed.RenderTexture2D _layer2;
+    private RL.Managed.RenderTexture2D _layer3;
+
+    private Shader _mask;
+
     private int _lightBrushTextureIndex;
     private float _lightBrushWidth = 200;
     private float _lightBrushHeight = 200;
     private float _lightBrushRotation;
     private bool _eraseShadow;
-    private bool _shading = true;
     private bool _showTiles;
     private bool _showProps;
-    private bool _tintedProps;
     private bool _tilePreview = true;
     private bool _tintedTileTextures = true;
 
@@ -43,6 +112,60 @@ internal class LightEditorPage : EditorPage
     private float _growthFactor = InitialGrowthFactor;
 
     private RL.Managed.Texture2D _stretchTexture;
+    
+
+    private void DrawLayers() {
+        var shader = _mask;
+
+        BeginTextureMode(_layer3);
+        ClearBackground(Color.White with { A = 0 });
+        
+        BeginShaderMode(shader);
+
+        SetShaderValueTexture(shader, GetShaderLocation(shader, "lightmap"), GLOBALS.Textures.LightMap.Texture);
+
+
+        DrawTextureRec(
+            GLOBALS.Textures.LightMap.Texture,
+            new Rectangle(GLOBALS.Level.LightFlatness * 30 * DegreeToVector(GLOBALS.Level.LightAngle), new Vector2(GLOBALS.Textures.LightMap.Texture.Width, GLOBALS.Textures.LightMap.Texture.Height)),
+            new Vector2(0, 0),
+            Color.Black with { A = 130 }
+        );
+        EndShaderMode();
+        EndTextureMode();
+        
+        BeginTextureMode(_layer2);
+        ClearBackground(Color.White with { A = 0 });
+
+        BeginShaderMode(shader);
+
+        SetShaderValueTexture(shader, GetShaderLocation(shader, "lightmap"), GLOBALS.Textures.LightMap.Texture);
+
+        DrawTextureRec(
+            GLOBALS.Textures.LightMap.Texture,
+            new Rectangle(GLOBALS.Level.LightFlatness * 20 * DegreeToVector(GLOBALS.Level.LightAngle), new Vector2(GLOBALS.Textures.LightMap.Texture.Width, GLOBALS.Textures.LightMap.Texture.Height)),
+            new Vector2(0, 0),
+            Color.Black with { A = 150 }
+        );
+        EndShaderMode();
+        EndTextureMode();
+        
+        BeginTextureMode(_layer1);
+        ClearBackground(Color.White with { A = 0 });
+
+        BeginShaderMode(shader);
+
+        SetShaderValueTexture(shader, GetShaderLocation(shader, "lightmap"), GLOBALS.Textures.LightMap.Texture);
+
+        DrawTextureRec(
+            GLOBALS.Textures.LightMap.Texture,
+            new Rectangle(GLOBALS.Level.LightFlatness * 10 * DegreeToVector(GLOBALS.Level.LightAngle), new Vector2(GLOBALS.Textures.LightMap.Texture.Width, GLOBALS.Textures.LightMap.Texture.Height)),
+            new Vector2(0, 0),
+            Color.Black with { A = 170 }
+        );
+        EndShaderMode();
+        EndTextureMode();
+    }
     
     private void ResetQuadPoints()
     {
@@ -117,6 +240,15 @@ internal class LightEditorPage : EditorPage
         _ => new Vector2(100, 100)
     };
 
+    private static Vector2 DegreeToVector(int degree) {
+        degree += 270;
+        // degree *= -1;
+        
+        var rad = degree/360f * Math.PI*2;
+
+        return new Vector2((float)Math.Cos(rad) * -1, (float)Math.Sin(rad));
+    }
+
     public override void Draw()
     {
         
@@ -158,34 +290,6 @@ internal class LightEditorPage : EditorPage
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
 
-
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt))
-        // {
-        //     GLOBALS.Page = 1;
-        // }
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt))
-        // {
-        //     GLOBALS.Page = 2;
-        // }
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt))
-        // {
-        //     GLOBALS.Page = 3;
-        // }
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt))
-        // {
-        //     GLOBALS.Page = 4;
-        // }
-        // // if (Raylib.IsKeyReleased(KeyboardKey.KEY_FIVE)) GLOBALS.Page = 5;
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
-        // {
-        //     GLOBALS.Page = 6;
-        // }
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt))
-        // {
-        //     GLOBALS.Page = 7;
-        // }
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
-        // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
 
         if (_shortcuts.IncreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness < 10) GLOBALS.Level.LightFlatness++;
         if (_shortcuts.DecreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness > 1) GLOBALS.Level.LightFlatness--;
@@ -400,6 +504,8 @@ internal class LightEditorPage : EditorPage
                 ? Color.Black 
                 : GLOBALS.Settings.LightEditor.Background);
 
+            DrawLayers();
+
             if (_shouldRedrawLevel)
             {
                 Printers.DrawLevelIntoBuffer(GLOBALS.Textures.GeneralLevel, new Printers.DrawLevelParams
@@ -453,19 +559,63 @@ internal class LightEditorPage : EditorPage
 
                 if (_stretchMode)
                 {
-                    // BeginShaderMode(GLOBALS.Shaders.LightMapStretch);
-                    // SetShaderValueTexture(GLOBALS.Shaders.LightMapStretch, GetShaderLocation(GLOBALS.Shaders.LightMapStretch, "textureSampler"), _stretchTexture);
+                    BeginShaderMode(GLOBALS.Shaders.LightMapStretch);
+                    SetShaderValueTexture(GLOBALS.Shaders.LightMapStretch, GetShaderLocation(GLOBALS.Shaders.LightMapStretch, "textureSampler"), _stretchTexture);
                     Printers.DrawTextureQuad(_stretchTexture, _quadPoints, Color.White with { A = 150 });
-                    // EndShaderMode();
+                    EndShaderMode();
                 }
-                else
+                else if (GLOBALS.Settings.LightEditor.Projection == LightEditorSettings.LightProjection.Basic)
                 {
+                    DrawTextureRec(
+                        GLOBALS.Textures.LightMap.Texture,
+                        new Rectangle(GLOBALS.Level.LightFlatness * 10 * DegreeToVector(GLOBALS.Level.LightAngle), new Vector2(GLOBALS.Textures.LightMap.Texture.Width, -GLOBALS.Textures.LightMap.Texture.Height)),
+                        new Vector2(0, 0),
+                        Color.White with { A = 150 }
+                    );
+
                     DrawTextureRec(
                         GLOBALS.Textures.LightMap.Texture,
                         new Rectangle(0, 0, GLOBALS.Textures.LightMap.Texture.Width, -GLOBALS.Textures.LightMap.Texture.Height),
                         new Vector2(0, 0),
                         Color.White with { A = 150 }
                     );
+                }
+                else if (GLOBALS.Settings.LightEditor.Projection == LightEditorSettings.LightProjection.ThreeLayers) {
+                    BeginShaderMode(GLOBALS.Shaders.VFlip);
+                    {
+                        SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), _layer3.Raw.Texture);
+
+                        DrawTexture(
+                            _layer3.Raw.Texture,
+                            0, 0,
+                            Color.Black
+                        );
+                    }
+                    EndShaderMode();
+
+                    BeginShaderMode(GLOBALS.Shaders.VFlip);
+                    {
+                        SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), _layer2.Raw.Texture);
+
+                        DrawTexture(
+                            _layer2.Raw.Texture, 
+                            0, 0,
+                            Color.Black
+                        );
+                    }
+                    EndShaderMode();
+
+                    BeginShaderMode(GLOBALS.Shaders.VFlip);
+                    {
+                        SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), _layer1.Raw.Texture);
+
+                        DrawTexture(
+                            _layer1.Raw.Texture,
+                            0, 0,
+                            Color.Black
+                        );
+                    }
+                    EndShaderMode();
                 }
                 
                 if (_stretchMode)
@@ -750,6 +900,17 @@ internal class LightEditorPage : EditorPage
                     if (ImGui.Checkbox("Tiles", ref _showTiles)) _shouldRedrawLevel = true;
                     if (ImGui.Checkbox("Props", ref _showProps)) _shouldRedrawLevel = true;
                     
+                    ImGui.Spacing();
+
+
+                    var projectionIndex = (int)GLOBALS.Settings.LightEditor.Projection;
+
+                    var projectionChanged = ImGui.Combo("Projection", ref projectionIndex, string.Join('\0', Enum.GetNames(typeof(LightEditorSettings.LightProjection))));
+
+                    if (projectionChanged) {
+                        GLOBALS.Settings.LightEditor.Projection = (LightEditorSettings.LightProjection)projectionIndex;
+                    }
+
                     ImGui.Spacing();
 
                     if (ImGui.Button("Save Settings", availableSpace with { Y = 20 }))

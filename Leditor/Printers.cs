@@ -7274,10 +7274,11 @@ internal static class Printers
 
                     var resolvedDeps = dependancies.Any() && dependancies.Aggregate((first, second) => first && second);
 
+                    if ((attribute?.Disabled ?? false) || (dependancies.Any() && !resolvedDeps)) ImGuiNET.ImGui.BeginDisabled();
+                    
                     if (type == typeof(bool)) {
                         var value = ((bool?) setting.GetValue(obj)) ?? false;
                         
-                        if ((attribute?.Disabled ?? false) || (dependancies.Any() && !resolvedDeps)) ImGuiNET.ImGui.BeginDisabled();
 
                         if (ImGuiNET.ImGui.Checkbox(attribute?.Name ?? setting.Name, ref value)) {
                             setting.SetValue(obj, value);
@@ -7285,8 +7286,6 @@ internal static class Printers
                     } else if (type == typeof(int)) {
                         var value = ((int?) setting.GetValue(obj)) ?? 0;
                         
-                        if (attribute?.Disabled ?? false) ImGuiNET.ImGui.BeginDisabled();
-
                         if (ImGuiNET.ImGui.InputInt(attribute?.Name ?? setting.Name, ref value)) {
                             var bounds = (IntBounds?) setting.GetCustomAttributes(typeof(IntBounds), false).FirstOrDefault();
                             
@@ -7305,8 +7304,6 @@ internal static class Printers
                     } else if (type == typeof(float)) {
                         var value = ((float?) setting.GetValue(obj)) ?? 0;
                         
-                        if (attribute?.Disabled ?? false) ImGuiNET.ImGui.BeginDisabled();
-
                         if (ImGuiNET.ImGui.InputFloat(attribute?.Name ?? setting.Name, ref value)) {
                             var bounds = (FloatBounds?) setting.GetCustomAttributes(typeof(FloatBounds), false).FirstOrDefault();
                             
@@ -7324,8 +7321,6 @@ internal static class Printers
                     } else if (type == typeof(string)) {
                         var value = ((string?) setting.GetValue(obj)) ?? "";
                         
-                        if (attribute?.Disabled ?? false) ImGuiNET.ImGui.BeginDisabled();
-
                         var bounds = (StringBounds?) setting.GetCustomAttributes(typeof(StringBounds), false).FirstOrDefault();
 
                         if (ImGuiNET.ImGui.InputText(attribute?.Name ?? setting.Name, ref value, bounds?.MaxLength ?? 256)) {
@@ -7336,12 +7331,32 @@ internal static class Printers
 
                         var valueVec = new Vector4(value.R/255f, value.G/255f, value.B/255f, value.A/255f);
 
-                        if (attribute?.Disabled ?? false) ImGuiNET.ImGui.BeginDisabled();
-
                         if (ImGuiNET.ImGui.ColorEdit4($"{attribute?.Name ?? ""}##{setting.Name}", ref valueVec)) {
                             value = new ConColor((byte)(valueVec.X * 255), (byte)(valueVec.Y * 255), (byte)(valueVec.Z * 255), (byte)(valueVec.W * 255));
 
                             setting.SetValue(obj, value);
+                        }
+                    } else if (type.IsEnum) {
+                        var enumNames = Enum.GetNames(type);
+                        var enums = Enum.GetValues(type);
+
+                        var value = setting.GetValue(obj);
+
+                        var name = Enum.GetName(type, value ?? enums.GetValue(0)!);
+
+                        var selectionIndex = 0;
+
+                        for (var i = 0; i < enumNames.Length; i++) {
+                            if (name == enumNames[i]) {
+                                selectionIndex = i;
+                            }
+                        }
+
+                        var selectionChanged = ImGuiNET.ImGui.Combo($"{attribute?.Name ?? setting.Name}", ref selectionIndex, string.Join('\0', enumNames));
+                    
+                        if (selectionChanged) {
+                            var newValue = enums.GetValue(selectionIndex);
+                            setting.SetValue(obj, newValue);
                         }
                     }
 
