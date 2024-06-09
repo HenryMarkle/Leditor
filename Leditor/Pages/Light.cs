@@ -623,14 +623,28 @@ internal class LightEditorPage : EditorPage, IContextListener
                     Printers.DrawTextureQuad(_stretchTexture, _quadPoints, Color.White with { A = 150 });
                     EndShaderMode();
                 }
-                else if (GLOBALS.Settings.LightEditor.Projection == LightEditorSettings.LightProjection.Basic)
-                {
+                else if (GLOBALS.Settings.LightEditor.Projection == LightEditorSettings.LightProjection.None) {
                     DrawTextureRec(
                         GLOBALS.Textures.LightMap.Texture,
-                        new Rectangle(GLOBALS.Level.LightFlatness * 10 * DegreeToVector(GLOBALS.Level.LightAngle), new Vector2(GLOBALS.Textures.LightMap.Texture.Width, -GLOBALS.Textures.LightMap.Texture.Height)),
+                        new Rectangle(0, 0, GLOBALS.Textures.LightMap.Texture.Width, -GLOBALS.Textures.LightMap.Texture.Height),
                         new Vector2(0, 0),
                         Color.White with { A = 150 }
                     );
+                }
+                else if (GLOBALS.Settings.LightEditor.Projection == LightEditorSettings.LightProjection.Basic)
+                {
+                    BeginShaderMode(_mask);
+                    {
+                        SetShaderValueTexture(_mask, GetShaderLocation(_mask, "inputTexture"), GLOBALS.Textures.LightMap.Texture);
+                        SetShaderValue(_mask, GetShaderLocation(_mask, "vflip"), 1, ShaderUniformDataType.Int);
+
+                        DrawTextureV(
+                            GLOBALS.Textures.LightMap.Texture, 
+                            GLOBALS.Level.LightFlatness * 10 * DegreeToVector2(GLOBALS.Level.LightAngle), 
+                            Color.Black with { A = 150 }
+                        );
+                    }
+                    EndShaderMode();
 
                     DrawTextureRec(
                         GLOBALS.Textures.LightMap.Texture,
