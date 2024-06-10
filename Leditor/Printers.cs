@@ -1968,7 +1968,7 @@ internal static class Printers
             if (current.type != InitPropType.Rope) continue;
             
             foreach (var point in current.prop.Extras.RopePoints)
-                DrawCircleV(point * (scale / 16f), 3f, Color.White);
+                DrawCircleV(point, 3f, Color.White);
         }
     }
 
