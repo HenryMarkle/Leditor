@@ -406,7 +406,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         20, 
                         false, 
                         GLOBALS.Settings.GeneralSettings.DrawTileMode,
-                        (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255)
+                        (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255),
+                        visibleStrays: false
                     );
 
                     EndTextureMode();
@@ -633,7 +634,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         20, 
                         false, 
                         GLOBALS.Settings.GeneralSettings.DrawTileMode,
-                        (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255)
+                        (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255),
+                        visibleStrays: false
                     );
 
                     EndTextureMode();
@@ -868,7 +870,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         20, 
                         false, 
                         GLOBALS.Settings.GeneralSettings.DrawTileMode,
-                        (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255)
+                        (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255),
+                        visibleStrays: false
                     );
                     EndTextureMode();
                 }

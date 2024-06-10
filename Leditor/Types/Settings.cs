@@ -113,6 +113,9 @@ public class TileEditorSettings
     [SettingName("Allow Undefined Tiles", Description = "When disabled, the level won't load if it has undefined tiles")]
     public bool AllowUndefinedTiles { get; set; }
 
+    [SettingName("Visible Stray Tile Fragments")]
+    public bool ShowStrayTileFragments { get; set; } = true;
+
     [SettingName("Show/Hide Grid")]
     public bool Grid { get; set; }
 

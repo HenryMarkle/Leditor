@@ -178,19 +178,33 @@ internal sealed class TileLoader : IDisposable
             }
             var tile = pack.Tiles[_textureCategoryCursor][_textureCursor];
 
+            var tilePath = Path.Combine(pack.Directory, $"{tile.Name}.png");
+
+            // UNIX
+            if (Environment.OSVersion.Platform == PlatformID.Unix) {
+                var filePaths = Directory.GetFiles(pack.Directory, "*");
+
+                if (filePaths.Length > 0) {
+                    var found = filePaths.SingleOrDefault(f => string.Equals(Path.GetFileNameWithoutExtension(f), tile.Name, StringComparison.OrdinalIgnoreCase));
+
+                    if (found is not null) tilePath = found;
+                }
+            }
+            //
+
             if (tile.Type != Data.Tiles.TileType.Box) {
-                var image = Raylib.LoadImage(Path.Combine(pack.Directory, $"{tile.Name}.png"));
+                var image = Raylib.LoadImage(tilePath);
                 if (image.Height != 0 && image.Width != 0) {
                     Raylib.ImageCrop(ref image, new Rectangle(0, 1, image.Width, image.Height - 1));
                     
                     pack.Textures[_textureCategoryCursor][_textureCursor] = new RL.Managed.Texture2D(image);
                 } else {
                     pack.Textures[_textureCategoryCursor][_textureCursor] = 
-                        new RL.Managed.Texture2D(Path.Combine(pack.Directory, $"{tile.Name}.png"));
+                        new RL.Managed.Texture2D(tilePath);
                 }
             } else {
                 pack.Textures[_textureCategoryCursor][_textureCursor] = 
-                    new RL.Managed.Texture2D(Path.Combine(pack.Directory, $"{tile.Name}.png"));
+                    new RL.Managed.Texture2D(tilePath);
             }
 
             _textureCursor++;

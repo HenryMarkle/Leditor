@@ -151,6 +151,30 @@ internal class TileEditorPage : EditorPage, IDisposable
 
     private bool _isNavbarHovered;
 
+    public static void EraseStrayFragments(TileCell[,,] matrix) {
+        for (var y = 0; y < matrix.GetLength(0); y++) {
+            for (var x = 0; x < matrix.GetLength(1); x++) {
+                for (var z = 0; z < 3; z++) {
+                    var cell = matrix[y, x, z];
+
+                    if (cell.Type != TileType.TileBody || cell.Data is not TileBody) continue;
+
+                    var (hx, hy, hz) = ((TileBody)cell.Data).HeadPosition;
+
+                    if (hx < 1 || 
+                        hx > matrix.GetLength(1) ||
+                        hy < 1 ||
+                        hy > matrix.GetLength(0) ||
+                        z < 1 || 
+                        z > 3 ||
+                        matrix[y - 1, x - 1, z - 1].Data is not TileHead) {
+                            matrix[y, x, z] = new TileCell();
+                    }
+                }
+            }
+        }
+    }
+
     public static bool IsTileLegal(in TileDefinition? init, Vector2 point)
     {
         if (init is null) return false;
@@ -2123,7 +2147,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                 Palette = GLOBALS.SelectedPalette,
                 Grid = false,
                 VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers,
-                CropTilePrevious = GLOBALS.Settings.GeneralSettings.CropTilePreviews
+                CropTilePrevious = GLOBALS.Settings.GeneralSettings.CropTilePreviews,
+                VisibleStrayTileFragments = GLOBALS.Settings.TileEditor.ShowStrayTileFragments
             });
             _shouldRedrawLevel = false;
         }
@@ -2990,6 +3015,25 @@ internal class TileEditorPage : EditorPage, IDisposable
 
                 if (ogDelete) ImGui.EndDisabled();
 
+                var eraseStrays = ImGui.Button("Erase Stray Tile Fragments", ImGui.GetContentRegionAvail() with { Y = 20 });
+
+                if (eraseStrays) {
+                    ImGui.OpenPopup("ConfirmEraseStrayTileFragments");
+                }
+
+                if (ImGui.BeginPopup("ConfirmEraseStrayTileFragments")) {
+                    ImGui.Text("Are you sure?");
+
+                    if (ImGui.Button("Confirm")) {
+                        EraseStrayFragments(GLOBALS.Level.TileMatrix);
+                        ImGui.CloseCurrentPopup();
+                    }
+
+                    if (ImGui.Button("Cancel")) ImGui.CloseCurrentPopup();
+                    
+                    ImGui.EndPopup();
+                }
+
                 //
 
                 ImGui.Checkbox("Tooltip", ref _tooltip);
@@ -3038,6 +3082,13 @@ internal class TileEditorPage : EditorPage, IDisposable
                     GLOBALS.Settings.TileEditor.Grid = grid;
                     _shouldRedrawLevel = true;
                 }
+
+                var showStrays = GLOBALS.Settings.TileEditor.ShowStrayTileFragments;
+                if (ImGui.Checkbox("Stray Tile Fragments", ref showStrays)) {
+                    GLOBALS.Settings.TileEditor.ShowStrayTileFragments = showStrays;
+                    _shouldRedrawLevel = true;
+                }
+
                 
                 ImGui.End();
             }

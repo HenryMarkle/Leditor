@@ -1098,7 +1098,7 @@ internal static class Printers
         }
     }
 
-    internal static void DrawTileLayer(int currentLayer, int targetLayer, int scale, bool grid, TileDrawMode drawMode, byte opacity = 255, bool deepTileOpacity = true, bool crop = false)
+    internal static void DrawTileLayer(int currentLayer, int targetLayer, int scale, bool grid, TileDrawMode drawMode, byte opacity = 255, bool deepTileOpacity = true, bool crop = false, bool visibleStrays = true)
     {
         for (var y = 0; y < GLOBALS.Level.Height; y++)
         {
@@ -1238,7 +1238,7 @@ internal static class Printers
 
                     var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
 
-                    if (supposedHead.Data is TileHead { Definition: null } or not TileHead)
+                    if (supposedHead.Data is TileHead { Definition: null } or not TileHead && visibleStrays)
                     {
                         DrawTexturePro(
                             GLOBALS.Textures.MissingTile, 
@@ -1997,6 +1997,7 @@ internal static class Printers
         internal bool VisiblePreceedingUnfocusedLayers { get; init; } = true;
         internal bool CropTilePrevious { get; init; } = false;
         internal bool Shadows { get; init; } = false;
+        internal bool VisibleStrayTileFragments { get; init; } = true;
     }
     
     internal static void DrawLevelIntoBuffer(in RenderTexture2D texture, DrawLevelParams parameters)
@@ -2090,7 +2091,8 @@ internal static class Printers
                     parameters.TileDrawMode,
                     (byte)(parameters.HighLayerContrast ? 70 : 255),
                     true, 
-                    true
+                    true,
+                    parameters.VisibleStrayTileFragments
                 );
                 EndTextureMode();
             }
@@ -2237,7 +2239,8 @@ internal static class Printers
                         parameters.TileDrawMode,
                         (byte)(parameters.HighLayerContrast ? 70 : 255),
                         true, 
-                        true
+                        true,
+                        parameters.VisibleStrayTileFragments
                     );
                     EndTextureMode();
                 }
@@ -2401,7 +2404,8 @@ internal static class Printers
                             parameters.Scale, 
                             false, 
                             parameters.TileDrawMode,
-                            255
+                            255,
+                            visibleStrays: parameters.VisibleStrayTileFragments
                         );
                     }
                     EndTextureMode();

@@ -782,7 +782,8 @@ internal class MainPage : EditorPage, IContextListener
                         PropsLayer3 = _showProps,
                         HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
                         Palette = GLOBALS.SelectedPalette,
-                        CropTilePrevious = GLOBALS.Settings.GeneralSettings.CropTilePreviews
+                        CropTilePrevious = GLOBALS.Settings.GeneralSettings.CropTilePreviews,
+                        VisibleStrayTileFragments = false
                     });
                     _shouldRedrawLevel = false;
                 }

@@ -71,7 +71,7 @@ internal class SaveProjectPage : EditorPage
         if (!Directory.Exists(path)) return;
 
         _currentDir = path;
-        _dirEntries = Directory
+        var entries = Directory
             .GetFileSystemEntries(path)
             .Select(e => {
                 var attrs = File.GetAttributes(e);
@@ -81,9 +81,12 @@ internal class SaveProjectPage : EditorPage
             .Where(e => e.Item2 || e.Item1.EndsWith(".txt"))
             .Select(e => {
                 return (e.Item1, Path.GetFileNameWithoutExtension(e.Item1), e.Item2);
-            })
-            .OrderBy(e => !e.Item3)
-            .ToArray();
+            });
+
+        var folders = entries.Where(e => e.Item3).OrderBy(e => e.Item2, StringComparer.OrdinalIgnoreCase);
+        var files = entries.Where(e => !e.Item3).OrderBy(e => e.Item2, StringComparer.OrdinalIgnoreCase);
+
+        _dirEntries = [..folders, ..files];
     }
 
     private void NavigateUp() {

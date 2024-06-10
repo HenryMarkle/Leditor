@@ -653,7 +653,8 @@ internal class EffectsEditorPage : EditorPage
                         CurrentLayer = 0,
                         PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
                         TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
-                        Palette = GLOBALS.SelectedPalette
+                        Palette = GLOBALS.SelectedPalette,
+                        VisibleStrayTileFragments = false
                     });
                     _shouldRedrawLevel = false;
                 }

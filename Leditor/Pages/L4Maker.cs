@@ -857,14 +857,14 @@ void main() {
 
                         if (supposedHead.Data is TileHead { Definition: null } or not TileHead)
                         {
-                            DrawTexturePro(
-                                GLOBALS.Textures.MissingTile, 
-                                new Rectangle(0, 0, missingTexture.Width, missingTexture.Height),
-                                new Rectangle(x*scale, y*scale, scale, scale),
-                                new(0, 0),
-                                0,
-                                Color.White
-                            );
+                            // DrawTexturePro(
+                            //     GLOBALS.Textures.MissingTile, 
+                            //     new Rectangle(0, 0, missingTexture.Width, missingTexture.Height),
+                            //     new Rectangle(x*scale, y*scale, scale, scale),
+                            //     new(0, 0),
+                            //     0,
+                            //     Color.White
+                            // );
                         }
                     }
                     break;
