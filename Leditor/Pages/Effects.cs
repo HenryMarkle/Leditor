@@ -442,7 +442,7 @@ internal class EffectsEditorPage : EditorPage
             }
             else
             {
-                if (effectsMouseWheel != 0 && canUseBrush)
+                if (effectsMouseWheel != 0)
                 {
                     var mouseWorldPosition = GetScreenToWorld2D(GetMousePosition(), _camera);
                     _camera.Offset = GetMousePosition();

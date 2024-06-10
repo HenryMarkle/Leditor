@@ -1,18 +1,7 @@
-### New
-
-- Added the ability to hide stray tile fragments.
-- Added a button to erase stray tile fragments to the tile editor.
-- Added the ability to show and select props from all layers.
-
-### Changes
-
-- File entries are now alphabetically sorted.
-
-### Fixes
-
-- Fixed some tile textures not loading on Linux machines.
-
-
 ### Revision 0.9.90-2
 
 - Fixed a crash that occurs when more than one texture share the same name.
+
+### Revision 0.9.90-3
+
+- Fixed not being able to delete tiles when their head has -1 spec.

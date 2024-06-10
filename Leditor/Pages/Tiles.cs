@@ -688,7 +688,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                         var spec2 = specs[y, x, 1];
                         var spec3 = specs[y, x, 2];
 
-                        if (spec != -1)
+                        if (spec != -1 || GLOBALS.Level.TileMatrix[matrixY, matrixX, mz].Data is TileHead)
                         {
                             var oldCell = GLOBALS.Level.TileMatrix[matrixY, matrixX, mz];
                             var newCell = new TileCell { Type = TileType.Default, Data = new TileDefault() };
