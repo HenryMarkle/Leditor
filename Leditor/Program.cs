@@ -716,15 +716,63 @@ class Program
         // 1. Get all texture paths
         
         ropePropImagePaths = GLOBALS.RopeProps
-            .Select(r => Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", r.Name + ".png"))
+            .Select(prop => {
+                if (Environment.OSVersion.Platform == PlatformID.Unix) {
+                    var entries = Directory.GetFiles(Path.Combine(GLOBALS.Paths.RendererDirectory, "Props"));
+
+                        if (entries.Length > 0) {
+                            var found = entries
+                                .Select(Path.GetFileNameWithoutExtension)
+                                .SingleOrDefault(f => string.Equals(f, prop.Name, StringComparison.OrdinalIgnoreCase));
+
+                            return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", (found ?? prop.Name) + ".png");
+                        }
+
+                        return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png");
+                }
+
+                return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png");
+            })
             .ToArray();
         
         longPropImagePaths = GLOBALS.LongProps
-            .Select(l => Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", l.Name + ".png"))
+            .Select(prop => {
+                if (Environment.OSVersion.Platform == PlatformID.Unix) {
+                    var entries = Directory.GetFiles(Path.Combine(GLOBALS.Paths.RendererDirectory, "Props"));
+
+                        if (entries.Length > 0) {
+                            var found = entries
+                                .Select(Path.GetFileNameWithoutExtension)
+                                .SingleOrDefault(f => string.Equals(f, prop.Name, StringComparison.OrdinalIgnoreCase));
+
+                            return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", (found ?? prop.Name) + ".png");
+                        }
+
+                        return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png");
+                }
+
+                return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png");
+            })
             .ToArray();
         
         otherPropImagePaths = GLOBALS.Props.Select(category =>
-            category.Select(prop => Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png")
+            category.Select(prop => {
+                if (Environment.OSVersion.Platform == PlatformID.Unix) {
+                    var entries = Directory.GetFiles(Path.Combine(GLOBALS.Paths.RendererDirectory, "Props"));
+
+                        if (entries.Length > 0) {
+                            var found = entries
+                                .Select(Path.GetFileNameWithoutExtension)
+                                .SingleOrDefault(f => string.Equals(f, prop.Name, StringComparison.OrdinalIgnoreCase));
+
+                            return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", (found ?? prop.Name) + ".png");
+                        }
+
+                        return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png");
+                }
+
+                return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png");
+            }
             ).ToArray()
         ).ToArray();
         
