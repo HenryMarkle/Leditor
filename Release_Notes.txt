@@ -2,6 +2,7 @@
 
 - Added the ability to hide stray tile fragments.
 - Added a button to erase stray tile fragments to the tile editor.
+- Added the ability to show and select props from all layers.
 
 ### Changes
 

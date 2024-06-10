@@ -313,6 +313,9 @@ public class PropEditor
     [SettingDependancy("Cameras")]
     public bool CamerasInnerBoundries { get; set; }
 
+    [SettingName("Cross-Layer Selection")]
+    public bool CrossLayerSelection { get; set; }
+
     //
 
     public PropEditor()

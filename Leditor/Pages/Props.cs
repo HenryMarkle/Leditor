@@ -49,7 +49,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             var current = GLOBALS.Level.Props[p];
             
             // Filter based on depth
-            if (current.prop.Depth <= -(GLOBALS.Layer+1)*10 || current.prop.Depth > -GLOBALS.Layer*10) continue;
+            if (!GLOBALS.Settings.PropEditor.CrossLayerSelection && (current.prop.Depth <= -(GLOBALS.Layer+1)*10 || current.prop.Depth > -GLOBALS.Layer*10)) continue;
 
             var (category, index) = current.position;
             var quads = current.prop.Quads;
@@ -416,7 +416,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             
             // Then draw the props
 
-            if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette || GLOBALS.Layer != 2) {
+            if (!GLOBALS.Settings.PropEditor.CrossLayerSelection && (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette || GLOBALS.Layer != 2)) {
 
                 BeginTextureMode(GLOBALS.Textures.GeneralLevel);
 
@@ -647,7 +647,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             
             // then draw the props
 
-            if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette || GLOBALS.Layer != 1) {
+            if (!GLOBALS.Settings.PropEditor.CrossLayerSelection && (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette || GLOBALS.Layer != 1)) {
                 for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
                 {
                     if (_hidden[p]) continue;
@@ -891,7 +891,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     var current = GLOBALS.Level.Props[p];
                     
                     // Filter based on depth
-                    if (current.prop.Depth < -9) continue;
+                    if (!GLOBALS.Settings.PropEditor.CrossLayerSelection && (current.prop.Depth < -9)) continue;
 
                     var (category, index) = current.position;
                     var quads = current.prop.Quads;
@@ -3636,14 +3636,14 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             
                             if (IsKeyDown(_shortcuts.PropSelectionModifier.Key))
                             {
-                                if (CheckCollisionRecs(propSelectRect, _selection) && !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10))
+                                if (CheckCollisionRecs(propSelectRect, _selection) && (GLOBALS.Settings.PropEditor.CrossLayerSelection || !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10)))
                                 {
                                     _selected[i] = !_selected[i];
                                 }
                             }
                             else
                             {
-                                if (CheckCollisionRecs(propSelectRect, _selection) && !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10))
+                                if (CheckCollisionRecs(propSelectRect, _selection) && (GLOBALS.Settings.PropEditor.CrossLayerSelection || !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10)))
                                 {
                                     _selected[i] = true;
                                     selectedI.Add(i);
