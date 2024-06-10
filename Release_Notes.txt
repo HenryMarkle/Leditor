@@ -20,6 +20,8 @@ Added a tile viewer that allows you to display each tile individually.
 - Added visible camera boundries to l4 maker.
 - Added props to l4 maker.
 - Added a new view to the light editor that projects shadows on all three layers, although it makes it harder to see the level.
+- Added keybinds to move the level's geometry view with keyboard, similar to comms editor.
+  - Currently only available for the geometry editor. 
 
 ### Changes
 

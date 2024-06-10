@@ -286,14 +286,7 @@ internal static class Utils
         var cams = Serialization.Importers.GetCameras(camsObj);
 
         // TODO: catch PropNotFoundException
-        List<(InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)>  props;
-
-        try {
-            props = Serialization.Importers.GetProps(propsObj);
-        } catch ( Exception e) {
-            props = [];
-            propsLoadException = e;
-        }
+        var  props =  Serialization.Importers.GetProps(propsObj);;
 
         var lightSettings = Serialization.Importers.GetLightSettings(lightObj);
 
