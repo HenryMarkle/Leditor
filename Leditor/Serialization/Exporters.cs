@@ -249,7 +249,7 @@ public static class Exporters
                 { } basic => $"[#renderorder: {basic.RenderOrder}, #seed: {basic.Seed}, #renderTime: {basic.RenderTime}]"
             };
 
-            var pointsString = string.Join(", ", prop.Extras.RopePoints.Select(point => $"point({point.X*1.25f:0.0000}, {point.Y:0.0000})"));
+            var pointsString = string.Join(", ", prop.Extras.RopePoints.Select(point => $"point({point.X*1.25f:0.0000}, {point.Y*1.25f:0.0000})"));
             
             builder.Append($"[#settings: {settingsString}{(type == InitPropType.Rope ? $", #points: [{pointsString}]" : "")}]");
             
