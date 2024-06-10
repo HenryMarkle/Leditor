@@ -2908,6 +2908,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         if (!_editingPropPoints) {
                             _gram.Proceed(GLOBALS.Level.Props);
                         }
+
+                        _bezierHandleLock = -1;
                     }
                     // Rope mode
                     else if (_shortcuts.ToggleRopeEditingMode.Check(ctrl, shift, alt))
@@ -2917,6 +2919,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         else {
                             _shouldRedrawLevel = true;
                         }
+
+                        _bezierHandleLock = -1;
 
                         // _scalingProps = false;
                         // _movingProps = false;
@@ -2944,6 +2948,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         else {
                             _shouldRedrawLevel = true;
                         }
+
+                        _bezierHandleLock = -1;
 
                         List<(InitPropType, TileDefinition?, (int, int), Prop)> dProps = [];
                     
@@ -3096,7 +3102,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 {
                                     for (var b = 0; b < model.BezierHandles.Length; b++)
                                     {
-                                        if (_bezierHandleLock == -1 && CheckCollisionPointCircle(tileMouseWorld, model.BezierHandles[b], 3f))
+                                        if (_bezierHandleLock == -1 && CheckCollisionPointCircle(tileMouseWorld, model.BezierHandles[b], 5f))
                                             _bezierHandleLock = b;
 
                                         if (_bezierHandleLock == b) model.BezierHandles[b] = tileMouseWorld;
@@ -3173,7 +3179,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 if (!_models[r].simulate) {
                                     for (var p = 0; p < GLOBALS.Level.Props[s].prop.Extras.RopePoints.Length; p++)
                                     {
-                                        GLOBALS.Level.Props[s].prop.Extras.RopePoints[p] = Raymath.Vector2Add(GLOBALS.Level.Props[s].prop.Extras.RopePoints[p], deltaToAdd);
+                                        GLOBALS.Level.Props[s].prop.Extras.RopePoints[p] = GLOBALS.Level.Props[s].prop.Extras.RopePoints[p] + deltaToAdd;
                                     }
                                 }
 
@@ -4871,13 +4877,20 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         var oldSegmentCount = GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints.Length;
                         var segmentCount = oldSegmentCount;
                         
-                        var switchSimSelected = ImGui.Button(currentModel.model.EditType == RopeModel.EditTypeEnum.Simulation ? "Simulation" : "Bezier Path");
+                        var switchSimSelected = ImGui.Button(currentModel.model.EditType switch { RopeModel.EditTypeEnum.BezierPaths => "Bezier Paths", RopeModel.EditTypeEnum.Simulation => "Simulation", _ => "Unknown" });
 
                         if (switchSimSelected)
                         {
                             _shouldRedrawLevel = true;
                             if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
-                            currentModel.model.EditType = (RopeModel.EditTypeEnum)(((int)(currentModel.model.EditType) + 1) % 2);
+                            
+                            currentModel.model.EditType = currentModel.model.EditType switch {
+                                RopeModel.EditTypeEnum.BezierPaths => RopeModel.EditTypeEnum.Simulation,
+                                RopeModel.EditTypeEnum.Simulation => RopeModel.EditTypeEnum.BezierPaths,
+                                _ => RopeModel.EditTypeEnum.Simulation
+                            };
+
+                            _bezierHandleLock = -1;
                         }
 
                         ImGui.SetNextItemWidth(100);
@@ -4921,9 +4934,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                             else _shouldRedrawLevel = true;
 
-                            if (!currentModel.simulate) {
-                                _bezierHandleLock = -1;
-                            }
+                            _bezierHandleLock = -1;
                         }
 
 
