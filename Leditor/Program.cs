@@ -721,11 +721,15 @@ class Program
                     var entries = Directory.GetFiles(Path.Combine(GLOBALS.Paths.RendererDirectory, "Props"));
 
                         if (entries.Length > 0) {
-                            var found = entries
-                                .Select(Path.GetFileNameWithoutExtension)
-                                .SingleOrDefault(f => string.Equals(f, prop.Name, StringComparison.OrdinalIgnoreCase));
+                            try {
+                                var found = entries
+                                    .Select(Path.GetFileNameWithoutExtension)
+                                    .SingleOrDefault(f => string.Equals(f, prop.Name, StringComparison.OrdinalIgnoreCase));
 
-                            return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", (found ?? prop.Name) + ".png");
+                                return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", (found ?? prop.Name) + ".png");
+                            } catch {
+                                return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png");
+                            }
                         }
 
                         return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png");
@@ -741,11 +745,15 @@ class Program
                     var entries = Directory.GetFiles(Path.Combine(GLOBALS.Paths.RendererDirectory, "Props"));
 
                         if (entries.Length > 0) {
-                            var found = entries
-                                .Select(Path.GetFileNameWithoutExtension)
-                                .SingleOrDefault(f => string.Equals(f, prop.Name, StringComparison.OrdinalIgnoreCase));
+                            try {
+                                var found = entries
+                                    .Select(Path.GetFileNameWithoutExtension)
+                                    .SingleOrDefault(f => string.Equals(f, prop.Name, StringComparison.OrdinalIgnoreCase));
 
-                            return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", (found ?? prop.Name) + ".png");
+                                return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", (found ?? prop.Name) + ".png");
+                            } catch {
+                                return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png");
+                            }
                         }
 
                         return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png");
@@ -761,11 +769,15 @@ class Program
                     var entries = Directory.GetFiles(Path.Combine(GLOBALS.Paths.RendererDirectory, "Props"));
 
                         if (entries.Length > 0) {
-                            var found = entries
-                                .Select(Path.GetFileNameWithoutExtension)
-                                .SingleOrDefault(f => string.Equals(f, prop.Name, StringComparison.OrdinalIgnoreCase));
+                            try {
+                                var found = entries
+                                    .Select(Path.GetFileNameWithoutExtension)
+                                    .SingleOrDefault(f => string.Equals(f, prop.Name, StringComparison.OrdinalIgnoreCase));
 
-                            return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", (found ?? prop.Name) + ".png");
+                                return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", (found ?? prop.Name) + ".png");
+                            } catch {
+                                return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png");
+                            }
                         }
 
                         return Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", prop.Name + ".png");

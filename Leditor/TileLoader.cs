@@ -185,9 +185,13 @@ internal sealed class TileLoader : IDisposable
                 var filePaths = Directory.GetFiles(pack.Directory, "*");
 
                 if (filePaths.Length > 0) {
-                    var found = filePaths.SingleOrDefault(f => string.Equals(Path.GetFileNameWithoutExtension(f), tile.Name, StringComparison.OrdinalIgnoreCase));
+                    try {
+                        var found = filePaths.SingleOrDefault(f => string.Equals(Path.GetFileNameWithoutExtension(f), tile.Name, StringComparison.OrdinalIgnoreCase));
 
-                    if (found is not null) tilePath = found;
+                        if (found is not null) tilePath = found;
+                    } catch {
+                        tilePath = Path.Combine(pack.Directory, $"{tile.Name}.png");
+                    }
                 }
             }
             //

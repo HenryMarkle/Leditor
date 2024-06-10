@@ -11,3 +11,8 @@
 ### Fixes
 
 - Fixed some tile textures not loading on Linux machines.
+
+
+### Revision 0.9.90-2
+
+- Fixed a crash that occurs when more than one texture share the same name.
