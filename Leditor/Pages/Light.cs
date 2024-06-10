@@ -301,9 +301,6 @@ internal class LightEditorPage : EditorPage, IContextListener
             }
         }
 
-        var panelHeight = GetScreenHeight() - 100;
-        var brushPanel = new Rectangle(10, 50, 120, panelHeight);
-
         var canPaint = !_isNavbarHovered && 
                         !_isSettingsWinHovered && 
                        !_isSettingsWinDragged && 
@@ -321,8 +318,20 @@ internal class LightEditorPage : EditorPage, IContextListener
         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
 
 
-        if (_shortcuts.IncreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness < 10) GLOBALS.Level.LightFlatness++;
-        if (_shortcuts.DecreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness > 1) GLOBALS.Level.LightFlatness--;
+        if (_shortcuts.IncreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness < 10) {
+            GLOBALS.Level.LightFlatness++;
+
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+                _shouldRedrawLevel = true;
+            }
+        }
+        else if (_shortcuts.DecreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness > 1) {
+            GLOBALS.Level.LightFlatness--;
+
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+                _shouldRedrawLevel = true;
+            }
+        }
 
         if (_shortcuts.IncreaseAngle.Check(ctrl, shift, alt, true))
         {
@@ -583,7 +592,7 @@ internal class LightEditorPage : EditorPage, IContextListener
                     PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
                     HighLayerContrast = GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette,
                     Palette = GLOBALS.SelectedPalette,
-                    Shadows = GLOBALS.Settings.LightEditor.Projection == LightEditorSettings.LightProjection.ThreeLayers,
+                    Shadows = GLOBALS.Settings.LightEditor.Projection == LightEditorSettings.LightProjection.ThreeLayers && GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette,
                     VisibleStrayTileFragments = false
                 });
                 _shouldRedrawLevel = false;

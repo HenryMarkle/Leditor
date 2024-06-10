@@ -1999,10 +1999,19 @@ internal static class Printers
         internal bool Shadows { get; init; } = false;
         internal bool VisibleStrayTileFragments { get; init; } = true;
     }
+
+    private static RL.Managed.RenderTexture2D? _tempRT = null;
     
     internal static void DrawLevelIntoBuffer(in RenderTexture2D texture, DrawLevelParams parameters)
     {
-        var geoL = LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20);
+        if (parameters.TileDrawMode == TileDrawMode.Palette) {
+            if (_tempRT is null) {
+                _tempRT = new(LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20));
+            } else if (_tempRT.Raw.Texture.Width != texture.Texture.Width || _tempRT.Raw.Texture.Height != texture.Texture.Height) {
+                _tempRT.Dispose();
+                _tempRT = new(LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20));
+            }
+        }
 
         BeginTextureMode(texture);
         ClearBackground(new(170, 170, 170, 255));
@@ -2011,20 +2020,7 @@ internal static class Printers
         if (parameters.GeometryLayer3)
         {
             if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                DrawGeoLayerWithMaterialsIntoBuffer(geoL, 2, parameters.Scale, true);
-                // if (parameters.RenderMaterials) {
-                // } else {
-                //     BeginTextureMode(geoL);
-                //     ClearBackground(Color.White with { A = 0 });
-                    
-                //     DrawGeoLayer(
-                //         2, 
-                //         parameters.Scale, 
-                //         false, 
-                //         Color.Green
-                //     );
-                //     EndTextureMode();
-                // }
+                DrawGeoLayerWithMaterialsIntoBuffer(_tempRT!, 2, parameters.Scale, true);
 
 
                 BeginTextureMode(texture);
@@ -2038,16 +2034,16 @@ internal static class Printers
                 var depthLoc = GetShaderLocation(shader, "depth");
                 // var shadingLoc = GetShaderLocation(shader, "shading");
 
-                SetShaderValueTexture(shader, textureLoc, geoL.Texture);
+                SetShaderValueTexture(shader, textureLoc, _tempRT!.Raw.Texture);
                 SetShaderValueTexture(shader, paletteLoc, parameters.Palette!.Value);
 
                 SetShaderValue(shader, depthLoc, 20, ShaderUniformDataType.Int);
                 // SetShaderValue(shader, shadingLoc, 1, ShaderUniformDataType.Int);
 
                 if (parameters.HighLayerContrast) {
-                    DrawTexture(geoL.Texture, 0, 0, parameters.CurrentLayer == 2 ? Color.Black : Color.Black with { A = 120 });
+                    DrawTexture(_tempRT!.Raw.Texture, 0, 0, parameters.CurrentLayer == 2 ? Color.Black : Color.Black with { A = 120 });
                 } else {
-                    DrawTexture(geoL.Texture, 0, 0, Color.Black);
+                    DrawTexture(_tempRT!.Raw.Texture, 0, 0, Color.Black);
                 }
 
                 EndShaderMode();
@@ -2134,21 +2130,7 @@ internal static class Printers
             if (parameters.GeometryLayer2)
             {
                 if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                    DrawGeoLayerWithMaterialsIntoBuffer(geoL, 1, parameters.Scale, true);
-                    // if (parameters.RenderMaterials) {
-                    // } else {
-                    //     BeginTextureMode(geoL);
-                    //     ClearBackground(Color.White with { A = 0 });
-                        
-                    //     DrawGeoLayer(
-                    //         1, 
-                    //         parameters.Scale, 
-                    //         false, 
-                    //         Color.Green
-                    //     );
-                    //     EndTextureMode();
-                    // }
-
+                    DrawGeoLayerWithMaterialsIntoBuffer(_tempRT!, 1, parameters.Scale, true);
 
                     BeginTextureMode(texture);
 
@@ -2162,16 +2144,16 @@ internal static class Printers
                     var depthLoc = GetShaderLocation(shader, "depth");
                     // var shadingLoc = GetShaderLocation(shader, "shading");
 
-                    SetShaderValueTexture(shader, textureLoc, geoL.Texture);
+                    SetShaderValueTexture(shader, textureLoc, _tempRT!.Raw.Texture);
                     SetShaderValueTexture(shader, paletteLoc, parameters.Palette!.Value);
 
                     SetShaderValue(shader, depthLoc, 10, ShaderUniformDataType.Int);
                     // SetShaderValue(shader, shadingLoc, 1, ShaderUniformDataType.Int);
 
                     if (parameters.HighLayerContrast) {
-                        DrawTexture(geoL.Texture, 0, 0, parameters.CurrentLayer == 1 ? Color.Black : Color.Black with { A = 140 });
+                        DrawTexture(_tempRT!.Raw.Texture, 0, 0, parameters.CurrentLayer == 1 ? Color.Black : Color.Black with { A = 140 });
                     } else {
-                        DrawTexture(geoL.Texture, 0, 0, Color.Black);
+                        DrawTexture(_tempRT!.Raw.Texture, 0, 0, Color.Black);
                     }
 
                     EndShaderMode();
@@ -2303,7 +2285,7 @@ internal static class Printers
             if (parameters.GeometryLayer1)
             {
                 if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                    DrawGeoLayerWithMaterialsIntoBuffer(geoL, 0, parameters.Scale, true);
+                    DrawGeoLayerWithMaterialsIntoBuffer(_tempRT!, 0, parameters.Scale, true);
 
                     var shader = GLOBALS.Shaders.Palette;
 
@@ -2316,15 +2298,15 @@ internal static class Printers
 
                     var depthLoc = GetShaderLocation(shader, "depth");
 
-                    SetShaderValueTexture(shader, textureLoc, geoL.Texture);
+                    SetShaderValueTexture(shader, textureLoc, _tempRT!.Raw.Texture);
                     SetShaderValueTexture(shader, paletteLoc, parameters.Palette!.Value);
 
                     SetShaderValue(shader, depthLoc, 0, ShaderUniformDataType.Int);
 
                     if (parameters.HighLayerContrast) {
-                        DrawTexture(geoL.Texture, 0, 0, parameters.CurrentLayer == 0 ? Color.Black : Color.Black with { A = 120 });
+                        DrawTexture(_tempRT!.Raw.Texture, 0, 0, parameters.CurrentLayer == 0 ? Color.Black : Color.Black with { A = 120 });
                     } else {
-                        DrawTexture(geoL.Texture, 0, 0, Color.Black);
+                        DrawTexture(_tempRT!.Raw.Texture, 0, 0, Color.Black);
                     }
 
                     EndShaderMode();
@@ -2461,7 +2443,7 @@ internal static class Printers
         }
         
 
-        UnloadRenderTexture(geoL);
+        // geoL?.Dispose();
     }
 
     internal static void DrawLevelIntoBufferV2(in RenderTexture2D texture, DrawLevelParams parameters)

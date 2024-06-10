@@ -1042,7 +1042,6 @@ internal class TileEditorPage : EditorPage, IDisposable
     {
         if (_hoveredTile is null) return;
         
-        _previewTooltipRT.Dispose();
 
         if (GLOBALS.Settings.TileEditor.UseTexturesInTooltip) {
             var (width, height) = _hoveredTile.Size;
@@ -1051,7 +1050,11 @@ internal class TileEditorPage : EditorPage, IDisposable
             var totalWidth = (width + buffer) * 20;
             var totalHeight = (height + buffer) * 20;
 
-            _previewTooltipRT = new RenderTexture2D(totalWidth, totalHeight);
+            if (totalWidth != _previewTooltipRT.Raw.Texture.Width || totalHeight != _previewTooltipRT.Raw.Texture.Height) {
+                _previewTooltipRT.Dispose();
+                _previewTooltipRT = new RenderTexture2D(totalWidth, totalHeight);
+            }
+
             
             BeginTextureMode(_previewTooltipRT);
             ClearBackground(Color.White with { A = 0 });
@@ -1068,11 +1071,14 @@ internal class TileEditorPage : EditorPage, IDisposable
             );
             EndTextureMode();
         } else {
-            _previewTooltipRT = new RenderTexture2D(
-                _hoveredTile.Size.Width*16, 
-                _hoveredTile.Size.Height*16
-            );
-                
+            var totalWidth = _hoveredTile.Size.Width * 16;
+            var totalHeight = _hoveredTile.Size.Height * 16;
+
+            if (totalWidth != _previewTooltipRT.Raw.Texture.Width || totalHeight != _previewTooltipRT.Raw.Texture.Height) {
+                _previewTooltipRT.Dispose();
+                _previewTooltipRT = new RenderTexture2D(totalWidth, totalHeight);
+            }
+
             BeginTextureMode(_previewTooltipRT);
             ClearBackground(Color.Black with { A = 0 });
                                         
