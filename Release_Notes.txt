@@ -3,3 +3,5 @@
 - Fixed a crash that occurs when more than one texture share the same name.
 - Fixed not being able to delete tiles when their head has -1 spec.
 - Fixed rope segment coordinates not scaling properly.
+- Fixed a crash that could occur when selecting a prop from the search results.
+- Fixed a crash that could occur when the search result is empty.
