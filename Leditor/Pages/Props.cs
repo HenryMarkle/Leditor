@@ -395,7 +395,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     //     GLOBALS.SelectedPalette!.Value,
                     //     70
                     // );
-                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 2, 20, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true);
+                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 2, 20, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true, false);
 
                 } else {
                     BeginTextureMode(GLOBALS.Textures.GeneralLevel);
@@ -613,7 +613,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             if (_showLayer2Tiles)
             {
                 if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
-                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 1, 20, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true);
+                    Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 1, 20, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true, false);
                     
                     
                     // Printers.DrawTileLayer(
@@ -851,7 +851,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             if (_showLayer1Tiles)
             {
                 if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
-                        Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 0, 20, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true);
+                        Printers.DrawTileLayerWithPaletteIntoBuffer(GLOBALS.Textures.GeneralLevel, GLOBALS.Layer, 0, 20, GLOBALS.SelectedPalette!.Value, (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255), false, true, false);
                     
                     // Printers.DrawTileLayer(
                     //     GLOBALS.Layer,
@@ -3183,15 +3183,20 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             for (var r = 0; r < _models.Length; r++)
                             {
-                                if (!_models[r].simulate) {
-                                    for (var p = 0; p < GLOBALS.Level.Props[s].prop.Extras.RopePoints.Length; p++)
-                                    {
-                                        GLOBALS.Level.Props[s].prop.Extras.RopePoints[p] = GLOBALS.Level.Props[s].prop.Extras.RopePoints[p] + deltaToAdd;
-                                    }
-                                }
+                                var (propIndex, simulated, model) = _models[r];
 
-                                if (_models[r].index == s)
+                                if (propIndex == s)
                                 {
+                                    var segments = GLOBALS.Level.Props[s].prop.Extras.RopePoints;
+                                    if (!simulated) {
+                                        for (var p = 0; p < segments.Length; p++)
+                                        {
+                                            segments[p] = segments[p] + deltaToAdd;
+                                        }
+
+                                        GLOBALS.Level.Props[propIndex].prop.Extras.RopePoints = segments;
+                                    }
+
                                     for (var h = 0; h < _models[r].model.BezierHandles.Length; h++)
                                     {
                                         _models[r].model.BezierHandles[h] += deltaToAdd;

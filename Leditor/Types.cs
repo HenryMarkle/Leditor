@@ -73,6 +73,7 @@ public sealed class LevelState
         set
         {
             _padding = value;
+
             Border = new Rectangle(
                 _padding.left * GLOBALS.Scale,
                 _padding.top * GLOBALS.Scale,
@@ -242,6 +243,51 @@ public sealed class LevelState
         WaterAtFront = false;
         Seed = new Random().Next(10000);
         DefaultMaterial = "Concrete";
+    }
+
+    internal void Resize(
+        int left,
+        int top,
+        int right,
+        int bottom,
+
+        RunCell layer1Fill,
+        RunCell layer2Fill,
+        RunCell layer3Fill
+    ) {
+        GeoMatrix = Utils.Resize(GeoMatrix, left, top, right, bottom, layer1Fill, layer2Fill, layer3Fill);
+        TileMatrix = Utils.Resize(TileMatrix, left, top, right, bottom, new TileCell(), new TileCell(), new TileCell());
+        MaterialColors = Utils.Resize(MaterialColors, left, top, right, bottom, Color.Black, Color.Black, Color.Black);
+
+        for (var e = 0; e < Effects.Length; e++) {
+            Effects[e].Item3 = Utils.Resize(Effects[e].Item3, left, top, right, bottom);
+        }
+
+        for (var p = 0; p < Props.Length; p++) {
+            var quad = Props[p].prop.Quads;
+
+            var delta = new Vector2(left, top) * 20;
+
+            quad.TopLeft += delta;
+            quad.TopRight += delta;
+            quad.BottomRight += delta;
+            quad.BottomLeft += delta;
+
+            Props[p].prop.Quads = quad;
+
+            if (Props[p].type == InitPropType.Rope) {
+                for (var s = 0; s < Props[p].prop.Extras.RopePoints.Length; s++) {
+                    var segments = Props[p].prop.Extras.RopePoints;
+
+                    segments[s] += delta;
+                }
+            }
+        }
+
+        Width = GeoMatrix.GetLength(1);
+        Height = GeoMatrix.GetLength(0);
+
+        Padding = _padding;
     }
 
     internal void Resize(
@@ -502,6 +548,17 @@ public struct TileCell {
     {
         Type = TileType.Default;
         Data = new TileDefault();
+    }
+
+    public TileCell(TileCell toCopy) {
+        Type = toCopy.Type;
+        Data = toCopy.Data switch {
+            TileDefault => new TileDefault(),
+            TileMaterial m => new TileMaterial(m.Name),
+            TileHead h => new TileHead(h.Definition) { Name = h.Name },
+            TileBody b => new TileBody(b.HeadPosition.x, b.HeadPosition.y, b.HeadPosition.z),
+            _ => new TileDefault()
+        };
     }
 
     public readonly override string ToString() => Data.ToString();

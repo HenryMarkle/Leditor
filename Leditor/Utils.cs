@@ -1646,6 +1646,354 @@ internal static class Utils
         return fi;
     }
 
+    internal static double[,] Resize(
+        double[,] matrix,
+        
+        int left,
+        int top,
+        int right,
+        int bottom
+    ) {
+        var width = matrix.GetLength(1);
+        var height = matrix.GetLength(0);
+
+        var newWidth = width + left + right;
+        var newHeight = height + top + bottom;
+
+        double[,] newMatrix = new double[newHeight, newWidth];
+
+        // Copy old matrix to new matrix
+
+        for (var y = 0; y < height; y++) {
+            var ny = y + top;
+
+            if (ny >= newHeight) break;
+            if (ny < 0) continue;
+
+            for (var x = 0; x < width; x++) {
+                var nx = x + left;
+
+                if (nx >= newWidth) break;
+                if (nx < 0) continue;
+
+                //
+
+                newMatrix[ny, nx] = matrix[y, x];
+            }
+        }
+
+        return newMatrix;
+    }
+
+    internal static Color[,,] Resize(
+        Color[,,] matrix,
+        
+        int left,
+        int top,
+        int right,
+        int bottom,
+
+        Color layer1Fill,
+        Color layer2Fill,
+        Color layer3Fill
+    ) {
+        var width = matrix.GetLength(1);
+        var height = matrix.GetLength(0);
+
+        var newWidth = width + left + right;
+        var newHeight = height + top + bottom;
+
+        var depth = matrix.GetLength(2);
+
+        Color[,,] newMatrix = new Color[newHeight, newWidth, depth];
+
+        // Copy old matrix to new matrix
+
+        for (var y = 0; y < height; y++) {
+            var ny = y + top;
+
+            if (ny >= newHeight) break;
+            if (ny < 0) continue;
+
+            for (var x = 0; x < width; x++) {
+                var nx = x + left;
+
+                if (nx >= newWidth) break;
+                if (nx < 0) continue;
+
+                //
+
+                newMatrix[ny, nx, 0] = matrix[y, x, 0];
+                newMatrix[ny, nx, 1] = matrix[y, x, 1];
+                newMatrix[ny, nx, 2] = matrix[y, x, 2];
+            }
+        }
+
+        // Fillers
+
+        if (left > 0) {
+            for (var y = top; y < newHeight; y++) {
+                for (var x = 0; x < left; x++) {
+                    newMatrix[y, x, 0] = layer1Fill;
+                    newMatrix[y, x, 1] = layer2Fill;
+                    newMatrix[y, x, 2] = layer3Fill;
+                }
+            }
+        }
+
+        if (top > 0) {
+            for (var y = 0; y < top; y++) {
+                for (var x = left; x < newWidth; x++) {
+                    for (var z = 0; z < depth; z++) {
+                        newMatrix[y, x, 0] = layer1Fill;
+                        newMatrix[y, x, 1] = layer2Fill;
+                        newMatrix[y, x, 2] = layer3Fill;
+                    }
+                }
+            }
+        }
+
+        if (right > 0) {
+            for (var y = top; y < newHeight; y++) {
+                for (var x = newWidth - right; x < newWidth; x++) {
+                    for (var z = 0; z < depth; z++) {
+                        newMatrix[y, x, 0] = layer1Fill;
+                        newMatrix[y, x, 1] = layer2Fill;
+                        newMatrix[y, x, 2] = layer3Fill;
+                    }
+                }
+            }
+        }
+
+        if (bottom > 0) {
+            for (var y = newHeight - bottom; y < newHeight; y++) {
+                for (var x = 0; x < newWidth; x++) {
+                    for (var z = 0; z < depth; z++) {
+                        newMatrix[y, x, 0] = layer1Fill;
+                        newMatrix[y, x, 1] = layer2Fill;
+                        newMatrix[y, x, 2] = layer3Fill;
+                    }
+                }
+            }
+        }
+
+        return newMatrix;
+    }
+
+    internal static RunCell[,,] Resize(
+        RunCell[,,] matrix,
+        
+        int left,
+        int top,
+        int right,
+        int bottom,
+
+        RunCell layer1Fill,
+        RunCell layer2Fill,
+        RunCell layer3Fill
+    ) {
+        var width = matrix.GetLength(1);
+        var height = matrix.GetLength(0);
+
+        var newWidth = width + left + right;
+        var newHeight = height + top + bottom;
+
+        var depth = matrix.GetLength(2);
+
+        RunCell[,,] newMatrix = new RunCell[newHeight, newWidth, depth];
+
+        // Copy old matrix to new matrix
+
+        for (var y = 0; y < height; y++) {
+            var ny = y + top;
+
+            if (ny >= newHeight) break;
+            if (ny < 0) continue;
+
+            for (var x = 0; x < width; x++) {
+                var nx = x + left;
+
+                if (nx >= newWidth) break;
+                if (nx < 0) continue;
+
+                //
+
+                newMatrix[ny, nx, 0] = matrix[y, x, 0];
+                newMatrix[ny, nx, 1] = matrix[y, x, 1];
+                newMatrix[ny, nx, 2] = matrix[y, x, 2];
+            }
+        }
+
+        // Fillers
+
+        if (left > 0) {
+            for (var y = top; y < newHeight; y++) {
+                for (var x = 0; x < left; x++) {
+                    newMatrix[y, x, 0] = new RunCell { Geo = layer1Fill.Geo, Stackables = [..layer1Fill.Stackables] };
+                    newMatrix[y, x, 1] = new RunCell { Geo = layer2Fill.Geo, Stackables = [..layer2Fill.Stackables] };
+                    newMatrix[y, x, 2] = new RunCell { Geo = layer3Fill.Geo, Stackables = [..layer3Fill.Stackables] };
+                }
+            }
+        }
+
+        if (top > 0) {
+            for (var y = 0; y < top; y++) {
+                for (var x = left; x < newWidth; x++) {
+                    newMatrix[y, x, 0] = new RunCell { Geo = layer1Fill.Geo, Stackables = [..layer1Fill.Stackables] };
+                    newMatrix[y, x, 1] = new RunCell { Geo = layer2Fill.Geo, Stackables = [..layer2Fill.Stackables] };
+                    newMatrix[y, x, 2] = new RunCell { Geo = layer3Fill.Geo, Stackables = [..layer3Fill.Stackables] };
+                }
+            }
+        }
+
+        if (right > 0) {
+            for (var y = top; y < newHeight; y++) {
+                for (var x = newWidth - right; x < newWidth; x++) {
+                    newMatrix[y, x, 0] = new RunCell { Geo = layer1Fill.Geo, Stackables = [..layer1Fill.Stackables] };
+                    newMatrix[y, x, 1] = new RunCell { Geo = layer2Fill.Geo, Stackables = [..layer2Fill.Stackables] };
+                    newMatrix[y, x, 2] = new RunCell { Geo = layer3Fill.Geo, Stackables = [..layer3Fill.Stackables] };
+                }
+            }
+        }
+
+        if (bottom > 0) {
+            for (var y = newHeight - bottom; y < newHeight; y++) {
+                for (var x = 0; x < newWidth; x++) {
+                    newMatrix[y, x, 0] = new RunCell { Geo = layer1Fill.Geo, Stackables = [..layer1Fill.Stackables] };
+                    newMatrix[y, x, 1] = new RunCell { Geo = layer2Fill.Geo, Stackables = [..layer2Fill.Stackables] };
+                    newMatrix[y, x, 2] = new RunCell { Geo = layer3Fill.Geo, Stackables = [..layer3Fill.Stackables] };
+                }
+            }
+        }
+
+        return newMatrix;
+    }
+
+    internal static TileCell[,,] Resize(
+        TileCell[,,] matrix,
+        
+        int left,
+        int top,
+        int right,
+        int bottom,
+
+        TileCell layer1Fill,
+        TileCell layer2Fill,
+        TileCell layer3Fill
+    ) {
+        var width = matrix.GetLength(1);
+        var height = matrix.GetLength(0);
+
+        var newWidth = width + left + right;
+        var newHeight = height + top + bottom;
+
+        var depth = matrix.GetLength(2);
+
+        TileCell[,,] newMatrix = new TileCell[newHeight, newWidth, depth];
+
+        // Copy old matrix to new matrix
+
+        for (var y = 0; y < height; y++) {
+            var ny = y + top;
+
+            if (ny >= newHeight) break;
+            if (ny < 0) continue;
+
+            for (var x = 0; x < width; x++) {
+                var nx = x + left;
+
+                if (nx >= newWidth) break;
+                if (nx < 0) continue;
+
+                //
+
+                newMatrix[ny, nx, 0] = matrix[y, x, 0];
+                newMatrix[ny, nx, 1] = matrix[y, x, 1];
+                newMatrix[ny, nx, 2] = matrix[y, x, 2];
+
+                if (newMatrix[ny, nx, 0].Data is TileBody b) {
+                    var (hx, hy, hz) = b.HeadPosition;
+
+                    hx += left;
+                    hy += top;
+
+                    b.HeadPosition = (hx, hy, hz);
+                    newMatrix[ny, nx, 0].Data = b;
+                }
+
+                if (newMatrix[ny, nx, 1].Data is TileBody b1) {
+                    var (hx, hy, hz) = b1.HeadPosition;
+
+                    hx += left;
+                    hy += top;
+
+                    b1.HeadPosition = (hx, hy, hz);
+                    newMatrix[ny, nx, 1].Data = b1;
+                }
+
+                if (newMatrix[ny, nx, 2].Data is TileBody b2) {
+                    var (hx, hy, hz) = b2.HeadPosition;
+
+                    hx += left;
+                    hy += top;
+
+                    b2.HeadPosition = (hx, hy, hz);
+                    newMatrix[ny, nx, 2].Data = b2;
+                }
+            }
+        }
+
+        // Fillers
+
+        if (left > 0) {
+            for (var y = top; y < newHeight; y++) {
+                for (var x = 0; x < left; x++) {
+                    newMatrix[y, x, 0] = new TileCell(layer1Fill);
+                    newMatrix[y, x, 1] = new TileCell(layer2Fill);
+                    newMatrix[y, x, 2] = new TileCell(layer3Fill);
+                }
+            }
+        }
+
+        if (top > 0) {
+            for (var y = 0; y < top; y++) {
+                for (var x = left; x < newWidth; x++) {
+                    for (var z = 0; z < depth; z++) {
+                        newMatrix[y, x, 0] = new TileCell(layer1Fill);
+                        newMatrix[y, x, 1] = new TileCell(layer2Fill);
+                        newMatrix[y, x, 2] = new TileCell(layer3Fill);
+                    }
+                }
+            }
+        }
+
+        if (right > 0) {
+            for (var y = top; y < newHeight; y++) {
+                for (var x = newWidth - right; x < newWidth; x++) {
+                    for (var z = 0; z < depth; z++) {
+                        newMatrix[y, x, 0] = new TileCell(layer1Fill);
+                        newMatrix[y, x, 1] = new TileCell(layer2Fill);
+                        newMatrix[y, x, 2] = new TileCell(layer3Fill);
+                    }
+                }
+            }
+        }
+
+        if (bottom > 0) {
+            for (var y = newHeight - bottom; y < newHeight; y++) {
+                for (var x = 0; x < newWidth; x++) {
+                    for (var z = 0; z < depth; z++) {
+                        newMatrix[y, x, 0] = new TileCell(layer1Fill);
+                        newMatrix[y, x, 1] = new TileCell(layer2Fill);
+                        newMatrix[y, x, 2] = new TileCell(layer3Fill);
+                    }
+                }
+            }
+        }
+
+        return newMatrix;
+    }
+
     internal static RunCell[,,] Resize(RunCell[,,] array, int width, int height, int newWidth, int newHeight, RunCell[] layersFill)
     {
 

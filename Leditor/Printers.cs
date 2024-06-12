@@ -59,6 +59,27 @@ internal static class Printers
                 break;
         }
     }
+
+    internal static void DrawGrid(Vector2 origin, int width, int height, int scale)
+    {
+        for (var x = 0; x < width; x++)
+        {
+            for (var y = 0; y < height; y++)
+            {
+                DrawRectangleLinesEx(
+                    new(origin.X + x * scale, origin.Y + y * scale, scale, scale),
+                    0.4f,
+                    new(255, 255, 255, 50)
+                );
+                        
+                if (x % 2 == 0 && y % 2 == 0) DrawRectangleLinesEx(
+                    new(origin.X + x * scale, origin.Y + y * scale, scale*2, scale*2),
+                    0.5f,
+                    new(255, 255, 255, 51)
+                );
+            }
+        }
+    }
     
     internal static void DrawGrid(int scale)
     {
@@ -1219,11 +1240,12 @@ internal static class Printers
                     
                     var (hx, hy, hz) = ((TileBody)tileCell.Data).HeadPosition;
 
-                    var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
-
-                    if (supposedHead.Data is TileHead { Definition: null } or not TileHead && visibleStrays)
+                    if (hy < 1 || 
+                        hy > GLOBALS.Level.Height || 
+                        hx < 1 ||
+                        hx > GLOBALS.Level.Width)
                     {
-                        DrawTexturePro(
+                        if (visibleStrays) DrawTexturePro(
                             GLOBALS.Textures.MissingTile, 
                             new Rectangle(0, 0, missingTexture.Width, missingTexture.Height),
                             new Rectangle(x*scale, y*scale, scale, scale),
@@ -1231,6 +1253,19 @@ internal static class Printers
                             0,
                             Color.White
                         );
+                    } else {
+                        var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
+                    
+                        if (supposedHead.Data is TileHead { Definition: null } or not TileHead && visibleStrays) {
+                            DrawTexturePro(
+                                GLOBALS.Textures.MissingTile, 
+                                new Rectangle(0, 0, missingTexture.Width, missingTexture.Height),
+                                new Rectangle(x*scale, y*scale, scale, scale),
+                                new(0, 0),
+                                0,
+                                Color.White
+                            );
+                        }
                     }
                 }
                 else if (tileCell.Type == TileType.Material)
@@ -1400,343 +1435,6 @@ internal static class Printers
         }
     }
 
-    // TODO: drop GLOBALS.Layer references
-    internal static void DrawTileLayer(int currentLayer, int targetLayer, int scale, bool grid, TileDrawMode drawMode, in Texture2D palette, byte opacity = 255, bool deepTileOpacity = true)
-    {
-        for (var y = 0; y < GLOBALS.Level.Height; y++)
-        {
-            for (var x = 0; x < GLOBALS.Level.Width; x++)
-            {
-                if (grid) DrawRectangleLinesEx(
-                    new(x * scale, y * scale, scale, scale),
-                    0.5f,
-                    new(255, 255, 255, 100)
-                );
-                
-                TileCell tileCell;
-
-                #if DEBUG
-                try
-                {
-                    tileCell = GLOBALS.Level.TileMatrix[y, x, targetLayer];
-                }
-                catch (IndexOutOfRangeException ie)
-                {
-                    throw new IndexOutOfRangeException(innerException: ie, message: $"Failed to fetch tile cell from {nameof(GLOBALS.Level.TileMatrix)}[{GLOBALS.Level.TileMatrix.GetLength(0)}, {GLOBALS.Level.TileMatrix.GetLength(1)}, {GLOBALS.Level.TileMatrix.GetLength(2)}]: x, y, or z ({x}, {y}, {targetLayer}) was out of bounds");
-                }
-                #else
-                tileCell = GLOBALS.Level.TileMatrix[y, x, targetLayer];
-                #endif
-                
-                if (tileCell.Type == TileType.TileHead)
-                {
-                    var data = (TileHead)tileCell.Data;
-
-                    TileDefinition? init = data.Definition;
-                    var undefined = init is null;
-
-                    var tileTexture = undefined
-                        ? GLOBALS.Textures.MissingTile 
-                        : data.Definition!.Texture;
-
-                    var color = Color.Purple;
-
-                    if (GLOBALS.TileDex?.TryGetTileColor(data.Definition?.Name ?? "", out var foundColor) ?? false)
-                    {
-                        color = foundColor;
-                    }
-
-                    if (undefined)
-                    {
-                        DrawTexturePro(
-                            tileTexture, 
-                            new Rectangle(0, 0, tileTexture.Width, tileTexture.Height),
-                            new(x*scale, y*scale, scale, scale),
-                            new Vector2(0, 0),
-                            0,
-                            Color.White with { A = opacity }
-                        );
-                    }
-                    else
-                    {
-                        var center = new Vector2(
-                        init!.Size.Item1 % 2 == 0 ? x * scale + scale : x * scale + scale/2f, 
-                        init!.Size.Item2 % 2 == 0 ? y * scale + scale : y * scale + scale/2f);
-
-                        var width = (scale / 20f)/2 * (init.Type == Data.Tiles.TileType.Box ? init.Size.Width : init.Size.Width + init.BufferTiles * 2) * 20;
-                        var height = (scale / 20f)/2 * ((init.Type == Data.Tiles.TileType.Box
-                            ? init.Size.Item2
-                            : (init.Size.Item2 + init.BufferTiles * 2)) * 20);
-
-                        var depth2 = Utils.SpecHasDepth(init.Specs);
-                        var depth3 = Utils.SpecHasDepth(init.Specs, 2);
-                        
-                        var shouldBeClearlyVisible = (targetLayer == currentLayer) || 
-                            (targetLayer + 1 == currentLayer && depth2) || 
-                            (targetLayer + 2 == currentLayer && depth3);
-
-                        switch (drawMode) {
-                            case TileDrawMode.Preview:
-                                DrawTilePreview(
-                                    init, 
-                                    color with { A = (byte)(shouldBeClearlyVisible ? 255 : opacity)}, 
-                                    new Vector2(x, y),
-                                    -Utils.GetTileHeadOrigin(init),
-                                    scale
-                                );
-                            break;
-
-                            case TileDrawMode.Tinted:
-                                // TODO: Replace
-                                DrawTileAsPropColored(
-                                    init,
-                                    center,
-                                    [
-                                        new(width, -height),
-                                        new(-width, -height),
-                                        new(-width, height),
-                                        new(width, height),
-                                        new(width, -height)
-                                    ],
-                                    new Color(color.R, color.G, color.B, (byte)(shouldBeClearlyVisible ? 255 : opacity)),
-                                    0
-                                );
-                            break;
-
-                            case TileDrawMode.Palette:
-                                DrawTileWithPalette(
-                                    init,
-                                    palette,
-                                    center,
-                                    [
-                                        new(width, -height),
-                                        new(-width, -height),
-                                        new(-width, height),
-                                        new(width, height),
-                                        new(width, -height)
-                                    ],
-                                    targetLayer * 10,
-                                    shouldBeClearlyVisible ? 1f : opacity/255f
-                                );
-                            break;
-                        }
-                    }
-                }
-                else if (tileCell.Type == TileType.TileBody)
-                {
-                    var missingTexture = GLOBALS.Textures.MissingTile;
-                    
-                    var (hx, hy, hz) = ((TileBody)tileCell.Data).HeadPosition;
-
-                    var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
-
-                    if (supposedHead.Data is TileHead { Definition: null } or not TileHead)
-                    {
-                        DrawTexturePro(
-                            GLOBALS.Textures.MissingTile, 
-                            new Rectangle(0, 0, missingTexture.Width, missingTexture.Height),
-                            new Rectangle(x*scale, y*scale, scale, scale),
-                            new(0, 0),
-                            0,
-                            Color.White
-                        );
-                    }
-                }
-                else if (tileCell.Type == TileType.Material)
-                {
-                    
-                    if (drawMode == TileDrawMode.Palette) {
-                        var op = (byte)((targetLayer == currentLayer) ? 255 : opacity);
-
-                        DrawMaterialTexture(((TileMaterial)tileCell.Data).Name, GLOBALS.Level.GeoMatrix[y, x, targetLayer].Geo, x, y, scale, op);
-                        continue;
-                    }
-                    // var materialName = ((TileMaterial)tileCell.Data).Name;
-                    var origin = new Vector2(x * scale + 5, y * scale + 5);
-                    var color = GLOBALS.Level.MaterialColors[y, x, targetLayer];
-
-                    color.A = (byte)((targetLayer == currentLayer) ? 255 : opacity);
-
-                    if (color.R != 0 || color.G != 0 || color.B != 0)
-                    {
-
-                        switch (GLOBALS.Level.GeoMatrix[y, x, targetLayer].Geo)
-                        {
-                            case 1:
-                                DrawRectangle(
-                                    x * scale + 6,
-                                    y * scale + 6,
-                                    scale - 12,
-                                    scale - 12,
-                                    color
-                                );
-                                break;
-
-
-                            case 2:
-                                DrawTriangle(
-                                    origin,
-                                    new(origin.X, origin.Y + scale - 10),
-                                    new(origin.X + scale - 10, origin.Y + scale - 10),
-                                    color
-                                );
-                                break;
-
-
-                            case 3:
-                                DrawTriangle(
-                                    new(origin.X + scale - 10, origin.Y),
-                                    new(origin.X, origin.Y + scale - 10),
-                                    new(origin.X + scale - 10, origin.Y + scale - 10),
-                                    color
-                                );
-                                break;
-
-                            case 4:
-                                DrawTriangle(
-                                    origin,
-                                    new(origin.X, origin.Y + scale - 10),
-                                    new(origin.X + scale - 10, origin.Y),
-                                    color
-                                );
-                                break;
-
-                            case 5:
-                                DrawTriangle(
-                                    origin,
-                                    new(origin.X + scale - 10, origin.Y + scale - 10),
-                                    new(origin.X + scale - 10, origin.Y),
-                                    color
-                                );
-                                break;
-
-                            case 6:
-                                DrawRectangleV(
-                                    origin,
-                                    new(scale - 10, (scale - 10) / 2),
-                                    color
-                                );
-                                break;
-                        }
-                    }
-                }
-                else if (tileCell.Data is TileDefault) {
-                    if (drawMode == TileDrawMode.Palette) {
-                        var op = (byte)((targetLayer == currentLayer) ? 255 : opacity);
-                        DrawMaterialTexture(GLOBALS.Level.DefaultMaterial, GLOBALS.Level.GeoMatrix[y, x, targetLayer].Geo, x, y, scale, op);
-                        continue;
-                    }
-                }
-            
-            }
-        }
-    }
-
-
-    internal static void DrawTileLayerIntoBuffer(RenderTexture2D renderTexture, int layer, int scale) {
-        BeginTextureMode(renderTexture);
-        ClearBackground(Color.White);
-
-        for (var y = 0; y < GLOBALS.Level.Height; y++)
-        {
-            for (var x = 0; x < GLOBALS.Level.Width; x++)
-            {
-                TileCell tileCell;
-
-                #if DEBUG
-                try
-                {
-                    tileCell = GLOBALS.Level.TileMatrix[y, x, layer];
-                }
-                catch (IndexOutOfRangeException ie)
-                {
-                    throw new IndexOutOfRangeException(innerException: ie, message: $"Failed to fetch tile cell from {nameof(GLOBALS.Level.TileMatrix)}[{GLOBALS.Level.TileMatrix.GetLength(0)}, {GLOBALS.Level.TileMatrix.GetLength(1)}, {GLOBALS.Level.TileMatrix.GetLength(2)}]: x, y, or z ({x}, {y}, {layer}) was out of bounds");
-                }
-                #else
-                tileCell = GLOBALS.Level.TileMatrix[y, x, layer];
-                #endif
-
-                switch (tileCell.Data) {
-                    case TileHead h:
-                    {
-                        var data = h;
-
-                        TileDefinition? init = data.Definition;
-                        var undefined = init is null;
-
-                        var tileTexture = undefined
-                            ? GLOBALS.Textures.MissingTile 
-                            : data.Definition!.Texture;
-
-                        var color = Color.Purple;
-
-                        if (GLOBALS.TileDex?.TryGetTileColor(data.Definition?.Name ?? "", out var foundColor) ?? false)
-                        {
-                            color = foundColor;
-                        }
-
-                        if (!undefined)
-                        {
-                            var center = new Vector2(
-                            init!.Size.Item1 % 2 == 0 ? x * scale + scale : x * scale + scale/2f, 
-                            init!.Size.Item2 % 2 == 0 ? y * scale + scale : y * scale + scale/2f);
-
-                            var width = (scale / 20f)/2 * (init.Type == Data.Tiles.TileType.Box ? init.Size.Width : init.Size.Width + init.BufferTiles * 2) * 20;
-                            var height = (scale / 20f)/2 * ((init.Type == Data.Tiles.TileType.Box
-                                ? init.Size.Item2
-                                : (init.Size.Item2 + init.BufferTiles * 2)) * 20);
-
-                            var depth2 = Utils.SpecHasDepth(init.Specs);
-                            var depth3 = Utils.SpecHasDepth(init.Specs, 2);
-                            
-                            DrawTileAsProp(
-                                init,
-                                center,
-                                [
-                                    new(width, -height),
-                                    new(-width, -height),
-                                    new(-width, height),
-                                    new(width, height),
-                                    new(width, -height)
-                                ],
-                                layer * 10,
-                                255
-                            );
-                        }
-                    }
-                    break;
-
-                    case TileBody b:
-                    {
-                        var missingTexture = GLOBALS.Textures.MissingTile;
-                    
-                        var (hx, hy, hz) = b.HeadPosition;
-
-                        var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
-
-                        if (supposedHead.Data is TileHead { Definition: null } or not TileHead)
-                        {
-                            DrawTexturePro(
-                                GLOBALS.Textures.MissingTile, 
-                                new Rectangle(0, 0, missingTexture.Width, missingTexture.Height),
-                                new Rectangle(x*scale, y*scale, scale, scale),
-                                new(0, 0),
-                                0,
-                                Color.White
-                            );
-                        }
-                    }
-                    break;
-
-                    default:
-                        DrawTileSpec(x*scale, y*scale, GLOBALS.Level.GeoMatrix[y, x, layer].Geo, scale, new Color(0, 255, 0, 255));
-                        break;
-                }
-            }
-        }
-    
-        EndTextureMode();
-    }
 
     internal static void DrawTileLayerWithMaterialTexturesIntoBuffer(RenderTexture2D renderTexture, int layer, int scale) {
         BeginTextureMode(renderTexture);
@@ -1856,9 +1554,10 @@ internal static class Printers
                     
                         var (hx, hy, hz) = b.HeadPosition;
 
-                        var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
-
-                        if (supposedHead.Data is TileHead { Definition: null } or not TileHead)
+                        if (hy < 1 || 
+                            hy > GLOBALS.Level.Height || 
+                            hx < 1 ||
+                            hx > GLOBALS.Level.Width)
                         {
                             DrawTexturePro(
                                 GLOBALS.Textures.MissingTile, 
@@ -1868,6 +1567,19 @@ internal static class Printers
                                 0,
                                 Color.White
                             );
+                        } else {
+                            var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
+                        
+                            if (supposedHead.Data is TileHead { Definition: null } or not TileHead) {
+                                DrawTexturePro(
+                                    GLOBALS.Textures.MissingTile, 
+                                    new Rectangle(0, 0, missingTexture.Width, missingTexture.Height),
+                                    new Rectangle(x*scale, y*scale, scale, scale),
+                                    new(0, 0),
+                                    0,
+                                    Color.White
+                                );
+                            }
                         }
                     }
                     break;
@@ -2059,7 +1771,7 @@ internal static class Printers
         if (parameters.TilesLayer3)
         {
             if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                DrawTileLayerWithPaletteIntoBuffer(texture, parameters.CurrentLayer, 2, parameters.Scale, parameters.Palette!.Value, (byte)(parameters.HighLayerContrast ? 70 : 255), true, true);
+                DrawTileLayerWithPaletteIntoBuffer(texture, parameters.CurrentLayer, 2, parameters.Scale, parameters.Palette!.Value, (byte)(parameters.HighLayerContrast ? 70 : 255), true, true, parameters.VisibleStrayTileFragments);
             } else {
                 BeginTextureMode(texture);
                 DrawTileLayer(
@@ -2171,7 +1883,7 @@ internal static class Printers
             if (parameters.TilesLayer2)
             {
                 if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                    DrawTileLayerWithPaletteIntoBuffer(texture, parameters.CurrentLayer, 1, parameters.Scale, parameters.Palette!.Value, (byte)(parameters.HighLayerContrast ? 70 : 255), true, true);
+                    DrawTileLayerWithPaletteIntoBuffer(texture, parameters.CurrentLayer, 1, parameters.Scale, parameters.Palette!.Value, (byte)(parameters.HighLayerContrast ? 70 : 255), true, true, parameters.VisibleStrayTileFragments);
 
                     // if (parameters.HighLayerContrast) {
                     //     DrawTileLayer(
@@ -2327,7 +2039,7 @@ internal static class Printers
             if (parameters.TilesLayer1)
             {
                 if (parameters.TileDrawMode == TileDrawMode.Palette) {
-                    DrawTileLayerWithPaletteIntoBuffer(texture, parameters.CurrentLayer, 0, parameters.Scale, parameters.Palette!.Value, (byte)(parameters.HighLayerContrast ? 70 : 255), true, true);
+                    DrawTileLayerWithPaletteIntoBuffer(texture, parameters.CurrentLayer, 0, parameters.Scale, parameters.Palette!.Value, (byte)(parameters.HighLayerContrast ? 70 : 255), true, true, parameters.VisibleStrayTileFragments);
 
                     // if (parameters.HighLayerContrast) {
                     //     DrawTileLayer(
@@ -6590,7 +6302,7 @@ internal static class Printers
     
     // Palette Printers
 
-    internal static void DrawTileLayerWithPaletteIntoBuffer(RenderTexture2D renderTexture, int currentLayer, int targetLayer, int scale, in Texture2D palette, byte opacity, bool deepTileOpacity, bool renderMaterials)
+    internal static void DrawTileLayerWithPaletteIntoBuffer(RenderTexture2D renderTexture, int currentLayer, int targetLayer, int scale, in Texture2D palette, byte opacity, bool deepTileOpacity, bool renderMaterials, bool visibleStrays)
     {
         // if (renderMaterials) {
         //     var buffer = LoadRenderTexture(GLOBALS.Level.Width * scale, GLOBALS.Level.Height * scale);
@@ -6733,19 +6445,33 @@ internal static class Printers
                     
                     var (hx, hy, hz) = ((TileBody)tileCell.Data).HeadPosition;
 
-                    var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
-
-                    if (supposedHead.Data is TileHead { Definition: null } or not TileHead)
-                    {
-                        DrawTexturePro(
-                            GLOBALS.Textures.MissingTile, 
-                            new Rectangle(0, 0, missingTexture.Width, missingTexture.Height),
-                            new Rectangle(x*scale, y*scale, scale, scale),
-                            new(0, 0),
-                            0,
-                            Color.White
-                        );
-                    }
+                    if (hy < 1 || 
+                            hy > GLOBALS.Level.Height || 
+                            hx < 1 ||
+                            hx > GLOBALS.Level.Width)
+                        {
+                            if (visibleStrays) DrawTexturePro(
+                                GLOBALS.Textures.MissingTile, 
+                                new Rectangle(0, 0, missingTexture.Width, missingTexture.Height),
+                                new Rectangle(x*scale, y*scale, scale, scale),
+                                new(0, 0),
+                                0,
+                                Color.White
+                            );
+                        } else {
+                            var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
+                        
+                            if (supposedHead.Data is TileHead { Definition: null } or not TileHead && visibleStrays) {
+                                DrawTexturePro(
+                                    GLOBALS.Textures.MissingTile, 
+                                    new Rectangle(0, 0, missingTexture.Width, missingTexture.Height),
+                                    new Rectangle(x*scale, y*scale, scale, scale),
+                                    new(0, 0),
+                                    0,
+                                    Color.White
+                                );
+                            }
+                        }
                 }
                 else if (!renderMaterials && tileCell.Type == TileType.Material) {
                     // var materialName = ((TileMaterial)tileCell.Data).Name;
