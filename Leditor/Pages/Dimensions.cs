@@ -130,7 +130,7 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
             (_leftPadding, _topPadding, _rightPadding, _bottomPadding) = GLOBALS.Level.Padding;
             _shouldRedrawLevel = true;
 
-            ResetSides();
+            // ResetSides();
         }
     }
 
@@ -266,8 +266,8 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
 
                 ResizeLightMap(
                     _levelOrigin - new Vector2(_leftSideTop.X, _topSideLeft.Y), 
-                    _matrixWidthValue, 
-                    _matrixHeightValue
+                    GLOBALS.Level.Width, 
+                    GLOBALS.Level.Height
                 );
 
                 _levelOrigin = _leftSideTop;
