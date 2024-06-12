@@ -1190,23 +1190,6 @@ internal static class Printers
                             break;
 
                             case TileDrawMode.Tinted:
-                                // TODO: Replace
-                                // DrawTileAsPropColored(
-                                //     init,
-                                //     center,
-                                //     [
-                                //         new(width, -height),
-                                //         new(-width, -height),
-                                //         new(-width, height),
-                                //         new(width, height),
-                                //         new(width, -height)
-                                //     ],
-                                //     new Color(color.R, color.G, color.B, (byte)(shouldBeClearlyVisible ? 255 : opacity)),
-                                //     0,
-                                //     true
-                                // );
-
-                                
                                 var quadOrigin = (new Vector2(x, y) - Vector2.One * init.BufferTiles - Utils.GetTileHeadOrigin(init))*scale;
 
                                 var quad = new PropQuad(
@@ -2085,7 +2068,7 @@ internal static class Printers
                     parameters.Scale, 
                     false, 
                     parameters.TileDrawMode,
-                    (byte)(parameters.HighLayerContrast ? 70 : 255),
+                    (byte)(parameters.HighLayerContrast ? 60 : 255),
                     true, 
                     true,
                     parameters.VisibleStrayTileFragments
@@ -4160,7 +4143,7 @@ internal static class Printers
                 ShaderUniformDataType.Vec2);
             
             SetShaderValue(shader, colorLoc,
-                new Vector4(tint.R / 255f, tint.G / 255f, tint.B / 255f, 1.0f),
+                new Vector4(tint.R / 255f, tint.G / 255f, tint.B / 255f, tint.A / 255f),
                 ShaderUniformDataType.Vec4);
             
             SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);

@@ -51,6 +51,7 @@ internal class TileEditorPage : EditorPage, IDisposable
     private bool _copyClickTracker;
 
     private bool _deepTileCopy = true;
+    private bool _copyMaterials = true;
 
     private int _prevPosX = -1;
     private int _prevPosY = -1;
@@ -118,6 +119,8 @@ internal class TileEditorPage : EditorPage, IDisposable
 
     private Rectangle _prevCopiedRectangle;
     private Rectangle _copyRectangle;
+
+    private Color[,,] _copyMaterialColorBuffer = new Color[0, 0, 0];
     private TileCell[,,] _copyBuffer = new TileCell[0,0,0];
     private RunCell[,,] _copyGeoBuffer = new RunCell[0, 0, 0];
 
@@ -1540,6 +1543,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             var width = (int)_copyRectangle.Width;
                             var height = (int)_copyRectangle.Height;
                             
+                            _copyMaterialColorBuffer = new Color[height, width, 2];
                             _copyBuffer = new TileCell[height, width, 2];
                             _copyGeoBuffer = new RunCell[height, width, 2];
 
@@ -1552,12 +1556,14 @@ internal class TileEditorPage : EditorPage, IDisposable
                                     
                                     if (mx < 0 || mx >= GLOBALS.Level.Width || my < 0 || my >= GLOBALS.Level.Height) continue;
 
+                                    _copyMaterialColorBuffer[y, x, 0] = GLOBALS.Level.MaterialColors[my, mx, GLOBALS.Layer];
                                     _copyBuffer[y, x, 0] = CopyTileCell(GLOBALS.Level.TileMatrix[my, mx, GLOBALS.Layer]);
                                     _copyGeoBuffer[y, x, 0] =
                                         Utils.CopyGeoCell(GLOBALS.Level.GeoMatrix[my, mx, GLOBALS.Layer]);
                                     
                                     if (GLOBALS.Layer != 2)
                                     {
+                                        _copyMaterialColorBuffer[y, x, 1] = GLOBALS.Level.MaterialColors[my, mx, GLOBALS.Layer + 1];
                                         _copyBuffer[y, x, 1] = CopyTileCell(GLOBALS.Level.TileMatrix[my, mx, GLOBALS.Layer + 1]);
                                         _copyGeoBuffer[y, x, 1] = Utils.CopyGeoCell(GLOBALS.Level.GeoMatrix[my, mx, GLOBALS.Layer + 1]);
                                     }
@@ -1579,7 +1585,6 @@ internal class TileEditorPage : EditorPage, IDisposable
                     break;
 
                 case AutoTilerMode.PasteWithGeo: // Paste tile with geo
-                // causes freeze!
                 {
                     if (_shortcuts.Draw.Check(ctrl, shift, alt) || _shortcuts.AltDraw.Check(ctrl, shift, alt))
                     {
@@ -1604,6 +1609,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                                     var pos = b.HeadPosition;
 
                                     l1Copy.Data = new TileBody(pos.x - difX, pos.y - difY, GLOBALS.Layer + 1);
+                                } else if (_copyMaterials && l1Copy.Data is TileMaterial m) {
+                                    GLOBALS.Level.MaterialColors[my, mx, GLOBALS.Layer] = _copyMaterialColorBuffer[y, x, 0];
                                 }
                                 
                                 actions.Add(new TileGram.TileGeoAction(
@@ -1624,6 +1631,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                                         var pos = b2.HeadPosition;
 
                                         l2Copy.Data = new TileBody(pos.x - difX, pos.y - difY, GLOBALS.Layer + 1);
+                                    } else if (_copyMaterials && l1Copy.Data is TileMaterial m) {
+                                        GLOBALS.Level.MaterialColors[my, mx, GLOBALS.Layer + 1] = _copyMaterialColorBuffer[y, x, 1];
                                     }
                                     
                                     actions.Add(new TileGram.TileGeoAction(
@@ -1668,6 +1677,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                                     var pos = b.HeadPosition;
 
                                     l1Copy.Data = new TileBody(pos.x - difX, pos.y - difY, GLOBALS.Layer + 1);
+                                } else if (_copyMaterials && l1Copy.Data is TileMaterial m) {
+                                    GLOBALS.Level.MaterialColors[my, mx, GLOBALS.Layer] = _copyMaterialColorBuffer[y, x, 0];
                                 }
                                 
                                 actions.Add(new TileGram.TileAction(
@@ -1687,6 +1698,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                                         var pos = b2.HeadPosition;
 
                                         l2Copy.Data = new TileBody(pos.x - difX, pos.y - difY, GLOBALS.Layer + 1);
+                                    } else if (_copyMaterials && l1Copy.Data is TileMaterial m) {
+                                        GLOBALS.Level.MaterialColors[my, mx, GLOBALS.Layer + 1] = _copyMaterialColorBuffer[y, x, 1];
                                     }
                                     
                                     actions.Add(new TileGram.TileAction(
@@ -3064,6 +3077,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 }
                 
                 ImGui.Checkbox("Deep Tile Copy", ref _deepTileCopy);
+                ImGui.Checkbox("Copy Materials Too", ref _copyMaterials);
 
                 var hoveredInfo = GLOBALS.Settings.TileEditor.HoveredTileInfo;
                 ImGui.Checkbox("Hovered Item Info", ref hoveredInfo);
