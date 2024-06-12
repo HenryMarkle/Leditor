@@ -4890,19 +4890,19 @@ internal class PropsEditorPage : EditorPage, IContextListener
 #endif
                         }
 
-                        ref var currentModel = ref _models[modelIndex];
+                        var (modelOgIndex, simulate, model) = _models[modelIndex];
 
-                        var oldSegmentCount = GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints.Length;
+                        var oldSegmentCount = GLOBALS.Level.Props[modelOgIndex].prop.Extras.RopePoints.Length;
                         var segmentCount = oldSegmentCount;
                         
-                        var switchSimSelected = ImGui.Button(currentModel.model.EditType switch { RopeModel.EditTypeEnum.BezierPaths => "Bezier Paths", RopeModel.EditTypeEnum.Simulation => "Simulation", _ => "Unknown" });
+                        var switchSimSelected = ImGui.Button(model.EditType switch { RopeModel.EditTypeEnum.BezierPaths => "Bezier Paths", RopeModel.EditTypeEnum.Simulation => "Simulation", _ => "Unknown" });
 
                         if (switchSimSelected)
                         {
                             _shouldRedrawLevel = true;
                             if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                             
-                            currentModel.model.EditType = currentModel.model.EditType switch {
+                            model.EditType = model.EditType switch {
                                 RopeModel.EditTypeEnum.BezierPaths => RopeModel.EditTypeEnum.Simulation,
                                 RopeModel.EditTypeEnum.Simulation => RopeModel.EditTypeEnum.BezierPaths,
                                 _ => RopeModel.EditTypeEnum.Simulation
@@ -4925,15 +4925,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         if (segmentCount > oldSegmentCount)
                         {
-                            GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
-                            [
-                                ..GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints, new Vector2()
-                            ];
+                            model.UpdateSegments([
+                                ..GLOBALS.Level.Props[modelOgIndex].prop.Extras.RopePoints, new Vector2()
+                            ]);
                         }
                         else if (segmentCount < oldSegmentCount)
                         {
-                            GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints =
-                                GLOBALS.Level.Props[currentModel.index].prop.Extras.RopePoints[..^1];
+                            model.UpdateSegments(GLOBALS.Level.Props[modelOgIndex].prop.Extras.RopePoints[..^1]);
                         }
 
                         if (segmentCount != oldSegmentCount)
@@ -4946,7 +4944,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         
                         //
 
-                        if (ImGui.Checkbox("Simulate Rope", ref currentModel.simulate))
+                        if (ImGui.Checkbox("Simulate Rope", ref simulate))
                         {
                             // _shouldRedrawLevel = true;
                             if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
@@ -4956,11 +4954,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
 
 
-                        if (currentModel.model.EditType == RopeModel.EditTypeEnum.Simulation) // Simulation mode
+                        if (model.EditType == RopeModel.EditTypeEnum.Simulation) // Simulation mode
                         {
-                            var grav = currentModel.model.Gravity;
+                            var grav = model.Gravity;
                             if (ImGui.Checkbox("Gravity", ref grav)) {
-                                currentModel.model.Gravity = grav;
+                                model.Gravity = grav;
                             }
                             
                             var cycleFpsSelected = ImGui.Button($"{60 / _ropeSimulationFrameCut} FPS");
@@ -4973,8 +4971,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 else _shouldRedrawLevel = true;
                             }
 
-                            var release = (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings)
-                                .Release;
+                            var release = (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings)?.Release ?? PropRopeRelease.None;
 
                             var releaseClicked = ImGui.Button(release switch
                             {
@@ -4993,13 +4990,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 release = (PropRopeRelease)((int)release + 1);
                                 if ((int)release > 2) release = 0;
 
-                                (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings).Release =
-                                    release;
+                                (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings)!.Release =release;
                             }
                         }
                         else // Bezier mode
                         {
-                            var oldHandlePointNumber = currentModel.model.BezierHandles.Length;
+                            var oldHandlePointNumber = model.BezierHandles.Length;
                             var handlePointNumber = oldHandlePointNumber;
 
                             Utils.Restrict(ref handlePointNumber, 1);
@@ -5009,7 +5005,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
 
                             if (handlePointNumber != oldHandlePointNumber) {
-                                var quads = GLOBALS.Level.Props[currentModel.index].prop.Quads;
+                                var quads = GLOBALS.Level.Props[modelOgIndex].prop.Quads;
                                 var center = Utils.QuadsCenter(ref quads);
         
                                 Utils.Restrict(ref handlePointNumber, 1);
@@ -5019,15 +5015,17 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 
                                 if (handlePointNumber > oldHandlePointNumber)
                                 {
-                                    currentModel.model.BezierHandles = [..currentModel.model.BezierHandles, center];
+                                    model.BezierHandles = [..model.BezierHandles, center];
                                 }
                                 else if (handlePointNumber < oldHandlePointNumber)
                                 {
-                                    currentModel.model.BezierHandles = currentModel.model.BezierHandles[..^1];
+                                    model.BezierHandles = model.BezierHandles[..^1];
                                 }
                             }
 
                         }
+
+                        _models[modelIndex] = (modelOgIndex, simulate, model);
 
                         ropeNotFound:
                         {
