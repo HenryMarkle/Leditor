@@ -303,6 +303,8 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
                 TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
                 PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
                 Palette = GLOBALS.SelectedPalette,
+
+                Padding = true
             });
 
             _shouldRedrawLevel = false;
@@ -412,134 +414,117 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
                 
         if (GLOBALS.Settings.GeneralSettings.Navbar) GLOBALS.NavSignal = Printers.ImGui.Nav(out _);
 
-        // var mainWinOpened = false;
+        var mainWinOpened = ImGui.Begin("Resizing##DimensionsWindow");
 
-        // var mainWinPos = ImGui.GetWindowPos();
-        // var mainWinSpace = ImGui.GetWindowSize();
+        var mainWinPos = ImGui.GetWindowPos();
+        var mainWinSpace = ImGui.GetWindowSize();
 
-        // _isMainWinHovered = CheckCollisionPointRec(GetMousePosition(), new(mainWinPos.X - 5, mainWinPos.Y-5, mainWinSpace.X + 10, mainWinSpace.Y+10));
+        _isMainWinHovered = CheckCollisionPointRec(GetMousePosition(), new(mainWinPos.X - 5, mainWinPos.Y-5, mainWinSpace.X + 10, mainWinSpace.Y+10));
 
-        // if (mainWinOpened)
-        // {
-        //     // ImGui.SetWindowSize(new Vector2(GetScreenWidth() - 80, GetScreenHeight() - 80));
-        //     // ImGui.SetWindowPos(new Vector2(40, 40));
+        if (mainWinOpened)
+        {
+            // ImGui.SetWindowSize(new Vector2(GetScreenWidth() - 80, GetScreenHeight() - 80));
+            // ImGui.SetWindowPos(new Vector2(40, 40));
 
-        //     var col1Space = ImGui.GetContentRegionAvail();
+            var col1Space = ImGui.GetContentRegionAvail();
             
-        //     ImGui.SetNextItemWidth(200);
-        //     ImGui.InputInt("Width", ref _matrixWidthValue);
+            ImGui.SetNextItemWidth(200);
+            ImGui.InputInt("Width", ref _matrixWidthValue);
             
-        //     ImGui.SetNextItemWidth(200);
-        //     ImGui.InputInt("Height", ref _matrixHeightValue);
+            ImGui.SetNextItemWidth(200);
+            ImGui.InputInt("Height", ref _matrixHeightValue);
             
-        //     Utils.Restrict(ref _matrixWidthValue, 1);
-        //     Utils.Restrict(ref _matrixHeightValue, 1);
+            Utils.Restrict(ref _matrixWidthValue, 1);
+            Utils.Restrict(ref _matrixHeightValue, 1);
             
-        //     ImGui.SeparatorText("Padding");
+            ImGui.SeparatorText("Padding");
 
-        //     ImGui.SetNextItemWidth(200);
-        //     ImGui.InputInt("Left", ref _leftPadding);
+            ImGui.SetNextItemWidth(200);
+            ImGui.InputInt("Left", ref _leftPadding);
             
-        //     ImGui.SetNextItemWidth(200);
-        //     ImGui.InputInt("Top", ref _topPadding);
+            ImGui.SetNextItemWidth(200);
+            ImGui.InputInt("Top", ref _topPadding);
             
-        //     ImGui.SetNextItemWidth(200);
-        //     ImGui.InputInt("Right", ref _rightPadding);
+            ImGui.SetNextItemWidth(200);
+            ImGui.InputInt("Right", ref _rightPadding);
             
-        //     ImGui.SetNextItemWidth(200);
-        //     ImGui.InputInt("Bottom", ref _bottomPadding);
+            ImGui.SetNextItemWidth(200);
+            ImGui.InputInt("Bottom", ref _bottomPadding);
             
-        //     Utils.Restrict(ref _leftPadding, 0);
-        //     Utils.Restrict(ref _topPadding, 0);
-        //     Utils.Restrict(ref _rightPadding, 0);
-        //     Utils.Restrict(ref _bottomPadding, 0);
+            Utils.Restrict(ref _leftPadding, 0);
+            Utils.Restrict(ref _topPadding, 0);
+            Utils.Restrict(ref _rightPadding, 0);
+            Utils.Restrict(ref _bottomPadding, 0);
             
-        //     ImGui.Spacing();
+            ImGui.Spacing();
             
-        //     var isBecomingLarger = _matrixWidthValue > GLOBALS.Level.Width || _matrixHeightValue > GLOBALS.Level.Height;
+            // var isBecomingLarger = _matrixWidthValue > GLOBALS.Level.Width || _matrixHeightValue > GLOBALS.Level.Height;
             
-        //     if (isBecomingLarger)
-        //     {
-        //         ImGui.SeparatorText("Fill Extra Space");
+            // if (isBecomingLarger)
+            // {
+            //     ImGui.SeparatorText("Fill Extra Space");
                         
-        //         ImGui.Checkbox("Fill Layer 1", ref _fillLayer1);
-        //         ImGui.Checkbox("Fill Layer 2", ref _fillLayer2);
-        //         ImGui.Checkbox("Fill Layer 3", ref _fillLayer3);
+            //     ImGui.Checkbox("Fill Layer 1", ref _fillLayer1);
+            //     ImGui.Checkbox("Fill Layer 2", ref _fillLayer2);
+            //     ImGui.Checkbox("Fill Layer 3", ref _fillLayer3);
                         
-        //         ImGui.Spacing();
-        //     }
+            //     ImGui.Spacing();
+            // }
 
-        //     if (ImGui.Button("Cancel", col1Space with { Y = 20 }))
-        //     {
-        //         Logger.Debug("page 6: Cancel button clicked");
+            if (ImGui.Button("Reset Values", col1Space with { Y = 20 }))
+            {
+                _leftPadding = GLOBALS.Level.Padding.left;
+                _rightPadding = GLOBALS.Level.Padding.right;
+                _topPadding = GLOBALS.Level.Padding.top;
+                _bottomPadding = GLOBALS.Level.Padding.bottom;
 
-        //         _leftPadding = GLOBALS.Level.Padding.left;
-        //         _rightPadding = GLOBALS.Level.Padding.right;
-        //         _topPadding = GLOBALS.Level.Padding.top;
-        //         _bottomPadding = GLOBALS.Level.Padding.bottom;
-
-        //         _matrixWidthValue = GLOBALS.Level.Width;
-        //         _matrixHeightValue = GLOBALS.Level.Height;
-
-        //         GLOBALS.Page = GLOBALS.PreviousPage;
-        //     }
+                _matrixWidthValue = GLOBALS.Level.Width;
+                _matrixHeightValue = GLOBALS.Level.Height;
+            }
             
-        //     if (ImGui.Button("Resize", col1Space with { Y = 20 }))
-        //     {
-        //         Logger.Debug("page 6: Ok button clicked");
+            if (ImGui.Button("Resize", col1Space with { Y = 20 }))
+            {
+                _shouldRedrawLevel = true;
 
-        //         Logger.Debug("resize flag detected");
+                Logger.Debug("page 6: Ok button clicked");
 
-        //         if (
-        //             GLOBALS.Level.Height != _matrixHeightValue ||
-        //             GLOBALS.Level.Width != _matrixWidthValue)
-        //         {
-        //             Logger.Debug("dimensions don't match; resizing");
+                Logger.Debug("resize flag detected");
 
-        //             Logger.Debug("resizing geometry matrix");
+                if (
+                    GLOBALS.Level.Height != _matrixHeightValue ||
+                    GLOBALS.Level.Width != _matrixWidthValue)
+                {
+                    Logger.Debug("dimensions don't match; resizing");
+
+                    Logger.Debug("resizing geometry matrix");
                     
-        //             // I know this can be simplified, but I'm keeping it in case 
-        //             // it becomes useful in the future
-        //             if (isBecomingLarger)
-        //             {
-        //                 GLOBALS.Level.Resize(
-        //                     _matrixWidthValue,
-        //                     _matrixHeightValue,
-        //                     (_leftPadding, _topPadding, _rightPadding, _bottomPadding),
-        //                     [
-        //                         _fillLayer1 ? 1 : 0,
-        //                         _fillLayer2 ? 1 : 0,
-        //                         _fillLayer3 ? 1 : 0
-        //                     ]
-        //                 );
-        //             }
-        //             else
-        //             {
-        //                 GLOBALS.Level.Resize(
-        //                     _matrixWidthValue,
-        //                     _matrixHeightValue,
-        //                     (_leftPadding, _topPadding, _rightPadding, _bottomPadding),
-        //                     [ 0, 0, 0 ]
-        //                 );
-        //             }
+                    // I know this can be simplified, but I'm keeping it in case 
+                    // it becomes useful in the future
+                    GLOBALS.Level.Resize(
+                        _matrixWidthValue,
+                        _matrixHeightValue,
+                        (_leftPadding, _topPadding, _rightPadding, _bottomPadding),
+                        [
+                            _fillLayer1 ? 1 : 0,
+                            _fillLayer2 ? 1 : 0,
+                            _fillLayer3 ? 1 : 0
+                        ]
+                    );
 
+                    Logger.Debug("resizing light map");
 
-        //             Logger.Debug("resizing light map");
-
-        //             ResizeLightMap(Vector2.Zero, _matrixWidthValue, _matrixHeightValue);
+                    ResizeLightMap(Vector2.Zero, _matrixWidthValue, _matrixHeightValue);
                     
-        //             UnloadRenderTexture(GLOBALS.Textures.GeneralLevel);
-        //             GLOBALS.Textures.GeneralLevel =
-        //                 LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20);
-        //         }
+                    UnloadRenderTexture(GLOBALS.Textures.GeneralLevel);
+                    GLOBALS.Textures.GeneralLevel =
+                        LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20);
+                }
                 
-        //         GLOBALS.Level.Padding = (_leftPadding, _topPadding, _rightPadding, _bottomPadding);
-
-        //         GLOBALS.Page = 1;
-        //     }
+                GLOBALS.Level.Padding = (_leftPadding, _topPadding, _rightPadding, _bottomPadding);
+            }
             
-        //     ImGui.End();
-        // }
+            ImGui.End();
+        }
         
         // Options
 

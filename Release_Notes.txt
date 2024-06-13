@@ -1,1 +1,6 @@
+- Added a new interface for resizing the level.
+  - Drag the level border to perform the resize from any direction.
+
 - Fixed rope segments out-of-proportion translation.
+- Fixed rope simulation checkbox not working.
+- Fixed rope segment count control not working.

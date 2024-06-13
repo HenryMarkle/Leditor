@@ -1693,6 +1693,7 @@ internal static class Printers
         internal bool CropTilePrevious { get; init; } = false;
         internal bool Shadows { get; init; } = false;
         internal bool VisibleStrayTileFragments { get; init; } = true;
+        internal bool Padding { get; init; }
     }
 
     private static RL.Managed.RenderTexture2D? _tempRT = null;
@@ -2137,8 +2138,13 @@ internal static class Printers
             EndTextureMode();
         }
         
-
         // geoL?.Dispose();
+
+        if (parameters.Padding) {
+            BeginTextureMode(texture);
+            DrawRectangleLinesEx(GLOBALS.Level.Border, 4, Color.White);
+            EndTextureMode();
+        }
     }
 
     internal static void DrawLevelIntoBufferV2(in RenderTexture2D texture, DrawLevelParams parameters)
