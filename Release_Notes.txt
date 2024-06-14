@@ -1,2 +1,6 @@
 - Fixed props placement scaling issues.
 - Fixed camera's inner boundies not toggling properly in the geometry editor.
+
+### Revision 0.9.92-2
+
+- Fixed undoing auto-tiler.

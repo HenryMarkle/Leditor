@@ -258,6 +258,8 @@ internal class TileEditorPage : EditorPage, IDisposable
 
         if (resolvedTiles == null) return;
 
+        List<TileGram.ISingleMatrixAction<TileCell>> combinedActions = [];
+
         foreach (var resolved in resolvedTiles)
         {
             if (!Utils.InBounds(resolved.Coords, GLOBALS.Level.TileMatrix) || resolved.Tile is null) continue;
@@ -265,9 +267,12 @@ internal class TileEditorPage : EditorPage, IDisposable
             var actions = _autoTilingWithGeo 
                 ? ForcePlaceTileWithGeo(resolved.Tile, resolved.Coords) 
                 : ForcePlaceTileWithoutGeo(resolved.Tile, resolved.Coords);
+
+            combinedActions = [..combinedActions, ..actions];
             
-            GLOBALS.Gram.Proceed(new TileGram.GroupAction<TileCell>(actions));
-        }        
+        }    
+            
+        GLOBALS.Gram.Proceed(new TileGram.GroupAction<TileCell>([..combinedActions]));
     }
     
     public override void Dispose()
@@ -1397,6 +1402,11 @@ internal class TileEditorPage : EditorPage, IDisposable
                     _materialTileSwitch = _currentTile is not null && (_tileCategoryIndex, _tileIndex) is not (-1, -1);
                     break;
             }
+
+            if (_tileSpecDisplayMode) 
+                UpdateTileTexturePanel();
+            else 
+                UpdateTileSpecsPanel();
         }
 
         
