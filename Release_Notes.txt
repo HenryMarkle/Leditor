@@ -1,2 +1,4 @@
 - Added a small indicator next to applied effect names to show which layers they affect.
 - Grouped the shortcuts to increment and decrement rope segment counts properly.
+- Tile categories are now associated with their colors in the props menu.
+- Added the option to rotate props' initial placement

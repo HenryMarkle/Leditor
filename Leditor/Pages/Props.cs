@@ -1220,6 +1220,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
     private int _defaultDepth;
     private int _defaultVariation;
     private int _defaultSeed;
+    private Vector2 _defaultStretch = Vector2.Zero;
 
     private void UpdateDefaultDepth()
     {
@@ -1912,11 +1913,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     settings = new();
                                 }
 
+                                // var placementQuad = new PropQuad(
+                                //     new Vector2(posV.X - width, posV.Y - height),
+                                //     new Vector2(posV.X + width, posV.Y - height),
+                                //     new Vector2(posV.X + width, posV.Y + height),
+                                //     new Vector2(posV.X - width, posV.Y + height)
+                                // );
+
                                 var placementQuad = new PropQuad(
-                                    new Vector2(posV.X - width, posV.Y - height),
-                                    new Vector2(posV.X + width, posV.Y - height),
-                                    new Vector2(posV.X + width, posV.Y + height),
-                                    new Vector2(posV.X - width, posV.Y + height)
+                                    new(posV.X - width - _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
+                                    new(posV.X + width + _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
+                                    new(posV.X + width + _defaultStretch.X, posV.Y + height + _defaultStretch.Y),
+                                    new(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y)
                                 );
 
                                 foreach (var prop in GLOBALS.Level.Props)
@@ -2123,10 +2131,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             init.Name, 
                                             false, 
                                             new PropQuad(
-                                            new(posV.X - width, posV.Y - height), 
-                                            new(posV.X + width, posV.Y - height), 
-                                            new(posV.X + width, posV.Y + height), 
-                                            new(posV.X - width, posV.Y + height))
+                                            new(posV.X - width - _defaultStretch.X, posV.Y - height - _defaultStretch.Y), 
+                                            new(posV.X + width + _defaultStretch.X, posV.Y - height - _defaultStretch.Y), 
+                                            new(posV.X + width + _defaultStretch.X, posV.Y + height + _defaultStretch.Y), 
+                                            new(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y))
                                         )
                                         {
                                             Extras = new PropExtras(settings, [])
@@ -2199,10 +2207,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 }
 
                                 var quads = new PropQuad(
-                                    new Vector2(posV.X - width, posV.Y - height),
-                                    new Vector2(posV.X + width, posV.Y - height),
-                                    new Vector2(posV.X + width, posV.Y + height),
-                                    new Vector2(posV.X - width, posV.Y + height)
+                                    new Vector2(posV.X - width - _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
+                                    new Vector2(posV.X + width + _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
+                                    new Vector2(posV.X + width + _defaultStretch.X, posV.Y + height + _defaultStretch.Y),
+                                    new Vector2(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y)
                                 );
 
                                 quads = Utils.RotatePropQuads(quads, _placementRotation * _placementRotationSteps, tileMouseWorld);
@@ -2392,10 +2400,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 }
 
                                 var quads = new PropQuad(
-                                    new(posV.X - width, posV.Y - height),
-                                    new(posV.X + width, posV.Y - height),
-                                    new(posV.X + width, posV.Y + height),
-                                    new(posV.X - width, posV.Y + height));
+                                    new(posV.X - width - _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
+                                    new(posV.X + width + _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
+                                    new(posV.X + width + _defaultStretch.X, posV.Y + height + _defaultStretch.Y),
+                                    new(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y)
+                                );
 
                                 quads = Utils.RotatePropQuads(quads, _placementRotation * _placementRotationSteps, tileMouseWorld);
                                 
@@ -2444,6 +2453,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                 if (_shortcuts.FastRotateCounterClockwise.Check(ctrl, shift, alt, true)) {
                     _placementRotation -= 2;
+                }
+
+                if (_shortcuts.ResetPlacementRotation.Check(ctrl, shift, alt)) {
+                    _placementRotation = 0;
                 }
 
                 // Activate Selection Mode Via Mouse
@@ -2528,6 +2541,30 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 {
                     DecrementMenuIndex();
                 }
+
+                // Stretch Placement
+
+                if (_shortcuts.StretchPlacementHorizontal.Check(ctrl, shift, alt, true)) {
+                    _defaultStretch.X += 1;
+                } else if (_shortcuts.StretchPlacementVertical.Check(ctrl, shift, alt, true)) {
+                    _defaultStretch.Y += 1;
+                } else if (_shortcuts.SqueezePlacementHorizontal.Check(ctrl, shift, alt, true)) {
+                    _defaultStretch.X -= 1;
+                } else if (_shortcuts.SqueezePlacementVertical.Check(ctrl, shift, alt, true)) {
+                    _defaultStretch.Y -= 1;
+                } else if (_shortcuts.FastStretchPlacementHorizontal.Check(ctrl, shift, alt, true)) {
+                    _defaultStretch.X += 4;
+                } else if (_shortcuts.FastStretchPlacementVertical.Check(ctrl, shift, alt, true)) {
+                    _defaultStretch.Y += 4;
+                } else if (_shortcuts.FastSqueezePlacementHorizontal.Check(ctrl, shift, alt, true)) {
+                    _defaultStretch.X -= 4;
+                } else if (_shortcuts.FastSqueezePlacementVertical.Check(ctrl, shift, alt, true)) {
+                    _defaultStretch.Y -= 4;
+                }
+
+                if (_shortcuts.ResetPlacementStretch.Check(ctrl, shift, alt)) {
+                    _defaultStretch = Vector2.Zero;
+                }
                 
                 // Pickup Prop
                 if (_shortcuts.PickupProp.Check(ctrl, shift, alt))
@@ -2537,8 +2574,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         var current = GLOBALS.Level.Props[i];
     
                         if (!CheckCollisionPointRec(tileMouseWorld, Utils.EncloseQuads(current.prop.Quads)) || 
-                            current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || 
-                            current.prop.Depth > GLOBALS.Layer * -10) 
+                            ((current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || 
+                            current.prop.Depth > GLOBALS.Layer * -10) && !GLOBALS.Settings.PropEditor.CrossLayerSelection)) 
                             continue;
 
                         if (current.type == InitPropType.Tile && GLOBALS.TileDex is not null)
@@ -3801,10 +3838,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         offset /= 2;
 
                                         var propQuad = new PropQuad(
-                                            tileMouseWorld - offset,
-                                            tileMouseWorld + offset with { Y = -offset.Y },
-                                            tileMouseWorld + offset,
-                                            tileMouseWorld + offset with { X = -offset.X }
+                                            tileMouseWorld - offset - _defaultStretch,
+                                            tileMouseWorld + offset with { Y = -offset.Y } + _defaultStretch with { Y = -_defaultStretch.Y },
+                                            tileMouseWorld + offset + _defaultStretch,
+                                            tileMouseWorld + offset with { X = -offset.X } + _defaultStretch with { X = -_defaultStretch.X }
                                         );
 
                                         propQuad = Utils.RotatePropQuads(propQuad, _placementRotation * _placementRotationSteps);
@@ -3825,10 +3862,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         offset /= 2;
 
                                         var propQuad = new PropQuad(
-                                            posV - offset,
-                                            posV + offset with { Y = -offset.Y },
-                                            posV + offset,
-                                            posV + offset with { X = -offset.X }
+                                            posV - offset - _defaultStretch,
+                                            posV + offset with { Y = -offset.Y } + _defaultStretch with { Y = -_defaultStretch.Y },
+                                            posV + offset + _defaultStretch,
+                                            posV + offset with { X = -offset.X } + _defaultStretch with { X = -_defaultStretch.X }
                                         );
 
                                         propQuad = Utils.RotatePropQuads(propQuad, _placementRotation * _placementRotationSteps);
@@ -3855,10 +3892,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         offset /= 2;
 
                                         var propQuad = new PropQuad(
-                                            posV - offset,
-                                            posV + offset with { Y = -offset.Y },
-                                            posV + offset,
-                                            posV + offset with { X = -offset.X }
+                                            posV - offset - _defaultStretch,
+                                            posV + offset with { Y = -offset.Y } + _defaultStretch with { Y = -_defaultStretch.Y },
+                                            posV + offset + _defaultStretch,
+                                            posV + offset with { X = -offset.X } + _defaultStretch with { X = -_defaultStretch.X }
                                         );
 
                                         propQuad = Utils.RotatePropQuads(propQuad, _placementRotation * _placementRotationSteps);
@@ -3944,10 +3981,10 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             };
 
                             var quad = new PropQuad(
-                                new Vector2(posV.X - width, posV.Y - height), 
-                                new Vector2(posV.X + width, posV.Y - height), 
-                                new Vector2(posV.X + width, posV.Y + height), 
-                                new Vector2(posV.X - width, posV.Y + height));
+                                new Vector2(posV.X - width - _defaultStretch.X, posV.Y - height - _defaultStretch.Y), 
+                                new Vector2(posV.X + width + _defaultStretch.X, posV.Y - height - _defaultStretch.Y), 
+                                new Vector2(posV.X + width + _defaultStretch.X, posV.Y + height + _defaultStretch.Y), 
+                                new Vector2(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y));
                             
                             Printers.DrawProp(settings, prop, texture, quad,
                                 0,
@@ -4318,11 +4355,25 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                             if (ImGui.BeginListBox("##TileCategories", listSize))
                             {
+                                var drawList = ImGui.GetWindowDrawList();
+                                var textHeight = ImGui.GetTextLineHeight();
+
                                 // Not searching
                                 if (_tileAsPropSearchResult is null) {
                                     for (var index = 0; index < GLOBALS.TileDex.OrderedTileAsPropCategories.Length; index++)
                                     {
-                                        var selected = ImGui.Selectable(GLOBALS.TileDex.OrderedTileAsPropCategories[index],
+                                        var color = GLOBALS.TileDex?.GetCategoryColor(GLOBALS.TileDex.OrderedTileAsPropCategories[index]) ?? Vector4.Zero;
+
+                                        Vector4 colorVec = color;
+
+                                        var cursor = ImGui.GetCursorScreenPos();
+                                        drawList.AddRectFilled(
+                                            p_min: cursor,
+                                            p_max: cursor + new Vector2(10f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(colorVec / 255f)
+                                        );
+
+                                        var selected = ImGui.Selectable("  " + GLOBALS.TileDex.OrderedTileAsPropCategories[index],
                                             index == _propsMenuTilesCategoryIndex);
                                         
                                         if (selected)
@@ -4343,7 +4394,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     for (var c = 0; c < _tileAsPropSearchResult.Categories.Length; c++) {
                                         var (name, originalIndex) = _tileAsPropSearchResult.Categories[c];
 
-                                        var selected = ImGui.Selectable(name, _tileAsPropSearchCategoryIndex == c);
+                                        var color = GLOBALS.TileDex?.GetCategoryColor(GLOBALS.TileDex.OrderedTileAsPropCategories[originalIndex]) ?? Vector4.Zero;
+
+                                        Vector4 colorVec = color;
+
+                                        var cursor = ImGui.GetCursorScreenPos();
+                                        drawList.AddRectFilled(
+                                            p_min: cursor,
+                                            p_max: cursor + new Vector2(10f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(colorVec / 255f)
+                                        );
+
+                                        var selected = ImGui.Selectable("  " + name, _tileAsPropSearchCategoryIndex == c);
 
                                         if (selected) {
                                             _tileAsPropSearchCategoryIndex = c;
@@ -4659,6 +4721,14 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     };
             
                     ImGui.Text($"From {_defaultDepth} to {_defaultDepth - propDepthTo}");
+
+                    // Stretch
+
+                    ImGui.SetNextItemWidth(100);
+                    ImGui.InputFloat("Vertical Stretch", ref _defaultStretch.Y);
+                    
+                    ImGui.SetNextItemWidth(100);
+                    ImGui.InputFloat("Horizontal Stretch", ref _defaultStretch.X);
             
                     // Variation
 

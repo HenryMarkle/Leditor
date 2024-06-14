@@ -767,6 +767,7 @@ public class PropsShortcuts : IEditorShortcuts
     private KeyboardShortcut simulationBeizerSwitch = new(KeyboardKey.Null);
     private KeyboardShortcut fastRotateClockwise = new(KeyboardKey.Null);
     private KeyboardShortcut fastRotateCounterClockwise = new(KeyboardKey.Null);
+    private KeyboardShortcut resetPlacementRotation = new(KeyboardKey.Null);
     private KeyboardShortcut cycleVariations = new(KeyboardKey.V, shift: false, alt: false, ctrl: false);
     private KeyboardShortcut toggleNoCollisionPropPlacement = KeyboardKey.Null;
     private KeyboardShortcut propSelectionModifier = new(KeyboardKey.LeftControl, ctrl: true);
@@ -778,6 +779,16 @@ public class PropsShortcuts : IEditorShortcuts
     private MouseShortcut placeProp = MouseButton.Left;
     private MouseShortcut dragLevel = MouseButton.Middle;
     private KeyboardShortcut showCameras = KeyboardKey.Null;
+    private KeyboardShortcut stretchPlacementVertical = KeyboardKey.Null;
+    private KeyboardShortcut stretchPlacementHorizontal = KeyboardKey.Null;
+    private KeyboardShortcut squeezePlacementVertical = KeyboardKey.Null;
+    private KeyboardShortcut squeezePlacementHorizontal = KeyboardKey.Null;
+    private KeyboardShortcut fastStretchPlacementVertical = KeyboardKey.Null;
+    private KeyboardShortcut fastStretchPlacementHorizontal = KeyboardKey.Null;
+    private KeyboardShortcut fastSqueezePlacementVertical = KeyboardKey.Null;
+    private KeyboardShortcut fastSqueezePlacementHorizontal = KeyboardKey.Null;
+    private KeyboardShortcut resetPlacementStretch = KeyboardKey.Null;
+    
 
     //
 
@@ -837,10 +848,10 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut DeleteSelectedProps { get => deleteSelectedProps; set { deleteSelectedProps = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     [ShortcutName("Move Rope Segments", Group = "Rope Actions")]
     public KeyboardShortcut ToggleRopePointsEditingMode { get => toggleRopePointsEditingMode; set { toggleRopePointsEditingMode = value; CachedStrings = Utils.GetShortcutStrings(this); } }
-    [ShortcutName("Simulate Rope", Group = "Prop Actions")]
+    [ShortcutName("Simulate Rope", Group = "Rope Actions")]
     public KeyboardShortcut ToggleRopeEditingMode { get => toggleRopeEditingMode; set { toggleRopeEditingMode = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     
-    [ShortcutName("Toggle Rope Simulation Gravity", Group = "Prop Actions")]
+    [ShortcutName("Toggle Rope Simulation Gravity", Group = "Rope Actions")]
     public KeyboardShortcut ToggleRopeGravity { get => toggleRopeGravity; set { toggleRopeGravity = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     
     [ShortcutName("Cycle Selected", Group = "Selected Prop Actions")]
@@ -855,7 +866,9 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut RotateClockwise { get => rotateClockwise; set { rotateClockwise = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     [ShortcutName("Rotate Counter-clockwise", Group = "Selection or Placement")]
     public KeyboardShortcut RotateCounterClockwise { get => rotateCounterClockwise; set { rotateCounterClockwise = value; CachedStrings = Utils.GetShortcutStrings(this); } }
-    [ShortcutName("Increase Rope Segments", Group = "Rop Actions")]
+    [ShortcutName("Reset Placement Rotation", Group = "Placement")]
+    public KeyboardShortcut ResetPlacementRotation { get => resetPlacementRotation; set { resetPlacementRotation = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    [ShortcutName("Increase Rope Segments", Group = "Rope Actions")]
     public KeyboardShortcut IncrementRopSegmentCount { get => incrementRopSegmentCount; set { incrementRopSegmentCount = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     [ShortcutName("Decrease Rope Segments", Group = "Rope Actions")]
     public KeyboardShortcut DecrementRopSegmentCount { get => decrementRopSegmentCount; set { decrementRopSegmentCount = value; CachedStrings = Utils.GetShortcutStrings(this); } }
@@ -889,6 +902,33 @@ public class PropsShortcuts : IEditorShortcuts
     
     [ShortcutName("Show/Hide Cameras")]
     public KeyboardShortcut ShowCameras { get => showCameras; set { showCameras = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+
+    [ShortcutName("Stretch Placement Vertically", Group = "Placement")]
+    public KeyboardShortcut StretchPlacementVertical { get => stretchPlacementVertical; set { stretchPlacementVertical = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Stretch Placement Horizontally", Group = "Placement")]
+    public KeyboardShortcut StretchPlacementHorizontal { get => stretchPlacementHorizontal; set { stretchPlacementHorizontal = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Squeeze Placement Vertically", Group = "Placement")]
+    public KeyboardShortcut SqueezePlacementVertical { get => squeezePlacementVertical; set { squeezePlacementVertical = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Squeeze Placement Horizontally", Group = "Placement")]
+    public KeyboardShortcut SqueezePlacementHorizontal { get => squeezePlacementHorizontal; set { squeezePlacementHorizontal = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Fast Stretch Placement Vertically", Group = "Placement")]
+    public KeyboardShortcut FastStretchPlacementVertical { get => fastStretchPlacementVertical; set { fastStretchPlacementVertical = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Fast Stretch Placement Horizontally", Group = "Placement")]
+    public KeyboardShortcut FastStretchPlacementHorizontal { get => fastStretchPlacementHorizontal; set { fastStretchPlacementHorizontal = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Fast Squeeze Placement Vertically", Group = "Placement")]
+    public KeyboardShortcut FastSqueezePlacementVertical { get => fastSqueezePlacementVertical; set { fastSqueezePlacementVertical = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Fast Squeeze Placement Horizontally", Group = "Placement")]
+    public KeyboardShortcut FastSqueezePlacementHorizontal { get => fastSqueezePlacementHorizontal; set { fastSqueezePlacementHorizontal = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+
+    [ShortcutName("Reset Placement Stretch", Group = "Placement")]
+    public KeyboardShortcut ResetPlacementStretch { get => resetPlacementStretch; set { resetPlacementStretch = value; CachedStrings = Utils.GetShortcutStrings(this); }}
 
 
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
