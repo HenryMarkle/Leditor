@@ -1145,7 +1145,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
     private int _propSearchCategoryIndex = -1;
     private int _propSearchIndex = -1;
     private record PropSearchResult(
-        (string name, int originalIndex)[] Categories,
+        (string name, int originalIndex, Color color)[] Categories,
         (InitPropBase prop, int originalIndex)[][] Props
     );
 
@@ -1158,7 +1158,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             return;
         }
 
-        List<(string, int)> categories = [];
+        List<(string, int, Color)> categories = [];
         List<(InitPropBase, int)[]> props = [];
 
         for (var c = 0; c < GLOBALS.Props.Length; c++) {
@@ -1173,7 +1173,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             }
 
             if (foundProps is not []) {
-                categories.Add((GLOBALS.PropCategories[c].Item1, c));
+                categories.Add((GLOBALS.PropCategories[c].Item1, c, GLOBALS.PropCategories[c].Item2));
                 props.Add([..foundProps]);
             }
         }
@@ -4570,11 +4570,25 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                             if (ImGui.BeginListBox("##OtherPropCategories", listSize))
                             {
+                                var drawList = ImGui.GetWindowDrawList();
+                                var textHeight = ImGui.GetTextLineHeight();
+
                                 // Not searching 
                                 if (_propSearchResult is null) {
                                     for (var index = 0; index < _otherCategoryNames.Length; index++)
                                     {
-                                        var selected = ImGui.Selectable(_otherCategoryNames[index],
+                                        var color = GLOBALS.PropCategories[index].Item2;
+                                        var colorVec = new Vector4(color.R/255f, color.G/255f, color.B/255f, 1.0f);
+
+                                        var cursor = ImGui.GetCursorScreenPos();
+                                        
+                                        drawList.AddRectFilled(
+                                            p_min: cursor,
+                                            p_max: cursor + new Vector2(10f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(colorVec)
+                                        );
+
+                                        var selected = ImGui.Selectable("  " + _otherCategoryNames[index],
                                             index == _propsMenuOthersCategoryIndex);
                                         
                                         if (selected)
@@ -4585,9 +4599,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     }
                                 } else {
                                     for (var c = 0; c < _propSearchResult.Categories.Length; c++) {
-                                        var (categoryName, originalIndex) = _propSearchResult.Categories[c];
+                                        var (categoryName, originalIndex, color) = _propSearchResult.Categories[c];
 
-                                        var selected = ImGui.Selectable(categoryName, _propSearchCategoryIndex == c);
+                                        var colorVec = new Vector4(color.R/255f, color.G/255f, color.B/255f, 1.0f);
+
+                                        var cursor = ImGui.GetCursorScreenPos();
+                                        drawList.AddRectFilled(
+                                            p_min: cursor,
+                                            p_max: cursor + new Vector2(10f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(colorVec)
+                                        );
+
+                                        var selected = ImGui.Selectable("  " + categoryName, _propSearchCategoryIndex == c);
 
                                         if (selected) {
                                             _propSearchCategoryIndex = c;
