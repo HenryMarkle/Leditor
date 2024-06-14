@@ -24,7 +24,7 @@ class DrizzleRenderWindow : IDisposable
         uniform sampler2D texture0;
         uniform vec4 colDiffuse;
 
-        out vec4 finalColor;
+        out vec4 FragColor;
 
         void main()
         {
@@ -32,7 +32,7 @@ class DrizzleRenderWindow : IDisposable
             bool isWhite = texelColor.r == 1.0 && texelColor.g == 1.0 && texelColor.b == 1.0;
             vec3 correctColor = texelColor.bgr;
             
-            finalColor = vec4(
+            FragColor = vec4(
                 mix(correctColor, vec3(1.0), fragColor.r * 0.8),
                 1.0 - float(isWhite)
             ) * colDiffuse;
@@ -48,7 +48,7 @@ class DrizzleRenderWindow : IDisposable
         uniform sampler2D texture0;
         uniform vec4 colDiffuse;
 
-        out vec4 finalColor;
+        out vec4 FragColor;
 
         void main()
         {
@@ -56,7 +56,7 @@ class DrizzleRenderWindow : IDisposable
             bool isWhite = texelColor.r == 1.0 && texelColor.g == 1.0 && texelColor.b == 1.0;
             vec3 correctColor = texelColor.bgr;
             
-            finalColor = vec4(
+            FragColor = vec4(
                 vec3(1.0, 0.0, 0.0),
                 1.0 - float(isWhite)
             ) * colDiffuse;
@@ -211,7 +211,7 @@ class DrizzleRenderWindow : IDisposable
         }
     }
 
-    public bool DrawWindow()
+    public bool DrawWindow(Serilog.ILogger? logger = null)
     {
         if (!isOpen)
         {
@@ -221,7 +221,7 @@ class DrizzleRenderWindow : IDisposable
 
         var doClose = false;
 
-        drizzleRenderer?.Update();
+        drizzleRenderer?.Update(logger);
 
         ImGuiExt.CenterNextWindow(ImGuiCond.Appearing);
         ImGui.SetNextWindowSizeConstraints(new Vector2(0f, ImGui.GetTextLineHeight() * 30.0f), Vector2.One * 9999f);

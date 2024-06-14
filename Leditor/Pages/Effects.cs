@@ -440,7 +440,7 @@ internal class EffectsEditorPage : EditorPage
                     Utils.Restrict(ref _brushRadius, 0, 10);
                 }
             }
-            else
+            else if (canUseBrush)
             {
                 if (effectsMouseWheel != 0)
                 {
@@ -794,10 +794,155 @@ internal class EffectsEditorPage : EditorPage
 
                     if (ImGui.BeginListBox("##AppliedEffects", ImGui.GetContentRegionAvail()))
                     {
+                        var drawList = ImGui.GetWindowDrawList();
+                        var textHeight = ImGui.GetTextLineHeight();
+
                         // i is index relative to the GLOBALS.Page; oi is index relative to the whole list
                         foreach (var (i, (name, _, _)) in GLOBALS.Level.Effects.Select((value, i) => (i, value)))
                         {
-                            if (ImGui.Selectable($"{i}. {name}", i == _currentAppliedEffect)) _currentAppliedEffect = i;
+                            var options = GLOBALS.Level.Effects.Length > 0
+                                ? GLOBALS.Level.Effects[i].Item2
+                                : [];
+
+                            var option = options.Length > 0 
+                                ? options.SingleOrDefault(o => o.Name == "Layers") 
+                                : null;
+
+                            if (option is null) {
+                                if (ImGui.Selectable($"      {i}. {name}", i == _currentAppliedEffect)) _currentAppliedEffect = i;
+                            } else {
+                                var cursor = ImGui.GetCursorScreenPos();
+
+                                var active = GLOBALS.Settings.GeneralSettings.DarkTheme ? Vector4.One : Vector4.Zero + new Vector4(0, 0, 0, 1);
+                                var deactive = GLOBALS.Settings.GeneralSettings.DarkTheme ? Vector4.One - new Vector4(0.6f, 0.6f, 0.6f, 0) : Vector4.One - new Vector4(0.2f, 0.2f, 0.2f, 0);
+
+                                switch (option.Choice as string) {
+                                    case "All":
+                                    {
+                                        drawList.AddRectFilled(
+                                            p_min: cursor,
+                                            p_max: cursor + new Vector2(10f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(active)
+                                        );
+
+                                        drawList.AddRectFilled(
+                                            p_min: cursor + new Vector2(12, 0),
+                                            p_max: cursor + new Vector2(22f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(active)
+                                        );
+
+                                        drawList.AddRectFilled(
+                                            p_min: cursor + new Vector2(24, 0),
+                                            p_max: cursor + new Vector2(34f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(active)
+                                        );
+                                    }
+                                    break;
+
+                                    case "1":
+                                    {
+                                        drawList.AddRectFilled(
+                                            p_min: cursor,
+                                            p_max: cursor + new Vector2(10f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(active)
+                                        );
+                                        drawList.AddRectFilled(
+                                            p_min: cursor + new Vector2(12, 0),
+                                            p_max: cursor + new Vector2(22f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(deactive)
+                                        );
+                                        drawList.AddRectFilled(
+                                            p_min: cursor + new Vector2(24, 0),
+                                            p_max: cursor + new Vector2(34f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(deactive)
+                                        );
+                                    }
+                                    break;
+
+                                    case "2":
+                                    {
+                                        drawList.AddRectFilled(
+                                            p_min: cursor,
+                                            p_max: cursor + new Vector2(10f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(deactive)
+                                        );
+                                        drawList.AddRectFilled(
+                                            p_min: cursor + new Vector2(12, 0),
+                                            p_max: cursor + new Vector2(22f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(active)
+                                        );
+                                        drawList.AddRectFilled(
+                                            p_min: cursor + new Vector2(24, 0),
+                                            p_max: cursor + new Vector2(34f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(deactive)
+                                        );
+                                    }
+                                    break;
+
+                                    case "3":
+                                    {
+                                        drawList.AddRectFilled(
+                                            p_min: cursor,
+                                            p_max: cursor + new Vector2(10f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(deactive)
+                                        );
+                                        drawList.AddRectFilled(
+                                            p_min: cursor + new Vector2(12, 0),
+                                            p_max: cursor + new Vector2(24f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(deactive)
+                                        );
+                                        drawList.AddRectFilled(
+                                            p_min: cursor + new Vector2(22, 0),
+                                            p_max: cursor + new Vector2(34f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(active)
+                                        );
+                                    }
+                                    break;
+
+                                    case "1:st and 2:nd":
+                                    {
+                                        drawList.AddRectFilled(
+                                            p_min: cursor,
+                                            p_max: cursor + new Vector2(10f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(active)
+                                        );
+                                        drawList.AddRectFilled(
+                                            p_min: cursor + new Vector2(12, 0),
+                                            p_max: cursor + new Vector2(22f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(active)
+                                        );
+                                        drawList.AddRectFilled(
+                                            p_min: cursor + new Vector2(24, 0),
+                                            p_max: cursor + new Vector2(34f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(deactive)
+                                        );
+                                    }
+                                    break;
+
+                                    case "2:nd and 3:rd":
+                                    {
+                                        drawList.AddRectFilled(
+                                            p_min: cursor,
+                                            p_max: cursor + new Vector2(10f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(deactive)
+                                        );
+                                        drawList.AddRectFilled(
+                                            p_min: cursor + new Vector2(12, 0),
+                                            p_max: cursor + new Vector2(22f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(active)
+                                        );
+                                        drawList.AddRectFilled(
+                                            p_min: cursor + new Vector2(24, 0),
+                                            p_max: cursor + new Vector2(34f, textHeight),
+                                            ImGui.ColorConvertFloat4ToU32(active)
+                                        );
+                                    }
+                                    break;
+                                }
+
+                                if (ImGui.Selectable($"      {i}. {name}", i == _currentAppliedEffect)) _currentAppliedEffect = i;
+                            }
+                            
                         }
 
                         ImGui.EndListBox();

@@ -417,7 +417,7 @@ class DrizzleRender : IDisposable
         }
     }
 
-    public void Update()
+    public void Update(Serilog.ILogger? logger = null)
     {
         while (threadState.Queue.TryDequeue(out ThreadMessage? messageGeneral))
         {
@@ -446,7 +446,7 @@ class DrizzleRender : IDisposable
                     break;
                 
                 case MessageRenderFailed msgFail:
-                    // RainEd.Logger.Error("Error occured when rendering level:\n{ErrorMessage}", msgFail.Exception);
+                    logger?.Error("Error occured when rendering level:\n{ErrorMessage}", msgFail.Exception);
                     thread.Join();
                     state = RenderState.Errored;
                     break;

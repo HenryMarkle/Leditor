@@ -1,6 +1,2 @@
-- Fixed props placement scaling issues.
-- Fixed camera's inner boundies not toggling properly in the geometry editor.
-
-### Revision 0.9.92-2
-
-- Fixed undoing auto-tiler.
+- Added a small indicator next to applied effect names to show which layers they affect.
+- Grouped the shortcuts to increment and decrement rope segment counts properly.

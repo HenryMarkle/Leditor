@@ -855,7 +855,7 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut RotateClockwise { get => rotateClockwise; set { rotateClockwise = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     [ShortcutName("Rotate Counter-clockwise", Group = "Selection or Placement")]
     public KeyboardShortcut RotateCounterClockwise { get => rotateCounterClockwise; set { rotateCounterClockwise = value; CachedStrings = Utils.GetShortcutStrings(this); } }
-    [ShortcutName("Increase Rope Segments", Group = "Selection or Placement")]
+    [ShortcutName("Increase Rope Segments", Group = "Rop Actions")]
     public KeyboardShortcut IncrementRopSegmentCount { get => incrementRopSegmentCount; set { incrementRopSegmentCount = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     [ShortcutName("Decrease Rope Segments", Group = "Rope Actions")]
     public KeyboardShortcut DecrementRopSegmentCount { get => decrementRopSegmentCount; set { decrementRopSegmentCount = value; CachedStrings = Utils.GetShortcutStrings(this); } }

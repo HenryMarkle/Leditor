@@ -817,7 +817,7 @@ internal class MainPage : EditorPage, IContextListener
                 if (_renderWindow is not null)
                 {
                     // True == window is closed
-                    if (_renderWindow.DrawWindow())
+                    if (_renderWindow.DrawWindow(Logger))
                     {
                         _renderWindow.Dispose();
                         _renderWindow = null;

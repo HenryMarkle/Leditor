@@ -2039,7 +2039,7 @@ void main() {
                     rlImGui.Begin();
                     
                     // True == window is closed
-                    if (_renderWindow.DrawWindow())
+                    if (_renderWindow.DrawWindow(logger))
                     {
                         _renderWindow.Dispose();
                         _renderWindow = null;
