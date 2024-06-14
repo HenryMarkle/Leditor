@@ -1884,8 +1884,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         
                         var posV = _snapMode switch
                         {
-                            1 => new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale,
-                            2 => new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f,
+                            1 => new Vector2((int)(tileMouseWorld.X / 20), (int)(tileMouseWorld.Y / 20)) * 20,
+                            2 => new Vector2((int)(tileMouseWorld.X / 10), (int)(tileMouseWorld.Y / 10)) * 10,
                             _ => tileMouseWorld
                         };
 
@@ -2172,8 +2172,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         
                         var posV = _snapMode switch
                         {
-                            1 => new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale,
-                            2 => new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f,
+                            1 => new Vector2((int)(tileMouseWorld.X / 20), (int)(tileMouseWorld.Y / 20)) * 20,
+                            2 => new Vector2((int)(tileMouseWorld.X / 10), (int)(tileMouseWorld.Y / 10)) * 10,
                             _ => tileMouseWorld
                         };
 
@@ -2181,8 +2181,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             case 0: // Tiles as props
                             {
-                                var width = (float)(_currentTile.Size.Item1 + _currentTile.BufferTiles*2) * GLOBALS.PreviewScale / 2;
-                                var height = (float)(_currentTile.Size.Item2 + _currentTile.BufferTiles*2) * GLOBALS.PreviewScale / 2;
+                                var width = (float)(_currentTile.Size.Item1 + _currentTile.BufferTiles*2) * 20 / 2;
+                                var height = (float)(_currentTile.Size.Item2 + _currentTile.BufferTiles*2) * 20 / 2;
                                 
                                 BasicPropSettings settings;
 
@@ -3792,34 +3792,84 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 switch (_snapMode)
                                 {
                                     case 0: // free
-                                        if (_currentTile is not null) Printers.DrawTileAsProp(
-                                            _currentTile,
-                                            tileMouseWorld,
-                                            _placementRotation * _placementRotationSteps
+                                    {
+                                        var offset = new Vector2(
+                                            _currentTile.Size.Width + _currentTile.BufferTiles*2, 
+                                            _currentTile.Size.Height + _currentTile.BufferTiles*2
+                                        ) * 20;
+
+                                        offset /= 2;
+
+                                        var propQuad = new PropQuad(
+                                            tileMouseWorld - offset,
+                                            tileMouseWorld + offset with { Y = -offset.Y },
+                                            tileMouseWorld + offset,
+                                            tileMouseWorld + offset with { X = -offset.X }
                                         );
+
+                                        propQuad = Utils.RotatePropQuads(propQuad, _placementRotation * _placementRotationSteps);
+
+                                        Printers.DrawTileAsProp(_currentTile, propQuad, 0, 255);
+                                    }
                                         break;
 
                                     case 1: // grid snap
                                     {
-                                        var posV = new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale;
-                                        
-                                        Printers.DrawTileAsProp(
-                                            _currentTile,
-                                            posV,
-                                            _placementRotation * _placementRotationSteps
+                                        var posV = new Vector2((int)(tileMouseWorld.X / 20), (int)(tileMouseWorld.Y / 20)) * 20f;
+
+                                        var offset = new Vector2(
+                                            _currentTile.Size.Width + _currentTile.BufferTiles*2, 
+                                            _currentTile.Size.Height + _currentTile.BufferTiles*2
+                                        ) * 20;
+
+                                        offset /= 2;
+
+                                        var propQuad = new PropQuad(
+                                            posV - offset,
+                                            posV + offset with { Y = -offset.Y },
+                                            posV + offset,
+                                            posV + offset with { X = -offset.X }
                                         );
+
+                                        propQuad = Utils.RotatePropQuads(propQuad, _placementRotation * _placementRotationSteps);
+                                        
+                                        // Printers.DrawTileAsProp(
+                                        //     _currentTile,
+                                        //     posV,
+                                        //     _placementRotation * _placementRotationSteps
+                                        // );
+
+                                        Printers.DrawTileAsProp(_currentTile, propQuad, 0, 255);
                                     }
                                         break;
                                     
                                     case 2: // precise grid snap
                                     {
-                                        var posV = new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f;
+                                        var posV = new Vector2((int)(tileMouseWorld.X / 10), (int)(tileMouseWorld.Y / 10)) * 10;
                                         
-                                        Printers.DrawTileAsProp(
-                                            _currentTile,
-                                            posV,
-                                            _placementRotation * _placementRotationSteps
+                                        var offset = new Vector2(
+                                            _currentTile.Size.Width + _currentTile.BufferTiles*2, 
+                                            _currentTile.Size.Height + _currentTile.BufferTiles*2
+                                        ) * 20;
+
+                                        offset /= 2;
+
+                                        var propQuad = new PropQuad(
+                                            posV - offset,
+                                            posV + offset with { Y = -offset.Y },
+                                            posV + offset,
+                                            posV + offset with { X = -offset.X }
                                         );
+
+                                        propQuad = Utils.RotatePropQuads(propQuad, _placementRotation * _placementRotationSteps);
+                                        
+                                        // Printers.DrawTileAsProp(
+                                        //     _currentTile,
+                                        //     posV,
+                                        //     _placementRotation * _placementRotationSteps
+                                        // );
+
+                                        Printers.DrawTileAsProp(_currentTile, propQuad, 0, 255);
                                     }
                                         break;
                                 }
@@ -3831,31 +3881,35 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             break;
 
                         case 2: // Current Long Prop
-                        {
+                        if (!_longInitialPlacement) {
                             var prop = GLOBALS.LongProps[_propsMenuLongsIndex];
                             var texture = GLOBALS.Textures.LongProps[_propsMenuLongsIndex];
                             var height = texture.Height / 2f;
 
                             var posV = _snapMode switch
                             {
-                                1 => new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale,
-                                2 => new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f,
+                                1 => new Vector2((int)(tileMouseWorld.X / 20), (int)(tileMouseWorld.Y / 20)) * 20,
+                                2 => new Vector2((int)(tileMouseWorld.X / 10), (int)(tileMouseWorld.Y / 10)) * 10,
                                 _ => tileMouseWorld,
                             };
                             
-                            Printers.DrawProp(
-                                new PropLongSettings(), 
-                                prop, 
-                                texture, 
-                                new PropQuad
-                                {
-                                    TopLeft = new(posV.X - 100, posV.Y - height),
-                                    BottomLeft = new(posV.X - 100, posV.Y + height),
-                                    TopRight = new(posV.X + 100, posV.Y - height),
-                                    BottomRight = new(posV.X + 100, posV.Y + height)
-                                }, 
-                                0
+                            var offset = new Vector2(
+                                _currentTile.Size.Width + _currentTile.BufferTiles*2, 
+                                _currentTile.Size.Height + _currentTile.BufferTiles*2
+                            ) * 20;
+
+                            offset /= 2;
+
+                            var propQuad = new PropQuad(
+                                posV - offset,
+                                posV + offset with { Y = -offset.Y },
+                                posV + offset,
+                                posV + offset with { X = -offset.X }
                             );
+
+                            propQuad = Utils.RotatePropQuads(propQuad, _placementRotation * _placementRotationSteps);
+
+                            Printers.DrawTileAsProp(_currentTile, propQuad, 0, 255);
                         }
                             break;
 
@@ -3884,16 +3938,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             
                             var posV = _snapMode switch
                             {
-                                1 => new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale,
-                                2 => new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f,
+                                1 => new Vector2((int)(tileMouseWorld.X / 20), (int)(tileMouseWorld.Y / 20)) * 20,
+                                2 => new Vector2((int)(tileMouseWorld.X / 10), (int)(tileMouseWorld.Y / 10)) * 10,
                                 _ => tileMouseWorld,
                             };
-                            
-                            Printers.DrawProp(settings, prop, texture, new PropQuad(
+
+                            var quad = new PropQuad(
                                 new Vector2(posV.X - width, posV.Y - height), 
                                 new Vector2(posV.X + width, posV.Y - height), 
                                 new Vector2(posV.X + width, posV.Y + height), 
-                                new Vector2(posV.X - width, posV.Y + height)),
+                                new Vector2(posV.X - width, posV.Y + height));
+                            
+                            Printers.DrawProp(settings, prop, texture, quad,
                                 0,
                                 _placementRotation * _placementRotationSteps
                             );

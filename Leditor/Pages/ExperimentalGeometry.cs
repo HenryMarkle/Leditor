@@ -1856,7 +1856,7 @@ internal class ExperimentalGeometryPage : EditorPage
                     foreach (var cam in GLOBALS.Level.Cameras)
                     {
                         DrawRectangleLinesEx(
-                            GLOBALS.Settings.TileEditor.CameraInnerBoundires 
+                            GLOBALS.Settings.GeometryEditor.CameraInnerBoundires 
                                 ? Utils.CameraCriticalRectangle(cam.Coords) 
                                 : new(cam.Coords.X, cam.Coords.Y, GLOBALS.EditorCameraWidth, GLOBALS.EditorCameraHeight),
                             4f,
