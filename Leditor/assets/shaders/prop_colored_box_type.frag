@@ -13,7 +13,12 @@ in vec4 fragColor;
 out vec4 FragColor;
 
 void main() {
-	vec4 newColor = texture(inputTexture, vec2(fragTexCoord.x * width, fragTexCoord.y * height + offset.y));
+	vec2 newCoords = vec2(fragTexCoord.x * width, fragTexCoord.y * height + offset.y);
+
+	if (newCoords.x >= 1.0) discard;
+	if (newCoords.y >= 1.0) discard;
+
+	vec4 newColor = texture(inputTexture, newCoords);
 
 	if (newColor.r == 1.0 && newColor.g == 1.0 && newColor.b == 1.0) discard;
 

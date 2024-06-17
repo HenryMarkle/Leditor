@@ -1211,6 +1211,10 @@ internal static class Printers
                             break;
 
                             case TileDrawMode.Tinted:
+                            {
+                                // var twidth = (init.Size.Width + init.BufferTiles * 2) * 10;
+                                // var tHeight = (init.Size.Height + init.BufferTiles * 2) * 10;
+
                                 var quadOrigin = (new Vector2(x, y) - Vector2.One * init.BufferTiles - Utils.GetTileHeadOrigin(init))*scale;
 
                                 var quad = new PropQuad(
@@ -1226,6 +1230,7 @@ internal static class Printers
                                     quad, 
                                     new Color(color.R, color.G, color.B, (byte)(shouldBeClearlyVisible ? 255 : opacity))
                                 );
+                            }
                             break;
 
                             case TileDrawMode.Palette:
@@ -3649,7 +3654,7 @@ internal static class Printers
             var bufferPixels = init.BufferTiles * 20;
             
             var height = tHeight * 20;
-            var offset = new Vector2(bufferPixels,tHeight*20*tWidth + bufferPixels);
+            var offset = new Vector2(0, tHeight*20*tWidth + bufferPixels);
             
             var calcHeight = (float)height / (float)texture.Height;
             var calcOffset = Raymath.Vector2Divide(offset, new(texture.Width, texture.Height));
@@ -3834,7 +3839,7 @@ internal static class Printers
             var bufferPixels = init.BufferTiles * 20;
             
             var height = tHeight * 20;
-            var offset = new Vector2(bufferPixels, tHeight * tWidth * 20);
+            var offset = new Vector2(0, tHeight * tWidth * 20);
             
             var calcHeight = (float)(height + bufferPixels*2) / (float)texture.Height;
             var calcOffset = Raymath.Vector2Divide(offset, new(texture.Width, texture.Height));

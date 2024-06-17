@@ -20,6 +20,8 @@ void main() {
 		float currentHeight = fragTexCoord.y * layerHeight + (l * layerHeight);
 		
 		vec2 newFragTexCoord = vec2(totalWidth, currentHeight);
+
+		if (totalWidth >= 1.0) { continue; /* newFragTexCoord = vec4(1.0, 1.0, 1.0, 1.0); */ }
 	
 		vec4 c = texture(inputTexture, newFragTexCoord);
 		if (c.r == 1.0 && c.g == 1.0 && c.b == 1.0) continue;

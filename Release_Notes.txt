@@ -1,1 +1,1 @@
-- Fixed potential crash when attempting to resize level.
+- Fixed drawing some tile textures in tinted mode.
