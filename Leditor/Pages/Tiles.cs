@@ -122,7 +122,7 @@ internal class TileEditorPage : EditorPage, IDisposable
 
     private Color[,,] _copyMaterialColorBuffer = new Color[0, 0, 0];
     private TileCell[,,] _copyBuffer = new TileCell[0,0,0];
-    private RunCell[,,] _copyGeoBuffer = new RunCell[0, 0, 0];
+    private GeoCell[,,] _copyGeoBuffer = new GeoCell[0, 0, 0];
 
     private (string category, Data.Color color, TileDefinition tile)[] _tileMatches = [];
     private (int category, int[] materials)[] _materialIndices = [];
@@ -1555,7 +1555,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             
                             _copyMaterialColorBuffer = new Color[height, width, 2];
                             _copyBuffer = new TileCell[height, width, 2];
-                            _copyGeoBuffer = new RunCell[height, width, 2];
+                            _copyGeoBuffer = new GeoCell[height, width, 2];
 
                             for (var x = 0; x < width; x++)
                             {
@@ -1598,7 +1598,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 {
                     if (_shortcuts.Draw.Check(ctrl, shift, alt) || _shortcuts.AltDraw.Check(ctrl, shift, alt))
                     {
-                        List<TileGram.ISingleAction<(TileCell, RunCell)>> actions = [];
+                        List<TileGram.ISingleAction<(TileCell, GeoCell)>> actions = [];
                         
                         var difX = (int) _prevCopiedRectangle.X - tileMatrixX;
                         var difY = (int) _prevCopiedRectangle.Y - tileMatrixY;
@@ -1656,7 +1656,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                             }
                         }
                         
-                        GLOBALS.Gram.Proceed(new TileGram.GroupAction<(TileCell, RunCell)>(actions));
+                        GLOBALS.Gram.Proceed(new TileGram.GroupAction<(TileCell, GeoCell)>(actions));
                         _shouldRedrawLevel = true;
                     }
                 }

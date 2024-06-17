@@ -51,6 +51,9 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
     private Vector2 _bottomSideLeft = Vector2.Zero;
     private Vector2 _bottomSideRight = Vector2.Zero;
 
+    private Vector2 _prevFirst;
+    private Vector2 _prevSecond;
+
     private void ResetSides() {
         var size = new Vector2(GLOBALS.Level.Width, GLOBALS.Level.Height) * 20;
 
@@ -171,58 +174,81 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
 
             const int colThres = 5;
 
-            // Left Side
-            if (CheckCollisionPointLine(
-                worldMouse, 
-                _leftSideTop, 
-                _leftSideBottom, 
-                colThres
-            )) {
-                SetMouseCursor(MouseCursor.ResizeEw);
-                _resizing = Resizing.Left;
+            if (_resizeLock == 0) {
                 
-                if (IsMouseButtonDown(MouseButton.Left)) _resizeLock = 1;
-            }
-            // Top Side
-            else if (CheckCollisionPointLine(
-                worldMouse, 
-                _topSideLeft, 
-                _topSideRight, 
-                colThres
-            )) {
-                SetMouseCursor(MouseCursor.ResizeNs);
-                _resizing = Resizing.Top;
-                
-                if (IsMouseButtonDown(MouseButton.Left)) _resizeLock = 2;
-            }
-            // Right Side
-            else if (CheckCollisionPointLine(
-                worldMouse, 
-                _rightSideTop, 
-                _rightSideBottom, 
-                colThres
-            )) {
-                SetMouseCursor(MouseCursor.ResizeEw);
-                _resizing = Resizing.Right;
+                // Left Side
+                if (CheckCollisionPointLine(
+                    worldMouse, 
+                    _leftSideTop, 
+                    _leftSideBottom, 
+                    colThres
+                )) {
+                    SetMouseCursor(MouseCursor.ResizeEw);
+                    _resizing = Resizing.Left;
+                    
+                    if (IsMouseButtonDown(MouseButton.Left)) {
+                        _resizeLock = 1;
 
-                if (IsMouseButtonDown(MouseButton.Left)) _resizeLock = 3;
-            }
-            // Bottom Side
-            else if (CheckCollisionPointLine(
-                worldMouse, 
-                _bottomSideLeft, 
-                _bottomSideRight, 
-                colThres
-            )) {
-                SetMouseCursor(MouseCursor.ResizeNs);
-                _resizing = Resizing.Bottom;
+                        _prevFirst = _leftSideTop;
+                        _prevSecond = _leftSideBottom;
+                    }
+                }
+                // Top Side
+                else if (CheckCollisionPointLine(
+                    worldMouse, 
+                    _topSideLeft, 
+                    _topSideRight, 
+                    colThres
+                )) {
+                    SetMouseCursor(MouseCursor.ResizeNs);
+                    _resizing = Resizing.Top;
+                    
+                    if (IsMouseButtonDown(MouseButton.Left)) {
+                        _resizeLock = 2;
 
-                if (IsMouseButtonDown(MouseButton.Left)) _resizeLock = 4;
-            }
-            // Else
-            else if (_resizeLock == 0) {
-                SetMouseCursor(MouseCursor.Default);
-                _resizing = Resizing.None;
+                        _prevFirst = _topSideLeft;
+                        _prevSecond = _topSideRight;
+                    }
+                }
+                // Right Side
+                else if (CheckCollisionPointLine(
+                    worldMouse, 
+                    _rightSideTop, 
+                    _rightSideBottom, 
+                    colThres
+                )) {
+                    SetMouseCursor(MouseCursor.ResizeEw);
+                    _resizing = Resizing.Right;
+
+                    if (IsMouseButtonDown(MouseButton.Left)) {
+                        _resizeLock = 3;
+
+                        _prevFirst = _rightSideTop;
+                        _prevSecond = _rightSideBottom;
+                    }
+                }
+                // Bottom Side
+                else if (CheckCollisionPointLine(
+                    worldMouse, 
+                    _bottomSideLeft, 
+                    _bottomSideRight, 
+                    colThres
+                )) {
+                    SetMouseCursor(MouseCursor.ResizeNs);
+                    _resizing = Resizing.Bottom;
+
+                    if (IsMouseButtonDown(MouseButton.Left)) {
+                        _resizeLock = 4;
+
+                        _prevFirst = _bottomSideLeft;
+                        _prevSecond = _bottomSideRight;
+                    }
+                }
+                // Else
+                else {
+                    SetMouseCursor(MouseCursor.Default);
+                    _resizing = Resizing.None;
+                }
             }
 
             // Resizing
@@ -252,31 +278,63 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
 
             // Apply Resize
             if (IsMouseButtonReleased(MouseButton.Left) && _resizeLock != 0) {
-                _resizeLock = 0;
+                var left = (int)(_levelOrigin.X -_leftSideTop.X)/20;
+                var top = (int)(_levelOrigin.Y - _topSideLeft.Y)/20;
+                var right = (int)_rightSideTop.X/20 - (int)(_levelOrigin.X/20 + GLOBALS.Level.Width);
+                var bottom = (int)_bottomSideRight.Y/20 - (int)(_levelOrigin.Y/20 + GLOBALS.Level.Height);
 
-                GLOBALS.Level.Resize(
-                    (int)(_levelOrigin.X -_leftSideTop.X)/20, 
-                    (int)(_levelOrigin.Y - _topSideLeft.Y)/20, 
-                    (int)_rightSideTop.X/20 - (int)(_levelOrigin.X/20 + GLOBALS.Level.Width), 
-                    (int)_bottomSideRight.Y/20 - (int)(_levelOrigin.Y/20 + GLOBALS.Level.Height),
-                    _fillLayer1 ? new RunCell(1) : new RunCell(0),
-                    _fillLayer2 ? new RunCell(1) : new RunCell(0),
-                    _fillLayer3 ? new RunCell(1) : new RunCell(0)
-                );
+                if (_leftSideTop.X == _rightSideTop.X || _topSideLeft.Y == _bottomSideLeft.Y) {
 
-                ResizeLightMap(
-                    _levelOrigin - new Vector2(_leftSideTop.X, _topSideLeft.Y), 
-                    GLOBALS.Level.Width, 
-                    GLOBALS.Level.Height
-                );
+                    switch (_resizeLock) {
+                        case 1: // Left
+                        _leftSideTop = _prevFirst;
+                        _leftSideBottom = _prevSecond;
+                        break;
 
-                _levelOrigin = _leftSideTop;
+                        case 2: // Top
+                        _topSideLeft = _prevFirst;
+                        _topSideRight = _prevSecond;
+                        break;
 
-                UnloadRenderTexture(GLOBALS.Textures.GeneralLevel);
-                GLOBALS.Textures.GeneralLevel =
-                    LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20);
+                        case 3: // Right
+                        _rightSideTop = _prevFirst;
+                        _rightSideBottom = _prevSecond;
+                        break;
+
+                        case 4: // Bottom
+                        _bottomSideLeft = _prevFirst;
+                        _bottomSideRight = _prevSecond;
+                        break;
+                    }
+                        
+                } else {
+
+                    GLOBALS.Level.Resize(
+                        left, 
+                        top, 
+                        right, 
+                        bottom,
+                        _fillLayer1 ? new GeoCell(1) : new GeoCell(0),
+                        _fillLayer2 ? new GeoCell(1) : new GeoCell(0),
+                        _fillLayer3 ? new GeoCell(1) : new GeoCell(0)
+                    );
+
+                    ResizeLightMap(
+                        _levelOrigin - new Vector2(_leftSideTop.X, _topSideLeft.Y), 
+                        GLOBALS.Level.Width, 
+                        GLOBALS.Level.Height
+                    );
+
+                    _levelOrigin = _leftSideTop;
+
+                    UnloadRenderTexture(GLOBALS.Textures.GeneralLevel);
+                    
+                    GLOBALS.Textures.GeneralLevel = LoadRenderTexture(GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20);
+                }
 
                 _shouldRedrawLevel = true;
+
+                _resizeLock = 0;
             }
         }
         #endregion

@@ -18,7 +18,7 @@ public static class Exporters
         return [..list];
     }
     
-    private static string Export(RunCell[,,] matrix)
+    private static string Export(GeoCell[,,] matrix)
     {
         System.Text.StringBuilder builder = new();
 

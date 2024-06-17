@@ -124,7 +124,7 @@ internal static class Utils
 
     internal static bool AllEqual(int a, int b, int c) => a == b && b == c && a == c;
 
-    internal static RunCell CopyGeoCell(in RunCell cell) => new()
+    internal static GeoCell CopyGeoCell(in GeoCell cell) => new()
     {
         Geo = cell.Geo,
         Stackables = [..cell.Stackables]
@@ -158,7 +158,7 @@ internal static class Utils
             GLOBALS.RecentProjects.RemoveLast();
     }
 
-    internal static RunCell[,,] GetGeometryMatrixFromFile(string path) {
+    internal static GeoCell[,,] GetGeometryMatrixFromFile(string path) {
         if (!File.Exists(path)) throw new FileNotFoundException("Level file not found", path);
     
         var text = File
@@ -414,7 +414,7 @@ internal static class Utils
     }
 
     public static bool IsTileLegal(
-        in RunCell[,,] geoMatrix, 
+        in GeoCell[,,] geoMatrix, 
         in TileCell[,,] tileMatrix, 
         in TileDefinition? init, 
         Vector2 point
@@ -1253,7 +1253,7 @@ internal static class Utils
     };
 
     [Obsolete]
-    public static bool IsConnectionEntranceConnected(RunCell[][] context)
+    public static bool IsConnectionEntranceConnected(GeoCell[][] context)
     {
         if (
                 context[0][0].Stackables[4] || context[0][1].Stackables[4] || context[0][2].Stackables[4] ||
@@ -1344,7 +1344,7 @@ internal static class Utils
     /// <param name="id">the ID of the geo-tile feature</param>
     /// <param name="context">a 3x3 slice of the geo-matrix where the geo-tile feature is in the middle</param>
     /// <returns>the index of the texture in the textures array (GLOBALS.Textures.GeoStackables)</returns>
-    public static int GetStackableTextureIndex(int id, RunCell[][] context)
+    public static int GetStackableTextureIndex(int id, GeoCell[][] context)
     {
         var i = id switch
         {
@@ -1601,7 +1601,7 @@ internal static class Utils
     /// </summary>
     /// <param name="context">a 3x3 slice of the geo-matrix where the slope is in the middle</param>
     /// <returns>the ID of the slope representing the proper direction</returns>
-    public static int GetCorrectSlopeID(RunCell[][] context)
+    public static int GetCorrectSlopeID(GeoCell[][] context)
     {
         var fi = (
             false, context[0][1].Geo is 1, false,
@@ -1646,6 +1646,61 @@ internal static class Utils
         return fi;
     }
 
+    internal static T[,,] Resize<T>(T[,,] matrix, 
+        int left,
+        int top,
+        int right,
+        int bottom)
+
+        where T : new()
+    {
+        if (left == 0 && top == 0 && right == 0 && bottom == 0) return matrix;
+        if (-left == matrix.GetLength(1) || -right == matrix.GetLength(1) ||
+            -top == matrix.GetLength(0) || -bottom == matrix.GetLength(0)) return matrix;
+
+        var width = matrix.GetLength(1);
+        var height = matrix.GetLength(0);
+
+        var newWidth = width + left + right;
+        var newHeight = height + top + bottom;
+
+        var depth = matrix.GetLength(2);
+
+        T[,,] newMatrix = new T[newHeight, newWidth, depth];
+
+        // Default value
+
+        for (var y = 0; y < newHeight; y++) {
+            for (var x = 0; x < newWidth; x++) {
+                for (var z = 0; z < depth; z++) {
+                    newMatrix[y, x, z] = new T();
+                }
+            }
+        } 
+
+        // Copy old matrix to new matrix
+
+        for (var y = 0; y < height; y++) {
+            var ny = y + top;
+
+            if (ny >= newHeight) break;
+            if (ny < 0) continue;
+
+            for (var x = 0; x < width; x++) {
+                var nx = x + left;
+
+                if (nx >= newWidth) break;
+                if (nx < 0) continue;
+
+                for (var z = 0; z < depth; z++) {
+                    newMatrix[ny, nx, z] = matrix[y, x, z];
+                }
+            }
+        }
+
+        return newMatrix;
+    }
+
     internal static double[,] Resize(
         double[,] matrix,
         
@@ -1654,6 +1709,10 @@ internal static class Utils
         int right,
         int bottom
     ) {
+        if (left == 0 && top == 0 && right == 0 && bottom == 0) return matrix;
+        if (-left == matrix.GetLength(1) || -right == matrix.GetLength(1) ||
+            -top == matrix.GetLength(0) || -bottom == matrix.GetLength(0)) return matrix;
+
         var width = matrix.GetLength(1);
         var height = matrix.GetLength(0);
 
@@ -1697,6 +1756,10 @@ internal static class Utils
         Color layer2Fill,
         Color layer3Fill
     ) {
+        if (left == 0 && top == 0 && right == 0 && bottom == 0) return matrix;
+        if (-left == matrix.GetLength(1) || -right == matrix.GetLength(1) ||
+            -top == matrix.GetLength(0) || -bottom == matrix.GetLength(0)) return matrix;
+
         var width = matrix.GetLength(1);
         var height = matrix.GetLength(0);
 
@@ -1707,6 +1770,16 @@ internal static class Utils
 
         Color[,,] newMatrix = new Color[newHeight, newWidth, depth];
 
+        // Default value
+
+        for (var y = 0; y < newHeight; y++) {
+            for (var x = 0; x < newWidth; x++) {
+                newMatrix[y, x, 0] = layer1Fill;
+                newMatrix[y, x, 1] = layer2Fill;
+                newMatrix[y, x, 2] = layer3Fill;
+            }
+        } 
+
         // Copy old matrix to new matrix
 
         for (var y = 0; y < height; y++) {
@@ -1729,69 +1802,25 @@ internal static class Utils
             }
         }
 
-        // Fillers
-
-        if (left > 0) {
-            for (var y = top; y < newHeight; y++) {
-                for (var x = 0; x < left; x++) {
-                    newMatrix[y, x, 0] = layer1Fill;
-                    newMatrix[y, x, 1] = layer2Fill;
-                    newMatrix[y, x, 2] = layer3Fill;
-                }
-            }
-        }
-
-        if (top > 0) {
-            for (var y = 0; y < top; y++) {
-                for (var x = left; x < newWidth; x++) {
-                    for (var z = 0; z < depth; z++) {
-                        newMatrix[y, x, 0] = layer1Fill;
-                        newMatrix[y, x, 1] = layer2Fill;
-                        newMatrix[y, x, 2] = layer3Fill;
-                    }
-                }
-            }
-        }
-
-        if (right > 0) {
-            for (var y = top; y < newHeight; y++) {
-                for (var x = newWidth - right; x < newWidth; x++) {
-                    for (var z = 0; z < depth; z++) {
-                        newMatrix[y, x, 0] = layer1Fill;
-                        newMatrix[y, x, 1] = layer2Fill;
-                        newMatrix[y, x, 2] = layer3Fill;
-                    }
-                }
-            }
-        }
-
-        if (bottom > 0) {
-            for (var y = newHeight - bottom; y < newHeight; y++) {
-                for (var x = 0; x < newWidth; x++) {
-                    for (var z = 0; z < depth; z++) {
-                        newMatrix[y, x, 0] = layer1Fill;
-                        newMatrix[y, x, 1] = layer2Fill;
-                        newMatrix[y, x, 2] = layer3Fill;
-                    }
-                }
-            }
-        }
-
         return newMatrix;
     }
 
-    internal static RunCell[,,] Resize(
-        RunCell[,,] matrix,
+    internal static GeoCell[,,] Resize(
+        GeoCell[,,] matrix,
         
         int left,
         int top,
         int right,
         int bottom,
 
-        RunCell layer1Fill,
-        RunCell layer2Fill,
-        RunCell layer3Fill
+        GeoCell layer1Fill,
+        GeoCell layer2Fill,
+        GeoCell layer3Fill
     ) {
+        if (left == 0 && top == 0 && right == 0 && bottom == 0) return matrix;
+        if (-left == matrix.GetLength(1) || -right == matrix.GetLength(1) ||
+            -top == matrix.GetLength(0) || -bottom == matrix.GetLength(0)) return matrix;
+
         var width = matrix.GetLength(1);
         var height = matrix.GetLength(0);
 
@@ -1800,7 +1829,17 @@ internal static class Utils
 
         var depth = matrix.GetLength(2);
 
-        RunCell[,,] newMatrix = new RunCell[newHeight, newWidth, depth];
+        GeoCell[,,] newMatrix = new GeoCell[newHeight, newWidth, depth];
+
+        // Default value
+
+        for (var y = 0; y < newHeight; y++) {
+            for (var x = 0; x < newWidth; x++) {
+                newMatrix[y, x, 0] = new GeoCell { Geo = layer1Fill.Geo, Stackables = [..layer1Fill.Stackables] };
+                newMatrix[y, x, 1] = new GeoCell { Geo = layer2Fill.Geo, Stackables = [..layer2Fill.Stackables] };
+                newMatrix[y, x, 2] = new GeoCell { Geo = layer3Fill.Geo, Stackables = [..layer3Fill.Stackables] };
+            }
+        } 
 
         // Copy old matrix to new matrix
 
@@ -1821,48 +1860,6 @@ internal static class Utils
                 newMatrix[ny, nx, 0] = matrix[y, x, 0];
                 newMatrix[ny, nx, 1] = matrix[y, x, 1];
                 newMatrix[ny, nx, 2] = matrix[y, x, 2];
-            }
-        }
-
-        // Fillers
-
-        if (left > 0) {
-            for (var y = top; y < newHeight; y++) {
-                for (var x = 0; x < left; x++) {
-                    newMatrix[y, x, 0] = new RunCell { Geo = layer1Fill.Geo, Stackables = [..layer1Fill.Stackables] };
-                    newMatrix[y, x, 1] = new RunCell { Geo = layer2Fill.Geo, Stackables = [..layer2Fill.Stackables] };
-                    newMatrix[y, x, 2] = new RunCell { Geo = layer3Fill.Geo, Stackables = [..layer3Fill.Stackables] };
-                }
-            }
-        }
-
-        if (top > 0) {
-            for (var y = 0; y < top; y++) {
-                for (var x = left; x < newWidth; x++) {
-                    newMatrix[y, x, 0] = new RunCell { Geo = layer1Fill.Geo, Stackables = [..layer1Fill.Stackables] };
-                    newMatrix[y, x, 1] = new RunCell { Geo = layer2Fill.Geo, Stackables = [..layer2Fill.Stackables] };
-                    newMatrix[y, x, 2] = new RunCell { Geo = layer3Fill.Geo, Stackables = [..layer3Fill.Stackables] };
-                }
-            }
-        }
-
-        if (right > 0) {
-            for (var y = top; y < newHeight; y++) {
-                for (var x = newWidth - right; x < newWidth; x++) {
-                    newMatrix[y, x, 0] = new RunCell { Geo = layer1Fill.Geo, Stackables = [..layer1Fill.Stackables] };
-                    newMatrix[y, x, 1] = new RunCell { Geo = layer2Fill.Geo, Stackables = [..layer2Fill.Stackables] };
-                    newMatrix[y, x, 2] = new RunCell { Geo = layer3Fill.Geo, Stackables = [..layer3Fill.Stackables] };
-                }
-            }
-        }
-
-        if (bottom > 0) {
-            for (var y = newHeight - bottom; y < newHeight; y++) {
-                for (var x = 0; x < newWidth; x++) {
-                    newMatrix[y, x, 0] = new RunCell { Geo = layer1Fill.Geo, Stackables = [..layer1Fill.Stackables] };
-                    newMatrix[y, x, 1] = new RunCell { Geo = layer2Fill.Geo, Stackables = [..layer2Fill.Stackables] };
-                    newMatrix[y, x, 2] = new RunCell { Geo = layer3Fill.Geo, Stackables = [..layer3Fill.Stackables] };
-                }
             }
         }
 
@@ -1881,6 +1878,10 @@ internal static class Utils
         TileCell layer2Fill,
         TileCell layer3Fill
     ) {
+        if (left == 0 && top == 0 && right == 0 && bottom == 0) return matrix;
+        if (-left == matrix.GetLength(1) || -right == matrix.GetLength(1) ||
+            -top == matrix.GetLength(0) || -bottom == matrix.GetLength(0)) return matrix;
+
         var width = matrix.GetLength(1);
         var height = matrix.GetLength(0);
 
@@ -1890,6 +1891,16 @@ internal static class Utils
         var depth = matrix.GetLength(2);
 
         TileCell[,,] newMatrix = new TileCell[newHeight, newWidth, depth];
+
+        // Default value
+
+        for (var y = 0; y < newHeight; y++) {
+            for (var x = 0; x < newWidth; x++) {
+                newMatrix[y, x, 0] = new TileCell(layer1Fill);
+                newMatrix[y, x, 1] = new TileCell(layer2Fill);
+                newMatrix[y, x, 2] = new TileCell(layer3Fill);
+            }
+        } 
 
         // Copy old matrix to new matrix
 
@@ -1943,61 +1954,13 @@ internal static class Utils
             }
         }
 
-        // Fillers
-
-        if (left > 0) {
-            for (var y = top; y < newHeight; y++) {
-                for (var x = 0; x < left; x++) {
-                    newMatrix[y, x, 0] = new TileCell(layer1Fill);
-                    newMatrix[y, x, 1] = new TileCell(layer2Fill);
-                    newMatrix[y, x, 2] = new TileCell(layer3Fill);
-                }
-            }
-        }
-
-        if (top > 0) {
-            for (var y = 0; y < top; y++) {
-                for (var x = left; x < newWidth; x++) {
-                    for (var z = 0; z < depth; z++) {
-                        newMatrix[y, x, 0] = new TileCell(layer1Fill);
-                        newMatrix[y, x, 1] = new TileCell(layer2Fill);
-                        newMatrix[y, x, 2] = new TileCell(layer3Fill);
-                    }
-                }
-            }
-        }
-
-        if (right > 0) {
-            for (var y = top; y < newHeight; y++) {
-                for (var x = newWidth - right; x < newWidth; x++) {
-                    for (var z = 0; z < depth; z++) {
-                        newMatrix[y, x, 0] = new TileCell(layer1Fill);
-                        newMatrix[y, x, 1] = new TileCell(layer2Fill);
-                        newMatrix[y, x, 2] = new TileCell(layer3Fill);
-                    }
-                }
-            }
-        }
-
-        if (bottom > 0) {
-            for (var y = newHeight - bottom; y < newHeight; y++) {
-                for (var x = 0; x < newWidth; x++) {
-                    for (var z = 0; z < depth; z++) {
-                        newMatrix[y, x, 0] = new TileCell(layer1Fill);
-                        newMatrix[y, x, 1] = new TileCell(layer2Fill);
-                        newMatrix[y, x, 2] = new TileCell(layer3Fill);
-                    }
-                }
-            }
-        }
-
         return newMatrix;
     }
 
-    internal static RunCell[,,] Resize(RunCell[,,] array, int width, int height, int newWidth, int newHeight, RunCell[] layersFill)
+    internal static GeoCell[,,] Resize(GeoCell[,,] array, int width, int height, int newWidth, int newHeight, GeoCell[] layersFill)
     {
 
-        RunCell[,,] newArray = new RunCell[newHeight, newWidth, 3];
+        GeoCell[,,] newArray = new GeoCell[newHeight, newWidth, 3];
 
         if (height > newHeight)
         {
@@ -2194,9 +2157,9 @@ internal static class Utils
     }
 
     [Obsolete]
-    internal static RunCell[,,] NewGeoMatrix(int width, int height, int geoFill = 0)
+    internal static GeoCell[,,] NewGeoMatrix(int width, int height, int geoFill = 0)
     {
-        RunCell[,,] matrix = new RunCell[height, width, 3];
+        GeoCell[,,] matrix = new GeoCell[height, width, 3];
 
         for (int y = 0; y < height; y++)
         {
@@ -2237,7 +2200,7 @@ internal static class Utils
     /// <param name="x">x-position of the middle of the slice</param>
     /// <param name="y">y-position of the middle of the slice</param>
     /// <param name="z">z-position of the middle of the slice</param>
-    internal static RunCell[][] GetContext(RunCell[,,] matrix, int width, int height, int x, int y, int z) =>
+    internal static GeoCell[][] GetContext(GeoCell[,,] matrix, int width, int height, int x, int y, int z) =>
         [
             [
                 x > 0 && y > 0 ? matrix[y - 1, x - 1, z] : new(),
@@ -2262,7 +2225,7 @@ internal static class Utils
     /// <param name="matrix">the geo-matrix (GLOBALS.Level.GeoMatrix)</param>
     /// <param name="x">x-position of the middle of the slice</param>
     /// <param name="y">y-position of the middle of the slice</param>
-    internal static RunCell[][] GetContext(RunCell[,] matrix, int x, int y) =>
+    internal static GeoCell[][] GetContext(GeoCell[,] matrix, int x, int y) =>
         [
             [
                 x > 0 && y > 0 ? matrix[y - 1, x - 1] : new(),
@@ -3118,7 +3081,7 @@ internal static class Utils
         return [.. tmp];
     }
 
-    public static bool IsGeoEqual(ref RunCell g1, ref RunCell g2) {
+    public static bool IsGeoEqual(ref GeoCell g1, ref GeoCell g2) {
         if (g1.Geo != g2.Geo) return false;
 
         return GeoStackEq(g1.Stackables, g2.Stackables);

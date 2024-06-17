@@ -27,9 +27,9 @@ public class GeoGram(int limit)
 {
     public interface IAction;
 
-    public record CellAction(Coords Position, RunCell Previous, RunCell Next) : IAction;
+    public record CellAction(Coords Position, GeoCell Previous, GeoCell Next) : IAction;
 
-    public record RectAction(Coords Position, RunCell[,] Previous, RunCell[,] Next, bool FillAir = true) : IAction;
+    public record RectAction(Coords Position, GeoCell[,] Previous, GeoCell[,] Next, bool FillAir = true) : IAction;
 
     public record GroupAction(CellAction[] CellActions) : IAction
     {
@@ -42,7 +42,7 @@ public class GeoGram(int limit)
 
     public IAction? Current => _currentNode?.Value;
 
-    public void Proceed(Coords position, RunCell previous, RunCell current)
+    public void Proceed(Coords position, GeoCell previous, GeoCell current)
     {
         if (_currentNode?.Next is not null)
         {
@@ -59,7 +59,7 @@ public class GeoGram(int limit)
         if (Actions.Count == limit) Actions.RemoveFirst();
     }
     
-    public void Proceed(Coords position, RunCell[,] previous, RunCell[,] current, bool fillAir = true)
+    public void Proceed(Coords position, GeoCell[,] previous, GeoCell[,] current, bool fillAir = true)
     {
         if (_currentNode?.Next is not null)
         {
@@ -176,8 +176,8 @@ public class TileGram(int limit)
 
     public record struct TileAction(Coords Position, TileCell Old, TileCell New) : ISingleMatrixAction<TileCell>;
 
-    public record struct TileGeoAction(Coords Position, (TileCell, RunCell) Old, (TileCell, RunCell) New)
-        : ISingleMatrixAction<(TileCell, RunCell)>;
+    public record struct TileGeoAction(Coords Position, (TileCell, GeoCell) Old, (TileCell, GeoCell) New)
+        : ISingleMatrixAction<(TileCell, GeoCell)>;
     public record struct GroupAction<TG>(IEnumerable<ISingleAction<TG>> Actions) : IGroupAction<TG>;
 
 }

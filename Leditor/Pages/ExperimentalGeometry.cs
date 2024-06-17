@@ -156,7 +156,7 @@ internal class ExperimentalGeometryPage : EditorPage
         EndTextureMode();
     }
     
-    private RunCell[,] _savedChunk = new RunCell[0, 0];
+    private GeoCell[,] _savedChunk = new GeoCell[0, 0];
     
     private bool _memDumbMode;
     private bool _memLoadMode;
@@ -197,7 +197,7 @@ internal class ExperimentalGeometryPage : EditorPage
                 var oldCell = GLOBALS.Level.GeoMatrix[my, mx, GLOBALS.Layer];
                 oldCell.Stackables = [..oldCell.Stackables];
 
-                var newCell = new RunCell { Geo = id, Stackables = [..oldCell.Stackables] };
+                var newCell = new GeoCell { Geo = id, Stackables = [..oldCell.Stackables] };
 
                 var action = new GeoGram.CellAction (new Coords(mx, my, GLOBALS.Layer), oldCell, newCell);
                 actions.Add(action);
@@ -230,7 +230,7 @@ internal class ExperimentalGeometryPage : EditorPage
                 var oldCell = GLOBALS.Level.GeoMatrix[my, mx, GLOBALS.Layer];
                 oldCell.Stackables = [..oldCell.Stackables];
 
-                var newCell = new RunCell { Geo = id, Stackables = [..oldCell.Stackables] };
+                var newCell = new GeoCell { Geo = id, Stackables = [..oldCell.Stackables] };
 
                 var action = new GeoGram.CellAction (new Coords(mx, my, GLOBALS.Layer), oldCell, newCell);
                 actions.Add(action);
@@ -825,7 +825,7 @@ internal class ExperimentalGeometryPage : EditorPage
 
                 if (_memLoadMode)
                 {
-                    _savedChunk = new RunCell[endY - startY + 1, endX - startX + 1];
+                    _savedChunk = new GeoCell[endY - startY + 1, endX - startX + 1];
 
                     for (var x = 0; x < _savedChunk.GetLength(1); x++)
                     {
@@ -848,8 +848,8 @@ internal class ExperimentalGeometryPage : EditorPage
                 }
                 else if (_memDumbMode)
                 {
-                    var newCopy = new RunCell[_savedChunk.GetLength(0), _savedChunk.GetLength(1)];
-                    var oldCopy = new RunCell[_savedChunk.GetLength(0), _savedChunk.GetLength(1)];
+                    var newCopy = new GeoCell[_savedChunk.GetLength(0), _savedChunk.GetLength(1)];
+                    var oldCopy = new GeoCell[_savedChunk.GetLength(0), _savedChunk.GetLength(1)];
                         
                     for (var x = 0; x < _savedChunk.GetLength(1); x++)
                     {
@@ -865,12 +865,12 @@ internal class ExperimentalGeometryPage : EditorPage
 
                                 ref var mtxCell = ref GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer];
                                 
-                                var oldCell = new RunCell { Geo = mtxCell.Geo, Stackables = [..mtxCell.Stackables]};
+                                var oldCell = new GeoCell { Geo = mtxCell.Geo, Stackables = [..mtxCell.Stackables]};
                                     
                                 // Copy memory to new state
-                                newCopy[y, x] = new RunCell { Geo = GLOBALS.Settings.GeometryEditor.PasteAir ? cell.Geo : cell.Geo == 0 ? mtxCell.Geo : cell.Geo, Stackables = [..cell.Stackables] };
+                                newCopy[y, x] = new GeoCell { Geo = GLOBALS.Settings.GeometryEditor.PasteAir ? cell.Geo : cell.Geo == 0 ? mtxCell.Geo : cell.Geo, Stackables = [..cell.Stackables] };
                                 // Copy level to old state
-                                oldCopy[y, x] = new RunCell { Geo = oldCell.Geo, Stackables = [..oldCell.Stackables] };
+                                oldCopy[y, x] = new GeoCell { Geo = oldCell.Geo, Stackables = [..oldCell.Stackables] };
                                     
                                 bool[] newStackables = [..cell.Stackables];
                                 cell.Stackables = newStackables;
@@ -884,8 +884,8 @@ internal class ExperimentalGeometryPage : EditorPage
                 }
                 else
                 {
-                    var newCopy = new RunCell[endY - startY + 1, endX - startX + 1];
-                    var oldCopy = new RunCell[endY - startY + 1, endX - startX + 1];
+                    var newCopy = new GeoCell[endY - startY + 1, endX - startX + 1];
+                    var oldCopy = new GeoCell[endY - startY + 1, endX - startX + 1];
 
                     for (var y = startY; y <= endY; y++)
                     {
@@ -896,13 +896,13 @@ internal class ExperimentalGeometryPage : EditorPage
                             if (_eraseAllMode)
                             {
                                 var cell = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer];
-                                var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                var oldCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
 
                                 cell.Geo = 0;
                                 Array.Fill(cell.Stackables, false);
                                 
                                 oldCopy[y - startY, x - startX] = oldCell;
-                                newCopy[y - startY, x - startX] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                newCopy[y - startY, x - startX] = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
 
                                 GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer] = cell;
                                 _connectionUpdate = true;
@@ -910,7 +910,7 @@ internal class ExperimentalGeometryPage : EditorPage
                             else
                             {
                                 ref var cell = ref GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer];
-                                oldCopy[y - startY, x - startX] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables]};
+                                oldCopy[y - startY, x - startX] = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables]};
                                 
                                 switch (_geoMenuCategory)
                                 {
@@ -989,7 +989,7 @@ internal class ExperimentalGeometryPage : EditorPage
                                         break;
                                 }
                                 
-                                newCopy[y - startY, x - startX] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                newCopy[y - startY, x - startX] = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                             }
                         }
                     }
@@ -1034,8 +1034,8 @@ internal class ExperimentalGeometryPage : EditorPage
                     endY = _prevCoordsY;
                 }
                 
-                var newCopy = new RunCell[endY - startY + 1, endX - startX + 1];
-                var oldCopy = new RunCell[endY - startY + 1, endX - startX + 1];
+                var newCopy = new GeoCell[endY - startY + 1, endX - startX + 1];
+                var oldCopy = new GeoCell[endY - startY + 1, endX - startX + 1];
 
                 for (var y = startY; y <= endY; y++)
                 {
@@ -1046,19 +1046,19 @@ internal class ExperimentalGeometryPage : EditorPage
                         if (_eraseAllMode)
                         {
                             var cell = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer];
-                            var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                            var oldCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
 
                             cell.Geo = 0;
                             Array.Fill(cell.Stackables, false);
 
                             oldCopy[y - startY, x - startX] = oldCell;
-                            newCopy[y - startY, x - startX] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                            newCopy[y - startY, x - startX] = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                             GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer] = cell;
                         }
                         else
                         {
                             ref var cell = ref GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer];
-                            oldCopy[y - startY, x - startX] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables]};
+                            oldCopy[y - startY, x - startX] = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables]};
                             
                             switch (_geoMenuCategory)
                             {
@@ -1117,7 +1117,7 @@ internal class ExperimentalGeometryPage : EditorPage
                                     break;
                             }
                             
-                            newCopy[y - startY, x - startX] = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                            newCopy[y - startY, x - startX] = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                         }
                     }
                 }
@@ -1182,8 +1182,8 @@ internal class ExperimentalGeometryPage : EditorPage
                                 if (cell.Geo == id) break;
 
                                 if (matrixX != _prevCoordsX || matrixY != _prevCoordsY || !_clickTracker) {                                        
-                                    var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
-                                    var newCell = new RunCell { Geo = 0, Stackables = [..cell.Stackables] };
+                                    var oldCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                    var newCell = new GeoCell { Geo = 0, Stackables = [..cell.Stackables] };
                                     
                                     cell.Geo = slope;
                                     
@@ -1218,8 +1218,8 @@ internal class ExperimentalGeometryPage : EditorPage
                                     if (0 != cell.Geo && 
                                         (_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) {
 
-                                        var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
-                                        var newCell = new RunCell { Geo = 0, Stackables = [..cell.Stackables] };
+                                        var oldCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                        var newCell = new GeoCell { Geo = 0, Stackables = [..cell.Stackables] };
 
                                         GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = newCell;
 
@@ -1243,11 +1243,11 @@ internal class ExperimentalGeometryPage : EditorPage
                             if (cell.Stackables[id] && 
                                         (_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) {
                                 
-                                var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                var oldCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                                 
                                 cell.Stackables[id] = false;
 
-                                var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                var newCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                             
                                 var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
 
@@ -1275,11 +1275,11 @@ internal class ExperimentalGeometryPage : EditorPage
 
                             if (!cell.Stackables[id] || !(_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) break;
 
-                            var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                            var oldCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                             
                             cell.Stackables[id] = false;
                             
-                            var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                            var newCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                             
                             var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
 
@@ -1305,11 +1305,11 @@ internal class ExperimentalGeometryPage : EditorPage
 
                             if (!cell.Stackables[id] || !(_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) break;
 
-                            var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                            var oldCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
 
                             cell.Stackables[id] = false;
 
-                            var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                            var newCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                             
                             var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
 
@@ -1344,8 +1344,8 @@ internal class ExperimentalGeometryPage : EditorPage
                                     if (cell.Geo == id) break;
 
                                     if (matrixX != _prevCoordsX || matrixY != _prevCoordsY || !_clickTracker) {                                        
-                                        var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
-                                        var newCell = new RunCell { Geo = id, Stackables = [..cell.Stackables] };
+                                        var oldCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                        var newCell = new GeoCell { Geo = id, Stackables = [..cell.Stackables] };
                                         
                                         cell.Geo = slope;
                                         
@@ -1380,8 +1380,8 @@ internal class ExperimentalGeometryPage : EditorPage
                                         if (id != cell.Geo && 
                                             (_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) {
 
-                                            var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
-                                            var newCell = new RunCell { Geo = id, Stackables = [..cell.Stackables] };
+                                            var oldCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                            var newCell = new GeoCell { Geo = id, Stackables = [..cell.Stackables] };
 
                                             GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = newCell;
 
@@ -1405,11 +1405,11 @@ internal class ExperimentalGeometryPage : EditorPage
                                 if (!cell.Stackables[id] && 
                                             (_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) {
                                     
-                                    var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                    var oldCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                                     
                                     cell.Stackables[id] = true;
 
-                                    var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                    var newCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                                 
                                     var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
 
@@ -1435,11 +1435,11 @@ internal class ExperimentalGeometryPage : EditorPage
 
                                 if (cell.Stackables[id] || !(_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) break;
 
-                                var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                var oldCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                                 
                                 cell.Stackables[id] = true;
                                 
-                                var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                var newCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                                 
                                 var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
 
@@ -1465,14 +1465,14 @@ internal class ExperimentalGeometryPage : EditorPage
 
                                 if (cell.Stackables[id] || !(_prevCoordsX != matrixX || _prevCoordsY != matrixY || !_clickTracker)) break;
 
-                                var oldCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                var oldCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
 
                                 cell.Stackables[id] = true;
                                 if (id == 4) {
                                     cell.Geo = 0;
                                 }
 
-                                var newCell = new RunCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                var newCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
                                 
                                 var action = new GeoGram.CellAction(new Coords(matrixX, matrixY, GLOBALS.Layer), oldCell, newCell);
 

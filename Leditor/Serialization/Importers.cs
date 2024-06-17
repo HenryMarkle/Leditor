@@ -847,7 +847,7 @@ public static class Importers {
         };
     }
 
-    public static RunCell[,,] GetGeoMatrix(AstNode.Base @base, out int height, out int width) {
+    public static GeoCell[,,] GetGeoMatrix(AstNode.Base @base, out int height, out int width) {
         if (@base is not AstNode.List) throw new ArgumentException("object is not a list", nameof(@base));
 
         var columns = ((AstNode.List)@base).Values;
@@ -867,7 +867,7 @@ public static class Importers {
             }
         }
 
-        RunCell[,,] matrix = new RunCell[height, width, 3];
+        GeoCell[,,] matrix = new GeoCell[height, width, 3];
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {

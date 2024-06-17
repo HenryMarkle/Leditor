@@ -123,7 +123,7 @@ internal static class Printers
         }
     }
 
-    internal static void DrawGeoLayer(RunCell[,,] matrix, int layer, int scale, bool grid, Color color)
+    internal static void DrawGeoLayer(GeoCell[,,] matrix, int layer, int scale, bool grid, Color color)
     {
         var width = matrix.GetLength(1);
         var height = matrix.GetLength(0);
@@ -2547,7 +2547,7 @@ internal static class Printers
         return new(img);
     }
 
-    internal static RL.Managed.Image GenerateLevelReviewImage(RunCell[,,] matrix) 
+    internal static RL.Managed.Image GenerateLevelReviewImage(GeoCell[,,] matrix) 
     {
         const int scale = 4;
 
@@ -2600,7 +2600,7 @@ internal static class Printers
         return new(img);
     }
     
-    internal static RL.Managed.Texture2D GenerateLevelReviewTexture(RunCell[,,] matrix) 
+    internal static RL.Managed.Texture2D GenerateLevelReviewTexture(GeoCell[,,] matrix) 
     {
         const int scale = 4;
 

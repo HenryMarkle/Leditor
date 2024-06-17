@@ -204,7 +204,7 @@ internal class StartPage : EditorPage
             DrawTexture(texture, 0, 0, Color.White);
             EndTextureMode();
         } else {
-            RunCell[,,] matrix;
+            GeoCell[,,] matrix;
 
             try {
                 matrix = Utils.GetGeometryMatrixFromFile(path);

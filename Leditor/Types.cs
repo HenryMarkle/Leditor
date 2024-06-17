@@ -93,7 +93,7 @@ public sealed class LevelState
 
     internal List<RenderCamera> Cameras { get; set; } = [];
 
-    internal RunCell[,,] GeoMatrix { get; private set; } = new RunCell[0, 0, 0];
+    internal GeoCell[,,] GeoMatrix { get; private set; } = new GeoCell[0, 0, 0];
     internal TileCell[,,] TileMatrix { get; private set; } = new TileCell[0, 0, 0];
     internal Color[,,] MaterialColors { get; private set; } = new Color[0, 0, 0];
     internal (string, EffectOptions[], double[,])[] Effects { get; set; } = [];
@@ -114,7 +114,7 @@ public sealed class LevelState
         int width,
         int height,
         (int left, int top, int right, int bottom) padding,
-        RunCell[,,] geoMatrix,
+        GeoCell[,,] geoMatrix,
         TileCell[,,] tileMatrix,
         Color[,,] materialColorMatrix,
         (string, EffectOptions[], double[,])[] effects,
@@ -173,7 +173,7 @@ public sealed class LevelState
         
         // Geo Matrix
         {
-            var matrix = new RunCell[height, width, 3];
+            var matrix = new GeoCell[height, width, 3];
 
             for (int y = 0; y < height; y++)
             {
@@ -251,9 +251,9 @@ public sealed class LevelState
         int right,
         int bottom,
 
-        RunCell layer1Fill,
-        RunCell layer2Fill,
-        RunCell layer3Fill
+        GeoCell layer1Fill,
+        GeoCell layer2Fill,
+        GeoCell layer3Fill
     ) {
         GeoMatrix = Utils.Resize(GeoMatrix, left, top, right, bottom, layer1Fill, layer2Fill, layer3Fill);
         TileMatrix = Utils.Resize(TileMatrix, left, top, right, bottom, new TileCell(), new TileCell(), new TileCell());
@@ -305,9 +305,9 @@ public sealed class LevelState
             width,
             height,
             [
-                new RunCell { Geo = geoIdFill[0], Stackables = new bool[22] },
-                new RunCell { Geo = geoIdFill[1], Stackables = new bool[22] },
-                new RunCell { Geo = geoIdFill[2], Stackables = new bool[22] }
+                new GeoCell { Geo = geoIdFill[0], Stackables = new bool[22] },
+                new GeoCell { Geo = geoIdFill[1], Stackables = new bool[22] },
+                new GeoCell { Geo = geoIdFill[2], Stackables = new bool[22] }
             ]
         );
 
@@ -401,7 +401,7 @@ public class LoadFileResult
     public bool DefaultTerrain { get; set; }
     public string DefaultMaterial { get; set; } = string.Empty;
 
-    public RunCell[,,]? GeoMatrix { get; init; } = null;
+    public GeoCell[,,]? GeoMatrix { get; init; } = null;
     public TileCell[,,]? TileMatrix { get; init; } = null;
     public Color[,,]? MaterialColorMatrix { get; init; } = null;
     public (InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)[]? PropsArray { get; init; } = null;
@@ -504,11 +504,11 @@ public record struct ConColor(
 }
 
 
-public struct RunCell {
+public struct GeoCell {
     public int Geo { get; set; } = 0;
     public bool[] Stackables { get; set; } = new bool[22];
 
-    public static bool operator ==(RunCell c1, RunCell c2)
+    public static bool operator ==(GeoCell c1, GeoCell c2)
     {
         if (c1.Geo != c2.Geo) return false;
 
@@ -522,14 +522,14 @@ public struct RunCell {
         return true;
     }
 
-    public static bool operator !=(RunCell c1, RunCell c2) => !(c1 == c2);
+    public static bool operator !=(GeoCell c1, GeoCell c2) => !(c1 == c2);
 
-    public RunCell() {
+    public GeoCell() {
         Geo = 0;
         Stackables = new bool[22];
     }
 
-    public RunCell(int geo)
+    public GeoCell(int geo)
     {
         Geo = geo;
         Stackables = new bool[22];

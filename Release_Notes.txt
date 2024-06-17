@@ -1,2 +1,1 @@
-- Fixed props not being placed with the proper scale when continuous placement is enabled.
-- Fixed continuous placement toggle shortcut. 
+- Fixed potential crash when attempting to resize level.
