@@ -126,7 +126,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         case 1:
                             DrawLineEx(
                                 center with { X = -10 }, 
-                                center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
+                                center with { X = GLOBALS.Level.Width*20 + 10 }, 
                                 2f, 
                                 Color.Red
                             );
@@ -134,7 +134,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         case 2:
                             DrawLineEx(
                                 center with { Y = -10 },
-                                center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
+                                center with { Y = GLOBALS.Level.Height*20 + 10 },
                                 2f,
                                 Color.Green
                             );
@@ -497,7 +497,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 case 1:
                                     DrawLineEx(
                                         center with { X = -10 }, 
-                                        center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
+                                        center with { X = GLOBALS.Level.Width*20 + 10 }, 
                                         2f, 
                                         Color.Red
                                     );
@@ -505,7 +505,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 case 2:
                                     DrawLineEx(
                                         center with { Y = -10 },
-                                        center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
+                                        center with { Y = GLOBALS.Level.Height*20 + 10 },
                                         2f,
                                         Color.Green
                                     );
@@ -723,7 +723,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 case 1:
                                     DrawLineEx(
                                         center with { X = -10 }, 
-                                        center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
+                                        center with { X = GLOBALS.Level.Width*20 + 10 }, 
                                         2f, 
                                         Color.Red
                                     );
@@ -731,7 +731,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 case 2:
                                     DrawLineEx(
                                         center with { Y = -10 },
-                                        center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
+                                        center with { Y = GLOBALS.Level.Height*20 + 10 },
                                         2f,
                                         Color.Green
                                     );
@@ -968,7 +968,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 case 1:
                                     DrawLineEx(
                                         center with { X = -10 }, 
-                                        center with { X = GLOBALS.Level.Width*GLOBALS.PreviewScale + 10 }, 
+                                        center with { X = GLOBALS.Level.Width*20 + 10 }, 
                                         2f, 
                                         Color.Red
                                     );
@@ -976,7 +976,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 case 2:
                                     DrawLineEx(
                                         center with { Y = -10 },
-                                        center with { Y = GLOBALS.Level.Height*GLOBALS.PreviewScale + 10 },
+                                        center with { Y = GLOBALS.Level.Height*20 + 10 },
                                         2f,
                                         Color.Green
                                     );
@@ -1608,7 +1608,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             _hidden = new bool[GLOBALS.Level.Props.Length];
         }
 
-        var previewScale = GLOBALS.PreviewScale;
+        var previewScale = 20;
 
         var sWidth = GetScreenWidth();
         var sHeight = GetScreenHeight();
@@ -1623,8 +1623,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
         var menuPanelRect = new Rectangle(sWidth - 360, 0, 360, sHeight);
 
         //                        v this was done to avoid rounding errors
-        var tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / previewScale;
-        var tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / previewScale;
+        var tileMatrixY = tileMouseWorld.Y < 0 ? -1 : (int)tileMouseWorld.Y / 20;
+        var tileMatrixX = tileMouseWorld.X < 0 ? -1 : (int)tileMouseWorld.X / 20;
 
         var canDrawTile = !_isPropsListHovered && !_isNavbarHovered && 
                         !_isPropsWinHovered && 
@@ -1896,8 +1896,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             {
                                 if (_currentTile is null) break;
                                 
-                                var width = (float)(_currentTile.Size.Item1 + _currentTile.BufferTiles*2) * GLOBALS.PreviewScale / 2;
-                                var height = (float)(_currentTile.Size.Item2 + _currentTile.BufferTiles*2) * GLOBALS.PreviewScale / 2;
+                                // var width = (float)(_currentTile.Size.Item1 + _currentTile.BufferTiles*2) * 20 / 2;
+                                // var height = (float)(_currentTile.Size.Item2 + _currentTile.BufferTiles*2) * 20 / 2;
+
+                                var width = (float)(_currentTile.Size.Item1 + _currentTile.BufferTiles*2) * 20 / 2;
+                                var height = (float)(_currentTile.Size.Item2 + _currentTile.BufferTiles*2) * 20 / 2;
                                 
                                 BasicPropSettings settings;
 
@@ -1920,11 +1923,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 //     new Vector2(posV.X - width, posV.Y + height)
                                 // );
 
+                                // var placementQuad = new PropQuad(
+                                //     new(posV.X - width - _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
+                                //     new(posV.X + width + _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
+                                //     new(posV.X + width + _defaultStretch.X, posV.Y + height + _defaultStretch.Y),
+                                //     new(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y)
+                                // );
+
                                 var placementQuad = new PropQuad(
-                                    new(posV.X - width - _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
-                                    new(posV.X + width + _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
-                                    new(posV.X + width + _defaultStretch.X, posV.Y + height + _defaultStretch.Y),
-                                    new(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y)
+                                    new Vector2(posV.X - width - _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
+                                    new Vector2(posV.X + width + _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
+                                    new Vector2(posV.X + width + _defaultStretch.X, posV.Y + height + _defaultStretch.Y),
+                                    new Vector2(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y)
                                 );
 
                                 foreach (var prop in GLOBALS.Level.Props)
@@ -2086,8 +2096,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 
                                 var (width, height, settings) = init switch
                                 {
-                                    InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings(variation:_defaultVariation)),
-                                    InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
+                                    InitVariedStandardProp variedStandard => (variedStandard.Size.x * 20 / 2f, variedStandard.Size.y * 20 / 2f, new PropVariedSettings(variation:_defaultVariation)),
+                                    InitStandardProp standard => (standard.Size.x * 20 / 2f, standard.Size.y * 20 / 2f, new BasicPropSettings()),
                                     InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings(variation:_defaultVariation)),
                                     InitSoftProp => (texture.Width  / 2f, texture.Height  / 2f, new PropSoftSettings()),
                                     InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings(variation:_defaultVariation)),
@@ -2364,8 +2374,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 
                                 var (width, height, settings) = init switch
                                 {
-                                    InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings(variation:_defaultVariation)),
-                                    InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
+                                    InitVariedStandardProp variedStandard => (variedStandard.Size.x * 20 / 2f, variedStandard.Size.y * 20 / 2f, new PropVariedSettings(variation:_defaultVariation)),
+                                    InitStandardProp standard => (standard.Size.x * 20 / 2f, standard.Size.y * 20 / 2f, new BasicPropSettings()),
                                     InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings(variation:_defaultVariation)),
                                     InitSoftProp => (texture.Width  / 2f, texture.Height  / 2f, new PropSoftSettings()),
                                     InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings(variation:_defaultVariation)),
@@ -2457,6 +2467,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                 if (_shortcuts.ResetPlacementRotation.Check(ctrl, shift, alt)) {
                     _placementRotation = 0;
+                }
+
+                // Continuous Placement
+                if (_shortcuts.ToggleNoCollisionPropPlacement.Check(ctrl, shift, alt)) {
+                    _noCollisionPropPlacement = !_noCollisionPropPlacement;
                 }
 
                 // Activate Selection Mode Via Mouse
@@ -3368,8 +3383,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     
                     var posV = _snapMode switch
                     {
-                        1 => new Vector2(tileMatrixX, tileMatrixY) * GLOBALS.PreviewScale,
-                        2 => new Vector2((int)(tileMouseWorld.X / 8f), (int)(tileMouseWorld.Y / 8f)) * 8f,
+                        1 => new Vector2((int)(tileMouseWorld.X / 20f), (int)(tileMouseWorld.Y / 20f)) * 20f,
+                        2 => new Vector2((int)(tileMouseWorld.X / 10f), (int)(tileMouseWorld.Y / 10f)) * 10f,
                         _ => tileMouseWorld
                     };
 
@@ -3959,8 +3974,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             
                             var (width, height, settings) = prop switch
                             {
-                                InitVariedStandardProp variedStandard => (variedStandard.Size.x * GLOBALS.PreviewScale / 2f, variedStandard.Size.y * GLOBALS.PreviewScale / 2f, new PropVariedSettings(variation:_defaultVariation)),
-                                InitStandardProp standard => (standard.Size.x * GLOBALS.PreviewScale / 2f, standard.Size.y * GLOBALS.PreviewScale / 2f, new BasicPropSettings()),
+                                InitVariedStandardProp variedStandard => (variedStandard.Size.x * 20 / 2f, variedStandard.Size.y * 20 / 2f, new PropVariedSettings(variation:_defaultVariation)),
+                                InitStandardProp standard => (standard.Size.x * 20 / 2f, standard.Size.y * 20 / 2f, new BasicPropSettings()),
                                 InitVariedSoftProp variedSoft => (variedSoft.SizeInPixels.x  / 2f, variedSoft.SizeInPixels.y / 2f, new PropVariedSoftSettings(variation:_defaultVariation)),
                                 InitSoftProp => (texture.Width  / 2f, texture.Height  / 2f, new PropSoftSettings()),
                                 InitVariedDecalProp variedDecal => (variedDecal.SizeInPixels.x  / 2f, variedDecal.SizeInPixels.y / 2f, new PropVariedDecalSettings(variation:_defaultVariation)),
