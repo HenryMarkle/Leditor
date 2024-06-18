@@ -1,1 +1,6 @@
-- Fixed drawing some tile textures in tinted mode.
+- Fixed stray tile fragment removal tool crashing the editor.
+- Renamed the "Options" navigation bar menu item to "File".
+  - Added "Open Projects Folder". 
+  - Added "Open Level Folder". 
+  - Added "Open Rendering Assets Folder".
+  - These are exlusive to Windows, for now. 

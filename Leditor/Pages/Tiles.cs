@@ -168,9 +168,9 @@ internal class TileEditorPage : EditorPage, IDisposable
                         hx > matrix.GetLength(1) ||
                         hy < 1 ||
                         hy > matrix.GetLength(0) ||
-                        z < 1 || 
-                        z > 3 ||
-                        matrix[y - 1, x - 1, z - 1].Data is not TileHead) {
+                        hz < 1 || 
+                        hz > 3 ||
+                        matrix[hy - 1, hx - 1, hz - 1].Data is not TileHead) {
                             matrix[y, x, z] = new TileCell();
                     }
                 }
@@ -3055,6 +3055,7 @@ internal class TileEditorPage : EditorPage, IDisposable
 
                     if (ImGui.Button("Confirm")) {
                         EraseStrayFragments(GLOBALS.Level.TileMatrix);
+                        _shouldRedrawLevel = true;
                         ImGui.CloseCurrentPopup();
                     }
 

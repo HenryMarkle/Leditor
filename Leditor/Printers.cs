@@ -2,6 +2,7 @@ using static Raylib_cs.Raylib;
 using System.Numerics;
 using Leditor.Types;
 using Leditor.Data.Tiles;
+using System.Threading;
 
 namespace Leditor;
 
@@ -7017,11 +7018,29 @@ internal static class Printers
 
             var selected = 0;
             
-            if (ImGuiNET.ImGui.BeginMenu("Options"))
+            if (ImGuiNET.ImGui.BeginMenu("File"))
             {
                 if (ImGuiNET.ImGui.MenuItem("Open..", gShortcuts.Open.ToString())) 
                 {
                     GLOBALS.Page = 0;
+                }
+
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT &&
+                    Directory.Exists(GLOBALS.Paths.ProjectsDirectory) && 
+                    ImGuiNET.ImGui.MenuItem("Open Projects Folder")) {
+                        System.Diagnostics.Process.Start("explorer.exe", GLOBALS.Paths.ProjectsDirectory);
+                }
+
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT &&
+                    Directory.Exists(GLOBALS.Paths.LevelsDirectory) && 
+                    ImGuiNET.ImGui.MenuItem("Open Levels Folder")) {
+                        System.Diagnostics.Process.Start("explorer.exe", GLOBALS.Paths.LevelsDirectory);
+                }
+
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT &&
+                    Directory.Exists(GLOBALS.Paths.RendererDirectory) && 
+                    ImGuiNET.ImGui.MenuItem("Open Rendering Assets Folder")) {
+                        System.Diagnostics.Process.Start("explorer.exe", GLOBALS.Paths.RendererDirectory);
                 }
 
                 if (ImGuiNET.ImGui.MenuItem("Save", gShortcuts.QuickSave.ToString()))
