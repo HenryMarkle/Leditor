@@ -1789,7 +1789,7 @@ internal static class Printers
                     parameters.TileDrawMode,
                     (byte)(parameters.HighLayerContrast ? 60 : 255),
                     true, 
-                    true,
+                    parameters.CropTilePrevious,
                     parameters.VisibleStrayTileFragments
                 );
                 EndTextureMode();
@@ -1923,7 +1923,7 @@ internal static class Printers
                         parameters.TileDrawMode,
                         (byte)(parameters.HighLayerContrast ? 70 : 255),
                         true, 
-                        true,
+                        parameters.CropTilePrevious,
                         parameters.VisibleStrayTileFragments
                     );
                     EndTextureMode();
@@ -2072,26 +2072,17 @@ internal static class Printers
                     
                 } else {
                     BeginTextureMode(texture);
-                    if (parameters.HighLayerContrast) {
-                        DrawTileLayer(
-                            parameters.CurrentLayer,
-                            0, 
-                            parameters.Scale, 
-                            false, 
-                            parameters.TileDrawMode,
-                            70
-                        );
-                    } else {
-                        DrawTileLayer(
-                            parameters.CurrentLayer,
-                            0, 
-                            parameters.Scale, 
-                            false, 
-                            parameters.TileDrawMode,
-                            255,
-                            visibleStrays: parameters.VisibleStrayTileFragments
-                        );
-                    }
+                    DrawTileLayer(
+                        parameters.CurrentLayer,
+                        0, 
+                        parameters.Scale, 
+                        false, 
+                        parameters.TileDrawMode,
+                        (byte)(parameters.HighLayerContrast ? 70 : 255),
+                        true,
+                        parameters.CropTilePrevious,
+                        parameters.VisibleStrayTileFragments
+                    );
                     EndTextureMode();
                 }
             }

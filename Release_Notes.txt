@@ -1,1 +1,1 @@
-- Bathives can be placed on the third layer. 
+- Fixed cropping tile preview textures checkbox.
