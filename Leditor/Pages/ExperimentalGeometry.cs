@@ -959,9 +959,10 @@ internal class ExperimentalGeometryPage : EditorPage
                                                 y * scale < GLOBALS.Level.Border.Y ||
                                                 y * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y)) break;
 
-                                            if (_geoMenuIndex == 0 && GLOBALS.Layer != 0 && GLOBALS.Layer != 1) break;
-
                                             var id = GeoMenuCategory3ToStackableId[_geoMenuIndex];
+
+                                            if (_geoMenuIndex == 0 && GLOBALS.Layer != 0 && GLOBALS.Layer != 1 && id != 3) break;
+                                            
                                             cell.Stackables[id] = true;
                                         }
                                         break;
@@ -1267,9 +1268,9 @@ internal class ExperimentalGeometryPage : EditorPage
                             //     matrixY * scale < GLOBALS.Level.Border.Y ||
                             //     matrixY * scale >= GLOBALS.Level.Border.Height + GLOBALS.Level.Border.Y)) break;
 
-                            if (_geoMenuIndex == 0 && GLOBALS.Layer != 0 && GLOBALS.Layer != 1) break;
-
                             var id = GeoMenuCategory3ToStackableId[_geoMenuIndex];
+
+                            if (_geoMenuIndex == 0 && GLOBALS.Layer != 0 && GLOBALS.Layer != 1 && id != 3) break;
                             
                             ref var cell = ref GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
 
