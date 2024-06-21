@@ -3,10 +3,11 @@ using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 using Leditor.Types;
+using System.Numerics;
 
 namespace Leditor.Pages;
 
-internal class GeoEditorPage : EditorPage
+internal class LegacyGeoEditorPage : EditorPage
 {
     public override void Dispose()
     {
@@ -448,7 +449,7 @@ internal class GeoEditorPage : EditorPage
                     case 23: // worm
                     case 24: // forbidflychains
                         {
-                            if (geoIndex is 17 or 18 or 19 or 20 or 22 or 23 or 24 or 25 or 26 or 27 && GLOBALS.Layer != 0)
+                            if (geoIndex is 17 or 19 or 20 or 22 or 23 or 24 or 25 or 26 or 27 && GLOBALS.Layer != 0)
                             {
                                 break;
                             }
@@ -1010,50 +1011,47 @@ internal class GeoEditorPage : EditorPage
                 
                 // the red selection rectangle
 
-                for (var y = 0; y < GLOBALS.Level.Height; y++)
+                if (multiselect)
                 {
-                    for (var x = 0; x < GLOBALS.Level.Width; x++)
+                    var XS = matrixX - prevCoordsX;
+                    var YS = matrixY - prevCoordsY;
+                    var width = Math.Abs(XS == 0 ? 1 : XS + (XS > 0 ? 1 : -1)) * scale;
+                    var height = Math.Abs(YS == 0 ? 1 : YS + (YS > 0 ? 1 : -1)) * scale;
+
+                    Rectangle rec = (XS >= 0, YS >= 0) switch
                     {
-                        if (multiselect)
-                        {
-                            var XS = matrixX - prevCoordsX;
-                            var YS = matrixY - prevCoordsY;
-                            var width = Math.Abs(XS == 0 ? 1 : XS + (XS > 0 ? 1 : -1)) * scale;
-                            var height = Math.Abs(YS == 0 ? 1 : YS + (YS > 0 ? 1 : -1)) * scale;
+                        // br
+                        (true, true) => new(prevCoordsX * scale, prevCoordsY * scale, width, height),
 
-                            Rectangle rec = (XS >= 0, YS >= 0) switch
-                            {
-                                // br
-                                (true, true) => new(prevCoordsX * scale, prevCoordsY * scale, width, height),
+                        // tr
+                        (true, false) => new(prevCoordsX * scale, matrixY * scale, width, height),
 
-                                // tr
-                                (true, false) => new(prevCoordsX * scale, matrixY * scale, width, height),
+                        // bl
+                        (false, true) => new(matrixX * scale, prevCoordsY * scale, width, height),
 
-                                // bl
-                                (false, true) => new(matrixX * scale, prevCoordsY * scale, width, height),
+                        // tl
+                        (false, false) => new(matrixX * scale, matrixY * scale, width, height)
+                    };
 
-                                // tl
-                                (false, false) => new(matrixX * scale, matrixY * scale, width, height)
-                            };
+                    DrawRectangleLinesEx(rec, 2, Color.Red);
 
-                            Raylib.DrawRectangleLinesEx(rec, 2, new(255, 0, 0, 255));
-
-                            Raylib.DrawText(
-                                $"{width / scale:0}x{height / scale:0}",
-                                (int)mouse.X + 10,
-                                (int)mouse.Y,
-                                4,
-                                new(255, 255, 255, 255)
-                                );
-                        }
-                        else
-                        {
-                            if (matrixX == x && matrixY == y)
-                            {
-                                Raylib.DrawRectangleLinesEx(new(x * scale, y * scale, scale, scale), 2, new(255, 0, 0, 255));
-                            }
-                        }
-                    }
+                    DrawText(
+                        $"{width / scale:0}x{height / scale:0}",
+                        (int)mouse.X + 10,
+                        (int)mouse.Y,
+                        4,
+                        Color.White
+                    );
+                }
+                else
+                {
+                    DrawRectangleLinesEx(new(matrixX * scale, matrixY * scale, scale, scale), 2, Color.Red);
+                    DrawText($"{matrixX}x {matrixY}y",
+                        (matrixX + 1) * 20,
+                        (matrixY + 1) * 20,
+                        4,
+                        Color.White
+                    );
                 }
             }
             EndMode2D();
@@ -1119,48 +1117,15 @@ internal class GeoEditorPage : EditorPage
                 }
             }
 
-            if (geoIndex < GLOBALS.Textures.GeoMenu.Length && geoIndex is not 28 or 29 or 30) Raylib.DrawText(GeoNames[geoIndex], Raylib.GetScreenWidth() - 190, 8 * GLOBALS.UiScale + 110, 18, new(0, 0, 0, 255));
+            if (geoIndex < GLOBALS.Textures.GeoMenu.Length && geoIndex is not 28 or 29 or 30) 
+            {
+                if (GLOBALS.Font is null) {
+                    DrawText(GeoNames[geoIndex], GetScreenWidth() - 190, 8 * GLOBALS.UiScale + 110, 20, Color.Black);
+                } else {
+                    DrawTextEx(GLOBALS.Font!.Value, GeoNames[geoIndex], new Vector2(GetScreenWidth() - 190, 8 * GLOBALS.UiScale + 110), 32, 0, Color.Black);
+                }
+            }
 
-            
-
-            if (matrixX >= 0 && matrixX < GLOBALS.Level.Width && matrixY >= 0 && matrixY < GLOBALS.Level.Height)
-                Raylib.DrawText(
-                    $"X = {matrixX:0}\nY = {matrixY:0}",
-                    sWidth - 195,
-                    sWidth - 100,
-                    12,
-                    new(0, 0, 0, 255));
-
-            else Raylib.DrawText(
-                    $"X = -\nY = -",
-                    sWidth - 195,
-                    sWidth - 100,
-                    12,
-                    new(0, 0, 0, 255));
-
-            // showLayer1 = RayGui.GuiCheckBox(
-            //     new(sWidth - 190, 8 * GLOBALS.UiScale + 190, 20, 20),
-            //     "Layer 1",
-            //     showLayer1
-            // );
-            //
-            // showLayer2 = RayGui.GuiCheckBox(
-            //     new(sWidth - 190, 8 * GLOBALS.UiScale + 210, 20, 20),
-            //     "Layer 2",
-            //     showLayer2
-            // );
-            //
-            // showLayer3 = RayGui.GuiCheckBox(
-            //     new(sWidth - 190, 8 * GLOBALS.UiScale + 230, 20, 20),
-            //     "Layer 3",
-            //     showLayer3
-            // );
-            //
-            // GLOBALS.Settings.GeometryEditor.ShowCameras = RayGui.GuiCheckBox(
-            //     new (sWidth - 190, 8 * GLOBALS.UiScale + 270, 20, 20),
-            //     "Show Cameras",
-            //     GLOBALS.Settings.GeometryEditor.ShowCameras
-            // );
 
             // Layer indicator
             

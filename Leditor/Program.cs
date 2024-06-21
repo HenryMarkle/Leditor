@@ -408,7 +408,7 @@ class Program
 
         var isLoadingTexturesDone = false;
 
-        GeoEditorPage? geoPage = null;
+        LegacyGeoEditorPage? geoPage = null;
         TileEditorPage? tilePage = null;
         CamerasEditorPage? camerasPage = null;
         LightEditorPage? lightPage = null;
