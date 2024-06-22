@@ -3,6 +3,7 @@ using rlImGui_cs;
 using Leditor.Types;
 using Leditor.Data.Tiles;
 using System.Numerics;
+using ImGuiNET;
 
 namespace Leditor.Pages;
 
@@ -30,6 +31,7 @@ internal class TileCreatorPage : EditorPage
         _generalSettings = GLOBALS.Settings.GeneralSettings;
 
         _layersRT = new RL.Managed.RenderTexture2D[30];
+        _hidden = new bool[30];
 
         for (var l = 0; l < 30; l++) {
             _layersRT[l] = new(0, 0);
@@ -77,8 +79,14 @@ void main() {
         L2Specs = new int[0, 0];
         L3Specs = new int[0, 0];
 
-        RepeatL = [];
+        RepeatL = Enumerable
+            .Range(0, _newLayerCount)
+            .Select(i => 1)
+            .ToList();
+        
         Tags = [];
+
+        UpdateNewCanvas();
     }
 
     ~TileCreatorPage() {
@@ -108,6 +116,12 @@ void main() {
     private int _newHeight = 1;
     private int _newBuffer;
 
+    private int _newLayerCount = 1;
+
+    private string _newName = "New Tile";
+
+    private bool[] _hidden;
+
     #endregion
 
     #region Properties
@@ -135,6 +149,7 @@ void main() {
         _newWidth = 1;
         _newHeight = 1;
         _newBuffer = 0;
+        _newLayerCount = 1;
     }
 
     private void New(int width, int height, int bufferSpace) {
@@ -156,9 +171,11 @@ void main() {
             }
         }
 
-        RepeatL = [ 1 ];
+        RepeatL = Enumerable.Range(0, _newLayerCount).Select(i => 1).ToList();
 
         Tags = [];
+
+        ResetNewMenu();
 
         UpdateCanvas();
     }
@@ -170,16 +187,16 @@ void main() {
         _newCanvasRT = new((_newWidth + _newBuffer * 2) * 20 + 20, (_newHeight + _newBuffer * 2) * 20 + 20);
 
         BeginTextureMode(_newCanvasRT);
-        ClearBackground(Color.White with { A = 0 });
+        ClearBackground(_generalSettings.DarkTheme ? Color.Black : Color.White);
 
         for (var x = 0; x < _newWidth + _newBuffer*2; x++) {
             for (var y = 0; y < _newHeight + _newBuffer*2; y++) {
                 if (y == 0 || y == _newHeight + _newBuffer*2 ||
                     x == 0 || x == _newWidth + _newBuffer*2) {
 
-                    DrawRectangle(10 + x * 20, 10 + y * 20, 20, 20, Color.Green);
+                    DrawRectangleLines(10 + x * 20, 10 + y * 20, 20, 20, Color.Green);
                 } else {
-                    DrawRectangle(10 + x * 20, 10 + y * 20, 20, 20, _generalSettings.DarkTheme ? Color.White : Color.Black);
+                    DrawRectangleLines(10 + x * 20, 10 + y * 20, 20, 20, _generalSettings.DarkTheme ? Color.White : Color.Black);
                 }
             }
         }
@@ -277,25 +294,67 @@ void main() {
                     : new Color(120, 120, 120, 255)
             );
 
-            #region 2D
+            if (_createNew) {
+                rlImGui.Begin();
+                {
+                    if (ImGui.Begin("New Tile##TileCreatorNewWindow", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove)) {
+                        ImGui.SetWindowPos(Vector2.One * 20);
+                        ImGui.SetWindowSize(new Vector2(GetScreenWidth() - 40, GetScreenHeight() - 40));
 
-            BeginMode2D(_camera);
-            {
+                        ImGui.Columns(2);
 
+                        ImGui.InputText("Name", ref _newName, 256);
+
+                        if (ImGui.InputInt("Width", ref _newWidth)) Utils.Restrict(ref _newWidth, 1);
+                        if (ImGui.InputInt("Height", ref _newHeight)) Utils.Restrict(ref _newHeight, 1);
+                        if (ImGui.InputInt("Buffer Space", ref _newBuffer)) Utils.Restrict(ref _newBuffer, 0);
+                        if (ImGui.InputInt("Layers", ref _newLayerCount)) Utils.Restrict(ref _newLayerCount, 1);
+
+                        ImGui.Spacing();
+
+                        var disableCreate = string.IsNullOrEmpty(_newName);
+
+                        if (disableCreate) ImGui.BeginDisabled();
+
+                        if (ImGui.Button("Create", ImGui.GetContentRegionAvail() with { Y = 20 })) {
+                            Name = _newName;
+                            New(_newWidth, _newHeight, _newBuffer);
+                            
+                            _createNew = false;
+                        }
+
+                        if (disableCreate) ImGui.EndDisabled();
+
+                        ImGui.NextColumn();
+
+                        rlImGui.ImageRenderTextureFit(_newCanvasRT, false);
+
+                        ImGui.End();
+                    }
+                }
+                rlImGui.End();
+            } else {
+                #region 2D
+
+                BeginMode2D(_camera);
+                {
+                    DrawTexture(_composedRT.Raw.Texture, 0, 0, Color.White);
+                }
+                EndMode2D();
+
+                #endregion
+
+                #region ImGui
+
+                rlImGui.Begin();
+                {
+
+                }
+                rlImGui.End();
+
+                #endregion
             }
-            EndMode2D();
 
-            #endregion
-
-            #region ImGui
-
-            rlImGui.Begin();
-            {
-
-            }
-            rlImGui.End();
-
-            #endregion
         }
         EndDrawing();
 

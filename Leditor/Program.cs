@@ -430,6 +430,7 @@ class Program
         ExperimentalGeometryPage? experimentalGeometryPage = null;
         SettingsPage? settingsPage = null;
         TileViewerPage? tileViewerPage = null;
+        TileCreatorPage? tileCreatorPage = null;
 
         Task allCacheTasks = default!;
 
@@ -1106,6 +1107,7 @@ void main() {
         experimentalGeometryPage = new() { Logger = logger };
         settingsPage = new() { Logger = logger };
         tileViewerPage = new() { Logger = logger };
+        tileCreatorPage = new() { Logger = logger };
 
         // GLOBALS.Pager = new Pager(logger, new Context(logger, null));
         //
@@ -2290,6 +2292,7 @@ void main() {
                         case 18: geoPage?.Draw(); break;
                         case 19: missingPropTexturesPage?.Draw(); break;
                         case 20: tileViewerPage?.Draw(); break;
+                        case 21: tileCreatorPage!.Draw(); break;
                         case 99: deathScreen?.Draw(); break;
                         
                         default:
@@ -2444,6 +2447,7 @@ void main() {
         experimentalGeometryPage?.Dispose();
         settingsPage?.Dispose();
         tileViewerPage?.Dispose();
+        tileCreatorPage?.Dispose();
 
         paletteLoader?.Dispose();
 
