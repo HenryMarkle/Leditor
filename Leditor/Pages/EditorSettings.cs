@@ -21,8 +21,10 @@ internal class SettingsPage : EditorPage
     private int _shortcutsActiveCategory;
 
     private bool _assigningShortcut;
+    private bool _showAssignAlertWindow;
 
     private KeyboardShortcut? _shortcutToAssign;
+    private KeyboardShortcut? _shortcutToReset;
     private MouseShortcut? _mouseShortcutToAssign;
     
     private readonly string[] _settingsCategories = [
@@ -51,27 +53,6 @@ internal class SettingsPage : EditorPage
     public override void Draw()
     {
         #region Shortcuts
-        
-        if (!_assigningShortcut)
-        {
-            // var ctrl = IsKeyDown(KeyboardKey.LeftControl);
-            // var shift = IsKeyDown(KeyboardKey.LeftShift);
-            // var alt = IsKeyDown(KeyboardKey.LeftAlt);
-            //
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToMainPage.Check(ctrl, shift, alt)) GLOBALS.Page = 1;
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToGeometryEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 2;
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToTileEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 3;
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToCameraEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 4;
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToLightEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 5;
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToDimensionsEditor.Check(ctrl, shift, alt))
-            // {
-            //     GLOBALS.Page = 6;
-            //     Logger.Debug("go from GLOBALS.Page 2 to GLOBALS.Page 6");
-            // }
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToEffectsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 7;
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToPropsEditor.Check(ctrl, shift, alt)) GLOBALS.Page = 8;
-            // if (GLOBALS.Settings.Shortcuts.GlobalShortcuts.ToSettingsPage.Check(ctrl, shift, alt)) GLOBALS.Page = 9;
-        }
         
         if (_shortcutToAssign is not null || _mouseShortcutToAssign is not null)
         {
@@ -107,6 +88,10 @@ internal class SettingsPage : EditorPage
                 _shortcutToAssign = null;
             }
             
+        }
+        else if (_shortcutToReset is not null) {
+            _shortcutToReset.Key = KeyboardKey.Null;
+            _shortcutToReset = null;
         }
         else if (_mouseShortcutToAssign is not null)
         {
@@ -276,8 +261,7 @@ internal class SettingsPage : EditorPage
 
                         ImGui.NextColumn();
 
-                        if (ImGui.BeginChild("##ActiveShortcutPanel")) {
-                        
+                        if (ImGui.BeginChild("##ActiveShortcutPanel")) {                        
                             var settings = GLOBALS.Settings;
 
                             var shortcutsContainer = _shortcutsActiveCategory switch { 
@@ -313,24 +297,39 @@ internal class SettingsPage : EditorPage
 
                             if (mouseShortcuts.Any()) ImGui.SeparatorText("Mouse Shortcuts");
 
-                            foreach (var group in mouseShortcuts) {
-                                foreach (var (property, name, combination, _, isMouse) in group) {
+                            if (ImGui.BeginTable("##MouseShortcuts", 3, ImGuiTableFlags.RowBg)) {
+                                ImGui.TableSetupColumn("Name");
+                                ImGui.TableSetupColumn("Combination");
 
-                                    ImGui.Text(name);
-                                    ImGui.SameLine();
-                                    var clicked =  ImGui.Button($"{combination}");
-                                    // ImGui.SameLine();
-                                    // var reset = ImGui.Button("Reset");
+                                ImGui.TableHeadersRow();
 
-                                    if (clicked) {
-                                        _mouseShortcutToAssign = (MouseShortcut?)combination;
+                                foreach (var group in mouseShortcuts) {
+                                    foreach (var (property, name, combination, _, isMouse) in group) {
+
+                                        ImGui.TableNextRow();
+
+                                        ImGui.TableSetColumnIndex(0);
+
+                                        ImGui.Text(name);
+                                        
+                                        ImGui.TableSetColumnIndex(1);
+                                
+                                        var clicked =  ImGui.Button($"{combination}");
+                                        // ImGui.SameLine();
+                                        // var reset = ImGui.Button("Reset");
+
+                                        if (clicked) {
+                                            _mouseShortcutToAssign = (MouseShortcut?)combination;
+                                        }
+
+                                        // if (reset) {
+                                        //     (combination as MouseShortcut)!.Button = MouseButton.Left;
+                                        // }
                                     }
-
-                                    // if (reset) {
-                                    //     (combination as MouseShortcut)!.Button = MouseButton.Left;
-                                    // }
                                 }
+                                ImGui.EndTable();
                             }
+
 
                             //
 
@@ -342,29 +341,69 @@ internal class SettingsPage : EditorPage
                                 ImGui.Spacing();
                             }
 
+
+                            var counter = 0;
+
                             foreach (var group in keyboardShortcuts) {
 
                                 if (!string.IsNullOrEmpty(group.Key)) ImGui.SeparatorText($"{group.Key}");
+
+                                if (ImGui.BeginTable($"##KeyboardShortcuts_{group.Key}", 3, ImGuiTableFlags.RowBg)) {
+                                    ImGui.TableSetupColumn("Name");
+                                    ImGui.TableSetupColumn("Combination");
+
+                                    ImGui.TableHeadersRow();
                                 
-                                foreach (var (property, name, combination, _, isMouse) in group) {
+                                    foreach (var (property, name, combination, _, isMouse) in group) {
+                                        counter++;
 
-                                    ImGui.Text(name);
+                                        ImGui.TableNextRow();
 
-                                    ImGui.SameLine();
+                                        ImGui.TableSetColumnIndex(0);
 
-                                    var clicked =  ImGui.Button($"{combination}");
-                                    // ImGui.SameLine();
+                                        ImGui.Text(name);
 
-                                    // var reset = ImGui.Button("Delete");
+                                        // ImGui.SameLine();
 
-                                    if (clicked) {
-                                        _shortcutToAssign = (KeyboardShortcut?)combination;
+                                        ImGui.TableSetColumnIndex(1);
+
+                                        var clicked =  ImGui.Button($"{combination}##COMBINATION_{counter}");
+                                        // ImGui.SameLine();
+
+                                        ImGui.TableSetColumnIndex(2);
+
+                                        var reset = ImGui.Button($"Delete##DELETE_{counter}");
+
+                                        if (clicked) {
+                                            _shortcutToAssign = (KeyboardShortcut?)combination;
+                                            ImGui.OpenPopup($"Settings Assigning Shortcut Alert {counter}");
+                                        }
+
+                                        if (ImGui.BeginPopupModal($"Settings Assigning Shortcut Alert {counter}")) 
+                                        {
+                                            // var size = ImGui.GetWindowSize();
+                                            
+                                            // ImGui.SetWindowPos(new Vector2(GetScreenWidth() - size.X, GetScreenHeight() - size.Y) / 2f);
+                                            
+                                            ImGui.Text("Enter the keyboard combination.");
+
+                                            var cancelClicked = ImGui.Button("Cancel", ImGui.GetContentRegionAvail() with { Y = 20});
+
+                                            if (cancelClicked || _shortcutToAssign is null) 
+                                            {
+                                                _shortcutToAssign = null;
+                                                ImGui.CloseCurrentPopup();
+                                            }
+
+                                            ImGui.EndPopup();
+                                        }
+
+                                        if (reset) {
+                                            _shortcutToReset = (KeyboardShortcut?)combination;
+                                        }
                                     }
-
-                                    // if (reset) {
-                                    //     (combination as KeyboardShortcut)!.Key = KeyboardKey.Null;
-                                    // }
                                 }
+                                ImGui.EndTable();
                             }
                             ImGui.EndChild();
                         }
@@ -376,7 +415,7 @@ internal class SettingsPage : EditorPage
             
             ImGui.End();
         }
-        
+
         rlImGui.End();
         
         EndDrawing();

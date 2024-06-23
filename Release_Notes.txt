@@ -2,4 +2,5 @@
 
 - Improved performance around big air/solid rectangles.
 - Bat hives can be placed on all layers.
-- Added cursor coordinates 
+- Added cursor coordinates.
+- Tweaked the shortcut settings window.
