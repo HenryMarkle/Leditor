@@ -315,6 +315,8 @@ public record TileShortcuts : IEditorShortcuts
     private KeyboardShortcut altDraw = new(KeyboardKey.Null);
     private KeyboardShortcut altErase = new(KeyboardKey.Null);
     private KeyboardShortcut altDragLevel = new(KeyboardKey.Null);
+    private KeyboardShortcut enlargeBrush = new(KeyboardKey.Equal);
+    private KeyboardShortcut shrinkBrush = new(KeyboardKey.Minus);
     private MouseShortcut draw = new(MouseButton.Left);
     private MouseShortcut erase = new(MouseButton.Right);
     private MouseShortcut dragLevel = new(MouseButton.Middle);
@@ -417,6 +419,8 @@ public record TileShortcuts : IEditorShortcuts
     public KeyboardShortcut AltDragLevel { get => altDragLevel; set {altDragLevel = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
 
+
+
     [ShortcutName("Draw")]
     public MouseShortcut Draw { get => draw; set {draw = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     
@@ -426,6 +430,11 @@ public record TileShortcuts : IEditorShortcuts
     [ShortcutName("Drag View")]
     public MouseShortcut DragLevel { get => dragLevel; set {dragLevel = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
+    [ShortcutName("Increase Brush Size")]
+    public KeyboardShortcut EnlargeBrush { get => enlargeBrush; set { enlargeBrush = value; CachedStrings = Utils.GetShortcutStrings(this); }}
+    
+    [ShortcutName("Decrease Brush Size")]
+    public KeyboardShortcut ShrinkBrush { get => shrinkBrush; set { shrinkBrush = value; CachedStrings = Utils.GetShortcutStrings(this); }}
 
  
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
@@ -636,6 +645,8 @@ public class EffectsShortcuts : IEditorShortcuts
     private KeyboardShortcut paintAlt = KeyboardKey.P;
     private KeyboardShortcut eraseAlt = KeyboardKey.Null;
     private KeyboardShortcut resizeBrush = KeyboardKey.LeftAlt;
+    private KeyboardShortcut enlargeBrush = new(KeyboardKey.Equal);
+    private KeyboardShortcut shrinkBrush = new(KeyboardKey.Minus);
     private MouseShortcut dragLevel = MouseButton.Middle;
     private MouseShortcut paint = MouseButton.Left;
     private MouseShortcut erase = MouseButton.Right;
@@ -707,6 +718,12 @@ public class EffectsShortcuts : IEditorShortcuts
     [ShortcutName("Resize Brush (+ Wheel)")]
     public KeyboardShortcut ResizeBrush { get => resizeBrush; set {resizeBrush = value; CachedStrings = Utils.GetShortcutStrings(this);} }
     
+    [ShortcutName("Increase Brush Size")]
+    public KeyboardShortcut EnlargeBrush { get => enlargeBrush; set { enlargeBrush = value; CachedStrings = Utils.GetShortcutStrings(this); }}
+    
+    [ShortcutName("Decrease Brush Size")]
+    public KeyboardShortcut ShrinkBrush { get => shrinkBrush; set { shrinkBrush = value; CachedStrings = Utils.GetShortcutStrings(this); }}
+
     [ShortcutName("Drag View")]
     public MouseShortcut DragLevel { get => dragLevel; set {dragLevel = value; CachedStrings = Utils.GetShortcutStrings(this);} }
     

@@ -427,6 +427,35 @@ internal class EffectsEditorPage : EditorPage
                                          _currentAppliedEffect < GLOBALS.Level.Effects.Length && 
                                          Utils.IsEffectBruhConstrained(GLOBALS.Level.Effects[_currentAppliedEffect].Item1);
 
+            if (isBrushSizeConstrained)
+            {
+                _brushRadius = 0;
+            }
+
+            if (_shortcuts.EnlargeBrush.Check(ctrl, shift, alt)) {
+                if (isBrushSizeConstrained)
+                {
+                    _brushRadius = 0;
+                }
+                else 
+                {
+                    _brushRadius += 1;
+
+                    Utils.Restrict(ref _brushRadius, 0, 10);
+                }
+            } else if (_shortcuts.ShrinkBrush.Check(ctrl, shift, alt)) {
+                if (isBrushSizeConstrained)
+                {
+                    _brushRadius = 0;
+                }
+                else 
+                {
+                    _brushRadius -= 1;
+
+                    Utils.Restrict(ref _brushRadius, 0, 10);
+                }
+            }
+
             if (IsKeyDown(_shortcuts.ResizeBrush.Key))
             {
                 if (isBrushSizeConstrained)

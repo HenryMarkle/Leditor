@@ -1350,6 +1350,18 @@ internal class TileEditorPage : EditorPage, IDisposable
             }
         }
         
+        // Resizing Brush With Keyboard
+
+        if (canDrawTile) {
+            if (_shortcuts.EnlargeBrush.Check(ctrl, shift, alt)) {
+                _materialBrushRadius += 1;
+                Utils.Restrict(ref _materialBrushRadius, 0);
+            }
+            else if (_shortcuts.ShrinkBrush.Check(ctrl, shift, alt)) {
+                _materialBrushRadius -= 1;
+                Utils.Restrict(ref _materialBrushRadius, 0);
+            }
+        }
         
         // Skip the rest of the shortcuts when searching
         if (_isSearching) goto skipShortcuts;
@@ -1410,7 +1422,7 @@ internal class TileEditorPage : EditorPage, IDisposable
         }
 
         
-        // handle mouse drag and brush resize
+        // handle mouse drag
 
         if (canDrawTile || _clickTracker)
         {
