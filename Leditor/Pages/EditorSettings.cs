@@ -315,11 +315,20 @@ internal class SettingsPage : EditorPage
 
                             foreach (var group in mouseShortcuts) {
                                 foreach (var (property, name, combination, _, isMouse) in group) {
-                                    var clicked =  ImGui.Button($"{name}: {combination}");
+
+                                    ImGui.Text(name);
+                                    ImGui.SameLine();
+                                    var clicked =  ImGui.Button($"{combination}");
+                                    // ImGui.SameLine();
+                                    // var reset = ImGui.Button("Reset");
 
                                     if (clicked) {
                                         _mouseShortcutToAssign = (MouseShortcut?)combination;
                                     }
+
+                                    // if (reset) {
+                                    //     (combination as MouseShortcut)!.Button = MouseButton.Left;
+                                    // }
                                 }
                             }
 
@@ -339,11 +348,22 @@ internal class SettingsPage : EditorPage
                                 
                                 foreach (var (property, name, combination, _, isMouse) in group) {
 
-                                    var clicked =  ImGui.Button($"{name}: {combination}");
+                                    ImGui.Text(name);
+
+                                    ImGui.SameLine();
+
+                                    var clicked =  ImGui.Button($"{combination}");
+                                    // ImGui.SameLine();
+
+                                    // var reset = ImGui.Button("Delete");
 
                                     if (clicked) {
                                         _shortcutToAssign = (KeyboardShortcut?)combination;
                                     }
+
+                                    // if (reset) {
+                                    //     (combination as KeyboardShortcut)!.Key = KeyboardKey.Null;
+                                    // }
                                 }
                             }
                             ImGui.EndChild();
