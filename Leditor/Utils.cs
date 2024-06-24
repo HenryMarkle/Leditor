@@ -46,6 +46,16 @@ internal static class Utils
         if (value < min) value = max;
     }
 
+    internal static void VFlipQuad(ref PropQuad quad) {
+        (quad.TopLeft, quad.BottomLeft) = (quad.BottomLeft, quad.TopLeft);
+        (quad.TopRight, quad.BottomRight) = (quad.BottomRight, quad.TopRight);
+    }
+
+    internal static void HFlipQuad(ref PropQuad quad) {
+        (quad.TopLeft, quad.TopRight) = (quad.TopRight, quad.TopLeft);
+        (quad.BottomLeft, quad.BottomRight) = (quad.BottomRight, quad.BottomLeft);
+    }
+
     internal static bool SpecHasDepth(int[,,] specs, int depth = 1) {
         if (depth < 0 || depth >= specs.GetLength(2)) return false;
 

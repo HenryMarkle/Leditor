@@ -805,7 +805,11 @@ public class PropsShortcuts : IEditorShortcuts
     private KeyboardShortcut fastSqueezePlacementVertical = KeyboardKey.Null;
     private KeyboardShortcut fastSqueezePlacementHorizontal = KeyboardKey.Null;
     private KeyboardShortcut resetPlacementStretch = KeyboardKey.Null;
-    
+
+    private KeyboardShortcut verticalFlipPlacement = KeyboardKey.Null;
+    private KeyboardShortcut horizontalFlipPlacement = KeyboardKey.Null;
+
+    private KeyboardShortcut rotateRightAnglePlacement = KeyboardKey.Null;
 
     //
 
@@ -946,6 +950,15 @@ public class PropsShortcuts : IEditorShortcuts
 
     [ShortcutName("Reset Placement Stretch", Group = "Placement")]
     public KeyboardShortcut ResetPlacementStretch { get => resetPlacementStretch; set { resetPlacementStretch = value; CachedStrings = Utils.GetShortcutStrings(this); }}
+
+    [ShortcutName("Vertically Flip", Group = "Placement")]
+    public KeyboardShortcut VerticalFlipPlacement { get => verticalFlipPlacement; set { verticalFlipPlacement = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Horizontally Flip", Group = "Placement")]
+    public KeyboardShortcut HorizontalFlipPlacement { get => horizontalFlipPlacement; set { horizontalFlipPlacement = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+
+    [ShortcutName("Rotate 90 Degrees", Group = "Placement")]
+    public KeyboardShortcut RotateRightAnglePlacement { get => rotateRightAnglePlacement; set { rotateRightAnglePlacement = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
 
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }

@@ -1,3 +1,3 @@
-- Added keyboard shortcuts to increase/decrease brush size to tiles and effects editors.
-  - `=` to increase.
-  - `-` to decrease.
+- Added a keyboard shortcut to vertically flip a prop placement (CTRL + V).
+- Added a keyboard shortcut to horizontally flip a prop placement (CTRL + H).
+- Added a keyboard shortcut to rotate a prop placement by 90 degrees (none by default).

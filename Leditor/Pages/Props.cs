@@ -1080,6 +1080,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
     // 0 - 360
     private int _placementRotation;
 
+    private bool _vFlipPlacement;
+    private bool _hFlipPlacement;
+
     private int _placementRotationSteps = 1;
 
     private int _ropeSimulationFrameCut = 1;
@@ -1729,6 +1732,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
         if (!isSearchBusy && _shortcuts.CycleSnapMode.Check(ctrl, shift, alt)) _snapMode = ++_snapMode % 3;
 
+        #region Placement & Selection Shortcuts
         // Mode-based hotkeys
         switch (_mode)
         {
@@ -1937,6 +1941,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     new Vector2(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y)
                                 );
 
+                                if (_vFlipPlacement) Utils.VFlipQuad(ref placementQuad);
+                                if (_hFlipPlacement) Utils.HFlipQuad(ref placementQuad);
+
                                 foreach (var prop in GLOBALS.Level.Props)
                                 {
                                     var propRec = Utils.EncloseQuads(prop.prop.Quads);
@@ -2051,6 +2058,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         TopRight = new(tileMouseWorld.X, tileMouseWorld.Y - height),
                                         BottomRight = new(tileMouseWorld.X, tileMouseWorld.Y + height)
                                     };
+
+                                    if (_vFlipPlacement) Utils.VFlipQuad(ref newQuads);
+                                    if (_hFlipPlacement) Utils.HFlipQuad(ref newQuads);
                                     
                                     PropLongSettings settings;
 
@@ -2130,6 +2140,16 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     settings = _copiedPropSettings;
                                     _defaultDepth = _copiedDepth;
                                 }
+
+                                var newQuads = new PropQuad(
+                                    new(posV.X - width - _defaultStretch.X, posV.Y - height - _defaultStretch.Y), 
+                                    new(posV.X + width + _defaultStretch.X, posV.Y - height - _defaultStretch.Y), 
+                                    new(posV.X + width + _defaultStretch.X, posV.Y + height + _defaultStretch.Y), 
+                                    new(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y)
+                                );
+
+                                if (_vFlipPlacement) Utils.VFlipQuad(ref newQuads);
+                                if (_hFlipPlacement) Utils.HFlipQuad(ref newQuads);
                                 
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
                                     (
@@ -2140,11 +2160,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             _defaultDepth, 
                                             init.Name, 
                                             false, 
-                                            new PropQuad(
-                                            new(posV.X - width - _defaultStretch.X, posV.Y - height - _defaultStretch.Y), 
-                                            new(posV.X + width + _defaultStretch.X, posV.Y - height - _defaultStretch.Y), 
-                                            new(posV.X + width + _defaultStretch.X, posV.Y + height + _defaultStretch.Y), 
-                                            new(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y))
+                                            newQuads
                                         )
                                         {
                                             Extras = new PropExtras(settings, [])
@@ -2222,6 +2238,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     new Vector2(posV.X + width + _defaultStretch.X, posV.Y + height + _defaultStretch.Y),
                                     new Vector2(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y)
                                 );
+
+                                if (_vFlipPlacement) Utils.VFlipQuad(ref quads);
+                                if (_hFlipPlacement) Utils.HFlipQuad(ref quads);
 
                                 quads = Utils.RotatePropQuads(quads, _placementRotation * _placementRotationSteps, tileMouseWorld);
                                 
@@ -2329,6 +2348,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         TopRight = new(tileMouseWorld.X, tileMouseWorld.Y - height),
                                         BottomRight = new(tileMouseWorld.X, tileMouseWorld.Y + height)
                                     };
+
+                                    if (_vFlipPlacement) Utils.VFlipQuad(ref newQuads);
+                                    if (_hFlipPlacement) Utils.HFlipQuad(ref newQuads);
                                     
                                     PropLongSettings settings;
 
@@ -2416,6 +2438,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     new(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y)
                                 );
 
+                                if (_vFlipPlacement) Utils.VFlipQuad(ref quads);
+                                if (_hFlipPlacement) Utils.HFlipQuad(ref quads);
+
                                 quads = Utils.RotatePropQuads(quads, _placementRotation * _placementRotationSteps, tileMouseWorld);
                                 
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
@@ -2467,6 +2492,24 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                 if (_shortcuts.ResetPlacementRotation.Check(ctrl, shift, alt)) {
                     _placementRotation = 0;
+                }
+
+                // Flipping Burgers
+
+                if (_shortcuts.VerticalFlipPlacement.Check(ctrl, shift, alt)) {
+                    _vFlipPlacement = !_vFlipPlacement;
+                }
+
+                if (_shortcuts.HorizontalFlipPlacement.Check(ctrl, shift, alt)) {
+                    _hFlipPlacement = !_hFlipPlacement;
+                }
+
+                // 90 Degree Rotation
+
+                if (_shortcuts.RotateRightAnglePlacement.Check(ctrl, shift, alt)) {
+                    _placementRotation += 90;
+
+                    Utils.Cycle(ref _placementRotation, 0, 360);
                 }
 
                 // Continuous Placement
@@ -3751,6 +3794,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 
                 break;
         }
+        #endregion
 
         #region TileEditorDrawing
         BeginDrawing();
@@ -3859,6 +3903,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             tileMouseWorld + offset with { X = -offset.X } + _defaultStretch with { X = -_defaultStretch.X }
                                         );
 
+                                        if (_vFlipPlacement) Utils.VFlipQuad(ref propQuad);
+                                        if (_hFlipPlacement) Utils.HFlipQuad(ref propQuad);
+
                                         propQuad = Utils.RotatePropQuads(propQuad, _placementRotation * _placementRotationSteps);
 
                                         Printers.DrawTileAsProp(_currentTile, propQuad, 0, 255);
@@ -3882,6 +3929,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             posV + offset + _defaultStretch,
                                             posV + offset with { X = -offset.X } + _defaultStretch with { X = -_defaultStretch.X }
                                         );
+
+                                        if (_vFlipPlacement) Utils.VFlipQuad(ref propQuad);
+                                        if (_hFlipPlacement) Utils.HFlipQuad(ref propQuad);
 
                                         propQuad = Utils.RotatePropQuads(propQuad, _placementRotation * _placementRotationSteps);
                                         
@@ -3912,6 +3962,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             posV + offset + _defaultStretch,
                                             posV + offset with { X = -offset.X } + _defaultStretch with { X = -_defaultStretch.X }
                                         );
+
+                                        if (_vFlipPlacement) Utils.VFlipQuad(ref propQuad);
+                                        if (_hFlipPlacement) Utils.HFlipQuad(ref propQuad);
 
                                         propQuad = Utils.RotatePropQuads(propQuad, _placementRotation * _placementRotationSteps);
                                         
@@ -3959,6 +4012,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 posV + offset with { X = -offset.X }
                             );
 
+                            if (_vFlipPlacement) Utils.VFlipQuad(ref propQuad);
+                            if (_hFlipPlacement) Utils.HFlipQuad(ref propQuad);
+
                             propQuad = Utils.RotatePropQuads(propQuad, _placementRotation * _placementRotationSteps);
 
                             Printers.DrawTileAsProp(_currentTile, propQuad, 0, 255);
@@ -4000,6 +4056,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 new Vector2(posV.X + width + _defaultStretch.X, posV.Y - height - _defaultStretch.Y), 
                                 new Vector2(posV.X + width + _defaultStretch.X, posV.Y + height + _defaultStretch.Y), 
                                 new Vector2(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y));
+
+                            if (_vFlipPlacement) Utils.VFlipQuad(ref quad);
+                            if (_hFlipPlacement) Utils.HFlipQuad(ref quad);
                             
                             Printers.DrawProp(settings, prop, texture, quad,
                                 0,

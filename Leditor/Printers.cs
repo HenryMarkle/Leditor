@@ -2725,28 +2725,47 @@ internal static class Printers
     
     internal static void DrawTextureQuad(
         in Texture2D texture, 
-        in PropQuad quads
+        in PropQuad quad
     )
     {
+        var flippedX = quad.TopLeft.X > quad.TopRight.X && quad.BottomLeft.X > quad.BottomRight.X;
+        var flippedY = quad.TopLeft.Y > quad.BottomLeft.Y && quad.TopRight.Y > quad.BottomRight.Y;
+
+        var (topRight, topLeft, bottomLeft, bottomRight) = (flippedX, flippedY) switch
+        {
+            (false, false) => (quad.TopRight, quad.TopLeft, quad.BottomLeft, quad.BottomRight),
+            (false, true ) => (quad.BottomRight, quad.BottomLeft, quad.TopLeft, quad.TopRight),
+            (true , false) => (quad.TopLeft, quad.TopRight, quad.BottomRight, quad.BottomLeft),
+            (true , true ) => (quad.BottomLeft, quad.BottomRight, quad.TopRight, quad.TopLeft)
+        };
+
+        var ((vTopRightX, vTopRightY), (vTopLeftX, vTopLeftY), (vBottomLeftX, vBottomLeftY), (vBottomRightX, vBottomRightY)) = (flippedX, flippedY) switch
+        {
+            (false, false) => ((1.0f, 0.0f), (0.0f, 0.0f), (0.0f, 1.0f), (1.0f, 1.0f)),
+            (false, true) => ((1.0f, 1.0f), (0.0f, 1.0f), (0.0f, 0.0f), (1.0f, 0.0f)),
+            (true, false) => ((0.0f, 0.0f), (1.0f, 0.0f), (1.0f, 1.0f), (0.0f, 1.0f)),
+            (true, true) => ((0.0f, 1.0f), (1.0f, 1.0f), (1.0f, 0.0f), (0.0f, 0.0f))
+        };
+
         Rlgl.SetTexture(texture.Id);
 
         Rlgl.Begin(0x0007);
         Rlgl.Color4ub(Color.White.R, Color.White.G, Color.White.B, Color.White.A);
 
-        Rlgl.TexCoord2f(1.0f, 0);
-        Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
+        Rlgl.TexCoord2f(vTopRightX, vTopRightY);
+        Rlgl.Vertex2f(topRight.X, topRight.Y);
         
-        Rlgl.TexCoord2f(0.0f, 0);
-        Rlgl.Vertex2f(quads.TopLeft.X, quads.TopLeft.Y);
+        Rlgl.TexCoord2f(vTopLeftX, vTopLeftY);
+        Rlgl.Vertex2f(topLeft.X, topLeft.Y);
         
-        Rlgl.TexCoord2f(0.0f, 1.0f);
-        Rlgl.Vertex2f(quads.BottomLeft.X, quads.BottomLeft.Y);
+        Rlgl.TexCoord2f(vBottomLeftX, vBottomLeftY);
+        Rlgl.Vertex2f(bottomLeft.X, bottomLeft.Y);
         
-        Rlgl.TexCoord2f(1.0f, 1.0f);
-        Rlgl.Vertex2f(quads.BottomRight.X, quads.BottomRight.Y);
+        Rlgl.TexCoord2f(vBottomRightX, vBottomRightY);
+        Rlgl.Vertex2f(bottomRight.X, bottomRight.Y);
         
-        Rlgl.TexCoord2f(1.0f, 0);
-        Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
+        Rlgl.TexCoord2f(vTopRightX, vTopRightY);
+        Rlgl.Vertex2f(topRight.X, topRight.Y);
         Rlgl.End();
 
         Rlgl.SetTexture(0);
