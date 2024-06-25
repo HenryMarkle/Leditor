@@ -206,6 +206,8 @@ internal class NewLevelPage : EditorPage
 
                     GLOBALS.Page = 1;
                     ProjectCreated?.Invoke(this, EventArgs.Empty);
+
+                    GLOBALS.NewlyCreated = true;
                 }
                 
                 //
@@ -310,6 +312,7 @@ internal class NewLevelPage : EditorPage
 
                     GLOBALS.Page = 1;
                     ProjectCreated?.Invoke(this, EventArgs.Empty);
+                    GLOBALS.NewlyCreated = true;
                 }
                 
                 //

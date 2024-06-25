@@ -250,6 +250,11 @@ internal static class GLOBALS
 
     internal static int RecentProjectsLimit { get; set; } = 10;
     internal static LinkedList<(string path, string name)> RecentProjects { get; set; } = [];
+
+    /// <summary>
+    /// Indicate whether a newly created level was saved before.
+    /// </summary>
+    internal static bool NewlyCreated { get; set; }
     
 
     /// The current loaded level

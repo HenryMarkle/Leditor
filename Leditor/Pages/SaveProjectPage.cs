@@ -305,6 +305,8 @@ internal class SaveProjectPage : EditorPage
                     EndDrawing();
                 }
 
+                GLOBALS.NewlyCreated = false;
+
                 GLOBALS.Page = GLOBALS.PreviousPage;
             }
             else

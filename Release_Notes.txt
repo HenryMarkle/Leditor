@@ -7,3 +7,9 @@
 ### Tiles Editor
 
 - The specs window has now been separated into two windows: specs and textures.
+
+### Rendering
+
+- Fixed a bug that saved the level anyway, even the cancel button was clicked in the save file dialog.
+- Added an auto-save prior to rendering.
+  - When enabled, if the project was newly created and not saved yet, attempting to render the level will temporaily redirect the user to the save file dialog screen.

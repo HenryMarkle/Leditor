@@ -81,6 +81,8 @@ internal class MainPage : EditorPage, IContextListener
     
     private DrizzleRenderWindow? _renderWindow;
 
+    private bool _renderAfterSave;
+
     public void OnProjectLoaded(object? sender, EventArgs e)
     {
         if (e is LevelLoadedEventArgs l)
@@ -905,39 +907,77 @@ internal class MainPage : EditorPage, IContextListener
                     var loadSelected = ImGui.Button("Load Project..", availableSpace with { Y = 20 });
                     var newSelected = ImGui.Button("New Project", availableSpace with { Y = 20 });
 
-                    if (true)
+                    var renderSelected = ImGui.Button("RENDER", availableSpace with { Y = 20 });
+                    
+                    if (renderSelected || _renderAfterSave)
                     {
-                        var renderSelected = ImGui.Button("RENDER", availableSpace with { Y = 20 });
-                        
-                        if (renderSelected)
-                        {
-                            Logger.Debug($"Rendering level \"{GLOBALS.Level.ProjectName}\"");
+                        if (_renderAfterSave) {
 
-                            _renderWindow = new DrizzleRenderWindow();
+                            if (File.Exists(Path.Combine(GLOBALS.ProjectPath, GLOBALS.Level.ProjectName + ".txt"))) {
+                                Logger.Debug($"Rendering level \"{GLOBALS.Level.ProjectName}\"");
+
+                                _renderWindow = new DrizzleRenderWindow();
+                                _renderAfterSave = false;
+                            } else {
+                                ImGui.OpenPopup("Project Not Rendered!");
+
+                                if (ImGui.BeginPopupModal("Project Not Rendered!")) {
+                                    ImGui.Text("Render failed because the project was not saved.");
+
+                                    ImGui.Spacing();
+                                    
+                                    if (ImGui.Button("Ok", ImGui.GetContentRegionAvail() with { Y = 20 })) {
+                                        ImGui.CloseCurrentPopup();
+                                        _renderAfterSave = false;
+                                    }
+                                    
+                                    ImGui.End();
+                                }
+                            }
+
+
+                        } else {
+                            if (GLOBALS.Settings.GeneralSettings.AutoSaveBeforeRendering) {
+                                
+                                if (GLOBALS.NewlyCreated) GLOBALS.Page = 12;
+                                else  {
+                                    GLOBALS.LockNavigation = true;
+                                    _fileDialogMode = 0;
+                                    _isGuiLocked = true;
+                                    _askForPath = false;
+                                }
+                                
+                                _renderAfterSave = true;
+                            } else {
+                                Logger.Debug($"Rendering level \"{GLOBALS.Level.ProjectName}\"");
+
+                                _renderWindow = new DrizzleRenderWindow();
+                            }
                         }
 
-                        if (ImGui.IsItemHovered())
-                        {
-                            ImGui.BeginTooltip();
-                            ImGui.Text("Requires saving the project to render the new changes");
-                            ImGui.EndTooltip();
-                        }
+                    }
+
+                    if (ImGui.IsItemHovered())
+                    {
+                        ImGui.BeginTooltip();
+                        ImGui.Text("Requires saving the project to render the new changes");
+                        ImGui.EndTooltip();
                     }
                     
                     if (saveSelected)
                     {
-                        _fileDialogMode = 0;
-                        if (string.IsNullOrEmpty(GLOBALS.ProjectPath))
+                        if (GLOBALS.NewlyCreated)
                         {
                             GLOBALS.Page = 12;
                         }
                         else
                         {
+                            _fileDialogMode = 0;
                             _askForPath = false;
+                            _isGuiLocked = true;
+                            GLOBALS.LockNavigation = true;
                         }
 
-                        _isGuiLocked = true;
-                        GLOBALS.LockNavigation = true;
                     }
 
                     if (saveAsSelected)

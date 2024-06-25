@@ -387,6 +387,9 @@ public class GeneralSettings
 
     [SettingName("Shortcuts Window")]
     public bool ShortcutWindow { get; set; } = true;
+
+    [SettingName("Auto-Save Before Rendering", Description = "If you render before saving your level, your new changes won't appear in the final render. This option was made to automatically apply your changes before rendering.")]
+    public bool AutoSaveBeforeRendering { get; set; } = true;
     
     [SettingName("Dark Theme")]
     public bool DarkTheme { get; set; } = false;
