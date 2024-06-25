@@ -135,8 +135,6 @@ internal class TileEditorPage : EditorPage, IDisposable
     
     private bool _shouldRedrawLevel = true;
 
-    private bool _tileSpecDisplayMode;
-    
     private int _tilePanelWidth = 400;
     private int _materialBrushRadius;
 
@@ -151,6 +149,8 @@ internal class TileEditorPage : EditorPage, IDisposable
     
     private bool _isSettingsWinHovered;
     private bool _isSettingsWinDragged;
+
+    private bool _isTexturesWinHovered;
 
     private bool _isNavbarHovered;
 
@@ -1198,8 +1198,8 @@ internal class TileEditorPage : EditorPage, IDisposable
     public void OnPageUpdated(int previous, int @next) {
         if (@next == 3) {
             _shouldRedrawLevel = true;
-            if (_tileSpecDisplayMode) UpdateTileTexturePanel();
-            else UpdateTileSpecsPanel();
+            UpdateTileTexturePanel();
+            UpdateTileSpecsPanel();
         }
     }
 
@@ -1299,6 +1299,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                           !_isTilesWinDragged &&
                           !_isShortcutsWinHovered &&
                           !_isShortcutsWinDragged &&
+                          !_isTexturesWinHovered &&
                           !CheckCollisionPointRec(tileMouse, layer3Rect) &&
                           (GLOBALS.Layer != 1 || !CheckCollisionPointRec(tileMouse, layer2Rect)) &&
                           (GLOBALS.Layer != 0 || !CheckCollisionPointRec(tileMouse, layer1Rect));
@@ -1415,10 +1416,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                     break;
             }
 
-            if (_tileSpecDisplayMode) 
-                UpdateTileTexturePanel();
-            else 
-                UpdateTileSpecsPanel();
+            UpdateTileTexturePanel();
+            UpdateTileSpecsPanel();
         }
 
         
@@ -1998,20 +1997,16 @@ internal class TileEditorPage : EditorPage, IDisposable
             if (_materialTileSwitch) ToNextTileCategory();
             else ToNextMaterialCategory();
 
-            if (_tileSpecDisplayMode) 
-                UpdateTileTexturePanel();
-            else 
-                UpdateTileSpecsPanel();
+            UpdateTileTexturePanel();
+            UpdateTileSpecsPanel();
         }
         else if (_shortcuts.MoveToPreviousCategory.Check(ctrl, shift, alt))
         {
             if (_materialTileSwitch) ToPreviousCategory();
             else ToPreviousMaterialCategory();
             
-            if (_tileSpecDisplayMode) 
-                UpdateTileTexturePanel();
-            else 
-                UpdateTileSpecsPanel();
+            UpdateTileTexturePanel();
+            UpdateTileSpecsPanel();
         }
 
         if (_shortcuts.MoveDown.Check(ctrl, shift, alt))
@@ -2059,10 +2054,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                 }
             }
             
-            if (_tileSpecDisplayMode) 
-                UpdateTileTexturePanel();
-            else 
-                UpdateTileSpecsPanel();
+            UpdateTileTexturePanel();
+            UpdateTileSpecsPanel();
         }
 
         if (_shortcuts.MoveUp.Check(ctrl, shift, alt))
@@ -2097,20 +2090,16 @@ internal class TileEditorPage : EditorPage, IDisposable
                 }
             }
             
-            if (_tileSpecDisplayMode) 
-                UpdateTileTexturePanel();
-            else 
-                UpdateTileSpecsPanel();
+            UpdateTileTexturePanel();
+            UpdateTileSpecsPanel();
         }
 
         if (_shortcuts.TileMaterialSwitch.Check(ctrl, shift, alt))
         {
             _materialTileSwitch = !_materialTileSwitch;
             
-            if (_tileSpecDisplayMode) 
-                UpdateTileTexturePanel();
-            else 
-                UpdateTileSpecsPanel();
+            UpdateTileTexturePanel();
+            UpdateTileSpecsPanel();
         }
 
         if (_shortcuts.HoveredItemInfo.Check(ctrl, shift, alt)) GLOBALS.Settings.TileEditor.HoveredTileInfo = !GLOBALS.Settings.TileEditor.HoveredTileInfo;
@@ -2716,10 +2705,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                                             _currentCategory = (category, color);
                                             _currentCategoryTiles = GLOBALS.TileDex?.GetTilesOfCategory(category) ?? [];
                                             
-                                            if (_tileSpecDisplayMode) 
-                                                UpdateTileTexturePanel();
-                                            else 
-                                                UpdateTileSpecsPanel();
+                                            UpdateTileTexturePanel();
+                                            UpdateTileSpecsPanel();
                                         }
                                     }
                                 }
@@ -2785,10 +2772,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                                         {
                                             _currentTile = currentTile;
                                             
-                                            if (_tileSpecDisplayMode) 
-                                                UpdateTileTexturePanel();
-                                            else 
-                                                UpdateTileSpecsPanel();
+                                            UpdateTileTexturePanel();
+                                            UpdateTileSpecsPanel();
                                         }
 
                                         var hovered = ImGui.IsItemHovered();
@@ -2829,10 +2814,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                                             _tileIndex = tileIndex;
                                             _currentTile = currentTile;
                                             
-                                            if (_tileSpecDisplayMode) 
-                                                UpdateTileTexturePanel();
-                                            else 
-                                                UpdateTileSpecsPanel();
+                                            UpdateTileTexturePanel();
+                                            UpdateTileSpecsPanel();
                                         }
                                     }
                                 }
@@ -2871,10 +2854,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                                             _currentTile = tile;
                                             _currentCategory = (category, color);
                                             
-                                            if (_tileSpecDisplayMode) 
-                                                UpdateTileTexturePanel();
-                                            else 
-                                                UpdateTileSpecsPanel();
+                                            UpdateTileTexturePanel();
+                                            UpdateTileSpecsPanel();
                                         }
                                     }
                                 }
@@ -2949,8 +2930,24 @@ internal class TileEditorPage : EditorPage, IDisposable
 
                 ImGui.End();
             }
+
+            // Tile Textures
+
+            var texturesWinOpened = ImGui.Begin("Textures##TileEditorTileTexturesWin");
+
+            var texturesWinPos = ImGui.GetWindowPos();
+            var texturesWinSpace = ImGui.GetWindowSize();
+
+            _isTexturesWinHovered = CheckCollisionPointRec(GetMousePosition(), new(texturesWinPos.X - 5, texturesWinPos.Y, texturesWinSpace.X + 10, texturesWinSpace.Y));
+
+            if (texturesWinOpened) {
+                
+                rlImGui.ImageRenderTextureFit(_tileTexturePanelRT);
+                
+                ImGui.End();
+            }
             
-            // Tile Specs with ImGui
+            // Tile Specs
 
             var specsWinOpened = ImGui.Begin("Specs");
             
@@ -2972,28 +2969,7 @@ internal class TileEditorPage : EditorPage, IDisposable
             
             if (specsWinOpened)
             {
-                var availableSpace = ImGui.GetContentRegionAvail();
-                
-                var displayClicked = ImGui.Button(
-                    _tileSpecDisplayMode ? "Texture" : "Geometry", 
-                    availableSpace with { Y = 20 }
-                );
-
-                if (displayClicked)
-                {
-                    _tileSpecDisplayMode = !_tileSpecDisplayMode;
-
-                    if (_tileSpecDisplayMode)
-                    {
-                        UpdateTileTexturePanel();
-                    }
-                    else
-                    {
-                        UpdateTileSpecsPanel();
-                    }
-                }
-                
-                rlImGui.ImageRenderTextureFit(_tileSpecDisplayMode ? _tileTexturePanelRT : _tileSpecsPanelRT);
+                rlImGui.ImageRenderTextureFit(_tileSpecsPanelRT);
                 
                 // Idk where to put this
                 ImGui.End();

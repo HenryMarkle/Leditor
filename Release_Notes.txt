@@ -1,3 +1,9 @@
-- Added a keyboard shortcut to vertically flip a prop placement (CTRL + V).
-- Added a keyboard shortcut to horizontally flip a prop placement (CTRL + H).
-- Added a keyboard shortcut to rotate a prop placement by 90 degrees (none by default).
+### Effects Editor
+
+- The new effect button is now named "New Effect", and now takes the entire width of the window.
+- The buttons, `delete`, `shift up`, and `shift down` are now always visible.
+- Hovering on those buttons will display their shortcuts as tooltips.
+
+### Tiles Editor
+
+- The specs window has now been separated into two windows: specs and textures.

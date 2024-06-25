@@ -781,11 +781,21 @@ internal class EffectsEditorPage : EditorPage
                 
                 if (effectsOpened)
                 {
-                    if (ImGui.Button("+")) _addNewEffectMode = true;
-                    
-                    if (GLOBALS.Level.Effects.Length > 0 && ImGui.Button("X"))
+                    if (ImGui.Button("Add Effect", ImGui.GetContentRegionAvail() with { Y = 20 })) _addNewEffectMode = true;
+
+                    if (ImGui.IsItemHovered() && _shortcuts.NewEffect.Key != KeyboardKey.Null)
                     {
-                        ImGui.SameLine();
+                        ImGui.BeginTooltip();
+                        ImGui.Text($"{_shortcuts.NewEffect}");
+                        ImGui.EndTooltip();
+                    } 
+
+                    var canDelete = GLOBALS.Level.Effects.Length > 0;
+
+                    if (!canDelete) ImGui.BeginDisabled(); 
+                    
+                    if (ImGui.Button("Delete"))
+                    {
                         GLOBALS.Level.Effects = GLOBALS.Level.Effects.Where((_, ei) => ei != _currentAppliedEffect).ToArray();
 
                         if (_currentAppliedEffect < 0) _currentAppliedEffect = 0;
@@ -793,33 +803,64 @@ internal class EffectsEditorPage : EditorPage
                             _currentAppliedEffect = GLOBALS.Level.Effects.Length - 1;
                     }
 
-                    if (_currentAppliedEffect > 0)
+                    if (ImGui.IsItemHovered() && _shortcuts.DeleteAppliedEffect.Key != KeyboardKey.Null)
                     {
-                        ImGui.SameLine();
-                        if (ImGui.Button("Shift Up"))
-                        {
-                            (GLOBALS.Level.Effects[_currentAppliedEffect],
-                                GLOBALS.Level.Effects[_currentAppliedEffect - 1]) = (
-                                GLOBALS.Level.Effects[_currentAppliedEffect - 1],
-                                GLOBALS.Level.Effects[_currentAppliedEffect]);
-                            
-                            _currentAppliedEffect--;
-                        }
+                        ImGui.BeginTooltip();
+                        ImGui.Text($"{_shortcuts.DeleteAppliedEffect}");
+                        ImGui.EndTooltip();
+                    } 
+                    
+                    if (!canDelete) ImGui.EndDisabled(); 
+
+                    var canShiftUp = _currentAppliedEffect > 0;
+
+                    ImGui.SameLine();
+                    
+                    if (!canShiftUp) ImGui.BeginDisabled();
+                    
+                    if (ImGui.Button("Shift Up"))
+                    {
+                        (GLOBALS.Level.Effects[_currentAppliedEffect],
+                            GLOBALS.Level.Effects[_currentAppliedEffect - 1]) = (
+                            GLOBALS.Level.Effects[_currentAppliedEffect - 1],
+                            GLOBALS.Level.Effects[_currentAppliedEffect]);
+                        
+                        _currentAppliedEffect--;
                     }
 
-                    if (_currentAppliedEffect < GLOBALS.Level.Effects.Length - 1)
+                    if (ImGui.IsItemHovered() && _shortcuts.ShiftAppliedEffectUp.Key != KeyboardKey.Null)
                     {
-                        ImGui.SameLine();
-                        if (ImGui.Button("Shift Down"))
-                        {
-                            (GLOBALS.Level.Effects[_currentAppliedEffect],
-                                GLOBALS.Level.Effects[_currentAppliedEffect + 1]) = (
-                                GLOBALS.Level.Effects[_currentAppliedEffect + 1],
-                                GLOBALS.Level.Effects[_currentAppliedEffect]);
-                            
-                            _currentAppliedEffect++;
-                        }
+                        ImGui.BeginTooltip();
+                        ImGui.Text($"{_shortcuts.ShiftAppliedEffectUp}");
+                        ImGui.EndTooltip();
+                    } 
+
+                    if (!canShiftUp) ImGui.EndDisabled();
+
+                    var canShiftDown = _currentAppliedEffect < GLOBALS.Level.Effects.Length - 1;
+
+                    ImGui.SameLine();
+
+                    if (!canShiftDown) ImGui.BeginDisabled();
+
+                    if (ImGui.Button("Shift Down"))
+                    {
+                        (GLOBALS.Level.Effects[_currentAppliedEffect],
+                            GLOBALS.Level.Effects[_currentAppliedEffect + 1]) = (
+                            GLOBALS.Level.Effects[_currentAppliedEffect + 1],
+                            GLOBALS.Level.Effects[_currentAppliedEffect]);
+                        
+                        _currentAppliedEffect++;
                     }
+
+                    if (ImGui.IsItemHovered() && _shortcuts.ShiftAppliedEffectDown.Key != KeyboardKey.Null)
+                    {
+                        ImGui.BeginTooltip();
+                        ImGui.Text($"{_shortcuts.ShiftAppliedEffectDown}");
+                        ImGui.EndTooltip();
+                    } 
+
+                    if (!canShiftDown) ImGui.EndDisabled();
 
                     if (ImGui.BeginListBox("##AppliedEffects", ImGui.GetContentRegionAvail()))
                     {
