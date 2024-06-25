@@ -1,1 +1,2 @@
-- Failure to load props will implicitly result in an empty prop arrray.
+- Placing shortcuts partially outside of the geometry's border may result in rendering failure.
+- Pasting from clipboard crashes the program.
