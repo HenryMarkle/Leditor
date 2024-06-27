@@ -2,6 +2,8 @@ using System.Net.Mail;
 
 namespace Leditor.Types;
 
+#nullable enable
+
 public interface IShortcut
 {
     bool? Ctrl { get; }
@@ -35,10 +37,50 @@ public class KeyboardShortcut(
 
     public override string ToString()
     {
-        return $"{(Ctrl is not null and not false ? "CTRL + " : "")}" +
+        return Key is KeyboardKey.Null ? "NONE" : $"{(Ctrl is not null and not false ? "CTRL + " : "")}" +
                $"{(Shift is not null and not false ? "SHIFT + " : "")}" +
                $"{(Alt is not null and not false ? "ALT + " : "")}" +
                $"{Key switch { KeyboardKey.Space => "SPACE", KeyboardKey.Enter => "ENTER", KeyboardKey.LeftAlt => "ALT", KeyboardKey.LeftShift => "SHIFT", KeyboardKey.LeftControl => "CTRL", KeyboardKey.Null => "NONE", KeyboardKey.Escape => "ESCAPE", var k => k }}";
+    }
+
+    public override int GetHashCode()
+    {
+        var ctrl = Ctrl is null ? 2 : Ctrl!.Value ? 3 : 5;
+        var shift = Shift is null ? 7 : Shift!.Value ? 11 : 13;
+        var alt = Alt is null ? 17 : Alt!.Value ? 19 : 23;
+
+        return ctrl * shift * alt * Key.GetHashCode();
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is null) return false;
+        if (obj is not KeyboardShortcut k) return false;
+
+        return Key == k.Key 
+            && Ctrl.Equals(k.Ctrl) 
+            && Shift.Equals(k.Shift) 
+            && Alt.Equals(k.Alt);
+    }
+
+    public static bool operator ==(KeyboardShortcut? left, KeyboardShortcut? right) {
+        if (left is null && right is null) return true;
+        if (left is null || right is null) return false;
+
+        return left.Key == right.Key 
+            && left.Ctrl.Equals(right.Ctrl) 
+            && left.Shift.Equals(right.Shift) 
+            && left.Alt.Equals(right.Alt);
+    }
+
+    public static bool operator !=(KeyboardShortcut? left, KeyboardShortcut? right) {
+        if (left is null && right is null) return false;
+        if (left is null || right is null) return true;
+
+        return !(left.Key == right.Key 
+            && left.Ctrl.Equals(right.Ctrl) 
+            && left.Shift.Equals(right.Shift) 
+            && left.Alt.Equals(right.Alt));
     }
 }
 
@@ -150,6 +192,8 @@ public class ExperimentalGeoShortcuts : IEditorShortcuts
     private KeyboardShortcut reallyFastMoveViewTop = new(KeyboardKey.Up, alt:true);
     private KeyboardShortcut reallyFastMoveViewRight = new(KeyboardKey.Right, alt:true);
     private KeyboardShortcut reallyFastMoveViewBottom = new(KeyboardKey.Down, alt:true);
+
+    private KeyboardShortcut toggleIndexHint = new(KeyboardKey.Null);
 
 
     //
@@ -274,6 +318,9 @@ public class ExperimentalGeoShortcuts : IEditorShortcuts
     [ShortcutName("Move View Bottom Really Quickly", Group = "Movement")]
     public KeyboardShortcut ReallyFastMoveViewBottom { get => reallyFastMoveViewBottom; set { reallyFastMoveViewBottom = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     
+    [ShortcutName("Toggle Ruler")]
+    public KeyboardShortcut ToggleIndexHint { get => toggleIndexHint; set { toggleIndexHint = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+
     
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
 
@@ -317,9 +364,12 @@ public record TileShortcuts : IEditorShortcuts
     private KeyboardShortcut altDragLevel = new(KeyboardKey.Null);
     private KeyboardShortcut enlargeBrush = new(KeyboardKey.Equal);
     private KeyboardShortcut shrinkBrush = new(KeyboardKey.Minus);
+    private KeyboardShortcut toggleIndexHint = KeyboardKey.Null;
+    
     private MouseShortcut draw = new(MouseButton.Left);
     private MouseShortcut erase = new(MouseButton.Right);
     private MouseShortcut dragLevel = new(MouseButton.Middle);
+
 
     //
 
@@ -435,6 +485,11 @@ public record TileShortcuts : IEditorShortcuts
     
     [ShortcutName("Decrease Brush Size")]
     public KeyboardShortcut ShrinkBrush { get => shrinkBrush; set { shrinkBrush = value; CachedStrings = Utils.GetShortcutStrings(this); }}
+
+
+    [ShortcutName("Toggle Ruler")]
+    public KeyboardShortcut ToggleIndexHint { get => toggleIndexHint; set { toggleIndexHint = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+
 
  
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }

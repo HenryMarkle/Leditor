@@ -2149,6 +2149,10 @@ internal class TileEditorPage : EditorPage, IDisposable
             GLOBALS.Settings.TileEditor.ShowCameras = !GLOBALS.Settings.TileEditor.ShowCameras;
         }
 
+        if (_shortcuts.ToggleIndexHint.Check(ctrl, shift, alt)) {
+            GLOBALS.Settings.TileEditor.IndexHint = !GLOBALS.Settings.TileEditor.IndexHint;
+        }
+
         #endregion
         
         skipShortcuts:
@@ -2178,7 +2182,8 @@ internal class TileEditorPage : EditorPage, IDisposable
                 Grid = false,
                 VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers,
                 CropTilePrevious = GLOBALS.Settings.GeneralSettings.CropTilePreviews,
-                VisibleStrayTileFragments = GLOBALS.Settings.TileEditor.ShowStrayTileFragments
+                VisibleStrayTileFragments = GLOBALS.Settings.TileEditor.ShowStrayTileFragments,
+                UnifiedTileColor = GLOBALS.Settings.TileEditor.UnifiedPreviewColor ? Color.White : null
             });
             _shouldRedrawLevel = false;
         }
@@ -2233,7 +2238,7 @@ internal class TileEditorPage : EditorPage, IDisposable
             // Draw geo features
             Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.White, false, GLOBALS.GeoPathsFilter);
 
-            if (GLOBALS.Settings.GeneralSettings.IndexHint)
+            if (GLOBALS.Settings.TileEditor.IndexHint)
             {
                 Printers.DrawLevelIndexHintsHollow(
                     tileMatrixX, tileMatrixY, 
@@ -2282,7 +2287,10 @@ internal class TileEditorPage : EditorPage, IDisposable
                             
                             // Draw current tile
                             if (GLOBALS.Settings.TileEditor.DrawCurrentTile) {
-                                Color color = isTileLegal ? _currentCategory.color : Color.Red;
+                                Color color = isTileLegal 
+                                    ? (GLOBALS.Settings.TileEditor.UnifiedInlinePreviewColor ? Color.Green : _currentCategory.color) 
+                                    : Color.Red;
+                                
                                 Printers.DrawTilePreview(_currentTile, color, (tileMatrixX, tileMatrixY), GLOBALS.Scale);
 
                                 // Where's BeginShaderMode()??????
@@ -3108,6 +3116,16 @@ internal class TileEditorPage : EditorPage, IDisposable
                     _shouldRedrawLevel = true;
                 }
 
+                var unifiedInlineColor = GLOBALS.Settings.TileEditor.UnifiedInlinePreviewColor;
+                if (ImGui.Checkbox("Unified Placement Preview Color", ref unifiedInlineColor)) {
+                    GLOBALS.Settings.TileEditor.UnifiedInlinePreviewColor = unifiedInlineColor;
+                }
+
+                var unifiedColor = GLOBALS.Settings.TileEditor.UnifiedPreviewColor;
+                if (ImGui.Checkbox("Unified Preview Color", ref unifiedColor)) {
+                    GLOBALS.Settings.TileEditor.UnifiedPreviewColor = unifiedColor;
+                    _shouldRedrawLevel = true;
+                }
                 
                 ImGui.End();
             }

@@ -1120,7 +1120,17 @@ internal static class Printers
         }
     }
 
-    internal static void DrawTileLayer(int currentLayer, int targetLayer, int scale, bool grid, TileDrawMode drawMode, byte opacity = 255, bool deepTileOpacity = true, bool crop = false, bool visibleStrays = true)
+    internal static void DrawTileLayer(
+        int currentLayer, 
+        int targetLayer, 
+        int scale, 
+        bool grid, 
+        TileDrawMode drawMode, 
+        byte opacity = 255, 
+        bool deepTileOpacity = true, 
+        bool crop = false, 
+        bool visibleStrays = true,
+        Color? unifiedTileColor = null)
     {
         for (var y = 0; y < GLOBALS.Level.Height; y++)
         {
@@ -1162,7 +1172,7 @@ internal static class Printers
 
                     if (GLOBALS.TileDex?.TryGetTileColor(data.Definition?.Name ?? "", out var foundColor) ?? false)
                     {
-                        color = foundColor;
+                        color = unifiedTileColor ?? foundColor;
                     }
 
                     if (undefined)
@@ -1700,6 +1710,7 @@ internal static class Printers
         internal bool Shadows { get; init; } = false;
         internal bool VisibleStrayTileFragments { get; init; } = true;
         internal bool Padding { get; init; }
+        internal Color? UnifiedTileColor { get; init; }
     }
 
     private static RL.Managed.RenderTexture2D? _tempRT = null;
@@ -1790,7 +1801,8 @@ internal static class Printers
                     (byte)(parameters.HighLayerContrast ? 60 : 255),
                     true, 
                     parameters.CropTilePrevious,
-                    parameters.VisibleStrayTileFragments
+                    parameters.VisibleStrayTileFragments,
+                    parameters.UnifiedTileColor
                 );
                 EndTextureMode();
             }
@@ -1924,7 +1936,8 @@ internal static class Printers
                         (byte)(parameters.HighLayerContrast ? 70 : 255),
                         true, 
                         parameters.CropTilePrevious,
-                        parameters.VisibleStrayTileFragments
+                        parameters.VisibleStrayTileFragments,
+                        parameters.UnifiedTileColor
                     );
                     EndTextureMode();
                 }
@@ -2081,7 +2094,8 @@ internal static class Printers
                         (byte)(parameters.HighLayerContrast ? 70 : 255),
                         true,
                         parameters.CropTilePrevious,
-                        parameters.VisibleStrayTileFragments
+                        parameters.VisibleStrayTileFragments,
+                        parameters.UnifiedTileColor
                     );
                     EndTextureMode();
                 }

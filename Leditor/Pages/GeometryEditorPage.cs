@@ -768,6 +768,10 @@ internal class ExperimentalGeometryPage : EditorPage
             _shouldRedrawLevel = true;
         }
 
+        if (_shortcuts.ToggleIndexHint.Check(ctrl, shift, alt)) {
+            GLOBALS.Settings.GeometryEditor.IndexHint = !GLOBALS.Settings.GeometryEditor.IndexHint;
+        }
+
         if (_allowMultiSelect)
         {
             if ((_shortcuts.Draw.Check(ctrl, shift, alt, true) || _shortcuts.AltDraw.Check(ctrl, shift, alt, true)) && canDrawGeo && inMatrixBounds && !_clickTracker)
@@ -1645,7 +1649,7 @@ internal class ExperimentalGeometryPage : EditorPage
                 }
                 
                 // Index hints
-                if (GLOBALS.Settings.GeneralSettings.IndexHint)
+                if (GLOBALS.Settings.GeometryEditor.IndexHint)
                 {
                     if (_allowMultiSelect) {
                         Printers.DrawLevelIndexHintsHollow(matrixX, matrixY, 

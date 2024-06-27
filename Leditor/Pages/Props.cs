@@ -4253,76 +4253,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 EndTextureMode();
             }
 
-            // // Edit Mode Indicators
-            // if (_mode == 0) {
-            //      var moveTexture = GLOBALS.Textures.PropEditModes[0];
-            //      var rotateTexture = GLOBALS.Textures.PropEditModes[1];
-            //      var scaleTexture = GLOBALS.Textures.PropEditModes[2];
-            //      var warpTexture = GLOBALS.Textures.PropEditModes[3];
-            //      var editPointsTexture = GLOBALS.Textures.PropEditModes[4];
-
-            //      var moveRect = new Rectangle(135, sHeight - 50, 40, 40);
-            //      var rotateRect = new Rectangle(180, sHeight - 50, 40, 40);
-            //      var scaleRect = new Rectangle(225, sHeight - 50, 40, 40);
-            //      var warpRect = new Rectangle(270, sHeight - 50, 40, 40);
-            //      var editPointsRect = new Rectangle(315, sHeight - 50, 40, 40);
-
-            //      var rectColor = GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black with { A = 100 } : Color.White;
-
-            //      DrawRectangleRec(moveRect, rectColor);
-            //      DrawRectangleRec(rotateRect, rectColor);
-            //      DrawRectangleRec(scaleRect, rectColor);
-            //      DrawRectangleRec(warpRect, rectColor);
-            //      DrawRectangleRec(editPointsRect, rectColor);
-                 
-            //      if (_movingProps) DrawRectangleRec(moveRect, Color.Blue);
-            //      if (_rotatingProps) DrawRectangleRec(rotateRect, Color.Blue);
-            //      if (_scalingProps) DrawRectangleRec(scaleRect, Color.Blue);
-            //      if (_stretchingProp) DrawRectangleRec(warpRect, Color.Blue);
-            //      if (_editingPropPoints) DrawRectangleRec(editPointsRect, Color.Blue);
-
-            //      DrawTexturePro(
-            //          moveTexture,
-            //          new Rectangle(0, 0, moveTexture.Width, moveTexture.Height),
-            //          moveRect,
-            //          new Vector2(0, 0),
-            //          0,
-            //          GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _movingProps ? Color.White : Color.Black);
-
-            //      DrawTexturePro(
-            //          rotateTexture,
-            //          new Rectangle(0, 0, rotateTexture.Width, rotateTexture.Height),
-            //          rotateRect,
-            //          new Vector2(0, 0),
-            //          0,
-            //          GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _rotatingProps ? Color.White : Color.Black);
-
-            //      DrawTexturePro(
-            //          scaleTexture,
-            //          new Rectangle(0, 0, scaleTexture.Width, scaleTexture.Height),
-            //          scaleRect,
-            //          new Vector2(0, 0),
-            //          0,
-            //          GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _scalingProps ? Color.White : Color.Black);
-
-            //      DrawTexturePro(
-            //          warpTexture,
-            //          new Rectangle(0, 0, warpTexture.Width, warpTexture.Height),
-            //          warpRect,
-            //          new Vector2(0, 0),
-            //          0,
-            //          GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _stretchingProp ? Color.White : Color.Black);
-
-            //      DrawTexturePro(
-            //          editPointsTexture,
-            //          new Rectangle(0, 0, editPointsTexture.Width, editPointsTexture.Height),
-            //          editPointsRect,
-            //          new Vector2(0, 0),
-            //          0,
-            //          GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.White : _editingPropPoints ? Color.White : Color.Black);
-            // }
-            //
-
             rlImGui.Begin();
             
             ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
@@ -4977,6 +4907,14 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 if (fetchedSelected.Length == 1)
                 {
                     var (selectedProp, _) = fetchedSelected[0];
+
+                    // Render Time
+
+                    var renderTime = selectedProp.prop.Extras.Settings.RenderTime;
+                    ImGui.SetNextItemWidth(100);
+                    if (ImGui.InputInt("Render Time", ref renderTime)) {
+                        selectedProp.prop.Extras.Settings.RenderTime = renderTime;
+                    }
                     
                     // Render Order
 

@@ -1,15 +1,3 @@
-### Effects Editor
-
-- The new effect button is now named "New Effect", and now takes the entire width of the window.
-- The buttons, `delete`, `shift up`, and `shift down` are now always visible.
-- Hovering on those buttons will display their shortcuts as tooltips.
-
-### Tiles Editor
-
-- The specs window has now been separated into two windows: specs and textures.
-
-### Rendering
-
-- Fixed a bug that saved the level anyway, even the cancel button was clicked in the save file dialog.
-- Added an auto-save prior to rendering.
-  - When enabled, if the project was newly created and not saved yet, attempting to render the level will temporaily redirect the user to the save file dialog screen.
+- Added `render time` control in the props editor.
+- Added the option to unify the color of tiles and their placement previews.
+- Added a shortcut to toggle the ruler for both geo and tile editors, separately.

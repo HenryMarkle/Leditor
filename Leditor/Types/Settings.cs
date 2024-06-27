@@ -91,6 +91,9 @@ public class GeoEditor
     [SettingName("Basic View")]
     public bool BasicView { get; set; }
 
+    [SettingName("Ruler")]
+    public bool IndexHint { get; set; } = true;
+
 
 
     public enum ScreenRelativePosition { 
@@ -146,6 +149,18 @@ public class TileEditorSettings
 
     [SettingName("Restore Original Deletion Behavior", Description = "Will disable exact hover and unified deletion settings", Group = "Brush")]
     public bool OriginalDeletionBehavior { get; set; }
+
+    [SettingName("Unified Placement Preview Color")]
+    public bool UnifiedInlinePreviewColor { get; set; }
+
+    [SettingName("Unified Preview Color")]
+    public bool UnifiedPreviewColor { get; set; }
+
+    [SettingName("Use Textures For Placement Preview")]
+    public bool InlineTextures { get; set; }
+
+    [SettingName("Ruler")]
+    public bool IndexHint { get; set; } = true;
 
     public enum ScreenRelativePosition { 
         TopLeft, 
@@ -423,9 +438,6 @@ public class GeneralSettings
 
     [SettingName("Really Keyboard Movement Steps", Group = "Movement")]
     public int ReallyKeyboardMovementSteps { get; set; } = 10;
-
-    [SettingName("Ruler")]
-    public bool IndexHint { get; set; } = true;
 
     [SettingName("Colorful Cameras")]
     public bool ColorfulCameras { get; set; }
