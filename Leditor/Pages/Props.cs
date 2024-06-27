@@ -1643,6 +1643,110 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
         var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
 
+        // Move level with keyboard
+
+        if (_shortcuts.MoveViewLeft.Check(ctrl, shift, alt)) {
+            _camera.Target.X -= GLOBALS.Settings.GeneralSettings.KeyboardMovementSteps * 20;
+
+            if (_camera.Target.X < -80) _camera.Target.X = -80;
+            if (_camera.Target.X > (GLOBALS.Level.Width * 20) - 120) _camera.Target.X = (GLOBALS.Level.Width * 20) - 120;
+            
+            if (_camera.Target.Y < -80) _camera.Target.Y = -80;
+            if (_camera.Target.Y > (GLOBALS.Level.Height * 20) - 120) _camera.Target.Y = (GLOBALS.Level.Height * 20)  - 120;
+        } else if (_shortcuts.MoveViewTop.Check(ctrl, shift, alt)) {
+            _camera.Target.Y -= GLOBALS.Settings.GeneralSettings.KeyboardMovementSteps * 20;
+
+            if (_camera.Target.X < -80) _camera.Target.X = -80;
+            if (_camera.Target.X > (GLOBALS.Level.Width * 20)  - 120) _camera.Target.X = (GLOBALS.Level.Width * 20)  - 120;
+            
+            if (_camera.Target.Y < -80) _camera.Target.Y = -80;
+            if (_camera.Target.Y > (GLOBALS.Level.Height * 20)  - 120) _camera.Target.Y = (GLOBALS.Level.Height * 20)  - 120;
+        } else if (_shortcuts.MoveViewRight.Check(ctrl, shift, alt)) {
+            _camera.Target.X += GLOBALS.Settings.GeneralSettings.KeyboardMovementSteps * 20;
+
+            if (_camera.Target.X < -80) _camera.Target.X = -80;
+            if (_camera.Target.X > (GLOBALS.Level.Width * 20)  - 120) _camera.Target.X = (GLOBALS.Level.Width * 20)  - 120;
+            
+            if (_camera.Target.Y < -80) _camera.Target.Y = -80;
+            if (_camera.Target.Y > (GLOBALS.Level.Height * 20)  - 120) _camera.Target.Y = (GLOBALS.Level.Height * 20)  - 120;
+        } if (_shortcuts.MoveViewBottom.Check(ctrl, shift, alt)) {
+            _camera.Target.Y += GLOBALS.Settings.GeneralSettings.KeyboardMovementSteps * 20;
+
+            if (_camera.Target.X < -80) _camera.Target.X = -80;
+            if (_camera.Target.X > (GLOBALS.Level.Width * 20)  - 120) _camera.Target.X = (GLOBALS.Level.Width * 20)  - 120;
+            
+            if (_camera.Target.Y < -80) _camera.Target.Y = -80;
+            if (_camera.Target.Y > (GLOBALS.Level.Height * 20)  - 120) _camera.Target.Y = (GLOBALS.Level.Height * 20)  - 120;
+        }
+
+        else if (_shortcuts.FastMoveViewLeft.Check(ctrl, shift, alt)) {
+            _camera.Target.X -= GLOBALS.Settings.GeneralSettings.FastKeyboardMovementSteps * 20;
+
+            if (_camera.Target.X < -80) _camera.Target.X = -80;
+            if (_camera.Target.X > (GLOBALS.Level.Width * 20) - 120) _camera.Target.X = (GLOBALS.Level.Width * 20) - 120;
+            
+            if (_camera.Target.Y < -80) _camera.Target.Y = -80;
+            if (_camera.Target.Y > (GLOBALS.Level.Height * 20) - 120) _camera.Target.Y = (GLOBALS.Level.Height * 20)  - 120;
+        } else if (_shortcuts.FastMoveViewTop.Check(ctrl, shift, alt)) {
+            _camera.Target.Y -= GLOBALS.Settings.GeneralSettings.FastKeyboardMovementSteps * 20;
+
+            if (_camera.Target.X < -80) _camera.Target.X = -80;
+            if (_camera.Target.X > (GLOBALS.Level.Width * 20)  - 120) _camera.Target.X = (GLOBALS.Level.Width * 20)  - 120;
+            
+            if (_camera.Target.Y < -80) _camera.Target.Y = -80;
+            if (_camera.Target.Y > (GLOBALS.Level.Height * 20)  - 120) _camera.Target.Y = (GLOBALS.Level.Height * 20)  - 120;
+        } else if (_shortcuts.FastMoveViewRight.Check(ctrl, shift, alt)) {
+            _camera.Target.X += GLOBALS.Settings.GeneralSettings.FastKeyboardMovementSteps * 20;
+
+            if (_camera.Target.X < -80) _camera.Target.X = -80;
+            if (_camera.Target.X > (GLOBALS.Level.Width * 20)  - 120) _camera.Target.X = (GLOBALS.Level.Width * 20)  - 120;
+            
+            if (_camera.Target.Y < -80) _camera.Target.Y = -80;
+            if (_camera.Target.Y > (GLOBALS.Level.Height * 20)  - 120) _camera.Target.Y = (GLOBALS.Level.Height * 20)  - 120;
+        } if (_shortcuts.FastMoveViewBottom.Check(ctrl, shift, alt)) {
+            _camera.Target.Y += GLOBALS.Settings.GeneralSettings.FastKeyboardMovementSteps * 20;
+
+            if (_camera.Target.X < -80) _camera.Target.X = -80;
+            if (_camera.Target.X > (GLOBALS.Level.Width * 20)  - 120) _camera.Target.X = (GLOBALS.Level.Width * 20)  - 120;
+            
+            if (_camera.Target.Y < -80) _camera.Target.Y = -80;
+            if (_camera.Target.Y > (GLOBALS.Level.Height * 20)  - 120) _camera.Target.Y = (GLOBALS.Level.Height * 20)  - 120;
+        }
+
+        else if (_shortcuts.ReallyFastMoveViewLeft.Check(ctrl, shift, alt)) {
+            _camera.Target.X -= GLOBALS.Settings.GeneralSettings.ReallyKeyboardMovementSteps * 20;
+
+            if (_camera.Target.X < -80) _camera.Target.X = -80;
+            if (_camera.Target.X > (GLOBALS.Level.Width * 20) - 120) _camera.Target.X = (GLOBALS.Level.Width * 20) - 120;
+            
+            if (_camera.Target.Y < -80) _camera.Target.Y = -80;
+            if (_camera.Target.Y > (GLOBALS.Level.Height * 20) - 120) _camera.Target.Y = (GLOBALS.Level.Height * 20)  - 120;
+        } else if (_shortcuts.ReallyFastMoveViewTop.Check(ctrl, shift, alt)) {
+            _camera.Target.Y -= GLOBALS.Settings.GeneralSettings.ReallyKeyboardMovementSteps * 20;
+
+            if (_camera.Target.X < -80) _camera.Target.X = -80;
+            if (_camera.Target.X > (GLOBALS.Level.Width * 20)  - 120) _camera.Target.X = (GLOBALS.Level.Width * 20)  - 120;
+            
+            if (_camera.Target.Y < -80) _camera.Target.Y = -80;
+            if (_camera.Target.Y > (GLOBALS.Level.Height * 20)  - 120) _camera.Target.Y = (GLOBALS.Level.Height * 20)  - 120;
+        } else if (_shortcuts.ReallyFastMoveViewRight.Check(ctrl, shift, alt)) {
+            _camera.Target.X += GLOBALS.Settings.GeneralSettings.ReallyKeyboardMovementSteps * 20;
+
+            if (_camera.Target.X < -80) _camera.Target.X = -80;
+            if (_camera.Target.X > (GLOBALS.Level.Width * 20)  - 120) _camera.Target.X = (GLOBALS.Level.Width * 20)  - 120;
+            
+            if (_camera.Target.Y < -80) _camera.Target.Y = -80;
+            if (_camera.Target.Y > (GLOBALS.Level.Height * 20)  - 120) _camera.Target.Y = (GLOBALS.Level.Height * 20)  - 120;
+        } if (_shortcuts.ReallyFastMoveViewBottom.Check(ctrl, shift, alt)) {
+            _camera.Target.Y += GLOBALS.Settings.GeneralSettings.ReallyKeyboardMovementSteps * 20;
+
+            if (_camera.Target.X < -80) _camera.Target.X = -80;
+            if (_camera.Target.X > (GLOBALS.Level.Width * 20)  - 120) _camera.Target.X = (GLOBALS.Level.Width * 20)  - 120;
+            
+            if (_camera.Target.Y < -80) _camera.Target.Y = -80;
+            if (_camera.Target.Y > (GLOBALS.Level.Height * 20)  - 120) _camera.Target.Y = (GLOBALS.Level.Height * 20)  - 120;
+        }
+
         // Undo
 
         if (!isSearchBusy && _shortcuts.Undo.Check(ctrl, shift, alt)) {
