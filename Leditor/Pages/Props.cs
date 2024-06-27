@@ -1920,20 +1920,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     settings = new();
                                 }
 
-                                // var placementQuad = new PropQuad(
-                                //     new Vector2(posV.X - width, posV.Y - height),
-                                //     new Vector2(posV.X + width, posV.Y - height),
-                                //     new Vector2(posV.X + width, posV.Y + height),
-                                //     new Vector2(posV.X - width, posV.Y + height)
-                                // );
-
-                                // var placementQuad = new PropQuad(
-                                //     new(posV.X - width - _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
-                                //     new(posV.X + width + _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
-                                //     new(posV.X + width + _defaultStretch.X, posV.Y + height + _defaultStretch.Y),
-                                //     new(posV.X - width - _defaultStretch.X, posV.Y + height + _defaultStretch.Y)
-                                // );
-
                                 var placementQuad = new PropQuad(
                                     new Vector2(posV.X - width - _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
                                     new Vector2(posV.X + width + _defaultStretch.X, posV.Y - height - _defaultStretch.Y),
@@ -1951,6 +1937,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     
                                     if (prop.prop.Depth == _defaultDepth && CheckCollisionRecs(newPropRec, propRec)) goto skipPlacement;
                                 }
+
+                                var rotatedQuad = Utils.RotatePropQuads(placementQuad, _placementRotation * _placementRotationSteps, tileMouseWorld);
                                 
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
                                     (
@@ -1961,10 +1949,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             _defaultDepth, 
                                             _currentTile.Name, 
                                             true, 
-                                            placementQuad
+                                            rotatedQuad
                                         )
                                         {
-                                            Extras = new PropExtras(settings, [])
+                                            Extras = new PropExtras(settings, []),
+                                            Rotation = _placementRotation * _placementRotationSteps,
+                                            OriginalQuad = placementQuad
                                         }
                                     )
                                 ];
@@ -2150,6 +2140,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                                 if (_vFlipPlacement) Utils.VFlipQuad(ref newQuads);
                                 if (_hFlipPlacement) Utils.HFlipQuad(ref newQuads);
+
+                                var rotatedQuad = Utils.RotatePropQuads(newQuads, _placementRotation * _placementRotationSteps, tileMouseWorld);
                                 
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
                                     (
@@ -2160,10 +2152,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             _defaultDepth, 
                                             init.Name, 
                                             false, 
-                                            newQuads
+                                            rotatedQuad
                                         )
                                         {
-                                            Extras = new PropExtras(settings, [])
+                                            Extras = new PropExtras(settings, []),
+                                            Rotation = _placementRotation * _placementRotationSteps,
+                                            OriginalQuad = newQuads
                                         }
                                     )
                                 ];
@@ -2242,7 +2236,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 if (_vFlipPlacement) Utils.VFlipQuad(ref quads);
                                 if (_hFlipPlacement) Utils.HFlipQuad(ref quads);
 
-                                quads = Utils.RotatePropQuads(quads, _placementRotation * _placementRotationSteps, tileMouseWorld);
+                                var rotatedQuads = Utils.RotatePropQuads(quads, _placementRotation * _placementRotationSteps, tileMouseWorld);
                                 
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
                                     (
@@ -2253,10 +2247,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             _defaultDepth, 
                                             _currentTile.Name, 
                                             true, 
-                                            quads
+                                            rotatedQuads
                                         )
                                         {
-                                            Extras = new(settings, [])
+                                            Extras = new(settings, []),
+                                            Rotation = _placementRotation * _placementRotationSteps,
+                                            OriginalQuad = quads
                                         }
                                     )
                                 ];
@@ -2378,7 +2374,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                                 newQuads
                                             )
                                             {
-                                                Extras = new PropExtras(settings, [])
+                                                Extras = new PropExtras(settings, []),
+                                                Rotation = _placementRotation
                                             }
                                         ) 
                                     ];
@@ -2441,7 +2438,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 if (_vFlipPlacement) Utils.VFlipQuad(ref quads);
                                 if (_hFlipPlacement) Utils.HFlipQuad(ref quads);
 
-                                quads = Utils.RotatePropQuads(quads, _placementRotation * _placementRotationSteps, tileMouseWorld);
+                                var rotatedQuad = Utils.RotatePropQuads(quads, _placementRotation * _placementRotationSteps, tileMouseWorld);
                                 
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
                                     (
@@ -2452,9 +2449,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             _defaultDepth, 
                                             init.Name, 
                                             false, 
-                                            quads)
+                                            rotatedQuad)
                                         {
-                                            Extras = new PropExtras(settings, [])
+                                            Extras = new PropExtras(settings, []),
+                                            Rotation = _placementRotation * _placementRotationSteps,
+                                            OriginalQuad = quads
                                         }
                                     )
                                 ];
@@ -2738,6 +2737,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
 
                     }
+                
+                    if (!isSearchBusy && _shortcuts.ResetQuadVertices.Check(ctrl, shift, alt)) {
+                        for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
+                        {
+                            if (!_selected[p]) continue;
+                            
+                            GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(GLOBALS.Level.Props[p].prop.OriginalQuad, GLOBALS.Level.Props[p].prop.Rotation);
+                        }
+
+                        _shouldRedrawPropLayer = true;
+                        if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette) _shouldRedrawLevel = true;
+                    }
                 }
                 else
                 {
@@ -2765,6 +2776,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
                         }
+
+                        GLOBALS.Level.Props[p].prop.Rotation += degree;
                     }
 
                     _shouldRedrawPropLayer = true;
@@ -2786,6 +2799,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
                         }
+
+                        GLOBALS.Level.Props[p].prop.Rotation += degree;
                     }
 
                     _shouldRedrawPropLayer = true;
@@ -2807,6 +2822,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
                         }
+
+                        GLOBALS.Level.Props[p].prop.Rotation += degree;
                     }
 
                     _shouldRedrawPropLayer = true;
@@ -2828,12 +2845,34 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
                         }
+
+                        GLOBALS.Level.Props[p].prop.Rotation += degree;
                     }
 
                     _shouldRedrawPropLayer = true;
                     if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette) _shouldRedrawLevel = true;
                 }
 
+                if (!isSearchBusy && _shortcuts.ResetPlacementRotation.Check(ctrl, shift, alt) && anySelected) {
+                    for (var p = 0; p < GLOBALS.Level.Props.Length; p++)
+                    {
+                        if (!_selected[p]) continue;
+                        
+                        var quads = GLOBALS.Level.Props[p].prop.Quads;
+
+                        GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(quads, -GLOBALS.Level.Props[p].prop.Rotation, _selectedPropsCenter);
+
+                        if (GLOBALS.Level.Props[p].type == InitPropType.Rope)
+                        {
+                            Utils.RotatePoints(-_placementRotation, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
+                        }
+
+                        GLOBALS.Level.Props[p].prop.Rotation = 0;
+                    }
+
+                    _shouldRedrawPropLayer = true;
+                    if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette) _shouldRedrawLevel = true;
+                }
                 #endregion
 
                 #region ActivateModes
@@ -3337,6 +3376,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             Utils.RotatePoints(delta.X, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
                         }
+
+                        GLOBALS.Level.Props[p].prop.Rotation += delta.X;
                     }
                 }
                 else if (_scalingProps && anySelected)
@@ -5212,6 +5253,25 @@ internal class PropsEditorPage : EditorPage, IContextListener
             
                     foreach (var selected in fetchedSelected)
                         selected.prop.prop.Depth = depth;
+                } else if (fetchedSelected.Length > 0) {
+                    if (ImGui.Button("Reset Quads", ImGui.GetContentRegionAvail() with { Y = 20 })) {
+                        foreach (var (_, _, _, prop) in GLOBALS.Level.Props) {
+                            prop.Quads = Utils.RotatePropQuads(prop.OriginalQuad, prop.Rotation);
+
+                            _shouldRedrawLevel = true;
+                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                        }
+                    }
+
+                    if (ImGui.Button("Reset Rotation", ImGui.GetContentRegionAvail() with { Y = 20 })) {
+                        foreach (var (_, _, _, prop) in GLOBALS.Level.Props) {
+                            prop.Quads = Utils.RotatePropQuads(prop.Quads, -prop.Rotation);
+                            prop.Rotation = 0;
+
+                            _shouldRedrawLevel = true;
+                            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+                        }
+                    }
                 }
                 
             }

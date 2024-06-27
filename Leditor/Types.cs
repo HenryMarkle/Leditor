@@ -917,6 +917,8 @@ public class Prop(int depth, string name, bool isTile, PropQuad quads)
     public int Depth { get; set; } = depth;
     public string Name { get; set; } = name;
     public bool IsTile { get; set; } = isTile;
+    public float Rotation { get; set; }
+    public PropQuad OriginalQuad { get; init; }
     public PropQuad Quads { get; set; } = quads;
     
     public PropExtras Extras { get; set; }

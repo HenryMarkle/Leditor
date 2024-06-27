@@ -1,3 +1,5 @@
 - Added `render time` control in the props editor.
 - Added the option to unify the color of tiles and their placement previews.
 - Added a shortcut to toggle the ruler for both geo and tile editors, separately.
+- Added a shortcut to reset a prop's quad vertices.
+- Reseting prop's rotation now works in selection mode.

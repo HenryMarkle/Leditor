@@ -365,7 +365,7 @@ public record TileShortcuts : IEditorShortcuts
     private KeyboardShortcut enlargeBrush = new(KeyboardKey.Equal);
     private KeyboardShortcut shrinkBrush = new(KeyboardKey.Minus);
     private KeyboardShortcut toggleIndexHint = KeyboardKey.Null;
-    
+
     private MouseShortcut draw = new(MouseButton.Left);
     private MouseShortcut erase = new(MouseButton.Right);
     private MouseShortcut dragLevel = new(MouseButton.Middle);
@@ -866,6 +866,8 @@ public class PropsShortcuts : IEditorShortcuts
 
     private KeyboardShortcut rotateRightAnglePlacement = KeyboardKey.Null;
 
+    private KeyboardShortcut resetQuadVertices = KeyboardKey.Null;
+
     //
 
     [ShortcutName("Cycle Layers")]
@@ -938,11 +940,17 @@ public class PropsShortcuts : IEditorShortcuts
     public KeyboardShortcut DeepenSelectedProps { get => deepenSelectedProps; set { deepenSelectedProps = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     [ShortcutName("Undeepen", Group = "Selected Prop Actions")]
     public KeyboardShortcut UndeepenSelectedProps { get => undeepenSelectedProps; set { undeepenSelectedProps = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    
+    [ShortcutName("Reset Quad Vertices", Group = "Selected Prop Actions")]
+    public KeyboardShortcut ResetQuadVertices { get => resetQuadVertices; set { resetQuadVertices = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    
     [ShortcutName("Rotate Clockwise", Group = "Selection or Placement")]
     public KeyboardShortcut RotateClockwise { get => rotateClockwise; set { rotateClockwise = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     [ShortcutName("Rotate Counter-clockwise", Group = "Selection or Placement")]
     public KeyboardShortcut RotateCounterClockwise { get => rotateCounterClockwise; set { rotateCounterClockwise = value; CachedStrings = Utils.GetShortcutStrings(this); } }
-    [ShortcutName("Reset Placement Rotation", Group = "Placement")]
+    [ShortcutName("Reset Placement Rotation", Group = "Selection or Placement")]
     public KeyboardShortcut ResetPlacementRotation { get => resetPlacementRotation; set { resetPlacementRotation = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     [ShortcutName("Increase Rope Segments", Group = "Rope Actions")]
     public KeyboardShortcut IncrementRopSegmentCount { get => incrementRopSegmentCount; set { incrementRopSegmentCount = value; CachedStrings = Utils.GetShortcutStrings(this); } }
