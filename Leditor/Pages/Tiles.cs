@@ -3110,6 +3110,11 @@ internal class TileEditorPage : EditorPage, IDisposable
                     _shouldRedrawLevel = true;
                 }
 
+                var ruler = GLOBALS.Settings.TileEditor.IndexHint;
+                if (ImGui.Checkbox("Ruler", ref ruler)) {
+                    GLOBALS.Settings.TileEditor.IndexHint = ruler;
+                }
+
                 var showStrays = GLOBALS.Settings.TileEditor.ShowStrayTileFragments;
                 if (ImGui.Checkbox("Stray Tile Fragments", ref showStrays)) {
                     GLOBALS.Settings.TileEditor.ShowStrayTileFragments = showStrays;

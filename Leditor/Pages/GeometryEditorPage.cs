@@ -2281,6 +2281,11 @@ internal class ExperimentalGeometryPage : EditorPage
                 }
 
                 if (GLOBALS.Settings.GeometryEditor.BasicView) ImGui.EndDisabled();
+
+                var ruler = GLOBALS.Settings.GeometryEditor.IndexHint;
+                if (ImGui.Checkbox("Ruler", ref ruler)) {
+                    GLOBALS.Settings.GeometryEditor.IndexHint = ruler;
+                }
                 
                 // Controls
                 
