@@ -410,7 +410,7 @@ public static class Importers {
     /// <returns>a list of (type, position, prop) tuples, where 'position' points to the definition index in the appropriate definitions array depending on the type (prop/tile)</returns>
     /// <exception cref="PropNotFoundException">prop not not found in neither the prop definitions nor the tile definitions</exception>
     /// <exception cref="MissingInitPropertyException">retrieved prop is missing a setting</exception>
-    public static List<(InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)>GetProps(AstNode.Base? @base)
+    public static List<Prop>GetProps(AstNode.Base? @base)
     {
         if (@base is null) {
             return [];
@@ -418,7 +418,7 @@ public static class Importers {
 
         var list = (AstNode.List)((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "props").Value;
 
-        List<(InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)> props = [];
+        List<Prop> props = [];
 
         Random rng = new();
 
@@ -571,10 +571,13 @@ public static class Importers {
                         return new Vector2(NumberToInteger(args[0]), NumberToInteger(args[1]));
                     }).ToArray() ?? [])
                 ),
-                IsTile = type == InitPropType.Tile
+                IsTile = type == InitPropType.Tile,
+                Type = type,
+                Tile = tileDefinition,
+                Position = position
             };
 
-            props.Add((type, tileDefinition, position, parsedProp));
+            props.Add(parsedProp);
         }
         return props;
     }

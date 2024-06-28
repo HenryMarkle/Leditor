@@ -662,7 +662,7 @@ void main() {
     private void DrawProp(InitPropType type, TileDefinition? tile, Color color, int category, int index, Prop prop, bool flat) {
         var depth = -prop.Depth + GLOBALS.Layer*10;
 
-        var quads = prop.Quads;
+        var quads = prop.Quad;
 
         // const float ratio = 20f / 16f;
 
@@ -888,11 +888,11 @@ void main() {
         foreach (var current in GLOBALS.Level.Props)
         {
             // Filter based on depth
-            if (current.prop.Depth > scopeNear || current.prop.Depth < scopeFar) continue;
+            if (current.Depth > scopeNear || current.Depth < scopeFar) continue;
 
-            var (category, index) = current.position;
+            var (category, index) = current.Position;
             
-            DrawProp(current.type, current.tile, color, category, index, current.prop, flat);
+            DrawProp(current.Type, current.Tile, color, category, index, current, flat);
         }
 
         EndTextureMode();

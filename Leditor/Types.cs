@@ -97,7 +97,7 @@ public sealed class LevelState
     internal TileCell[,,] TileMatrix { get; private set; } = new TileCell[0, 0, 0];
     internal Color[,,] MaterialColors { get; private set; } = new Color[0, 0, 0];
     internal (string, EffectOptions[], double[,])[] Effects { get; set; } = [];
-    internal (InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)[] Props { get; set; } = [];
+    internal Prop[] Props { get; set; } = [];
 
     internal string DefaultMaterial { get; set; } = "Concrete";
     
@@ -119,7 +119,7 @@ public sealed class LevelState
         Color[,,] materialColorMatrix,
         (string, EffectOptions[], double[,])[] effects,
         List<RenderCamera> cameras,
-        (InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)[] props,
+        Prop[] props,
         (int angle, int flatness) lightSettings,
         bool lightMode,
         bool terrainMedium,
@@ -264,7 +264,7 @@ public sealed class LevelState
         }
 
         for (var p = 0; p < Props.Length; p++) {
-            var quad = Props[p].prop.Quads;
+            var quad = Props[p].Quad;
 
             var delta = new Vector2(left, top) * 20;
 
@@ -273,11 +273,11 @@ public sealed class LevelState
             quad.BottomRight += delta;
             quad.BottomLeft += delta;
 
-            Props[p].prop.Quads = quad;
+            Props[p].Quad = quad;
 
-            if (Props[p].type == InitPropType.Rope) {
-                for (var s = 0; s < Props[p].prop.Extras.RopePoints.Length; s++) {
-                    var segments = Props[p].prop.Extras.RopePoints;
+            if (Props[p].Type == InitPropType.Rope) {
+                for (var s = 0; s < Props[p].Extras.RopePoints.Length; s++) {
+                    var segments = Props[p].Extras.RopePoints;
 
                     segments[s] += delta;
                 }
@@ -404,7 +404,7 @@ public class LoadFileResult
     public GeoCell[,,]? GeoMatrix { get; init; } = null;
     public TileCell[,,]? TileMatrix { get; init; } = null;
     public Color[,,]? MaterialColorMatrix { get; init; } = null;
-    public (InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)[]? PropsArray { get; init; } = null;
+    public Prop[]? PropsArray { get; init; } = null;
 
     public Image LightMapImage { get; init; }
     
@@ -910,18 +910,24 @@ public struct PropQuad(
     public Vector2 TopRight { get; set; } = topRight;
     public Vector2 BottomRight { get; set; } = bottomRight;
     public Vector2 BottomLeft { get; set; } = bottomLeft;
+
+    public PropQuad(PropQuad quad) : this(quad.TopLeft, quad.TopRight, quad.BottomRight, quad.BottomLeft) {}
 }
 
 public class Prop(int depth, string name, bool isTile, PropQuad quads)
 {
+    public InitPropType Type { get; set; }
+    public TileDefinition? Tile { get; set; }
+    public (int category, int index) Position { get; set; }
+
     public int Depth { get; set; } = depth;
     public string Name { get; set; } = name;
     public bool IsTile { get; set; } = isTile;
     public float Rotation { get; set; }
     public PropQuad OriginalQuad { get; init; }
-    public PropQuad Quads { get; set; } = quads;
+    public PropQuad Quad { get; set; } = quads;
     
-    public PropExtras Extras { get; set; }
+    public PropExtras Extras { get; set; } = new(new BasicPropSettings(), []);
 }
 
 public class PropExtras(BasicPropSettings settings, Vector2[] ropePoints)

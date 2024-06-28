@@ -183,10 +183,10 @@ public class TileGram(int limit)
 }
 
 public class PropGram {
-    private LinkedList<(InitPropType type, Data.Tiles.TileDefinition? tile, (int category, int index) position, Prop prop)[]> _snapshots;
-    private LinkedListNode<(InitPropType type, Data.Tiles.TileDefinition? tile, (int category, int index) position, Prop prop)[]>? _current;
+    private LinkedList<Prop[]> _snapshots;
+    private LinkedListNode<Prop[]>? _current;
 
-    public (InitPropType type, Data.Tiles.TileDefinition? tile, (int category, int index) position, Prop prop)[]? CurrentAction => _current?.Value;
+    public Prop[]? CurrentAction => _current?.Value;
 
     public int Limit { get; set; }
 
@@ -195,13 +195,16 @@ public class PropGram {
         Limit = limit;
     }
 
-    public void Proceed((InitPropType type, Data.Tiles.TileDefinition? tile, (int category, int index) position, Prop prop)[] snapshot) {
-        var newArray = new (InitPropType type, Data.Tiles.TileDefinition? tile, (int category, int index) position, Prop prop)[snapshot.Length];
+    public void Proceed(Prop[] snapshot) {
+        var newArray = new Prop[snapshot.Length];
 
         for (var i = 0; i < snapshot.Length; i++) {
             newArray[i] = snapshot[i];
-            newArray[i].prop = new Prop(snapshot[i].prop.Depth, snapshot[i].prop.Name, snapshot[i].prop.IsTile, snapshot[i].prop.Quads) {
-                Extras = new PropExtras(snapshot[i].prop.Extras.Settings.Clone(), [..snapshot[i].prop.Extras.RopePoints])
+            newArray[i] = new Prop(snapshot[i].Depth, snapshot[i].Name, snapshot[i].IsTile, new PropQuad(snapshot[i].Quad)) {
+                Extras = new PropExtras(snapshot[i].Extras.Settings.Clone(), [..snapshot[i].Extras.RopePoints]),
+                Position = snapshot[i].Position,
+                Type = snapshot[i].Type,
+                Tile = snapshot[i].Tile
             };
         }
         

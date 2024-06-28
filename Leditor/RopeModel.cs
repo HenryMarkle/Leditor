@@ -98,7 +98,7 @@ public class RopeModel
     }
 
     public void ResetBezierHandles() {
-        var quad = Rope.Quads;
+        var quad = Rope.Quad;
         
         BezierHandles = [ Utils.QuadsCenter(ref quad) ];
     }

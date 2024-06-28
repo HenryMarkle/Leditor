@@ -1623,16 +1623,16 @@ internal static class Printers
         foreach (var current in GLOBALS.Level.Props)
         {
             // Filter based on depth
-            if (current.prop.Depth > scopeNear || current.prop.Depth < scopeFar) continue;
+            if (current.Depth > scopeNear || current.Depth < scopeFar) continue;
 
-            var (category, index) = current.position;
+            var (category, index) = current.Position;
             
-            DrawProp(current.type, current.tile, category, index, current.prop, tinted);
+            DrawProp(current.Type, current.Tile, category, index, current, tinted);
             
             // Draw Rope Point
-            if (current.type != InitPropType.Rope) continue;
+            if (current.Type != InitPropType.Rope) continue;
             
-            foreach (var point in current.prop.Extras.RopePoints)
+            foreach (var point in current.Extras.RopePoints)
                 DrawCircleV(point, 3f, Color.White);
         }
     }
@@ -1645,18 +1645,18 @@ internal static class Printers
         foreach (var current in GLOBALS.Level.Props)
         {
             // Filter based on depth
-            if (current.prop.Depth > scopeNear || current.prop.Depth < scopeFar) continue;
+            if (current.Depth > scopeNear || current.Depth < scopeFar) continue;
 
-            var (category, index) = current.position;
+            var (category, index) = current.Position;
             
              
             
-            DrawProp(current.type, current.tile, category, index, current.prop, scale, tinted);
+            DrawProp(current.Type, current.Tile, category, index, current, scale, tinted);
             
             // Draw Rope Point
-            if (current.type != InitPropType.Rope) continue;
+            if (current.Type != InitPropType.Rope) continue;
             
-            foreach (var point in current.prop.Extras.RopePoints)
+            foreach (var point in current.Extras.RopePoints)
                 DrawCircleV(point * (scale / 16f), 3f, Color.White);
         }
     }
@@ -1669,16 +1669,16 @@ internal static class Printers
         foreach (var current in GLOBALS.Level.Props)
         {
             // Filter based on depth
-            if (current.prop.Depth > scopeNear || current.prop.Depth < scopeFar) continue;
+            if (current.Depth > scopeNear || current.Depth < scopeFar) continue;
 
-            var (category, index) = current.position;
+            var (category, index) = current.Position;
             
-            DrawProp(current.type, current.tile, category, index, current.prop, scale, drawMode, palette);
+            DrawProp(current.Type, current.Tile, category, index, current, scale, drawMode, palette);
             
             // Draw Rope Point
-            if (current.type != InitPropType.Rope) continue;
+            if (current.Type != InitPropType.Rope) continue;
             
-            foreach (var point in current.prop.Extras.RopePoints)
+            foreach (var point in current.Extras.RopePoints)
                 DrawCircleV(point, 3f, Color.White);
         }
     }
@@ -4130,16 +4130,16 @@ internal static class Printers
                 var color = GLOBALS.TileDex.GetTileColor(tile.Name);
             
                 if (tintedTiles)
-                    DrawTileAsPropColored(tile, prop.Quads, color, depth);
+                    DrawTileAsPropColored(tile, prop.Quad, color, depth);
                 else
-                    DrawTileAsProp(tile, prop.Quads, depth);
+                    DrawTileAsProp(tile, prop.Quad, depth);
             }
                 break;
 
             case InitPropType.Long:
             {
                 var texture = GLOBALS.Textures.LongProps[index];
-                DrawLongProp(texture, prop.Quads, depth, 0);
+                DrawLongProp(texture, prop.Quad, depth, 0);
             }
                 break;
 
@@ -4155,35 +4155,35 @@ internal static class Printers
                 switch (init)
                 {
                     case InitVariedStandardProp variedStandard:
-                        DrawVariedStandardProp(variedStandard, texture, prop.Quads, ((PropVariedSettings)prop.Extras.Settings).Variation, depth);
+                        DrawVariedStandardProp(variedStandard, texture, prop.Quad, ((PropVariedSettings)prop.Extras.Settings).Variation, depth);
                         break;
 
                     case InitStandardProp standard:
-                        DrawStandardProp(standard, texture, prop.Quads, depth);
+                        DrawStandardProp(standard, texture, prop.Quad, depth);
                         break;
 
                     case InitVariedSoftProp variedSoft:
-                        DrawVariedSoftProp(variedSoft, texture, prop.Quads,  ((PropVariedSoftSettings)prop.Extras.Settings).Variation, depth);
+                        DrawVariedSoftProp(variedSoft, texture, prop.Quad,  ((PropVariedSoftSettings)prop.Extras.Settings).Variation, depth);
                         break;
 
                     case InitSoftProp:
-                        DrawSoftProp(texture, prop.Quads, depth);
+                        DrawSoftProp(texture, prop.Quad, depth);
                         break;
 
                     case InitVariedDecalProp variedDecal:
-                        DrawVariedDecalProp(variedDecal, texture, prop.Quads, ((PropVariedDecalSettings)prop.Extras.Settings).Variation, depth);
+                        DrawVariedDecalProp(variedDecal, texture, prop.Quad, ((PropVariedDecalSettings)prop.Extras.Settings).Variation, depth);
                         break;
 
                     case InitSimpleDecalProp:
-                        DrawSimpleDecalProp(texture, prop.Quads, depth);
+                        DrawSimpleDecalProp(texture, prop.Quad, depth);
                         break;
                     
                     case InitAntimatterProp:
-                        DrawAntimatterProp(texture, prop.Quads, depth, 0);
+                        DrawAntimatterProp(texture, prop.Quad, depth, 0);
                         break;
                     
                     default:
-                        DrawPropDefault(texture, prop.Quads, depth, 0);
+                        DrawPropDefault(texture, prop.Quad, depth, 0);
                         break;
                 }
             }
@@ -4195,7 +4195,7 @@ internal static class Printers
     {
         var depth = -prop.Depth - GLOBALS.Layer*10;
 
-        var quads = prop.Quads;
+        var quads = prop.Quad;
 
         quads.TopLeft *= scale / 16f;
         quads.TopRight *= scale / 16f;
@@ -4276,7 +4276,7 @@ internal static class Printers
     {
         var depth = -prop.Depth - GLOBALS.Layer*10;
 
-        var quads = prop.Quads;
+        var quads = prop.Quad;
 
         // quads.TopLeft *= scale / 16f;
         // quads.TopRight *= scale / 16f;
@@ -4415,7 +4415,7 @@ internal static class Printers
     {
         var depth = -prop.Depth - GLOBALS.Layer*10;
 
-        var quads = prop.Quads;
+        var quads = prop.Quad;
 
         quads.TopLeft *= scale / 16f;
         quads.TopRight *= scale / 16f;
@@ -6042,20 +6042,20 @@ internal static class Printers
         }
     }
 
-    internal static void DrawDepthIndicator((InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop) prop)
+    internal static void DrawDepthIndicator(Prop prop)
     {
-        var (c, i) = prop.position;
+        var (c, i) = prop.Position;
         
-        switch (prop.type)
+        switch (prop.Type)
         {
             case InitPropType.Tile:
             {
-                var init = prop.tile;
+                var init = prop.Tile;
 
                 if (init is null) return;
                 
                 var depth = init.Repeat.Sum() * 10;
-                var offset = -prop.prop.Depth * 10;
+                var offset = -prop.Depth * 10;
                 var overflow = offset + depth - 290;
             
                 DrawRectangleRec(
@@ -6082,7 +6082,7 @@ internal static class Printers
                 
                 DrawRectangleRec(
                     new Rectangle(
-                        -prop.prop.Depth * 10, 
+                        -prop.Depth * 10, 
                         0,
                         init switch
                         {

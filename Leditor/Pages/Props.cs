@@ -49,21 +49,21 @@ internal class PropsEditorPage : EditorPage, IContextListener
             var current = GLOBALS.Level.Props[p];
             
             // Filter based on depth
-            if (!GLOBALS.Settings.PropEditor.CrossLayerSelection && (current.prop.Depth <= -(GLOBALS.Layer+1)*10 || current.prop.Depth > -GLOBALS.Layer*10)) continue;
+            if (!GLOBALS.Settings.PropEditor.CrossLayerSelection && (current.Depth <= -(GLOBALS.Layer+1)*10 || current.Depth > -GLOBALS.Layer*10)) continue;
 
-            var (category, index) = current.position;
-            var quads = current.prop.Quads;
+            var (category, index) = current.Position;
+            var quads = current.Quad;
             
             // origin must be the center
             // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
             
             // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-            Printers.DrawProp(current.type, current.tile, category, index, current.prop, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+            Printers.DrawProp(current.Type, current.Tile, category, index, current, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
 
             // Draw Rope Point
-            if (current.type == InitPropType.Rope)
+            if (current.Type == InitPropType.Rope)
             {
-                foreach (var point in current.prop.Extras.RopePoints)
+                foreach (var point in current.Extras.RopePoints)
                 {
                     DrawCircleV(point, 3f, Color.White);
                 }
@@ -73,13 +73,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
             {
                 // Side Lines
                 
-                DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
+                DrawRectangleLinesEx(Utils.EncloseQuads(current.Quad), 1.2f, Color.Blue);
                 
                 // Quad Points
 
                 if (_stretchingProp)
                 {
-                    if (current.type == InitPropType.Rope)
+                    if (current.Type == InitPropType.Rope)
                     {
                         DrawCircleV(
                             Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
@@ -100,9 +100,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         DrawCircleV(quads.BottomRight, 2f, Color.Blue);
                         DrawCircleV(quads.BottomLeft, 2f, Color.Blue);*/
                     }
-                    else if (current.type == InitPropType.Long)
+                    else if (current.Type == InitPropType.Long)
                     {
-                        var sides = Utils.LongSides(current.prop.Quads);
+                        var sides = Utils.LongSides(current.Quad);
                         
                         DrawCircleV(sides.left, 5f, Color.Blue);
                         DrawCircleV(sides.top, 5f, Color.Blue);
@@ -143,18 +143,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 }
                 
                 // Draw Rope Point
-                if (current.type == InitPropType.Rope)
+                if (current.Type == InitPropType.Rope)
                 {
                     if (_editingPropPoints)
                     {
-                        foreach (var point in current.prop.Extras.RopePoints)
+                        foreach (var point in current.Extras.RopePoints)
                         {
                             DrawCircleV(point, 3f, Color.Red);
                         }
                     }
                     else
                     {
-                        foreach (var point in current.prop.Extras.RopePoints)
+                        foreach (var point in current.Extras.RopePoints)
                         {
                             DrawCircleV(point, 2f, Color.Orange);
                         }
@@ -428,22 +428,22 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     var current = GLOBALS.Level.Props[p];
                     
                     // Filter based on depth
-                    if (current.prop.Depth > -20) continue;
+                    if (current.Depth > -20) continue;
 
-                    var (category, index) = current.position;
-                    var quads = current.prop.Quads;
+                    var (category, index) = current.Position;
+                    var quads = current.Quad;
                     
                     // origin must be the center
                     // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
                     // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                    Printers.DrawProp(current.type, current.tile, category, index, current.prop, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+                    Printers.DrawProp(current.Type, current.Tile, category, index, current, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
 
 
                     // Draw Rope Point
-                    if (current.type == InitPropType.Rope)
+                    if (current.Type == InitPropType.Rope)
                     {
-                        foreach (var point in current.prop.Extras.RopePoints)
+                        foreach (var point in current.Extras.RopePoints)
                         {
                             DrawCircleV(point, 3f, Color.White);
                         }
@@ -453,13 +453,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         // Side Lines
                         
-                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
+                        DrawRectangleLinesEx(Utils.EncloseQuads(current.Quad), 1.2f, Color.Blue);
                         
                         // Quad Points
 
                         if (_stretchingProp)
                         {
-                            if (current.type == InitPropType.Rope)
+                            if (current.Type == InitPropType.Rope)
                             {
                                 DrawCircleV(
                                     Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
@@ -514,18 +514,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
                         
                         // Draw Rope Point
-                        if (current.type == InitPropType.Rope)
+                        if (current.Type == InitPropType.Rope)
                         {
                             if (_editingPropPoints)
                             {
-                                foreach (var point in current.prop.Extras.RopePoints)
+                                foreach (var point in current.Extras.RopePoints)
                                 {
                                     DrawCircleV(point, 3f, Color.Red);
                                 }
                             }
                             else
                             {
-                                foreach (var point in current.prop.Extras.RopePoints)
+                                foreach (var point in current.Extras.RopePoints)
                                 {
                                     DrawCircleV(point, 2f, Color.Orange);
                                 }
@@ -655,21 +655,21 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     var current = GLOBALS.Level.Props[p];
                     
                     // Filter based on depth
-                    if (current.prop.Depth > -10 || current.prop.Depth < -19) continue;
+                    if (current.Depth > -10 || current.Depth < -19) continue;
 
-                    var (category, index) = current.position;
-                    var quads = current.prop.Quads;
+                    var (category, index) = current.Position;
+                    var quads = current.Quad;
                     
                     // origin must be the center
                     // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
                     // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                    Printers.DrawProp(current.type, current.tile, category, index, current.prop, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+                    Printers.DrawProp(current.Type, current.Tile, category, index, current, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
 
                     // Draw Rope Point
-                    if (current.type == InitPropType.Rope)
+                    if (current.Type == InitPropType.Rope)
                     {
-                        foreach (var point in current.prop.Extras.RopePoints)
+                        foreach (var point in current.Extras.RopePoints)
                         {
                             DrawCircleV(point, 3f, Color.White);
                         }
@@ -679,13 +679,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         // Side Lines
                         
-                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
+                        DrawRectangleLinesEx(Utils.EncloseQuads(current.Quad), 1.2f, Color.Blue);
                         
                         // Quad Points
 
                         if (_stretchingProp)
                         {
-                            if (current.type == InitPropType.Rope)
+                            if (current.Type == InitPropType.Rope)
                             {
                                 DrawCircleV(
                                     Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
@@ -740,18 +740,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
                         
                         // Draw Rope Point
-                        if (current.type == InitPropType.Rope)
+                        if (current.Type == InitPropType.Rope)
                         {
                             if (_editingPropPoints)
                             {
-                                foreach (var point in current.prop.Extras.RopePoints)
+                                foreach (var point in current.Extras.RopePoints)
                                 {
                                     DrawCircleV(point, 3f, Color.Red);
                                 }
                             }
                             else
                             {
-                                foreach (var point in current.prop.Extras.RopePoints)
+                                foreach (var point in current.Extras.RopePoints)
                                 {
                                     DrawCircleV(point, 2f, Color.Orange);
                                 }
@@ -891,21 +891,21 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     var current = GLOBALS.Level.Props[p];
                     
                     // Filter based on depth
-                    if (!GLOBALS.Settings.PropEditor.CrossLayerSelection && (current.prop.Depth < -9)) continue;
+                    if (!GLOBALS.Settings.PropEditor.CrossLayerSelection && (current.Depth < -9)) continue;
 
-                    var (category, index) = current.position;
-                    var quads = current.prop.Quads;
+                    var (category, index) = current.Position;
+                    var quads = current.Quad;
                     
                     // origin must be the center
                     // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
                     // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                    Printers.DrawProp(current.type, current.tile, category, index, current.prop, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+                    Printers.DrawProp(current.Type, current.Tile, category, index, current, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
 
                     // Draw Rope Point
-                    if (current.type == InitPropType.Rope)
+                    if (current.Type == InitPropType.Rope)
                     {
-                        foreach (var point in current.prop.Extras.RopePoints)
+                        foreach (var point in current.Extras.RopePoints)
                         {
                             DrawCircleV(point, 3f, Color.White);
                         }
@@ -915,13 +915,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         // Side Lines
                         
-                        DrawRectangleLinesEx(Utils.EncloseQuads(current.prop.Quads), 1.2f, Color.Blue);
+                        DrawRectangleLinesEx(Utils.EncloseQuads(current.Quad), 1.2f, Color.Blue);
                         
                         // Quad Points
 
                         if (_stretchingProp)
                         {
-                            if (current.type == InitPropType.Rope)
+                            if (current.Type == InitPropType.Rope)
                             {
                                 DrawCircleV(
                                     Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
@@ -942,9 +942,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 DrawCircleV(quads.BottomRight, 2f, Color.Blue);
                                 DrawCircleV(quads.BottomLeft, 2f, Color.Blue);*/
                             }
-                            else if (current.type == InitPropType.Long)
+                            else if (current.Type == InitPropType.Long)
                             {
-                                var sides = Utils.LongSides(current.prop.Quads);
+                                var sides = Utils.LongSides(current.Quad);
                                 
                                 DrawCircleV(sides.left, 5f, Color.Blue);
                                 DrawCircleV(sides.top, 5f, Color.Blue);
@@ -985,18 +985,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
                         
                         // Draw Rope Point
-                        if (current.type == InitPropType.Rope)
+                        if (current.Type == InitPropType.Rope)
                         {
                             if (_editingPropPoints)
                             {
-                                foreach (var point in current.prop.Extras.RopePoints)
+                                foreach (var point in current.Extras.RopePoints)
                                 {
                                     DrawCircleV(point, 3f, Color.Red);
                                 }
                             }
                             else
                             {
-                                foreach (var point in current.prop.Extras.RopePoints)
+                                foreach (var point in current.Extras.RopePoints)
                                 {
                                     DrawCircleV(point, 2f, Color.Orange);
                                 }
@@ -1352,7 +1352,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
         var ropes = GLOBALS.Level.Props
             .Select((rope, index) => (rope, index))
-            .Where(ropeInfo => ropeInfo.rope.type == InitPropType.Rope);
+            .Where(ropeInfo => ropeInfo.rope.Type == InitPropType.Rope);
 
         if (!ropes.Any()) {
             _models = [];
@@ -1366,9 +1366,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
             {
                 var current = GLOBALS.Level.Props[r];
                 
-                if (current.type != InitPropType.Rope) continue;
+                if (current.Type != InitPropType.Rope) continue;
                 
-                var newModel = new RopeModel(current.prop, GLOBALS.RopeProps[current.position.index]);
+                var newModel = new RopeModel(current, GLOBALS.RopeProps[current.Position.index]);
             
                 // var quad = current.prop.Quads;
                 // var quadCenter = Utils.QuadsCenter(ref quad);
@@ -1383,7 +1383,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                 if (foundModel.model != null) return foundModel;
 
-                var newModel = new RopeModel(ropeInfo.rope.prop, GLOBALS.RopeProps[ropeInfo.rope.position.index]);
+                var newModel = new RopeModel(ropeInfo.rope, GLOBALS.RopeProps[ropeInfo.rope.Position.index]);
 
                 // var quad = ropeInfo.rope.prop.Quads;
                 // var quadCenter = Utils.QuadsCenter(ref quad);
@@ -1407,8 +1407,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 current.index, 
                 false, 
                 new RopeModel(
-                    GLOBALS.Level.Props[current.index].prop, 
-                    GLOBALS.RopeProps[GLOBALS.Level.Props[current.index].position.index])
+                    GLOBALS.Level.Props[current.index], 
+                    GLOBALS.RopeProps[GLOBALS.Level.Props[current.index].Position.index])
                     {
                         BezierHandles = current.model.BezierHandles
                     }
@@ -1865,15 +1865,15 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             // Utils.Restrict(ref _additionalInitialRopeSegments, 0);
                         }
 
-                        var (_, _, (_, initIndex), foundProp) = GLOBALS.Level.Props[index];
+                        var current = GLOBALS.Level.Props[index];
 
                         var middleLeft = Raymath.Vector2Divide(
-                            Raymath.Vector2Add(foundProp.Quads.TopLeft, foundProp.Quads.BottomLeft),
+                            Raymath.Vector2Add(current.Quad.TopLeft, current.Quad.BottomLeft),
                             new(2f, 2f)
                         );
 
                         var middleRight = Raymath.Vector2Divide(
-                            Raymath.Vector2Add(foundProp.Quads.TopRight, foundProp.Quads.BottomRight),
+                            Raymath.Vector2Add(current.Quad.TopRight, current.Quad.BottomRight),
                             new(2f, 2f)
                         );
                         
@@ -1881,9 +1881,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             var beta = Raymath.Vector2Angle(Raymath.Vector2Subtract(middleLeft, middleRight), new(1.0f, 0.0f));
                             
-                            var r = Raymath.Vector2Length(Raymath.Vector2Subtract(foundProp.Quads.TopLeft, middleLeft));
+                            var r = Raymath.Vector2Length(Raymath.Vector2Subtract(current.Quad.TopLeft, middleLeft));
                         
-                            var currentQuads = foundProp.Quads;
+                            var currentQuads = current.Quad;
 
                             currentQuads.BottomLeft = Raymath.Vector2Add(
                                 middleLeft, 
@@ -1905,14 +1905,14 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 new Vector2(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                             );
 
-                            foundProp.Quads = currentQuads;
+                            current.Quad = currentQuads;
                         }
 
                         // Adjust segment count
-                        var init = GLOBALS.Ropes[initIndex];
+                        var init = GLOBALS.Ropes[current.Position.index];
                         var endsDistance = (int)Raymath.Vector2Distance(middleLeft, middleRight) / (10 + init.SegmentLength);
                         if (endsDistance > 0 && ++_ropeSimulationFrame % 6 == 0) {
-                            var ropePoints = foundProp.Extras.RopePoints;
+                            var ropePoints = current.Extras.RopePoints;
                             var targetCount = endsDistance + _additionalInitialRopeSegments;
 
                             Utils.Restrict(ref targetCount, 3);
@@ -1929,12 +1929,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             model.UpdateSegments(ropePoints);
                         }
 
-                        model?.Update(foundProp.Quads, foundProp.Depth switch
-                                {
-                                    < -19 => 2,
-                                    < -9 => 1,
-                                    _ => 0
-                                });
+                        model?.Update(current.Quad, current.Depth switch
+                        {
+                            < -19 => 2,
+                            < -9 => 1,
+                            _ => 0
+                        });
 
                         if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                         else {
@@ -1944,7 +1944,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 }
 
                 if (_longInitialPlacement && GLOBALS.Level.Props is { Length: > 0 }) {
-                    var currentQuads = GLOBALS.Level.Props[^1].prop.Quads;
+                    var currentQuads = GLOBALS.Level.Props[^1].Quad;
                     var (left, top, right, bottom) = Utils.LongSides(currentQuads);
                             
                     var beta = Raymath.Vector2Angle(Raymath.Vector2Subtract(left, right), new(1.0f, 0.0f));
@@ -1971,7 +1971,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         new(r * (float) Math.Cos(-beta + float.DegreesToRadians(90)), r * (float) Math.Sin(-beta + float.DegreesToRadians(90)))
                     );
 
-                    GLOBALS.Level.Props[^1].prop.Quads = currentQuads;
+                    GLOBALS.Level.Props[^1].Quad = currentQuads;
 
                     if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
                     else {
@@ -2036,19 +2036,15 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                                 foreach (var prop in GLOBALS.Level.Props)
                                 {
-                                    var propRec = Utils.EncloseQuads(prop.prop.Quads);
+                                    var propRec = Utils.EncloseQuads(prop.Quad);
                                     var newPropRec = Utils.EncloseQuads(placementQuad);
                                     
-                                    if (prop.prop.Depth == _defaultDepth && CheckCollisionRecs(newPropRec, propRec)) goto skipPlacement;
+                                    if (prop.Depth == _defaultDepth && CheckCollisionRecs(newPropRec, propRec)) goto skipPlacement;
                                 }
 
                                 var rotatedQuad = Utils.RotatePropQuads(placementQuad, _placementRotation * _placementRotationSteps, tileMouseWorld);
                                 
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
-                                    (
-                                        InitPropType.Tile, 
-                                        _currentTile,
-                                        (-1, -1),
                                         new Prop(
                                             _defaultDepth, 
                                             _currentTile.Name, 
@@ -2058,9 +2054,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         {
                                             Extras = new PropExtras(settings, []),
                                             Rotation = _placementRotation * _placementRotationSteps,
-                                            OriginalQuad = placementQuad
+                                            OriginalQuad = placementQuad,
+                                            Type = InitPropType.Tile,
+                                            Tile = _currentTile,
+                                            Position = (-1, -1)
                                         }
-                                    )
                                 ];
                             }
                                 break;
@@ -2105,10 +2103,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                                         
                                     GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
-                                        (
-                                            InitPropType.Rope, 
-                                            null,
-                                            (-1, _propsMenuRopesIndex), 
                                             new Prop(
                                                 _defaultDepth, 
                                                 current.Name, 
@@ -2119,9 +2113,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                                 Extras = new PropExtras(
                                                     settings, 
                                                     ropePoints
-                                                )
+                                                ),
+                                                Type = InitPropType.Rope,
+                                                Tile = null,
+                                                Position = (-1, _propsMenuRopesIndex)
                                             }
-                                        ) 
                                     ];
 
                                     _selected = new bool[GLOBALS.Level.Props.Length];
@@ -2171,10 +2167,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     }
                                     
                                     GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
-                                        (
-                                            InitPropType.Long, 
-                                            null,
-                                            (-1, _propsMenuLongsIndex), 
                                             new Prop(
                                                 _defaultDepth, 
                                                 current.Name, 
@@ -2182,9 +2174,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                                 newQuads
                                             )
                                             {
-                                                Extras = new PropExtras(settings, [])
+                                                Extras = new PropExtras(settings, []),
+                                                Type = InitPropType.Long,
+                                                Tile = null,
+                                                Position = (-1, _propsMenuLongsIndex)
                                             }
-                                        ) 
                                     ];
 
                                     _selected = new bool[GLOBALS.Level.Props.Length];
@@ -2248,10 +2242,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 var rotatedQuad = Utils.RotatePropQuads(newQuads, _placementRotation * _placementRotationSteps, tileMouseWorld);
                                 
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
-                                    (
-                                        init.Type, 
-                                        null,
-                                        (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex),
                                         new Prop(
                                             _defaultDepth, 
                                             init.Name, 
@@ -2261,16 +2251,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         {
                                             Extras = new PropExtras(settings, []),
                                             Rotation = _placementRotation * _placementRotationSteps,
-                                            OriginalQuad = newQuads
+                                            OriginalQuad = newQuads,
+                                            Type = init.Type,
+                                            Tile = null,
+                                            Position = (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex)
                                         }
-                                    )
                                 ];
                             }
                                 break;
                         }
                         
                         if (GLOBALS.Level.Props.Length > 0 && 
-                            GLOBALS.Level.Props[^1].type != InitPropType.Rope) _ropeInitialPlacement = false;
+                            GLOBALS.Level.Props[^1].Type != InitPropType.Rope) _ropeInitialPlacement = false;
 
                         // Do not forget to update _selected and _hidden
 
@@ -2343,10 +2335,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 var rotatedQuads = Utils.RotatePropQuads(quads, _placementRotation * _placementRotationSteps, tileMouseWorld);
                                 
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
-                                    (
-                                        InitPropType.Tile, 
-                                        _currentTile,
-                                        (-1, -1),
+                                    
                                         new Prop(
                                             _defaultDepth, 
                                             _currentTile.Name, 
@@ -2356,9 +2345,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         {
                                             Extras = new(settings, []),
                                             Rotation = _placementRotation * _placementRotationSteps,
-                                            OriginalQuad = quads
+                                            OriginalQuad = quads,
+                                            Type = InitPropType.Tile,
+                                            Tile = _currentTile,
+                                            Position = (-1, -1)
                                         }
-                                    )
+                                    
                                 ];
                             }
                                 break;
@@ -2404,10 +2396,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                                         
                                     GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
-                                        (
-                                            InitPropType.Rope, 
-                                            null,
-                                            (-1, _propsMenuRopesIndex), 
                                             new Prop(
                                                 _defaultDepth, 
                                                 current.Name, 
@@ -2418,9 +2406,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                                 Extras = new PropExtras(
                                                     settings, 
                                                     ropePoints
-                                                )
+                                                ),
+                                                Type = InitPropType.Rope,
+                                                Tile = null,
+                                                Position = (-1, _propsMenuRopesIndex)
                                             }
-                                        ) 
                                     ];
 
                                     _selected = new bool[GLOBALS.Level.Props.Length];
@@ -2467,10 +2457,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     }
                                     
                                     GLOBALS.Level.Props = [..GLOBALS.Level.Props, 
-                                        (
-                                            InitPropType.Long, 
-                                            null,
-                                            (-1, _propsMenuLongsIndex), 
                                             new Prop(
                                                 _defaultDepth, 
                                                 current.Name, 
@@ -2479,9 +2465,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             )
                                             {
                                                 Extras = new PropExtras(settings, []),
-                                                Rotation = _placementRotation
+                                                Rotation = _placementRotation,
+                                                Type = InitPropType.Long,
+                                                Tile = null,
+                                                Position = (-1, _propsMenuLongsIndex)
                                             }
-                                        ) 
                                     ];
 
                                     _selected = new bool[GLOBALS.Level.Props.Length];
@@ -2545,10 +2533,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 var rotatedQuad = Utils.RotatePropQuads(quads, _placementRotation * _placementRotationSteps, tileMouseWorld);
                                 
                                 GLOBALS.Level.Props = [ .. GLOBALS.Level.Props,
-                                    (
-                                        init.Type, 
-                                        null,
-                                        (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex),
                                         new Prop(
                                             _defaultDepth, 
                                             init.Name, 
@@ -2557,16 +2541,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         {
                                             Extras = new PropExtras(settings, []),
                                             Rotation = _placementRotation * _placementRotationSteps,
-                                            OriginalQuad = quads
+                                            OriginalQuad = quads,
+                                            Type = init.Type,
+                                            Tile = null,
+                                            Position = (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex)
                                         }
-                                    )
                                 ];
                             }
                                 break;
                         }
 
                         if (GLOBALS.Level.Props.Length > 0 && 
-                            GLOBALS.Level.Props[^1].type != InitPropType.Rope) _ropeInitialPlacement = false;
+                            GLOBALS.Level.Props[^1].Type != InitPropType.Rope) _ropeInitialPlacement = false;
                         
                         // Do not forget to update _selected and _hidden
 
@@ -2645,17 +2631,17 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         for (var i = 0; i < GLOBALS.Level.Props.Length; i++)
                         {
                             var current = GLOBALS.Level.Props[i];
-                            var propSelectRect = Utils.EncloseQuads(current.prop.Quads);
+                            var propSelectRect = Utils.EncloseQuads(current.Quad);
                             if (_shortcuts.PropSelectionModifier.Check(ctrl, shift, alt, true))
                             {
-                                if (CheckCollisionRecs(propSelectRect, _selection) && !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10))
+                                if (CheckCollisionRecs(propSelectRect, _selection) && !(current.Depth <= (GLOBALS.Layer + 1) * -10 || current.Depth > GLOBALS.Layer * -10))
                                 {
                                     _selected[i] = !_selected[i];
                                 }
                             }
                             else
                             {
-                                if (CheckCollisionRecs(propSelectRect, _selection) && !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10))
+                                if (CheckCollisionRecs(propSelectRect, _selection) && !(current.Depth <= (GLOBALS.Layer + 1) * -10 || current.Depth > GLOBALS.Layer * -10))
                                 {
                                     _selected[i] = true;
                                     selectedI.Add(i);
@@ -2734,12 +2720,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         var current = GLOBALS.Level.Props[i];
     
-                        if (!CheckCollisionPointRec(tileMouseWorld, Utils.EncloseQuads(current.prop.Quads)) || 
-                            ((current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || 
-                            current.prop.Depth > GLOBALS.Layer * -10) && !GLOBALS.Settings.PropEditor.CrossLayerSelection)) 
+                        if (!CheckCollisionPointRec(tileMouseWorld, Utils.EncloseQuads(current.Quad)) || 
+                            ((current.Depth <= (GLOBALS.Layer + 1) * -10 || 
+                            current.Depth > GLOBALS.Layer * -10) && !GLOBALS.Settings.PropEditor.CrossLayerSelection)) 
                             continue;
 
-                        if (current.type == InitPropType.Tile && GLOBALS.TileDex is not null)
+                        if (current.Type == InitPropType.Tile && GLOBALS.TileDex is not null)
                         {
                             for (var c = 0; c < GLOBALS.TileDex.OrderedTilesAsProps.Length; c++)
                             {
@@ -2747,35 +2733,35 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 {
                                     var currentTileAsProp = GLOBALS.TileDex.OrderedTilesAsProps[c][p];
 
-                                    if (currentTileAsProp.Name != current.prop.Name) continue;
+                                    if (currentTileAsProp.Name != current.Name) continue;
 
                                     _propsMenuTilesCategoryIndex = c;
                                     _propsMenuTilesIndex = p;
 
-                                    _copiedPropSettings = current.prop.Extras.Settings;
+                                    _copiedPropSettings = current.Extras.Settings;
                                     _copiedIsTileAsProp = true;
                                 }
                             }
                         }
-                        else if (current.type == InitPropType.Rope)
+                        else if (current.Type == InitPropType.Rope)
                         {
-                            _copiedRopePoints = [..current.prop.Extras.RopePoints];
-                            _copiedPropSettings = current.prop.Extras.Settings;
+                            _copiedRopePoints = [..current.Extras.RopePoints];
+                            _copiedPropSettings = current.Extras.Settings;
                             _copiedIsTileAsProp = false;
                         }
-                        else if (current.type == InitPropType.Long)
+                        else if (current.Type == InitPropType.Long)
                         {
-                            _copiedPropSettings = current.prop.Extras.Settings;
+                            _copiedPropSettings = current.Extras.Settings;
                             _copiedIsTileAsProp = false;
                         }
                         else
                         {
-                            (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex) = current.position;
-                            _copiedPropSettings = current.prop.Extras.Settings;
+                            (_propsMenuOthersCategoryIndex, _propsMenuOthersIndex) = current.Position;
+                            _copiedPropSettings = current.Extras.Settings;
                             _copiedIsTileAsProp = false;
                         }
 
-                        _copiedDepth = current.prop.Depth;
+                        _copiedDepth = current.Depth;
                     }
                 }
                 break;
@@ -2791,7 +2777,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 
                 if (anySelected)
                 {
-                    _selectedPropsEncloser = Utils.EncloseProps(fetchedSelected.Select(p => p.prop.prop.Quads));
+                    _selectedPropsEncloser = Utils.EncloseProps(fetchedSelected.Select(p => p.prop.Quad));
                     _selectedPropsCenter = new Vector2(
                         _selectedPropsEncloser.X + 
                         _selectedPropsEncloser.Width/2, 
@@ -2799,7 +2785,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         _selectedPropsEncloser.Height/2
                     );
 
-                    if (fetchedSelected[0].prop.type == InitPropType.Rope) {
+                    if (fetchedSelected[0].prop.Type == InitPropType.Rope) {
                         if (_shortcuts.ToggleRopeGravity.Check(ctrl, shift, alt)) {
                             for (var i = 0; i < _models.Length; i++)
                             {
@@ -2829,13 +2815,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         var foundRope = _models.SingleOrDefault(rope => rope.index == fetchedSelected[0].index);
 
                         if (_shortcuts.IncrementRopSegmentCount.Check(ctrl, shift, alt)) {
-                            foundRope.model.UpdateSegments([..fetchedSelected[0].prop.prop.Extras.RopePoints, new Vector2(0, 0)]);
+                            foundRope.model.UpdateSegments([..fetchedSelected[0].prop.Extras.RopePoints, new Vector2(0, 0)]);
 
                             // ImportRopeModels();
                         }
 
                         if (_shortcuts.DecrementRopSegmentCount.Check(ctrl, shift, alt)) {
-                            foundRope.model.UpdateSegments(fetchedSelected[0].prop.prop.Extras.RopePoints.Take(fetchedSelected[0].prop.prop.Extras.RopePoints.Length - 1).ToArray());
+                            foundRope.model.UpdateSegments(fetchedSelected[0].prop.Extras.RopePoints.Take(fetchedSelected[0].prop.Extras.RopePoints.Length - 1).ToArray());
 
                             // ImportRopeModels();
                         }
@@ -2847,7 +2833,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             if (!_selected[p]) continue;
                             
-                            GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(GLOBALS.Level.Props[p].prop.OriginalQuad, GLOBALS.Level.Props[p].prop.Rotation);
+                            GLOBALS.Level.Props[p].Quad = Utils.RotatePropQuads(GLOBALS.Level.Props[p].OriginalQuad, GLOBALS.Level.Props[p].Rotation);
                         }
 
                         _shouldRedrawPropLayer = true;
@@ -2872,16 +2858,16 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         if (!_selected[p]) continue;
                         
-                        var quads = GLOBALS.Level.Props[p].prop.Quads;
+                        var quads = GLOBALS.Level.Props[p].Quad;
 
-                        GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
+                        GLOBALS.Level.Props[p].Quad = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
 
-                        if (GLOBALS.Level.Props[p].type == InitPropType.Rope)
+                        if (GLOBALS.Level.Props[p].Type == InitPropType.Rope)
                         {
-                            Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
+                            Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].Extras.RopePoints);
                         }
 
-                        GLOBALS.Level.Props[p].prop.Rotation += degree;
+                        GLOBALS.Level.Props[p].Rotation += degree;
                     }
 
                     _shouldRedrawPropLayer = true;
@@ -2895,16 +2881,16 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         if (!_selected[p]) continue;
                         
-                        var quads = GLOBALS.Level.Props[p].prop.Quads;
+                        var quads = GLOBALS.Level.Props[p].Quad;
 
-                        GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
+                        GLOBALS.Level.Props[p].Quad = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
 
-                        if (GLOBALS.Level.Props[p].type == InitPropType.Rope)
+                        if (GLOBALS.Level.Props[p].Type == InitPropType.Rope)
                         {
-                            Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
+                            Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].Extras.RopePoints);
                         }
 
-                        GLOBALS.Level.Props[p].prop.Rotation += degree;
+                        GLOBALS.Level.Props[p].Rotation += degree;
                     }
 
                     _shouldRedrawPropLayer = true;
@@ -2918,16 +2904,16 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         if (!_selected[p]) continue;
                         
-                        var quads = GLOBALS.Level.Props[p].prop.Quads;
+                        var quads = GLOBALS.Level.Props[p].Quad;
 
-                        GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
+                        GLOBALS.Level.Props[p].Quad = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
 
-                        if (GLOBALS.Level.Props[p].type == InitPropType.Rope)
+                        if (GLOBALS.Level.Props[p].Type == InitPropType.Rope)
                         {
-                            Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
+                            Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].Extras.RopePoints);
                         }
 
-                        GLOBALS.Level.Props[p].prop.Rotation += degree;
+                        GLOBALS.Level.Props[p].Rotation += degree;
                     }
 
                     _shouldRedrawPropLayer = true;
@@ -2941,16 +2927,16 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         if (!_selected[p]) continue;
                         
-                        var quads = GLOBALS.Level.Props[p].prop.Quads;
+                        var quads = GLOBALS.Level.Props[p].Quad;
 
-                        GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
+                        GLOBALS.Level.Props[p].Quad = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
 
-                        if (GLOBALS.Level.Props[p].type == InitPropType.Rope)
+                        if (GLOBALS.Level.Props[p].Type == InitPropType.Rope)
                         {
-                            Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
+                            Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].Extras.RopePoints);
                         }
 
-                        GLOBALS.Level.Props[p].prop.Rotation += degree;
+                        GLOBALS.Level.Props[p].Rotation += degree;
                     }
 
                     _shouldRedrawPropLayer = true;
@@ -2962,16 +2948,16 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         if (!_selected[p]) continue;
                         
-                        var quads = GLOBALS.Level.Props[p].prop.Quads;
+                        var quads = GLOBALS.Level.Props[p].Quad;
 
-                        GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(quads, -GLOBALS.Level.Props[p].prop.Rotation, _selectedPropsCenter);
+                        GLOBALS.Level.Props[p].Quad = Utils.RotatePropQuads(quads, -GLOBALS.Level.Props[p].Rotation, _selectedPropsCenter);
 
-                        if (GLOBALS.Level.Props[p].type == InitPropType.Rope)
+                        if (GLOBALS.Level.Props[p].Type == InitPropType.Rope)
                         {
-                            Utils.RotatePoints(-_placementRotation, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
+                            Utils.RotatePoints(-_placementRotation, _selectedPropsCenter, GLOBALS.Level.Props[p].Extras.RopePoints);
                         }
 
-                        GLOBALS.Level.Props[p].prop.Rotation = 0;
+                        GLOBALS.Level.Props[p].Rotation = 0;
                     }
 
                     _shouldRedrawPropLayer = true;
@@ -3128,7 +3114,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     // Rope-only actions
                     else if (
                         fetchedSelected.Length == 1 &&
-                        fetchedSelected[0].prop.type == InitPropType.Rope
+                        fetchedSelected[0].prop.Type == InitPropType.Rope
                     )
                     {
                         // Edit Rope Points
@@ -3195,25 +3181,29 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                             _bezierHandleLock = -1;
 
-                            List<(InitPropType, TileDefinition?, (int, int), Prop)> dProps = [];
+                            List<Prop> dProps = [];
                         
                             foreach (var (prop, _) in fetchedSelected)
                             {
-                                dProps.Add((prop.type, prop.tile, prop.position, new Prop(
-                                        prop.prop.Depth,
-                                        prop.prop.Name,
-                                        prop.prop.IsTile,
+                                dProps.Add(new Prop(
+                                        prop.Depth,
+                                        prop.Name,
+                                        prop.IsTile,
                                         new PropQuad(
-                                            prop.prop.Quads.TopLeft,
-                                            prop.prop.Quads.TopRight,
-                                            prop.prop.Quads.BottomRight,
-                                            prop.prop.Quads.BottomLeft
+                                            prop.Quad.TopLeft,
+                                            prop.Quad.TopRight,
+                                            prop.Quad.BottomRight,
+                                            prop.Quad.BottomLeft
                                         ))
                                     {
                                         Extras = new PropExtras(
-                                            prop.prop.Extras.Settings.Clone(),
-                                            [..prop.prop.Extras.RopePoints])
-                                    })
+                                            prop.Extras.Settings.Clone(),
+                                            [..prop.Extras.RopePoints]),
+
+                                            Type = prop.Type,
+                                            Tile = prop.Tile,
+                                            Position = prop.Position
+                                    }
                                 );
 
                             }
@@ -3253,25 +3243,28 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
 
                         
-                        List<(InitPropType, TileDefinition?, (int, int), Prop)> dProps = [];
+                        List<Prop> dProps = [];
                         
                         foreach (var (prop, _) in fetchedSelected)
                         {
-                            dProps.Add((prop.type, prop.tile, prop.position, new Prop(
-                                    prop.prop.Depth,
-                                    prop.prop.Name,
-                                    prop.prop.IsTile,
+                            dProps.Add(new Prop(
+                                    prop.Depth,
+                                    prop.Name,
+                                    prop.IsTile,
                                     new PropQuad(
-                                        prop.prop.Quads.TopLeft,
-                                        prop.prop.Quads.TopRight,
-                                        prop.prop.Quads.BottomRight,
-                                        prop.prop.Quads.BottomLeft
+                                        prop.Quad.TopLeft,
+                                        prop.Quad.TopRight,
+                                        prop.Quad.BottomRight,
+                                        prop.Quad.BottomLeft
                                     ))
                                 {
                                     Extras = new PropExtras(
-                                        prop.prop.Extras.Settings.Clone(),
-                                        [..prop.prop.Extras.RopePoints])
-                                })
+                                        prop.Extras.Settings.Clone(),
+                                        [..prop.Extras.RopePoints]),
+                                    Type = prop.Type,
+                                    Tile = prop.Tile,
+                                    Position = prop.Position
+                                }
                             );
 
                         }
@@ -3304,7 +3297,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 }
                 #endregion
 
-                if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.type == InitPropType.Rope && _models.Length > 0)
+                if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.Type == InitPropType.Rope && _models.Length > 0)
                 {
                     _shouldUpdateModeIndicatorsRT = true;
 
@@ -3325,8 +3318,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 if (++_ropeSimulationFrame % _ropeSimulationFrameCut == 0)
                                 {
                                     model.Update(
-                                    fetchedSelected[0].prop.prop.Quads, 
-                                    fetchedSelected[0].prop.prop.Depth switch
+                                    fetchedSelected[0].prop.Quad, 
+                                    fetchedSelected[0].prop.Depth switch
                                     {
                                         < -19 => 2,
                                         < -9 => 1,
@@ -3336,9 +3329,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             }
                             else if (model.EditType == RopeModel.EditTypeEnum.BezierPaths) // bezier
                             {
-                                var (pA, pB) = Utils.RopeEnds(fetchedSelected[0].prop.prop.Quads);
+                                var (pA, pB) = Utils.RopeEnds(fetchedSelected[0].prop.Quad);
                                 
-                                fetchedSelected[0].prop.prop.Extras.RopePoints = Utils.Casteljau(fetchedSelected[0].prop.prop.Extras.RopePoints.Length, [ pA, ..model.BezierHandles, pB ]);
+                                fetchedSelected[0].prop.Extras.RopePoints = Utils.Casteljau(fetchedSelected[0].prop.Extras.RopePoints.Length, [ pA, ..model.BezierHandles, pB ]);
 
                                 if ((IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) && _bezierHandleLock != -1)
                                     _bezierHandleLock = -1;
@@ -3401,7 +3394,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         if (!_selected[s]) continue;
                         
-                        var quads = GLOBALS.Level.Props[s].prop.Quads;
+                        var quads = GLOBALS.Level.Props[s].Quad;
                         var center = Utils.QuadsCenter(ref quads);
 
                         Vector2 deltaToAdd = _snapMode switch {
@@ -3415,9 +3408,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         quads.BottomRight = Raymath.Vector2Add(quads.BottomRight, deltaToAdd);
                         quads.BottomLeft = Raymath.Vector2Add(quads.BottomLeft, deltaToAdd);
 
-                        GLOBALS.Level.Props[s].prop.Quads = quads;
+                        GLOBALS.Level.Props[s].Quad = quads;
 
-                        if (GLOBALS.Level.Props[s].type == InitPropType.Rope)
+                        if (GLOBALS.Level.Props[s].Type == InitPropType.Rope)
                         {
                             for (var r = 0; r < _models.Length; r++)
                             {
@@ -3425,14 +3418,14 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                                 if (propIndex == s)
                                 {
-                                    var segments = GLOBALS.Level.Props[s].prop.Extras.RopePoints;
+                                    var segments = GLOBALS.Level.Props[s].Extras.RopePoints;
                                     if (!simulated) {
                                         for (var p = 0; p < segments.Length; p++)
                                         {
                                             segments[p] = segments[p] + deltaToAdd;
                                         }
 
-                                        GLOBALS.Level.Props[propIndex].prop.Extras.RopePoints = segments;
+                                        GLOBALS.Level.Props[propIndex].Extras.RopePoints = segments;
                                     }
 
                                     for (var h = 0; h < _models[r].model.BezierHandles.Length; h++)
@@ -3472,16 +3465,16 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         if (!_selected[p]) continue;
                         
-                        var quads = GLOBALS.Level.Props[p].prop.Quads;
+                        var quads = GLOBALS.Level.Props[p].Quad;
 
-                        GLOBALS.Level.Props[p].prop.Quads = Utils.RotatePropQuads(quads, delta.X, _selectedPropsCenter);
+                        GLOBALS.Level.Props[p].Quad = Utils.RotatePropQuads(quads, delta.X, _selectedPropsCenter);
 
-                        if (GLOBALS.Level.Props[p].type == InitPropType.Rope)
+                        if (GLOBALS.Level.Props[p].Type == InitPropType.Rope)
                         {
-                            Utils.RotatePoints(delta.X, _selectedPropsCenter, GLOBALS.Level.Props[p].prop.Extras.RopePoints);
+                            Utils.RotatePoints(delta.X, _selectedPropsCenter, GLOBALS.Level.Props[p].Extras.RopePoints);
                         }
 
-                        GLOBALS.Level.Props[p].prop.Rotation += delta.X;
+                        GLOBALS.Level.Props[p].Rotation += delta.X;
                     }
                 }
                 else if (_scalingProps && anySelected)
@@ -3517,14 +3510,14 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     {
                         case 0: // Uniform Scaling
                         {
-                            var enclose = Utils.EncloseProps(fetchedSelected.Select(s => s.prop.prop.Quads));
+                            var enclose = Utils.EncloseProps(fetchedSelected.Select(s => s.prop.Quad));
                             var center = Utils.RectangleCenter(ref enclose);
 
                             foreach (var selected in fetchedSelected)
                             {
-                                var quads = selected.prop.prop.Quads;
+                                var quads = selected.prop.Quad;
                                 Utils.ScaleQuads(ref quads, center, 1f + delta.X*0.01f);
-                                GLOBALS.Level.Props[selected.index].prop.Quads = quads;
+                                GLOBALS.Level.Props[selected.index].Quad = quads;
                             }
                         }
                             break;
@@ -3533,12 +3526,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             foreach (var selected in fetchedSelected)
                             {
-                                var quads = selected.prop.prop.Quads;
+                                var quads = selected.prop.Quad;
                                 var center = Utils.QuadsCenter(ref quads);
                                 
                                 Utils.ScaleQuadsX(ref quads, center, 1f + delta.X * 0.01f);
                                 
-                                GLOBALS.Level.Props[selected.index].prop.Quads = quads;
+                                GLOBALS.Level.Props[selected.index].Quad = quads;
                             }
                         }
                             break;
@@ -3547,12 +3540,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         {
                             foreach (var selected in fetchedSelected)
                             {
-                                var quads = selected.prop.prop.Quads;
+                                var quads = selected.prop.Quad;
                                 var center = Utils.QuadsCenter(ref quads);
 
                                 Utils.ScaleQuadsY(ref quads, center, 1f - delta.Y * 0.01f);
                                 
-                                GLOBALS.Level.Props[selected.index].prop.Quads = quads;
+                                GLOBALS.Level.Props[selected.index].Quad = quads;
                             }
                         }
                             break;
@@ -3567,7 +3560,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     }
 
                     
-                    var currentQuads = fetchedSelected[0].prop.prop.Quads; 
+                    var currentQuads = fetchedSelected[0].prop.Quad; 
                     
                     var posV = _snapMode switch
                     {
@@ -3578,7 +3571,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                     if (IsMouseButtonDown(_shortcuts.SelectProps.Button) || IsKeyDown(_shortcuts.SelectPropsAlt.Key))
                     {
-                        if (fetchedSelected[0].prop.type == InitPropType.Rope)
+                        if (fetchedSelected[0].prop.Type == InitPropType.Rope)
                         {
                             var middleLeft = Raymath.Vector2Divide(
                                 Raymath.Vector2Add(currentQuads.TopLeft, currentQuads.BottomLeft),
@@ -3651,9 +3644,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 );
                             }
                         }
-                        else if (fetchedSelected[0].prop.type == InitPropType.Long)
+                        else if (fetchedSelected[0].prop.Type == InitPropType.Long)
                         {
-                            var (left, top, right, bottom) = Utils.LongSides(fetchedSelected[0].prop.prop.Quads);
+                            var (left, top, right, bottom) = Utils.LongSides(fetchedSelected[0].prop.Quad);
                             
                             var beta = Raymath.Vector2Angle(Raymath.Vector2Subtract(left, right), new(1.0f, 0.0f));
                             
@@ -3773,7 +3766,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             }
                         }
                         
-                        GLOBALS.Level.Props[fetchedSelected[0].index].prop.Quads = currentQuads;
+                        GLOBALS.Level.Props[fetchedSelected[0].index].Quad = currentQuads;
                     }
                     else if ((IsMouseButtonReleased(_shortcuts.SelectProps.Button) || IsKeyReleased(_shortcuts.SelectPropsAlt.Key)) && _quadLock != 0) _quadLock = 0;
                 }
@@ -3786,7 +3779,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     }
 
                     
-                    var points = fetchedSelected[0].prop.prop.Extras.RopePoints;
+                    var points = fetchedSelected[0].prop.Extras.RopePoints;
 
                     if ((IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) && _pointLock != -1) _pointLock = -1;
                     
@@ -3827,9 +3820,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             
                             foreach (var selected in fetchedSelected)
                             {
-                                selected.prop.prop.Depth--;
+                                selected.prop.Depth--;
 
-                                if (selected.prop.prop.Depth < -29) selected.prop.prop.Depth = 29;
+                                if (selected.prop.Depth < -29) selected.prop.Depth = 29;
                             }
                         }
                         else if (_shortcuts.UndeepenSelectedProps.Check(ctrl, shift, alt))
@@ -3843,18 +3836,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             
                             foreach (var selected in fetchedSelected)
                             {
-                                selected.prop.prop.Depth++;
+                                selected.prop.Depth++;
 
-                                if (selected.prop.prop.Depth > 0) selected.prop.prop.Depth = 0;
+                                if (selected.prop.Depth > 0) selected.prop.Depth = 0;
                             }
                         }
                     
                         if (_shortcuts.CycleVariations.Check(ctrl, shift, alt)) {
                             foreach (var selected in fetchedSelected) {
-                                if (selected.prop.prop.Extras.Settings is IVariable vs) {
-                                    var (category, index) = selected.prop.position;
+                                if (selected.prop.Extras.Settings is IVariable vs) {
+                                    var (category, index) = selected.prop.Position;
 
-                                    var variations = (GLOBALS.Props[category][index] as IVariableInit).Variations;
+                                    var variations = (GLOBALS.Props[category][index] as IVariableInit)?.Variations ?? 1;
                                 
                                     vs.Variation = (vs.Variation += 1) % variations;
                                 }
@@ -3890,18 +3883,18 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         for (var i = 0; i < GLOBALS.Level.Props.Length; i++)
                         {
                             var current = GLOBALS.Level.Props[i];
-                            var propSelectRect = Utils.EncloseQuads(current.prop.Quads);
+                            var propSelectRect = Utils.EncloseQuads(current.Quad);
                             
                             if (IsKeyDown(_shortcuts.PropSelectionModifier.Key))
                             {
-                                if (CheckCollisionRecs(propSelectRect, _selection) && (GLOBALS.Settings.PropEditor.CrossLayerSelection || !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10)))
+                                if (CheckCollisionRecs(propSelectRect, _selection) && (GLOBALS.Settings.PropEditor.CrossLayerSelection || !(current.Depth <= (GLOBALS.Layer + 1) * -10 || current.Depth > GLOBALS.Layer * -10)))
                                 {
                                     _selected[i] = !_selected[i];
                                 }
                             }
                             else
                             {
-                                if (CheckCollisionRecs(propSelectRect, _selection) && (GLOBALS.Settings.PropEditor.CrossLayerSelection || !(current.prop.Depth <= (GLOBALS.Layer + 1) * -10 || current.prop.Depth > GLOBALS.Layer * -10)))
+                                if (CheckCollisionRecs(propSelectRect, _selection) && (GLOBALS.Settings.PropEditor.CrossLayerSelection || !(current.Depth <= (GLOBALS.Layer + 1) * -10 || current.Depth > GLOBALS.Layer * -10)))
                                 {
                                     _selected[i] = true;
                                     selectedI.Add(i);
@@ -4389,8 +4382,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
             // Update prop depth render texture
             if (fetchedSelected.Length == 1 || 
                 (fetchedSelected.Length > 1 && 
-                                                Utils.AllEqual(fetchedSelected.Select(f => f.prop.prop.Depth),
-                    fetchedSelected[0].prop.prop.Depth)))
+                                                Utils.AllEqual(fetchedSelected.Select(f => f.prop.Depth),
+                    fetchedSelected[0].prop.Depth)))
             {
                 BeginTextureMode(GLOBALS.Textures.PropDepth);
                 ClearBackground(Color.Green);
@@ -4964,7 +4957,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         ref var currentProp = ref GLOBALS.Level.Props[index];
                         
                         var selected = ImGui.Selectable(
-                            $"{index}. {currentProp.prop.Name}{(_hidden[index] ? " [hidden]" : "")}", 
+                            $"{index}. {currentProp.Name}{(_hidden[index] ? " [hidden]" : "")}", 
                             _selected[index]);
                         
                         if (selected)
@@ -5055,33 +5048,33 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                     // Render Time
 
-                    var renderTime = selectedProp.prop.Extras.Settings.RenderTime;
+                    var renderTime = selectedProp.Extras.Settings.RenderTime;
                     ImGui.SetNextItemWidth(100);
                     if (ImGui.InputInt("Render Time", ref renderTime)) {
-                        selectedProp.prop.Extras.Settings.RenderTime = renderTime;
+                        selectedProp.Extras.Settings.RenderTime = renderTime;
                     }
                     
                     // Render Order
 
-                    var renderOrder = selectedProp.prop.Extras.Settings.RenderOrder;
+                    var renderOrder = selectedProp.Extras.Settings.RenderOrder;
                     ImGui.SetNextItemWidth(100);
                     if (ImGui.InputInt("Render Order", ref renderOrder))
-                        selectedProp.prop.Extras.Settings.RenderOrder = renderOrder;
+                        selectedProp.Extras.Settings.RenderOrder = renderOrder;
             
                     // Seed
 
-                    var seed = selectedProp.prop.Extras.Settings.Seed;
+                    var seed = selectedProp.Extras.Settings.Seed;
             
                     ImGui.SetNextItemWidth(100);
                     ImGui.InputInt("Seed", ref seed);
 
-                    selectedProp.prop.Extras.Settings.Seed = seed;
+                    selectedProp.Extras.Settings.Seed = seed;
             
                     // Depth
             
                     ImGui.Image(new IntPtr(GLOBALS.Textures.PropDepth.Texture.Id), new Vector2(290, 20));
 
-                    var depth = selectedProp.prop.Depth;
+                    var depth = selectedProp.Depth;
             
                     ImGui.SetNextItemWidth(100);
                     if (ImGui.InputInt("Depth", ref depth))
@@ -5092,13 +5085,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
             
                     Utils.Restrict(ref depth, -29, 0);
             
-                    selectedProp.prop.Depth = depth;
+                    selectedProp.Depth = depth;
             
                     // Variation
 
-                    if (selectedProp.prop.Extras.Settings is IVariable v)
+                    if (selectedProp.Extras.Settings is IVariable v)
                     {
-                        var init = GLOBALS.Props[selectedProp.position.category][selectedProp.position.index];
+                        var init = GLOBALS.Props[selectedProp.Position.category][selectedProp.Position.index];
                         var variations = (init as IVariableInit)?.Variations ?? 1;
 
                         if (variations > 1) {
@@ -5121,9 +5114,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     
                     // Colored
 
-                    if (selectedProp.type == InitPropType.VariedSoft && 
-                        selectedProp.prop.Extras.Settings is PropVariedSoftSettings vs &&
-                        ((InitVariedSoftProp) GLOBALS.Props[selectedProp.position.category][selectedProp.position.index]).Colorize != 0)
+                    if (selectedProp.Type == InitPropType.VariedSoft && 
+                        selectedProp.Extras.Settings is PropVariedSoftSettings vs &&
+                        ((InitVariedSoftProp) GLOBALS.Props[selectedProp.Position.category][selectedProp.Position.index]).Colorize != 0)
                     {
                         var applyColor = vs.ApplyColor is 1;
 
@@ -5135,7 +5128,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                     // Custom Depth
 
-                    if (selectedProp.prop.Extras.Settings is ICustomDepth cd) {
+                    if (selectedProp.Extras.Settings is ICustomDepth cd) {
                         ImGui.SetNextItemWidth(100);
 
                         var customDepth = cd.CustomDepth;
@@ -5147,15 +5140,15 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     
                     // Rope
                     
-                    if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.type == InitPropType.Rope)
+                    if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.Type == InitPropType.Rope)
                     {
                         ImGui.SeparatorText("Rope Options");
                         
                         //
 
-                        if (fetchedSelected[0].prop.prop.Name == "Zero-G Tube")
+                        if (fetchedSelected[0].prop.Name == "Zero-G Tube")
                         {
-                            var ropeSettings = ((PropRopeSettings)fetchedSelected[0].prop.prop.Extras.Settings);
+                            var ropeSettings = ((PropRopeSettings)fetchedSelected[0].prop.Extras.Settings);
                             var applyColor = ropeSettings.ApplyColor is 1;
 
                             if (ImGui.Checkbox("Apply Color", ref applyColor))
@@ -5163,9 +5156,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 ropeSettings.ApplyColor = applyColor ? 1 : 0;
                             }
                         }
-                        else if (fetchedSelected[0].prop.prop.Name is "Wire" or "Zero-G Wire")
+                        else if (fetchedSelected[0].prop.Name is "Wire" or "Zero-G Wire")
                         {
-                            var ropeSettings = ((PropRopeSettings)fetchedSelected[0].prop.prop.Extras.Settings);
+                            var ropeSettings = ((PropRopeSettings)fetchedSelected[0].prop.Extras.Settings);
                             var thickness = ropeSettings.Thickness ?? 2f;
 
                             ImGui.SetNextItemWidth(100);
@@ -5198,7 +5191,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         var (modelOgIndex, simulate, model) = _models[modelIndex];
 
-                        var oldSegmentCount = GLOBALS.Level.Props[modelOgIndex].prop.Extras.RopePoints.Length;
+                        var oldSegmentCount = GLOBALS.Level.Props[modelOgIndex].Extras.RopePoints.Length;
                         var segmentCount = oldSegmentCount;
                         
                         var switchSimSelected = ImGui.Button(model.EditType switch { RopeModel.EditTypeEnum.BezierPaths => "Bezier Paths", RopeModel.EditTypeEnum.Simulation => "Simulation", _ => "Unknown" });
@@ -5232,12 +5225,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         if (segmentCount > oldSegmentCount)
                         {
                             model.UpdateSegments([
-                                ..GLOBALS.Level.Props[modelOgIndex].prop.Extras.RopePoints, new Vector2()
+                                ..GLOBALS.Level.Props[modelOgIndex].Extras.RopePoints, new Vector2()
                             ]);
                         }
                         else if (segmentCount < oldSegmentCount)
                         {
-                            model.UpdateSegments(GLOBALS.Level.Props[modelOgIndex].prop.Extras.RopePoints[..^1]);
+                            model.UpdateSegments(GLOBALS.Level.Props[modelOgIndex].Extras.RopePoints[..^1]);
                         }
 
                         if (segmentCount != oldSegmentCount)
@@ -5277,7 +5270,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 else _shouldRedrawLevel = true;
                             }
 
-                            var release = (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings)?.Release ?? PropRopeRelease.None;
+                            var release = (fetchedSelected[0].prop.Extras.Settings as PropRopeSettings)?.Release ?? PropRopeRelease.None;
 
                             var releaseClicked = ImGui.Button(release switch
                             {
@@ -5296,7 +5289,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 release = (PropRopeRelease)((int)release + 1);
                                 if ((int)release > 2) release = 0;
 
-                                (fetchedSelected[0].prop.prop.Extras.Settings as PropRopeSettings)!.Release =release;
+                                (fetchedSelected[0].prop.Extras.Settings as PropRopeSettings)!.Release =release;
                             }
                         }
                         else // Bezier mode
@@ -5311,7 +5304,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
 
                             if (handlePointNumber != oldHandlePointNumber) {
-                                var quads = GLOBALS.Level.Props[modelOgIndex].prop.Quads;
+                                var quads = GLOBALS.Level.Props[modelOgIndex].Quad;
                                 var center = Utils.QuadsCenter(ref quads);
         
                                 Utils.Restrict(ref handlePointNumber, 1);
@@ -5339,12 +5332,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     }
                 }
                 else if (fetchedSelected.Length > 1 && 
-                            Utils.AllEqual(fetchedSelected.Select(f => f.prop.prop.Depth),
-                                fetchedSelected[0].prop.prop.Depth))
+                            Utils.AllEqual(fetchedSelected.Select(f => f.prop.Depth),
+                                fetchedSelected[0].prop.Depth))
                 {
                     ImGui.Image(new IntPtr(GLOBALS.Textures.PropDepth.Texture.Id), new Vector2(290, 20));
 
-                    var depth = fetchedSelected[0].prop.prop.Depth;
+                    var depth = fetchedSelected[0].prop.Depth;
             
                     ImGui.SetNextItemWidth(100);
                     if (ImGui.InputInt("Depth", ref depth))
@@ -5356,11 +5349,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     Utils.Restrict(ref depth, -29, 0);
             
                     foreach (var selected in fetchedSelected)
-                        selected.prop.prop.Depth = depth;
+                        selected.prop.Depth = depth;
                 } else if (fetchedSelected.Length > 0) {
                     if (ImGui.Button("Reset Quads", ImGui.GetContentRegionAvail() with { Y = 20 })) {
-                        foreach (var (_, _, _, prop) in GLOBALS.Level.Props) {
-                            prop.Quads = Utils.RotatePropQuads(prop.OriginalQuad, prop.Rotation);
+                        foreach (var prop in GLOBALS.Level.Props) {
+                            prop.Quad = Utils.RotatePropQuads(prop.OriginalQuad, prop.Rotation);
 
                             _shouldRedrawLevel = true;
                             if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
@@ -5368,8 +5361,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     }
 
                     if (ImGui.Button("Reset Rotation", ImGui.GetContentRegionAvail() with { Y = 20 })) {
-                        foreach (var (_, _, _, prop) in GLOBALS.Level.Props) {
-                            prop.Quads = Utils.RotatePropQuads(prop.Quads, -prop.Rotation);
+                        foreach (var prop in GLOBALS.Level.Props) {
+                            prop.Quad = Utils.RotatePropQuads(prop.Quad, -prop.Rotation);
                             prop.Rotation = 0;
 
                             _shouldRedrawLevel = true;

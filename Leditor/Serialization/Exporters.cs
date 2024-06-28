@@ -215,7 +215,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    private static string Export((InitPropType type, TileDefinition? tile, (int category, int index) position, Prop prop)[] props)
+    private static string Export(Prop[] props)
     {
         System.Text.StringBuilder builder = new();
 
@@ -223,7 +223,7 @@ public static class Exporters
 
         for (var p = 0; p < props.Length; p++)
         {
-            var (type, _, (category, index), prop) = props[p];
+            var prop = props[p];
 
             builder.Append('[');
 
@@ -233,7 +233,7 @@ public static class Exporters
             builder.Append(", ");
             builder.Append($"point(1, 1)");
             builder.Append(", ");
-            builder.Append($"[point({prop.Quads.TopLeft.X/1.25f:0.0000}, {prop.Quads.TopLeft.Y/1.25f:0.0000}), point({prop.Quads.TopRight.X/1.25f:0.0000}, {prop.Quads.TopRight.Y/1.25f:0.0000}), point({prop.Quads.BottomRight.X/1.25f:0.0000}, {prop.Quads.BottomRight.Y/1.25f:0.0000}), point({prop.Quads.BottomLeft.X/1.25f:0.0000}, {prop.Quads.BottomLeft.Y/1.25f:0.0000})]");
+            builder.Append($"[point({prop.Quad.TopLeft.X/1.25f:0.0000}, {prop.Quad.TopLeft.Y/1.25f:0.0000}), point({prop.Quad.TopRight.X/1.25f:0.0000}, {prop.Quad.TopRight.Y/1.25f:0.0000}), point({prop.Quad.BottomRight.X/1.25f:0.0000}, {prop.Quad.BottomRight.Y/1.25f:0.0000}), point({prop.Quad.BottomLeft.X/1.25f:0.0000}, {prop.Quad.BottomLeft.Y/1.25f:0.0000})]");
             builder.Append(", ");
 
             var settingsString = prop.Extras.Settings switch
@@ -251,7 +251,7 @@ public static class Exporters
 
             var pointsString = string.Join(", ", prop.Extras.RopePoints.Select(point => $"point({point.X:0.0000}, {point.Y:0.0000})"));
             
-            builder.Append($"[#settings: {settingsString}{(type == InitPropType.Rope ? $", #points: [{pointsString}]" : "")}]");
+            builder.Append($"[#settings: {settingsString}{(prop.Type == InitPropType.Rope ? $", #points: [{pointsString}]" : "")}]");
             
             builder.Append(']');
             if (p != props.Length - 1) builder.Append(", ");

@@ -106,21 +106,21 @@ internal class StartPage : EditorPage
             
             try
             {
-                _ = prop.type switch
+                _ = prop.Type switch
                 {
-                    InitPropType.Long => GLOBALS.Textures.LongProps[prop.position.index],
-                    InitPropType.Rope => GLOBALS.Textures.RopeProps[prop.position.index],
-                    InitPropType.Tile => prop.tile?.Texture ?? throw new NullReferenceException(),
-                    _ => GLOBALS.Textures.Props[prop.position.category][prop.position.index]
+                    InitPropType.Long => GLOBALS.Textures.LongProps[prop.Position.index],
+                    InitPropType.Rope => GLOBALS.Textures.RopeProps[prop.Position.index],
+                    InitPropType.Tile => prop.Tile?.Texture ?? throw new NullReferenceException(),
+                    _ => GLOBALS.Textures.Props[prop.Position.category][prop.Position.index]
                 };
 
                 // No IndexOutOfRangeException exception was thrown - Success
             }
             catch
             {
-                var path = prop.type == InitPropType.Tile
-                    ? Path.Combine(GLOBALS.Paths.TilesAssetsDirectory, prop.prop.Name+".png")
-                    : Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, prop.prop.Name + ".png");
+                var path = prop.Type == InitPropType.Tile
+                    ? Path.Combine(GLOBALS.Paths.TilesAssetsDirectory, prop.Name+".png")
+                    : Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, prop.Name + ".png");
                 
                 Logger.Error($"prop texture \"{path}\"");
                 result = PropCheckResult.MissingTexture;
