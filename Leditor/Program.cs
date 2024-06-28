@@ -884,9 +884,6 @@ class Program
         GLOBALS.Textures.MissingTile =
             LoadTexture(Path.Combine(GLOBALS.Paths.AssetsDirectory, "other", "missing tile.png"));
 
-        GLOBALS.Textures.PropMenuCategories = LoadPropMenuCategoryTextures();
-
-
         GLOBALS.Textures.PropEditModes =
         [
             LoadTexture(Path.Combine(GLOBALS.Paths.UiAssetsDirectory, "move icon.png")),
@@ -905,7 +902,6 @@ class Program
 
         //
 
-        GLOBALS.Textures.TileSpecs = LoadRenderTexture(200, 200);
         GLOBALS.Textures.PropDepth = LoadRenderTexture(290, 20);
         GLOBALS.Textures.DimensionsVisual = LoadRenderTexture(1400, 800);
 
@@ -2357,7 +2353,6 @@ void main() {
         foreach (var texture in GLOBALS.Textures.GeoBlocks) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.GeoStackables) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.LightBrushes) UnloadTexture(texture);
-        foreach (var texture in GLOBALS.Textures.PropMenuCategories) UnloadTexture(texture);
         foreach (var category in GLOBALS.Textures.Props) { foreach (var texture in category) UnloadTexture(texture); }
         foreach (var texture in GLOBALS.Textures.LongProps) UnloadTexture(texture);
         foreach (var texture in GLOBALS.Textures.RopeProps) UnloadTexture(texture);
@@ -2371,7 +2366,6 @@ void main() {
 
         UnloadRenderTexture(GLOBALS.Textures.LightMap);
         
-        UnloadRenderTexture(GLOBALS.Textures.TileSpecs);
         UnloadRenderTexture(GLOBALS.Textures.PropDepth);
         UnloadRenderTexture(GLOBALS.Textures.DimensionsVisual);
         

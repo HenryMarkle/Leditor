@@ -31,7 +31,6 @@ internal static class GLOBALS
         public Texture2D[][] Props { get; set; } = [];
         public Texture2D[] LongProps { get; set; } = [];
         public Texture2D[] RopeProps { get; set; } = [];
-        public Texture2D[] PropMenuCategories { get; set; } = [];
         public Texture2D[] PropEditModes { get; set; } = [];
         public Texture2D[] PropGenerals { get; set; } = [];
         public Texture2D[] InternalMaterials { get; set; } = [];
@@ -40,7 +39,6 @@ internal static class GLOBALS
         
         // Might be a really bad idea
         
-        public RenderTexture2D TileSpecs { get; set; }
         public RenderTexture2D PropDepth { get; set; }
         public RenderTexture2D DimensionsVisual { get; set; }
 
