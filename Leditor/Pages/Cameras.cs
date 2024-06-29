@@ -430,7 +430,7 @@ internal class CamerasEditorPage : EditorPage
             if (camWinOpenned) {
 
                 var listBoxAvail = ImGui.GetContentRegionAvail();
-                if (ImGui.BeginListBox("##CamerasSelector", listBoxAvail with { Y = listBoxAvail.Y - 170 })) {
+                if (ImGui.BeginListBox("##CamerasSelector", listBoxAvail with { Y = listBoxAvail.Y - 260 })) {
                     
                     for (var i = 0; i < GLOBALS.Level.Cameras.Count; i++) {
 
@@ -451,6 +451,15 @@ internal class CamerasEditorPage : EditorPage
 
                     ImGui.SeparatorText("Camera Quad Points");
                     
+                    if (ImGui.Button("Reset All", ImGui.GetContentRegionAvail() with { Y = 20 })) {
+                        currentCam.Quad.TopLeft = (0, 0);
+                        currentCam.Quad.TopRight = (0, 0);
+                        currentCam.Quad.BottomRight = (0, 0);
+                        currentCam.Quad.BottomLeft = (0, 0);
+                    }
+
+                    ImGui.Spacing();
+
                     ImGui.Columns(2);
 
                     ImGui.SeparatorText("Top Left");
@@ -463,6 +472,11 @@ internal class CamerasEditorPage : EditorPage
                             Utils.Restrict(ref radius, 0);
                             currentCam.Quad.TopLeft = (angle, radius);
                         }
+
+                        ImGui.Spacing();
+                        if (ImGui.Button("Copy To All##CopyToAll_TopLeft", ImGui.GetContentRegionAvail() with { Y = 20 })) {
+                            currentCam.Quad.TopRight = currentCam.Quad.BottomRight = currentCam.Quad.BottomLeft = currentCam.Quad.TopLeft;
+                        }
                     }
 
                     ImGui.SeparatorText("Bottom Left");
@@ -474,6 +488,11 @@ internal class CamerasEditorPage : EditorPage
                         if (ImGui.InputFloat("Radius##BottomLeftRadius", ref radius, 0.1f)) {
                             Utils.Restrict(ref radius, 0);
                             currentCam.Quad.BottomLeft = (angle, radius);
+                        }
+
+                        ImGui.Spacing();
+                        if (ImGui.Button("Copy To All##CopyToAll_BottomLeft", ImGui.GetContentRegionAvail() with { Y = 20 })) {
+                            currentCam.Quad.TopRight = currentCam.Quad.BottomRight = currentCam.Quad.TopLeft = currentCam.Quad.BottomLeft;
                         }
                     }
 
@@ -489,6 +508,11 @@ internal class CamerasEditorPage : EditorPage
                             Utils.Restrict(ref radius, 0);
                             currentCam.Quad.TopRight = (angle, radius);
                         }
+
+                        ImGui.Spacing();
+                        if (ImGui.Button("Copy To All##CopyToAll_TopRight", ImGui.GetContentRegionAvail() with { Y = 20 })) {
+                            currentCam.Quad.BottomLeft = currentCam.Quad.BottomRight = currentCam.Quad.TopLeft = currentCam.Quad.TopRight;
+                        }
                     }
 
                     ImGui.SeparatorText("Bottom Right");
@@ -500,6 +524,11 @@ internal class CamerasEditorPage : EditorPage
                         if (ImGui.InputFloat("Radius##BottomRightRadius", ref radius, 0.1f)) {
                             Utils.Restrict(ref radius, 0);
                             currentCam.Quad.BottomRight = (angle, radius);
+                        }
+
+                        ImGui.Spacing();
+                        if (ImGui.Button("Copy To All##CopyToAll_BottomRight", ImGui.GetContentRegionAvail() with { Y = 20 })) {
+                            currentCam.Quad.BottomLeft = currentCam.Quad.TopRight = currentCam.Quad.TopLeft = currentCam.Quad.BottomRight;
                         }
                     }
                     

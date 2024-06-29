@@ -381,6 +381,8 @@ public record TileShortcuts : IEditorShortcuts
     private KeyboardShortcut reallyFastMoveViewRight = new(KeyboardKey.Right, alt:true);
     private KeyboardShortcut reallyFastMoveViewBottom = new(KeyboardKey.Down, alt:true);
 
+    private KeyboardShortcut toggleProps = KeyboardKey.Null;
+
     private MouseShortcut draw = new(MouseButton.Left);
     private MouseShortcut erase = new(MouseButton.Right);
     private MouseShortcut dragLevel = new(MouseButton.Middle);
@@ -531,6 +533,8 @@ public record TileShortcuts : IEditorShortcuts
     [ShortcutName("Move View Bottom Quickly", Group = "Movement")]
     public KeyboardShortcut FastMoveViewBottom { get => fastMoveViewBottom; set { fastMoveViewBottom = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     
+    [ShortcutName("Toggle Props")]
+    public KeyboardShortcut ToggleProps { get => toggleProps; set { toggleProps = value; CachedStrings = Utils.GetShortcutStrings(this); }}
     
 
     [ShortcutName("Move View Left Really Quickly", Group = "Movement")]

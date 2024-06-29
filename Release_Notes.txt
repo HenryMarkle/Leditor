@@ -1,1 +1,13 @@
+### Camera Editor
+
+- Added a button to reset all selected camera quad points.
+- Added a button to each quad point to copy it over all the other points.
+
+### Other
+
+- Added the option to show props in the tile editor.
 - Under-the-hood changes.
+- Fixed inacurate water level in the geometry level.
+- Fixed the water always being at front in the tile editor.
+
+- Added a funny.

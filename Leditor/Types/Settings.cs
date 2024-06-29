@@ -162,6 +162,9 @@ public class TileEditorSettings
     [SettingName("Ruler")]
     public bool IndexHint { get; set; } = true;
 
+    [SettingName("Show Props")]
+    public bool ShowProps { get; set; } = false;
+
     public enum ScreenRelativePosition { 
         TopLeft, 
         TopRight, 
@@ -470,6 +473,9 @@ public class GeneralSettings
     [SettingName("Rendering Assets Path", Description = "Leave empty for default directory")]
     [StringBounds(0, MaxLength = 256)]
     public string RenderingAssetsPath { get; set; } = "";
+
+    [SettingName("Pressing Esc Crashes The Program")]
+    public bool PressingEscCrashes { get; set; }
 }
 
 

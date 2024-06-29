@@ -134,9 +134,9 @@ internal class ExperimentalGeometryPage : EditorPage
         if (GLOBALS.Level.WaterLevel > -1)
         {
             DrawRectangle(
-                0,
+                (-1) * GLOBALS.Scale,
                 (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                GLOBALS.Level.Width*GLOBALS.Scale,
+                (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
                 (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                 GLOBALS.Settings.GeometryEditor.WaterColor
             );

@@ -1266,6 +1266,13 @@ void main() {
         {
             try
             {
+                // The funny
+                #if !DEBUG
+                if (GLOBALS.Settings.GeneralSettings.PressingEscCrashes && 
+                    IsKeyPressed(KeyboardKey.Escape)) throw new Exception("The program didn't know what to do.");
+                #endif
+                //
+
                 if (!failedIntegrity) goto skip_failed_integrity;
                 #region FailedIntegrity
                 

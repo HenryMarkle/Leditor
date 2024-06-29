@@ -391,44 +391,21 @@ internal class LightEditorPage : EditorPage, IContextListener
             if (_lightBrushTextureIndex < 0) _lightBrushTextureIndex = GLOBALS.Textures.LightBrushes.Length - 1;
         }
         
-        if (_shortcuts.RotateBrushCounterClockwise.Check(ctrl, shift, alt, true))
-        {
-            _lightBrushRotation -= 0.2f;
-            
-        }
-        if (_shortcuts.RotateBrushClockwise.Check(ctrl, shift, alt, true))
-        {
-            
-            _lightBrushRotation += 0.2f;
-            
-        }
-        if (_shortcuts.StretchBrushVertically.Check(ctrl, shift, alt, true))
-        {
-            _lightBrushHeight += 2;
-            
-        }
-        if (_shortcuts.SqueezeBrushVertically.Check(ctrl, shift, alt, true))
-        {
-            _lightBrushHeight -= 2;
-            
-        }
-        if (_shortcuts.StretchBrushHorizontally.Check(ctrl, shift, alt, true))
-        {
-            _lightBrushWidth += 2;
-            
-        }
-        if (_shortcuts.SqueezeBrushHorizontally.Check(ctrl, shift, alt, true))
-        {
-            
-            _lightBrushWidth -= 2;
-            
-        }
+        if (_shortcuts.RotateBrushCounterClockwise.Check(ctrl, shift, alt, true)) _lightBrushRotation -= 0.2f;
+        else if (_shortcuts.RotateBrushClockwise.Check(ctrl, shift, alt, true)) _lightBrushRotation += 0.2f;
         
+        if (_shortcuts.StretchBrushVertically.Check(ctrl, shift, alt, true)) _lightBrushHeight += 2;
+        else if (_shortcuts.SqueezeBrushVertically.Check(ctrl, shift, alt, true)) _lightBrushHeight -= 2;
+        
+        if (_shortcuts.StretchBrushHorizontally.Check(ctrl, shift, alt, true)) _lightBrushWidth += 2;
+        else if (_shortcuts.SqueezeBrushHorizontally.Check(ctrl, shift, alt, true)) _lightBrushWidth -= 2;
+        
+        var oldGrowthFactor = _growthFactor;
+
         if (_shortcuts.FastRotateBrushCounterClockwise.Check(ctrl, shift, alt, true))
         {
             _lightBrushRotation -= 1 + _growthFactor;
             IncreaseGrowthFactor();
-            
         }
         else if (_shortcuts.FastRotateBrushClockwise.Check(ctrl, shift, alt, true))
         {
@@ -436,7 +413,8 @@ internal class LightEditorPage : EditorPage, IContextListener
             IncreaseGrowthFactor();
             
         }
-        else if (_shortcuts.FastStretchBrushVertically.Check(ctrl, shift, alt, true))
+        
+        if (_shortcuts.FastStretchBrushVertically.Check(ctrl, shift, alt, true))
         {
             _lightBrushHeight += 5+_growthFactor;
             IncreaseGrowthFactor();
@@ -446,9 +424,9 @@ internal class LightEditorPage : EditorPage, IContextListener
         {
             _lightBrushHeight -= 5+_growthFactor;
             IncreaseGrowthFactor();
-            
         }
-        else if (_shortcuts.FastStretchBrushHorizontally.Check(ctrl, shift, alt, true))
+
+        if (_shortcuts.FastStretchBrushHorizontally.Check(ctrl, shift, alt, true))
         {
             _lightBrushWidth += 5+_growthFactor;
             IncreaseGrowthFactor();
@@ -458,10 +436,9 @@ internal class LightEditorPage : EditorPage, IContextListener
         {
             _lightBrushWidth -= 5+_growthFactor;
             IncreaseGrowthFactor();
-            
         }
-        else ResetGrowthFactor();
-
+        
+        if (oldGrowthFactor == _growthFactor) ResetGrowthFactor();
 
         if (_shortcuts.ToggleTileVisibility.Check(ctrl, shift, alt)) _showTiles = !_showTiles;
         if (_shortcuts.ToggleTilePreview.Check(ctrl, shift, alt)) _tilePreview = !_tilePreview;

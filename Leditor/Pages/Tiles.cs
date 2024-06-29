@@ -2278,10 +2278,11 @@ internal class TileEditorPage : EditorPage, IDisposable
                 TilesLayer1 = _showLayer1Tiles,
                 TilesLayer2 = _showLayer2Tiles,
                 TilesLayer3 = _showLayer3Tiles,
-                PropsLayer1 = false,
-                PropsLayer2 = false,
-                PropsLayer3 = false,
+                PropsLayer1 = GLOBALS.Settings.TileEditor.ShowProps,
+                PropsLayer2 = GLOBALS.Settings.TileEditor.ShowProps,
+                PropsLayer3 = GLOBALS.Settings.TileEditor.ShowProps,
                 Water = GLOBALS.Settings.GeneralSettings.Water,
+                WaterAtFront = GLOBALS.Level.WaterAtFront,
                 WaterOpacity = GLOBALS.Settings.GeneralSettings.WaterOpacity,
                 TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
                 Palette = GLOBALS.SelectedPalette,
@@ -2289,7 +2290,7 @@ internal class TileEditorPage : EditorPage, IDisposable
                 VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers,
                 CropTilePrevious = GLOBALS.Settings.GeneralSettings.CropTilePreviews,
                 VisibleStrayTileFragments = GLOBALS.Settings.TileEditor.ShowStrayTileFragments,
-                UnifiedTileColor = GLOBALS.Settings.TileEditor.UnifiedPreviewColor ? Color.White : null
+                UnifiedTileColor = GLOBALS.Settings.TileEditor.UnifiedPreviewColor ? Color.White : null,
             });
             _shouldRedrawLevel = false;
         }
@@ -3208,6 +3209,12 @@ internal class TileEditorPage : EditorPage, IDisposable
                 }
 
                 if (!showCameras) ImGui.EndDisabled();
+
+                var showProps = GLOBALS.Settings.TileEditor.ShowProps;
+                if (ImGui.Checkbox("Show Props", ref showProps)) {
+                    GLOBALS.Settings.TileEditor.ShowProps = showProps;
+                    _shouldRedrawLevel = true;
+                }
 
                 var grid = GLOBALS.Settings.TileEditor.Grid;
                 if (ImGui.Checkbox("Grid", ref grid))

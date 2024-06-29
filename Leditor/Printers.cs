@@ -1981,9 +1981,9 @@ internal static class Printers
                 {
                     DrawRectangle(
                         (-1) * parameters.Scale,
-                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom - 1) * parameters.Scale,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * parameters.Scale,
                         (GLOBALS.Level.Width + 2) * parameters.Scale,
-                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom + 1) * parameters.Scale,
+                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * parameters.Scale,
                         new Color(0, 0, 255, parameters.WaterOpacity)
                     );
                 }
@@ -2136,9 +2136,9 @@ internal static class Printers
                 {
                     DrawRectangle(
                         (-1) * parameters.Scale,
-                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom - 1) * parameters.Scale,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * parameters.Scale,
                         (GLOBALS.Level.Width + 2) * parameters.Scale,
-                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom + 1) * parameters.Scale,
+                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * parameters.Scale,
                         new Color(0, 0, 255, parameters.WaterOpacity)
                     );
                 }
@@ -2333,9 +2333,9 @@ internal static class Printers
                 {
                     DrawRectangle(
                         (-1) * parameters.Scale,
-                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom - 1) * parameters.Scale,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * parameters.Scale,
                         (GLOBALS.Level.Width + 2) * parameters.Scale,
-                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom + 1) * parameters.Scale,
+                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * parameters.Scale,
                         new Color(0, 0, 255, parameters.WaterOpacity)
                     );
                 }
@@ -2421,9 +2421,9 @@ internal static class Printers
                 {
                     DrawRectangle(
                         (-1) * GLOBALS.Scale,
-                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom - 1) * GLOBALS.Scale,
+                        (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                         (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
-                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom + 1) * GLOBALS.Scale,
+                        (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                         new Color(0, 0, 255, parameters.WaterOpacity)
                     );
                 }
