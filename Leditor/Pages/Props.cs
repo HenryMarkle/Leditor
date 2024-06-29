@@ -2065,6 +2065,9 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                             case 1: // Ropes
                             {
+                                if (_clickTracker) break;
+                                _clickTracker = true;
+
                                 if (_ropeInitialPlacement) {
                                     _ropeInitialPlacement = false;
 

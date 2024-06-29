@@ -190,10 +190,6 @@ internal static class Utils
         var lightMapFileName = Path.Combine(Path.GetDirectoryName(filePath)!,
             Path.GetFileNameWithoutExtension(filePath) + ".png");
 
-        if (!File.Exists(lightMapFileName)) return new();
-
-        var lightMap = Raylib.LoadImage(lightMapFileName);
-
         if (text.Length < 7) return new LoadFileResult();
 
         var objTask = Task.Factory.StartNew(() =>
@@ -321,6 +317,12 @@ internal static class Utils
                 }
             }
         }
+
+        // Light map
+
+        var lightMap = File.Exists(lightMapFileName) 
+            ? Raylib.LoadImage(lightMapFileName) 
+            : Raylib.GenImageColor(givenWidth * 20 + 300, givenHeight * 20 + 300, Color.White);
 
         //
 
