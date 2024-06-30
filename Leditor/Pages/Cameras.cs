@@ -6,12 +6,32 @@ using Leditor.Types;
 
 namespace Leditor.Pages;
 
-internal class CamerasEditorPage : EditorPage
+internal class CamerasEditorPage : EditorPage, IContextListener
 {
     public override void Dispose()
     {
         Disposed = true;
     }
+
+    public void OnProjectLoaded(object? sender, EventArgs e)
+    {
+        _shouldRedrawLevel = true;
+    }
+
+    public void OnProjectCreated(object? sender, EventArgs e)
+    {
+        _shouldRedrawLevel = true;
+    }
+
+    public void OnPageUpdated(int previous, int @next) {
+        if (next == 4) _shouldRedrawLevel = true;
+    }
+
+    public void OnGlobalResourcesUpdated()
+    {
+        _shouldRedrawLevel = true;
+    }
+    
     
     Camera2D _camera = new() { Zoom = 0.8f, Target = new(-100, -100) };
     bool clickTracker;
@@ -33,10 +53,6 @@ internal class CamerasEditorPage : EditorPage
     
     private bool _alignment = GLOBALS.Settings.CameraSettings.Alignment;
     private bool _snap = GLOBALS.Settings.CameraSettings.Snap;
-
-    public void OnPageUpdated(int previous, int @next) {
-        if (@next == 4) _shouldRedrawLevel = true;
-    }
 
     public override void Draw()
     {

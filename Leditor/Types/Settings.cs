@@ -476,6 +476,9 @@ public class GeneralSettings
 
     [SettingName("Pressing Esc Crashes The Program")]
     public bool PressingEscCrashes { get; set; }
+
+    [SettingName("Never Show Missing Tile Textures Alert Again", Hidden = true)]
+    public bool NeverShowMissingTileTexturesAlertAgain { get; set; }
 }
 
 

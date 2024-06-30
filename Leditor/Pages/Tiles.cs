@@ -10,7 +10,7 @@ namespace Leditor.Pages;
 
 #nullable enable
 
-internal class TileEditorPage : EditorPage, IDisposable
+internal class TileEditorPage : EditorPage, IDisposable, IContextListener
 {
     private Camera2D _camera = new() { Zoom = 1.0f };
 
@@ -154,6 +154,8 @@ internal class TileEditorPage : EditorPage, IDisposable
 
     private bool _isNavbarHovered;
 
+    private bool _isVisibilityWinHovered;
+
     public static void EraseStrayFragments(TileCell[,,] matrix) {
         for (var y = 0; y < matrix.GetLength(0); y++) {
             for (var x = 0; x < matrix.GetLength(1); x++) {
@@ -285,6 +287,21 @@ internal class TileEditorPage : EditorPage, IDisposable
         _previewTooltipRT.Dispose();
 
         foreach (var (_, texture) in _materialPreviews) texture.Dispose();
+    }
+
+    public void OnProjectCreated(object? sender, EventArgs e)
+    {
+        _shouldRedrawLevel = true;
+    }
+
+    public void OnProjectLoaded(object? sender, EventArgs e)
+    {
+        _shouldRedrawLevel = true;
+    }
+
+    public void OnGlobalResourcesUpdated()
+    {
+        _shouldRedrawLevel = true;
     }
 
     ~TileEditorPage()
@@ -1290,7 +1307,8 @@ internal class TileEditorPage : EditorPage, IDisposable
 
         var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
 
-        var canDrawTile = !_isNavbarHovered &&
+        var canDrawTile = !_isVisibilityWinHovered && 
+                          !_isNavbarHovered &&
                           !_isSettingsWinHovered && 
                           !_isSettingsWinDragged && 
                           !_isSpecsWinHovered &&
@@ -2275,9 +2293,12 @@ internal class TileEditorPage : EditorPage, IDisposable
             {
                 DarkTheme = GLOBALS.Settings.GeneralSettings.DarkTheme,
                 CurrentLayer = GLOBALS.Layer,
-                TilesLayer1 = _showLayer1Tiles,
-                TilesLayer2 = _showLayer2Tiles,
-                TilesLayer3 = _showLayer3Tiles,
+                GeometryLayer1 = _showTileLayer1,
+                GeometryLayer2 = _showTileLayer2,
+                GeometryLayer3 = _showTileLayer3,
+                TilesLayer1 = _showTileLayer1 && _showLayer1Tiles,
+                TilesLayer2 = _showTileLayer2 && _showLayer2Tiles,
+                TilesLayer3 = _showTileLayer3 &&_showLayer3Tiles,
                 PropsLayer1 = GLOBALS.Settings.TileEditor.ShowProps,
                 PropsLayer2 = GLOBALS.Settings.TileEditor.ShowProps,
                 PropsLayer3 = GLOBALS.Settings.TileEditor.ShowProps,
@@ -3090,6 +3111,92 @@ internal class TileEditorPage : EditorPage, IDisposable
                 ImGui.End();
             }
             
+            // Visibility
+
+            var visibilityWinOpened = ImGui.Begin("Visuals##TilesEditorVisualsWindow");
+
+            var visibilityPos = ImGui.GetWindowPos();
+            var visibilitySize = ImGui.GetWindowSize();
+
+            _isVisibilityWinHovered = CheckCollisionPointRec(tileMouse, new(visibilityPos.X - 5, visibilityPos.Y-5, visibilitySize.X + 10, visibilitySize.Y+10));
+
+            if (visibilityWinOpened) {
+
+                ImGui.SeparatorText("Layers");
+
+                ImGui.Spacing();
+
+                if (ImGui.Checkbox("Layer 1", ref _showTileLayer1)) _shouldRedrawLevel = true;
+                if (ImGui.Checkbox("Layer 2", ref _showTileLayer2)) _shouldRedrawLevel = true;
+                if (ImGui.Checkbox("Layer 3", ref _showTileLayer3)) _shouldRedrawLevel = true;
+
+                ImGui.Spacing();
+
+                if (ImGui.Checkbox("Layer 1 Tiles", ref _showLayer1Tiles)) _shouldRedrawLevel = true;
+                if (ImGui.Checkbox("Layer 2 Tiles", ref _showLayer2Tiles)) _shouldRedrawLevel = true;
+                if (ImGui.Checkbox("Layer 3 Tiles", ref _showLayer3Tiles)) _shouldRedrawLevel = true;
+
+                ImGui.Spacing();
+
+                ImGui.SeparatorText("Colors");
+
+                ImGui.Spacing();
+
+                var unifiedInlineColor = GLOBALS.Settings.TileEditor.UnifiedInlinePreviewColor;
+                if (ImGui.Checkbox("Unified Placement Preview Color", ref unifiedInlineColor)) {
+                    GLOBALS.Settings.TileEditor.UnifiedInlinePreviewColor = unifiedInlineColor;
+                }
+
+                var unifiedColor = GLOBALS.Settings.TileEditor.UnifiedPreviewColor;
+                if (ImGui.Checkbox("Unified Preview Color", ref unifiedColor)) {
+                    GLOBALS.Settings.TileEditor.UnifiedPreviewColor = unifiedColor;
+                    _shouldRedrawLevel = true;
+                }
+
+                ImGui.Spacing();
+
+                ImGui.SeparatorText("Level");
+
+                var showProps = GLOBALS.Settings.TileEditor.ShowProps;
+                if (ImGui.Checkbox("Show Props", ref showProps)) {
+                    GLOBALS.Settings.TileEditor.ShowProps = showProps;
+                    _shouldRedrawLevel = true;
+                }
+
+                ImGui.Spacing();
+
+                var showCameras = GLOBALS.Settings.TileEditor.ShowCameras;
+                if (ImGui.Checkbox("Cameras", ref showCameras)) GLOBALS.Settings.TileEditor.ShowCameras = showCameras;
+
+                if (!showCameras) ImGui.BeginDisabled();
+
+                var innerCamBounds = GLOBALS.Settings.TileEditor.CameraInnerBoundires;
+                if (ImGui.Checkbox("Camera's Inner Boundries", ref innerCamBounds)) {
+                    GLOBALS.Settings.TileEditor.CameraInnerBoundires = innerCamBounds;
+                }
+
+                if (!showCameras) ImGui.EndDisabled();
+
+                ImGui.Spacing();
+
+                ImGui.SeparatorText("Tooltip");
+
+                ImGui.Spacing();
+
+                ImGui.Checkbox("Show Tooltip", ref _tooltip);
+
+                if (!_tooltip) ImGui.BeginDisabled();
+
+                var useTextures = GLOBALS.Settings.TileEditor.UseTexturesInTooltip;
+                if (ImGui.Checkbox("Use textures in tooltip", ref useTextures)) {
+                    GLOBALS.Settings.TileEditor.UseTexturesInTooltip = useTextures;
+                    UpdatePreviewToolTip();
+                }
+                if (!_tooltip) ImGui.EndDisabled();
+                
+                ImGui.End();
+            }
+
             // Settings
             #region Settings Window
 
@@ -3169,17 +3276,6 @@ internal class TileEditorPage : EditorPage, IDisposable
 
                 //
 
-                ImGui.Checkbox("Tooltip", ref _tooltip);
-
-                if (!_tooltip) ImGui.BeginDisabled();
-
-                var useTextures = GLOBALS.Settings.TileEditor.UseTexturesInTooltip;
-                if (ImGui.Checkbox("Use textures in tooltip", ref useTextures)) {
-                    GLOBALS.Settings.TileEditor.UseTexturesInTooltip = useTextures;
-                    UpdatePreviewToolTip();
-                }
-                if (!_tooltip) ImGui.EndDisabled();
-
                 var drawCurrentTile = GLOBALS.Settings.TileEditor.DrawCurrentTile;
                 if (ImGui.Checkbox("Current Tile", ref drawCurrentTile)) {
                     GLOBALS.Settings.TileEditor.DrawCurrentTile = drawCurrentTile;
@@ -3198,24 +3294,6 @@ internal class TileEditorPage : EditorPage, IDisposable
                 if (GLOBALS.Settings.TileEditor.HoveredTileInfo != hoveredInfo) 
                     GLOBALS.Settings.TileEditor.HoveredTileInfo = hoveredInfo;
 
-                var showCameras = GLOBALS.Settings.TileEditor.ShowCameras;
-                if (ImGui.Checkbox("Cameras", ref showCameras)) GLOBALS.Settings.TileEditor.ShowCameras = showCameras;
-
-                if (!showCameras) ImGui.BeginDisabled();
-
-                var innerCamBounds = GLOBALS.Settings.TileEditor.CameraInnerBoundires;
-                if (ImGui.Checkbox("Camera's Inner Boundries", ref innerCamBounds)) {
-                    GLOBALS.Settings.TileEditor.CameraInnerBoundires = innerCamBounds;
-                }
-
-                if (!showCameras) ImGui.EndDisabled();
-
-                var showProps = GLOBALS.Settings.TileEditor.ShowProps;
-                if (ImGui.Checkbox("Show Props", ref showProps)) {
-                    GLOBALS.Settings.TileEditor.ShowProps = showProps;
-                    _shouldRedrawLevel = true;
-                }
-
                 var grid = GLOBALS.Settings.TileEditor.Grid;
                 if (ImGui.Checkbox("Grid", ref grid))
                 {
@@ -3233,18 +3311,6 @@ internal class TileEditorPage : EditorPage, IDisposable
                     GLOBALS.Settings.TileEditor.ShowStrayTileFragments = showStrays;
                     _shouldRedrawLevel = true;
                 }
-
-                var unifiedInlineColor = GLOBALS.Settings.TileEditor.UnifiedInlinePreviewColor;
-                if (ImGui.Checkbox("Unified Placement Preview Color", ref unifiedInlineColor)) {
-                    GLOBALS.Settings.TileEditor.UnifiedInlinePreviewColor = unifiedInlineColor;
-                }
-
-                var unifiedColor = GLOBALS.Settings.TileEditor.UnifiedPreviewColor;
-                if (ImGui.Checkbox("Unified Preview Color", ref unifiedColor)) {
-                    GLOBALS.Settings.TileEditor.UnifiedPreviewColor = unifiedColor;
-                    _shouldRedrawLevel = true;
-                }
-                
                 ImGui.End();
             }
             

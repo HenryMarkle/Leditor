@@ -48,8 +48,6 @@ internal class MainPage : EditorPage, IContextListener
     
     private int _fileDialogMode; // 0 - save, 1 - load
 
-    private System.Diagnostics.Process _renderProcess = new();
-    
     private bool _isShortcutsWinHovered;
     private bool _isShortcutsWinDragged;
 
@@ -65,17 +63,6 @@ internal class MainPage : EditorPage, IContextListener
     private bool _isNavbarHovered;
 
     private bool _isRecentlyWinHovered;
-
-
-    // 0 - Preview
-    // 1 - Tinted Texture
-    // 2 - Palette
-    private TileDrawMode _tileVisual;
-
-    // 0 - Untinted Texture
-    // 1 - Tinted Texture
-    // 2 - Palette
-    private PropDrawMode _propVisual;
 
     private int _selectedPaletteIndex;
     
@@ -103,6 +90,11 @@ internal class MainPage : EditorPage, IContextListener
 
     public void OnPageUpdated(int previous, int @next) {
         if (next == 1) _shouldRedrawLevel = true;
+    }
+
+    public void OnGlobalResourcesUpdated()
+    {
+        _shouldRedrawLevel = true;
     }
     
     private async Task<SaveProjectResult> SaveProjectAsync(string path)
@@ -227,108 +219,6 @@ internal class MainPage : EditorPage, IContextListener
         }
 
         return result;
-    }
-    
-    private async Task<LoadFileResult> LoadProjectAsync(string filePath)
-    {
-        try
-        {
-            var text = (await File.ReadAllTextAsync(filePath)).ReplaceLineEndings().Split(Environment.NewLine);
-
-            var lightMapFileName = Path.Combine(Path.GetDirectoryName(filePath), Path.GetFileNameWithoutExtension(filePath) + ".png");
-
-            if (!File.Exists(lightMapFileName)) return new();
-
-            var lightMap = Raylib.LoadImage(lightMapFileName);
-
-            if (text.Length < 7) return new LoadFileResult();
-
-            var objTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[0]));
-            var tilesObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[1]));
-            var terrainObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[4]));
-            var obj2Task = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[5]));
-            var effObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[2]));
-            var lightObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[3]));
-            var camsObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[6]));
-            var waterObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[7]));
-            var propsObjTask = Task.Factory.StartNew(() => Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[8]));
-
-            var obj = await objTask;
-            var tilesObj = await tilesObjTask;
-            var terrainModeObj = await terrainObjTask;
-            var obj2 = await obj2Task;
-            var effObj = await effObjTask;
-            var lightObj = await lightObjTask;
-            var camsObj = await camsObjTask;
-            var waterObj = await waterObjTask;
-            var propsObj = await propsObjTask;
-
-            var mtx = Serialization.Importers.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
-            var tlMtx = Serialization.Importers.GetTileMatrix(tilesObj, out _, out _);
-            var defaultMaterial = Serialization.Importers.GetDefaultMaterial(tilesObj);
-            var buffers = Serialization.Importers.GetBufferTiles(obj2);
-            var terrain = Serialization.Importers.GetTerrainMedium(terrainModeObj);
-            var lightMode = Serialization.Importers.GetLightMode(obj2);
-            var seed = Serialization.Importers.GetSeed(obj2);
-            var waterData = Serialization.Importers.GetWaterData(waterObj);
-            var effects = Serialization.Importers.GetEffects(effObj, givenWidth, givenHeight);
-            var cams = Serialization.Importers.GetCameras(camsObj);
-            
-            // TODO: catch PropNotFoundException
-            var props = Serialization.Importers.GetProps(propsObj);
-            var lightSettings = Serialization.Importers.GetLightSettings(lightObj);
-
-            // map material colors
-
-            var materialColors = Utils.NewMaterialColorMatrix(givenWidth, givenHeight, new(0, 0, 0, 255));
-
-            for (int y = 0; y < givenHeight; y++)
-            {
-                for (int x = 0; x < givenWidth; x++)
-                {
-                    for (int z = 0; z < 3; z++)
-                    {
-                        var cell = tlMtx[y, x, z];
-
-                        if (cell.Type != TileType.Material) continue;
-
-                        var materialName = ((TileMaterial)cell.Data).Name;
-
-                        if (GLOBALS.MaterialColors.TryGetValue(materialName, out Color color)) materialColors[y, x, z] = color;
-                    }
-                }
-            }
-
-            //
-
-            return new LoadFileResult
-            {
-                Success = true,
-                Seed = seed,
-                WaterLevel = waterData.waterLevel,
-                WaterInFront = waterData.waterInFront,
-                Width = givenWidth,
-                Height = givenHeight,
-                DefaultMaterial = defaultMaterial,
-                BufferTiles = buffers,
-                GeoMatrix = mtx,
-                TileMatrix = tlMtx,
-                LightMode = lightMode,
-                DefaultTerrain = terrain,
-                MaterialColorMatrix = materialColors,
-                Effects = effects,
-                LightMapImage = lightMap,
-                Cameras = cams,
-                PropsArray = props.ToArray(),
-                LightSettings = lightSettings,
-                Name = Path.GetFileNameWithoutExtension(filePath)
-            };
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            return new();
-        }
     }
 
 
@@ -1055,12 +945,20 @@ internal class MainPage : EditorPage, IContextListener
                         
                         ImGui.SetWindowPos((screenSize - winSize)/2);
                         if (_missingTileDef) ImGui.Text("This  project contains undefined tiles.");
-                        if (_missingTileText) ImGui.Text("This  project contains tiles with no textures.");
+                        if (_missingTileText) ImGui.Text("Textures are still loading. Be ware that if you forgot to include your custom tile textures, they will not show in the level.");
                         if (_missingMatDef) ImGui.Text("This  project contains undefined materials.");
+
+                        ImGui.Spacing();
                         
-                        var okSelected = ImGui.Button("Ok");
+                        var neverShow = GLOBALS.Settings.GeneralSettings.NeverShowMissingTileTexturesAlertAgain;
+                        ImGui.Checkbox("Don't Show Again", ref neverShow);
                         
-                        if (okSelected) _undefinedTilesAlert = false;
+                        var okSelected = ImGui.Button("Ok", ImGui.GetContentRegionAvail() with { Y = 20 });
+                        
+                        if (okSelected) {
+                            _undefinedTilesAlert = false;
+                            GLOBALS.Settings.GeneralSettings.NeverShowMissingTileTexturesAlertAgain = neverShow;
+                        }
                         
                         ImGui.End();
                     }

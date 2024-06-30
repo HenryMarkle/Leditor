@@ -12,6 +12,7 @@ internal interface IContextListener
     void OnProjectCreated(object? sender, EventArgs e);
     void OnProjectLoaded(object? sender, EventArgs e);
     void OnPageUpdated(int previous, int @next);
+    void OnGlobalResourcesUpdated();
 }
 
 internal abstract class EditorPage : IDrawable, IDisposable

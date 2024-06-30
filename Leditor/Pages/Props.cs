@@ -1294,6 +1294,14 @@ internal class PropsEditorPage : EditorPage, IContextListener
         }
     }
 
+    public void OnGlobalResourcesUpdated()
+    {
+        if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) _shouldRedrawPropLayer = true;
+        else {
+            _shouldRedrawLevel = true;
+        }
+    }
+
     public void OnProjectLoaded(object? sender, EventArgs e)
     {
         var lWidth = GLOBALS.Level.Width * 20;

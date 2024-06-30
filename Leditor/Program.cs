@@ -406,7 +406,8 @@ class Program
         List<Action>.Enumerator loadPropTexturesEnumerator = default!;
         List<Action>.Enumerator loadLightTexturesEnumerator = default!;
 
-        var isLoadingTexturesDone = false;
+        var isLoadingPropTexturesDone = false;
+        var isLoadingLightTexturesDone = false;
 
         LegacyGeoEditorPage? geoPage = null;
         TileEditorPage? tilePage = null;
@@ -433,6 +434,8 @@ class Program
         TileCreatorPage? tileCreatorPage = null;
 
         Task allCacheTasks = default!;
+
+        var _tileDexTaskSet = false;
 
 
         Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
@@ -635,7 +638,13 @@ class Program
                 _tileLoader = new([
                     GLOBALS.Paths.TilesAssetsDirectory, 
                     ..Directory.GetDirectories(GLOBALS.Paths.TilePackagesDirectory)
-                ]);
+                ])
+                {
+                    // Doesn't seem to work..
+                    Logger = logger
+                };
+
+                _tileLoader.Start();
             }
             catch (Exception e)
             {
@@ -1146,14 +1155,20 @@ void main() {
         startPage.ProjectLoaded += mainPage.OnProjectLoaded;
         startPage.ProjectLoaded += dimensionsPage.OnProjectLoaded;
         startPage.ProjectLoaded += l4MakerPage.OnProjectLoaded;
+        startPage.ProjectLoaded += camerasPage.OnProjectLoaded;
+        startPage.ProjectLoaded += lightPage.OnProjectLoaded;
         
         mainPage.ProjectLoaded += propsPage.OnProjectLoaded;
         mainPage.ProjectLoaded += dimensionsPage.OnProjectLoaded;
         mainPage.ProjectLoaded += l4MakerPage.OnProjectLoaded;
+        mainPage.ProjectLoaded += camerasPage.OnProjectLoaded;
+        mainPage.ProjectLoaded += lightPage.OnProjectLoaded;
         
         newLevelPage.ProjectCreated += propsPage.OnProjectCreated;
         newLevelPage.ProjectCreated += dimensionsPage.OnProjectCreated;
         newLevelPage.ProjectCreated += l4MakerPage.OnProjectCreated;
+        newLevelPage.ProjectCreated += camerasPage.OnProjectCreated;
+        newLevelPage.ProjectCreated += lightPage.OnProjectCreated;
 
         GLOBALS.PageUpdated += mainPage.OnPageUpdated;
         GLOBALS.PageUpdated += tilePage.OnPageUpdated;
@@ -1165,6 +1180,7 @@ void main() {
         GLOBALS.PageUpdated += experimentalGeometryPage.OnPageUpdated;
         GLOBALS.PageUpdated += dimensionsPage.OnPageUpdated;
         GLOBALS.PageUpdated += l4MakerPage.OnPageUpdated;
+
         //
 
         unsafe
@@ -1250,11 +1266,6 @@ void main() {
         GLOBALS.AutoSaveTimer.Enabled = GLOBALS.Settings.GeneralSettings.AutoSave;
 
         if (failedIntegrity) goto skip_loading;
-
-        // Doesn't seem to work
-        _tileLoader.Logger = logger;
-        
-        _tileLoader.Start();
 
         _propLoader.Start();
         _propLoader.IncludeDefined(("Ropes", new Data.Color(0, 0, 0)), GLOBALS.Ropes, GLOBALS.Paths.PropsAssetsDirectory);
@@ -1428,75 +1439,34 @@ void main() {
                     continue;
                 }
 
-                if (!_tileLoader.Done)
-                {
-                    tileLoadProgress++;
-                    
-                    while (tileLoadProgress % loadRate != 0)
-                    {
-                        // Load complete
-                        if (_tileLoader.Proceed())
+                if (!_tileDexTaskSet) {
+                    if (_tileLoader.DexTask?.IsCompleted is false) {
+                        var width = GetScreenWidth();
+                        var height = GetScreenHeight();
+                        
+                        BeginDrawing();
+                        Printers.DrawSplashScreen(true);
+
                         {
-                            tileDexTask = _tileLoader.Build();
-                            
-                            break;
-                        } 
-                            
-                        tileLoadProgress++;
-                    }
-                    
-                    var width = GetScreenWidth();
-                    var height = GetScreenHeight();
-                    
-                    BeginDrawing();
-                    Printers.DrawSplashScreen(true);
+                            if (GLOBALS.Font is null)
+                                DrawText("Building Tile Dex", 100, height - 120, 20, Color.White);
+                            else
+                                DrawTextEx(GLOBALS.Font.Value, "Building Tile Dex", new Vector2(100, height - 120), 20, 1, Color.White);
+                        }
 
-                    if (!_tileLoader.Started || !_tileLoader.PackLoadCompleted)
-                    {
-                        if (GLOBALS.Font is null)
-                            DrawText("Loading Tiles", 100, height - 120, 20, Color.White);
-                        else
-                            DrawTextEx(GLOBALS.Font.Value, "Loading Tiles", new Vector2(100, height - 120), 20, 1, Color.White);
-                    }
-                    else if (!_tileLoader.TextureLoadCompleted)
-                    {
-                        if (GLOBALS.Font is null)
-                            DrawText("Loading Tile Textures", 100, height - 120, 20, Color.White);
-                        else
-                            DrawTextEx(GLOBALS.Font.Value, "Loading Tile Textures", new Vector2(100, height - 120), 20, 1, Color.White);
-                    }
-                    else if (!_tileLoader.DexBuildCompleted)
-                    {
-                        if (GLOBALS.Font is null)
-                            DrawText("Building Table", 100, height - 120, 20, Color.White);
-                        else
-                            DrawTextEx(GLOBALS.Font.Value, "Building Table", new Vector2(100, height - 120), 20, 1, Color.White);
-                    }
+                        EndDrawing();
 
-                    Printers.DrawProgressBar(new Rectangle(100, height - 100, width - 200, 30), tileLoadProgress, _tileLoader.TotalProgress, false, Color.White);
-                    EndDrawing();
-                    continue;
-                }
-                if (GLOBALS.TileDex is null)
-                {
-                    if (tileDexTask?.IsCompleted == true) {
-                        GLOBALS.TileDex = tileDexTask.Result;
-                        _propLoader.IncludeTiles(GLOBALS.TileDex);
-                    }
-                    
-                    var height = GetScreenHeight();
-                    
-                    BeginDrawing();
-                    Printers.DrawSplashScreen(true);
+                        continue;
+                    } else if (_tileLoader.DexTask?.IsCompleted is true) {
+                        GLOBALS.TileDex = _tileLoader.DexTask.Result;
+                        _tileDexTaskSet = true;
 
-                    if (GLOBALS.Font is null)
-                        DrawText("Building Tile Dex", 100, height - 120, 20, Color.White);
-                    else
-                        DrawTextEx(GLOBALS.Font.Value, "Building Tile Dex", new Vector2(100, height - 120), 20, 1, Color.White);
-                    
-                    EndDrawing();
-                    
-                    continue;
+                        GLOBALS.TileDex.TextureUpdated += tilePage!.OnGlobalResourcesUpdated;
+                        GLOBALS.TileDex.TextureUpdated += mainPage!.OnGlobalResourcesUpdated;
+                        GLOBALS.TileDex.TextureUpdated += propsPage!.OnGlobalResourcesUpdated;
+                        GLOBALS.TileDex.TextureUpdated += lightPage!.OnGlobalResourcesUpdated;
+                        GLOBALS.TileDex.TextureUpdated += camerasPage!.OnGlobalResourcesUpdated;
+                    }
                 }
 
                 goto skip_prop_load;
@@ -1607,62 +1577,10 @@ void main() {
                 }
 
                 // TODO: To be replaced
-                if (!isLoadingTexturesDone)
+                if (!isLoadingLightTexturesDone)
                 {
                     // Loading screen
 
-                    loadLoop:
-                    
-                    if (loadPropTexturesEnumerator.MoveNext() is true)
-                    {
-                        loadPropTexturesEnumerator.Current?.Invoke();
-                        propTexturesLoadProgress++;
-
-                        while (propTexturesLoadProgress % loadRate != 0 && loadPropTexturesEnumerator.MoveNext() is true)
-                        {
-                            loadPropTexturesEnumerator.Current?.Invoke();
-                            propTexturesLoadProgress++;
-                        }
-
-                        var width = GetScreenWidth();
-                        var height = GetScreenHeight();
-
-                        BeginDrawing();
-                        ClearBackground(new(0, 0, 0, 255));
-
-                        DrawTexturePro(
-                            GLOBALS.Textures.SplashScreen,
-                            new(0, 0, GLOBALS.Textures.SplashScreen.Width, GLOBALS.Textures.SplashScreen.Height),
-                            new(0, 0, GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight),
-                            new(0, 0),
-                            0,
-                            new(255, 255, 255, 255)
-                        );
-
-                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
-
-                        if (GLOBALS.Font is null) DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
-                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.Version, new(700, 50), new(0, 0), 0, 30, 0, Color.White);
-
-                        if (GLOBALS.Font is null) DrawText(GLOBALS.RaylibVersion, 700, 70, 15, Color.White);
-                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.RaylibVersion, new(700, 80), new(0, 0), 0, 30, 0, Color.White);
-
-                        if (GLOBALS.Font is null) DrawText(GLOBALS.BuildConfiguration, 700, 90, 15, Color.White);
-                        else DrawTextPro(GLOBALS.Font.Value, GLOBALS.BuildConfiguration, new(700, 110), new(0, 0), 0, 30, 0, Color.White);
-                        
-                        
-                        if (GLOBALS.Font is null)
-                            DrawText("Loading prop textures", 100, height - 120, 20, Color.White);
-                        else
-                            DrawTextEx(GLOBALS.Font.Value, "Loading prop textures", new Vector2(100, height - 120), 20, 1, Color.White);
-
-
-                        Printers.DrawProgressBar(new Rectangle(100, height - 100, width - 200, 30), propTexturesLoadProgress, totalPropTexturesLoadProgress, false, Color.White);
-
-                        EndDrawing();
-                        
-                        continue;
-                    }
                     if (loadLightTexturesEnumerator.MoveNext())
                     {
                         loadLightTexturesEnumerator.Current?.Invoke();
@@ -1713,15 +1631,15 @@ void main() {
                         continue;
                     }
 
-                    GLOBALS.Textures.Props = propTextures.Others;
-                    GLOBALS.Textures.RopeProps = propTextures.Ropes;
-                    GLOBALS.Textures.LongProps = propTextures.Longs;
+                    // GLOBALS.Textures.Props = propTextures.Others;
+                    // GLOBALS.Textures.RopeProps = propTextures.Ropes;
+                    // GLOBALS.Textures.LongProps = propTextures.Longs;
                     GLOBALS.Textures.LightBrushes = lightTextures.Textures;
                     
-                    loadPropTexturesList.Clear();
+                    // loadPropTexturesList.Clear();
                     loadLightTexturesList.Clear();
 
-                    isLoadingTexturesDone = true;
+                    isLoadingLightTexturesDone = true;
                     // Enabled = true;
                 }
                 else if (allCacheTasks?.IsCompleted is not true)
@@ -2269,6 +2187,60 @@ void main() {
                     }
                     #endregion
                     
+                    // Load Tile Textures
+
+                    if (!_tileLoader.Done) {
+                        if (!_tileLoader.Proceed())
+                        {
+                            while (++tileTexturesLoadProgress % GLOBALS.Settings.Misc.TileImageScansPerFrame != 0) {
+                                if (_tileLoader.Proceed()) {
+                                    _tileLoader.ResetTask();
+                                    _propLoader.IncludeTiles(GLOBALS.TileDex!);
+
+                                    goto break_tile_texture_loading;
+                                }
+                            }
+
+                            break_tile_texture_loading: {}
+                        }
+                        else 
+                        {
+                            _tileLoader.ResetTask();
+                            _propLoader.IncludeTiles(GLOBALS.TileDex!);
+                        }
+                    }
+
+                    // Load Prop Textures
+
+                    if (!isLoadingPropTexturesDone) {
+                        if (loadPropTexturesEnumerator.MoveNext() is true)
+                        {
+                            loadPropTexturesEnumerator.Current?.Invoke();
+                            propTexturesLoadProgress++;
+
+                            while (propTexturesLoadProgress % loadRate != 0)
+                            {
+                                if (loadPropTexturesEnumerator.MoveNext() is true) {
+                                    loadPropTexturesEnumerator.Current?.Invoke();
+                                    propTexturesLoadProgress++;
+                                }
+                                else
+                                {
+                                    isLoadingPropTexturesDone = true;
+                                    GLOBALS.Textures.Props = propTextures.Others;
+                                    GLOBALS.Textures.RopeProps = propTextures.Ropes;
+                                    GLOBALS.Textures.LongProps = propTextures.Longs;
+                                    
+                                    loadPropTexturesList.Clear();
+
+                                    goto break_prop_texture_loading;
+                                }
+                            }
+                        }
+
+                        break_prop_texture_loading: {}
+                    }
+
                     // page switch
 
                     switch (GLOBALS.Page)
@@ -2417,7 +2389,49 @@ void main() {
         UnloadShader(GLOBALS.Shaders.VFlip);
         
         UnloadRenderTexture(GLOBALS.Textures.GeneralLevel);
+
+        //
+
+        _tileLoader?.Dispose();
         
+        // Unlistening
+
+        GLOBALS.TileDex!.TextureUpdated -= tilePage!.OnGlobalResourcesUpdated;
+        GLOBALS.TileDex!.TextureUpdated -= mainPage!.OnGlobalResourcesUpdated;
+        GLOBALS.TileDex!.TextureUpdated -= propsPage!.OnGlobalResourcesUpdated;
+        GLOBALS.TileDex!.TextureUpdated -= lightPage!.OnGlobalResourcesUpdated;
+        GLOBALS.TileDex!.TextureUpdated -= camerasPage!.OnGlobalResourcesUpdated;
+
+        startPage!.ProjectLoaded -= propsPage.OnProjectLoaded;
+        startPage.ProjectLoaded -= mainPage.OnProjectLoaded;
+        startPage.ProjectLoaded -= dimensionsPage!.OnProjectLoaded;
+        startPage.ProjectLoaded -= l4MakerPage!.OnProjectLoaded;
+        startPage.ProjectLoaded -= camerasPage.OnProjectLoaded;
+        startPage.ProjectLoaded -= lightPage.OnProjectLoaded;
+        
+        mainPage.ProjectLoaded -= propsPage.OnProjectLoaded;
+        mainPage.ProjectLoaded -= dimensionsPage.OnProjectLoaded;
+        mainPage.ProjectLoaded -= l4MakerPage.OnProjectLoaded;
+        mainPage.ProjectLoaded -= camerasPage.OnProjectLoaded;
+        mainPage.ProjectLoaded -= lightPage.OnProjectLoaded;
+        
+        newLevelPage!.ProjectCreated -= propsPage.OnProjectCreated;
+        newLevelPage.ProjectCreated -= dimensionsPage.OnProjectCreated;
+        newLevelPage.ProjectCreated -= l4MakerPage.OnProjectCreated;
+        newLevelPage.ProjectCreated -= camerasPage.OnProjectCreated;
+        newLevelPage.ProjectCreated -= lightPage.OnProjectCreated;
+
+        GLOBALS.PageUpdated -= mainPage.OnPageUpdated;
+        GLOBALS.PageUpdated -= tilePage.OnPageUpdated;
+        GLOBALS.PageUpdated -= lightPage.OnPageUpdated;
+        GLOBALS.PageUpdated -= effectsPage!.OnPageUpdated;
+        GLOBALS.PageUpdated -= propsPage.OnPageUpdated;
+        GLOBALS.PageUpdated -= camerasPage.OnPageUpdated;
+        GLOBALS.PageUpdated -= savePage!.OnPageUpdated;
+        GLOBALS.PageUpdated -= experimentalGeometryPage!.OnPageUpdated;
+        GLOBALS.PageUpdated -= dimensionsPage.OnPageUpdated;
+        GLOBALS.PageUpdated -= l4MakerPage.OnPageUpdated;
+
         // Unloading Pages
         
         logger.Debug("Unloading Pages");

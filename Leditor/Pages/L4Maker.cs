@@ -40,6 +40,11 @@ internal class L4MakerPage : EditorPage, IContextListener {
             ResetQuadHandles();
         }
     }
+
+    public void OnGlobalResourcesUpdated()
+    {
+        _shouldRedrawLevel = true;
+    }
     
     /// Requires a gl context
     internal L4MakerPage() {

@@ -56,7 +56,7 @@ public class TileDexBuilder
     /// <param name="force">If a duplicate was found, replace the duplicate.</param>
     /// <exception cref="DuplicateTileDefinitionException">When attempting to register the same tile definition more than once</exception>
     /// <exception cref="TileCategoryNotFoundException">When the <paramref name="category"/> is not registered</exception>
-    public TileDexBuilder Register(string category, TileDefinition definition, Texture2D texture, bool force = false)
+    public TileDexBuilder Register(string category, TileDefinition definition, Texture2D? texture, bool force = false)
     {
         if (_tiles.TryGetValue(category, out var row))
         {
@@ -69,14 +69,14 @@ public class TileDexBuilder
                     row.definitions.Remove(definition);
                     row.definitions.Add(definition);
 
-                    if (_textures.TryAdd(definition.Name, texture)) definition.Texture = texture.Raw;
+                    if (texture is not null && _textures.TryAdd(definition.Name, texture)) definition.Texture = texture.Raw;
                 } else {
                     row.definitions.Add(definition);
-                    if (_textures.TryAdd(definition.Name, texture)) definition.Texture = texture.Raw;
+                    if (texture is not null && _textures.TryAdd(definition.Name, texture)) definition.Texture = texture.Raw;
                 }
             } else {
                 row.definitions.Add(definition);
-                if (_textures.TryAdd(definition.Name, texture)) definition.Texture = texture.Raw;
+                if (texture is not null && _textures.TryAdd(definition.Name, texture)) definition.Texture = texture.Raw;
             }
             
             return this;

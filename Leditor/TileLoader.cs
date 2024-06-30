@@ -14,6 +14,7 @@ internal sealed class TileLoader : IDisposable
 
         _tilePackTasks = [];
         _tilePacks.Clear();
+        DexTask = null;
     }
     #endregion
     
@@ -24,6 +25,8 @@ internal sealed class TileLoader : IDisposable
         internal Data.Tiles.TileDefinition[][] Tiles { get; init; }
         internal RL.Managed.Texture2D[][] Textures { get; init; }
     }
+
+    public  Task<Data.Tiles.TileDex>? DexTask { get; private set; }
 
     internal bool Done { get; private set; }
     internal int TotalProgress { get; private set; }
@@ -40,7 +43,6 @@ internal sealed class TileLoader : IDisposable
     private bool _textureLoadCompleted;
     private bool _dexBuildCompleted;
 
-    private int _tilePackLoadWaitCursor;
 
     private int _texturePackCursor;
     private int _textureCategoryCursor;
@@ -109,6 +111,64 @@ internal sealed class TileLoader : IDisposable
 
         TotalProgress += _tilePackTasks.Length;
 
+        //
+
+        foreach (var task in _tilePackTasks) {
+            task.Wait();
+            _tilePacks.Add(task.Result);
+        }
+
+        //
+
+        DexTask = Task.Factory.StartNew(() => {
+            var builder = new Data.Tiles.TileDexBuilder();
+
+            var tileCursor = 0;
+            var tileCategoryCursor = 0;
+            var tilePackCursor = 0;
+
+            while (true) {
+
+                if (tileCursor == _tilePacks[tilePackCursor].Textures[tileCategoryCursor].Length)
+                {
+                    tileCursor = 0;
+                    tileCategoryCursor++;
+                }
+                
+                if (tileCategoryCursor == _tilePacks[tilePackCursor].Textures.Length)
+                {
+                    tileCategoryCursor = 0;
+                    tileCursor = 0;
+                    tilePackCursor++;
+                }
+                
+                if (tilePackCursor == _tilePacks.Count)
+                {
+                    Logger?.Debug("[TileLoader]: Dex build complete");
+
+                    break;
+                }
+
+                var pack = _tilePacks[tilePackCursor];
+                var category = pack.Categories[tileCategoryCursor];
+                if (pack.Tiles[tileCategoryCursor].Length == 0)
+                {
+                    continue;
+                }
+
+                var tile = pack.Tiles[tileCategoryCursor][tileCursor];
+
+                if (tileCursor == 0) builder.Register(category.name, category.Item2, true);
+
+                builder.Register(category.name, tile, null, true);
+
+                tileCursor++;
+            }
+
+
+            return builder.Build();
+        });
+
         _started = true;
     }
 
@@ -126,26 +186,10 @@ internal sealed class TileLoader : IDisposable
         }
         
         if (!_started) throw new InvalidOperationException("TileLoader hasn't started yet");
-        
-        if (!_packLoadCompleted)
-        {
-            if (_tilePackLoadWaitCursor == _tilePackTasks.Length)
-            {
-                _packLoadCompleted = true;
 
-                Logger?.Debug("[TileLoader]: Init load completed");
+        if (DexTask is null) throw new NullReferenceException("Dex task was null");
 
-                return false;
-            }
-
-            var task = _tilePackTasks[_tilePackLoadWaitCursor++];
-
-            task.Wait();
-            
-            _tilePacks.Add(task.Result);
-            
-            return false;
-        }
+        if (!DexTask.IsCompleted) return false;
 
         if (!_textureLoadCompleted)
         {
@@ -248,9 +292,7 @@ internal sealed class TileLoader : IDisposable
             var tile = pack.Tiles[_tileCategoryCursor][_tileCursor];
             var texture = pack.Textures[_tileCategoryCursor][_tileCursor];
 
-            if (_tileCursor == 0) _builder.Register(category.name, category.Item2, true);
-
-            _builder.Register(category.name, tile, texture, true);
+            DexTask.Result.UpdateTexture(tile, texture);
 
             _tileCursor++;
             return false;
@@ -261,10 +303,10 @@ internal sealed class TileLoader : IDisposable
         return true;
     }
 
-    internal Task<Data.Tiles.TileDex> Build()
+    internal async Task<Data.Tiles.TileDex> Build()
     {
-        if (!Done) throw new InvalidOperationException("Loading isn't done yet");
-
-        return Task.Factory.StartNew(() => _builder.Build());
+        return await DexTask!;
     }
+
+    internal void ResetTask() => DexTask = null;
 }

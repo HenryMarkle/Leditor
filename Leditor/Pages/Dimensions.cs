@@ -124,7 +124,11 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
 
         ResetSides();
     }
-    #nullable disable
+
+    public void OnGlobalResourcesUpdated()
+    {
+        _shouldRedrawLevel = true;
+    }
 
     public void OnPageUpdated(int previous, int @next) {
         if (@next == 6) {

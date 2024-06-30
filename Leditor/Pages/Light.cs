@@ -227,6 +227,10 @@ internal class LightEditorPage : EditorPage, IContextListener
 
     private bool _isNavbarHovered;
 
+    public void OnGlobalResourcesUpdated()
+    {
+        _shouldRedrawLevel = true;
+    }
 
     public void OnPageUpdated(int previous, int @next) {
         _shouldRedrawLevel = true;

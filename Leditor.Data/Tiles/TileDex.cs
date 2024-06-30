@@ -43,7 +43,7 @@ public class TileDex : IDisposable
     /// <summary>
     /// Tile -> Texture
     /// </summary>
-    private readonly ImmutableDictionary<string, Texture2D> _textures;
+    private readonly Dictionary<string, Texture2D> _textures;
     
     //
 
@@ -170,6 +170,23 @@ public class TileDex : IDisposable
     /// <param name="name">The name of the tile</param>
     /// <returns>A managed reference to the texture</returns>
     public Texture2D GetTexture(string name) => _textures[name];
+
+    public delegate void TextureUpdateEventHandler();
+
+    public event TextureUpdateEventHandler? TextureUpdated;
+
+    public void UpdateTexture(string name, Texture2D texture)
+    {
+        if (_textures.TryGetValue(name, out Texture2D? t))
+        {
+            t!.Dispose();
+        }
+
+        _definitions[name].Texture = texture;
+        _textures[name] = texture;
+
+        TextureUpdated?.Invoke();
+    }
     
     public string[] OrderedTileAsPropCategories { get; init; }
     public TileDefinition[][] OrderedTilesAsProps { get; init; }
@@ -202,7 +219,7 @@ public class TileDex : IDisposable
         _colors = colors.ToImmutableDictionary();
         _tileCategory = tileCategory.ToImmutableDictionary();
         _tileColor = tileColor.ToImmutableDictionary();
-        _textures = textures.ToImmutableDictionary();
+        _textures = textures;
         OrderedCategoryNames = orderedCategoryNames;
 
         List<string> filteredCategories = [];
