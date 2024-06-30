@@ -619,7 +619,7 @@ public class Shortcuts
 }
 
 public class Misc(
-    bool splashScreen = true,
+    bool splashScreen = false,
     int tileImageScansPerFrame = 20,
     int fps = 60,
     bool funnyDeathScreen = false
