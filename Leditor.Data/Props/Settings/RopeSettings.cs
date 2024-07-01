@@ -11,7 +11,7 @@ public class RopeSettings(
     RopeRelease release = RopeRelease.None, 
     float? thickness = null, 
     int? applyColor = null)
-    : PropSettings(renderOrder, seed, renderTime)
+    : PropSettings(renderOrder, seed, renderTime), IApplyColor
 {
     public RopeRelease Release { get; set; } = release;
     public float? Thickness { get; set; } = thickness;

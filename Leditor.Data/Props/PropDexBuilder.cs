@@ -1,15 +1,26 @@
-﻿using Leditor.Data.Props.Definitions;
+﻿using System.ComponentModel;
+using Leditor.Data.Props.Definitions;
 using Leditor.Data.Props.Exceptions;
+using Leditor.Data.Tiles;
 using Leditor.Data.Tiles.Exceptions;
 using Leditor.RL.Managed;
+using Microsoft.VisualBasic;
 
 namespace Leditor.Data.Props;
 
 public class PropDexBuilder
 {
-    private readonly Dictionary<string, (Color color, List<PropDefinition> definitions)> _tiles = new();
-    private readonly Dictionary<string, Texture2D> _textures = new();
-    private readonly List<string> _orderedCategoryNames = [];
+    private readonly HashSet<PropDefinition> _props = [];
+    private readonly Dictionary<string, Color> _categoryColors = [];
+    private readonly Dictionary<string, List<PropDefinition>> _categoryProps = [];
+
+
+    private Rope[] _ropes = [];
+    private Long[] _longs = [];
+    
+    private string[] _tileAsPropCategories = [];
+    private TileAsProp[][] _tilesAsProps = [];
+    
 
     /// <summary>
     /// Register a prop category
@@ -17,19 +28,45 @@ public class PropDexBuilder
     /// <param name="category">The name of the category</param>
     /// <param name="color">The associated color</param>
     /// <exception cref="DuplicateTileCategoryException">When attempting to register the same category</exception>
-    public PropDexBuilder Register(string category, Color color)
+    public void Register(string category, Color color)
     {
-        try
-        {
-            _tiles.Add(category, (color, []));
-            _orderedCategoryNames.Add(category);
+        if (_categoryColors.ContainsKey(category) || _categoryProps.ContainsKey(category))
+            throw new DuplicatePropCategoryException(category);
+
+        _categoryColors[category] = color;
+        _categoryProps[category] = [];
+    }
+
+    public void RegisterTiles(string[] categories, TileDefinition[][] tiles)
+    {
+        _tileAsPropCategories = categories;
+        _tilesAsProps = tiles.Select(tiles => tiles.Select(t => new TileAsProp(t)).ToArray()).ToArray();
+
+        foreach (var category in _tilesAsProps) {
+            foreach (var tile in category) {
+                if (!_props.Add(tile)) throw new TileAsPropNamingConflictException(tile.Name);
+            }
         }
-        catch (ArgumentException e)
+    }
+
+    public void RegisterRopes(Rope[] ropes)
+    {
+        _ropes = ropes;
+
+        foreach (var rope in _ropes)
         {
-            throw new DuplicatePropCategoryException(category, e);
+            if (!_props.Add(rope)) throw new DuplicatePropDefinitionException(rope.Name);
         }
-        
-        return this;
+    }
+
+    public void RegisterLong(Long[] longs)
+    {
+        _longs = longs;
+
+        foreach (var l in _longs)
+        {
+            if (!_props.Add(l)) throw new DuplicatePropDefinitionException(l.Name);
+        }
     }
 
     /// <summary>
@@ -40,38 +77,57 @@ public class PropDexBuilder
     /// <param name="texture">The associated texture</param>
     /// <exception cref="DuplicateTileDefinitionException">When attempting to register the same prop definition more than once</exception>
     /// <exception cref="TileCategoryNotFoundException">When the <paramref name="category"/> is not registered</exception>
-    public PropDexBuilder Register(string category, PropDefinition definition, Texture2D texture)
+    public void Register(
+        string category, 
+        PropDefinition definition, 
+        bool force = false
+    )
     {
-        if (_tiles.TryGetValue(category, out var row))
+        if (!_props.Add(definition))
         {
-            row.definitions.Add(definition);
-            if (_textures.TryAdd(definition.Name, texture)) definition.Texture = texture.Raw;
-            
-            return this;
+            if (force)
+            {
+                _props.Remove(definition);
+                _props.Add(definition);
+            }
+            else throw new DuplicatePropDefinitionException(definition.Name);
         }
 
-        throw new PropCategoryNotFoundException(category);
+        if (_categoryProps.TryGetValue(category, out var list))
+        {
+            list.Add(definition);
+        }
+        else
+        {
+            if (force)
+            {
+                _categoryProps[category] = [ definition ];
+                _categoryColors[category] = new(0, 0, 0, 255);
+            }
+            else
+            {
+                throw new PropCategoryNotFoundException(category);
+            }
+        }
     }
 
     public PropDex Build()
     {
         Dictionary<string, PropDefinition> definitions = new();
         Dictionary<string, PropDefinition[]> categories = new();
-        Dictionary<string, Color> colors = new();
+        Dictionary<string, Color> colors = _categoryColors;
         Dictionary<PropDefinition, string> propCategory = new();
         Dictionary<string, Color> propColor = new();
 
-        foreach (var (category, (color, propDefinitions)) in _tiles)
+        foreach (var prop in _props) definitions.Add(prop.Name, prop);
+
+        foreach (var (category, props) in _categoryProps)
         {
-            foreach (var propDefinition in propDefinitions)
-            {
-                definitions.Add(propDefinition.Name, propDefinition);
-                propCategory.Add(propDefinition, category);
-                propColor.Add(propDefinition.Name, color);
-            }
-            
-            categories.Add(category, [..propDefinitions]);
-            colors.Add(category, color);
+            categories[category] = [ ..props ];
+
+            var color = colors[category];
+
+            foreach (var prop in props) propColor[prop.Name] = color;
         }
 
         return new PropDex(
@@ -79,9 +135,11 @@ public class PropDexBuilder
             categories, 
             colors, 
             propCategory, 
-            propColor, 
-            _textures,
-            [.._orderedCategoryNames]
+            propColor,
+            _ropes,
+            _longs,
+            _tileAsPropCategories,
+            _tilesAsProps
         );
     }
 }

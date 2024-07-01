@@ -39,12 +39,25 @@ public class PropDex : IDisposable
     /// </summary>
     private readonly ImmutableDictionary<string, Color> _propColor;
 
-    /// <summary>
-    /// Prop -> Texture
-    /// </summary>
-    private readonly ImmutableDictionary<string, Texture2D> _textures;
+
+    private Rope[] _ropes = [];
+    private Long[] _longs = [];
+
+    private string[] _tilesAsPropsCategories = [];
+    private TileAsProp[][] _tilesAsProps = [];
+
     
+    private string[] _orderedCategories = [];
+
     //
+
+    public Long[] Longs => _longs;
+    public Rope[] Ropes => _ropes;
+
+    public string[] TileCategories => _tilesAsPropsCategories;
+    public TileAsProp[][] Tiles => _tilesAsProps;
+
+    public string[] OrderedCategories => _orderedCategories;
 
     /// <summary>
     /// Get the definition of prop
@@ -116,17 +129,16 @@ public class PropDex : IDisposable
     /// <returns>true if the category exists; otherwise false</returns>
     public bool CategoryExists(string name) => _categories.ContainsKey(name);
 
-    /// <summary>
-    /// Gets the prop's associated texture
-    /// </summary>
-    /// <param name="name">The name of the prop</param>
-    /// <returns>The associated texture</returns>
-    public Texture2D GetTexture(string name) => _textures[name];
-    
-    /// <summary>
-    /// An array of category names with a fixed order
-    /// </summary>
-    public string[] OrderedCategoryNames { get; init; }
+    public delegate void DexTextureUpdateEventHandler();
+
+    public event DexTextureUpdateEventHandler? TextureUpdated;
+
+    public void UpdateTexture(string name, Texture2D texture)
+    {
+        _definitions[name].Texture = texture;
+
+        TextureUpdated?.Invoke();
+    }
     
     //
 
@@ -134,7 +146,7 @@ public class PropDex : IDisposable
     {
         if (Disposed) return;
         
-        foreach (var (_, texture) in _textures) texture.Dispose();
+        foreach (var d in _definitions) if (d.Value.Texture.Id != 0) Raylib_cs.Raylib.UnloadTexture(d.Value.Texture);
 
         Disposed = true;
     }
@@ -145,16 +157,25 @@ public class PropDex : IDisposable
         Dictionary<string, Color> colors,
         Dictionary<PropDefinition, string> propCategory,
         Dictionary<string, Color> propColor,
-        Dictionary<string, Texture2D> texture,
-        string[] orderedCategoryNames)
+        Rope[] ropes,
+        Long[] longs,
+        string[] tileCategories,
+        TileAsProp[][] tiles
+        )
     {
         _definitions = definitions.ToImmutableDictionary();
         _categories = categories.ToImmutableDictionary();
         _colors = colors.ToImmutableDictionary();
         _propCategory = propCategory.ToImmutableDictionary();
         _propColor = propColor.ToImmutableDictionary();
-        _textures = texture.ToImmutableDictionary();
-        OrderedCategoryNames = orderedCategoryNames;
+
+        _ropes = ropes;
+        _longs = longs;
+
+        _tilesAsProps = tiles;
+        _tilesAsPropsCategories = tileCategories;
+
+        _orderedCategories = [ ..categories.Keys ];
     }
 
     ~PropDex()

@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Text.Json.Serialization;
+using Leditor.Data.Props.Definitions;
 using Leditor.Data.Tiles;
 
 namespace Leditor;
@@ -919,6 +920,7 @@ public class Prop(int depth, string name, bool isTile, PropQuad quads)
     public InitPropType Type { get; set; }
     public TileDefinition? Tile { get; set; }
     public (int category, int index) Position { get; set; }
+    public PropDefinition? Definition { get; set; }
 
     public int Depth { get; set; } = depth;
     public string Name { get; set; } = name;

@@ -7,7 +7,7 @@ public class VariedSoftSettings(
     int variation = 0, 
     int customDepth = 0, 
     int? applyColor = null
-) : PropSettings(renderOrder, seed, renderTime)
+) : PropSettings(renderOrder, seed, renderTime), IVariant, ICustomDepth
 {
     public int Variation { get; set; } = variation;
     public int CustomDepth { get; set; } = customDepth;

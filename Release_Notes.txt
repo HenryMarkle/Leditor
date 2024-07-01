@@ -1,4 +1,0 @@
-- Launch time has been massively optimized, by loading tile and prop textures dynamically.
-- Fixed Show/Hide layers 1, 2, and 3 shortcuts not working.
-- Some settings in the tile editor have been moved to a new window named "visuals".
-- Added Show layers 1, 2, and 3 (along with the tile-only version) checkboxes to the tile editor.

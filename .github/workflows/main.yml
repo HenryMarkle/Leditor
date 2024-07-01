@@ -127,7 +127,7 @@ jobs:
       id: release_notes
       uses: jaywcjlove/github-action-read-file@main
       with:
-        path: ./Release_Notes.txt
+        path: Release_Notes.txt
 
     - name: Download Linux Artifact
       uses: actions/download-artifact@v2
@@ -149,8 +149,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ github.run_number }}
-        release_name: Release v0.9.96
-        body: ${{ steps.package.outputs.content }}
+        release_name: Release v0.9.97
+        body: ${{ steps.read_release_notes.outputs.content }}
         draft: false
         prerelease: false
 
