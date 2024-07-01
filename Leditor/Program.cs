@@ -211,7 +211,6 @@ class Program
     private static Task<SaveProjectResult>? _saveResult;
 
     private static bool _askForPath;
-    private static bool _failedToSave;
 
     private static bool _isGuiLocked;
 
@@ -363,8 +362,8 @@ class Program
     
     //
 
-    private static TileLoader _tileLoader;
-    private static PropLoader _propLoader;
+    private static TileLoader? _tileLoader;
+    private static PropLoader? _propLoader;
 
     // MAIN FUNCTION
     private static void Main()
@@ -394,18 +393,13 @@ class Program
         
         var paletteLoadProgress = 0;
 
-        Task<Data.Tiles.TileDex>? tileDexTask = null;
-        Task<Data.Props.PropDex>? propDexTask = null;
-
-        var tileLoadProgress = 0;
-        var propLoadProgress = 0;
-
         var totalPropTexturesLoadProgress = 0;
         var totalLightTexturesLoadProgress = 0;
 
         List<Action>.Enumerator loadPropTexturesEnumerator = default!;
         List<Action>.Enumerator loadLightTexturesEnumerator = default!;
 
+        var isLoadingTileTexturesDone = false;
         var isLoadingPropTexturesDone = false;
         var isLoadingLightTexturesDone = false;
 
@@ -1056,36 +1050,12 @@ void main() {
     FragColor = fragColor;
 }");
 
-//         GLOBALS.Shaders.LightMapCroppedMask = LoadShaderFromMemory(null, @"#version 330
-        
-// in vec2 fragTexCoord;
-// in vec4 fragColor;
-
-// out vec4 FragColor;
-
-// uniform sampler2D level;
-// uniform sampler2D lightmap;
-
-// uniform vec2 offset;
-// uniform vec2 marginOffset;
-
-// void main() {
-//     vec4 levelColor = texture(level, fragTexCoord);
-//     vec4 lightColor = texture(level, fragTexCoord);
-
-//     if (levelColor.r + lightColor.r > 0.0 || levelColor.g + lightColor.g > 0 || levelColor.b + lightColor.b > 0) { discard; }
-
-//     FragColor = fragColor;
-// }");
-
         //
 
         SetTargetFPS(GLOBALS.Settings.Misc.FPS);
 
         GLOBALS.Camera = new Camera2D { Zoom = GLOBALS.Settings.GeneralSettings.DefaultZoom };
         
-        skip_gl_init:
-
         logger.Information("Initializing pages");
         
         // Initialize pages
@@ -1267,9 +1237,9 @@ void main() {
 
         if (failedIntegrity) goto skip_loading;
 
-        _propLoader.Start();
-        _propLoader.IncludeDefined(("Ropes", new Data.Color(0, 0, 0)), GLOBALS.Ropes, GLOBALS.Paths.PropsAssetsDirectory);
-        _propLoader.IncludeDefined(("Longs", new Data.Color(0, 0, 0)), GLOBALS.Longs, GLOBALS.Paths.PropsAssetsDirectory);
+        // _propLoader!.Start();
+        // _propLoader.IncludeDefined(("Ropes", new Data.Color(0, 0, 0)), GLOBALS.Ropes, GLOBALS.Paths.PropsAssetsDirectory);
+        // _propLoader.IncludeDefined(("Longs", new Data.Color(0, 0, 0)), GLOBALS.Longs, GLOBALS.Paths.PropsAssetsDirectory);
 
         skip_loading:
 
@@ -1440,7 +1410,7 @@ void main() {
                 }
 
                 if (!_tileDexTaskSet) {
-                    if (_tileLoader.DexTask?.IsCompleted is false) {
+                    if (_tileLoader!.DexTask?.IsCompleted is false) {
                         var width = GetScreenWidth();
                         var height = GetScreenHeight();
                         
@@ -1461,6 +1431,8 @@ void main() {
                         GLOBALS.TileDex = _tileLoader.DexTask.Result;
                         _tileDexTaskSet = true;
 
+                        // _propLoader!.IncludeTiles(GLOBALS.TileDex!);
+
                         GLOBALS.TileDex.TextureUpdated += tilePage!.OnGlobalResourcesUpdated;
                         GLOBALS.TileDex.TextureUpdated += mainPage!.OnGlobalResourcesUpdated;
                         GLOBALS.TileDex.TextureUpdated += propsPage!.OnGlobalResourcesUpdated;
@@ -1468,78 +1440,6 @@ void main() {
                         GLOBALS.TileDex.TextureUpdated += camerasPage!.OnGlobalResourcesUpdated;
                     }
                 }
-
-                goto skip_prop_load;
-
-                if (!_propLoader.Done)
-                {
-                    propLoadProgress++;
-                    
-                    while (propLoadProgress % loadRate != 0)
-                    {
-                        // Load complete
-                        if (_propLoader.Proceed())
-                        {
-                            propDexTask = _propLoader.Build();
-                            
-                            break;
-                        } 
-                            
-                        propLoadProgress++;
-                    }
-                    
-                    var width = GetScreenWidth();
-                    var height = GetScreenHeight();
-                    
-                    BeginDrawing();
-                    Printers.DrawSplashScreen(true);
-                
-                    if (!_propLoader.Started || !_propLoader.PackLoadCompleted)
-                    {
-                        if (GLOBALS.Font is null)
-                            DrawText("Loading Props", 100, height - 120, 20, Color.White);
-                        else
-                            DrawTextEx(GLOBALS.Font.Value, "Loading Props", new Vector2(100, height - 120), 20, 1, Color.White);
-                    }
-                    else if (!_propLoader.TextureLoadCompleted)
-                    {
-                        if (GLOBALS.Font is null)
-                            DrawText("Loading Prop Textures", 100, height - 120, 20, Color.White);
-                        else
-                            DrawTextEx(GLOBALS.Font.Value, "Loading Prop Textures", new Vector2(100, height - 120), 20, 1, Color.White);
-                    }
-                    else if (!_propLoader.DexBuildCompleted)
-                    {
-                        if (GLOBALS.Font is null)
-                            DrawText("Building Table", 100, height - 120, 20, Color.White);
-                        else
-                            DrawTextEx(GLOBALS.Font.Value, "Building Table", new Vector2(100, height - 120), 20, 1, Color.White);
-                    }
-                
-                    Printers.DrawProgressBar(new Rectangle(100, height - 100, width - 200, 30), propLoadProgress, _propLoader.TotalProgress, false, Color.White);
-                    EndDrawing();
-                    
-                    continue;
-                }
-                if (GLOBALS.PropDex is null)
-                {
-                    if (propDexTask?.IsCompleted == true) GLOBALS.PropDex = propDexTask.Result;
-                    
-                    var height = GetScreenHeight();
-                    
-                    BeginDrawing();
-                    Printers.DrawSplashScreen(true);
-                
-                    if (GLOBALS.Font is null)
-                        DrawText("Building Prop Dex", 100, height - 120, 20, Color.White);
-                    else
-                        DrawTextEx(GLOBALS.Font.Value, "Building Prop Dex", new Vector2(100, height - 120), 20, 1, Color.White);
-                    
-                    EndDrawing();
-                    continue;
-                }
-
-                skip_prop_load:
 
                 if (palettesDirExists && !paletteLoader!.Done)
                 {
@@ -1826,7 +1726,6 @@ void main() {
                             if (!result.Success)
                             {
                                 _globalSave = false;
-                                _failedToSave = true;
                                 _isGuiLocked = false;
                                 EndDrawing();
                                 #if DEBUG
@@ -1904,7 +1803,6 @@ void main() {
                         if (!result.Success)
                         {
                             _globalSave = false;
-                            _failedToSave = true;
                             _isGuiLocked = false;
                             EndDrawing();
                             #if DEBUG
@@ -2189,26 +2087,24 @@ void main() {
                     
                     // Load Tile Textures
 
-                    if (!_tileLoader.Done) {
-                        if (!_tileLoader.Proceed())
+                    if (!isLoadingTileTexturesDone) {
+                        if (!_tileLoader!.Proceed())
                         {
                             while (++tileTexturesLoadProgress % GLOBALS.Settings.Misc.TileImageScansPerFrame != 0) {
                                 if (_tileLoader.Proceed()) {
                                     _tileLoader.ResetTask();
-                                    _propLoader.IncludeTiles(GLOBALS.TileDex!);
+                                    isLoadingTileTexturesDone = true;
 
                                     goto break_tile_texture_loading;
                                 }
                             }
-
-                            break_tile_texture_loading: {}
                         }
-                        else 
+                        else
                         {
-                            _tileLoader.ResetTask();
-                            _propLoader.IncludeTiles(GLOBALS.TileDex!);
+                            isLoadingTileTexturesDone = true;
                         }
                     }
+                    break_tile_texture_loading: {}
 
                     // Load Prop Textures
 

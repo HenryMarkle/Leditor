@@ -1,10 +1,7 @@
-﻿using System.ComponentModel;
-using Leditor.Data.Props.Definitions;
+﻿using Leditor.Data.Props.Definitions;
 using Leditor.Data.Props.Exceptions;
 using Leditor.Data.Tiles;
 using Leditor.Data.Tiles.Exceptions;
-using Leditor.RL.Managed;
-using Microsoft.VisualBasic;
 
 namespace Leditor.Data.Props;
 
@@ -15,8 +12,8 @@ public class PropDexBuilder
     private readonly Dictionary<string, List<PropDefinition>> _categoryProps = [];
 
 
-    private Rope[] _ropes = [];
-    private Long[] _longs = [];
+    private List<Rope> _ropes = [];
+    private List<Long> _longs = [];
     
     private string[] _tileAsPropCategories = [];
     private TileAsProp[][] _tilesAsProps = [];
@@ -37,21 +34,31 @@ public class PropDexBuilder
         _categoryProps[category] = [];
     }
 
-    public void RegisterTiles(string[] categories, TileDefinition[][] tiles)
+    public void RegisterTiles(string[] categories, TileDefinition[][] tiles, bool force = false)
     {
         _tileAsPropCategories = categories;
         _tilesAsProps = tiles.Select(tiles => tiles.Select(t => new TileAsProp(t)).ToArray()).ToArray();
 
         foreach (var category in _tilesAsProps) {
             foreach (var tile in category) {
-                if (!_props.Add(tile)) throw new TileAsPropNamingConflictException(tile.Name);
+                if (_props.Contains(tile)) {
+                    if (force)
+                    {
+                        _props.Remove(tile);
+                        _props.Add(tile);
+                    }
+                    else throw new TileAsPropNamingConflictException(tile.Name);
+                }
+                else {
+                    _props.Add(tile);
+                }
             }
         }
     }
 
     public void RegisterRopes(Rope[] ropes)
     {
-        _ropes = ropes;
+        _ropes = [ .._ropes, ..ropes ];
 
         foreach (var rope in _ropes)
         {
@@ -61,7 +68,7 @@ public class PropDexBuilder
 
     public void RegisterLong(Long[] longs)
     {
-        _longs = longs;
+        _longs = [ .._longs, ..longs ];
 
         foreach (var l in _longs)
         {
@@ -89,6 +96,9 @@ public class PropDexBuilder
             {
                 _props.Remove(definition);
                 _props.Add(definition);
+
+                if (definition is Rope rope) _ropes.Add(rope);
+                else if (definition is Long @long) _longs.Add(@long);
             }
             else throw new DuplicatePropDefinitionException(definition.Name);
         }
@@ -136,8 +146,8 @@ public class PropDexBuilder
             colors, 
             propCategory, 
             propColor,
-            _ropes,
-            _longs,
+            [ .._ropes ],
+            [ .._longs ],
             _tileAsPropCategories,
             _tilesAsProps
         );

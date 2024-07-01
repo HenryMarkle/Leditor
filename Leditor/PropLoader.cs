@@ -140,23 +140,7 @@ internal sealed class PropLoader : IDisposable
     {
         if (!_started) throw new InvalidOperationException("TileLoader hasn't started yet");
 
-        var categories = dex.OrderedTileAsPropCategories;
-        var tiles = dex.OrderedTilesAsProps;
-
-        for (var c = 0; c < categories.Length; c++)
-        {
-            var category = categories[c];    
-            var color = dex.GetCategoryColor(category);
-
-            _builder.Register(category, color);
-
-            for (var t = 0; t < tiles[c].Length; t++)
-            {
-                var tile = tiles[c][t];
-                var asProp = new TileAsProp(tile);
-                _builder.Register(category, asProp, dex.GetTexture(tile.Name));
-            }
-        }
+        _builder.RegisterTiles(dex.OrderedTileAsPropCategories, dex.OrderedTilesAsProps, true);
     }
 
     /// <summary>
@@ -248,7 +232,7 @@ internal sealed class PropLoader : IDisposable
 
             if (_propCursor == 0) _builder.Register(category.name, category.Item2);
 
-            _builder.Register(category.name, prop, texture);
+            _builder.Register(category.name, prop);
 
             _propCursor++;
             return false;
