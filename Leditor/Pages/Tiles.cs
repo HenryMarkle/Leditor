@@ -3418,6 +3418,199 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
             
             // Hovered tile info text
 
+            if (inMatrixBounds && canDrawTile)
+            {
+
+                TileCell hoveredTile;
+
+                #if DEBUG
+                try
+                {
+                    hoveredTile = GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer];
+                }
+                catch (IndexOutOfRangeException ie)
+                {
+                    throw new IndexOutOfRangeException(innerException: ie,
+                        message:
+                        $"Failed to fetch hovered tile from {nameof(GLOBALS.Level.TileMatrix)} (LX: {GLOBALS.Level.TileMatrix.GetLength(1)}, LY: {GLOBALS.Level.TileMatrix.GetLength(0)}): x, y, or z ({tileMatrixX}, {tileMatrixY}, {GLOBALS.Layer}) were out of bounds");
+                }
+                #else
+                hoveredTile = GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer];
+                #endif
+
+                switch (hoveredTile.Data)
+                {
+                    case TileDefault:
+                    {
+                        if (GLOBALS.Font is null)
+                        {
+                            var labelPos = GetLabelPosition(MeasureText(GLOBALS.Level.DefaultMaterial, 20), 20);
+                            
+                            DrawText(
+                                GLOBALS.Level.DefaultMaterial,
+                                (int)labelPos.X,
+                                (int)labelPos.Y,
+                                20,
+                                Color.White
+                            );
+                        }
+                        else
+                        {
+                            var labelPos = GetLabelPosition(MeasureText(GLOBALS.Level.DefaultMaterial, 30), 30);
+
+                            DrawTextEx(
+                                GLOBALS.Font.Value,
+                                GLOBALS.Level.DefaultMaterial,
+                                labelPos,
+                                30,
+                                1,
+                                Color.White
+                            );
+                        }
+                    }
+                        break;
+
+                    case TileHead h:
+                    {
+                        if (GLOBALS.Font is null) {
+                            var text = h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\"";
+
+                            var labelPos = GetLabelPosition(MeasureText(text, 20), 20);
+
+                            DrawText(
+                                text,
+                                (int)labelPos.X,
+                                (int)labelPos.Y,
+                                20,
+                                Color.White
+                            );
+                        }
+                        else
+                        {
+                            var text = h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\"";
+
+                            var labelPos = GetLabelPosition(MeasureText(text, 30), 30);
+
+                            DrawTextEx(
+                                GLOBALS.Font.Value,
+                                text,
+                                labelPos,
+                                30,
+                                1,
+                                Color.White
+                            );
+                        }
+                    }
+                        break;
+
+                    case TileBody b:
+                    {
+                        var (hx, hy, hz) = b.HeadPosition;
+                        
+                        try
+                        {
+                            var supposedHead = GLOBALS.Level.TileMatrix[hy-1, hx-1, hz-1];
+
+                            if (GLOBALS.Font is null)
+                            {
+                                var text = supposedHead.Data is TileHead h
+                                        ? h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\""
+                                        : "Stray Tile Fragment";
+
+                                var labelPos = GetLabelPosition(MeasureText(text, 20), 20);
+
+                                DrawText(
+                                    text,
+                                    (int)labelPos.X,
+                                    (int)labelPos.Y,
+                                    20,
+                                    Color.White
+                                );
+                                
+                            }
+                            else
+                            {
+                                var text = supposedHead.Data is TileHead h
+                                        ? h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\""
+                                        : "Stray Tile Fragment";
+
+                                var labelPos = GetLabelPosition(MeasureText(text, 30), 30);
+
+                                DrawTextEx(
+                                    GLOBALS.Font.Value,
+                                    text,
+                                    labelPos,
+                                    30,
+                                    1,
+                                    Color.White
+                                );
+                            }
+                        
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            var text = "Stray Tile Fragment";
+
+                            if (GLOBALS.Font is null) {
+                                var labelPos = GetLabelPosition(MeasureText(text, 20), 20);
+
+                                DrawText(text,
+                                    (int)labelPos.X,
+                                    (int)labelPos.Y,
+                                    20,
+                                    Color.White
+                                );
+                            }
+                            else
+                            {
+                                var labelPos = GetLabelPosition(MeasureText(text, 30), 30);
+
+                                DrawTextEx(
+                                    GLOBALS.Font.Value,
+                                    text,
+                                    labelPos,
+                                    30,
+                                    1,
+                                    Color.White
+                                );
+                            }
+                        }
+                    }
+                        break;
+                    
+                    case TileMaterial m:
+                    {
+                        var text = m.Name;
+
+                        if (GLOBALS.Font is null) {
+
+                            var labelPos = GetLabelPosition(MeasureText(text, 20), 20);
+
+                            DrawText(m.Name,
+                                (int)labelPos.X,
+                                (int)labelPos.Y,
+                                20,
+                                Color.White
+                            );
+                        }
+                        else
+                        {
+                            var labelPos = GetLabelPosition(MeasureText(text, 30), 30);
+                            
+                            DrawTextEx(
+                                GLOBALS.Font.Value,
+                                text,
+                                labelPos,
+                                30,
+                                1,
+                                Color.White
+                            );
+                        }
+                    }
+                        break;
+                }
+            }
+
             
         #endregion
 
