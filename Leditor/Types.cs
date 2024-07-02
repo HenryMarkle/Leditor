@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Text;
 using System.Text.Json.Serialization;
 using Leditor.Data.Props.Definitions;
 using Leditor.Data.Tiles;
@@ -509,22 +511,6 @@ public struct GeoCell {
     public int Geo { get; set; } = 0;
     public bool[] Stackables { get; set; } = new bool[22];
 
-    public static bool operator ==(GeoCell c1, GeoCell c2)
-    {
-        if (c1.Geo != c2.Geo) return false;
-
-        if (c1.Stackables.Length != c2.Stackables.Length) return false;
-
-        for (var i = 0; i < 22; i++)
-        {
-            if (c1.Stackables[i] != c2.Stackables[i]) return false;
-        }
-
-        return true;
-    }
-
-    public static bool operator !=(GeoCell c1, GeoCell c2) => !(c1 == c2);
-
     public GeoCell() {
         Geo = 0;
         Stackables = new bool[22];
@@ -534,6 +520,22 @@ public struct GeoCell {
     {
         Geo = geo;
         Stackables = new bool[22];
+    }
+
+    public readonly override string ToString()
+    {
+        List<string> stc = new(22);
+
+        if (Stackables is null) {
+            stc.Add("NULL");
+        }
+        else {
+            for (var i = 0; i < Stackables.Length; i++) {
+                if (Stackables[i]) stc.Add(i.ToString());
+            }
+        }
+
+        return $"[ {Geo}, [ {string.Join(", ", stc)} ] ]";
     }
 }
 

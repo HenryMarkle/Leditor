@@ -305,7 +305,7 @@ internal class StartPage : EditorPage
             } 
         }
 
-        BeginDrawing();
+        // BeginDrawing();
         {
             if (_uiLocked)
             {
@@ -313,21 +313,21 @@ internal class StartPage : EditorPage
 
                 if (_dirEntries[_currentIndex].isDir || !_dirEntries[_currentIndex].path.EndsWith(".txt")) {
                     _uiLocked = false;
-                    EndDrawing();
+                    // EndDrawing();
                     return;
                 } 
                 
                 if (_loadFileTask is null)
                 {
                     _loadFileTask = Utils.LoadProjectAsync(_dirEntries[_currentIndex].path);
-                    EndDrawing();
+                    // EndDrawing();
                     return;
                 }
                 if (!_loadFileTask.IsCompleted)
                 {
                     DrawText("Loading. Please wait..", (GetScreenWidth() - MeasureText("Loading. Please wait..", 30))/2, GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
 
-                    EndDrawing();
+                    // EndDrawing();
                     return;
                 }
 
@@ -340,7 +340,7 @@ internal class StartPage : EditorPage
                     _loadFileTask = null;
                     _openFileDialog = null;
                     _uiLocked = false;
-                    EndDrawing();
+                    // EndDrawing();
                     return;
                 }
 
@@ -353,7 +353,7 @@ internal class StartPage : EditorPage
                     _loadFileTask = null;
                     _openFileDialog = null;
                     _uiLocked = false;
-                    EndDrawing();
+                    // EndDrawing();
                     return;
                 }
                 
@@ -363,7 +363,7 @@ internal class StartPage : EditorPage
                     // var res = Task.Factory.StartNew(() => CheckTileIntegrity(result));
                     GLOBALS.TileCheck = Task.Factory.StartNew(() => CheckTileIntegrity(result));
 
-                    EndDrawing();
+                    // EndDrawing();
                     return;
                 }
                 
@@ -372,20 +372,20 @@ internal class StartPage : EditorPage
                 {
                     GLOBALS.PropCheck = Task.Factory.StartNew(() => CheckPropIntegrity(result));
                     
-                    EndDrawing();
+                    // EndDrawing();
                     return;
                 }
 
                 if (!GLOBALS.TileCheck.IsCompleted) {
                     DrawText("Validating Tiles..", Raylib.GetScreenWidth() / 2 - 100, Raylib.GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
-                    EndDrawing();
+                    // EndDrawing();
                     return;
                 }
                 
                 if (!GLOBALS.PropCheck.IsCompleted)
                 {
                     DrawText("Validating Props..", Raylib.GetScreenWidth() / 2 - 100, Raylib.GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
-                    EndDrawing();
+                    // EndDrawing();
                     return;
                 }
 
@@ -397,7 +397,7 @@ internal class StartPage : EditorPage
                     if (!GLOBALS.Settings.TileEditor.AllowUndefinedTiles) {
                         GLOBALS.Page = 13;
                         _uiLocked = false;
-                        EndDrawing();
+                        // EndDrawing();
                         return;
                     }
 
@@ -429,7 +429,7 @@ internal class StartPage : EditorPage
                     GLOBALS.Page = 19;
                     _uiLocked = false;
                     
-                    EndDrawing();
+                    // EndDrawing();
                     return;
                 }
                 
@@ -711,6 +711,6 @@ internal class StartPage : EditorPage
                 #endregion
             }
         }
-        EndDrawing();
+        // EndDrawing();
     }
 }

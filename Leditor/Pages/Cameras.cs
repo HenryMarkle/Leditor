@@ -238,7 +238,7 @@ internal class CamerasEditorPage : EditorPage, IContextListener
 
         #endregion
 
-        BeginDrawing();
+        // BeginDrawing();
         {
             ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme ? Color.Black : new Color(170, 170, 170, 255));
 
@@ -616,7 +616,7 @@ internal class CamerasEditorPage : EditorPage, IContextListener
             rlImGui.End();
             #endregion
         }
-        EndDrawing();
+        // EndDrawing();
         
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera;
     }

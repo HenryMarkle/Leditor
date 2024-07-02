@@ -286,7 +286,7 @@ void main() {
 
         #endregion
 
-        BeginDrawing();
+        // BeginDrawing();
         {
             ClearBackground(
                 _generalSettings.DarkTheme 
@@ -356,7 +356,7 @@ void main() {
             }
 
         }
-        EndDrawing();
+        // EndDrawing();
 
         if (_generalSettings.GlobalCamera) GLOBALS.Camera = _camera;
     }

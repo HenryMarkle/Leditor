@@ -1018,7 +1018,7 @@ void main() {
 
         #endregion
 
-        BeginDrawing();
+        // BeginDrawing();
         {
             if (_generateSignal) {
                 _generateSignal = false;
@@ -1270,7 +1270,7 @@ void main() {
             }
             #endregion
         }
-        EndDrawing();
+        // EndDrawing();
 
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera;
     }

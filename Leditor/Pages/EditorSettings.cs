@@ -125,7 +125,7 @@ internal class SettingsPage : EditorPage
         
         #endregion
         
-        BeginDrawing();
+        // BeginDrawing();
         
         ClearBackground(Color.Gray);
 
@@ -418,6 +418,6 @@ internal class SettingsPage : EditorPage
 
         rlImGui.End();
         
-        EndDrawing();
+        // EndDrawing();
     }
 }

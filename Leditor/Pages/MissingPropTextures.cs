@@ -20,13 +20,13 @@ internal class MissingPropTexturesPage : EditorPage
     {
         var width = GetScreenWidth();
         
-        BeginDrawing();
+        // BeginDrawing();
         
         ClearBackground(Color.Black);
         
         DrawText(Title, (width - _titleWidth)/2, 200, 50, Color.White);
         DrawText(Subtitle, (width - _subtitleWidth)/2, 400, 20, Color.White);
         
-        EndDrawing();
+        // EndDrawing();
     }
 }

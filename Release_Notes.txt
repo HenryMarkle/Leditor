@@ -1,0 +1,5 @@
+### Debug Screen
+
+- Added an overlay displaying some additional information to help debugging the behavior of the program.
+  - Toggle with F3.
+  - Limited information is displayed, currently.

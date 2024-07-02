@@ -28,7 +28,7 @@ internal class FailedTileCheckOnLoadPage : EditorPage
 
         var okButtonRect = new Rectangle(width / 2 - 100, height - 200, 200, 60);
 
-        BeginDrawing();
+        // BeginDrawing();
         {
             ClearBackground(new(0, 0, 0, 255));
 
@@ -87,6 +87,6 @@ internal class FailedTileCheckOnLoadPage : EditorPage
             }
             else SetMouseCursor(MouseCursor.Default);
         }
-        EndDrawing();    
+        // EndDrawing();    
     }
 }

@@ -1507,7 +1507,7 @@ void main() {
                             new(255, 255, 255, 255)
                         );
 
-                        if (GLOBALS.Settings.GeneralSettings.DeveloperMode) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
+                        if (GLOBALS.Settings.GeneralSettings.DebugScreen) DrawText("Developer mode active", 50, 300, 16, Color.Yellow);
 
                         if (GLOBALS.Font is null) DrawText(GLOBALS.Version, 700, 50, 15, Color.White);
                         else DrawTextPro(GLOBALS.Font.Value, GLOBALS.Version, new(700, 50), new(0, 0), 0, 30, 0, Color.White);
@@ -2082,6 +2082,10 @@ void main() {
                             _renderWindow = new DrizzleRenderWindow();
                             GLOBALS.NavSignal = 0;
                         }
+                    
+                        if (gShortcuts.ToggleDebugScreen.Check(ctrl, shift, alt)) {
+                            GLOBALS.Settings.GeneralSettings.DebugScreen = !GLOBALS.Settings.GeneralSettings.DebugScreen;
+                        }
                     }
                     #endregion
                     
@@ -2137,6 +2141,8 @@ void main() {
                         break_prop_texture_loading: {}
                     }
 
+                    BeginDrawing();
+
                     // page switch
 
                     switch (GLOBALS.Page)
@@ -2170,6 +2176,10 @@ void main() {
                             GLOBALS.Page = GLOBALS.PreviousPage;
                             break;
                     }
+
+                    if (GLOBALS.Settings.GeneralSettings.DebugScreen) Printers.Debug.F3Screen();
+
+                    EndDrawing();
                 }
             }
             catch (Data.Tiles.Exceptions.DuplicateTileCategoryException dtce) {

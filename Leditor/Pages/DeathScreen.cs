@@ -27,7 +27,7 @@ internal class DeathScreen : ExceptionPage
 
         if (GLOBALS.Settings.Misc.FunnyDeathScreen)
         {
-            BeginDrawing();
+            // BeginDrawing();
             ClearBackground(Color.Black);
 
             if (Screenshot is not null) {
@@ -112,7 +112,7 @@ internal class DeathScreen : ExceptionPage
             } else {
                 DrawTextPro(GLOBALS.Font.Value, GLOBALS.Version, new(5, sHeight - 35), new(0, 0), 0, 30, 0, Color.White);
             }
-            EndDrawing();
+            // EndDrawing();
         }
     }
 }

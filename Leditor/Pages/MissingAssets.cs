@@ -17,7 +17,7 @@ internal class MissingAssetsPage : EditorPage
         var sWidth = GetScreenWidth();
         var sHeight = GetScreenHeight();
 
-        BeginDrawing();
+        // BeginDrawing();
         ClearBackground(Color.Black);
 
         DrawText(
@@ -34,6 +34,6 @@ internal class MissingAssetsPage : EditorPage
             Color.White
         );
         
-        EndDrawing();
+        // EndDrawing();
     }
 }

@@ -537,7 +537,7 @@ internal class TileViewerPage : EditorPage {
         #endregion
 
         #region Drawing
-        BeginDrawing();
+        // BeginDrawing();
         {
             ClearBackground(settings.DarkTheme ? Color.Black : Color.Gray);
 
@@ -974,7 +974,7 @@ internal class TileViewerPage : EditorPage {
             rlImGui_cs.rlImGui.End();
             #endregion
         }
-        EndDrawing();
+        // EndDrawing();
         #endregion
     }
 }

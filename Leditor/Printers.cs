@@ -6927,6 +6927,435 @@ internal static class Printers
         EndShaderMode();
     }
 
+    internal static class Debug
+    {
+        internal static int FontSize { get; set; } = 32;
+
+        private static void DrawDebugText(string text, Vector2 position, int size, Color color, Color background)
+        {
+            if (GLOBALS.Font is null)
+            {
+                DrawRectangleV(position, new Vector2(MeasureText(text, size) + 2, size + 2), background);
+                DrawText(text, (int)position.X + 1, (int)position.Y + 1, size, color);
+            }
+            else
+            {
+                DrawRectangleV(position, MeasureTextEx(GLOBALS.Font!.Value, text, size, 0) + new Vector2(2, 2), background);
+                DrawTextEx(GLOBALS.Font!.Value, text, position + Vector2.One, size, 0, color);
+            }
+        }
+
+        private static Vector2 GetTextSize(string text, int size)
+        {
+            if (GLOBALS.Font is null) {
+                return new Vector2(MeasureText(text, size), size);
+            } else {
+                return MeasureTextEx(GLOBALS.Font.Value, text, size, 0);
+            }
+        }
+
+        internal record F3DisplayData
+        {
+            public object Data { get; init; }
+            public bool SameLine { get; init; }
+            public string? Name { get; init; }
+
+            internal F3DisplayData(object data)
+            {
+                Data = data;
+                SameLine = false;
+                Name = null;
+            }
+        }
+
+        private static List<F3DisplayData?> QueuedData { get; set; } = [];
+
+        internal static void EnqueueF3(F3DisplayData? data) {
+            QueuedData.Add(data);
+        }
+
+        private static void ClearF3() => QueuedData.Clear();
+
+        internal static void F3Screen()
+        {
+            var color = Color.White;
+            var background = Color.Gray with { A = 120 };
+            
+            int bufferedSize = FontSize + 2;
+            int spacing = FontSize / 2;
+
+            Vector2 cursor = Vector2.Zero;
+
+            DrawDebugText(
+                GLOBALS.Version, 
+                cursor, FontSize, color, background
+            );
+
+            cursor.Y += bufferedSize;
+
+            DrawDebugText(
+                GLOBALS.BuildConfiguration, 
+                cursor, FontSize, color, background
+            );
+
+            cursor.Y += bufferedSize;
+
+            DrawDebugText(
+                $"FPS {GetFPS()}", 
+                cursor, FontSize, color, background
+            );
+
+            cursor.Y += bufferedSize;
+            
+            DrawDebugText(
+                $"Page {GLOBALS.Page} / Previous Page {GLOBALS.PreviousPage}", 
+                cursor, FontSize, color, background
+            );
+
+            cursor.Y += bufferedSize;
+
+            DrawDebugText(
+                $"Current Layer {GLOBALS.Layer}", 
+                cursor, FontSize, color, background
+            );
+
+            cursor.Y += bufferedSize * 2;
+
+            foreach (var item in QueuedData) {
+                if (item is null) {
+                    cursor.Y += spacing;
+                    
+                    continue;
+                }
+
+                var data = item.Data;
+
+                if (data is string s) {
+                    var width = GetTextSize(s, FontSize).X;
+
+                    if (!string.IsNullOrEmpty(item.Name)) {
+                        var nameWidth = GetTextSize(item.Name + ": ", FontSize).X;
+
+                        DrawDebugText(item.Name + ": ", cursor, FontSize, color, background);
+
+                        cursor.X += nameWidth + 2;
+                    }
+
+                    DrawDebugText(
+                        s, 
+                        cursor, FontSize, color, background
+                    );
+
+                    if (item.SameLine) {
+                        cursor.X += width + 20;
+                    } else {
+                        cursor.Y += bufferedSize;;
+                        cursor.X = 0;
+                    }
+                }
+                else if (data is int i) {
+                    var text = $"{i}";
+                    var width = GetTextSize(text, FontSize).X;
+
+                    if (!string.IsNullOrEmpty(item.Name)) {
+                        var nameWidth = GetTextSize(item.Name + ": ", FontSize).X;
+
+                        DrawDebugText(item.Name + ": ", cursor, FontSize, color, background);
+
+                        cursor.X += nameWidth + 2;
+                    }
+
+                    DrawDebugText(
+                        text, 
+                        cursor, FontSize, color, background
+                    );
+
+                    if (item.SameLine) {
+                        cursor.X += width + 20;
+                    } else {
+                        cursor.Y += bufferedSize;;
+                        cursor.X = 0;
+                    }
+                }
+                else if (data is float f) {
+                    var text = $"{f:0.00}";
+                    var width = GetTextSize(text, FontSize).X;
+
+                    if (!string.IsNullOrEmpty(item.Name)) {
+                        var nameWidth = GetTextSize(item.Name + ": ", FontSize).X;
+
+                        DrawDebugText(item.Name + ": ", cursor, FontSize, color, background);
+
+                        cursor.X += nameWidth + 2;
+                    }
+
+                    DrawDebugText(
+                        text, 
+                        cursor, FontSize, color, background
+                    );
+
+                    if (item.SameLine) {
+                        cursor.X += width + 20;
+                    } else {
+                        cursor.Y += bufferedSize;;
+                        cursor.X = 0;
+                    }
+                }
+                else if (data is bool b) {
+                    var text = b ? "True" : "False";
+
+                    var width = GetTextSize(text, FontSize).X;
+
+                    if (!string.IsNullOrEmpty(item.Name)) {
+                        var nameWidth = GetTextSize(item.Name + ": ", FontSize).X;
+
+                        DrawDebugText(item.Name + ": ", cursor, FontSize, color, background);
+
+                        cursor.X += nameWidth + 2;
+                    }
+
+                    if (b) DrawDebugText(
+                        text, 
+                        cursor, FontSize, Color.Lime, background
+                    );
+                    else DrawDebugText(
+                        text, 
+                        cursor, FontSize, Color.Red, background
+                    );
+
+                    if (item.SameLine) {
+                        cursor.X += width + 20;
+                    } else {
+                        cursor.Y += bufferedSize;;
+                        cursor.X = 0;
+                    }
+                }
+                else if (data is Vector2 v2) {
+                    var text = $"X: {v2.X} / Y: {v2.Y}";
+                    var width = GetTextSize(text, FontSize).X;
+
+                    if (!string.IsNullOrEmpty(item.Name)) {
+                        var nameWidth = GetTextSize(item.Name + ": ", FontSize).X;
+
+                        DrawDebugText(item.Name + ": ", cursor, FontSize, color, background);
+
+                        cursor.X += nameWidth + 2;
+                    }
+
+                    DrawDebugText(
+                        text, 
+                        cursor, FontSize, color, background
+                    );
+
+                    if (item.SameLine) {
+                        cursor.X += width + 20;
+                    } else {
+                        cursor.Y += bufferedSize;;
+                        cursor.X = 0;
+                    }
+                }
+                else if (data is Vector3 v3) {
+                    var text = $"X: {v3.X} / Y: {v3.Y} / Z: {v3.Z}";
+                    var width = GetTextSize(text, FontSize).X;
+
+                    if (!string.IsNullOrEmpty(item.Name)) {
+                        var nameWidth = GetTextSize(item.Name + ": ", FontSize).X;
+
+                        DrawDebugText(item.Name + ": ", cursor, FontSize, color, background);
+
+                        cursor.X += nameWidth + 2;
+                    }
+
+                    DrawDebugText(
+                        text, 
+                        cursor, FontSize, color, background
+                    );
+
+                    if (item.SameLine) {
+                        cursor.X += width + 20;
+                    } else {
+                        cursor.Y += bufferedSize;;
+                        cursor.X = 0;
+                    }
+                }
+                else if (data is Rectangle rect) {
+                    var text = $"X: {rect.X} / Y: {rect.Y} / Width: {rect.Width} / Height: {rect.Height}";
+                    var width = GetTextSize(text, FontSize).X;
+
+                    if (!string.IsNullOrEmpty(item.Name)) {
+                        var nameWidth = GetTextSize(item.Name + ": ", FontSize).X;
+
+                        DrawDebugText(item.Name + ": ", cursor, FontSize, color, background);
+
+                        cursor.X += nameWidth + 2;
+                    }
+
+                    DrawDebugText(
+                        text, 
+                        cursor, FontSize, color, background
+                    );
+
+                    if (item.SameLine) {
+                        cursor.X += width + 20;
+                    } else {
+                        cursor.Y += bufferedSize;;
+                        cursor.X = 0;
+                    }
+                }
+                else if (data.GetType().IsEnum) {
+                    var text = data.GetType().GetEnumName(data) ?? "Unknown";
+                    var width = GetTextSize(text, FontSize).X;
+
+                    if (!string.IsNullOrEmpty(item.Name)) {
+                        var nameWidth = GetTextSize(item.Name + ": ", FontSize).X;
+
+                        DrawDebugText(item.Name + ": ", cursor, FontSize, color, background);
+
+                        cursor.X += nameWidth + 2;
+                    }
+
+                    DrawDebugText(
+                        text, 
+                        cursor, FontSize, Color.SkyBlue, background
+                    );
+
+                    if (item.SameLine) {
+                        cursor.X += width + 20;
+                    } else {
+                        cursor.Y += bufferedSize;;
+                        cursor.X = 0;
+                    }
+                }
+                else {
+
+                    var properties = data.GetType().GetProperties().Where(p => p.GetIndexParameters().Length == 0);
+
+                    foreach (var property in properties) {
+                        var type = property.PropertyType;
+                        var valueName = $"{property.Name}: ";
+                        
+                        var width = GetTextSize(valueName, FontSize).X;
+
+                        DrawDebugText(
+                            valueName, 
+                            cursor, FontSize, color, background
+                        );
+
+                        cursor.X += width + 2;
+
+                        if (type == typeof(bool)) {
+
+                            var value = (bool?)property.GetValue(data) ?? false;
+
+                            if (value) {
+                                var valueWidth = GetTextSize("True", FontSize).X;
+
+                                DrawDebugText(
+                                    "True", 
+                                    cursor, 
+                                    FontSize, Color.Lime, background
+                                );
+
+                                cursor.X += valueWidth;
+
+                            } else {
+                                var valueWidth = GetTextSize("False", FontSize).X;
+
+                                DrawDebugText(
+                                    "False", 
+                                    cursor, 
+                                    FontSize, Color.Red, background
+                                );
+
+                                cursor.X += valueWidth;
+                            }
+
+                        } 
+                        else if (type == typeof(int)) {
+                            var value = ((int?)property.GetValue(data) ?? 0).ToString();
+
+                            var valueWidth = GetTextSize(value, FontSize).X;
+
+                            DrawDebugText(
+                                value, 
+                                cursor, 
+                                FontSize, color, background
+                            );
+
+                            cursor.X += valueWidth;
+                        } 
+                        else if (type == typeof(string)) {
+                            var value = (string?)property.GetValue(data) ?? "";
+
+                            var valueWidth = GetTextSize(value, FontSize).X;
+
+                            DrawDebugText(
+                                value, 
+                                cursor, 
+                                FontSize, Color.Orange, background
+                            );
+
+                            cursor.X += valueWidth;
+                        } 
+                        else if (type == typeof(Vector2)) {
+                            var value = ((Vector2?)property.GetValue(data)) ?? Vector2.Zero;
+
+                            var valueText = $"X: {value.X} / Y: {value.Y}";
+
+                            var valueWidth = GetTextSize(valueText, FontSize).X;
+
+                            DrawDebugText(
+                                valueText, 
+                                cursor, 
+                                FontSize, color, background
+                            );
+
+                            cursor.X += valueWidth;
+                        }
+                        else if (type == typeof(Vector3)) {
+                            var value = ((Vector3?)property.GetValue(data)) ?? Vector3.Zero;
+
+                            var valueText = $"X: {value.X} / Y: {value.Y} / Z: {value.Z}";
+
+                            var valueWidth = GetTextSize(valueText, FontSize).X;
+
+                            DrawDebugText(
+                                valueText, 
+                                cursor, 
+                                FontSize, color, background
+                            );
+
+                            cursor.X += valueWidth;
+                        }
+                        else if (type == typeof(float)) {
+                            var value = $"{((float?)property.GetValue(data)) ?? 0:0.0000}";
+
+                            var valueWidth = GetTextSize(value, FontSize).X;
+
+                            DrawDebugText(
+                                value, 
+                                cursor, 
+                                FontSize, color, background
+                            );
+
+                            cursor.X += valueWidth;
+                        }
+                    }
+                
+                    if (item.SameLine) {
+                        cursor.X += 20;
+                    } 
+                    else {
+                        cursor.X = 0;
+                        cursor.Y += bufferedSize;
+                    }
+                }
+            }
+
+            ClearF3();
+        }
+    }
+
     /// Needs rlImGui mode
     internal static class ImGui
     {

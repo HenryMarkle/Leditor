@@ -650,7 +650,7 @@ internal class LightEditorPage : EditorPage, IContextListener
 
         DrawLayers();
         
-        BeginDrawing();
+        // BeginDrawing();
         {
             ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
                 ? Color.Black 
@@ -1245,8 +1245,26 @@ internal class LightEditorPage : EditorPage, IContextListener
             
             rlImGui.End();
         }
-        EndDrawing();
+        // EndDrawing();
         
+        // F3
+
+        Printers.Debug.EnqueueF3(new(GLOBALS.Level.LightAngle) { Name = "Angle", SameLine = true });
+        Printers.Debug.EnqueueF3(new(GLOBALS.Level.LightFlatness) { Name = "Flatness" });
+
+        Printers.Debug.EnqueueF3(null);
+        
+        Printers.Debug.EnqueueF3(new(_lightBrushTextureIndex) { Name = "Brush Index" });
+        Printers.Debug.EnqueueF3(new(canPaint) { Name = "canPaint" });
+        Printers.Debug.EnqueueF3(new((bool)indHovered) { Name = "indHovered" });
+
+        Printers.Debug.EnqueueF3(null);
+
+        Printers.Debug.EnqueueF3(new(_growthFactor) { Name = "GF", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_lightBrushRotation) { Name = "R", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_lightBrushWidth) { Name = "W", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_lightBrushHeight) { Name = "H" });
+
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera with { Target = _camera.Target - new Vector2(300, 300)};
     }
 }

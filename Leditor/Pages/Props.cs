@@ -3946,7 +3946,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
         #endregion
 
         #region TileEditorDrawing
-        BeginDrawing();
+        // BeginDrawing();
 
         if (_shouldRedrawLevel)
         {
@@ -5412,8 +5412,81 @@ internal class PropsEditorPage : EditorPage, IContextListener
         }
         #endregion
 
-        EndDrawing();
+        // EndDrawing();
         #endregion
+
+        // F3
+
+        Printers.Debug.EnqueueF3(new(GLOBALS.Level.Width) { Name = "LW", SameLine = true });
+        Printers.Debug.EnqueueF3(new(GLOBALS.Level.Height) { Name = "LH" });
+
+        Printers.Debug.EnqueueF3(new(_defaultDepth) { Name = "PSL", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_placementRotation) { Name = "PR", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_defaultStretch.X) { Name = "HS", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_defaultStretch.Y) { Name = "VS" });
+        
+        Printers.Debug.EnqueueF3(null);
+        
+        Printers.Debug.EnqueueF3(new(_showTileLayer1) { Name = "Layer 1", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_showLayer1Tiles) { Name = "Tiles" });
+
+        Printers.Debug.EnqueueF3(new(_showTileLayer2) { Name = "Layer 2", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_showLayer2Tiles) { Name = "Tiles" });
+
+        Printers.Debug.EnqueueF3(new(_showTileLayer3) { Name = "Layer 3", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_showLayer3Tiles) { Name = "Tiles" });
+        
+        Printers.Debug.EnqueueF3(null);
+        
+        Printers.Debug.EnqueueF3(new(GLOBALS.Settings.PropEditor.Cameras) { Name = "Cameras", SameLine = true });
+        Printers.Debug.EnqueueF3(new(GLOBALS.Settings.PropEditor.CamerasInnerBoundries) { Name = "Inner" });
+
+        Printers.Debug.EnqueueF3(null);
+
+        Printers.Debug.EnqueueF3(new("Coordinates: ") { SameLine = true });
+        Printers.Debug.EnqueueF3(new(tileMouseWorld) { SameLine = true });
+        
+        Printers.Debug.EnqueueF3(new($"MX: {tileMatrixX} / MY: {tileMatrixY}"));
+        
+        Printers.Debug.EnqueueF3(new(canDrawTile) { Name = "canDrawTile" });
+        Printers.Debug.EnqueueF3(new(inMatrixBounds) { Name = "inMatrixBounds" });
+
+        Printers.Debug.EnqueueF3(null);
+        
+        Printers.Debug.EnqueueF3(new(_mode switch { 0 => "Selection", _ => "Placement" }) { Name = "Mode", SameLine = _mode == 0 });
+        
+        if (_mode == 0) {
+            Printers.Debug.EnqueueF3(new(_movingProps) { Name = "M", SameLine = true });
+            Printers.Debug.EnqueueF3(new(_rotatingProps) { Name = "R", SameLine = true });
+            Printers.Debug.EnqueueF3(new(_scalingProps) { Name = "S", SameLine = true });
+            Printers.Debug.EnqueueF3(new(_stretchingProp) { Name = "V", SameLine = true });
+            Printers.Debug.EnqueueF3(new(_editingPropPoints) { Name = "P" });
+        }
+
+        Printers.Debug.EnqueueF3(new(GLOBALS.Settings.PropEditor.CrossLayerSelection) { Name = "CLS" });
+
+        Printers.Debug.EnqueueF3(new(GLOBALS.Props.Length) { Name = "Prop Categories", SameLine = true });
+        Printers.Debug.EnqueueF3(new(GLOBALS.Props.Select(c => c.Length).Sum()) { Name = "Props", SameLine = true });
+        Printers.Debug.EnqueueF3(new(GLOBALS.TileDex?.OrderedTileAsPropCategories.Length ?? 0) { Name = "Tile-As-Prop Categories", SameLine = true });
+        Printers.Debug.EnqueueF3(new(GLOBALS.TileDex?.OrderedTilesAsProps.Select(c => c.Length).Sum() ?? 0) { Name = "Tiles-As-Props", SameLine = true });
+        Printers.Debug.EnqueueF3(new(GLOBALS.RopeProps.Length) { Name = "Ropes", SameLine = true });
+        Printers.Debug.EnqueueF3(new(GLOBALS.LongProps.Length) { Name = "Longs" });
+
+        Printers.Debug.EnqueueF3(new(_noCollisionPropPlacement) { Name = "Continiuous Placement" });
+        Printers.Debug.EnqueueF3(new(_snapMode switch { 1 => "Grid", 2 => "Precise", _ => "Free" }) { Name = "Snap" });
+        Printers.Debug.EnqueueF3(new(_menuRootCategoryIndex switch { 0 => "Tiles", 1 => "Ropes", 2 => "Longs", _ => "Others" }) { Name = "Category" });
+        
+        Printers.Debug.EnqueueF3(new(_isTileSearchActive) { Name = "ST", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_isPropSearchActive) { Name = "SP", SameLine = true });
+        
+        Printers.Debug.EnqueueF3(new(_propsMenuTilesCategoryIndex) { Name = "TCI", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_propsMenuOthersCategoryIndex) { Name = "OCI" });
+
+
+        Printers.Debug.EnqueueF3(new(_propsMenuTilesIndex) { Name = "TI", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_propsMenuOthersIndex) { Name = "OI", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_propsMenuRopesIndex) { Name = "RI", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_propsMenuLongsIndex) { Name = "LI" });
         
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera;
     }

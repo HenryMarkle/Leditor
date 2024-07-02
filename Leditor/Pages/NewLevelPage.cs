@@ -37,7 +37,7 @@ internal class NewLevelPage : EditorPage
 
     public override void Draw()
     {
-        BeginDrawing();
+        // BeginDrawing();
         
         ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
             ? new Color(100, 100, 100, 255) 
@@ -328,6 +328,6 @@ internal class NewLevelPage : EditorPage
         rlImGui_cs.rlImGui.End();
         #endregion
 
-        EndDrawing();
+        // EndDrawing();
     }
 }

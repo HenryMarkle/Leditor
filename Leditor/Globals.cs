@@ -186,8 +186,8 @@ internal static class GLOBALS
     internal static string BuildConfiguration { get; set; } = "Build Configuration: Unknown";
     internal static string OperatingSystem { get; set; } = "Operating System: Unknown";
 
-    internal static int MinScreenWidth => 1280;
-    internal static int MinScreenHeight => 800;
+    internal static int MinScreenWidth => 1300;
+    internal static int MinScreenHeight => 850;
 
     // These are for the camera sprite in the camera editor.
     internal static int EditorCameraWidth => 1400;

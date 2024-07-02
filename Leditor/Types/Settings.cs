@@ -395,7 +395,7 @@ public enum PropDrawMode { Untinted, Tinted, Palette }
 public class GeneralSettings
 {
     [SettingName("Developer Mode", Hidden = true)]
-    public bool DeveloperMode { get; set; } = false;
+    public bool DebugScreen { get; set; } = false;
 
     [SettingName("Default Font")]
     public bool DefaultFont { get; set; } = false;

@@ -16,7 +16,7 @@ internal class AssetsNukedPage : EditorPage
     {
         var width = GetScreenWidth();
 
-        BeginDrawing();
+        // BeginDrawing();
         ClearBackground(Color.Black);
 
         DrawText(
@@ -32,6 +32,6 @@ internal class AssetsNukedPage : EditorPage
             20,
             Color.White
         );
-        EndDrawing();
+        // EndDrawing();
     }
 }

@@ -48,6 +48,11 @@ public class TileDex : IDisposable
     //
 
     /// <summary>
+    /// Gets the number of registered tiles.
+    /// </summary>
+    public int Count => _definitions.Count;
+
+    /// <summary>
     /// Get the definition of tile
     /// </summary>
     /// <param name="name">The name of the tile</param>

@@ -263,7 +263,7 @@ internal class MainPage : EditorPage, IContextListener
         }
         
 
-        BeginDrawing();
+        // BeginDrawing();
         {
             if (_isGuiLocked)
             {
@@ -288,14 +288,14 @@ internal class MainPage : EditorPage, IContextListener
                             {
                                 if (!_saveFileDialog.IsCompleted)
                                 {
-                                    EndDrawing();
+                                    // EndDrawing();
                                     return;
                                 }
                                 if (string.IsNullOrEmpty(_saveFileDialog.Result))
                                 {
                                     _isGuiLocked = false;
                                     GLOBALS.LockNavigation = false;
-                                    EndDrawing();
+                                    // EndDrawing();
                                     return;
                                 }
 
@@ -304,12 +304,12 @@ internal class MainPage : EditorPage, IContextListener
                                 if (_saveResult is null)
                                 {
                                     _saveResult = SaveProjectAsync(path);
-                                    EndDrawing();
+                                    // EndDrawing();
                                     return;
                                 }
                                 if (!_saveResult.IsCompleted)
                                 {
-                                    EndDrawing();
+                                    // EndDrawing();
                                     return;
                                 }
 
@@ -320,7 +320,7 @@ internal class MainPage : EditorPage, IContextListener
                                     _failedToSave = true;
                                     _isGuiLocked = false;
                                     GLOBALS.LockNavigation = false;
-                                    EndDrawing();
+                                    // EndDrawing();
                                     #if DEBUG
                                     if (result.Exception is not null) Logger.Error($"Failed to save project: {result.Exception}");
                                     #endif
@@ -369,7 +369,7 @@ internal class MainPage : EditorPage, IContextListener
 
                                     //
 
-                                    EndDrawing();
+                                    // EndDrawing();
                                 }
                             }
                         }
@@ -380,12 +380,12 @@ internal class MainPage : EditorPage, IContextListener
                             if (_saveResult is null)
                             {
                                 _saveResult = SaveProjectAsync(path);
-                                EndDrawing();
+                                // EndDrawing();
                                 return;
                             }
                             if (!_saveResult.IsCompleted)
                             {
-                                EndDrawing();
+                                // EndDrawing();
                                 return;
                             }
 
@@ -396,7 +396,7 @@ internal class MainPage : EditorPage, IContextListener
                                 _failedToSave = true;
                                 _isGuiLocked = false;
                                 GLOBALS.LockNavigation = false;
-                                EndDrawing();
+                                // EndDrawing();
                                 #if DEBUG
                                 if (result.Exception is not null) Logger.Error($"Failed to save project: {result.Exception}");
                                 #endif
@@ -437,7 +437,7 @@ internal class MainPage : EditorPage, IContextListener
                             _saveResult = null;
                             _isGuiLocked = false;
                             GLOBALS.LockNavigation = false;
-                            EndDrawing();
+                            // EndDrawing();
                         }
                     }
                         break;
@@ -448,7 +448,7 @@ internal class MainPage : EditorPage, IContextListener
                         {
                             DrawText("Please wait..", GetScreenWidth() / 2 - 100, GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
 
-                            EndDrawing();
+                            // EndDrawing();
                             return;
                         }
                         if (string.IsNullOrEmpty(_openFileDialog.Result))
@@ -456,20 +456,20 @@ internal class MainPage : EditorPage, IContextListener
                             _openFileDialog = null;
                             _isGuiLocked = false;
                             GLOBALS.LockNavigation = false;
-                            EndDrawing();
+                            // EndDrawing();
                             return;
                         }
                         if (_loadFileTask is null)
                         {
                             _loadFileTask = Utils.LoadProjectAsync(_openFileDialog.Result);
-                            EndDrawing();
+                            // EndDrawing();
                             return;
                         }
                         if (!_loadFileTask.IsCompleted)
                         {
                             DrawText("Loading. Please wait..", (GetScreenWidth() - MeasureText("Loading. Please wait..", 30))/2, GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
 
-                            EndDrawing();
+                            // EndDrawing();
                             return;
                         }
 
@@ -481,7 +481,7 @@ internal class MainPage : EditorPage, IContextListener
                             _openFileDialog = null;
                             _isGuiLocked = false;
                             GLOBALS.LockNavigation = false;
-                            EndDrawing();
+                            // EndDrawing();
                             return;
                         }
                         
@@ -492,7 +492,7 @@ internal class MainPage : EditorPage, IContextListener
                         {
                             GLOBALS.TileCheck = Task.Factory.StartNew(() => CheckTileIntegrity(result));
 
-                            EndDrawing();
+                            // EndDrawing();
                             return;
                         }
                         
@@ -501,14 +501,14 @@ internal class MainPage : EditorPage, IContextListener
                         {
                             GLOBALS.PropCheck = Task.Factory.StartNew(() => CheckPropIntegrity(result));
                             
-                            EndDrawing();
+                            // EndDrawing();
                             return;
                         }
                         
                         if (!GLOBALS.TileCheck.IsCompleted || !GLOBALS.PropCheck.IsCompleted)
                         {
                             DrawText("Validating..", Raylib.GetScreenWidth() / 2 - 100, Raylib.GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
-                            EndDrawing();
+                            // EndDrawing();
                             return;
                         }
                         
@@ -521,7 +521,7 @@ internal class MainPage : EditorPage, IContextListener
                                 _isGuiLocked = false;
                                 GLOBALS.LockNavigation = false;
                                 
-                                EndDrawing();
+                                // EndDrawing();
                                 return;
                             }
 
@@ -542,7 +542,7 @@ internal class MainPage : EditorPage, IContextListener
                             _isGuiLocked = false;
                             GLOBALS.LockNavigation = false;
                             
-                            EndDrawing();
+                            // EndDrawing();
                             return;
                         }
                         
@@ -1183,6 +1183,6 @@ internal class MainPage : EditorPage, IContextListener
             }
             
         }
-        EndDrawing();
+        // EndDrawing();
     }
 }

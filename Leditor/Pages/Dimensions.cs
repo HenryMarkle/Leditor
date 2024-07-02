@@ -344,7 +344,7 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
         #endregion
 
         //
-        BeginDrawing();
+        // BeginDrawing();
 
         ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
             ? new Color(100, 100, 100, 255) 
@@ -611,6 +611,41 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
         
         rlImGui.End();
 
-        EndDrawing();
+        // EndDrawing();
+
+        // F3
+
+        Printers.Debug.EnqueueF3(new(_leftPadding) { Name = "LP", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_topPadding) { Name = "TP", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_rightPadding) { Name = "RP", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_bottomPadding) { Name = "BP" });
+
+        Printers.Debug.EnqueueF3(null);
+
+        Printers.Debug.EnqueueF3(new(_fillLayer1) { Name = "Fill Layer 1" });
+        Printers.Debug.EnqueueF3(new(_fillLayer2) { Name = "Fill Layer 2" });
+        Printers.Debug.EnqueueF3(new(_fillLayer3) { Name = "Fill Layer 3" });
+
+        Printers.Debug.EnqueueF3(null);
+
+        Printers.Debug.EnqueueF3(new(_resizing) { Name = "Resizing" });
+
+        Printers.Debug.EnqueueF3(new(GLOBALS.Level.Width) { Name = "H", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_matrixWidthValue) { Name = "MH" });
+
+        Printers.Debug.EnqueueF3(new(GLOBALS.Level.Height) { Name = "V", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_matrixHeightValue) { Name = "MV" });
+
+        Printers.Debug.EnqueueF3(new(_leftSideTop) { Name = "LT", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_leftSideBottom) { Name = "LB" });
+
+        Printers.Debug.EnqueueF3(new(_topSideLeft) { Name = "TL", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_topSideRight) { Name = "TR" });
+
+        Printers.Debug.EnqueueF3(new(_rightSideTop) { Name = "RT", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_rightSideBottom) { Name = "RB" });
+
+        Printers.Debug.EnqueueF3(new(_bottomSideLeft) { Name = "BL", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_bottomSideRight) { Name = "BR" });
     }
 }

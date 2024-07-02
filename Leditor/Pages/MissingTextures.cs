@@ -13,7 +13,7 @@ internal class MissingTexturesPage : EditorPage
     {
         var width = GetScreenWidth();
 
-        BeginDrawing();
+        // BeginDrawing();
         ClearBackground(Color.Black);
 
         DrawText(
@@ -31,6 +31,6 @@ internal class MissingTexturesPage : EditorPage
             20,
             Color.White
         );
-        EndDrawing();
+        // EndDrawing();
     }
 }

@@ -2281,7 +2281,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
         
         skipShortcuts:
 
-        BeginDrawing();
+        // BeginDrawing();
 
         ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
             ? Color.Black 
@@ -3418,7 +3418,46 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
             
             // Hovered tile info text
 
-            if (inMatrixBounds && canDrawTile)
+            
+        #endregion
+
+        // EndDrawing();
+
+        // F3
+
+        Printers.Debug.EnqueueF3(new(_showTileLayer1) { Name = "Layer 1", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_showLayer1Tiles) { Name = "Tiles" });
+
+        Printers.Debug.EnqueueF3(new(_showTileLayer2) { Name = "Layer 2", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_showLayer2Tiles) { Name = "Tiles" });
+
+        Printers.Debug.EnqueueF3(new(_showTileLayer3) { Name = "Layer 3", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_showLayer3Tiles) { Name = "Tiles" });
+
+        Printers.Debug.EnqueueF3(null);
+
+        Printers.Debug.EnqueueF3(new(GLOBALS.Settings.TileEditor.ShowProps) { Name = "Props" });
+        
+        Printers.Debug.EnqueueF3(new(GLOBALS.Settings.TileEditor.ShowCameras) { Name = "Cameras", SameLine = true });
+        Printers.Debug.EnqueueF3(new(GLOBALS.Settings.TileEditor.CameraInnerBoundires) { Name = "Inner" });
+
+        Printers.Debug.EnqueueF3(null);
+
+        Printers.Debug.EnqueueF3(new($"Coordinates: {tileMatrixX} X / {tileMatrixY} Y"));
+        Printers.Debug.EnqueueF3(new(canDrawTile) { Name = "canDrawTile" });
+        Printers.Debug.EnqueueF3(new(inMatrixBounds) { Name = "inMatrixBounds" });
+
+        Printers.Debug.EnqueueF3(null);
+
+        Printers.Debug.EnqueueF3(new($"Material/Tile Switch: {(_materialTileSwitch ? "Tile" : "Material")}"));
+
+        Printers.Debug.EnqueueF3(new($"Selected Tile: {_currentTile?.Name ?? "NULL"}"));
+        Printers.Debug.EnqueueF3(new($"Selected Material: {currentMaterialInit.Item1}"));
+        Printers.Debug.EnqueueF3(new($"Default Material: {GLOBALS.Level.DefaultMaterial}"));
+
+        if (_materialTileSwitch) Printers.Debug.EnqueueF3(new(isTileLegal) { Name = "Is Placement Legal" });
+
+        if (inMatrixBounds && canDrawTile)
             {
 
                 TileCell hoveredTile;
@@ -3442,138 +3481,35 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                 {
                     case TileDefault:
                     {
-                        if (GLOBALS.Font is null)
-                        {
-                            var labelPos = GetLabelPosition(MeasureText(GLOBALS.Level.DefaultMaterial, 20), 20);
-                            
-                            DrawText(
-                                GLOBALS.Level.DefaultMaterial,
-                                (int)labelPos.X,
-                                (int)labelPos.Y,
-                                20,
-                                Color.White
-                            );
-                        }
-                        else
-                        {
-                            var labelPos = GetLabelPosition(MeasureText(GLOBALS.Level.DefaultMaterial, 30), 30);
-
-                            DrawTextEx(
-                                GLOBALS.Font.Value,
-                                GLOBALS.Level.DefaultMaterial,
-                                labelPos,
-                                30,
-                                1,
-                                Color.White
-                            );
-                        }
+                        Printers.Debug.EnqueueF3(new(GLOBALS.Level.DefaultMaterial) { Name = "Material" });
                     }
                         break;
 
                     case TileHead h:
                     {
-                        if (GLOBALS.Font is null) {
-                            var text = h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\"";
-
-                            var labelPos = GetLabelPosition(MeasureText(text, 20), 20);
-
-                            DrawText(
-                                text,
-                                (int)labelPos.X,
-                                (int)labelPos.Y,
-                                20,
-                                Color.White
-                            );
-                        }
-                        else
-                        {
-                            var text = h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\"";
-
-                            var labelPos = GetLabelPosition(MeasureText(text, 30), 30);
-
-                            DrawTextEx(
-                                GLOBALS.Font.Value,
-                                text,
-                                labelPos,
-                                30,
-                                1,
-                                Color.White
-                            );
-                        }
+                        var text = h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\"";
+                        Printers.Debug.EnqueueF3(new(text) { Name = "Tile" });
                     }
                         break;
 
                     case TileBody b:
                     {
-                        var (hx, hy, hz) = b.HeadPosition;
-                        
                         try
                         {
+                            var (hx, hy, hz) = b.HeadPosition;
                             var supposedHead = GLOBALS.Level.TileMatrix[hy-1, hx-1, hz-1];
+                            var text = supposedHead.Data is TileHead h
+                                    ? h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\""
+                                    : "Stray Tile Fragment";
 
-                            if (GLOBALS.Font is null)
-                            {
-                                var text = supposedHead.Data is TileHead h
-                                        ? h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\""
-                                        : "Stray Tile Fragment";
-
-                                var labelPos = GetLabelPosition(MeasureText(text, 20), 20);
-
-                                DrawText(
-                                    text,
-                                    (int)labelPos.X,
-                                    (int)labelPos.Y,
-                                    20,
-                                    Color.White
-                                );
-                                
-                            }
-                            else
-                            {
-                                var text = supposedHead.Data is TileHead h
-                                        ? h.Definition?.Name ?? $"Undefined Tile \"{h.Name}\""
-                                        : "Stray Tile Fragment";
-
-                                var labelPos = GetLabelPosition(MeasureText(text, 30), 30);
-
-                                DrawTextEx(
-                                    GLOBALS.Font.Value,
-                                    text,
-                                    labelPos,
-                                    30,
-                                    1,
-                                    Color.White
-                                );
-                            }
-                        
+                            Printers.Debug.EnqueueF3(new(text) { Name = "Tile Body", SameLine = true });
+                            Printers.Debug.EnqueueF3(new($"X: {hx - 1} / Y: {hy - 1} / Z: {hz - 1}") { Name = "Head's Coordinates" });
                         }
                         catch (IndexOutOfRangeException)
                         {
                             var text = "Stray Tile Fragment";
 
-                            if (GLOBALS.Font is null) {
-                                var labelPos = GetLabelPosition(MeasureText(text, 20), 20);
-
-                                DrawText(text,
-                                    (int)labelPos.X,
-                                    (int)labelPos.Y,
-                                    20,
-                                    Color.White
-                                );
-                            }
-                            else
-                            {
-                                var labelPos = GetLabelPosition(MeasureText(text, 30), 30);
-
-                                DrawTextEx(
-                                    GLOBALS.Font.Value,
-                                    text,
-                                    labelPos,
-                                    30,
-                                    1,
-                                    Color.White
-                                );
-                            }
+                            Printers.Debug.EnqueueF3(new(text) { Name = "Tile" });
                         }
                     }
                         break;
@@ -3582,38 +3518,31 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                     {
                         var text = m.Name;
 
-                        if (GLOBALS.Font is null) {
-
-                            var labelPos = GetLabelPosition(MeasureText(text, 20), 20);
-
-                            DrawText(m.Name,
-                                (int)labelPos.X,
-                                (int)labelPos.Y,
-                                20,
-                                Color.White
-                            );
-                        }
-                        else
-                        {
-                            var labelPos = GetLabelPosition(MeasureText(text, 30), 30);
-                            
-                            DrawTextEx(
-                                GLOBALS.Font.Value,
-                                text,
-                                labelPos,
-                                30,
-                                1,
-                                Color.White
-                            );
-                        }
+                        Printers.Debug.EnqueueF3(new(text) { Name = "Material" });
                     }
                         break;
                 }
             }
         }
-        #endregion
+        
+        Printers.Debug.EnqueueF3(null);
+       
+        Printers.Debug.EnqueueF3(new (GLOBALS.TileDex?.OrderedCategoryNames.Length ?? 0) { Name = "Categories", SameLine = true });
+        Printers.Debug.EnqueueF3(new (GLOBALS.TileDex?.Count ?? 0) { Name = "Tiles" });
+       
+        Printers.Debug.EnqueueF3(null);
 
-        EndDrawing();
+        Printers.Debug.EnqueueF3(new($"TCI: {_tileCategoryIndex}") { SameLine = true });
+        Printers.Debug.EnqueueF3(new($"TI: {_tileIndex}") { SameLine = true });
+        Printers.Debug.EnqueueF3(new($"MCI: {_materialCategoryIndex}") { SameLine = true });
+        Printers.Debug.EnqueueF3(new($"MI: {_materialIndex}"));
+
+        Printers.Debug.EnqueueF3(null);
+
+        Printers.Debug.EnqueueF3(new($"TCSI: {_tileCategorySearchIndex}") { SameLine = true });
+        Printers.Debug.EnqueueF3(new($"TSI: {_tileSearchIndex}") { SameLine = true });
+        Printers.Debug.EnqueueF3(new($"MCSI: {_materialCategorySearchIndex}") { SameLine = true });
+        Printers.Debug.EnqueueF3(new($"MSI: {_materialSearchIndex}"));
         
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera;
     }

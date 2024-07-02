@@ -1518,7 +1518,7 @@ internal class ExperimentalGeometryPage : EditorPage
         }
 
 
-        BeginDrawing();
+        // BeginDrawing();
         {
             ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
                 ? Color.Black 
@@ -1696,7 +1696,8 @@ internal class ExperimentalGeometryPage : EditorPage
                         4f, 
                         Color.White
                     );
-                } else if (_multiselect)
+                } 
+                else if (_multiselect)
                 {
                     DrawRectangleLinesEx(
                         _selectionRectangle,
@@ -2345,8 +2346,40 @@ internal class ExperimentalGeometryPage : EditorPage
             
             rlImGui.End();
         }
-        EndDrawing();
+        // EndDrawing();
         
+        // F3
+
+        Printers.Debug.EnqueueF3(new(_geoMenuCategory) { Name = "Category", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_geoMenuIndex) { Name = "Index" });
+        Printers.Debug.EnqueueF3(new(GLOBALS.Settings.GeometryEditor.BasicView) { Name = "Basic View" });
+        
+        Printers.Debug.EnqueueF3(new(GLOBALS.Settings.GeometryEditor.ShowCameras) { Name = "Cameras", SameLine = true });
+        Printers.Debug.EnqueueF3(new(GLOBALS.Settings.GeometryEditor.CameraInnerBoundires) { Name = "Inner" });
+
+        Printers.Debug.EnqueueF3(new(GLOBALS.Settings.GeometryEditor.ShowTiles) { Name = "Tiles", SameLine = true });
+        Printers.Debug.EnqueueF3(new(GLOBALS.Settings.GeometryEditor.ShowProps) { Name = "Props" });
+        
+        Printers.Debug.EnqueueF3(new(GLOBALS.Settings.GeometryEditor.IndexHint) { Name = "Ruler" });
+
+        Printers.Debug.EnqueueF3(new(_multiselect) { Name = "Multi-Select", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_eraseMode) { Name = "Erase", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_eraseAllMode) { Name = "Erase All" });
+        
+        Printers.Debug.EnqueueF3(null);
+
+        Printers.Debug.EnqueueF3(new(mouse) { Name = "Coordinates" });
+        
+        if (canDrawGeo && inMatrixBounds) Printers.Debug.EnqueueF3(new($"{GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer]}") { Name = "Hovered Geo" });
+        if (canDrawGeo && inMatrixBounds) Printers.Debug.EnqueueF3(new(_selectionRectangle with { X = _selectionRectangle.X / 20, Y = _selectionRectangle.Y / 20, Width = _selectionRectangle.Width / 20, Height = _selectionRectangle.Height / 20 }) { Name = "Selection Rectangle" });
+        
+        Printers.Debug.EnqueueF3(new(_brushRadius) { Name = "Brush Radius" });
+        
+        Printers.Debug.EnqueueF3(null);
+
+        Printers.Debug.EnqueueF3(new(canDrawGeo) { Name = "canDrawGeo" });
+        Printers.Debug.EnqueueF3(new(inMatrixBounds) { Name = "inMatrixBounds" });
+
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera;
     }
 }

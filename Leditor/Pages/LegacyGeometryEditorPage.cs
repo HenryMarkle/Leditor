@@ -863,7 +863,7 @@ internal class LegacyGeoEditorPage : EditorPage
             }
         }
 
-        BeginDrawing();
+        // BeginDrawing();
         {
             ClearBackground(new Color(120, 120, 120, 255));
 
@@ -1225,7 +1225,7 @@ internal class LegacyGeoEditorPage : EditorPage
             }
             rlImGui.End();
         }
-        EndDrawing();
+        // EndDrawing();
 
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera;
     }

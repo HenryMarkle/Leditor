@@ -264,7 +264,7 @@ internal class EffectsEditorPage : EditorPage
                 if (GLOBALS.Level.Effects.Length > 0) _currentAppliedEffect = GLOBALS.Level.Effects.Length -1;
             }
 
-            BeginDrawing();
+            // BeginDrawing();
             {
                 DrawRectangle(
                     0,
@@ -381,7 +381,7 @@ internal class EffectsEditorPage : EditorPage
                 }
                 rlImGui.End();
             }
-            EndDrawing();
+            // EndDrawing();
         }
         else
         {
@@ -768,7 +768,7 @@ internal class EffectsEditorPage : EditorPage
                 }
             }
 
-            BeginDrawing();
+            // BeginDrawing();
             {
                 if (_shouldRedrawLevel)
                 {
@@ -1306,10 +1306,39 @@ internal class EffectsEditorPage : EditorPage
                 }
                 
                 rlImGui.End();
+
+                Printers.Debug.EnqueueF3(new(canUseBrush) { Name = "canUseBrush" });
             }
-            EndDrawing();
+            // EndDrawing();
             
         }
+
+        // F3
+
+        Printers.Debug.EnqueueF3(new(GLOBALS.Level.Effects.Length) { Name = "Effects", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_currentAppliedEffect) { Name = "Index", SameLine = true });
+
+        {
+            var options = GLOBALS.Level.Effects.Length > 0
+                            ? GLOBALS.Level.Effects[_currentAppliedEffect].Item2
+                            : [];
+
+            Printers.Debug.EnqueueF3(new(options.Length) { Name = "Options", SameLine = true });
+            Printers.Debug.EnqueueF3(new(_optionsIndex) { Name = "Options Index" });
+
+            if (options.Length > 0 && _optionsIndex > -1 && _optionsIndex < options.Length) {
+                var co = options[_optionsIndex];
+
+                Printers.Debug.EnqueueF3(new(co.Options.Length) { Name = "Option Choices", SameLine = true });
+                Printers.Debug.EnqueueF3(new(co.Name) { Name = "Option Name", SameLine = true });
+                Printers.Debug.EnqueueF3(new(co.Choice) { Name = "Current Choice" });
+            }
+
+        }
+
+        Printers.Debug.EnqueueF3(null);
+
+        Printers.Debug.EnqueueF3(new(_addNewEffectMode) { Name = "addNewEffect" });
         
         if (GLOBALS.Settings.GeneralSettings.GlobalCamera) GLOBALS.Camera = _camera;
     }

@@ -227,7 +227,7 @@ internal class SaveProjectPage : EditorPage
             // } 
         }
 
-        BeginDrawing();
+        // BeginDrawing();
         {
             if (_uiLocked)
             {
@@ -236,12 +236,12 @@ internal class SaveProjectPage : EditorPage
                 if (_saveResult is null)
                 {
                     _saveResult = SaveProjectAsync(path);
-                    EndDrawing();
+                    // EndDrawing();
                     return;
                 }
                 if (!_saveResult.IsCompleted)
                 {
-                    EndDrawing();
+                    // EndDrawing();
                     return;
                 }
 
@@ -252,7 +252,7 @@ internal class SaveProjectPage : EditorPage
                     _failedToSave = true;
                     _uiLocked = false;
                     GLOBALS.LockNavigation = false;
-                    EndDrawing();
+                    // EndDrawing();
                     #if DEBUG
                     if (result.Exception is not null) Logger.Error($"Failed to save project: {result.Exception}");
                     #endif
@@ -302,7 +302,7 @@ internal class SaveProjectPage : EditorPage
 
                     //
 
-                    EndDrawing();
+                    // EndDrawing();
                 }
 
                 GLOBALS.NewlyCreated = false;
@@ -493,6 +493,6 @@ internal class SaveProjectPage : EditorPage
                 #endregion
             }
         }
-        EndDrawing();
+        // EndDrawing();
     }
 }

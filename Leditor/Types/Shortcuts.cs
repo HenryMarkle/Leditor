@@ -1333,6 +1333,8 @@ public class GlobalShortcuts : IEditorShortcuts
     public KeyboardShortcut QuickSaveAs { get; set; } = new(KeyboardKey.S, shift: true, ctrl: true, alt: false);
     public KeyboardShortcut Render { get; set; } = new(KeyboardKey.Null);
 
+    public KeyboardShortcut ToggleDebugScreen { get; set; } = new(KeyboardKey.F3);
+
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
 
     public GlobalShortcuts()
