@@ -150,7 +150,7 @@ jobs:
       with:
         tag_name: v${{ github.run_number }}
         release_name: Release v0.9.97
-        body: ${{ steps.read_release_notes.outputs.content }}
+        body: ${{ steps.release_notes.outputs.content }}
         draft: false
         prerelease: false
 
