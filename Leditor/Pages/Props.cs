@@ -5463,25 +5463,27 @@ internal class PropsEditorPage : EditorPage, IContextListener
             Printers.Debug.EnqueueF3(new(_editingPropPoints) { Name = "P" });
         }
 
-        Printers.Debug.EnqueueF3(new(GLOBALS.Settings.PropEditor.CrossLayerSelection) { Name = "CLS" });
-
         Printers.Debug.EnqueueF3(new(GLOBALS.Props.Length) { Name = "Prop Categories", SameLine = true });
         Printers.Debug.EnqueueF3(new(GLOBALS.Props.Select(c => c.Length).Sum()) { Name = "Props", SameLine = true });
-        Printers.Debug.EnqueueF3(new(GLOBALS.TileDex?.OrderedTileAsPropCategories.Length ?? 0) { Name = "Tile-As-Prop Categories", SameLine = true });
-        Printers.Debug.EnqueueF3(new(GLOBALS.TileDex?.OrderedTilesAsProps.Select(c => c.Length).Sum() ?? 0) { Name = "Tiles-As-Props", SameLine = true });
+        Printers.Debug.EnqueueF3(new(GLOBALS.TileDex?.OrderedTileAsPropCategories.Length ?? 0) { Name = "Tile Categories", SameLine = true });
+        Printers.Debug.EnqueueF3(new(GLOBALS.TileDex?.OrderedTilesAsProps.Select(c => c.Length).Sum() ?? 0) { Name = "Tiles", SameLine = true });
         Printers.Debug.EnqueueF3(new(GLOBALS.RopeProps.Length) { Name = "Ropes", SameLine = true });
         Printers.Debug.EnqueueF3(new(GLOBALS.LongProps.Length) { Name = "Longs" });
-
-        Printers.Debug.EnqueueF3(new(_noCollisionPropPlacement) { Name = "Continiuous Placement" });
-        Printers.Debug.EnqueueF3(new(_snapMode switch { 1 => "Grid", 2 => "Precise", _ => "Free" }) { Name = "Snap" });
-        Printers.Debug.EnqueueF3(new(_menuRootCategoryIndex switch { 0 => "Tiles", 1 => "Ropes", 2 => "Longs", _ => "Others" }) { Name = "Category" });
         
-        Printers.Debug.EnqueueF3(new(_isTileSearchActive) { Name = "ST", SameLine = true });
-        Printers.Debug.EnqueueF3(new(_isPropSearchActive) { Name = "SP", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_currentTile?.Name ?? "NULL") { Name = "Current Tile" });
+
+        Printers.Debug.EnqueueF3(new(GLOBALS.Settings.PropEditor.CrossLayerSelection) { Name = "CLS", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_additionalInitialRopeSegments) { Name = "ARS", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_editingPropPoints) { Name = "EPP", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_lockedPlacement) { Name = "LP", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_models.Length) { Name = "RM", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_newlyCopied) { Name = "NC" });
+        
+        Printers.Debug.EnqueueF3(new(_isTileSearchActive) { Name = "TS", SameLine = true });
+        Printers.Debug.EnqueueF3(new(_isPropSearchActive) { Name = "PS", SameLine = true });
         
         Printers.Debug.EnqueueF3(new(_propsMenuTilesCategoryIndex) { Name = "TCI", SameLine = true });
         Printers.Debug.EnqueueF3(new(_propsMenuOthersCategoryIndex) { Name = "OCI" });
-
 
         Printers.Debug.EnqueueF3(new(_propsMenuTilesIndex) { Name = "TI", SameLine = true });
         Printers.Debug.EnqueueF3(new(_propsMenuOthersIndex) { Name = "OI", SameLine = true });
