@@ -149,7 +149,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ github.run_number }}
-        release_name: Release v0.9.97-3
+        release_name: Release v0.9.97-4
         body: ${{ steps.release_notes.outputs.content }}
         draft: false
         prerelease: false

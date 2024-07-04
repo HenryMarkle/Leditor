@@ -6,6 +6,8 @@ using Leditor.Types;
 
 namespace Leditor.Pages;
 
+#nullable enable
+
 internal class CamerasEditorPage : EditorPage, IContextListener
 {
     public override void Dispose()
