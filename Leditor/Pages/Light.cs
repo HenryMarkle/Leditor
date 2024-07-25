@@ -20,6 +20,8 @@ internal class LightEditorPage : EditorPage, IContextListener
         _layer3.Dispose();
 
         UnloadShader(_mask);
+
+        foreach (var canvas in _gram) UnloadRenderTexture(canvas);
     }
 
     private void ResetRTs() {
@@ -47,14 +49,43 @@ internal class LightEditorPage : EditorPage, IContextListener
         EndTextureMode();
     }
 
+    private void ResizeGram() {
+        var width = GLOBALS.Level.Width * 20 + 300;
+        var height = GLOBALS.Level.Height * 20 + 300;
+
+        var canvasNode = _gram.First;
+
+        while (canvasNode is not null) {
+            var canvas = canvasNode.Value;
+
+            if (canvas.Texture.Width == width && canvas.Texture.Height == height) break;
+
+            var newCanvas = LoadRenderTexture(width, height);
+
+            BeginTextureMode(newCanvas);
+            ClearBackground(Color.White);
+            DrawTexture(canvas.Texture, 0, 0, Color.White);
+            EndTextureMode();
+
+            canvasNode.Value = newCanvas;
+            UnloadRenderTexture(canvas);
+
+            canvasNode = canvasNode.Next;
+        }
+    }
+
     public void OnProjectCreated(object sender, EventArgs e)
     {
         ResetRTs();
+
+        ResizeGram();
     }
 
     public void OnProjectLoaded(object sender, EventArgs e)
     {
         ResetRTs();
+
+        ResizeGram();
     }
 
     public LightEditorPage()
@@ -86,6 +117,19 @@ internal class LightEditorPage : EditorPage, IContextListener
 
             FragColor = fragColor;
         }");
+
+        //
+
+        _gram = [];
+
+        var canvas = LoadRenderTexture(GLOBALS.Level.Width * 20 + 300, GLOBALS.Level.Height*20 + 300);
+            
+        BeginTextureMode(canvas);
+        ClearBackground(Color.White);
+        EndTextureMode();
+
+        _gram.AddLast(canvas);
+        _currentGram = _gram.Last;
     }
     
     private Camera2D _camera = new() { Zoom = 0.5f, Target = new(-500, -200) };
@@ -95,6 +139,11 @@ internal class LightEditorPage : EditorPage, IContextListener
     private RL.Managed.RenderTexture2D _layer3;
 
     private Shader _mask;
+
+    private readonly LinkedList<RenderTexture2D> _gram;
+    private LinkedListNode<RenderTexture2D> _currentGram;
+
+    private bool _paintLock;
 
     private int _lightBrushTextureIndex;
     private float _lightBrushWidth = 200;
@@ -119,7 +168,58 @@ internal class LightEditorPage : EditorPage, IContextListener
     private float _growthFactor = InitialGrowthFactor;
 
     private RL.Managed.Texture2D _stretchTexture;
+
+    private void ProceedGram() {
+        if (_currentGram.Next is not null)
+        {
+            _currentGram = _currentGram.Next;
+
+            var canvas = _currentGram.Value;
+
+            BeginTextureMode(canvas);
+            DrawTexture(GLOBALS.Textures.LightMap.Texture, 0, 0, Color.White);
+            EndTextureMode();
+        }
+        else
+        {
+            var canvas = LoadRenderTexture(GLOBALS.Level.Width * 20 + 300, GLOBALS.Level.Height * 20 + 300);
+
+            BeginTextureMode(canvas);
+            DrawTexture(GLOBALS.Textures.LightMap.Texture, 0, 0, Color.White);
+            EndTextureMode();
+
+            _gram.AddLast(canvas);
+
+            if (_gram.Count > GLOBALS.Settings.LightEditor.UndoLimit) {
+                var first = _gram.First;
+
+                UnloadRenderTexture(first.Value);
+                _gram.RemoveFirst();
+            }
+
+            _currentGram = _gram.Last;
+        }
+    }
     
+    private void Undo() {
+        if (_currentGram.Previous is null) return;
+
+        _currentGram = _currentGram.Previous;
+
+        BeginTextureMode(GLOBALS.Textures.LightMap);
+        DrawTexture(_currentGram.Value.Texture, 0, 0, Color.White);
+        EndTextureMode();
+    }
+
+    private void Redo() {
+        if (_currentGram.Next is null) return;
+
+        _currentGram = _currentGram.Next;
+
+        BeginTextureMode(GLOBALS.Textures.LightMap);
+        DrawTexture(_currentGram.Value.Texture, 0, 0, Color.White);
+        EndTextureMode();
+    }
 
     private void DrawLayers() {
         var shader = _mask;
@@ -320,6 +420,21 @@ internal class LightEditorPage : EditorPage, IContextListener
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
         var alt = IsKeyDown(KeyboardKey.LeftAlt) || IsKeyDown(KeyboardKey.RightAlt);
+
+
+        // Undo
+
+        if (_shortcuts.Undo.Check(ctrl, shift, alt)) {
+            Undo();
+        }
+
+        // Redo
+
+        else if (_shortcuts.Redo.Check(ctrl, shift, alt)) {
+            Redo();
+        }
+
+
 
 
         if (_shortcuts.IncreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness < 10) {
@@ -575,6 +690,8 @@ internal class LightEditorPage : EditorPage, IContextListener
             if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
                 _shouldRedrawLevel = true;
             }
+
+            _paintLock = true;
         }
 
         if (canPaint && !_stretchMode && (_shortcuts.Erase.Check(ctrl, shift, alt, true) ||
@@ -603,8 +720,20 @@ internal class LightEditorPage : EditorPage, IContextListener
             if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
                 _shouldRedrawLevel = true;
             }
+
+            _paintLock = true;
         }
         else _eraseShadow = false;
+
+        if (_paintLock && ( 
+            IsMouseButtonReleased(_shortcuts.Paint.Button) || 
+            IsKeyReleased(_shortcuts.PaintAlt.Key) ||
+            IsMouseButtonReleased(_shortcuts.Erase.Button) ||
+            IsKeyReleased(_shortcuts.EraseAlt.Key)
+            )) {
+
+            ProceedGram();
+        }
 
         // if (IsKeyPressed(KeyboardKey.R)) _shading = !_shading;
 

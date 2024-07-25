@@ -279,6 +279,9 @@ public class LightEditorSettings
 
     public LightProjection Projection { get; set; } 
 
+    [SettingName("Undo Limit", Description = "The maximum the number of actions you can reverse")]
+    public int UndoLimit { get; set; }
+
     public LightEditorSettings()
     {
         Background = Color.Blue;
@@ -287,6 +290,8 @@ public class LightEditorSettings
 
         LightIndicatorPosition = ScreenRelativePosition.TopLeft;
         Projection = LightProjection.Basic;
+
+        UndoLimit = 30;
     }
 
     public LightEditorSettings(
@@ -294,7 +299,8 @@ public class LightEditorSettings
         ConColor levelBackgroundLight, 
         ConColor levelBackgroundDark,
         ScreenRelativePosition lightIndicatorPos,
-        LightProjection projection
+        LightProjection projection,
+        int undoLimit
     )
     {
         Background = background;
@@ -303,6 +309,8 @@ public class LightEditorSettings
 
         LightIndicatorPosition = lightIndicatorPos;
         Projection = projection;
+
+        UndoLimit = undoLimit;
     }
 }
 
@@ -525,7 +533,9 @@ public class Settings
             levelBackgroundLight: Color.White,
             levelBackgroundDark: new Color(200, 0, 0, 255),
             LightEditorSettings.ScreenRelativePosition.TopLeft,
-            LightEditorSettings.LightProjection.Basic);
+            LightEditorSettings.LightProjection.Basic,
+            30
+        );
         EffectsSettings = new(
             Color.Green, 
             Color.Yellow, 
