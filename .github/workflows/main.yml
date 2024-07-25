@@ -95,7 +95,7 @@ jobs:
 
     - name: Copy assets folder to output directory
       run: |
-        rsync -av --exclude='renderer/Props' --exclude='renderer/Graphics/' ./Leditor/assets/ ./outputs/assets/
+        rsync -av --exclude='renderer/Props' --exclude='renderer/Graphics/' ./Leditor/assets/ ./output/assets/
         cp ./imgui.ini ./output
 
     - name: Archive output
