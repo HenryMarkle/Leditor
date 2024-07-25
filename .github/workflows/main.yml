@@ -99,9 +99,9 @@ jobs:
         cp ./imgui.ini ./output
 
     - name: Archive output
-      run: zip -r linux-x64.zip ./output
+      run: zip -r linux-minimal-x64.zip ./output
 
-    - name: Upload Linux Artifact
+    - name: Upload Linux Artifact (minimal)
       uses: actions/upload-artifact@v2
       with:
         name: linux-binaries-minimal
@@ -207,7 +207,7 @@ jobs:
       run: Copy-Item -Path ./imgui.ini -Destination ./output
 
     - name: Archive output
-      run: Compress-Archive -Path ./output/* -DestinationPath windows-x64.zip
+      run: Compress-Archive -Path ./output/* -DestinationPath windows-minimal-x64.zip
 
     - name: Upload Windows Artifact (minimal)
       uses: actions/upload-artifact@v2
