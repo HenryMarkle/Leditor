@@ -1,1 +1,8 @@
-- Fixed not being able to type in the camera corner values.
+- Added undo action to the light editor.
+    - `CTRL + Z` to undo.
+    - `CTRL + SHIFT + Z` to redo.
+    - By default, you can undo up to 30 actions.
+
+- If `/assets/renderer/Props` and `/assets/renderer/Graphics` are missing, the editor now provides an option to download them automatically, either from Solar's repo or Slime_Cubed's.
+
+- Fixed a crash that is caused by attempting to paste from clipboard.

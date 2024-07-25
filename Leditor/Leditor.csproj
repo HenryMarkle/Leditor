@@ -19,9 +19,10 @@
 
   <ItemGroup>
     <PackageReference Include="ImGui.NET" Version="1.90.1.1" />
+    <PackageReference Include="LibGit2Sharp" Version="0.30.0" />
     <PackageReference Include="Pidgin" Version="3.2.3" />
     <PackageReference Include="Raylib-cs" Version="6.0.0" />
-    <PackageReference Include="rlImgui-cs" Version="2.0.3" />
+    <!-- <PackageReference Include="rlImgui-cs" Version="2.0.3" /> -->
     <PackageReference Include="Serilog" Version="2.12.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="2.1.8" />
@@ -38,11 +39,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Using Include="System"/> 
-    <Using Include="System.IO"/> 
-    <Using Include="System.Linq"/> 
-    <Using Include="System.Collections.Generic"/> 
-    <Using Include="System.Threading.Tasks"/> 
+    <Using Include="System" /> 
+    <Using Include="System.IO" /> 
+    <Using Include="System.Linq" /> 
+    <Using Include="System.Collections.Generic" /> 
+    <Using Include="System.Threading.Tasks" /> 
   </ItemGroup>
 
   <ItemGroup>

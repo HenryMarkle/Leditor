@@ -712,6 +712,9 @@ public class LightShortcuts : IEditorShortcuts
     private KeyboardShortcut reallyFastMoveViewRight = new(KeyboardKey.Right, alt:true);
     private KeyboardShortcut reallyFastMoveViewBottom = new(KeyboardKey.Down, alt:true);
 
+    private KeyboardShortcut undo = new(KeyboardKey.Z, ctrl:true);
+    private KeyboardShortcut redo = new(KeyboardKey.Z, ctrl:true, shift:true);
+
     //
 
     [ShortcutName("Increase Flatness", Group = "Light Settings")]
@@ -835,6 +838,9 @@ public class LightShortcuts : IEditorShortcuts
     [ShortcutName("Move View Bottom Really Quickly", Group = "Movement")]
     public KeyboardShortcut ReallyFastMoveViewBottom { get => reallyFastMoveViewBottom; set { reallyFastMoveViewBottom = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     
+
+    public KeyboardShortcut Undo { get => undo; set { undo = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut Redo { get => redo; set { redo = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
 
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }

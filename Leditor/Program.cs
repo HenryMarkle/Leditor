@@ -210,9 +210,33 @@ class Program
     private static Task<string>? _saveFileDialog;
     private static Task<SaveProjectResult>? _saveResult;
 
+
+    private static bool _downloadingAssets;
+    private static string _downloadAssetsRepoUrl = "";
+    private static Task<string>? _downloadAssetsTask = null;
+    private static Task? _movingAssetsTask = null;
+    private static bool _downloadExceptionLogged;
+    private static bool _moveExceptionLogged;
+    private static float _downloadProgress;
+    private static bool _deletingRepo;
+
+    private static long _downloadSpinFrames;
+    private static int _downloadSpinFrame;
+
+
+
+    public static bool HandleAssetsDownloadProgress(LibGit2Sharp.TransferProgress progress) {
+        _downloadProgress = progress.ReceivedObjects / progress.TotalObjects * 100;
+        return true;
+    }
+
+
     private static bool _askForPath;
 
     private static bool _isGuiLocked;
+
+    // ImGui ini file name allocation
+    private static nint _iniFilenameAlloc = 0;
 
     private static DrizzleRenderWindow? _renderWindow;
     
@@ -543,6 +567,12 @@ class Program
 
         var missingAssetsDirectory = !Directory.Exists(GLOBALS.Paths.AssetsDirectory);
         var missingRenderingAssetsDirecotry = !Directory.Exists(GLOBALS.Paths.RendererDirectory);
+
+        var missingRenderingAssetsDirecotrySavable = 
+            Directory.Exists(GLOBALS.Paths.RendererDirectory) &&
+            Directory.Exists(Path.Combine(GLOBALS.Paths.RendererDirectory, "Cast")) &&
+            !Directory.Exists(Path.Combine(GLOBALS.Paths.RendererDirectory, "Graphics")) &&
+            !Directory.Exists(Path.Combine(GLOBALS.Paths.RendererDirectory, "Props"));
         
         var failedIntegrity = missingAssetsDirectory;
 
@@ -1159,11 +1189,21 @@ void main() {
         }
         
         //
+
         rlImGui.Setup(GLOBALS.Settings.GeneralSettings.DarkTheme, true);
+        
+        var iniPath = Encoding.ASCII.GetBytes(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "imgui.ini") + "\0");
+        _iniFilenameAlloc = System.Runtime.InteropServices.Marshal.AllocHGlobal(iniPath.Length);
+        System.Runtime.InteropServices.Marshal.Copy(iniPath, 0, _iniFilenameAlloc, iniPath.Length);
+
+        // unsafe {
+        //     ImGui.GetIO().NativePtr->IniFilename = (byte*) _iniFilenameAlloc;
+        // }
 
         ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
         ImGui.GetIO().ConfigDockingWithShift = true;
         ImGui.GetIO().ConfigDockingTransparentPayload = true;
+
         
         
         // ImGui.LoadIniSettingsFromDisk(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "imgui.ini"));
@@ -1322,6 +1362,245 @@ void main() {
                     );
                     
                     DrawText(GLOBALS.Version, 10, GetScreenHeight() - 25, 20, Color.White);
+                    EndDrawing();
+                    continue;
+                }
+                // Allow downloading assets from GitHub
+                else if (missingRenderingAssetsDirecotrySavable) {
+                    BeginDrawing();
+                    ClearBackground(Color.Black);
+                    _downloadSpinFrames++;
+
+
+                    if (_downloadSpinFrames % 1000 == 0) {
+                        _downloadSpinFrame++;
+
+                        if (_downloadSpinFrame % 3 == 0) _downloadSpinFrame = 0;
+                    }
+
+                    if (_downloadingAssets)
+                    {
+                        if (_deletingRepo) DrawText("Download Complete", (GetScreenWidth() - MeasureText("Download Complete", 35))/2, 50, 35, Color.White); 
+                        else DrawText("Downloading Assets", (GetScreenWidth() - MeasureText("Downloading Assets", 35))/2, 50, 35, Color.White);
+                    
+                        var progressRect = new Rectangle(50, 300, GetScreenWidth() - 100, 50);
+                        DrawRectangleLinesEx(progressRect, 3, Color.White);
+
+                        if (_downloadAssetsTask is null) {
+                            logger.Information("Download started");
+
+                            if (Directory.Exists(Path.Combine(GLOBALS.Paths.CacheDirectory, "repos"))) {
+                                Directory.Delete(Path.Combine(GLOBALS.Paths.CacheDirectory, "repos"), true);
+                            }
+
+                            var options = new LibGit2Sharp.CloneOptions();
+
+                            options.FetchOptions.OnTransferProgress += HandleAssetsDownloadProgress;
+
+                            _downloadAssetsTask = Task.Factory.StartNew(
+                                () => LibGit2Sharp.Repository.Clone(
+                                    _downloadAssetsRepoUrl, 
+                                    Path.Combine(GLOBALS.Paths.CacheDirectory, "repos"),
+                                    options
+                                )
+                            );
+                        }
+
+                        if (!_downloadAssetsTask.IsCompleted) {
+                            DrawRectangleRec(progressRect with { Width = _downloadProgress }, Color.White);
+
+                            DrawText("Downloading assets from the repository" + _downloadSpinFrame switch { 0 => ".", 1 => "..", 2 => "...", _ => "" },
+                                (GetScreenWidth() - MeasureText("Downloading assets from the repository", 20))/2,
+                                400,
+                                20,
+                                Color.White
+                            );
+
+                            EndDrawing();
+                            continue;
+                        }
+
+                        if (_downloadAssetsTask.IsFaulted) {
+                            DrawText("Failed to download assets; Please check the logs for more information",
+                                (GetScreenWidth() - MeasureText("Failed to download assets; Please check the logs for more information", 20))/2,
+                                400,
+                                20,
+                                Color.White
+                            );
+
+                            if (!_downloadExceptionLogged) {
+                                logger.Error("Failed to download assets: " + _downloadAssetsTask.Exception?.ToString() ?? "NULL");
+                                _downloadExceptionLogged = true;
+                            }
+
+                            EndDrawing();
+                            continue;
+                        }
+
+                        if (_movingAssetsTask is null) {
+                            logger.Information("Moving downloaded assets");
+
+
+                            _movingAssetsTask = Task.Factory.StartNew(() => {
+                                var path = Path.Combine(_downloadAssetsTask.Result, "..");
+
+                                if (Directory.Exists(Path.Combine(GLOBALS.Paths.RendererDirectory, "Props"))) {
+                                    Directory.Delete(Path.Combine(GLOBALS.Paths.RendererDirectory, "Props"));
+                                }
+
+                                if (Directory.Exists(Path.Combine(GLOBALS.Paths.RendererDirectory, "Graphics"))) {
+                                    Directory.Delete(Path.Combine(GLOBALS.Paths.RendererDirectory, "Graphics"));
+                                }
+
+
+                                Directory.Move(Path.Combine(path, "Props"), Path.Combine(GLOBALS.Paths.RendererDirectory, "Props"));
+                                Directory.Move(Path.Combine(path, "Graphics"), Path.Combine(GLOBALS.Paths.RendererDirectory, "Graphics"));
+                            });
+
+                        }
+
+                        if (!_movingAssetsTask.IsCompleted) {
+                            DrawRectangleRec(progressRect with { Width = progressRect.Width/2 }, Color.White);
+                            
+                            DrawText("Moving assets" + _downloadSpinFrame switch { 0 => ".", 1 => "..", 2 => "...", _ => "" },
+                                (GetScreenWidth() - MeasureText("Moving assets", 20))/2,
+                                400,
+                                20,
+                                Color.White
+                            );
+
+                            EndDrawing();
+                            continue;
+                        }
+
+                        if (_movingAssetsTask.IsFaulted) {
+                            DrawText("Failed to download assets; please check the logs for more information",
+                                (GetScreenWidth() - MeasureText("Failed to download assets; please check the logs for more information", 20))/2,
+                                400,
+                                20,
+                                Color.White
+                            );
+
+                            if (!_moveExceptionLogged) {
+                                logger.Error("Failed to move downloaded assets into their appropriate location: " + _movingAssetsTask.Exception?.ToString() ?? "NULL");
+                                _moveExceptionLogged = true;
+                            }
+
+                            EndDrawing();
+                            continue;
+                        }
+
+                        if (!_deletingRepo) {
+                            logger.Information("Deleting the remaining files");
+
+                            DrawRectangleRec(progressRect with { Width = progressRect.Width * 2/3 }, Color.White);
+                            Directory.Delete(Path.Combine(GLOBALS.Paths.CacheDirectory, "repos"), true);
+                            _deletingRepo = true;
+                        }
+                        else
+                        {
+                            logger.Information("Downloading done");
+
+                            DrawRectangleRec(progressRect, Color.White);
+
+                            DrawText("Download succeeded; Please restart the editor now",
+                                (GetScreenWidth() - MeasureText("Download succeeded; Please restart the editor now", 20))/2,
+                                400,
+                                20,
+                                Color.White
+                            );
+                        }
+                        
+                    }
+                    else
+                    {
+                        DrawText("No Assets Found", (GetScreenWidth() - MeasureText("No Assets Found", 35))/2, 50, 35, Color.White);
+                        
+                        DrawText("Select a repository to download assets from", 
+                            (GetScreenWidth() - MeasureText("Select a repository to download assets from", 20))/2, 
+                            250, 
+                            20, 
+                            Color.White
+                        );
+
+                        var solarBtn = new Rectangle((GetScreenWidth() - 450)/2, 300, 200, 50);
+                        var vanillaBtn = new Rectangle((GetScreenWidth() - 450)/2 + 250, 300, 200, 50);
+
+                        var solarHovered = CheckCollisionPointRec(GetMousePosition(), solarBtn);
+                        var vanillaHovered = CheckCollisionPointRec(GetMousePosition(), vanillaBtn);
+
+                        DrawRectangleLinesEx(solarBtn, 3, Color.White);
+                        DrawRectangleLinesEx(vanillaBtn, 3, Color.White);
+
+                        DrawText("Solar", (int)solarBtn.X + 20, (int)solarBtn.Y + 15, 20, Color.White);
+                        DrawText("Vanilla", (int)vanillaBtn.X + 20, (int)vanillaBtn.Y + 15, 20, Color.White);
+
+                        if (solarHovered || vanillaHovered) {
+                            SetMouseCursor(MouseCursor.PointingHand);
+
+                            if (solarHovered) {
+                                DrawRectangleRec(solarBtn, Color.White);
+                                DrawText("Solar", (int)solarBtn.X + 20, (int)solarBtn.Y + 15, 20, Color.Black);
+
+                                // Description
+
+                                DrawText(
+                                    "A rich, all-in-one collection of high-quality tiles and props", 
+                                    (GetScreenWidth() - MeasureText("A rich, all-in-one collection of high-quality tiles and props", 20))/2,
+                                    400,
+                                    20,
+                                    Color.White
+                                );
+
+                                // Click
+
+                                if (IsMouseButtonPressed(MouseButton.Left)) {
+                                    SetMouseCursor(MouseCursor.Default);
+
+                                    _downloadAssetsRepoUrl = "https://github.com/solaristheworstcatever/Modded-Regions-Starter-Pack.git";
+
+                                    _downloadingAssets = true;
+                                    _downloadExceptionLogged = false;
+                                    _downloadAssetsTask = null;
+
+                                    logger.Information("Download solar repo selected");
+                                }
+
+                            } else if (vanillaHovered) {
+                                DrawRectangleRec(vanillaBtn, Color.White);
+                                DrawText("Vanilla", (int)vanillaBtn.X + 20, (int)vanillaBtn.Y + 15, 20, Color.Black);
+
+                                // Description
+
+                                DrawText(
+                                    "The default assets included in the community editor", 
+                                    (GetScreenWidth() - MeasureText("The default assets included in the community editor", 20))/2,
+                                    400,
+                                    20,
+                                    Color.White
+                                );
+
+                                // Click
+
+                                if (IsMouseButtonPressed(MouseButton.Left)) {
+                                    SetMouseCursor(MouseCursor.Default);
+
+                                    _downloadAssetsRepoUrl = "https://github.com/SlimeCubed/Drizzle.Data.git";
+
+                                    _downloadingAssets = true;
+                                    _downloadExceptionLogged = false;
+                                    _downloadAssetsTask = null;
+
+                                    logger.Information("Download vanilla repo selected");
+                                }
+                            }
+                        } else {
+                            SetMouseCursor(MouseCursor.Default);
+                        }
+                        
+                        DrawText(GLOBALS.Version, 10, GetScreenHeight() - 25, 20, Color.White);
+                    }
+                    
                     EndDrawing();
                     continue;
                 }
@@ -2375,6 +2654,7 @@ void main() {
         GLOBALS.AutoSaveTimer.Dispose();
 
         //
+        System.Runtime.InteropServices.Marshal.FreeHGlobal(_iniFilenameAlloc);
         rlImGui.Shutdown();
         //
 
