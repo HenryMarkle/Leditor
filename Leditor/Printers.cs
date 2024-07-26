@@ -2742,8 +2742,8 @@ internal static class Printers
         in PropQuad quad
     )
     {
-        var flippedX = quad.TopLeft.X > quad.TopRight.X && quad.BottomLeft.X > quad.BottomRight.X;
-        var flippedY = quad.TopLeft.Y > quad.BottomLeft.Y && quad.TopRight.Y > quad.BottomRight.Y;
+        var flippedX = quad.TopLeft.X > quad.TopRight.X + 0.5f && quad.BottomLeft.X > quad.BottomRight.X + 0.5f;
+        var flippedY = quad.TopLeft.Y > quad.BottomLeft.Y + 0.5f && quad.TopRight.Y > quad.BottomRight.Y + 0.5f;
 
         var (topRight, topLeft, bottomLeft, bottomRight) = (flippedX, flippedY) switch
         {

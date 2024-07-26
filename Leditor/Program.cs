@@ -1192,12 +1192,13 @@ void main() {
 
         rlImGui.Setup(GLOBALS.Settings.GeneralSettings.DarkTheme, true);
         
-        var iniPath = Encoding.ASCII.GetBytes(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "imgui.ini") + "\0");
-        _iniFilenameAlloc = System.Runtime.InteropServices.Marshal.AllocHGlobal(iniPath.Length);
-        System.Runtime.InteropServices.Marshal.Copy(iniPath, 0, _iniFilenameAlloc, iniPath.Length);
-
         // unsafe {
-        //     ImGui.GetIO().NativePtr->IniFilename = (byte*) _iniFilenameAlloc;
+        //     byte[] pathBytes = Encoding.UTF8.GetBytes(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "imgui.ini"));
+            
+        //     fixed (byte* bytes = pathBytes) {
+        //         ImGui.GetIO().NativePtr->IniFilename = bytes;
+        //     }
+            
         // }
 
         ImGui.GetIO().ConfigFlags |= ImGuiConfigFlags.DockingEnable;
