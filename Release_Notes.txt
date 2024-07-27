@@ -1,1 +1,2 @@
 - Fixed textures not rendering when rotated 90 degrees.
+- Fixed levels not loading when a `Zero-G Tube` prop is missing `#pplyColor` property.

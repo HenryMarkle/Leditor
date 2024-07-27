@@ -531,11 +531,11 @@ public static class Importers {
                 }
             }
 
-            int getIntProperty(AstNode.Number? property) => property is null
-                    ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(property))
+            int getIntProperty(AstNode.Number? property, string propertyName = "") => property is null
+                    ? throw new MissingInitPropertyException($"{name}: #{propertyName}", StringifyBase(@base), nameof(property))
                     : NumberToInteger(property);
 
-            var deNullVariation = variation is null ? 0 : getIntProperty(variation) - 1;
+            var deNullVariation = variation is null ? 0 : getIntProperty(variation, "variation") - 1;
 
             if (deNullVariation < 0) deNullVariation = 0;
 
@@ -547,12 +547,12 @@ public static class Importers {
                     AstNode.Number n => n,
                     AstNode.UnaryOperator u => (AstNode.Number)u.Expression,
                     _ => null
-                }) switch { 1 => PropRopeRelease.Right, -1 => PropRopeRelease.Left, _ => PropRopeRelease.None }, 
+                }, "release") switch { 1 => PropRopeRelease.Right, -1 => PropRopeRelease.Left, _ => PropRopeRelease.None }, 
                     name is "Wire" or "Zero-G Wire" ? thickness is null ? 2 : NumberToFloat(thickness) : null, 
-                    name == "Zero-G Tube" ? getIntProperty(applyColor) : null),
+                    name == "Zero-G Tube" ? (applyColor is null ? 0 : getIntProperty(applyColor, "applyColor")) : null),
                 InitPropType.VariedDecal => new PropVariedDecalSettings(depth, rng.Next(1000), 0, deNullVariation, baseToNumber(customDepth)),
                 InitPropType.VariedSoft => new PropVariedSoftSettings(depth, rng.Next(1000), 0, deNullVariation, baseToNumber(customDepth),
-                    ((InitVariedSoftProp)GLOBALS.Props[position.category][position.index]).Colorize == 0 ? 1 : null),
+                    ((InitVariedSoftProp)GLOBALS.Props[position.category][position.index]).Colorize == 1 ? (applyColor is null ? 0 : getIntProperty(applyColor, "applyColor")) : null),
                 InitPropType.SimpleDecal => new PropSimpleDecalSettings(depth, rng.Next(1000), 0, baseToNumber(customDepth)),
                 InitPropType.Soft => new PropSoftSettings(depth, rng.Next(1000), 0, baseToNumber(customDepth)),
                 InitPropType.SoftEffect => new PropSoftEffectSettings(depth, rng.Next(1000), 0, baseToNumber(customDepth)),
