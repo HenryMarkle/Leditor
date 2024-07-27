@@ -273,7 +273,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ github.run_number }}
-        release_name: Release v${{steps.release_version.outputs.content}}
+        release_name: Release v${{steps.release_version.outputs.version}}
         body: ${{ steps.release_notes.outputs.content }}
         draft: false
         prerelease: false
