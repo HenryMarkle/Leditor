@@ -1,1 +1,3 @@
 - Added a changelog section in the navigation bar.
+- Fixed the editor sometimes not adding a black pixel at the top left corner of the lightmap.
+- The editor now also adds a black pixel at the bottom right corner of the lightmap.

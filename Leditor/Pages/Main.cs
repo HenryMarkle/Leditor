@@ -331,6 +331,11 @@ internal class MainPage : EditorPage, IContextListener
                                 
                                 // export light map
                                 {
+                                    BeginTextureMode(GLOBALS.Textures.LightMap);
+                                    DrawRectangle(0, 0, 1, 1, Color.Black);
+                                    DrawRectangle(GLOBALS.Textures.LightMap.Texture.Width - 1, GLOBALS.Textures.LightMap.Texture.Height - 1, 1, 1, Color.Black);
+                                    EndTextureMode();
+                                    
                                     var image = LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);
 
                                     unsafe
