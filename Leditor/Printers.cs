@@ -7510,8 +7510,15 @@ internal static class Printers
                 ImGuiNET.ImGui.EndMenu();
             }
 
-            if (ImGuiNET.ImGui.MenuItem("About"))
-                selected = 4;
+            if (ImGuiNET.ImGui.BeginMenu("Info")) {
+
+                if (ImGuiNET.ImGui.MenuItem("About")) selected = 4;
+                if (ImGuiNET.ImGui.MenuItem("Changelog")) selected = 5;
+                
+
+                ImGuiNET.ImGui.EndMenu();
+            }
+
             
             ImGuiNET.ImGui.EndMainMenuBar();
 

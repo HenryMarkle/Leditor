@@ -16,7 +16,7 @@ using Drizzle.Lingo.Runtime;
 using Drizzle.Logic;
 using Leditor.Pages;
 using Leditor.Renderer;
-using System.Diagnostics;
+using System.Reflection;
 
 #nullable enable
 
@@ -203,6 +203,14 @@ class Program
             logger.Debug($"loading light texture \"{e}\""); 
             return LoadTexture(e); })
         .ToArray();
+
+    private static string GetEmbeddedResource(string resourceName)
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        using Stream stream = assembly.GetManifestResourceStream(resourceName)!;
+        using StreamReader reader = new(stream);
+        return reader.ReadToEnd();
+    }
     
     private record struct SaveProjectResult(bool Success, Exception? Exception = null);
 
@@ -465,6 +473,9 @@ class Program
         #elif EXPERIMENTAL
         GLOBALS.BuildConfiguration = "Build Configuration: Experimental";
         #endif
+
+        GLOBALS.Changelog = GetEmbeddedResource("Leditor.Release_Notes.txt");
+        GLOBALS.Version = $"Henry's Leditor v" + GetEmbeddedResource("Leditor.Version.txt");
 
         GLOBALS.OperatingSystem = System.Environment.OSVersion.ToString();
 
@@ -2224,6 +2235,33 @@ void main() {
                         GLOBALS.NavSignal = 0;
                     ImGui.End();
                     
+                    rlImGui.End();
+                    EndDrawing();
+                }
+                else if (GLOBALS.NavSignal == 5) {
+                    BeginDrawing();
+                    ClearBackground(Color.Gray);
+                    rlImGui.Begin();
+
+                    ImGui.Begin("Changelog##ChangelogWindow", ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse);
+
+                    ImGui.SetWindowPos(new(40, 40));
+                    ImGui.SetWindowSize(new(GetScreenWidth() - 80, GetScreenHeight() - 80));
+
+                    var availSpace = ImGui.GetContentRegionAvail();
+
+                    ImGui.BeginChild("changelog_child", availSpace with { Y = availSpace.Y - 25 });
+
+                    ImGui.Text(GLOBALS.Changelog);
+
+                    ImGui.EndChild();
+
+                    var closeClicked = ImGui.Button("Close", ImGui.GetContentRegionAvail() with { Y = 20 });
+
+                    if (closeClicked) GLOBALS.NavSignal = 0;
+
+                    ImGui.End();
+
                     rlImGui.End();
                     EndDrawing();
                 }

@@ -66,5 +66,9 @@
     <ProjectReference Include="..\Leditor.Serialization\Leditor.Serialization.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="../Release_Notes.txt"/>
+    <EmbeddedResource Include="../Version.txt"/>
+  </ItemGroup>
 
 </Project>

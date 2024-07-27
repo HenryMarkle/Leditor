@@ -181,10 +181,11 @@ internal static class GLOBALS
 
     internal static System.Timers.Timer AutoSaveTimer = new(30_000);
     
-    internal const string Version = "Henry's Leditor v0.9.98-2";
+    internal static string Version { get; set; } = "Henry's Leditor v0";
     internal const string RaylibVersion = "Raylib v5.0.0";
     internal static string BuildConfiguration { get; set; } = "Build Configuration: Unknown";
     internal static string OperatingSystem { get; set; } = "Operating System: Unknown";
+    internal static string Changelog { get; set; } = "";
 
     internal static int MinScreenWidth => 1300;
     internal static int MinScreenHeight => 850;
