@@ -278,7 +278,7 @@ internal class EffectsEditorPage : EditorPage
                 
                 rlImGui.Begin();
                 
-                ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
+                ImGui.DockSpaceOverViewport(ImGui.GetWindowDockID(), ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
                 
                 if (ImGui.Begin("New Effect##NewEffectMenu", ImGuiWindowFlags.NoCollapse))
                 {
@@ -857,7 +857,7 @@ internal class EffectsEditorPage : EditorPage
 
                 rlImGui.Begin();
                 
-                ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
+                ImGui.DockSpaceOverViewport(ImGui.GetWindowDockID(), ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
                 
                 // Navigation bar
                 
