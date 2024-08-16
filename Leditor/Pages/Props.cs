@@ -407,7 +407,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         false, 
                         GLOBALS.Settings.GeneralSettings.DrawTileMode,
                         (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255),
-                        visibleStrays: false
+                        visibleStrays: false,
+                        materialColorSpace: GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace
                     );
 
                     EndTextureMode();
@@ -635,7 +636,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         false, 
                         GLOBALS.Settings.GeneralSettings.DrawTileMode,
                         (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255),
-                        visibleStrays: false
+                        visibleStrays: false,
+                        materialColorSpace: GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace
                     );
 
                     EndTextureMode();
@@ -871,7 +873,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         false, 
                         GLOBALS.Settings.GeneralSettings.DrawTileMode,
                         (byte)(GLOBALS.Settings.GeneralSettings.HighLayerContrast ? 70 : 255),
-                        visibleStrays: false
+                        visibleStrays: false,
+                        materialColorSpace: GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace
                     );
                     EndTextureMode();
                 }
@@ -3308,7 +3311,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 }
                 #endregion
 
-                if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.Type == InitPropType.Rope && _models.Length > 0)
+                // Simulate ropes
+                if (_models.Length > 0)
                 {
                     _shouldUpdateModeIndicatorsRT = true;
 
@@ -3317,50 +3321,51 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     else {
                         _shouldRedrawLevel = true;
                     }
-                    
-                    var foundRope = _models.SingleOrDefault(rope => rope.index == fetchedSelected[0].index);
 
-                    if (foundRope.model != null) {
-                        var (_, simulate, model) = foundRope;
+                    for (var i = 0; i < _models.Length; i++) {
+                        ref var current = ref _models[i];
 
-                        if (simulate) {
-                            if (model.EditType == RopeModel.EditTypeEnum.Simulation) // simulate
-                            {
-                                if (++_ropeSimulationFrame % _ropeSimulationFrameCut == 0)
-                                {
-                                    model.Update(
-                                    fetchedSelected[0].prop.Quad, 
-                                    fetchedSelected[0].prop.Depth switch
-                                    {
+                        if (current.simulate && ++_ropeSimulationFrame % _ropeSimulationFrameCut == 0) {
+                            #if DEBUG
+                            if (current.index < 0 || 
+                            current.index >= GLOBALS.Level.Props.Length || 
+                            GLOBALS.Level.Props[current.index].Type != InitPropType.Rope) {
+                                throw new Exception("model's reference index was invalid or out of bounds");
+                            }
+                            #endif
+                            
+                            var prop = GLOBALS.Level.Props[current.index]; // potential exception
+
+                            if (current.model.EditType == RopeModel.EditTypeEnum.Simulation) {
+                                current.model.Update(
+                                    prop.Quad,
+                                    prop.Depth switch {
                                         < -19 => 2,
                                         < -9 => 1,
                                         _ => 0
-                                    });
-                                }
-                            }
-                            else if (model.EditType == RopeModel.EditTypeEnum.BezierPaths) // bezier
-                            {
+                                    }
+                                );
+                            } else if (current.model.EditType == RopeModel.EditTypeEnum.BezierPaths) {
                                 var (pA, pB) = Utils.RopeEnds(fetchedSelected[0].prop.Quad);
                                 
-                                fetchedSelected[0].prop.Extras.RopePoints = Utils.Casteljau(fetchedSelected[0].prop.Extras.RopePoints.Length, [ pA, ..model.BezierHandles, pB ]);
+                                fetchedSelected[0].prop.Extras.RopePoints = Utils.Casteljau(fetchedSelected[0].prop.Extras.RopePoints.Length, [ pA, ..current.model.BezierHandles, pB ]);
 
                                 if ((IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) && _bezierHandleLock != -1)
                                     _bezierHandleLock = -1;
 
                                 if (IsMouseButtonDown(_shortcuts.SelectProps.Button))
                                 {
-                                    for (var b = 0; b < model.BezierHandles.Length; b++)
+                                    for (var b = 0; b < current.model.BezierHandles.Length; b++)
                                     {
-                                        if (_bezierHandleLock == -1 && CheckCollisionPointCircle(tileMouseWorld, model.BezierHandles[b], 5f))
+                                        if (_bezierHandleLock == -1 && CheckCollisionPointCircle(tileMouseWorld, current.model.BezierHandles[b], 5f))
                                             _bezierHandleLock = b;
 
-                                        if (_bezierHandleLock == b) model.BezierHandles[b] = tileMouseWorld;
+                                        if (_bezierHandleLock == b) current.model.BezierHandles[b] = tileMouseWorld;
                                     }
                                 }
                             }
                         }
                     }
-
                 }
                 
                 // TODO: switch on enums instead
@@ -3922,11 +3927,12 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             }
                         }
 
-                        // if (selectCount == 1 && GLOBALS.Level.Props[lastSelected].type == InitPropType.Rope) {
-                        //     _ropeMode = true;
-                        // } else {
-                        //     _ropeMode = false;
-                        // }
+                        // Auto-simulate ropes
+                        if (GLOBALS.Settings.PropEditor.SimulateSelectedRopes) {
+                            for (var i = 0; i < _models.Length; i++) {
+                                _models[i].simulate = _selected[_models[i].index];
+                            }
+                        }
 
                         if (selectCount == 0) {
                             _shouldUpdateModeIndicatorsRT = true;

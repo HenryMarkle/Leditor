@@ -1,2 +1,2 @@
-- Upgraded `Raylib-cs` dependency to `6.1.1`.
-- Upgraded `ImGui.NET` to `1.91.0.1`.
+- Added an option to auto-simulate selected ropes in the props editor (found in the settings).
+- Added the option to customize the size of the material rectangles in the editor.

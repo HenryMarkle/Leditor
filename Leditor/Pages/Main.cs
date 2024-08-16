@@ -680,7 +680,8 @@ internal class MainPage : EditorPage, IContextListener
                         HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
                         Palette = GLOBALS.SelectedPalette,
                         CropTilePrevious = GLOBALS.Settings.GeneralSettings.CropTilePreviews,
-                        VisibleStrayTileFragments = false
+                        VisibleStrayTileFragments = false,
+                        MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace
                     });
                     _shouldRedrawLevel = false;
                 }

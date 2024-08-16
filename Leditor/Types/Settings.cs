@@ -342,6 +342,9 @@ public class PropEditor
     [SettingName("Cross-Layer Selection")]
     public bool CrossLayerSelection { get; set; }
 
+    [SettingName("Auto-Simulate Selected Ropes")]
+    public bool SimulateSelectedRopes { get; set; }
+
     //
 
     public PropEditor()
@@ -487,6 +490,9 @@ public class GeneralSettings
 
     [SettingName("Never Show Missing Tile Textures Alert Again", Hidden = true)]
     public bool NeverShowMissingTileTexturesAlertAgain { get; set; }
+
+    [SettingName("Material White Space", Description = "The space between material rectangles")]
+    public int MaterialWhiteSpace { get; set; } = 6;
 }
 
 

@@ -1130,7 +1130,8 @@ internal static class Printers
         bool deepTileOpacity = true, 
         bool crop = false, 
         bool visibleStrays = true,
-        Color? unifiedTileColor = null)
+        Color? unifiedTileColor = null,
+        int materialColorSpace = 6)
     {
         for (var y = 0; y < GLOBALS.Level.Height; y++)
         {
@@ -1299,10 +1300,10 @@ internal static class Printers
                         {
                             case 1:
                                 DrawRectangle(
-                                    x * scale + 6,
-                                    y * scale + 6,
-                                    scale - 12,
-                                    scale - 12,
+                                    x * scale + materialColorSpace,
+                                    y * scale + materialColorSpace,
+                                    scale - materialColorSpace * 2,
+                                    scale - materialColorSpace * 2,
                                     color
                                 );
                                 break;
@@ -1311,8 +1312,8 @@ internal static class Printers
                             case 2:
                                 DrawTriangle(
                                     origin,
-                                    new(origin.X, origin.Y + scale - 10),
-                                    new(origin.X + scale - 10, origin.Y + scale - 10),
+                                    new(origin.X, origin.Y + scale - materialColorSpace * 2),
+                                    new(origin.X + materialColorSpace * 2, origin.Y + materialColorSpace * 2),
                                     color
                                 );
                                 break;
@@ -1320,9 +1321,9 @@ internal static class Printers
 
                             case 3:
                                 DrawTriangle(
-                                    new(origin.X + scale - 10, origin.Y),
-                                    new(origin.X, origin.Y + scale - 10),
-                                    new(origin.X + scale - 10, origin.Y + scale - 10),
+                                    new(origin.X + materialColorSpace * 2, origin.Y),
+                                    new(origin.X, origin.Y + materialColorSpace * 2),
+                                    new(origin.X + materialColorSpace * 2, origin.Y + materialColorSpace * 2),
                                     color
                                 );
                                 break;
@@ -1330,8 +1331,8 @@ internal static class Printers
                             case 4:
                                 DrawTriangle(
                                     origin,
-                                    new(origin.X, origin.Y + scale - 10),
-                                    new(origin.X + scale - 10, origin.Y),
+                                    new(origin.X, origin.Y + materialColorSpace * 2),
+                                    new(origin.X + materialColorSpace * 2, origin.Y),
                                     color
                                 );
                                 break;
@@ -1339,8 +1340,8 @@ internal static class Printers
                             case 5:
                                 DrawTriangle(
                                     origin,
-                                    new(origin.X + scale - 10, origin.Y + scale - 10),
-                                    new(origin.X + scale - 10, origin.Y),
+                                    new(origin.X + materialColorSpace * 2, origin.Y + materialColorSpace * 2),
+                                    new(origin.X + materialColorSpace * 2, origin.Y),
                                     color
                                 );
                                 break;
@@ -1348,7 +1349,7 @@ internal static class Printers
                             case 6:
                                 DrawRectangleV(
                                     origin,
-                                    new(scale - 10, (scale - 10) / 2),
+                                    new(materialColorSpace * 2, (materialColorSpace * 2) / 2),
                                     color
                                 );
                                 break;
@@ -1711,6 +1712,8 @@ internal static class Printers
         internal bool VisibleStrayTileFragments { get; init; } = true;
         internal bool Padding { get; init; }
         internal Color? UnifiedTileColor { get; init; }
+        internal int MaterialWhiteSpace { get; init; } = 6;
+        internal bool GrayFilter { get; init; } = false;
     }
 
     private static RL.Managed.RenderTexture2D? _tempRT = null;
@@ -1802,7 +1805,8 @@ internal static class Printers
                     true, 
                     parameters.CropTilePrevious,
                     parameters.VisibleStrayTileFragments,
-                    parameters.UnifiedTileColor
+                    parameters.UnifiedTileColor,
+                    parameters.MaterialWhiteSpace
                 );
                 EndTextureMode();
             }
@@ -1837,6 +1841,11 @@ internal static class Printers
             EndTextureMode();
         }
 
+        if (parameters.GrayFilter) {
+            BeginTextureMode(texture);
+            DrawRectangle(0, 0, GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20, Color.Gray with { A = 120 });
+            EndTextureMode();
+        }
         
         // Layer 2
 
@@ -1937,7 +1946,8 @@ internal static class Printers
                         true, 
                         parameters.CropTilePrevious,
                         parameters.VisibleStrayTileFragments,
-                        parameters.UnifiedTileColor
+                        parameters.UnifiedTileColor,
+                        parameters.MaterialWhiteSpace
                     );
                     EndTextureMode();
                 }
@@ -1991,7 +2001,12 @@ internal static class Printers
 
             EndTextureMode();
         }
-        
+
+        if (parameters.GrayFilter) {
+            BeginTextureMode(texture);
+            DrawRectangle(0, 0, GLOBALS.Level.Width * 20, GLOBALS.Level.Height * 20, Color.Gray with { A = 120 });
+            EndTextureMode();
+        }        
 
         // Layer 1
 
@@ -2095,7 +2110,8 @@ internal static class Printers
                         true,
                         parameters.CropTilePrevious,
                         parameters.VisibleStrayTileFragments,
-                        parameters.UnifiedTileColor
+                        parameters.UnifiedTileColor,
+                        parameters.MaterialWhiteSpace
                     );
                     EndTextureMode();
                 }

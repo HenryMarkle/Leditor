@@ -1549,7 +1549,8 @@ internal class ExperimentalGeometryPage : EditorPage
                         HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
                         Palette = GLOBALS.SelectedPalette,
                         VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers,
-                        VisibleStrayTileFragments = false
+                        VisibleStrayTileFragments = false,
+                        MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace
                     });
                 }
                 _shouldRedrawLevel = false;

@@ -2308,10 +2308,12 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                 TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
                 Palette = GLOBALS.SelectedPalette,
                 Grid = false,
+                HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
                 VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers,
                 CropTilePrevious = GLOBALS.Settings.GeneralSettings.CropTilePreviews,
                 VisibleStrayTileFragments = GLOBALS.Settings.TileEditor.ShowStrayTileFragments,
                 UnifiedTileColor = GLOBALS.Settings.TileEditor.UnifiedPreviewColor ? Color.White : null,
+                MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace
             });
             _shouldRedrawLevel = false;
         }
@@ -3193,6 +3195,12 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                     UpdatePreviewToolTip();
                 }
                 if (!_tooltip) ImGui.EndDisabled();
+
+                var matSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace;
+                if (ImGui.InputInt("Material White Space", ref matSpace)) {
+                    GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace = matSpace;
+                    _shouldRedrawLevel = true;
+                }
                 
                 ImGui.End();
             }
@@ -3236,7 +3244,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                 }
 
                 var ogDelete = GLOBALS.Settings.TileEditor.OriginalDeletionBehavior;
-                if (ImGui.Checkbox("Original Deletion Bahvior", ref ogDelete)) {
+                if (ImGui.Checkbox("Original Deletion Behavior", ref ogDelete)) {
                     GLOBALS.Settings.TileEditor.OriginalDeletionBehavior = ogDelete;
                 }
 

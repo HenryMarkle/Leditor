@@ -807,7 +807,8 @@ internal class LightEditorPage : EditorPage, IContextListener
                     HighLayerContrast = GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Palette,
                     Palette = GLOBALS.SelectedPalette,
                     Shadows = GLOBALS.Settings.LightEditor.Projection == LightEditorSettings.LightProjection.ThreeLayers && GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette,
-                    VisibleStrayTileFragments = false
+                    VisibleStrayTileFragments = false,
+                    MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace
                 });
                 _shouldRedrawLevel = false;
             }

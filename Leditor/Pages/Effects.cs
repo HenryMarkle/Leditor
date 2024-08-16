@@ -787,7 +787,8 @@ internal class EffectsEditorPage : EditorPage
                         PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
                         TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
                         Palette = GLOBALS.SelectedPalette,
-                        VisibleStrayTileFragments = false
+                        VisibleStrayTileFragments = false,
+                        MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace
                     });
                     _shouldRedrawLevel = false;
                 }

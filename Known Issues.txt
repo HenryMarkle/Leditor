@@ -1,2 +1,2 @@
-- Placing shortcuts partially outside of the geometry's border may result in rendering failure.
-- Pasting from clipboard crashes the program.
+- Props editor's undo/redo feature is incomplete.
+- Geometry editor's undo/redo feature does not behave properly when a large brush is applied continouosly.

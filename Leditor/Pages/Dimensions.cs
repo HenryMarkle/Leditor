@@ -366,7 +366,9 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
                 PropDrawMode = GLOBALS.Settings.GeneralSettings.DrawPropMode,
                 Palette = GLOBALS.SelectedPalette,
 
-                Padding = true
+                Padding = true,
+
+                MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace
             });
 
             _shouldRedrawLevel = false;
