@@ -493,6 +493,9 @@ public class GeneralSettings
 
     [SettingName("Material White Space", Description = "The space between material rectangles")]
     public int MaterialWhiteSpace { get; set; } = 6;
+
+    [SettingName("Current Layer At Front", Description = "Render the current layer above all other layers")]
+    public bool CurrentLayerAtFront { get; set; } = false;
 }
 
 

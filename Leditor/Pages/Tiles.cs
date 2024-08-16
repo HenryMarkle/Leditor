@@ -2309,6 +2309,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                 Palette = GLOBALS.SelectedPalette,
                 Grid = false,
                 HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
+                CurrentLayerAtFront = GLOBALS.Settings.GeneralSettings.CurrentLayerAtFront,
                 VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers,
                 CropTilePrevious = GLOBALS.Settings.GeneralSettings.CropTilePreviews,
                 VisibleStrayTileFragments = GLOBALS.Settings.TileEditor.ShowStrayTileFragments,

@@ -1550,7 +1550,8 @@ internal class ExperimentalGeometryPage : EditorPage
                         Palette = GLOBALS.SelectedPalette,
                         VisiblePreceedingUnfocusedLayers = GLOBALS.Settings.GeneralSettings.VisiblePrecedingUnfocusedLayers,
                         VisibleStrayTileFragments = false,
-                        MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace
+                        MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace,
+                        CurrentLayerAtFront = GLOBALS.Settings.GeneralSettings.CurrentLayerAtFront,
                     });
                 }
                 _shouldRedrawLevel = false;

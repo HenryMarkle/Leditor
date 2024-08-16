@@ -808,7 +808,8 @@ internal class LightEditorPage : EditorPage, IContextListener
                     Palette = GLOBALS.SelectedPalette,
                     Shadows = GLOBALS.Settings.LightEditor.Projection == LightEditorSettings.LightProjection.ThreeLayers && GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette,
                     VisibleStrayTileFragments = false,
-                    MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace
+                    MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace,
+                    CurrentLayerAtFront = GLOBALS.Settings.GeneralSettings.CurrentLayerAtFront,
                 });
                 _shouldRedrawLevel = false;
             }

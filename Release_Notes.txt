@@ -1,2 +1,1 @@
-- Added an option to auto-simulate selected ropes in the props editor (found in the settings).
-- Added the option to customize the size of the material rectangles in the editor.
+- Added the option to draw the current layer above all layers, for better visibility.

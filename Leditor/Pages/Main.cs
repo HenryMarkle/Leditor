@@ -678,6 +678,7 @@ internal class MainPage : EditorPage, IContextListener
                         PropsLayer2 = _showProps,
                         PropsLayer3 = _showProps,
                         HighLayerContrast = GLOBALS.Settings.GeneralSettings.HighLayerContrast,
+                        CurrentLayerAtFront = GLOBALS.Settings.GeneralSettings.CurrentLayerAtFront,
                         Palette = GLOBALS.SelectedPalette,
                         CropTilePrevious = GLOBALS.Settings.GeneralSettings.CropTilePreviews,
                         VisibleStrayTileFragments = false,
@@ -1083,6 +1084,12 @@ internal class MainPage : EditorPage, IContextListener
                         _shouldRedrawLevel = true;
                     }
                     //
+
+                    var layerAboveAll = GLOBALS.Settings.GeneralSettings.CurrentLayerAtFront;
+                    if (ImGui.Checkbox("Current Layer Above All", ref layerAboveAll)) {
+                        GLOBALS.Settings.GeneralSettings.CurrentLayerAtFront = layerAboveAll;
+                        _shouldRedrawLevel = true;
+                    }
 
                     if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Preview) ImGui.BeginDisabled();
 

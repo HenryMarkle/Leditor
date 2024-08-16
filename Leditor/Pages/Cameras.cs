@@ -264,7 +264,8 @@ internal class CamerasEditorPage : EditorPage, IContextListener
                     TileDrawMode = GLOBALS.Settings.GeneralSettings.DrawTileMode,
                     Palette = GLOBALS.SelectedPalette,
                     CurrentLayer = 0,
-                    MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace
+                    MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace,
+                    CurrentLayerAtFront = GLOBALS.Settings.GeneralSettings.CurrentLayerAtFront,
                 });
                 _shouldRedrawLevel = false;
             }
