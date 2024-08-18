@@ -1091,6 +1091,27 @@ void main() {
     FragColor = fragColor;
 }");
 
+        GLOBALS.Shaders.WhiteBackgroundRemover = LoadShaderFromMemory(null, @"#version 330
+
+in vec2 fragTexCoord;
+in vec4 fragColor;
+
+out vec4 FragColor;
+
+uniform sampler2D inputTexture;
+
+void main()
+{
+    vec4 color = texture(inputTexture, fragTexCoord);
+
+    if (color.r == 1.0 && color.g == 1.0 && color.b == 1.0) {
+        discard;
+    }
+
+    FragColor = color;
+}
+");
+
         //
 
         SetTargetFPS(GLOBALS.Settings.Misc.FPS);
@@ -2608,9 +2629,9 @@ void main() {
         UnloadShader(GLOBALS.Shaders.BoxTilePalette);
         UnloadShader(GLOBALS.Shaders.LightMapStretch);
         UnloadShader(GLOBALS.Shaders.TilePreviewFragment);
+        UnloadShader(GLOBALS.Shaders.WhiteBackgroundRemover);
         
         UnloadShader(GLOBALS.Shaders.LightMapMask);
-        // UnloadShader(GLOBALS.Shaders.LightMapCroppedMask);
         UnloadShader(GLOBALS.Shaders.VFlip);
         
         UnloadRenderTexture(GLOBALS.Textures.GeneralLevel);

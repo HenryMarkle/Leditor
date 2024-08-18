@@ -22,7 +22,7 @@ internal static class GLOBALS
         public Texture2D SplashScreen { get; set; }
         
         public Texture2D MissingTile { get; set; }
-
+ 
         public Texture2D[] GeoMenu { get; set; } = [];
         public Texture2D[] GeoInterface { get; set; } = [];
         public Texture2D[] GeoBlocks { get; set; } = [];
@@ -60,7 +60,7 @@ internal static class GLOBALS
         internal Shader OppositeBrightness { get; set; }
 
         internal Shader LightMapMask { get; set; }
-        // internal Shader LightMapCroppedMask { get; set; }
+        public Shader WhiteBackgroundRemover { get; set; }        
         
         internal Shader TilePreviewFragment { get; set; }
         internal Shader Palette { get; set; }

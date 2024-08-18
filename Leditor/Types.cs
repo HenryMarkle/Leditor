@@ -154,6 +154,8 @@ public sealed class LevelState
 
         LightMode = lightMode;
         DefaultTerrain = terrainMedium;
+
+        LevelCreated?.Invoke();
     }
 
     internal void New(
@@ -246,6 +248,8 @@ public sealed class LevelState
         WaterAtFront = false;
         Seed = new Random().Next(10000);
         DefaultMaterial = "Concrete";
+
+        LevelCreated?.Invoke();
     }
 
     internal void Resize(
@@ -258,6 +262,8 @@ public sealed class LevelState
         GeoCell layer2Fill,
         GeoCell layer3Fill
     ) {
+        LevelResized?.Invoke(Width, Height, Width + left + right, Height + top + bottom);
+
         GeoMatrix = Utils.Resize(GeoMatrix, left, top, right, bottom, layer1Fill, layer2Fill, layer3Fill);
         TileMatrix = Utils.Resize(TileMatrix, left, top, right, bottom, new TileCell(), new TileCell(), new TileCell());
         MaterialColors = Utils.Resize(MaterialColors, left, top, right, bottom, Color.Black, Color.Black, Color.Black);
@@ -342,17 +348,18 @@ public sealed class LevelState
 
         // Update Dimensions
 
+        LevelResized?.Invoke(Width, Height, width, height);
+
         Width = width;
         Height = height;
         Padding = padding;
-
-        /*Border = new(
-            Padding.left * Scale,
-            Padding.top * Scale,
-            (Width - (Padding.right + Padding.left)) * Scale,
-            (Height - (Padding.bottom + Padding.top)) * Scale
-        );*/
     }
+
+    internal delegate void LevelCreatedEventHandler();
+    internal delegate void LevelResizedEventHandler(int oldWidth, int oldHeight, int newWidth, int newHeight);
+
+    internal event LevelCreatedEventHandler? LevelCreated;
+    internal event LevelResizedEventHandler? LevelResized;
 }
 
 public record struct TileInitLoadInfo(
