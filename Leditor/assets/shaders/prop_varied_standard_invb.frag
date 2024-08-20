@@ -1,6 +1,11 @@
 #version 330
 
-uniform sampler2D textureSampler;
+uniform sampler2D inputTexture;
+uniform int layerNum;
+uniform float layerHeight;
+uniform float varWidth;
+uniform int variation;
+uniform int depth;
 
 in vec2 fragTexCoord;
 in vec4 fragColor;
@@ -59,9 +64,24 @@ void main() {
 	vec2 c = vertex_pos[3]; // bottom right
 	vec2 d = vertex_pos[2]; // bottom left
 
-	vec2 uv = invbilinear(fragTexCoord, a, b, c, d);
+	vec2 p = fragTexCoord;
+	
+	vec2 uv = invbilinear(p, a, b, c, d);
 
-    vec4 newColor = texture(textureSampler, uv) * fragColor;
+    vec4 newColor = vec4(0);
+    float newXCoord = uv.x * varWidth + (variation * varWidth);
+
+    for (int l = layerNum - 1; l > -1; l--) {
+        float depthTint = 0.03 * (depth + l);
+        
+        float currentHeight = uv.y * layerHeight + (l * layerHeight);
+
+        vec2 newFragTexCoord = vec2(newXCoord, currentHeight);
+
+        vec4 c = texture(inputTexture, newFragTexCoord);
+        if (c.r == 1.0 && c.g == 1.0 && c.b == 1.0) continue;
+        newColor = vec4(c.r + depthTint, c.g + depthTint, c.b + depthTint, c.a);
+    }
 
     FragColor = newColor;
 }

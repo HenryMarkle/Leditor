@@ -1,11 +1,13 @@
 #version 330
 
-uniform sampler2D textureSampler;
+uniform sampler2D inputTexture;
+uniform vec2 offset;
+uniform float height;
+uniform float width;
+uniform int depth; // 0 - 29
 
 in vec2 fragTexCoord;
 in vec4 fragColor;
-
-uniform vec2 vertex_pos[4];
 
 out vec4 FragColor;
 
@@ -59,9 +61,21 @@ void main() {
 	vec2 c = vertex_pos[3]; // bottom right
 	vec2 d = vertex_pos[2]; // bottom left
 
-	vec2 uv = invbilinear(fragTexCoord, a, b, c, d);
+	vec2 p = fragTexCoord;
+	
+	vec2 uv = invbilinear(p, a, b, c, d);
 
-    vec4 newColor = texture(textureSampler, uv) * fragColor;
+	vec4 newColor = texture(inputTexture, vec2(uv.x * width + offset.x, uv.y * height + offset.y));
 
-    FragColor = newColor;
+	if (newColor.r == 1.0 && newColor.g == 1.0 && newColor.b == 1.0) discard;
+
+	float depthWhite = depth * 0.03;
+
+	newColor = vec4(newColor.r + depthWhite, newColor.g + depthWhite, newColor.b + depthWhite, fragColor.a);
+
+	if (newColor.a == 0.0) {
+		discard;
+	}
+
+	FragColor = newColor;
 }

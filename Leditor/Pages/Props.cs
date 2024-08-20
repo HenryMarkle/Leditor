@@ -1654,6 +1654,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
         var inMatrixBounds = tileMatrixX >= 0 && tileMatrixX < GLOBALS.Level.Width && tileMatrixY >= 0 && tileMatrixY < GLOBALS.Level.Height;
 
+        GLOBALS.LockNavigation = _isTileSearchActive || _isPropSearchActive;
+
         // Move level with keyboard
 
         if (_shortcuts.MoveViewLeft.Check(ctrl, shift, alt)) {

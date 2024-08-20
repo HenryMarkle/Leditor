@@ -1328,6 +1328,8 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
 
         var isTileLegal = IsTileLegal(_currentTile, new Vector2(tileMatrixX, tileMatrixY));
 
+        GLOBALS.LockNavigation = _isSearching;
+
         #region TileEditorShortcuts
         
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);

@@ -1,11 +1,16 @@
 #version 330
 
-uniform sampler2D textureSampler;
+uniform sampler2D inputTexture;
+uniform int layerNum;
+uniform float layerHeight;
+uniform float layerWidth;
+uniform vec4 tint;
+uniform int depth; // 0 - 29
+
+uniform vec2 vertex_pos[4];
 
 in vec2 fragTexCoord;
 in vec4 fragColor;
-
-uniform vec2 vertex_pos[4];
 
 out vec4 FragColor;
 
@@ -59,9 +64,41 @@ void main() {
 	vec2 c = vertex_pos[3]; // bottom right
 	vec2 d = vertex_pos[2]; // bottom left
 
-	vec2 uv = invbilinear(fragTexCoord, a, b, c, d);
+	vec2 p = fragTexCoord;
+	
+	vec2 uv = invbilinear(p, a, b, c, d);
 
-    vec4 newColor = texture(textureSampler, uv) * fragColor;
+	vec4 newColor = vec4(0);
+	float totalWidth = uv.x * layerWidth;
 
-    FragColor = newColor;
+	for (int l = layerNum - 1; l > -1; l--) {
+		float currentHeight = uv.y * layerHeight + (l * layerHeight);
+		
+		vec2 newFragTexCoord = vec2(totalWidth, currentHeight);
+
+		if (totalWidth >= 1.0) { continue; /* newFragTexCoord = vec4(1.0, 1.0, 1.0, 1.0); */ }
+	
+		vec4 c = texture(inputTexture, newFragTexCoord);
+		if (c.r == 1.0 && c.g == 1.0 && c.b == 1.0) continue;
+		
+		if (c.g == 1.0) {
+			newColor = vec4(tint.r - 0.3, tint.g - 0.3, tint.b - 0.3, tint.a);
+		}
+		else if (c.r == 1.0) {
+			newColor = vec4(tint.r - 0.6, tint.g - 0.6, tint.b - 0.6, tint.a);
+		}
+		else if (c.b == 1.0) {
+			newColor = vec4(tint.r - 0.1, tint.g - 0.1, tint.b - 0.1, tint.a);
+		}
+		
+		float depthWhite = (depth + l) * 0.03;
+		
+		newColor = vec4(newColor.r + depthWhite, newColor.g + depthWhite, newColor.b + depthWhite, newColor.a);
+	}
+
+	if (newColor.a == 0.0) {
+		discard;
+	}
+
+	FragColor = newColor;
 }

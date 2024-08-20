@@ -1,5 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# 
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Leditor", "Leditor\Leditor.csproj", "{99085254-6DE7-48B1-8345-EAA3E1830163}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Leditor.RL", "Leditor.RL\Leditor.RL.csproj", "{265D591D-6EED-467D-A690-8FE8ADF3CC30}"
@@ -9,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Leditor.Serialization", "Leditor.Serialization\Leditor.Serialization.csproj", "{1E43BF44-159C-42A4-90E5-42044E0E6E4D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Leditor.Test", "Leditor.Test\Leditor.Test.csproj", "{D540F35C-0D43-4836-A5AC-A762A342A4BB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Leditor.Renderer", "Leditor.Renderer\Leditor.Renderer.csproj", "{BFDC3036-91A2-4709-8F09-05C9BA783BDC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,15 +41,21 @@ Global
 		{D540F35C-0D43-4836-A5AC-A762A342A4BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D540F35C-0D43-4836-A5AC-A762A342A4BB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{99085254-6DE7-48B1-8345-EAA3E1830163}.Experimental|Any CPU.ActiveCfg = Experimental|Any CPU
-        {99085254-6DE7-48B1-8345-EAA3E1830163}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
+		{99085254-6DE7-48B1-8345-EAA3E1830163}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
 		{265D591D-6EED-467D-A690-8FE8ADF3CC30}.Experimental|Any CPU.ActiveCfg = Experimental|Any CPU
-        {265D591D-6EED-467D-A690-8FE8ADF3CC30}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
+		{265D591D-6EED-467D-A690-8FE8ADF3CC30}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
 		{6DA4BD27-E60D-4518-BEE2-02E55CE7BF37}.Experimental|Any CPU.ActiveCfg = Experimental|Any CPU
-        {6DA4BD27-E60D-4518-BEE2-02E55CE7BF37}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
+		{6DA4BD27-E60D-4518-BEE2-02E55CE7BF37}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
 		{1E43BF44-159C-42A4-90E5-42044E0E6E4D}.Experimental|Any CPU.ActiveCfg = Experimental|Any CPU
-        {1E43BF44-159C-42A4-90E5-42044E0E6E4D}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
+		{1E43BF44-159C-42A4-90E5-42044E0E6E4D}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
 		{D540F35C-0D43-4836-A5AC-A762A342A4BB}.Experimental|Any CPU.ActiveCfg = Experimental|Any CPU
-        {D540F35C-0D43-4836-A5AC-A762A342A4BB}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
+		{D540F35C-0D43-4836-A5AC-A762A342A4BB}.Experimental|Any CPU.Build.0 = Experimental|Any CPU
+		{BFDC3036-91A2-4709-8F09-05C9BA783BDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFDC3036-91A2-4709-8F09-05C9BA783BDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BFDC3036-91A2-4709-8F09-05C9BA783BDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BFDC3036-91A2-4709-8F09-05C9BA783BDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BFDC3036-91A2-4709-8F09-05C9BA783BDC}.Experimental|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFDC3036-91A2-4709-8F09-05C9BA783BDC}.Experimental|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

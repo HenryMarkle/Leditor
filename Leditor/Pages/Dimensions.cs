@@ -54,6 +54,8 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
     private Vector2 _prevFirst;
     private Vector2 _prevSecond;
 
+    private bool _isInputBusy;
+
     private void ResetSides() {
         var size = new Vector2(GLOBALS.Level.Width, GLOBALS.Level.Height) * 20;
 
@@ -147,6 +149,9 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
 
         var mouse = GetMousePosition();
         var worldMouse = GetScreenToWorld2D(mouse, _camera);
+
+        GLOBALS.LockNavigation = _isInputBusy;
+        _isInputBusy = false;
 
         #region Shortcuts
         if (!isWinBusy || _clickTracker)
@@ -494,9 +499,13 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
             
             ImGui.SetNextItemWidth(200);
             ImGui.InputInt("Width", ref _matrixWidthValue);
+
+            _isInputBusy = _isInputBusy || ImGui.IsItemActive();
             
             ImGui.SetNextItemWidth(200);
             ImGui.InputInt("Height", ref _matrixHeightValue);
+
+            _isInputBusy = _isInputBusy || ImGui.IsItemActive();
             
             Utils.Restrict(ref _matrixWidthValue, 1);
             Utils.Restrict(ref _matrixHeightValue, 1);
@@ -505,15 +514,23 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
 
             ImGui.SetNextItemWidth(200);
             ImGui.InputInt("Left", ref _leftPadding);
+
+            _isInputBusy = _isInputBusy || ImGui.IsItemActive();
             
             ImGui.SetNextItemWidth(200);
             ImGui.InputInt("Top", ref _topPadding);
+
+            _isInputBusy = _isInputBusy || ImGui.IsItemActive();
             
             ImGui.SetNextItemWidth(200);
             ImGui.InputInt("Right", ref _rightPadding);
+
+            _isInputBusy = _isInputBusy || ImGui.IsItemActive();
             
             ImGui.SetNextItemWidth(200);
             ImGui.InputInt("Bottom", ref _bottomPadding);
+
+            _isInputBusy = _isInputBusy || ImGui.IsItemActive();
             
             Utils.Restrict(ref _leftPadding, 0);
             Utils.Restrict(ref _topPadding, 0);

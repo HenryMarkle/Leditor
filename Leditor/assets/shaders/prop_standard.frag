@@ -25,7 +25,7 @@ void main() {
         newColor = vec4(c.r + depthTint, c.g + depthTint, c.b + depthTint, c.a);
     }
 
-if (newColor.a == 0.0) discard;
+    if (newColor.a == 0.0) discard;
 
     FragColor = newColor;
 }

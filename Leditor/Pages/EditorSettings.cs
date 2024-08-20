@@ -23,9 +23,13 @@ internal class SettingsPage : EditorPage
     private bool _assigningShortcut;
     private bool _showAssignAlertWindow;
 
+    private bool _isInputBusy;
+
     private KeyboardShortcut? _shortcutToAssign;
     private KeyboardShortcut? _shortcutToReset;
     private MouseShortcut? _mouseShortcutToAssign;
+
+    private bool _showStyles;
     
     private readonly string[] _settingsCategories = [
         "Global",
@@ -52,6 +56,9 @@ internal class SettingsPage : EditorPage
     
     public override void Draw()
     {
+        GLOBALS.LockNavigation = _isInputBusy;
+        _isInputBusy = false;
+
         #region Shortcuts
         
         if (_shortcutToAssign is not null || _mouseShortcutToAssign is not null)
@@ -203,9 +210,15 @@ internal class SettingsPage : EditorPage
                         _ => GLOBALS.Settings.GeneralSettings
                     };
 
-                    Printers.ImGui.BindObject(settings);
+                    _isInputBusy = _isInputBusy || Printers.ImGui.BindObject_CheckActiveInput(settings);
                 } else if (_settingsActiveCategory is 7) {
-                    ImGui.ShowStyleEditor();
+                    ImGui.Text("Style editor has been temporarily removed.");
+                    
+                    ImGui.Checkbox("Show", ref _showStyles);
+                    
+                    ImGui.Separator();
+
+                    if (_showStyles) ImGui.ShowStyleEditor();
                 } else {
                     if (ImGui.BeginChild("##ShortcutsPanel")) {
                         ImGui.Columns(2);

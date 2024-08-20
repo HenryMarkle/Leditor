@@ -64,6 +64,8 @@ internal class CamerasEditorPage : EditorPage, IContextListener
 
         var worldMouse = GetScreenToWorld2D(GetMousePosition(), _camera);
 
+        GLOBALS.LockNavigation = _isTextInputBusy;
+
         #region CamerasInputHandlers
 
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);

@@ -157,7 +157,7 @@ uniform float layerHeight;
 uniform float varWidth;
 uniform int variation;
 uniform int depth;
-uniform in flatShading;
+uniform int flatShading;
 
 in vec2 fragTexCoord;
 in vec4 fragColor;

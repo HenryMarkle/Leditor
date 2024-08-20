@@ -844,8 +844,18 @@ internal class LightEditorPage : EditorPage, IContextListener
 
                 if (_stretchMode)
                 {
-                    BeginShaderMode(GLOBALS.Shaders.LightMapStretch);
-                    SetShaderValueTexture(GLOBALS.Shaders.LightMapStretch, GetShaderLocation(GLOBALS.Shaders.LightMapStretch, "textureSampler"), _stretchTexture);
+                    var shader = GLOBALS.Shaders.LightMapStretch;
+                    BeginShaderMode(shader);
+                    SetShaderValueTexture(shader, GetShaderLocation(shader, "textureSampler"), _stretchTexture.Raw);
+                    
+                    SetShaderValueV(
+                        shader, 
+                        GetShaderLocation(shader, "vertex_pos"), 
+                        [ _quadPoints.TopRight, _quadPoints.TopLeft, _quadPoints.BottomLeft, _quadPoints.BottomRight ], 
+                        ShaderUniformDataType.Vec2, 
+                        4
+                    );
+                    
                     Printers.DrawTextureQuad(_stretchTexture, _quadPoints, Color.White with { A = 150 });
                     EndShaderMode();
                 }
@@ -926,10 +936,10 @@ internal class LightEditorPage : EditorPage, IContextListener
                 
                 if (_stretchMode)
                 {
-                    DrawCircleV(_quadPoints.TopLeft, 7f, Color.Blue);
-                    DrawCircleV(_quadPoints.TopRight, 7f, Color.Blue);
-                    DrawCircleV(_quadPoints.BottomRight, 7f, Color.Blue);
-                    DrawCircleV(_quadPoints.BottomLeft, 7f, Color.Blue);
+                    DrawCircleV(_quadPoints.TopLeft, 7f, Color.Green);
+                    DrawCircleV(_quadPoints.TopRight, 7f, Color.Green);
+                    DrawCircleV(_quadPoints.BottomRight, 7f, Color.Green);
+                    DrawCircleV(_quadPoints.BottomLeft, 7f, Color.Green);
                 }
 
                 // The brush
@@ -1230,10 +1240,24 @@ internal class LightEditorPage : EditorPage, IContextListener
 
                         if (applyClicked)
                         {
+                            var shader = GLOBALS.Shaders.LightMapStretch;
+                            BeginShaderMode(shader);
+                            SetShaderValueTexture(shader, GetShaderLocation(shader, "textureSampler"), _stretchTexture);
+
+                            SetShaderValueV(
+                                shader, 
+                                GetShaderLocation(shader, "vertex_pos"), 
+                                [ _quadPoints.TopRight, _quadPoints.TopLeft, _quadPoints.BottomLeft, _quadPoints.BottomRight ], 
+                                ShaderUniformDataType.Vec2, 
+                                4
+                            );
+
                             BeginTextureMode(GLOBALS.Textures.LightMap);
                             ClearBackground(Color.White);
                             Printers.DrawTextureQuad(_stretchTexture, _quadPoints);
                             EndTextureMode();
+
+                            EndShaderMode();
                             
                             ResetQuadPoints();
                         }

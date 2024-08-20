@@ -65,6 +65,8 @@ internal class MainPage : EditorPage, IContextListener
     private bool _isRecentlyWinHovered;
 
     private int _selectedPaletteIndex;
+
+    private bool _isInputBusy;
     
     private DrizzleRenderWindow? _renderWindow;
 
@@ -235,6 +237,8 @@ internal class MainPage : EditorPage, IContextListener
                 _isVisualsWinDragged || 
                 _isShortcutsWinHovered || 
                 _isShortcutsWinDragged;
+
+        GLOBALS.LockNavigation = _isInputBusy;
 
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
@@ -702,6 +706,8 @@ internal class MainPage : EditorPage, IContextListener
                 EndMode2D();
                 
                 // Menu
+
+                _isInputBusy = false;
                 
                 rlImGui.Begin();
                 
@@ -764,6 +770,8 @@ internal class MainPage : EditorPage, IContextListener
                     ImGui.InputInt("Seed", ref seed);
                     if (GLOBALS.Level.Seed != seed) GLOBALS.Level.Seed = seed;
 
+                    _isInputBusy = _isInputBusy || ImGui.IsItemActive();
+
                     // Water Level
                     
                     var waterLevel = GLOBALS.Level.WaterLevel;
@@ -774,6 +782,8 @@ internal class MainPage : EditorPage, IContextListener
                         if (waterLevel < -1) waterLevel = -1;
                         GLOBALS.Level.WaterLevel = waterLevel;
                     }
+
+                    _isInputBusy = _isInputBusy || ImGui.IsItemActive();
                     
                     // Water Position
                     
@@ -783,6 +793,8 @@ internal class MainPage : EditorPage, IContextListener
                         _shouldRedrawLevel = true;
                         GLOBALS.Level.WaterAtFront = waterInFront;
                     }
+
+                    _isInputBusy = _isInputBusy || ImGui.IsItemActive();
                     
                     ImGui.Separator();
                     
@@ -1083,6 +1095,8 @@ internal class MainPage : EditorPage, IContextListener
                         GLOBALS.Settings.GeneralSettings.WaterOpacity = (byte) waterOpacity;
                         _shouldRedrawLevel = true;
                     }
+
+                    _isInputBusy = _isInputBusy || ImGui.IsItemActive();
                     //
 
                     var layerAboveAll = GLOBALS.Settings.GeneralSettings.CurrentLayerAtFront;

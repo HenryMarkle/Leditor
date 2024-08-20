@@ -1319,15 +1319,15 @@ public class PropsShortcuts : IEditorShortcuts
 
 public class GlobalShortcuts : IEditorShortcuts
 {
-    public KeyboardShortcut ToMainPage { get; set; } = new(KeyboardKey.One, shift: false, ctrl: false, alt: true);
-    public KeyboardShortcut ToGeometryEditor { get; set; } = new(KeyboardKey.Two, shift: false, ctrl: false, alt: true);
-    public KeyboardShortcut ToTileEditor { get; set; } = new(KeyboardKey.Three, shift: false, ctrl: false, alt: true);
-    public KeyboardShortcut ToCameraEditor { get; set; } = new(KeyboardKey.Four, shift: false, ctrl: false, alt: true);
-    public KeyboardShortcut ToLightEditor { get; set; } = new(KeyboardKey.Five, shift: false, ctrl: false, alt: true);
-    public KeyboardShortcut ToDimensionsEditor { get; set; } = new(KeyboardKey.Six, shift: false, ctrl: false, alt: true);
-    public KeyboardShortcut ToEffectsEditor { get; set; } = new(KeyboardKey.Seven, shift: false, ctrl: false, alt: true);
-    public KeyboardShortcut ToPropsEditor { get; set; } = new(KeyboardKey.Eight, shift: false, ctrl: false, alt: true);
-    public KeyboardShortcut ToSettingsPage { get; set; } = new(KeyboardKey.Nine, shift: false, ctrl: false, alt: true);
+    public KeyboardShortcut ToMainPage { get; set; } = new(KeyboardKey.One);
+    public KeyboardShortcut ToGeometryEditor { get; set; } = new(KeyboardKey.Two);
+    public KeyboardShortcut ToTileEditor { get; set; } = new(KeyboardKey.Three);
+    public KeyboardShortcut ToCameraEditor { get; set; } = new(KeyboardKey.Four);
+    public KeyboardShortcut ToLightEditor { get; set; } = new(KeyboardKey.Five);
+    public KeyboardShortcut ToDimensionsEditor { get; set; } = new(KeyboardKey.Six);
+    public KeyboardShortcut ToEffectsEditor { get; set; } = new(KeyboardKey.Seven);
+    public KeyboardShortcut ToPropsEditor { get; set; } = new(KeyboardKey.Eight);
+    public KeyboardShortcut ToSettingsPage { get; set; } = new(KeyboardKey.Nine);
 
     public KeyboardShortcut TakeScreenshot { get; set; } = new(KeyboardKey.Null);
 

@@ -55,6 +55,8 @@ internal class ExperimentalGeometryPage : EditorPage
     private int _geoMenuCategory;
     private int _geoMenuIndex;
 
+    private bool _isInputBusy;
+
     private static readonly int[] GeoMenuIndexMaxCount = [4, 3, 6, 7];
     private static readonly int[] GeoMenuIndexToBlockId = [1, 2, 6, 9];
     private static readonly int[] GeoMenuCategory2ToStackableId = [2, 1, 11];
@@ -285,6 +287,9 @@ internal class ExperimentalGeometryPage : EditorPage
             _shouldRedrawLevel = true;
             _connectionUpdate = false;
         }
+
+        GLOBALS.LockNavigation = _isInputBusy;
+        _isInputBusy = false;
         
         var ctrl = IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl);
         var shift = IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift);
@@ -2168,6 +2173,8 @@ internal class ExperimentalGeometryPage : EditorPage
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer1 = new ConColor((byte)(layer1ColorVec.X * 255),
                         (byte)(layer1ColorVec.Y * 255), (byte)(layer1ColorVec.Z * 255), (byte)(layer1ColorVec.W * 255));
                 }
+
+                _isInputBusy = _isInputBusy || ImGui.IsItemActive();
                 
                 ImGui.SetNextItemWidth(250);
                 if (ImGui.ColorEdit4("Layer 2", ref layer2ColorVec)) {
@@ -2176,6 +2183,8 @@ internal class ExperimentalGeometryPage : EditorPage
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 = new ConColor((byte)(layer2ColorVec.X * 255),
                         (byte)(layer2ColorVec.Y * 255), (byte)(layer2ColorVec.Z * 255), (byte)(layer2ColorVec.W * 255));
                 }
+
+                _isInputBusy = _isInputBusy || ImGui.IsItemActive();
                 
                 ImGui.SetNextItemWidth(250);
                 if (ImGui.ColorEdit4("Layer 3", ref layer3ColorVec)) {
@@ -2183,6 +2192,8 @@ internal class ExperimentalGeometryPage : EditorPage
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 = new ConColor((byte)(layer3ColorVec.X * 255),
                         (byte)(layer3ColorVec.Y * 255), (byte)(layer3ColorVec.Z * 255), (byte)(layer3ColorVec.W * 255));
                 }
+
+                _isInputBusy = _isInputBusy || ImGui.IsItemActive();
                 
                 ImGui.SetNextItemWidth(250);
                 if (ImGui.ColorEdit4("Water", ref waterColorVec)) {
@@ -2192,6 +2203,7 @@ internal class ExperimentalGeometryPage : EditorPage
                         (byte)(waterColorVec.Y * 255), (byte)(waterColorVec.Z * 255), (byte)(waterColorVec.W * 255));
                 }
                 
+                _isInputBusy = _isInputBusy || ImGui.IsItemActive();
 
                 var saveColors = ImGui.Button("Save Settings", availableSpace with { Y = 20 });
 

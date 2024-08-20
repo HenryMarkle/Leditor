@@ -1015,7 +1015,7 @@ class Program
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_colored.frag"));
         
         GLOBALS.Shaders.ColoredBoxTileProp =
-            LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_colored_box_type.frag"));
+            LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_colored_box.frag"));
 
         GLOBALS.Shaders.LongProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_long.frag"));
@@ -1027,7 +1027,7 @@ class Program
             Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_colored_preview.frag"));
 
         GLOBALS.Shaders.LightMapStretch =
-            LoadShader(null,
+            LoadShader(Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "image_invb.vert"),
                 Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "lightmap_stretch.frag"));
 
         GLOBALS.Shaders.TilePalette = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "tile_palette.frag"));
@@ -1091,26 +1091,10 @@ void main() {
     FragColor = fragColor;
 }");
 
-        GLOBALS.Shaders.WhiteBackgroundRemover = LoadShaderFromMemory(null, @"#version 330
-
-in vec2 fragTexCoord;
-in vec4 fragColor;
-
-out vec4 FragColor;
-
-uniform sampler2D inputTexture;
-
-void main()
-{
-    vec4 color = texture(inputTexture, fragTexCoord);
-
-    if (color.r == 1.0 && color.g == 1.0 && color.b == 1.0) {
-        discard;
-    }
-
-    FragColor = color;
-}
-");
+        GLOBALS.Shaders.PropInvb = LoadShader(
+            Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "image_invb.vert"), 
+            Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_invb.frag")
+        );
 
         //
 
@@ -2629,7 +2613,7 @@ void main()
         UnloadShader(GLOBALS.Shaders.BoxTilePalette);
         UnloadShader(GLOBALS.Shaders.LightMapStretch);
         UnloadShader(GLOBALS.Shaders.TilePreviewFragment);
-        UnloadShader(GLOBALS.Shaders.WhiteBackgroundRemover);
+        UnloadShader(GLOBALS.Shaders.PropInvb);
         
         UnloadShader(GLOBALS.Shaders.LightMapMask);
         UnloadShader(GLOBALS.Shaders.VFlip);

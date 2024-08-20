@@ -57,10 +57,7 @@ internal static class GLOBALS
     /// </summary>
     internal class ShaderService
     {
-        internal Shader OppositeBrightness { get; set; }
-
-        internal Shader LightMapMask { get; set; }
-        public Shader WhiteBackgroundRemover { get; set; }        
+        internal Shader LightMapMask { get; set; }        
         
         internal Shader TilePreviewFragment { get; set; }
         internal Shader Palette { get; set; }
@@ -73,6 +70,12 @@ internal static class GLOBALS
         internal Shader ApplyShadowBrush { get; set; }
         internal Shader ApplyLightBrush { get; set; }
         internal Shader Prop { get; set; }
+        
+        /// <summary>
+        ///  Prop with inverse-bilinear interpolation
+        /// </summary>
+        internal Shader PropInvb { get; set; }
+
         internal Shader StandardProp { get; set; }
         internal Shader StandardPropColored { get; set; }
         internal Shader StandardPropPalette { get; set; }
@@ -254,7 +257,6 @@ internal static class GLOBALS
     /// Indicate whether a newly created level was saved before.
     /// </summary>
     internal static bool NewlyCreated { get; set; }
-    
 
     /// The current loaded level
     internal static LevelState Level { get; set; } = new(InitialMatrixWidth, InitialMatrixHeight, (6, 3, 6, 5));

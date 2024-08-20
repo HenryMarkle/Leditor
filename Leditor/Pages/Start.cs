@@ -268,9 +268,15 @@ internal class StartPage : EditorPage
     private bool _columnWidthSetOnce;
     private bool _isPathBufferActive;
 
+    private bool _isInputBusy;
+
     public override void Draw()
     {
+        GLOBALS.LockNavigation = _isInputBusy;
+
         if (!_uiLocked) {
+            _isInputBusy = false;
+
             if (_dirEntries.Length > 0 && (IsKeyPressed(KeyboardKey.Down))) {
                 _currentIndex++;
                 _shouldRedrawLevelReview = true;
@@ -525,6 +531,8 @@ internal class StartPage : EditorPage
             }
             else
             {
+                _isInputBusy = false;
+
                 if (GLOBALS.Settings.GeneralSettings.DarkTheme) ClearBackground(new Color(100, 100, 100, 255));
                 else ClearBackground(new Color(170, 170, 170, 255));
 
@@ -544,7 +552,6 @@ internal class StartPage : EditorPage
                 rlImGui.Begin();
 
                 var winSize = new Vector2(GetScreenWidth() - 80, GetScreenHeight() - 80);
-
 
                 if (ImGui.Begin("Start##StartupWindow", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoDocking)) {
                     ImGui.SetWindowSize(winSize);
@@ -580,8 +587,8 @@ internal class StartPage : EditorPage
 
                     var pathUpdated = ImGui.InputText("##FilePathBuffer", ref _currentDir, 260, ImGuiInputTextFlags.AutoSelectAll);
 
-                    _isPathBufferActive = ImGui.IsItemActive();
-
+                    _isInputBusy = _isPathBufferActive = ImGui.IsItemActive();
+                    
                     var listAvailSpace = ImGui.GetContentRegionAvail();
 
                     if (ImGui.BeginListBox("##StartPageFileExplorerList", listAvailSpace with { Y = listAvailSpace.Y - 260 })) {

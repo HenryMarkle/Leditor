@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <NeutralLanguage>en-US</NeutralLanguage>
+        <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Experimental'">
+      <DefineConstants>EXPERIMENTAL;TRACE</DefineConstants>
+      <OutputPath>bin\Experimental\</OutputPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Raylib-cs" Version="6.1.1" />
+      <PackageReference Include="Serilog" Version="2.12.0" />
+      <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+      <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Leditor.Data\Leditor.Data.csproj" />
+      <ProjectReference Include="..\Leditor.RL\Leditor.RL.csproj" />
+      <ProjectReference Include="..\Leditor.Serialization\Leditor.Serialization.csproj" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
+    </PropertyGroup>
+</Project>

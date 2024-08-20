@@ -3123,21 +3123,22 @@ internal static class Printers
 
         Rlgl.Begin(0x0007);
         Rlgl.Color4ub(Color.White.R, Color.White.G, Color.White.B, Color.White.A);
-
+        
         Rlgl.TexCoord2f(vTopRightX, vTopRightY);
         Rlgl.Vertex2f(topRight.X, topRight.Y);
         
         Rlgl.TexCoord2f(vTopLeftX, vTopLeftY);
         Rlgl.Vertex2f(topLeft.X, topLeft.Y);
-        
+
         Rlgl.TexCoord2f(vBottomLeftX, vBottomLeftY);
         Rlgl.Vertex2f(bottomLeft.X, bottomLeft.Y);
         
         Rlgl.TexCoord2f(vBottomRightX, vBottomRightY);
         Rlgl.Vertex2f(bottomRight.X, bottomRight.Y);
-        
+
         Rlgl.TexCoord2f(vTopRightX, vTopRightY);
         Rlgl.Vertex2f(topRight.X, topRight.Y);
+        
         Rlgl.End();
 
         Rlgl.SetTexture(0);
@@ -3900,22 +3901,76 @@ internal static class Printers
         var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * scale;
         float calTextureCutWidth = (float)textureCutWidth / (float)texture.Width;
 
-        var textureLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "inputTexture");
-        var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerNum");
-        var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerHeight");
-        var layerWidthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "layerWidth");
-        var depthLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "depth");
-        var alphaLoc = GetShaderLocation(GLOBALS.Shaders.Prop, "alpha");
+        var shader = GLOBALS.Shaders.Prop;
 
-        BeginShaderMode(GLOBALS.Shaders.Prop);
+        var textureLoc = GetShaderLocation(shader, "inputTexture");
+        var layerNumLoc = GetShaderLocation(shader, "layerNum");
+        var layerHeightLoc = GetShaderLocation(shader, "layerHeight");
+        var layerWidthLoc = GetShaderLocation(shader, "layerWidth");
+        var depthLoc = GetShaderLocation(shader, "depth");
+        var alphaLoc = GetShaderLocation(shader, "alpha");
 
-        SetShaderValueTexture(GLOBALS.Shaders.Prop, textureLoc, texture);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.Int);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerHeightLoc, calLayerHeight, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.Prop, layerWidthLoc, calTextureCutWidth, ShaderUniformDataType.Float);
-        SetShaderValue(GLOBALS.Shaders.Prop, depthLoc, depth, ShaderUniformDataType.Int);
-        SetShaderValue(GLOBALS.Shaders.Prop, alphaLoc, alpha/255f, ShaderUniformDataType.Float);
+        BeginShaderMode(shader);
+
+        SetShaderValueTexture(shader, textureLoc, texture);
+        SetShaderValue(shader, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.Int);
+        SetShaderValue(shader, layerHeightLoc, calLayerHeight, ShaderUniformDataType.Float);
+        SetShaderValue(shader, layerWidthLoc, calTextureCutWidth, ShaderUniformDataType.Float);
+        SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
+        SetShaderValue(shader, alphaLoc, alpha/255f, ShaderUniformDataType.Float);
+
+        DrawTextureQuad(texture, quads);
         
+        EndShaderMode();
+    }
+
+    /// <summary>
+    /// Draws the texture of the tile, layer by layer, from the bottom up.
+    /// </summary>
+    /// <param name="init">a reference to the tile definition</param>
+    /// <param name="quads">target placement quads</param>
+    internal static void DrawTileAsProp_Intrpolated(
+        in TileDefinition init,
+        PropQuad quads,
+        int depth = 0,
+        int alpha = 255
+    )
+    {
+        var scale = GLOBALS.Scale;
+        var texture = init.Texture;
+
+        var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * scale;
+        float calLayerHeight = (float)layerHeight / (float)texture.Height;
+        var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * scale;
+        float calTextureCutWidth = (float)textureCutWidth / (float)texture.Width;
+
+        var shader = GLOBALS.Shaders.PropInvb;
+
+        var textureLoc = GetShaderLocation(shader, "inputTexture");
+        var layerNumLoc = GetShaderLocation(shader, "layerNum");
+        var layerHeightLoc = GetShaderLocation(shader, "layerHeight");
+        var layerWidthLoc = GetShaderLocation(shader, "layerWidth");
+        var depthLoc = GetShaderLocation(shader, "depth");
+        var alphaLoc = GetShaderLocation(shader, "alpha");
+        var vertLoc = GetShaderLocation(shader, "vertex_pos");
+
+        BeginShaderMode(shader);
+
+        SetShaderValueTexture(shader, textureLoc, texture);
+        SetShaderValue(shader, layerNumLoc, init.Repeat.Length, ShaderUniformDataType.Int);
+        SetShaderValue(shader, layerHeightLoc, calLayerHeight, ShaderUniformDataType.Float);
+        SetShaderValue(shader, layerWidthLoc, calTextureCutWidth, ShaderUniformDataType.Float);
+        SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
+        SetShaderValue(shader, alphaLoc, alpha/255f, ShaderUniformDataType.Float);
+
+        SetShaderValueV(
+            shader, 
+            vertLoc, 
+            [ quads.TopRight, quads.TopLeft, quads.BottomLeft, quads.BottomRight ], 
+            ShaderUniformDataType.Vec2, 
+            4
+        );
+
         DrawTextureQuad(texture, quads);
         
         EndShaderMode();
@@ -4630,6 +4685,7 @@ internal static class Printers
         }
     }
 
+    #region Used By Props Editor
     internal static void DrawProp(InitPropType type, TileDefinition? tile, int category, int index, Prop prop, int scale, PropDrawMode drawMode, Texture2D? palette)
     {
         var depth = -prop.Depth - GLOBALS.Layer*10;
@@ -4651,7 +4707,7 @@ internal static class Printers
 
                 switch (drawMode) {
                     case PropDrawMode.Untinted:
-                    DrawTileAsProp(tile, quads, depth);
+                    DrawTileAsProp_Intrpolated(tile, quads, depth);
                     break;
 
                     case PropDrawMode.Tinted:
@@ -4768,7 +4824,7 @@ internal static class Printers
                 break;
         }
     } 
-    
+    #endregion
     internal static void DrawProp(InitPropType type, TileDefinition? tile, int category, int index, Prop prop, int scale, Vector2 offset, bool tintedTiles = true)
     {
         var depth = -prop.Depth - GLOBALS.Layer*10;
@@ -7808,21 +7864,20 @@ internal static class Printers
             var isEffects = GLOBALS.Page == 7;
             var isProps = GLOBALS.Page == 8;
             var isSettings = GLOBALS.Page == 9;
-            var isMisc = GLOBALS.Page is 10 or 20;
             
-            if (ImGuiNET.ImGui.MenuItem("Main", string.Empty, ref isMain)) {GLOBALS.Page = 1;}
-            if (ImGuiNET.ImGui.MenuItem("Geometry", string.Empty, ref isGeo)) {GLOBALS.Page = 2;}
-            if (ImGuiNET.ImGui.MenuItem("Tiles", string.Empty, ref isTile)) {GLOBALS.Page = 3;}
-            if (ImGuiNET.ImGui.MenuItem("Cameras", string.Empty, ref isCamera)) {GLOBALS.Page = 4;}
-            if (ImGuiNET.ImGui.MenuItem("Light", string.Empty, ref isLight)) {GLOBALS.Page = 5;}
-            if (ImGuiNET.ImGui.MenuItem("Dimensions", string.Empty, ref isDimensions)) {GLOBALS.Page = 6;}
-            if (ImGuiNET.ImGui.MenuItem("Effects", string.Empty, ref isEffects)) {GLOBALS.Page = 7;}
-            if (ImGuiNET.ImGui.MenuItem("Props", string.Empty, ref isProps)) {GLOBALS.Page = 8;}
-            if (ImGuiNET.ImGui.MenuItem("Settings", string.Empty, ref isSettings)) {GLOBALS.Page = 9;}
+            if (ImGuiNET.ImGui.MenuItem("Main", string.Empty, ref isMain)) { GLOBALS.LockNavigation = false; GLOBALS.Page = 1;}
+            if (ImGuiNET.ImGui.MenuItem("Geometry", string.Empty, ref isGeo)) {GLOBALS.LockNavigation = false;GLOBALS.Page = 2;}
+            if (ImGuiNET.ImGui.MenuItem("Tiles", string.Empty, ref isTile)) {GLOBALS.LockNavigation = false;GLOBALS.Page = 3;}
+            if (ImGuiNET.ImGui.MenuItem("Cameras", string.Empty, ref isCamera)) {GLOBALS.LockNavigation = false;GLOBALS.Page = 4;}
+            if (ImGuiNET.ImGui.MenuItem("Light", string.Empty, ref isLight)) {GLOBALS.LockNavigation = false;GLOBALS.Page = 5;}
+            if (ImGuiNET.ImGui.MenuItem("Dimensions", string.Empty, ref isDimensions)) {GLOBALS.LockNavigation = false;GLOBALS.Page = 6;}
+            if (ImGuiNET.ImGui.MenuItem("Effects", string.Empty, ref isEffects)) {GLOBALS.LockNavigation = false;GLOBALS.Page = 7;}
+            if (ImGuiNET.ImGui.MenuItem("Props", string.Empty, ref isProps)) {GLOBALS.LockNavigation = false;GLOBALS.Page = 8;}
+            if (ImGuiNET.ImGui.MenuItem("Settings", string.Empty, ref isSettings)) {GLOBALS.LockNavigation = false;GLOBALS.Page = 9;}
 
             if (ImGuiNET.ImGui.BeginMenu("Misc")) {
-                if (ImGuiNET.ImGui.MenuItem("L4 Maker")) GLOBALS.Page = 10;
-                if (ImGuiNET.ImGui.MenuItem("Tile Viewer")) GLOBALS.Page = 20;
+                if (ImGuiNET.ImGui.MenuItem("L4 Maker")) {GLOBALS.LockNavigation = false; GLOBALS.Page = 10;}
+                if (ImGuiNET.ImGui.MenuItem("Tile Viewer")) {GLOBALS.LockNavigation = false;GLOBALS.Page = 20;}
 
                 ImGuiNET.ImGui.EndMenu();
             }
@@ -7833,6 +7888,7 @@ internal static class Printers
             {
                 if (ImGuiNET.ImGui.MenuItem("Open..", gShortcuts.Open.ToString())) 
                 {
+                    GLOBALS.LockNavigation = false;
                     GLOBALS.Page = 0;
                 }
 
@@ -7859,6 +7915,7 @@ internal static class Printers
 
                 if (ImGuiNET.ImGui.MenuItem("Save as..", gShortcuts.QuickSaveAs.ToString()))
                 {
+                    GLOBALS.LockNavigation = false;
                     GLOBALS.Page = 12;
                 }
 
@@ -8024,6 +8081,150 @@ internal static class Printers
             }
 
             return updated;
+        }
+
+        internal static bool BindObject_CheckActiveInput(object? obj) {
+            if (obj is null) return false;
+
+            var active = false;
+
+            var properties = obj
+                .GetType()
+                .GetProperties()
+                .Select(property => {
+                    var attr = (SettingName?)property.GetCustomAttributes(typeof(SettingName), false).FirstOrDefault();
+
+                    return (attr, property);
+                })
+                .Where(p => (p.attr?.Hidden ?? false) != true);
+
+            var groupedProperties = properties.GroupBy(p => p.attr?.Group ?? "");
+
+            foreach (var group in groupedProperties) {
+                if (!string.IsNullOrEmpty(group.Key)) ImGuiNET.ImGui.SeparatorText(group.Key);
+
+                foreach (var (attribute, setting) in group) {
+                    var type = setting.PropertyType;
+                    var dependancies = setting
+                        .GetCustomAttributes(typeof(SettingDependancy), false)
+                        .Cast<SettingDependancy>()
+                        .Select(d => properties.SingleOrDefault(p => p.property.Name == d.SettingName && p.property.Name != setting.Name))
+                        .Where(d => d.property is not null && d.property.PropertyType == typeof(bool))
+                        .Select(d => ((bool?) d.property.GetValue(obj)) ?? false);
+
+
+                    var resolvedDeps = dependancies.Any() && dependancies.Aggregate((first, second) => first && second);
+
+                    if ((attribute?.Disabled ?? false) || (dependancies.Any() && !resolvedDeps)) ImGuiNET.ImGui.BeginDisabled();
+                    
+                    if (type == typeof(bool)) {
+                        var value = ((bool?) setting.GetValue(obj)) ?? false;
+                        
+
+                        if (ImGuiNET.ImGui.Checkbox(attribute?.Name ?? setting.Name, ref value)) {
+                            setting.SetValue(obj, value);
+                        }
+                    } else if (type == typeof(int)) {
+                        var value = ((int?) setting.GetValue(obj)) ?? 0;
+                        
+                        if (ImGuiNET.ImGui.InputInt(attribute?.Name ?? setting.Name, ref value)) {
+                            var bounds = (IntBounds?) setting.GetCustomAttributes(typeof(IntBounds), false).FirstOrDefault();
+                            
+                            if (bounds is not null) {
+
+                                if (bounds.Max >= bounds.Min) {
+                                    Utils.Restrict(ref value, bounds.Min, bounds.Max);
+                                } else {
+                                    Utils.Restrict(ref value, bounds.Min);
+                                }
+                            }
+                            
+                            setting.SetValue(obj, value);
+
+                            active = active || ImGuiNET.ImGui.IsItemActive();
+                        }
+
+                    } else if (type == typeof(float)) {
+                        var value = ((float?) setting.GetValue(obj)) ?? 0;
+                        
+                        if (ImGuiNET.ImGui.InputFloat(attribute?.Name ?? setting.Name, ref value)) {
+                            var bounds = (FloatBounds?) setting.GetCustomAttributes(typeof(FloatBounds), false).FirstOrDefault();
+                            
+                            if (bounds is not null) {
+
+                                if (bounds.Max >= bounds.Min) {
+                                    Utils.Restrict(ref value, bounds.Min, bounds.Max);
+                                } else {
+                                    Utils.Restrict(ref value, bounds.Min);
+                                }
+                            }
+                            
+                            setting.SetValue(obj, value);
+                            active = active || ImGuiNET.ImGui.IsItemActive();
+                        }
+                    } else if (type == typeof(string)) {
+                        var value = ((string?) setting.GetValue(obj)) ?? "";
+                        
+                        var bounds = (StringBounds?) setting.GetCustomAttributes(typeof(StringBounds), false).FirstOrDefault();
+
+                        if (ImGuiNET.ImGui.InputText(attribute?.Name ?? setting.Name, ref value, bounds?.MaxLength ?? 256)) {
+                            setting.SetValue(obj, value);
+                        }
+
+                        active = active || ImGuiNET.ImGui.IsItemActive();
+                    } else if (type == typeof(ConColor)) {
+                        var value = ((ConColor?) setting.GetValue(obj)) ?? new(0, 0, 0, 255);
+
+                        var valueVec = new Vector4(value.R/255f, value.G/255f, value.B/255f, value.A/255f);
+
+                        if (ImGuiNET.ImGui.ColorEdit4($"{attribute?.Name ?? ""}##{setting.Name}", ref valueVec)) {
+                            value = new ConColor((byte)(valueVec.X * 255), (byte)(valueVec.Y * 255), (byte)(valueVec.Z * 255), (byte)(valueVec.W * 255));
+
+                            setting.SetValue(obj, value);
+                        }
+
+                        active = active || ImGuiNET.ImGui.IsItemActive();
+                    } else if (type.IsEnum) {
+                        var enumNames = Enum.GetNames(type);
+                        var enums = Enum.GetValues(type);
+
+                        var value = setting.GetValue(obj);
+
+                        var name = Enum.GetName(type, value ?? enums.GetValue(0)!);
+
+                        var selectionIndex = 0;
+
+                        for (var i = 0; i < enumNames.Length; i++) {
+                            if (name == enumNames[i]) {
+                                selectionIndex = i;
+                                break;
+                            }
+                        }
+
+                        var selectionChanged = ImGuiNET.ImGui.Combo($"{attribute?.Name ?? setting.Name}", ref selectionIndex, string.Join('\0', enumNames));
+                    
+                        if (selectionChanged) {
+                            var newValue = enums.GetValue(selectionIndex);
+                            setting.SetValue(obj, newValue);
+                        }
+
+                        active = active || ImGuiNET.ImGui.IsItemActive();
+                    }
+
+
+                    if (!string.IsNullOrEmpty(attribute?.Description) && ImGuiNET.ImGui.IsItemHovered()) {
+                        ImGuiNET.ImGui.BeginTooltip();
+
+                        ImGuiNET.ImGui.Text(attribute!.Description);
+
+                        ImGuiNET.ImGui.EndTooltip();
+                    }
+
+                    if ((attribute?.Disabled ?? false) || (dependancies.Any() && !resolvedDeps)) ImGuiNET.ImGui.EndDisabled();
+                }
+            }
+
+            return active;
         }
     }
 }

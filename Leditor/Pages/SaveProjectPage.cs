@@ -65,6 +65,8 @@ internal class SaveProjectPage : EditorPage
     private string _currentDir;
     private (string path, string name, bool isDir)[] _dirEntries;
 
+    private bool _isInputBusy;
+
     private int _currentIndex = -1;
 
     private void NavigateToDir(string path) {
@@ -311,6 +313,8 @@ internal class SaveProjectPage : EditorPage
             }
             else
             {
+                _isInputBusy = false;
+
                 if (GLOBALS.Settings.GeneralSettings.DarkTheme) ClearBackground(new Color(100, 100, 100, 255));
                 else ClearBackground(new Color(170, 170, 170, 255));
 
@@ -342,6 +346,8 @@ internal class SaveProjectPage : EditorPage
                     
                     ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                     var pathUpdated = ImGui.InputText("##FilePathBuffer", ref _currentDir, 260, ImGuiInputTextFlags.None);
+
+                    _isInputBusy = _isInputBusy || ImGui.IsItemActive();
 
                     var listAvailSpace = ImGui.GetContentRegionAvail();
 
@@ -379,6 +385,8 @@ internal class SaveProjectPage : EditorPage
                     ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                     if (ImGui.InputText("##ProjectName", ref _projectName, 260)) _duplicateName = ProjectNameExists(_projectName);
 
+                    _isInputBusy = _isInputBusy || ImGui.IsItemActive();
+
                     if (pathUpdated) {
                         if (!Directory.Exists(_currentDir)) {
                             _dirEntries = [];
@@ -398,6 +406,8 @@ internal class SaveProjectPage : EditorPage
                     if (ImGui.BeginPopupModal("New Folder Name")) {
                         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                         if (ImGui.InputText("##NewFolderName", ref _newFolderName, 260)) _duplicateFolderName = FolderExists(_newFolderName);
+
+                        _isInputBusy = _isInputBusy || ImGui.IsItemActive();
 
                         if (_duplicateFolderName) ImGui.BeginDisabled();
                         if (ImGui.Button("Create", ImGui.GetContentRegionAvail() with { Y = 20 })) {
