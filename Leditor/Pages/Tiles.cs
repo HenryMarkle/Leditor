@@ -2125,7 +2125,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
         if (_shortcuts.HoveredItemInfo.Check(ctrl, shift, alt)) GLOBALS.Settings.TileEditor.HoveredTileInfo = !GLOBALS.Settings.TileEditor.HoveredTileInfo;
         
         if (_shortcuts.SetMaterialDefault.Check(ctrl, shift, alt) && !_materialTileSwitch) {
-            GLOBALS.Level.DefaultMaterial = currentMaterialInit.Item1;
+            GLOBALS.Level.DefaultMaterial = currentMaterialInit;
         }
 
         if (_shortcuts.ToggleLayer1Tiles.Check(ctrl, shift, alt))
@@ -2754,7 +2754,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                         // Default Material
                         if (!_materialTileSwitch)
                         {
-                            if (currentMaterialInit.Item1 == GLOBALS.Level.DefaultMaterial)
+                            if (currentMaterialInit == GLOBALS.Level.DefaultMaterial)
                             {
                                 ImGui.Text("Current material is the default");
                             }
@@ -2762,7 +2762,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                             {
                                 if (ImGui.Button("Set to default material"))
                                 {
-                                    GLOBALS.Level.DefaultMaterial = currentMaterialInit.Item1;
+                                    GLOBALS.Level.DefaultMaterial = currentMaterialInit;
                                 }
                             }
                         }
@@ -3019,12 +3019,12 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                                         drawList.AddRectFilled(
                                             p_min: cursor,
                                             p_max: cursor + new Vector2(10f, textHeight),
-                                            ImGui.ColorConvertFloat4ToU32(new Vector4(material.Item2.R / 255f, material.Item2.G / 255f, material.Item2.B / 255f, 1f))
+                                            ImGui.ColorConvertFloat4ToU32(new Vector4(material.Color.R / 255f, material.Color.G / 255f, material.Color.B / 255f, 1f))
                                         );
                                         //
                                         
                                         var selected = ImGui.Selectable(
-                                            "  "+material.Item1,
+                                            "  "+material.Name,
                                             _materialIndex == materialIndex
                                         );
 
@@ -3044,12 +3044,12 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                                         drawList.AddRectFilled(
                                             p_min: cursor,
                                             p_max: cursor + new Vector2(10f, textHeight),
-                                            ImGui.ColorConvertFloat4ToU32(new Vector4(material.Item2.R / 255f, material.Item2.G / 255f, material.Item2.B / 255, 1f))
+                                            ImGui.ColorConvertFloat4ToU32(new Vector4(material.Color.R / 255f, material.Color.G / 255f, material.Color.B / 255, 1f))
                                         );
                                         //
                                         
                                         var selected = ImGui.Selectable(
-                                            "  "+material.Item1,
+                                            "  "+material.Name,
                                             _materialSearchIndex == m
                                         );
 
@@ -3455,10 +3455,10 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                     {
                         if (GLOBALS.Font is null)
                         {
-                            var labelPos = GetLabelPosition(MeasureText(GLOBALS.Level.DefaultMaterial, 20), 20);
+                            var labelPos = GetLabelPosition(MeasureText(GLOBALS.Level.DefaultMaterial.Name, 20), 20);
                             
                             DrawText(
-                                GLOBALS.Level.DefaultMaterial,
+                                GLOBALS.Level.DefaultMaterial.Name,
                                 (int)labelPos.X,
                                 (int)labelPos.Y,
                                 20,
@@ -3467,11 +3467,11 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                         }
                         else
                         {
-                            var labelPos = GetLabelPosition(MeasureText(GLOBALS.Level.DefaultMaterial, 30), 30);
+                            var labelPos = GetLabelPosition(MeasureText(GLOBALS.Level.DefaultMaterial.Name, 30), 30);
 
                             DrawTextEx(
                                 GLOBALS.Font.Value,
-                                GLOBALS.Level.DefaultMaterial,
+                                GLOBALS.Level.DefaultMaterial.Name,
                                 labelPos,
                                 30,
                                 1,
@@ -3656,7 +3656,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
         Printers.Debug.EnqueueF3(new($"Material/Tile Switch: {(_materialTileSwitch ? "Tile" : "Material")}"));
 
         Printers.Debug.EnqueueF3(new($"Selected Tile: {_currentTile?.Name ?? "NULL"}"));
-        Printers.Debug.EnqueueF3(new($"Selected Material: {currentMaterialInit.Item1}"));
+        Printers.Debug.EnqueueF3(new($"Selected Material: {currentMaterialInit}"));
         Printers.Debug.EnqueueF3(new($"Default Material: {GLOBALS.Level.DefaultMaterial}"));
 
         if (_materialTileSwitch) Printers.Debug.EnqueueF3(new(isTileLegal) { Name = "Is Placement Legal" });

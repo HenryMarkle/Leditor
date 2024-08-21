@@ -557,7 +557,7 @@ internal static class Printers
                         break;
 
                         case TileDefault:
-                        DrawMaterialTexture(GLOBALS.Level.DefaultMaterial, cell.Geo, x, y, scale, 255);
+                        DrawMaterialTexture(GLOBALS.Level.DefaultMaterial.Name, cell.Geo, x, y, scale, 255);
                         break;
                     }
                 } 
@@ -1607,7 +1607,7 @@ internal static class Printers
                     break;
 
                     case TileDefault:
-                        DrawMaterialTexture(GLOBALS.Level.DefaultMaterial, GLOBALS.Level.GeoMatrix[y, x, layer].Geo, x, y, scale, 255);
+                        DrawMaterialTexture(GLOBALS.Level.DefaultMaterial.Name, GLOBALS.Level.GeoMatrix[y, x, layer].Geo, x, y, scale, 255);
                     break;
                 }
             }

@@ -122,7 +122,7 @@ internal class LightEditorPage : EditorPage, IContextListener
 
         _gram = [];
 
-        var canvas = LoadRenderTexture(GLOBALS.Level.Width * 20 + 300, GLOBALS.Level.Height*20 + 300);
+        var canvas = LoadRenderTexture(GLOBALS.Level?.Width * 20 + 300 ?? 0, GLOBALS.Level?.Height*20 + 300 ?? 0);
             
         BeginTextureMode(canvas);
         ClearBackground(Color.White);

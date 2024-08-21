@@ -290,7 +290,7 @@ class Program
         ).ToArray();
     }
 
-    private static (string[], (string, Color)[][]) LoadMaterialInit()
+    private static (string[], Material[][]) LoadMaterialInit()
     {
         var path = GLOBALS.Paths.MaterialsInitPath;
 
@@ -895,8 +895,7 @@ class Program
 
         // This is the level's light map, which will be used to draw textures on called "light/shadow brushes"
         GLOBALS.Textures.LightMap = LoadRenderTexture(
-            GLOBALS.Level.Width * GLOBALS.Scale + 300,
-            GLOBALS.Level.Height * GLOBALS.Scale + 300
+            0, 0
         );
 
         //

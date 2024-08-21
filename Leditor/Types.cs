@@ -102,7 +102,7 @@ public sealed class LevelState
     internal (string, EffectOptions[], double[,])[] Effects { get; set; } = [];
     internal Prop[] Props { get; set; } = [];
 
-    internal string DefaultMaterial { get; set; } = "Concrete";
+    internal Material DefaultMaterial { get; set; }
     
     internal string ProjectName { get; set; } = "New Project";
     
@@ -129,7 +129,7 @@ public sealed class LevelState
         int seed,
         int waterLevel,
         bool waterInFront,
-        string defaultMaterial = "Concrete",
+        Material defaultMaterial,
         string projectName = "New Project"
     )
     {
@@ -247,7 +247,7 @@ public sealed class LevelState
         WaterLevel = -1;
         WaterAtFront = false;
         Seed = new Random().Next(10000);
-        DefaultMaterial = "Concrete";
+        DefaultMaterial = GLOBALS.Materials[0][1];
 
         LevelCreated?.Invoke();
     }
@@ -409,7 +409,7 @@ public class LoadFileResult
 
     public bool LightMode { get; init; }
     public bool DefaultTerrain { get; set; }
-    public string DefaultMaterial { get; set; } = string.Empty;
+    public Material DefaultMaterial { get; set; }
 
     public GeoCell[,,]? GeoMatrix { get; init; } = null;
     public TileCell[,,]? TileMatrix { get; init; } = null;
@@ -498,12 +498,13 @@ public enum MaterialRenderType {
     Sandy,
     MegaTrash,
     WV,
+
+    CustomUnified
 }
 
 public readonly record struct Material(
     string Name, 
     Color Color, 
-    (int width, int height) Size, 
     MaterialRenderType RenderType
 ) {
     public static implicit operator (string, Color)(Material m) => (m.Name, m.Color);

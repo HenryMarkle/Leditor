@@ -291,6 +291,19 @@ internal static class Utils
         var effects = Serialization.Importers.GetEffects(effObj, givenWidth, givenHeight);
         var cams = Serialization.Importers.GetCameras(camsObj);
 
+        Material defMatFound = GLOBALS.Materials[0][1];
+
+        foreach (var category in GLOBALS.Materials) {
+            foreach (var m in category) {
+                if (string.Equals(defaultMaterial, m.Name, StringComparison.InvariantCulture)) {
+                    defMatFound = m;
+                    goto skipMatSearch;
+                }
+            }
+        }
+
+        skipMatSearch:
+
         // TODO: catch PropNotFoundException
         var  props =  Serialization.Importers.GetProps(propsObj);;
 
@@ -334,7 +347,7 @@ internal static class Utils
             WaterInFront = waterData.waterInFront,
             Width = givenWidth,
             Height = givenHeight,
-            DefaultMaterial = defaultMaterial,
+            DefaultMaterial = defMatFound,
             BufferTiles = buffers,
             GeoMatrix = mtx,
             TileMatrix = tlMtx,
@@ -402,7 +415,7 @@ internal static class Utils
             {
                 for (int i = 0; i < GLOBALS.Materials[c].Length; i++)
                 {
-                    if (GLOBALS.Materials[c][i].Item1 == ((TileMaterial)cell.Data).Name) return (c, i);
+                    if (string.Equals(GLOBALS.Materials[c][i].Name, ((TileMaterial)cell.Data).Name, StringComparison.InvariantCulture)) return (c, i);
                 }
             }
 

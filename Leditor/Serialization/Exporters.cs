@@ -265,7 +265,7 @@ public static class Exporters
     internal static async Task<string> ExportAsync(LevelState level, char newLine = '\r')
     {
         var geoTask = Task.Factory.StartNew(() => Export(level.GeoMatrix));
-        var tileTask = Task.Factory.StartNew(() => Export(level.TileMatrix, level.DefaultMaterial));
+        var tileTask = Task.Factory.StartNew(() => Export(level.TileMatrix, level.DefaultMaterial.Name));
         var effTask = Task.Factory.StartNew(() => Export(level.Effects));
         var lightTask = Task.Factory.StartNew(() => Export(level.LightAngle, level.LightFlatness));
         var generalTask = Task.Factory.StartNew(() => Export(level.DefaultTerrain, level.LightMode, (level.Width, level.Height), level.Padding, level.Seed));
