@@ -480,7 +480,39 @@ public class EffectOptions(string name, IEnumerable<string> options, dynamic cho
     public dynamic Choice { get; set; } = choice;
 }
 
+public enum MaterialRenderType {
+    Unified,
+    Tiles,
+    Pipe,
+    Invisible,
+    LargeTrash,
+    Dirt,
+    Ceramic,
+    DensePipe,
+    Ridge,
+    CeramicA,
+    CeramicB,
+    RandomPipes,
+    Rock,
+    RoughRock,
+    Sandy,
+    MegaTrash,
+    WV,
+}
 
+public readonly record struct Material(
+    string Name, 
+    Color Color, 
+    (int width, int height) Size, 
+    MaterialRenderType RenderType
+) {
+    public static implicit operator (string, Color)(Material m) => (m.Name, m.Color);
+
+    public void Deconstruct(out string name, out Color color) {
+        name = Name;
+        color = Color;
+    }
+};
 
 public record struct ConColor(
     byte R = 0,
