@@ -496,6 +496,9 @@ public class GeneralSettings
 
     [SettingName("Current Layer At Front", Description = "Render the current layer above all other layers")]
     public bool CurrentLayerAtFront { get; set; } = false;
+
+    [SettingName("Inverse Bilinear Interpolation", Description = "Heavy on performance and does not affect rendering")]
+    public bool InverseBilinearInterpolation { get; set; } = true;
 }
 
 

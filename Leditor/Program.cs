@@ -975,6 +975,12 @@ class Program
         GLOBALS.Shaders.StandardPropColored =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_standard_colored.frag"));
         
+        GLOBALS.Shaders.StandardPropColoredInvb =
+            LoadShader(
+                Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "image_invb.vert"), 
+                Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_standard_colored_invb.frag")
+            );
+        
         GLOBALS.Shaders.StandardPropPalette =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_standard_palette.frag"));
         
@@ -1012,10 +1018,25 @@ class Program
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_varied_decal.frag"));
         
         GLOBALS.Shaders.ColoredTileProp =
-            LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_colored.frag"));
+            LoadShader(
+                null, 
+                Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_colored.frag")
+            );
+
+        GLOBALS.Shaders.ColoredTilePropInvb =
+            LoadShader(
+                Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "image_invb.vert"), 
+                Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_colored_invb.frag")
+            );
         
         GLOBALS.Shaders.ColoredBoxTileProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_colored_box.frag"));
+        
+        GLOBALS.Shaders.ColoredBoxTilePropInvb =
+            LoadShader(
+                Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "image_invb.vert"), 
+                Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_colored_box_invb.frag")
+            );
 
         GLOBALS.Shaders.LongProp =
             LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_long.frag"));
@@ -1031,7 +1052,19 @@ class Program
                 Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "lightmap_stretch.frag"));
 
         GLOBALS.Shaders.TilePalette = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "tile_palette.frag"));
+        
+        GLOBALS.Shaders.TilePaletteInvb = 
+            LoadShader(
+                Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "image_invb.vert"), 
+                Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "tile_palette_invb.frag")
+            );
+        
         GLOBALS.Shaders.BoxTilePalette = LoadShader(null, Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "tile_box_palette.frag"));
+        GLOBALS.Shaders.BoxTilePaletteInvb = 
+            LoadShader(
+                Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "image_invb.vert"), 
+                Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "tile_box_palette_invb.frag")
+            );
 
         GLOBALS.Shaders.VFlip = LoadShaderFromMemory(null, @"#version 330
 in vec2 fragTexCoord;
@@ -2592,6 +2625,7 @@ void main() {
         UnloadShader(GLOBALS.Shaders.BoxTile);
         UnloadShader(GLOBALS.Shaders.StandardProp);
         UnloadShader(GLOBALS.Shaders.StandardPropColored);
+        UnloadShader(GLOBALS.Shaders.StandardPropColoredInvb);
         UnloadShader(GLOBALS.Shaders.StandardPropPalette);
         UnloadShader(GLOBALS.Shaders.VariedStandardProp);
         UnloadShader(GLOBALS.Shaders.VariedStandardPropPalette);
@@ -2605,12 +2639,16 @@ void main() {
         UnloadShader(GLOBALS.Shaders.SimpleDecalProp);
         UnloadShader(GLOBALS.Shaders.VariedDecalProp);
         UnloadShader(GLOBALS.Shaders.ColoredTileProp);
+        UnloadShader(GLOBALS.Shaders.ColoredTilePropInvb);
         UnloadShader(GLOBALS.Shaders.ColoredBoxTileProp);
+        UnloadShader(GLOBALS.Shaders.ColoredBoxTilePropInvb);
         UnloadShader(GLOBALS.Shaders.LongProp);
         UnloadShader(GLOBALS.Shaders.DefaultProp);
         UnloadShader(GLOBALS.Shaders.PreviewColoredTileProp);
         UnloadShader(GLOBALS.Shaders.TilePalette);
+        UnloadShader(GLOBALS.Shaders.TilePaletteInvb);
         UnloadShader(GLOBALS.Shaders.BoxTilePalette);
+        UnloadShader(GLOBALS.Shaders.BoxTilePaletteInvb);
         UnloadShader(GLOBALS.Shaders.LightMapStretch);
         UnloadShader(GLOBALS.Shaders.TilePreviewFragment);
         UnloadShader(GLOBALS.Shaders.PropInvb);

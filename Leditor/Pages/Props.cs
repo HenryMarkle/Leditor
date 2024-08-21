@@ -58,7 +58,15 @@ internal class PropsEditorPage : EditorPage, IContextListener
             // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
             
             // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-            Printers.DrawProp(current.Type, current.Tile, category, index, current, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+            Printers.DrawProp(
+                category, 
+                index, 
+                current, 
+                20, 
+                GLOBALS.Settings.GeneralSettings.DrawPropMode, 
+                GLOBALS.SelectedPalette,
+                GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation
+            );
 
             // Draw Rope Point
             if (current.Type == InitPropType.Rope)
@@ -438,8 +446,15 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
                     // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                    Printers.DrawProp(current.Type, current.Tile, category, index, current, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
-
+                    Printers.DrawProp(
+                        category, 
+                        index, 
+                        current, 
+                        20, 
+                        GLOBALS.Settings.GeneralSettings.DrawPropMode, 
+                        GLOBALS.SelectedPalette,
+                        GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation
+                    );
 
                     // Draw Rope Point
                     if (current.Type == InitPropType.Rope)
@@ -666,7 +681,15 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
                     // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                    Printers.DrawProp(current.Type, current.Tile, category, index, current, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+                    Printers.DrawProp(
+                        category, 
+                        index, 
+                        current, 
+                        20, 
+                        GLOBALS.Settings.GeneralSettings.DrawPropMode, 
+                        GLOBALS.SelectedPalette,
+                        GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation
+                    );
 
                     // Draw Rope Point
                     if (current.Type == InitPropType.Rope)
@@ -903,7 +926,15 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     // var origin = new Vector2(tl.X + (tr.X - tl.X)/2f, tl.Y + (bl.Y - tl.Y)/2f);
                     
                     // Printers.DrawProp(current.type, current.tile, category, index, current.prop, GLOBALS.Settings.PropEditor.TintedTextures);
-                    Printers.DrawProp(current.Type, current.Tile, category, index, current, 20, GLOBALS.Settings.GeneralSettings.DrawPropMode, GLOBALS.SelectedPalette);
+                    Printers.DrawProp(
+                        category, 
+                        index, 
+                        current, 
+                        20, 
+                        GLOBALS.Settings.GeneralSettings.DrawPropMode, 
+                        GLOBALS.SelectedPalette,
+                        GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation
+                    );
 
                     // Draw Rope Point
                     if (current.Type == InitPropType.Rope)

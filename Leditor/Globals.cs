@@ -64,7 +64,9 @@ internal static class GLOBALS
         internal Shader GeoPalette { get; set; }
         internal Shader TilePreview { get; set; }
         internal Shader ColoredTileProp { get; set; }
+        internal Shader ColoredTilePropInvb { get; set; }
         internal Shader ColoredBoxTileProp { get; set; }
+        internal Shader ColoredBoxTilePropInvb { get; set; }
         internal Shader ShadowBrush { get; set; }
         internal Shader LightBrush { get; set; }
         internal Shader ApplyShadowBrush { get; set; }
@@ -75,6 +77,7 @@ internal static class GLOBALS
         ///  Prop with inverse-bilinear interpolation
         /// </summary>
         internal Shader PropInvb { get; set; }
+        internal Shader StandardPropColoredInvb { get; set; }
 
         internal Shader StandardProp { get; set; }
         internal Shader StandardPropColored { get; set; }
@@ -96,8 +99,10 @@ internal static class GLOBALS
         internal Shader LightMapStretch { get; set; }
 
         internal Shader TilePalette { get; set; }
+        internal Shader TilePaletteInvb { get; set; }
         internal Shader BoxTile { get; set; }
         internal Shader BoxTilePalette { get; set; }
+        internal Shader BoxTilePaletteInvb { get; set; }
 
         // internal Shader GeoMaterialMask { get; set; }
         
