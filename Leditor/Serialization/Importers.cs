@@ -93,7 +93,7 @@ public static class Importers {
         }
     }
 
-    public static Material GetInitMaterial(AstNode.Base @base)
+    public static Data.Materials.Material GetInitMaterial(AstNode.Base @base)
     {
         #nullable enable
         var propertyList = (AstNode.PropertyList)@base;
@@ -115,16 +115,16 @@ public static class Importers {
             255
             );
 
-        return new(((AstNode.String)nameBase).Value, color, MaterialRenderType.CustomUnified);
+        return new(((AstNode.String)nameBase).Value, color, Data.Materials.MaterialRenderType.CustomUnified);
     }
 
-    public static (string[] categories, Material[][]) GetMaterialInit(string text)
+    public static (string[] categories, Data.Materials.Material[][]) GetMaterialInit(string text)
     {
         #nullable enable
         var lines = text.ReplaceLineEndings().Split(Environment.NewLine);
 
         List<string> categories = [];
-        List<Material[]> materials = [];
+        List<Data.Materials.Material[]> materials = [];
 
         foreach (var line in lines)
         {

@@ -290,7 +290,7 @@ class Program
         ).ToArray();
     }
 
-    private static (string[], Material[][]) LoadMaterialInit()
+    private static (string[], Data.Materials.Material[][]) LoadMaterialInit()
     {
         var path = GLOBALS.Paths.MaterialsInitPath;
 

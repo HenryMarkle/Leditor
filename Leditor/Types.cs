@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text;
-using System.Text.Json.Serialization;
+using Leditor.Data.Materials;
 using Leditor.Data.Props.Definitions;
 using Leditor.Data.Tiles;
 
@@ -102,7 +102,7 @@ public sealed class LevelState
     internal (string, EffectOptions[], double[,])[] Effects { get; set; } = [];
     internal Prop[] Props { get; set; } = [];
 
-    internal Material DefaultMaterial { get; set; }
+    internal Data.Materials.Material DefaultMaterial { get; set; }
     
     internal string ProjectName { get; set; } = "New Project";
     
@@ -129,7 +129,7 @@ public sealed class LevelState
         int seed,
         int waterLevel,
         bool waterInFront,
-        Material defaultMaterial,
+        Data.Materials.Material defaultMaterial,
         string projectName = "New Project"
     )
     {
@@ -409,7 +409,7 @@ public class LoadFileResult
 
     public bool LightMode { get; init; }
     public bool DefaultTerrain { get; set; }
-    public Material DefaultMaterial { get; set; }
+    public Data.Materials.Material DefaultMaterial { get; set; }
 
     public GeoCell[,,]? GeoMatrix { get; init; } = null;
     public TileCell[,,]? TileMatrix { get; init; } = null;
@@ -479,41 +479,6 @@ public class EffectOptions(string name, IEnumerable<string> options, dynamic cho
     public string[] Options { get; set; } = [.. options];
     public dynamic Choice { get; set; } = choice;
 }
-
-public enum MaterialRenderType {
-    Unified,
-    Tiles,
-    Pipe,
-    Invisible,
-    LargeTrash,
-    Dirt,
-    Ceramic,
-    DensePipe,
-    Ridge,
-    CeramicA,
-    CeramicB,
-    RandomPipes,
-    Rock,
-    RoughRock,
-    Sandy,
-    MegaTrash,
-    WV,
-
-    CustomUnified
-}
-
-public readonly record struct Material(
-    string Name, 
-    Color Color, 
-    MaterialRenderType RenderType
-) {
-    public static implicit operator (string, Color)(Material m) => (m.Name, m.Color);
-
-    public void Deconstruct(out string name, out Color color) {
-        name = Name;
-        color = Color;
-    }
-};
 
 public record struct ConColor(
     byte R = 0,

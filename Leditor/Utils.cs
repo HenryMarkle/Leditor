@@ -291,7 +291,7 @@ internal static class Utils
         var effects = Serialization.Importers.GetEffects(effObj, givenWidth, givenHeight);
         var cams = Serialization.Importers.GetCameras(camsObj);
 
-        Material defMatFound = GLOBALS.Materials[0][1];
+        Data.Materials.Material defMatFound = GLOBALS.Materials[0][1];
 
         foreach (var category in GLOBALS.Materials) {
             foreach (var m in category) {

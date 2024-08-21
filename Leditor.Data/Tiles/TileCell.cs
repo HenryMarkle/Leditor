@@ -20,7 +20,7 @@ public readonly struct TileCell
     /// </summary>
     public TileCellType Type { get; } = TileCellType.Default;
 
-    public MaterialDefinition? MaterialDefinition { get; } = null;
+    public Material? MaterialDefinition { get; } = null;
     public TileDefinition? TileDefinition { get; } = null;
     public (int X, int Y, int Z) HeadPosition { get; } = (0, 0, 0);
 
@@ -43,12 +43,11 @@ public readonly struct TileCell
     /// </summary>
     /// <param name="definition">A pointer to a <see cref="MaterialDefinition"/></param>
     /// <exception cref="NullReferenceException">Material definition is a null pointer</exception>
-    public TileCell(MaterialDefinition definition)
+    public TileCell(Material definition)
     {
         Type = TileCellType.Material;
 
-        MaterialDefinition = definition 
-                             ?? throw new NullReferenceException("Could not create a new material tile cell");
+        MaterialDefinition = definition;
         
         TileDefinition = null;
         HeadPosition = (0, 0, 0);

@@ -4,6 +4,7 @@ using Drizzle.Lingo.Runtime;
 using Drizzle.Ported;
 using Leditor.Pages;
 using Leditor.Data.Props.Definitions;
+using Leditor.Data.Materials;
 
 namespace Leditor;
 
@@ -369,7 +370,7 @@ internal static class GLOBALS
     ];
     
     /// Embedded material definitions
-    internal static Material[][] Materials { get; set; } = [
+    internal static Data.Materials.Material[][] Materials { get; set; } = [
         [
             new( "Standard",         new(150, 150, 150, 255), MaterialRenderType.Unified    ),
             new( "Concrete",         new(150, 255, 255, 255), MaterialRenderType.Unified    ),
