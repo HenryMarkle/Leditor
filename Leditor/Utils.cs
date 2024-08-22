@@ -3,7 +3,7 @@ using Leditor.Types;
 using Leditor.Data.Tiles;
 using Pidgin;
 using System.Text.Json;
-using ImGuiNET;
+using Leditor.Data.Geometry;
 
 namespace Leditor;
 
@@ -134,10 +134,10 @@ internal static class Utils
 
     internal static bool AllEqual(int a, int b, int c) => a == b && b == c && a == c;
 
-    internal static GeoCell CopyGeoCell(in GeoCell cell) => new()
+    internal static Geo CopyGeoCell(in Geo cell) => new()
     {
-        Geo = cell.Geo,
-        Stackables = [..cell.Stackables]
+        Type = cell.Type,
+        Features = cell.Features,
     };
 
     internal static int GetPropDepth(in TileDefinition? tile) => tile?.Repeat.Sum() ?? 0;
@@ -168,7 +168,7 @@ internal static class Utils
             GLOBALS.RecentProjects.RemoveLast();
     }
 
-    internal static GeoCell[,,] GetGeometryMatrixFromFile(string path) {
+    internal static Geo[,,] GetGeometryMatrixFromFile(string path) {
         if (!File.Exists(path)) throw new FileNotFoundException("Level file not found", path);
     
         var text = File
@@ -439,7 +439,7 @@ internal static class Utils
     }
 
     public static bool IsTileLegal(
-        in GeoCell[,,] geoMatrix, 
+        in Geo[,,] geoMatrix, 
         in TileCell[,,] tileMatrix, 
         in TileDefinition? init, 
         Vector2 point
@@ -479,7 +479,7 @@ internal static class Utils
                     var spec3 = specs[y, x, 2];
 
                     var isLegal = spec == -1 ||
-                                  (geoCell.Geo == spec && tileCell.Type is TileType.Default or TileType.Material);
+                                  ((int)geoCell.Type == spec && tileCell.Type is TileType.Default or TileType.Material);
 
                     if (tileCell.Type is TileType.Material && !GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials) isLegal = false;
 
@@ -488,7 +488,7 @@ internal static class Utils
                         var tileCellNextLayer = tileMatrix[matrixY, matrixX, GLOBALS.Layer + 1];
                         var geoCellNextLayer = geoMatrix[matrixY, matrixX, GLOBALS.Layer + 1];
 
-                        isLegal = isLegal && (spec2 == -1 || (geoCellNextLayer.Geo == spec2 &&
+                        isLegal = isLegal && (spec2 == -1 || ((int)geoCellNextLayer.Type == spec2 &&
                                                      tileCellNextLayer.Type is TileType.Default or TileType.Material));
 
                         if (tileCellNextLayer.Type is TileType.Material && !GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials) isLegal = false;
@@ -499,7 +499,7 @@ internal static class Utils
                         var tileCellNextLayer = tileMatrix[matrixY, matrixX, 2];
                         var geoCellNextLayer = geoMatrix[matrixY, matrixX, 2];
                         
-                        isLegal = isLegal && (spec3 == -1 || (geoCellNextLayer.Geo == spec3 &&
+                        isLegal = isLegal && (spec3 == -1 || ((int)geoCellNextLayer.Type == spec3 &&
                                                               tileCellNextLayer.Type is TileType.Default or TileType.Material));
 
                         if (tileCellNextLayer.Type is TileType.Material && !GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials) isLegal = false;
@@ -1207,161 +1207,75 @@ internal static class Utils
     }
 
     /// Maps a geo block id to a block texture index
-    public static int GetBlockIndex(int id) => id switch
+    public static int GetBlockIndex(GeoType id) => id switch
     {
-        1 => 0,
-        2 => 1,
-        3 => 2,
-        4 => 3,
-        5 => 4,
-        6 => 5,
-        7 => 6,
-        9 => 7,
+        GeoType.Solid => 0,
+        GeoType.SlopeNE => 1,
+        GeoType.SlopeNW => 2,
+        GeoType.SlopeES => 3,
+        GeoType.SlopeSW => 4,
+        GeoType.Platform => 5,
+        GeoType.ShortcutEntrance => 6,
+        GeoType.Glass => 7,
 
         _ => -1,
     };
 
     /// Maps a UI texture index to block ID
-    public static int GetBlockID(uint index) => index switch
+    public static GeoType GetBlockID(uint index) => index switch
     {
-        0 => 1,
-        1 => 0,
-        7 => 4,
-        3 => 2,
-        2 => 3,
-        6 => 6,
-        30 => 9,
-        _ => -1
+        0 => GeoType.Solid,
+        1 => GeoType.Air,
+        7 => GeoType.SlopeES,
+        3 => GeoType.SlopeNE,
+        2 => GeoType.SlopeSW,
+        6 => GeoType.Platform,
+        30 => GeoType.Glass,
+        _ => GeoType.Air
     };
 
 
     /// Maps a UI texture index to a stackable ID
-    public static int GetStackableID(uint index) => index switch
+    public static GeoFeature GetStackableID(uint index) => index switch
     {
-        28 => 9,
-        29 => 10,
-        9 => 11,
-        10 => 1,
-        11 => 2,
-        14 => 4,
-        15 => 5,
-        16 => 7,
-        17 => 6,
-        18 => 3,
-        19 => 18,
-        20 => 21,
-        21 => 19,
-        22 => 13,
-        23 => 20,
-        24 => 12,
+        28 => GeoFeature.PlaceRock,
+        29 => GeoFeature.PlaceSpear,
+        9 => GeoFeature.CrackedTerrain,
+        10 => GeoFeature.HorizontalPole,
+        11 => GeoFeature.VerticalPole,
+        14 => GeoFeature.ShortcutEntrance,
+        15 => GeoFeature.ShortcutPath,
+        16 => GeoFeature.DragonDen,
+        17 => GeoFeature.RoomEntrance,
+        18 => GeoFeature.Bathive,
+        19 => GeoFeature.Waterfall,
+        20 => GeoFeature.ScavengerHole,
+        21 => GeoFeature.WackAMoleHole,
+        22 => GeoFeature.GarbageWormHole,
+        23 => GeoFeature.WormGrass,
+        24 => GeoFeature.ForbidFlyChains,
 
-        _ => -1
+        _ => GeoFeature.None
     };
 
-    public static int GetStackableTextureIndex(int id) => id switch
+    public static int GetStackableTextureIndex(GeoFeature id) => id switch
     {
-        1 => 0,
-        2 => 1,
-        3 => 2,
-        5 => 3,
-        6 => 27,
-        7 => 28,
-        9 => 18,
-        10 => 29,
-        12 => 30,
-        13 => 16,
-        18 => 19,
-        19 => 20,
-        20 => 21,
-        21 => 17,
+        GeoFeature.HorizontalPole => 0,
+        GeoFeature.VerticalPole => 1,
+        GeoFeature.Bathive => 2,
+        GeoFeature.ShortcutPath => 3,
+        GeoFeature.RoomEntrance => 27,
+        GeoFeature.DragonDen => 28,
+        GeoFeature.PlaceRock => 18,
+        GeoFeature.PlaceSpear => 29,
+        GeoFeature.ForbidFlyChains => 30,
+        GeoFeature.GarbageWormHole => 16,
+        GeoFeature.Waterfall => 19,
+        GeoFeature.WackAMoleHole => 20,
+        GeoFeature.WormGrass => 21,
+        GeoFeature.ScavengerHole => 17,
         _ => -1
     };
-
-    [Obsolete]
-    public static bool IsConnectionEntranceConnected(GeoCell[][] context)
-    {
-        if (
-                context[0][0].Stackables[4] || context[0][1].Stackables[4] || context[0][2].Stackables[4] ||
-                context[1][0].Stackables[4] || context[1][2].Stackables[4] ||
-                context[2][0].Stackables[4] || context[2][1].Stackables[4] || context[2][2].Stackables[4]
-        ) return false;
-
-        var pattern = (
-            false, context[0][1].Stackables[5] ^ context[0][1].Stackables[6] ^ context[0][1].Stackables[7] ^ context[0][1].Stackables[19] ^ context[0][1].Stackables[21], false,
-            context[1][0].Stackables[5] ^ context[1][0].Stackables[6] ^ context[1][0].Stackables[7] ^ context[1][0].Stackables[19] ^ context[1][0].Stackables[21], false, context[1][2].Stackables[5] ^ context[1][2].Stackables[6] ^ context[1][2].Stackables[7] ^ context[1][2].Stackables[19] ^ context[1][2].Stackables[21],
-            false, context[2][1].Stackables[5] ^ context[2][1].Stackables[6] ^ context[2][1].Stackables[7] ^ context[2][1].Stackables[19] ^ context[2][1].Stackables[21], false
-        );
-
-        var directionIndex = pattern switch
-        {
-
-            (
-                _, true, _,
-                false, _, false,
-                _, false, _
-            ) => true,
-
-            (
-                _, false, _,
-                false, _, true,
-                _, false, _
-            ) => true,
-
-            (
-                _, false, _,
-                false, _, false,
-                _, true, _
-            ) => true,
-
-            (
-                _, false, _,
-                true, _, false,
-                _, false, _
-            ) => true,
-
-            _ => false
-        };
-
-        if (!directionIndex) return false;
-
-        var geoPattern = (
-            context[0][0].Geo, context[0][1].Geo, context[0][2].Geo,
-            context[1][0].Geo, 0, context[1][2].Geo,
-            context[2][0].Geo, context[2][1].Geo, context[2][2].Geo
-        );
-
-        directionIndex = geoPattern switch
-        {
-
-            (
-                1, _, 1,
-                1, _, 1,
-                1, 1, 1
-            ) => context[0][1].Geo is 0 or 6 ? directionIndex : false,
-
-            (
-                1, 1, 1,
-                1, _, _,
-                1, 1, 1
-            ) => context[1][2].Geo is 0 or 6 ? directionIndex : false,
-
-            (
-                1, 1, 1,
-                1, _, 1,
-                1, _, 1
-            ) => context[2][1].Geo is 0 or 6 ? directionIndex : false,
-
-            (
-                1, 1, 1,
-                _, _, 1,
-                1, 1, 1
-            ) => context[1][0].Geo is 0 or 6 ? directionIndex : false,
-
-            _ => false
-        };
-
-        return directionIndex;
-    }
 
     /// <summary>
     /// This is used to determine the index of the stackable texture, including the directional ones.
@@ -1369,7 +1283,7 @@ internal static class Utils
     /// <param name="id">the ID of the geo-tile feature</param>
     /// <param name="context">a 3x3 slice of the geo-matrix where the geo-tile feature is in the middle</param>
     /// <returns>the index of the texture in the textures array (GLOBALS.Textures.GeoStackables)</returns>
-    public static int GetStackableTextureIndex(int id, GeoCell[][] context)
+    public static int GetStackableTextureIndex(int id, Geo[][] context)
     {
         var i = id switch
         {
@@ -1396,15 +1310,19 @@ internal static class Utils
         if (i == -4)
         {
             if (
-                context[0][0].Stackables[4] || context[0][1].Stackables[4] || context[0][2].Stackables[4] ||
-                context[1][0].Stackables[4] || context[1][2].Stackables[4] ||
-                context[2][0].Stackables[4] || context[2][1].Stackables[4] || context[2][2].Stackables[4]
+                ((
+                    context[0][0].Features | context[0][1].Features  | context[0][2].Features |
+                    context[1][0].Features                           | context[1][2].Features |
+                    context[2][0].Features | context[2][1].Features  | context[2][2].Features
+                ) & GeoFeature.RoomEntrance)
+                
+                == GeoFeature.RoomEntrance
             ) return 26;
 
             var pattern = (
-                false, context[0][1].Stackables[5] ^ context[0][1].Stackables[6] ^ context[0][1].Stackables[7] ^ context[0][1].Stackables[19] ^ context[0][1].Stackables[21], false,
-                context[1][0].Stackables[5] ^ context[1][0].Stackables[6] ^ context[1][0].Stackables[7] ^ context[1][0].Stackables[19] ^ context[1][0].Stackables[21], false, context[1][2].Stackables[5] ^ context[1][2].Stackables[6] ^ context[1][2].Stackables[7] ^ context[1][2].Stackables[19] ^ context[1][2].Stackables[21],
-                false, context[2][1].Stackables[5] ^ context[2][1].Stackables[6] ^ context[2][1].Stackables[7] ^ context[2][1].Stackables[19] ^ context[2][1].Stackables[21], false
+                false, context[0][1][5] ^ context[0][1][6] ^ context[0][1][7] ^ context[0][1][19] ^ context[0][1][21], false,
+                context[1][0][5] ^ context[1][0][6] ^ context[1][0][7] ^ context[1][0][19] ^ context[1][0][21], false, context[1][2][5] ^ context[1][2][6] ^ context[1][2][7] ^ context[1][2][19] ^ context[1][2][21],
+                false, context[2][1][5] ^ context[2][1][6] ^ context[2][1][7] ^ context[2][1][19] ^ context[2][1][21], false
             );
 
             var directionIndex = pattern switch
@@ -1440,45 +1358,45 @@ internal static class Utils
             if (directionIndex == 26) return 26;
 
             var geoPattern = (
-                context[0][0].Geo, context[0][1].Geo, context[0][2].Geo,
-                context[1][0].Geo, 0,                 context[1][2].Geo,
-                context[2][0].Geo, context[2][1].Geo, context[2][2].Geo
+                context[0][0].Type, context[0][1].Type, context[0][2].Type,
+                context[1][0].Type, 0,                 context[1][2].Type,
+                context[2][0].Type, context[2][1].Type, context[2][2].Type
             );
 
             directionIndex = geoPattern switch
             {
 
                 (
-                    1, _, 1,
-                    1, _, 1,
-                    1, 1, 1
-                ) => (context[0][1].Geo is 0 or 6 
-                    && !(context[1][0].Stackables[5] || context[1][0].Stackables[6] || context[1][0].Stackables[7] || context[1][0].Stackables[19] || context[1][0].Stackables[21])
-                    && !(context[1][2].Stackables[5] || context[1][2].Stackables[6] || context[1][2].Stackables[7] || context[1][2].Stackables[19] || context[1][2].Stackables[21])) ? directionIndex : 26,
+                    GeoType.Solid,             _, GeoType.Solid,
+                    GeoType.Solid,             _, GeoType.Solid,
+                    GeoType.Solid, GeoType.Solid, GeoType.Solid
+                ) => (context[0][1].Type is GeoType.Air or GeoType.Platform 
+                    && !(context[1][0][5] || context[1][0][6] || context[1][0][7] || context[1][0][19] || context[1][0][21])
+                    && !(context[1][2][5] || context[1][2][6] || context[1][2][7] || context[1][2][19] || context[1][2][21])) ? directionIndex : 26,
 
                 (
-                    1, 1, 1,
-                    1, _, _,
-                    1, 1, 1
-                ) => (context[1][2].Geo is 0 or 6 
-                    && !(context[0][1].Stackables[5] || context[0][1].Stackables[6] || context[0][1].Stackables[7] || context[0][1].Stackables[19] || context[0][1].Stackables[21])
-                    && !(context[2][1].Stackables[5] || context[2][1].Stackables[6] || context[2][1].Stackables[7] || context[2][1].Stackables[19] || context[2][1].Stackables[21])) ? directionIndex : 26,
+                    GeoType.Solid, GeoType.Solid, GeoType.Solid,
+                    GeoType.Solid, _,          _,
+                    GeoType.Solid, GeoType.Solid, GeoType.Solid
+                ) => (context[1][2].Type is GeoType.Air or GeoType.Platform 
+                    && !(context[0][1][5] || context[0][1][6] || context[0][1][7] || context[0][1][19] || context[0][1][21])
+                    && !(context[2][1][5] || context[2][1][6] || context[2][1][7] || context[2][1][19] || context[2][1][21])) ? directionIndex : 26,
 
                 (
-                    1, 1, 1,
-                    1, _, 1,
-                    1, _, 1
-                ) => (context[2][1].Geo is 0 or 6
-                    && !(context[1][0].Stackables[5] || context[1][0].Stackables[6] || context[1][0].Stackables[7] || context[1][0].Stackables[19] || context[1][0].Stackables[21])
-                    && !(context[1][2].Stackables[5] || context[1][2].Stackables[6] || context[1][2].Stackables[7] || context[1][2].Stackables[19] || context[1][2].Stackables[21])) ? directionIndex : 26,
+                    GeoType.Solid, GeoType.Solid, GeoType.Solid,
+                    GeoType.Solid,             _, GeoType.Solid,
+                    GeoType.Solid,             _, GeoType.Solid
+                ) => (context[2][1].Type is GeoType.Air or GeoType.Platform 
+                    && !(context[1][0][5] || context[1][0][6] || context[1][0][7] || context[1][0][19] || context[1][0][21])
+                    && !(context[1][2][5] || context[1][2][6] || context[1][2][7] || context[1][2][19] || context[1][2][21])) ? directionIndex : 26,
 
                 (
-                    1, 1, 1,
-                    _, _, 1,
-                    1, 1, 1
-                ) => (context[1][0].Geo is 0 or 6
-                    && !(context[0][1].Stackables[5] || context[0][1].Stackables[6] || context[0][1].Stackables[7] || context[0][1].Stackables[19] || context[0][1].Stackables[21])
-                    && !(context[2][1].Stackables[5] || context[2][1].Stackables[6] || context[2][1].Stackables[7] || context[2][1].Stackables[19] || context[2][1].Stackables[21])) ? directionIndex : 26,
+                    GeoType.Solid, GeoType.Solid, GeoType.Solid,
+                                _,             _, GeoType.Solid,
+                    GeoType.Solid, GeoType.Solid, GeoType.Solid
+                ) => (context[1][0].Type is GeoType.Air or GeoType.Platform 
+                    && !(context[0][1][5] || context[0][1][6] || context[0][1][7] || context[0][1][19] || context[0][1][21])
+                    && !(context[2][1][5] || context[2][1][6] || context[2][1][7] || context[2][1][19] || context[2][1][21])) ? directionIndex : 26,
 
                 _ => 26
             };
@@ -1488,9 +1406,9 @@ internal static class Utils
         else if (i == -11)
         {
             i = (
-                false, context[0][1].Stackables[11], false,
-                context[1][0].Stackables[11], false, context[1][2].Stackables[11],
-                false, context[2][1].Stackables[11], false
+                false, context[0][1][11], false,
+                context[1][0][11], false, context[1][2][11],
+                false, context[2][1][11], false
             ) switch
             {
 
@@ -1597,9 +1515,9 @@ internal static class Utils
                     false, _, false,
                     _, false, _
                 ) => (
-                false, context[0][1].Geo == 1, false,
-                context[1][0].Geo == 1, context[1][1].Geo == 1, context[1][2].Geo == 1,
-                false, context[2][0].Geo == 1, false
+                false, context[0][1].Type == GeoType.Solid, false,
+                context[1][0].Type == GeoType.Solid, context[1][1].Type == GeoType.Solid, context[1][2].Type == GeoType.Solid,
+                false, context[2][0].Type == GeoType.Solid, false
                 ) switch
                 {
                     (
@@ -1626,12 +1544,12 @@ internal static class Utils
     /// </summary>
     /// <param name="context">a 3x3 slice of the geo-matrix where the slope is in the middle</param>
     /// <returns>the ID of the slope representing the proper direction</returns>
-    public static int GetCorrectSlopeID(GeoCell[][] context)
+    public static int GetCorrectSlopeID(Geo[][] context)
     {
         var fi = (
-            false, context[0][1].Geo is 1, false,
-            context[1][0].Geo is 1, false, context[1][2].Geo is 1,
-            false, context[2][1].Geo is 1, false
+            false, context[0][1].Type is GeoType.Solid, false,
+            context[1][0].Type is GeoType.Solid, false, context[1][2].Type is GeoType.Solid,
+            false, context[2][1].Type is GeoType.Solid, false
         ) switch
         {
             (
@@ -1661,10 +1579,10 @@ internal static class Utils
 
         if (fi == -1) return -1;
 
-        var ssi = context[0][1].Geo is 2 or 3 or 4 or 5 || 
-                  context[1][0].Geo is 2 or 3 or 4 or 5 || 
-                  context[1][2].Geo is 2 or 3 or 4 or 5 ||
-                  context[2][1].Geo is 2 or 3 or 4 or 5;
+        var ssi = context[0][1].Type is GeoType.SlopeES or GeoType.SlopeNE or GeoType.SlopeNW or GeoType.SlopeSW || 
+                  context[1][0].Type is GeoType.SlopeES or GeoType.SlopeNE or GeoType.SlopeNW or GeoType.SlopeSW || 
+                  context[1][2].Type is GeoType.SlopeES or GeoType.SlopeNE or GeoType.SlopeNW or GeoType.SlopeSW ||
+                  context[2][1].Type is GeoType.SlopeES or GeoType.SlopeNE or GeoType.SlopeNW or GeoType.SlopeSW;
 
         if (ssi) return -1;
 
@@ -1830,17 +1748,17 @@ internal static class Utils
         return newMatrix;
     }
 
-    internal static GeoCell[,,] Resize(
-        GeoCell[,,] matrix,
+    internal static Geo[,,] Resize(
+        Geo[,,] matrix,
         
         int left,
         int top,
         int right,
         int bottom,
 
-        GeoCell layer1Fill,
-        GeoCell layer2Fill,
-        GeoCell layer3Fill
+        Geo layer1Fill,
+        Geo layer2Fill,
+        Geo layer3Fill
     ) {
         if (left == 0 && top == 0 && right == 0 && bottom == 0) return matrix;
         if (-left == matrix.GetLength(1) || -right == matrix.GetLength(1) ||
@@ -1854,15 +1772,15 @@ internal static class Utils
 
         var depth = matrix.GetLength(2);
 
-        GeoCell[,,] newMatrix = new GeoCell[newHeight, newWidth, depth];
+        Geo[,,] newMatrix = new Geo[newHeight, newWidth, depth];
 
         // Default value
 
         for (var y = 0; y < newHeight; y++) {
             for (var x = 0; x < newWidth; x++) {
-                newMatrix[y, x, 0] = new GeoCell { Geo = layer1Fill.Geo, Stackables = [..layer1Fill.Stackables] };
-                newMatrix[y, x, 1] = new GeoCell { Geo = layer2Fill.Geo, Stackables = [..layer2Fill.Stackables] };
-                newMatrix[y, x, 2] = new GeoCell { Geo = layer3Fill.Geo, Stackables = [..layer3Fill.Stackables] };
+                newMatrix[y, x, 0] = layer1Fill;
+                newMatrix[y, x, 1] = layer2Fill;
+                newMatrix[y, x, 2] = layer3Fill;
             }
         } 
 
@@ -1982,10 +1900,10 @@ internal static class Utils
         return newMatrix;
     }
 
-    internal static GeoCell[,,] Resize(GeoCell[,,] array, int width, int height, int newWidth, int newHeight, GeoCell[] layersFill)
+    internal static Geo[,,] Resize(Geo[,,] array, int width, int height, int newWidth, int newHeight, Geo[] layersFill)
     {
 
-        GeoCell[,,] newArray = new GeoCell[newHeight, newWidth, 3];
+        Geo[,,] newArray = new Geo[newHeight, newWidth, 3];
 
         if (height > newHeight)
         {
@@ -2014,9 +1932,9 @@ internal static class Utils
 
                     for (int x = width; x < newWidth; x++)
                     {
-                        newArray[y, x, 0] = layersFill[0] with { Stackables = [..layersFill[0].Stackables] };
-                        newArray[y, x, 1] = layersFill[1] with { Stackables = [..layersFill[1].Stackables] };
-                        newArray[y, x, 2] = layersFill[2] with { Stackables = [..layersFill[2].Stackables] };
+                        newArray[y, x, 0] = layersFill[0];
+                        newArray[y, x, 1] = layersFill[1];
+                        newArray[y, x, 2] = layersFill[2];
                     }
                 }
             }
@@ -2040,9 +1958,9 @@ internal static class Utils
                 {
                     for (int x = 0; x < newWidth; x++)
                     {
-                        newArray[y, x, 0] = layersFill[0] with { Stackables = [..layersFill[0].Stackables] };
-                        newArray[y, x, 1] = layersFill[1] with { Stackables = [..layersFill[1].Stackables] };
-                        newArray[y, x, 2] = layersFill[2] with { Stackables = [..layersFill[2].Stackables] };
+                        newArray[y, x, 0] = layersFill[0];
+                        newArray[y, x, 1] = layersFill[1];
+                        newArray[y, x, 2] = layersFill[2];
                     }
                 }
             }
@@ -2059,9 +1977,9 @@ internal static class Utils
 
                     for (int x = width; x < newWidth; x++)
                     {
-                        newArray[y, x, 0] = layersFill[0] with { Stackables = [..layersFill[0].Stackables] };
-                        newArray[y, x, 1] = layersFill[1] with { Stackables = [..layersFill[1].Stackables] };
-                        newArray[y, x, 2] = layersFill[2] with { Stackables = [..layersFill[2].Stackables] };
+                        newArray[y, x, 0] = layersFill[0];
+                        newArray[y, x, 1] = layersFill[1];
+                        newArray[y, x, 2] = layersFill[2];
                     }
                 }
 
@@ -2069,9 +1987,9 @@ internal static class Utils
                 {
                     for (int x = 0; x < newWidth; x++)
                     {
-                        newArray[y, x, 0] = layersFill[0] with { Stackables = [..layersFill[0].Stackables] };
-                        newArray[y, x, 1] = layersFill[1] with { Stackables = [..layersFill[1].Stackables] };
-                        newArray[y, x, 2] = layersFill[2] with { Stackables = [..layersFill[2].Stackables] };
+                        newArray[y, x, 0] = layersFill[0];
+                        newArray[y, x, 1] = layersFill[1];
+                        newArray[y, x, 2] = layersFill[2];
                     }
                 }
             }
@@ -2181,24 +2099,6 @@ internal static class Utils
         }
     }
 
-    [Obsolete]
-    internal static GeoCell[,,] NewGeoMatrix(int width, int height, int geoFill = 0)
-    {
-        GeoCell[,,] matrix = new GeoCell[height, width, 3];
-
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                matrix[y, x, 0] = new() { Geo = geoFill, Stackables = new bool[22] };
-                matrix[y, x, 1] = new() { Geo = geoFill, Stackables = new bool[22] };
-                matrix[y, x, 2] = new() { Geo = 0, Stackables = new bool[22] };
-            }
-        }
-
-        return matrix;
-    }
-
     internal static Color[,,] NewMaterialColorMatrix(int width, int height, Color @default)
     {
         Color[,,] matrix = new Color[height, width, 3];
@@ -2225,7 +2125,7 @@ internal static class Utils
     /// <param name="x">x-position of the middle of the slice</param>
     /// <param name="y">y-position of the middle of the slice</param>
     /// <param name="z">z-position of the middle of the slice</param>
-    internal static GeoCell[][] GetContext(GeoCell[,,] matrix, int width, int height, int x, int y, int z) =>
+    internal static Geo[][] GetContext(Geo[,,] matrix, int width, int height, int x, int y, int z) =>
         [
             [
                 x > 0 && y > 0 ? matrix[y - 1, x - 1, z] : new(),
@@ -2250,7 +2150,7 @@ internal static class Utils
     /// <param name="matrix">the geo-matrix (GLOBALS.Level.GeoMatrix)</param>
     /// <param name="x">x-position of the middle of the slice</param>
     /// <param name="y">y-position of the middle of the slice</param>
-    internal static GeoCell[][] GetContext(GeoCell[,] matrix, int x, int y) =>
+    internal static Geo[][] GetContext(Geo[,] matrix, int x, int y) =>
         [
             [
                 x > 0 && y > 0 ? matrix[y - 1, x - 1] : new(),
@@ -3106,65 +3006,6 @@ internal static class Utils
         return [.. tmp];
     }
 
-    public static bool IsGeoEqual(ref GeoCell g1, ref GeoCell g2) {
-        if (g1.Geo != g2.Geo) return false;
-
-        return GeoStackEq(g1.Stackables, g2.Stackables);
-    }
-
-    public static bool GeoStackEq(bool[] stc1, bool[] stc2)
-    {
-        if (stc1.Length != stc2.Length) return false;
-
-        for (var i = 0; i < stc1.Length; i++)
-        {
-            if (stc1[i] != stc2[i]) return false;
-        }
-
-        return true;
-    }
-
-    #nullable enable
-    [Obsolete]
-    public static async Task<(bool success, Exception? exception)> SaveProjectAsync()
-    {
-        (bool success, Exception? exception) result;
-        var logger = GLOBALS.Logger;
-        var path = Path.Combine(GLOBALS.ProjectPath, GLOBALS.Level.ProjectName + ".txt");
-        
-        try
-        {
-            var strTask = Leditor.Serialization.Exporters.ExportAsync(GLOBALS.Level);
-
-            // export light map
-            var image = Raylib.LoadImageFromTexture(GLOBALS.Textures.LightMap.Texture);
-
-            unsafe
-            {
-                Raylib.ImageFlipVertical(&image);
-            }
-            
-            var parent = Directory.GetParent(path)?.FullName ?? GLOBALS.ProjectPath;
-            var name = Path.GetFileNameWithoutExtension(path);
-                    
-            Raylib.ExportImage(image, Path.Combine(parent, name+".png"));
-            
-            Raylib.UnloadImage(image);
-
-            var str = await strTask;
-            
-            logger?.Debug($"Saving to {GLOBALS.ProjectPath}");
-            await File.WriteAllTextAsync(path, str);
-
-            result = (true, null);
-        }
-        catch (Exception e)
-        {
-            result =(false, e);
-        }
-        
-        return result;
-    }
 
     internal static IEnumerable<(string, string)> GetShortcutStrings(object? obj)
     {

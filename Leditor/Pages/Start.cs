@@ -1,14 +1,12 @@
 using System.Numerics;
-using System.Text;
 using ImGuiNET;
-using Leditor.Pages;
-using Pidgin;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
+using Leditor.Data.Geometry;
+
 namespace Leditor.Pages;
 
-#nullable enable
 
 internal class StartPage : EditorPage
 {
@@ -204,7 +202,7 @@ internal class StartPage : EditorPage
             DrawTexture(texture, 0, 0, Color.White);
             EndTextureMode();
         } else {
-            GeoCell[,,] matrix;
+            Geo[,,] matrix;
 
             try {
                 matrix = Utils.GetGeometryMatrixFromFile(path);

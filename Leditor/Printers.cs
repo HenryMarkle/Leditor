@@ -2,11 +2,9 @@ using static Raylib_cs.Raylib;
 using System.Numerics;
 using Leditor.Types;
 using Leditor.Data.Tiles;
-using System.Threading;
+using Leditor.Data.Geometry;
 
 namespace Leditor;
-
-#nullable enable
 
 /// <summary>
 /// Functions that are called each frame; Must only be called after window initialization and in drawing mode.
@@ -124,7 +122,7 @@ internal static class Printers
         }
     }
 
-    internal static void DrawGeoLayer(GeoCell[,,] matrix, int layer, int scale, bool grid, Color color)
+    internal static void DrawGeoLayer(Geo[,,] matrix, int layer, int scale, bool grid, Color color)
     {
         var width = matrix.GetLength(1);
         var height = matrix.GetLength(0);
@@ -135,7 +133,7 @@ internal static class Printers
             {
                 var cell = matrix[y, x, layer];
                 
-                DrawTileSpec(x*scale, y*scale, cell.Geo, scale, color);
+                DrawTileSpec(x*scale, y*scale, cell.Type, scale, color);
 
                 if (grid) DrawRectangleLinesEx(
                     new(x * scale, y * scale, scale, scale),
@@ -149,16 +147,16 @@ internal static class Printers
                     new(255, 255, 255, 55)
                 );
 
-                for (var s = 1; s < cell.Stackables.Length; s++)
+                for (var s = 1; s < 22; s++)
                 {
-                    if (cell.Stackables[s])
+                    if (cell[s])
                     {
                         switch (s)
                         {
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -181,7 +179,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -199,7 +197,7 @@ internal static class Printers
 
                                 if (index is 22 or 23 or 24 or 25)
                                 {
-                                    matrix[y, x, layer].Geo = 7;
+                                    matrix[y, x, layer].Type = GeoType.ShortcutEntrance;
                                 }
 
                                 var t = GLOBALS.Textures.GeoStackables[index];
@@ -244,7 +242,7 @@ internal static class Printers
             {
                 var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
                 
-                DrawTileSpec(x*scale, y*scale, cell.Geo, scale, color);
+                DrawTileSpec(x*scale, y*scale, cell.Type, scale, color);
 
                 if (grid) DrawRectangleLinesEx(
                     new(x * scale, y * scale, scale, scale),
@@ -258,16 +256,16 @@ internal static class Printers
                     new(255, 255, 255, 55)
                 );
 
-                for (var s = 1; s < cell.Stackables.Length; s++)
+                for (var s = 1; s < 22; s++)
                 {
-                    if (cell.Stackables[s])
+                    if (cell[s])
                     {
                         switch (s)
                         {
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -290,7 +288,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -308,7 +306,7 @@ internal static class Printers
 
                                 if (index is 22 or 23 or 24 or 25)
                                 {
-                                    GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
+                                    GLOBALS.Level.GeoMatrix[y, x, layer].Type = GeoType.ShortcutEntrance;
                                 }
 
                                 var t = GLOBALS.Textures.GeoStackables[index];
@@ -360,18 +358,18 @@ internal static class Printers
             {
                 var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
                 
-                DrawTileSpec(x*scale, y*scale, cell.Geo, scale, color);
+                DrawTileSpec(x*scale, y*scale, cell.Type, scale, color);
 
-                for (var s = 1; s < cell.Stackables.Length; s++)
+                for (var s = 1; s < 22; s++)
                 {
-                    if (cell.Stackables[s])
+                    if (cell[s])
                     {
                         switch (s)
                         {
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -394,7 +392,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -412,7 +410,7 @@ internal static class Printers
 
                                 if (index is 22 or 23 or 24 or 25)
                                 {
-                                    GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
+                                    GLOBALS.Level.GeoMatrix[y, x, layer].Type = GeoType.ShortcutEntrance;
                                 }
 
                                 var t = GLOBALS.Textures.GeoStackables[index];
@@ -464,18 +462,18 @@ internal static class Printers
                 var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
                 // var tileCell = GLOBALS.Level.TileMatrix[y, x, layer];
                 
-                DrawTileSpec(x*scale, y*scale, cell.Geo, scale, color);
+                DrawTileSpec(x*scale, y*scale, cell.Type, scale, color);
 
-                for (var s = 1; s < cell.Stackables.Length; s++)
+                for (var s = 1; s < 22; s++)
                 {
-                    if (cell.Stackables[s])
+                    if (cell[s])
                     {
                         switch (s)
                         {
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -498,7 +496,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -516,7 +514,7 @@ internal static class Printers
 
                                 if (index is 22 or 23 or 24 or 25)
                                 {
-                                    GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
+                                    GLOBALS.Level.GeoMatrix[y, x, layer].Type = GeoType.ShortcutEntrance;
                                 }
 
                                 var t = GLOBALS.Textures.GeoStackables[index];
@@ -553,11 +551,11 @@ internal static class Printers
                 if (renderMaterials) {
                     switch (GLOBALS.Level.TileMatrix[y, x, layer].Data) {
                         case TileMaterial m:
-                        DrawMaterialTexture(m.Name, cell.Geo, x, y, scale, 255);
+                        DrawMaterialTexture(m.Name, cell.Type, x, y, scale, 255);
                         break;
 
                         case TileDefault:
-                        DrawMaterialTexture(GLOBALS.Level.DefaultMaterial.Name, cell.Geo, x, y, scale, 255);
+                        DrawMaterialTexture(GLOBALS.Level.DefaultMaterial.Name, cell.Type, x, y, scale, 255);
                         break;
                     }
                 } 
@@ -645,7 +643,7 @@ internal static class Printers
             {
                 var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
                 
-                DrawTileSpec(x*scale + offsetPixels.X, y*scale + offsetPixels.Y, cell.Geo, scale, color);
+                DrawTileSpec(x*scale + offsetPixels.X, y*scale + offsetPixels.Y, cell.Type, scale, color);
 
                 if (grid) DrawRectangleLinesEx(
                     new(offsetPixels.X + x * scale, offsetPixels.Y + y * scale, scale, scale),
@@ -659,16 +657,16 @@ internal static class Printers
                     new(255, 255, 255, 55)
                 );
 
-                for (var s = 1; s < cell.Stackables.Length; s++)
+                for (var s = 1; s < 22; s++)
                 {
-                    if (cell.Stackables[s])
+                    if (cell[s])
                     {
                         switch (s)
                         {
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -691,7 +689,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -709,7 +707,7 @@ internal static class Printers
 
                                 if (index is 22 or 23 or 24 or 25)
                                 {
-                                    GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
+                                    GLOBALS.Level.GeoMatrix[y, x, layer].Type = GeoType.ShortcutEntrance;
                                 }
 
                                 var t = GLOBALS.Textures.GeoStackables[index];
@@ -753,7 +751,7 @@ internal static class Printers
             {
                 var cell = GLOBALS.Level.GeoMatrix[y, x, layer];
                 
-                DrawTileSpec(x*scale, y*scale, cell.Geo, scale, color);
+                DrawTileSpec(x*scale, y*scale, cell.Type, scale, color);
 
                 /*var texture = Utils.GetBlockIndex(cell.Geo);
 
@@ -783,16 +781,16 @@ internal static class Printers
                     new(255, 255, 255, 55)
                 );
 
-                for (var s = 1; s < cell.Stackables.Length; s++)
+                for (var s = 1; s < 22; s++)
                 {
-                    if (stackableFilter[s] && cell.Stackables[s])
+                    if (stackableFilter[s] && cell[s])
                     {
                         switch (s)
                         {
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -815,7 +813,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -833,7 +831,7 @@ internal static class Printers
 
                                 if (index is 22 or 23 or 24 or 25)
                                 {
-                                    GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
+                                    GLOBALS.Level.GeoMatrix[y, x, layer].Type = GeoType.ShortcutEntrance;
                                 }
 
                                 var t = GLOBALS.Textures.GeoStackables[index];
@@ -879,7 +877,7 @@ internal static class Printers
 
                 if (!geos) goto skipGeos;
                 
-                DrawTileSpec(x*scale, y*scale, cell.Geo, scale, color);
+                DrawTileSpec(x*scale, y*scale, cell.Type, scale, color);
 
                 /*var texture = Utils.GetBlockIndex(cell.Geo);
 
@@ -909,16 +907,16 @@ internal static class Printers
 
                 if (!stackables) continue;
 
-                for (var s = 1; s < cell.Stackables.Length; s++)
+                for (var s = 1; s < 22; s++)
                 {
-                    if (cell.Stackables[s])
+                    if (cell[s])
                     {
                         switch (s)
                         {
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -941,7 +939,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -959,7 +957,7 @@ internal static class Printers
 
                                 if (index is 22 or 23 or 24 or 25)
                                 {
-                                    GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
+                                    GLOBALS.Level.GeoMatrix[y, x, layer].Type = GeoType.ShortcutEntrance;
                                 }
 
                                 var t = GLOBALS.Textures.GeoStackables[index];
@@ -1005,7 +1003,7 @@ internal static class Printers
 
                 if (!geos) goto skipGeos;
                 
-                DrawTileSpec(x*scale, y*scale, cell.Geo, scale, color);
+                DrawTileSpec(x*scale, y*scale, cell.Type, scale, color);
 
                 /*var texture = Utils.GetBlockIndex(cell.Geo);
 
@@ -1033,16 +1031,16 @@ internal static class Printers
                 
                 skipGeos:
 
-                for (var s = 1; s < cell.Stackables.Length; s++)
+                for (var s = 1; s < 22; s++)
                 {
-                    if (stackableFilter[s] && cell.Stackables[s])
+                    if (stackableFilter[s] && cell[s])
                     {
                         switch (s)
                         {
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -1065,7 +1063,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -1083,7 +1081,7 @@ internal static class Printers
 
                                 if (index is 22 or 23 or 24 or 25)
                                 {
-                                    GLOBALS.Level.GeoMatrix[y, x, layer].Geo = 7;
+                                    GLOBALS.Level.GeoMatrix[y, x, layer].Type = GeoType.ShortcutEntrance;
                                 }
 
                                 var t = GLOBALS.Textures.GeoStackables[index];
@@ -1296,9 +1294,9 @@ internal static class Printers
                     if (color.R != 0 || color.G != 0 || color.B != 0)
                     {
 
-                        switch (GLOBALS.Level.GeoMatrix[y, x, targetLayer].Geo)
+                        switch (GLOBALS.Level.GeoMatrix[y, x, targetLayer].Type)
                         {
-                            case 1:
+                            case GeoType.Solid:
                                 DrawRectangle(
                                     x * scale + materialColorSpace,
                                     y * scale + materialColorSpace,
@@ -1309,7 +1307,7 @@ internal static class Printers
                                 break;
 
 
-                            case 2:
+                            case GeoType.SlopeNE:
                                 DrawTriangle(
                                     origin,
                                     new(origin.X, origin.Y + scale - materialColorSpace * 2),
@@ -1319,7 +1317,7 @@ internal static class Printers
                                 break;
 
 
-                            case 3:
+                            case GeoType.SlopeNW:
                                 DrawTriangle(
                                     new(origin.X + materialColorSpace * 2, origin.Y),
                                     new(origin.X, origin.Y + materialColorSpace * 2),
@@ -1328,7 +1326,7 @@ internal static class Printers
                                 );
                                 break;
 
-                            case 4:
+                            case GeoType.SlopeES:
                                 DrawTriangle(
                                     origin,
                                     new(origin.X, origin.Y + materialColorSpace * 2),
@@ -1337,7 +1335,7 @@ internal static class Printers
                                 );
                                 break;
 
-                            case 5:
+                            case GeoType.SlopeSW:
                                 DrawTriangle(
                                     origin,
                                     new(origin.X + materialColorSpace * 2, origin.Y + materialColorSpace * 2),
@@ -1346,7 +1344,7 @@ internal static class Printers
                                 );
                                 break;
 
-                            case 6:
+                            case GeoType.Platform:
                                 DrawRectangleV(
                                     origin,
                                     new(materialColorSpace * 2, (materialColorSpace * 2) / 2),
@@ -1478,8 +1476,8 @@ internal static class Printers
 
                 var geoCell = GLOBALS.Level.GeoMatrix[y, x, layer];
 
-                if (geoCell.Stackables[1]) {
-                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(1)];
+                if (geoCell[1]) {
+                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)1)];
 
                     DrawTexturePro(
                         stackableTexture, 
@@ -1491,8 +1489,8 @@ internal static class Printers
                     );
                 }
 
-                if (geoCell.Stackables[2]) {
-                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(2)];
+                if (geoCell[2]) {
+                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)2)];
 
                     DrawTexturePro(
                         stackableTexture, 
@@ -1602,12 +1600,12 @@ internal static class Printers
                     break;
 
                     case TileMaterial m:
-                        DrawMaterialTexture(m.Name, GLOBALS.Level.GeoMatrix[y, x, layer].Geo, x, y, scale, 255);
+                        DrawMaterialTexture(m.Name, GLOBALS.Level.GeoMatrix[y, x, layer].Type, x, y, scale, 255);
 
                     break;
 
                     case TileDefault:
-                        DrawMaterialTexture(GLOBALS.Level.DefaultMaterial.Name, GLOBALS.Level.GeoMatrix[y, x, layer].Geo, x, y, scale, 255);
+                        DrawMaterialTexture(GLOBALS.Level.DefaultMaterial.Name, GLOBALS.Level.GeoMatrix[y, x, layer].Type, x, y, scale, 255);
                     break;
                 }
             }
@@ -2922,7 +2920,7 @@ internal static class Printers
         return new(img);
     }
 
-    internal static RL.Managed.Image GenerateLevelReviewImage(GeoCell[,,] matrix) 
+    internal static RL.Managed.Image GenerateLevelReviewImage(Geo[,,] matrix) 
     {
         const int scale = 4;
 
@@ -2975,7 +2973,7 @@ internal static class Printers
         return new(img);
     }
     
-    internal static RL.Managed.Texture2D GenerateLevelReviewTexture(GeoCell[,,] matrix) 
+    internal static RL.Managed.Texture2D GenerateLevelReviewTexture(Geo[,,] matrix) 
     {
         const int scale = 4;
 
@@ -6019,7 +6017,7 @@ internal static class Printers
                 var scaledOrigin = new Vector2(origin.X + x, origin.Y + y) * scale;
 
                 if (spec3 is >= 0 and < 9 and not 8) DrawTileSpec(
-                    spec3,
+                    (GeoType)spec3,
                     scaledOrigin + new Vector2(4, 4),
                     scale - 8,
                     Color.Red,
@@ -6027,7 +6025,7 @@ internal static class Printers
                 );
                 
                 if (spec2 is >= 0 and < 9 and not 8) DrawTileSpec(
-                    spec2,
+                    (GeoType)spec2,
                     scaledOrigin + new Vector2(2, 2),
                     scale - 4,
                     Color.Green,
@@ -6037,7 +6035,7 @@ internal static class Printers
                 if (spec is >= 0 and < 9 and not 8)
                 {
                     DrawTileSpec(
-                        spec,
+                        (GeoType)spec,
                         scaledOrigin,
                         scale,
                         GLOBALS.Settings.GeneralSettings.DarkTheme 
@@ -6164,12 +6162,12 @@ internal static class Printers
     /// <param name="scale">the scale of the drawing</param>
     /// <param name="color">the color of the sprite</param>
     /// <param name="thickness">the line thickness</param>
-    internal static void DrawTileSpec(int id, Vector2 origin, int scale, Color color, float thickness = 1)
+    internal static void DrawTileSpec(GeoType id, Vector2 origin, int scale, Color color, float thickness = 1)
     {
         switch (id)
         {
             // air
-            case 0:
+            case GeoType.Air:
                 // DrawRectangleLinesEx(
                 //     new(origin.X + 10, origin.Y + 10, scale - 20, scale - 20),
                 //     2,
@@ -6180,13 +6178,13 @@ internal static class Printers
                 break;
 
             // solid
-            case 1:
+            case GeoType.Solid:
                 // DrawRectangleV(origin, Raymath.Vector2Scale(new(1, 1), scale), color);
                 DrawRectangleLinesEx(new Rectangle(origin.X, origin.Y,  scale,  scale), thickness, color);
                 break;
 
             // slopes
-            case 2:
+            case GeoType.SlopeNE:
                 DrawTriangleLines(
                     origin,
                     new(origin.X, origin.Y + scale),
@@ -6196,7 +6194,7 @@ internal static class Printers
                 );
                 break;
 
-            case 3:
+            case GeoType.SlopeNW:
                 DrawTriangleLines(
                     new Vector2(origin.X + scale, origin.Y), 
                     new Vector2(origin.X, origin.Y + scale), 
@@ -6206,7 +6204,7 @@ internal static class Printers
                 );
                 break;
 
-            case 4:
+            case GeoType.SlopeES:
                 DrawTriangleLines(
                     origin, 
                     new Vector2(origin.X , origin.Y + scale), 
@@ -6216,7 +6214,7 @@ internal static class Printers
                 );
                 break;
             
-            case 5:
+            case GeoType.SlopeSW:
                 DrawTriangleLines(
                     origin,
                     new Vector2(origin.X + scale, origin.Y + scale),
@@ -6227,7 +6225,7 @@ internal static class Printers
                 break;
 
             // platform
-            case 6:
+            case GeoType.Platform:
                 DrawRectangleLinesEx(
                     new Rectangle(origin.X, origin.Y, scale, scale/2f),
                     thickness,
@@ -6236,7 +6234,7 @@ internal static class Printers
                 break;
 
             // shortcut entrance
-            case 7:
+            case GeoType.ShortcutEntrance:
                 var entryTexture = GLOBALS.Textures.GeoBlocks[6];
                 
                 DrawTexturePro(
@@ -6250,7 +6248,7 @@ internal static class Printers
                 break;
 
             // glass
-            case 9: 
+            case GeoType.Glass: 
                 var glassTexture = GLOBALS.Textures.GeoBlocks[7];
                 
                 DrawTexturePro(
@@ -6272,12 +6270,12 @@ internal static class Printers
     /// <param name="origin">the top-left corner to start drawing</param>
     /// <param name="scale">the scale of the drawing</param>
     /// <param name="color">the color of the sprite</param>
-    internal static void DrawTileSpec(int id, Vector2 origin, float scale, Color color)
+    internal static void DrawTileSpec(GeoType id, Vector2 origin, float scale, Color color)
     {
         switch (id)
         {
             // air
-            case 0:
+            case GeoType.Air:
                 DrawRectangleLinesEx(
                     new(origin.X + 10, origin.Y + 10, scale - 20, scale - 20),
                     2,
@@ -6286,12 +6284,12 @@ internal static class Printers
                 break;
 
             // solid
-            case 1:
+            case GeoType.Solid:
                 DrawRectangleV(origin, Raymath.Vector2Scale(new(1, 1), scale), color);
                 break;
 
             // slopes
-            case 2:
+            case GeoType.SlopeNE:
                 DrawTriangle(
                     origin,
                     new(origin.X, origin.Y + scale),
@@ -6300,7 +6298,7 @@ internal static class Printers
                 );
                 break;
 
-            case 3:
+            case GeoType.SlopeNW:
                 DrawTriangle(
                     new(origin.X + scale, origin.Y),
                     new(origin.X, origin.Y + scale),
@@ -6309,7 +6307,7 @@ internal static class Printers
                 );
                 break;
 
-            case 4:
+            case GeoType.SlopeES:
                 DrawTriangle(
                     origin,
                     new(origin.X, origin.Y + scale),
@@ -6317,7 +6315,7 @@ internal static class Printers
                     color
                 );
                 break;
-            case 5:
+            case GeoType.SlopeSW:
                 DrawTriangle(
                     origin,
                     new(origin.X + scale, origin.Y + scale),
@@ -6327,7 +6325,7 @@ internal static class Printers
                 break;
 
             // platform
-            case 6:
+            case GeoType.Platform:
                 DrawRectangleV(
                     origin,
                     new(scale, scale / 2),
@@ -6336,7 +6334,7 @@ internal static class Printers
                 break;
 
             // shortcut entrance
-            case 7:
+            case GeoType.ShortcutEntrance:
                 var entryTexture = GLOBALS.Textures.GeoBlocks[6];
                 
                 DrawTexturePro(
@@ -6350,7 +6348,7 @@ internal static class Printers
                 break;
 
             // glass
-            case 9: 
+            case GeoType.Glass: 
                 var glassTexture = GLOBALS.Textures.GeoBlocks[7];
                 
                 DrawTexturePro(
@@ -6371,14 +6369,14 @@ internal static class Printers
     /// <param name="id">geo-tile ID</param>
     /// <param name="scale">the scale of the drawing</param>
     /// <param name="color">the color of the sprite</param>
-    internal static void DrawTileSpec(int x, int y, int id, float scale, Color color)
+    internal static void DrawTileSpec(int x, int y, GeoType id, float scale, Color color)
     {
         var vector = new Vector2(x, y);
         
         switch (id)
         {
             // air
-            case 0:
+            case GeoType.Air:
                 DrawRectangleLinesEx(
                     new(x + 10, y + 10, scale - 20, scale - 20),
                     2,
@@ -6387,12 +6385,12 @@ internal static class Printers
                 break;
 
             // solid
-            case 1:
+            case GeoType.Solid:
                 DrawRectangleV(vector, Raymath.Vector2Scale(new(1, 1), scale), color);
                 break;
 
             // slopes
-            case 2:
+            case GeoType.SlopeNE:
                 DrawTriangle(
                     vector,
                     new(x, y + scale),
@@ -6401,7 +6399,7 @@ internal static class Printers
                 );
                 break;
 
-            case 3:
+            case GeoType.SlopeNW:
                 DrawTriangle(
                     new(x + scale, y),
                     new(x, y + scale),
@@ -6410,7 +6408,7 @@ internal static class Printers
                 );
                 break;
 
-            case 4:
+            case GeoType.SlopeES:
                 DrawTriangle(
                     vector,
                     new(x, y + scale),
@@ -6418,7 +6416,7 @@ internal static class Printers
                     color
                 );
                 break;
-            case 5:
+            case GeoType.SlopeSW:
                 DrawTriangle(
                     vector,
                     new(x + scale, y + scale),
@@ -6428,7 +6426,7 @@ internal static class Printers
                 break;
 
             // platform
-            case 6:
+            case GeoType.Platform:
                 DrawRectangleV(
                     vector,
                     new(scale, scale / 2),
@@ -6437,7 +6435,7 @@ internal static class Printers
                 break;
 
             // shortcut entrance
-            case 7:
+            case GeoType.ShortcutEntrance:
                 var entryTexture = GLOBALS.Textures.GeoBlocks[6];
                 
                 DrawTexturePro(
@@ -6451,7 +6449,7 @@ internal static class Printers
                 break;
 
             // glass
-            case 9: 
+            case GeoType.Glass: 
                 var glassTexture = GLOBALS.Textures.GeoBlocks[7];
                 
                 DrawTexturePro(
@@ -6473,14 +6471,14 @@ internal static class Printers
     /// <param name="origin">the top-left corner to start drawing</param>
     /// <param name="scale">the scale of the drawing</param>
     /// <param name="color">the color of the sprite</param>
-    internal static void DrawTileSpec(float x, float y, int id, float scale, Color color)
+    internal static void DrawTileSpec(float x, float y, GeoType id, float scale, Color color)
     {
         var vector = new Vector2(x, y);
         
         switch (id)
         {
             // air
-            case 0:
+            case GeoType.Air:
                 DrawRectangleLinesEx(
                     new(x + 10, y + 10, scale - 20, scale - 20),
                     2,
@@ -6489,12 +6487,12 @@ internal static class Printers
                 break;
 
             // solid
-            case 1:
+            case GeoType.Solid:
                 DrawRectangleV(vector, Raymath.Vector2Scale(new(1, 1), scale), color);
                 break;
 
             // slopes
-            case 2:
+            case GeoType.SlopeNE:
                 DrawTriangle(
                     vector,
                     new(x, y + scale),
@@ -6503,7 +6501,7 @@ internal static class Printers
                 );
                 break;
 
-            case 3:
+            case GeoType.SlopeNW:
                 DrawTriangle(
                     new(x + scale, y),
                     new(x, y + scale),
@@ -6512,7 +6510,7 @@ internal static class Printers
                 );
                 break;
 
-            case 4:
+            case GeoType.SlopeES:
                 DrawTriangle(
                     vector,
                     new(x, y + scale),
@@ -6520,7 +6518,7 @@ internal static class Printers
                     color
                 );
                 break;
-            case 5:
+            case GeoType.SlopeSW:
                 DrawTriangle(
                     vector,
                     new(x + scale, y + scale),
@@ -6530,7 +6528,7 @@ internal static class Printers
                 break;
 
             // platform
-            case 6:
+            case GeoType.Platform:
                 DrawRectangleV(
                     vector,
                     new(scale, scale / 2),
@@ -6539,7 +6537,7 @@ internal static class Printers
                 break;
 
             // shortcut entrance
-            case 7:
+            case GeoType.ShortcutEntrance:
                 var entryTexture = GLOBALS.Textures.GeoBlocks[6];
                 
                 DrawTexturePro(
@@ -6553,7 +6551,7 @@ internal static class Printers
                 break;
 
             // glass
-            case 9: 
+            case GeoType. Glass: 
                 var glassTexture = GLOBALS.Textures.GeoBlocks[7];
                 
                 DrawTexturePro(
@@ -6721,7 +6719,7 @@ internal static class Printers
         }
     }
 
-    internal static void DrawMaterialTexture(string name, int geoId, int mx, int my, int scale, byte opacity) {
+    internal static void DrawMaterialTexture(string name, GeoType geoId, int mx, int my, int scale, byte opacity) {
         var x = mx * scale;
         var y = my * scale;
 
@@ -6799,11 +6797,11 @@ internal static class Printers
         var tsy = ((float)y + scale) / texture.Height;
 
         switch (geoId) {
-            case 1:
+            case GeoType.Solid:
             DrawTexturePro(texture, rect, rect, new(0, 0), 0, tint);
             break;
 
-            case 2:// \
+            case GeoType.SlopeNE:// \
                 DrawTextureTriangle(
                     texture,
                     new(tx, ty),
@@ -6817,7 +6815,7 @@ internal static class Printers
                 break;
 
 
-            case 3:// /
+            case GeoType.SlopeNW:// /
                 DrawTextureTriangle(
                     texture,
                     new(tsx, ty),
@@ -6830,7 +6828,7 @@ internal static class Printers
                 );
                 break;
 
-            case 5:
+            case GeoType.SlopeES:
                 DrawTextureTriangle(
                     texture,
                     new(tx, ty),
@@ -6843,7 +6841,7 @@ internal static class Printers
                 );
                 break;
 
-            case 4:
+            case GeoType.SlopeSW:
                 DrawTextureTriangle(
                     texture,
                     new(tx, ty),
@@ -6856,7 +6854,7 @@ internal static class Printers
                 );
                 break;
 
-            case 6:
+            case GeoType.Platform:
                 DrawTexturePro(texture, rect with { Height = rect.Height / 2.0f }, rect with { Height = rect.Height / 2.0f }, new(0, 0), 0, tint);
                 break;
         }
@@ -7045,9 +7043,9 @@ internal static class Printers
                     if (color.R != 0 || color.G != 0 || color.B != 0)
                     {
 
-                        switch (GLOBALS.Level.GeoMatrix[y, x, targetLayer].Geo)
+                        switch (GLOBALS.Level.GeoMatrix[y, x, targetLayer].Type)
                         {
-                            case 1:
+                            case GeoType.Air:
                                 DrawRectangle(
                                     x * scale + 6,
                                     y * scale + 6,
@@ -7058,7 +7056,7 @@ internal static class Printers
                                 break;
 
 
-                            case 2:
+                            case GeoType.SlopeNE:
                                 DrawTriangle(
                                     origin,
                                     new(origin.X, origin.Y + scale - 10),
@@ -7068,7 +7066,7 @@ internal static class Printers
                                 break;
 
 
-                            case 3:
+                            case GeoType.SlopeNW:
                                 DrawTriangle(
                                     new(origin.X + scale - 10, origin.Y),
                                     new(origin.X, origin.Y + scale - 10),
@@ -7077,7 +7075,7 @@ internal static class Printers
                                 );
                                 break;
 
-                            case 4:
+                            case GeoType.SlopeES:
                                 DrawTriangle(
                                     origin,
                                     new(origin.X, origin.Y + scale - 10),
@@ -7086,7 +7084,7 @@ internal static class Printers
                                 );
                                 break;
 
-                            case 5:
+                            case GeoType.SlopeSW:
                                 DrawTriangle(
                                     origin,
                                     new(origin.X + scale - 10, origin.Y + scale - 10),
@@ -7095,7 +7093,7 @@ internal static class Printers
                                 );
                                 break;
 
-                            case 6:
+                            case GeoType.Platform:
                                 DrawRectangleV(
                                     origin,
                                     new(scale - 10, (scale - 10) / 2),

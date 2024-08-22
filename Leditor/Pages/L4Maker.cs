@@ -1,11 +1,10 @@
 using System.Numerics;
 using ImGuiNET;
 using Leditor.Data.Tiles;
+using Leditor.Data.Geometry;
 using static Raylib_cs.Raylib;
 
 namespace Leditor.Pages;
-
-#nullable enable
 
 internal class L4MakerPage : EditorPage, IContextListener {
     public override void Dispose()
@@ -747,8 +746,8 @@ void main() {
 
                 var geoCell = GLOBALS.Level.GeoMatrix[y, x, layer];
 
-                if (geoCell.Stackables[1]) {
-                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(1)];
+                if (geoCell[1]) {
+                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)1)];
 
                     DrawTexturePro(
                         stackableTexture, 
@@ -760,8 +759,8 @@ void main() {
                     );
                 }
 
-                if (geoCell.Stackables[2]) {
-                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(2)];
+                if (geoCell[2]) {
+                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)2)];
 
                     DrawTexturePro(
                         stackableTexture, 
@@ -875,7 +874,7 @@ void main() {
                     break;
 
                     default:
-                    Printers.DrawTileSpec(x * scale, y * scale, geoCell.Geo, scale, color);
+                    Printers.DrawTileSpec(x * scale, y * scale, geoCell.Type, scale, color);
                     break;
                 }
             }

@@ -1,5 +1,6 @@
 ﻿using Drizzle.Lingo.Runtime.Parser;
 using Leditor.Data.Tiles;
+using Leditor.Data.Geometry;
 using Leditor.Serialization.Exceptions;
 using Pidgin;
 using Color = Leditor.Data.Color;

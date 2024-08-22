@@ -37,7 +37,7 @@ jobs:
     - name: Build
       run: |
         cd ./Leditor
-        dotnet build --configuration Release Leditor.csproj
+        dotnet build --configuration Release
 
     - name: Publish
       run: |
@@ -86,7 +86,7 @@ jobs:
     - name: Build
       run: |
         cd ./Leditor
-        dotnet build --configuration Release Leditor.csproj
+        dotnet build --configuration Release
 
     - name: Publish
       run: |
@@ -136,7 +136,7 @@ jobs:
     - name: Build
       run: |
         cd ./Leditor
-        dotnet build --configuration Release Leditor.csproj
+        dotnet build --configuration Release
 
     - name: Publish
       run: |
@@ -186,7 +186,7 @@ jobs:
     - name: Build
       run: |
         cd ./Leditor
-        dotnet build --configuration Release Leditor.csproj
+        dotnet build --configuration Release
 
     - name: Publish
       run: |

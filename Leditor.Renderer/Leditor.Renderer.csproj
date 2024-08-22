@@ -6,11 +6,10 @@
         <Nullable>enable</Nullable>
         <NeutralLanguage>en-US</NeutralLanguage>
         <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)' == 'Experimental'">
-      <DefineConstants>EXPERIMENTAL;TRACE</DefineConstants>
-      <OutputPath>bin\Experimental\</OutputPath>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <SelfContained>true</SelfContained>
+        <!-- <PublishSingleFile>true</PublishSingleFile> -->
+        <OutputType>WinExe</OutputType>
     </PropertyGroup>
 
     <ItemGroup>

@@ -2,10 +2,10 @@ using Pidgin;
 using System.Numerics;
 using Drizzle.Lingo.Runtime.Parser;
 using Leditor.Data.Tiles;
+using Leditor.Data.Geometry;
 
 namespace Leditor.Serialization;
 
-#nullable enable
 
 public static class Importers {
     /// Meaningless name; this function turns a sequel of stackable IDs to an array that can be used at leditor runtime
@@ -16,6 +16,15 @@ public static class Importers {
         foreach (var i in seq) bools[i] = true;
 
         return bools;
+    }
+
+    private static GeoFeature GetGeoFeaturesFromList(IEnumerable<int> seq)
+    {
+        var features = GeoFeature.None;
+
+        foreach (var f in seq) features |= Geo.FeatureID(f);
+
+        return features;
     }
     
     public static string StringifyBase(AstNode.Base b) {
@@ -850,7 +859,7 @@ public static class Importers {
         };
     }
 
-    public static GeoCell[,,] GetGeoMatrix(AstNode.Base @base, out int height, out int width) {
+    public static Geo[,,] GetGeoMatrix(AstNode.Base @base, out int height, out int width) {
         if (@base is not AstNode.List) throw new ArgumentException("object is not a list", nameof(@base));
 
         var columns = ((AstNode.List)@base).Values;
@@ -870,7 +879,7 @@ public static class Importers {
             }
         }
 
-        GeoCell[,,] matrix = new GeoCell[height, width, 3];
+        Geo[,,] matrix = new Geo[height, width, 3];
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -897,18 +906,18 @@ public static class Importers {
                         throw new Exception($"invalid cell at column ({x}), row ({y}), layer (3)");
 
                 matrix[y, x, 0] = new() { 
-                    Geo = ((AstNode.Number)((AstNode.List)layer1).Values[0]).Value.IntValue,
-                    Stackables = DecomposeStackables(((AstNode.List)((AstNode.List)layer1).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
+                    Type = (GeoType) ((AstNode.Number)((AstNode.List)layer1).Values[0]).Value.IntValue,
+                    Features = GetGeoFeaturesFromList(((AstNode.List)((AstNode.List)layer1).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
                 };
 
                 matrix[y, x, 1] = new() {
-                    Geo = ((AstNode.Number)((AstNode.List)layer2).Values[0]).Value.IntValue,
-                    Stackables = DecomposeStackables(((AstNode.List)((AstNode.List)layer2).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
+                    Type = (GeoType) ((AstNode.Number)((AstNode.List)layer2).Values[0]).Value.IntValue,
+                    Features = GetGeoFeaturesFromList(((AstNode.List)((AstNode.List)layer2).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
                 };
 
                 matrix[y, x, 2] = new() {
-                    Geo = ((AstNode.Number)((AstNode.List)layer3).Values[0]).Value.IntValue,
-                    Stackables = DecomposeStackables(((AstNode.List)((AstNode.List)layer3).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
+                    Type = (GeoType) ((AstNode.Number)((AstNode.List)layer3).Values[0]).Value.IntValue,
+                    Features = GetGeoFeaturesFromList(((AstNode.List)((AstNode.List)layer3).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
                 };
             }
         }

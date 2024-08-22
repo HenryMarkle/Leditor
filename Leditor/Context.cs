@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using Leditor.Data.Tiles;
+using Leditor.Data.Geometry;
 
 namespace Leditor;
 
@@ -191,7 +192,7 @@ public sealed class Context(Serilog.ILogger logger, TileDex tileDex) : IDisposab
         int width,
         int height,
         (int left, int top, int right, int bottom) padding,
-        int[] geoIdFill)
+        GeoType[] geoIdFill)
     {
         await Task.Factory.StartNew(() => Level.New(width, height, padding, geoIdFill));
 

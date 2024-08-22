@@ -3,6 +3,8 @@ using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
+using Leditor.Data.Geometry;
+
 namespace Leditor.Pages;
 
 internal class DimensionsEditorPage : EditorPage, IContextListener
@@ -323,9 +325,9 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
                         top, 
                         right, 
                         bottom,
-                        _fillLayer1 ? new GeoCell(1) : new GeoCell(0),
-                        _fillLayer2 ? new GeoCell(1) : new GeoCell(0),
-                        _fillLayer3 ? new GeoCell(1) : new GeoCell(0)
+                        _fillLayer1 ? new Geo(GeoType.Solid) : new Geo(),
+                        _fillLayer2 ? new Geo(GeoType.Solid) : new Geo(),
+                        _fillLayer3 ? new Geo(GeoType.Solid) : new Geo()
                     );
 
                     ResizeLightMap(
@@ -586,9 +588,9 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
                         _matrixHeightValue,
                         (_leftPadding, _topPadding, _rightPadding, _bottomPadding),
                         [
-                            _fillLayer1 ? 1 : 0,
-                            _fillLayer2 ? 1 : 0,
-                            _fillLayer3 ? 1 : 0
+                            _fillLayer1 ? GeoType.Solid : GeoType.Air,
+                            _fillLayer2 ? GeoType.Solid : GeoType.Air,
+                            _fillLayer3 ? GeoType.Solid : GeoType.Air
                         ]
                     );
 

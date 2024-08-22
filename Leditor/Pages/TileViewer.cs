@@ -1,10 +1,8 @@
 using static Raylib_cs.Raylib;
 using ImGuiNET;
 using Leditor.Data.Tiles;
-using System.Runtime.CompilerServices;
-using System.ComponentModel.DataAnnotations;
+using Leditor.Data.Geometry;
 using System.Numerics;
-using SixLabors.ImageSharp.Memory;
 using Leditor.Types;
 
 namespace Leditor.Pages;
@@ -297,14 +295,14 @@ internal class TileViewerPage : EditorPage {
                 var specOrigin = new Vector2(scale*x + 5, scale*y + 5);
 
                 if (spec3 is >= 0 and < 9 and not 8) Printers.DrawTileSpec(
-                    spec3,
+                    (GeoType)spec3,
                     specOrigin + new Vector2(10, 10),
                     scale,
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 with { A = 255 }
                 );
 
                 if (spec2 is >= 0 and < 9 and not 8) Printers.DrawTileSpec(
-                    spec2,
+                    (GeoType)spec2,
                     specOrigin + new Vector2(5, 5),
                     scale,
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 with { A = 255 }
@@ -313,7 +311,7 @@ internal class TileViewerPage : EditorPage {
                 if (spec is >= 0 and < 9 and not 8)
                 {
                     Printers.DrawTileSpec(
-                        spec,
+                        (GeoType)spec,
                         specOrigin,
                         scale,
                         GLOBALS.Settings.GeneralSettings.DarkTheme 

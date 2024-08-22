@@ -4,6 +4,7 @@ using System.Text;
 using Leditor.Data.Materials;
 using Leditor.Data.Props.Definitions;
 using Leditor.Data.Tiles;
+using Leditor.Data.Geometry;
 
 namespace Leditor;
 
@@ -96,7 +97,7 @@ public sealed class LevelState
 
     internal List<RenderCamera> Cameras { get; set; } = [];
 
-    internal GeoCell[,,] GeoMatrix { get; private set; } = new GeoCell[0, 0, 0];
+    internal Geo[,,] GeoMatrix { get; private set; } = new Geo[0, 0, 0];
     internal TileCell[,,] TileMatrix { get; private set; } = new TileCell[0, 0, 0];
     internal Color[,,] MaterialColors { get; private set; } = new Color[0, 0, 0];
     internal (string, EffectOptions[], double[,])[] Effects { get; set; } = [];
@@ -110,14 +111,14 @@ public sealed class LevelState
     
     internal LevelState(int width, int height, (int left, int top, int right, int bottom) padding)
     {
-        New(width, height, padding, [1, 1, 0]);
+        New(width, height, padding, [GeoType.Solid, GeoType.Solid, GeoType.Air]);
     }
 
     internal void Import(
         int width,
         int height,
         (int left, int top, int right, int bottom) padding,
-        GeoCell[,,] geoMatrix,
+        Geo[,,] geoMatrix,
         TileCell[,,] tileMatrix,
         Color[,,] materialColorMatrix,
         (string, EffectOptions[], double[,])[] effects,
@@ -162,7 +163,7 @@ public sealed class LevelState
         int width,
         int height,
         (int left, int top, int right, int bottom) padding,
-        Span<int> geoIdFill
+        Span<GeoType> geoIdFill
     )
     {
         Width = width;
@@ -178,15 +179,15 @@ public sealed class LevelState
         
         // Geo Matrix
         {
-            var matrix = new GeoCell[height, width, 3];
+            var matrix = new Geo[height, width, 3];
 
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
-                    matrix[y, x, 0] = new() { Geo = geoIdFill[0], Stackables = new bool[22] };
-                    matrix[y, x, 1] = new() { Geo = geoIdFill[1], Stackables = new bool[22] };
-                    matrix[y, x, 2] = new() { Geo = geoIdFill[2], Stackables = new bool[22] };
+                    matrix[y, x, 0] = new(geoIdFill[0]);
+                    matrix[y, x, 1] = new(geoIdFill[1]);
+                    matrix[y, x, 2] = new(geoIdFill[2]);
                 }
             }
 
@@ -258,9 +259,9 @@ public sealed class LevelState
         int right,
         int bottom,
 
-        GeoCell layer1Fill,
-        GeoCell layer2Fill,
-        GeoCell layer3Fill
+        Geo layer1Fill,
+        Geo layer2Fill,
+        Geo layer3Fill
     ) {
         LevelResized?.Invoke(Width, Height, Width + left + right, Height + top + bottom);
 
@@ -303,7 +304,7 @@ public sealed class LevelState
         int width,
         int height,
         (int left, int top, int right, int bottom) padding,
-        ReadOnlySpan<int> geoIdFill
+        ReadOnlySpan<GeoType> geoIdFill
     )
     {
         // Geo Matrix
@@ -314,9 +315,9 @@ public sealed class LevelState
             width,
             height,
             [
-                new GeoCell { Geo = geoIdFill[0], Stackables = new bool[22] },
-                new GeoCell { Geo = geoIdFill[1], Stackables = new bool[22] },
-                new GeoCell { Geo = geoIdFill[2], Stackables = new bool[22] }
+                new(geoIdFill[0]),
+                new(geoIdFill[1]),
+                new(geoIdFill[2])
             ]
         );
 
@@ -411,7 +412,7 @@ public class LoadFileResult
     public bool DefaultTerrain { get; set; }
     public Data.Materials.Material DefaultMaterial { get; set; }
 
-    public GeoCell[,,]? GeoMatrix { get; init; } = null;
+    public Geo[,,]? GeoMatrix { get; init; } = null;
     public TileCell[,,]? TileMatrix { get; init; } = null;
     public Color[,,]? MaterialColorMatrix { get; init; } = null;
     public Prop[]? PropsArray { get; init; } = null;
@@ -511,38 +512,37 @@ public record struct ConColor(
 
 }
 
+// public struct Geo {
+//     public int GeoType { get; set; } = 0;
+//     public bool[] Stackables { get; set; } = new bool[22];
 
-public struct GeoCell {
-    public int Geo { get; set; } = 0;
-    public bool[] Stackables { get; set; } = new bool[22];
+//     public Geo() {
+//         GeoType = 0;
+//         Stackables = new bool[22];
+//     }
 
-    public GeoCell() {
-        Geo = 0;
-        Stackables = new bool[22];
-    }
+//     public Geo(int geo)
+//     {
+//         GeoType = geo;
+//         Stackables = new bool[22];
+//     }
 
-    public GeoCell(int geo)
-    {
-        Geo = geo;
-        Stackables = new bool[22];
-    }
+//     public readonly override string ToString()
+//     {
+//         List<string> stc = new(22);
 
-    public readonly override string ToString()
-    {
-        List<string> stc = new(22);
+//         if (Stackables is null) {
+//             stc.Add("NULL");
+//         }
+//         else {
+//             for (var i = 0; i < Stackables.Length; i++) {
+//                 if (Stackables[i]) stc.Add(i.ToString());
+//             }
+//         }
 
-        if (Stackables is null) {
-            stc.Add("NULL");
-        }
-        else {
-            for (var i = 0; i < Stackables.Length; i++) {
-                if (Stackables[i]) stc.Add(i.ToString());
-            }
-        }
-
-        return $"[ {Geo}, [ {string.Join(", ", stc)} ] ]";
-    }
-}
+//         return $"[ {GeoType}, [ {string.Join(", ", stc)} ] ]";
+//     }
+// }
 
 public enum TileType { Default, Material, TileHead, TileBody }
 

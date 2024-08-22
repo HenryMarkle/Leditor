@@ -2,6 +2,8 @@
 using ImGuiNET;
 using System.Numerics;
 
+using Leditor.Data.Geometry;
+
 namespace Leditor.Pages;
 
 internal class NewLevelPage : EditorPage
@@ -187,7 +189,7 @@ internal class NewLevelPage : EditorPage
                         _matrixWidthValue,
                         _matrixHeightValue,
                         (_leftPadding, _topPadding, _rightPadding, _bottomPadding),
-                        [1, 1, 0]
+                        [GeoType.Solid, GeoType.Solid, GeoType.Air]
                     );
 
                     UnloadRenderTexture(GLOBALS.Textures.LightMap);
@@ -276,7 +278,7 @@ internal class NewLevelPage : EditorPage
                         _columns * 52 + 20,
                         _rows * 40 + 3,
                         (6, 3, 6, 5),
-                        [_simpleFillLayer1 ? 1 : 0, _simpleFillLayer2 ? 1 : 0, _simpleFillLayer3 ? 1 : 0]
+                        [_simpleFillLayer1 ? GeoType.Solid : GeoType.Air, _simpleFillLayer2 ? GeoType.Solid : GeoType.Air, _simpleFillLayer3 ? GeoType.Solid : GeoType.Air]
                     );
 
                     GLOBALS.Level.ProjectName = "New Level";

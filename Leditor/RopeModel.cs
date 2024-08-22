@@ -1,6 +1,5 @@
-using System.Diagnostics;
 using static Raylib_cs.Raymath;
-
+using Leditor.Data.Geometry;
 using System.Numerics;
 
 namespace Leditor;
@@ -216,7 +215,7 @@ public class RopeModel
         var level = GLOBALS.Level.GeoMatrix;
         
         if (x >= 0 && x < level.GetLength(1) && y >= 0 && y < level.GetLength(0))
-            return level[y, x, layer].Geo;
+            return (int)level[y, x, layer].Type;
         else
             return 1;
     }

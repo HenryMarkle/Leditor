@@ -1,4 +1,4 @@
-using Leditor.Data.Tiles;
+using Leditor.Data.Geometry;
 
 namespace Leditor.Serialization;
 
@@ -17,8 +17,20 @@ public static class Exporters
         
         return [..list];
     }
+
+    private static int[] ComposeStackables(GeoFeature features)
+    {
+        List<int> list = [];
+
+        for (var i = 1; i < 22; i++)
+        {
+            if ((features & Geo.FeatureID(i)) != GeoFeature.None) list.Add(i);
+        }
+        
+        return [..list];
+    }
     
-    private static string Export(GeoCell[,,] matrix)
+    private static string Export(Geo[,,] matrix)
     {
         System.Text.StringBuilder builder = new();
 
@@ -36,7 +48,7 @@ public static class Exporters
                 {
                     var cell = matrix[y, x, z];
                     
-                    builder.Append($"[{cell.Geo}, [{string.Join(", ", ComposeStackables(cell.Stackables))}]]");
+                    builder.Append($"[{(int)cell.Type}, [{string.Join(", ", ComposeStackables(cell.Features))}]]");
 
                     if (z != 2) builder.Append(", ");
                 }

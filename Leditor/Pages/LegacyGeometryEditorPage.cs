@@ -3,6 +3,7 @@ using ImGuiNET;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 using Leditor.Types;
+using Leditor.Data.Geometry;
 using System.Numerics;
 
 namespace Leditor.Pages;
@@ -62,7 +63,7 @@ internal class LegacyGeoEditorPage : EditorPage
     ];
 
 
-    GeoCell[,] savedChunk = new GeoCell[0, 0];
+    Geo[,] savedChunk = new Geo[0, 0];
 
     private readonly GeoGram _gram = new(40);
 
@@ -296,8 +297,8 @@ internal class LegacyGeoEditorPage : EditorPage
                                 if (mx >= 0 && mx < GLOBALS.Level.Width) {
                                     var prevCell = r.Previous[y, x];
                                     
-                                    GLOBALS.Level.GeoMatrix[my, mx, r.Position.Z].Stackables = prevCell.Stackables;
-                                    if (prevCell.Geo != 0 || r.FillAir) GLOBALS.Level.GeoMatrix[my, mx, r.Position.Z].Geo = prevCell.Geo;
+                                    GLOBALS.Level.GeoMatrix[my, mx, r.Position.Z].Features = prevCell.Features;
+                                    if (prevCell.Type is not GeoType.Air || r.FillAir) GLOBALS.Level.GeoMatrix[my, mx, r.Position.Z].Type = prevCell.Type;
                                 }
 
                             }
@@ -337,8 +338,8 @@ internal class LegacyGeoEditorPage : EditorPage
 
                                 if (mx >= 0 && mx < GLOBALS.Level.Width) {    
                                     var nextCell = r.Next[y, x];
-                                    GLOBALS.Level.GeoMatrix[my, mx, r.Position.Z].Stackables = nextCell.Stackables;
-                                    if (nextCell.Geo != 0 || r.FillAir) GLOBALS.Level.GeoMatrix[my, mx, r.Position.Z].Geo = nextCell.Geo;
+                                    GLOBALS.Level.GeoMatrix[my, mx, r.Position.Z].Features = nextCell.Features;
+                                    if (nextCell.Type is not GeoType.Air || r.FillAir) GLOBALS.Level.GeoMatrix[my, mx, r.Position.Z].Type = nextCell.Type;
                                 }
 
                             }
@@ -387,17 +388,17 @@ internal class LegacyGeoEditorPage : EditorPage
                     case 2: // slopebl
                     {
                         var cell = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
-                        var oldCell = new GeoCell { Geo = cell.Geo, Stackables = [ .. cell.Stackables ]};
+                        var oldCell = cell;
 
                         var slope = Utils.GetCorrectSlopeID(Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width, GLOBALS.Level.Height, matrixX, matrixY, GLOBALS.Layer));
 
                         if (slope == -1) break;
 
-                        cell.Geo = slope;
+                        cell.Type = (GeoType)slope;
                         GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = cell;
 
                         if ((matrixX != prevMatrixX || matrixY != prevMatrixY || !clickTracker) &&
-                            oldCell.Geo != cell.Geo)
+                            oldCell.Type != cell.Type)
                         {
                             _gram.Proceed((matrixX, matrixY, GLOBALS.Layer), oldCell, cell);
                         }
@@ -410,14 +411,14 @@ internal class LegacyGeoEditorPage : EditorPage
                             //case 12: // glass
                         {
                             var cell2 = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
-                            var oldCell = new GeoCell { Geo = cell2.Geo, Stackables = [ .. cell2.Stackables ]};
+                            var oldCell = cell2;
 
 
-                            cell2.Geo = Utils.GetBlockID(geoIndex);
+                            cell2.Type = Utils.GetBlockID(geoIndex);
                             GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = cell2;
 
                             if ((matrixX != prevMatrixX || matrixY != prevMatrixY || !clickTracker) &&
-                                oldCell.Geo != cell2.Geo)
+                                oldCell.Type != cell2.Type)
                             {
                                 // _gram.Proceed((matrixX, matrixY, GLOBALS.Layer), oldCell, cell2);
                                 _groupedActions.Add(new((matrixX, matrixY, GLOBALS.Layer), oldCell, cell2));
@@ -467,23 +468,23 @@ internal class LegacyGeoEditorPage : EditorPage
 
                             var id = Utils.GetStackableID(geoIndex);
                             var cell_ = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
-                            var oldCell = new GeoCell { Geo = cell_.Geo, Stackables = [..cell_.Stackables] };
+                            var oldCell = cell_;
 
-                            var newValue = !cell_.Stackables[id];
+                            var newValue = !cell_[id];
                             if (matrixX != prevMatrixX || matrixY != prevMatrixY || !clickTracker)
                             {
 
-                                if (cell_.Stackables[id] != newValue)
+                                if (cell_[id] != newValue)
                                 {
-                                    cell_.Stackables[id] = newValue;
+                                    cell_.ToggleWhen(id, newValue);
                                     
-                                    if (id == 4)
+                                    if (id is GeoFeature.ShortcutEntrance)
                                     {
                                         /*var context = Utils.GetContext(GLOBALS.Level.GeoMatrix, GLOBALS.Level.Width,
                                             GLOBALS.Level.Height, matrixY, matrixX, GLOBALS.Layer);
                                         var isConnected = Utils.IsConnectionEntranceConnected(context);*/
                                                 
-                                        cell_.Geo = 0;
+                                        cell_.Type = GeoType.Air;
                                     }
                                     GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = cell_;
                                     // _gram.Proceed((matrixX, matrixY, GLOBALS.Layer), oldCell, cell_);
@@ -519,16 +520,16 @@ internal class LegacyGeoEditorPage : EditorPage
 
                             var id = Utils.GetStackableID(geoIndex);
                             var cell_ = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
-                            var oldCell = new GeoCell { Geo = cell_.Geo, Stackables = [..cell_.Stackables] };
+                            var oldCell = cell_;
 
-                            var newValue = !cell_.Stackables[id];
+                            var newValue = !cell_[id];
                             if (matrixX != prevMatrixX || matrixY != prevMatrixY || !clickTracker)
                             {
 
-                                if (cell_.Stackables[id] != newValue)
+                                if (cell_[id] != newValue)
                                 {
-                                    cell_.Stackables[id] = newValue;
-                                    if (id == 4) { cell_.Geo = 0; }
+                                    cell_.ToggleWhen(id, newValue);
+                                    if (id is GeoFeature.ShortcutEntrance) { cell_.Type = GeoType.Air; }
                                     GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = cell_;
                                     // _gram.Proceed((matrixX, matrixY, GLOBALS.Layer), oldCell, cell_);
                                     _groupedActions.Add(new((matrixX, matrixY, GLOBALS.Layer), oldCell, cell_));
@@ -545,7 +546,7 @@ internal class LegacyGeoEditorPage : EditorPage
                         {
                             var cell2 = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer];
 
-                            cell2.Geo = Utils.GetBlockID(geoIndex);
+                            cell2.Type = Utils.GetBlockID(geoIndex);
                             GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer] = cell2;
                         }
                         break;
@@ -563,8 +564,8 @@ internal class LegacyGeoEditorPage : EditorPage
             switch (geoIndex) {
                 case 13:
                 {
-                    var newCopy = new GeoCell[savedChunk.GetLength(0), savedChunk.GetLength(1)];
-                        var oldCopy = new GeoCell[savedChunk.GetLength(0), savedChunk.GetLength(1)];
+                    var newCopy = new Geo[savedChunk.GetLength(0), savedChunk.GetLength(1)];
+                        var oldCopy = new Geo[savedChunk.GetLength(0), savedChunk.GetLength(1)];
                         
                         for (var x = 0; x < savedChunk.GetLength(1); x++)
                         {
@@ -580,15 +581,12 @@ internal class LegacyGeoEditorPage : EditorPage
                                     var oldCell = GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer];
                                     
                                     // Copy memory to new state
-                                    newCopy[y, x] = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                    newCopy[y, x] = cell;
                                     // Copy level to old state
-                                    oldCopy[y, x] = new GeoCell { Geo = oldCell.Geo, Stackables = [..oldCell.Stackables] };
+                                    oldCopy[y, x] = oldCell;
                                     
-                                    bool[] newStackables = [..cell.Stackables];
-                                    cell.Stackables = newStackables;
-
-                                    if (cell.Geo != 0) GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer].Geo = cell.Geo;
-                                    GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer].Stackables = cell.Stackables;
+                                    if (cell.Type is not GeoType.Air) GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer].Type = cell.Type;
+                                    GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer].Features = cell.Features;
                                 }
                             }
                         }
@@ -652,24 +650,24 @@ internal class LegacyGeoEditorPage : EditorPage
                             var revWidth = endX - startX + 1;
                             var revHeight = endY - startY + 1;
 
-                            var newCopy = new GeoCell[revHeight, revWidth];
+                            var newCopy = new Geo[revHeight, revWidth];
                             
-                            var oldCopy1 = new GeoCell[revHeight, revWidth];
-                            var oldCopy2 = new GeoCell[revHeight, revWidth];
-                            var oldCopy3 = new GeoCell[revHeight, revWidth];
+                            var oldCopy1 = new Geo[revHeight, revWidth];
+                            var oldCopy2 = new Geo[revHeight, revWidth];
+                            var oldCopy3 = new Geo[revHeight, revWidth];
 
                             for (var y = startY; y <= endY; y++)
                             {
                                 for (var x = startX; x <= endX; x++)
                                 {
-                                    newCopy[y - startY, x - startX] = new GeoCell { Geo = 0, Stackables = Utils.NewStackables() };
-                                    oldCopy1[y - startY, x - startX] = new GeoCell { Geo = GLOBALS.Level.GeoMatrix[y, x, 0].Geo, Stackables = [..GLOBALS.Level.GeoMatrix[y, x, 0].Stackables] };
-                                    oldCopy2[y - startY, x - startX] = new GeoCell { Geo = GLOBALS.Level.GeoMatrix[y, x, 1].Geo, Stackables = [..GLOBALS.Level.GeoMatrix[y, x, 1].Stackables] };
-                                    oldCopy3[y - startY, x - startX] = new GeoCell { Geo = GLOBALS.Level.GeoMatrix[y, x, 2].Geo, Stackables = [..GLOBALS.Level.GeoMatrix[y, x, 2].Stackables] };
+                                    newCopy[y - startY, x - startX] = new();
+                                    oldCopy1[y - startY, x - startX] = new Geo { Type = GLOBALS.Level.GeoMatrix[y, x, 0].Type, Features = GLOBALS.Level.GeoMatrix[y, x, 0].Features };
+                                    oldCopy2[y - startY, x - startX] = new Geo { Type = GLOBALS.Level.GeoMatrix[y, x, 1].Type, Features = GLOBALS.Level.GeoMatrix[y, x, 1].Features };
+                                    oldCopy3[y - startY, x - startX] = new Geo { Type = GLOBALS.Level.GeoMatrix[y, x, 2].Type, Features = GLOBALS.Level.GeoMatrix[y, x, 2].Features };
                                     
-                                    GLOBALS.Level.GeoMatrix[y, x, 0].Geo = 0;
-                                    GLOBALS.Level.GeoMatrix[y, x, 1].Geo = 0;
-                                    GLOBALS.Level.GeoMatrix[y, x, 2].Geo = 0;
+                                    GLOBALS.Level.GeoMatrix[y, x, 0].Type = GeoType.Air;
+                                    GLOBALS.Level.GeoMatrix[y, x, 1].Type = GeoType.Air;
+                                    GLOBALS.Level.GeoMatrix[y, x, 2].Type = GeoType.Air;
                                 }
                             }
                             
@@ -717,17 +715,17 @@ internal class LegacyGeoEditorPage : EditorPage
 
                             if (GLOBALS.Layer is 0 or 1)
                             {
-                                var newCopy = new GeoCell[endY - startY + 1, endX - startX + 1];
-                                var oldCopy = new GeoCell[endY - startY + 1, endX - startX + 1];
+                                var newCopy = new Geo[endY - startY + 1, endX - startX + 1];
+                                var oldCopy = new Geo[endY - startY + 1, endX - startX + 1];
                                 
                                 for (var y = startY; y <= endY; y++)
                                 {
                                     for (var x = startX; x <= endX; x++)
                                     {
-                                        oldCopy[y - startY, x - startX] = new GeoCell { Geo = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer + 1].Geo, Stackables = [..GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer + 1].Stackables] };
-                                        newCopy[y - startY, x - startX] = new GeoCell { Geo = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer + 1].Geo, Stackables = [..GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer + 1].Stackables]};
+                                        oldCopy[y - startY, x - startX] = new Geo { Type = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer + 1].Type, Features = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer + 1].Features };
+                                        newCopy[y - startY, x - startX] = new Geo { Type = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer + 1].Type, Features = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer + 1].Features};
                                         
-                                        GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer + 1].Geo = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Geo;
+                                        GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer + 1].Type = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer].Type;
                                     }
                                 }
                                 
@@ -773,21 +771,21 @@ internal class LegacyGeoEditorPage : EditorPage
                                 endY = prevCoordsY;
                             }
 
-                            var value = geoIndex == 4 ? 1 : 0;
+                            var value = geoIndex == 4 ? GeoType.Solid : GeoType.Air;
                             
-                            var newCopy = new GeoCell[endY - startY + 1, endX - startX + 1];
-                            var oldCopy = new GeoCell[endY - startY + 1, endX - startX + 1];
+                            var newCopy = new Geo[endY - startY + 1, endX - startX + 1];
+                            var oldCopy = new Geo[endY - startY + 1, endX - startX + 1];
 
                             for (var y = startY; y <= endY; y++)
                             {
                                 for (var x = startX; x <= endX; x++)
                                 {
                                     var cell = GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer];
-                                    var oldCell = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
-                                    cell.Geo = value;
+                                    var oldCell = cell;
+                                    cell.Type = value;
 
                                     oldCopy[y - startY, x - startX] = oldCell;
-                                    newCopy[y - startY, x - startX] = new GeoCell { Geo = cell.Geo, Stackables = [..cell.Stackables] };
+                                    newCopy[y - startY, x - startX] = cell;
                                     GLOBALS.Level.GeoMatrix[y, x, GLOBALS.Layer] = cell;
                                 }
                             }
@@ -836,7 +834,7 @@ internal class LegacyGeoEditorPage : EditorPage
                                 endY = prevCoordsY;
                             }
 
-                            savedChunk = new GeoCell[endY - startY + 1, endX - startX + 1];
+                            savedChunk = new Geo[endY - startY + 1, endX - startX + 1];
                             
 
                             for (var x = 0; x < savedChunk.GetLength(1); x++)
@@ -847,9 +845,6 @@ internal class LegacyGeoEditorPage : EditorPage
                                     var yy = y + startY;
 
                                     var _cell = GLOBALS.Level.GeoMatrix[yy, xx, GLOBALS.Layer];
-                                    var newStackables = new bool[22];
-                                    _cell.Stackables.CopyTo(newStackables, 0);
-                                    _cell.Stackables = newStackables;
 
                                     savedChunk[y, x] = _cell;
                                 }
@@ -933,7 +928,7 @@ internal class LegacyGeoEditorPage : EditorPage
                         {
                             var cell = savedChunk[y, x];
 
-                            var texture = Utils.GetBlockIndex(cell.Geo);
+                            var texture = Utils.GetBlockIndex(cell.Type);
 
                             if (texture >= 0)
                             {
@@ -941,16 +936,16 @@ internal class LegacyGeoEditorPage : EditorPage
                             }
 
 
-                            for (var s = 1; s < cell.Stackables.Length; s++)
+                            for (var s = 1; s < 22; s++)
                             {
-                                if (cell.Stackables[s])
+                                if (cell[s])
                                 {
                                     switch (s)
                                     {
                                         // dump placement
                                         case 1:     // ph
                                         case 2:     // pv
-                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], (matrixX + x) * scale, (matrixY + y) * scale, new(89, 7, 222, 200));
+                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)], (matrixX + x) * scale, (matrixY + y) * scale, new(89, 7, 222, 200));
                                             break;
                                         case 3:     // bathive
                                         case 5:     // entrance
@@ -964,7 +959,7 @@ internal class LegacyGeoEditorPage : EditorPage
                                         case 19:    // wac
                                         case 20:    // worm
                                         case 21:    // scav
-                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(s)], (matrixX + x) * scale, (matrixY + y) * scale, Color.White); // TODO: remove opacity from entrances
+                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)], (matrixX + x) * scale, (matrixY + y) * scale, Color.White); // TODO: remove opacity from entrances
                                             break;
 
                                         

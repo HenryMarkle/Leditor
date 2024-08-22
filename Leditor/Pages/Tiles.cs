@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using ImGuiNET;
 using Leditor.Data.Tiles;
+using Leditor.Data.Geometry;
 using rlImGui_cs;
 using static Raylib_cs.Raylib;
 using RenderTexture2D = Leditor.RL.Managed.RenderTexture2D;
@@ -122,7 +123,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
 
     private Color[,,] _copyMaterialColorBuffer = new Color[0, 0, 0];
     private TileCell[,,] _copyBuffer = new TileCell[0,0,0];
-    private GeoCell[,,] _copyGeoBuffer = new GeoCell[0, 0, 0];
+    private Geo[,,] _copyGeoBuffer = new Geo[0, 0, 0];
 
     private (string category, Data.Color color, TileDefinition tile)[] _tileMatches = [];
     private (int category, int[] materials)[] _materialIndices = [];
@@ -218,7 +219,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                     var spec3 = specs[y, x, 2];
 
                     var isLegal = spec == -1 ||
-                                  (geoCell.Geo == spec && tileCell.Type is TileType.Default or TileType.Material);
+                                  (geoCell.Type == (GeoType)spec && tileCell.Type is TileType.Default or TileType.Material);
 
                     if (tileCell.Type is TileType.Material && !GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials) isLegal = false;
 
@@ -227,7 +228,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                         var tileCellNextLayer = GLOBALS.Level.TileMatrix[matrixY, matrixX, GLOBALS.Layer + 1];
                         var geoCellNextLayer = GLOBALS.Level.GeoMatrix[matrixY, matrixX, GLOBALS.Layer + 1];
 
-                        isLegal = isLegal && (spec2 == -1 || (geoCellNextLayer.Geo == spec2 &&
+                        isLegal = isLegal && (spec2 == -1 || (geoCellNextLayer.Type == (GeoType)spec2 &&
                                                      tileCellNextLayer.Type is TileType.Default or TileType.Material));
 
                         if (tileCellNextLayer.Type is TileType.Material && !GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials) isLegal = false;
@@ -238,7 +239,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                         var tileCellNextLayer = GLOBALS.Level.TileMatrix[matrixY, matrixX, 2];
                         var geoCellNextLayer = GLOBALS.Level.GeoMatrix[matrixY, matrixX, 2];
                         
-                        isLegal = isLegal && (spec3 == -1 || (geoCellNextLayer.Geo == spec3 &&
+                        isLegal = isLegal && (spec3 == -1 || (geoCellNextLayer.Type == (GeoType)spec3 &&
                                                               tileCellNextLayer.Type is TileType.Default or TileType.Material));
 
                         if (tileCellNextLayer.Type is TileType.Material && !GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials) isLegal = false;
@@ -865,7 +866,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                     
                     if (spec != -1)
                     {
-                        GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz].Geo = spec;
+                        GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz].Type = (GeoType)spec;
         
                         if (!(x == (int)head.X && y == (int)head.Y))
                         {
@@ -884,7 +885,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                     
                     if (spec2 != -1 && mz != 2)
                     {
-                        GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz + 1].Geo = spec2;
+                        GLOBALS.Level.GeoMatrix[matrixY, matrixX, mz + 1].Type = (GeoType)spec2;
                         
                         var newerCell = new TileCell
                         {
@@ -900,7 +901,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
 
                     if (spec3 != -1 && mz == 2)
                     {
-                        GLOBALS.Level.GeoMatrix[matrixY, matrixX, 2].Geo = spec3;
+                        GLOBALS.Level.GeoMatrix[matrixY, matrixX, 2].Type = (GeoType)spec3;
                         
                         var newerCell = new TileCell
                         {
@@ -1146,14 +1147,14 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                 var specOrigin = new Vector2(scale*x + 5, scale*y + 5);
 
                 if (spec3 is >= 0 and < 9 and not 8) Printers.DrawTileSpec(
-                    spec3,
+                    (GeoType)spec3,
                     specOrigin + new Vector2(10, 10),
                     scale,
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 with { A = 255 }
                 );
 
                 if (spec2 is >= 0 and < 9 and not 8) Printers.DrawTileSpec(
-                    spec2,
+                    (GeoType)spec2,
                     specOrigin + new Vector2(5, 5),
                     scale,
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 with { A = 255 }
@@ -1162,7 +1163,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                 if (spec is >= 0 and < 9 and not 8)
                 {
                     Printers.DrawTileSpec(
-                        spec,
+                        (GeoType)spec,
                         specOrigin,
                         scale,
                         GLOBALS.Settings.GeneralSettings.DarkTheme 
@@ -1586,7 +1587,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                             
                             _copyMaterialColorBuffer = new Color[height, width, 2];
                             _copyBuffer = new TileCell[height, width, 2];
-                            _copyGeoBuffer = new GeoCell[height, width, 2];
+                            _copyGeoBuffer = new Geo[height, width, 2];
 
                             for (var x = 0; x < width; x++)
                             {
@@ -1629,7 +1630,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                 {
                     if (_shortcuts.Draw.Check(ctrl, shift, alt) || _shortcuts.AltDraw.Check(ctrl, shift, alt))
                     {
-                        List<TileGram.ISingleAction<(TileCell, GeoCell)>> actions = [];
+                        List<TileGram.ISingleAction<(TileCell, Geo)>> actions = [];
                         
                         var difX = (int) _prevCopiedRectangle.X - tileMatrixX;
                         var difY = (int) _prevCopiedRectangle.Y - tileMatrixY;
@@ -1687,7 +1688,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                             }
                         }
                         
-                        GLOBALS.Gram.Proceed(new TileGram.GroupAction<(TileCell, GeoCell)>(actions));
+                        GLOBALS.Gram.Proceed(new TileGram.GroupAction<(TileCell, Geo)>(actions));
                         _shouldRedrawLevel = true;
                     }
                 }
