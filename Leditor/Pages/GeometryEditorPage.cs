@@ -948,7 +948,7 @@ internal class ExperimentalGeometryPage : EditorPage
                                                 throw new IndexOutOfRangeException(innerException: e, message: $"Geo cell at {x} {y} {GLOBALS.Layer} has stackables array that is not initialized correctly");
                                             }
                                             #else
-                                            cell.Stackables[id] = !_eraseMode;
+                                            cell.ToggleWhen(id, !_eraseMode);
                                             #endif
                                         }
                                         break;
