@@ -123,7 +123,10 @@ internal static class GLOBALS
         internal static string AssetsDirectory { 
             get {
                 #if DEBUG
-                return Path.Combine(ExecutableDirectory, "..", "..", "..", "assets");
+                if (Directory.Exists(Path.Combine(ExecutableDirectory, "..", "..", "..", "assets")))
+                    return Path.Combine(ExecutableDirectory, "..", "..", "..", "assets");
+                else
+                    return Path.Combine(ExecutableDirectory, "..", "..", "..", "..", "assets");
                 #else
                 return Path.Combine(ExecutableDirectory, "assets");
                 #endif
