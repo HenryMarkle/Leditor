@@ -945,7 +945,7 @@ internal class LegacyGeoEditorPage : EditorPage
                                         // dump placement
                                         case 1:     // ph
                                         case 2:     // pv
-                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)], (matrixX + x) * scale, (matrixY + y) * scale, new(89, 7, 222, 200));
+                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))], (matrixX + x) * scale, (matrixY + y) * scale, new(89, 7, 222, 200));
                                             break;
                                         case 3:     // bathive
                                         case 5:     // entrance
@@ -959,7 +959,7 @@ internal class LegacyGeoEditorPage : EditorPage
                                         case 19:    // wac
                                         case 20:    // worm
                                         case 21:    // scav
-                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)], (matrixX + x) * scale, (matrixY + y) * scale, Color.White); // TODO: remove opacity from entrances
+                                            DrawTexture(GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))], (matrixX + x) * scale, (matrixY + y) * scale, Color.White); // TODO: remove opacity from entrances
                                             break;
 
                                         

@@ -747,7 +747,7 @@ void main() {
                 var geoCell = GLOBALS.Level.GeoMatrix[y, x, layer];
 
                 if (geoCell[1]) {
-                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)1)];
+                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(GeoFeature.HorizontalPole)];
 
                     DrawTexturePro(
                         stackableTexture, 
@@ -760,7 +760,7 @@ void main() {
                 }
 
                 if (geoCell[2]) {
-                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)2)];
+                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(GeoFeature.VerticalPole)];
 
                     DrawTexturePro(
                         stackableTexture, 

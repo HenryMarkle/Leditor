@@ -1601,13 +1601,13 @@ internal class ExperimentalGeometryPage : EditorPage
                             {
                                 if (cell[s])
                                 {
-                                    switch ((GeoFeature)s)
+                                    switch (Geo.FeatureID(s))
                                     {
                                         // dump placement
                                         case GeoFeature.HorizontalPole:
                                         case GeoFeature.VerticalPole:
                                             DrawTexture(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)], 
+                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))], 
                                                 (matrixX + x - Utils.GetMiddle(_savedChunk.GetLength(1))) * scale, 
                                                 (matrixY + y - Utils.GetMiddle(_savedChunk.GetLength(0))) * scale, 
                                                 new(89, 7, 222, 200)
@@ -1626,7 +1626,7 @@ internal class ExperimentalGeometryPage : EditorPage
                                         case GeoFeature.WormGrass:   
                                         case GeoFeature.ScavengerHole:   
                                             DrawTexture(
-                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)], 
+                                                GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))], 
                                                 (matrixX + x - Utils.GetMiddle(_savedChunk.GetLength(1))) * scale, 
                                                 (matrixY + y - Utils.GetMiddle(_savedChunk.GetLength(0))) * scale, 
                                                 Color.White

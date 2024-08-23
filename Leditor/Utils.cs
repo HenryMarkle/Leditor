@@ -1274,6 +1274,7 @@ internal static class Utils
         GeoFeature.WackAMoleHole => 20,
         GeoFeature.WormGrass => 21,
         GeoFeature.ScavengerHole => 17,
+        
         _ => -1
     };
 

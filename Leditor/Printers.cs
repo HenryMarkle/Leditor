@@ -156,7 +156,7 @@ internal static class Printers
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -179,7 +179,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -265,7 +265,7 @@ internal static class Printers
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -288,7 +288,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -369,7 +369,7 @@ internal static class Printers
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -392,7 +392,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -473,7 +473,7 @@ internal static class Printers
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -496,7 +496,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -666,7 +666,7 @@ internal static class Printers
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -689,7 +689,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -790,7 +790,7 @@ internal static class Printers
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -813,7 +813,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -916,7 +916,7 @@ internal static class Printers
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -939,7 +939,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -1040,7 +1040,7 @@ internal static class Printers
                             // dump placement
                             case 1:     // ph
                             case 2:     // pv
-                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                 DrawTexturePro(
                                     stackableTexture, 
@@ -1063,7 +1063,7 @@ internal static class Printers
                                 case 19:    // wac
                                 case 20:    // worm
                                 case 21:    // scav
-                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)s)];
+                                    var stackableTexture2 = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(s))];
 
                                     DrawTexturePro(
                                         stackableTexture2,
@@ -1477,7 +1477,7 @@ internal static class Printers
                 var geoCell = GLOBALS.Level.GeoMatrix[y, x, layer];
 
                 if (geoCell[1]) {
-                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)1)];
+                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(1))];
 
                     DrawTexturePro(
                         stackableTexture, 
@@ -1490,7 +1490,7 @@ internal static class Printers
                 }
 
                 if (geoCell[2]) {
-                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex((GeoFeature)2)];
+                    var stackableTexture = GLOBALS.Textures.GeoStackables[Utils.GetStackableTextureIndex(Geo.FeatureID(2))];
 
                     DrawTexturePro(
                         stackableTexture, 
