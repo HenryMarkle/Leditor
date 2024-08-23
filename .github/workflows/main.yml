@@ -42,7 +42,7 @@ jobs:
     - name: Publish
       run: |
         cd ./Leditor
-        dotnet publish --configuration Release --output ../output
+        dotnet publish --configuration Release --sc -r linux-x64 --output ../output
 
     - name: Copy assets folder to output directory
       run: |
@@ -91,7 +91,7 @@ jobs:
     - name: Publish
       run: |
         cd ./Leditor
-        dotnet publish --configuration Release --output ../output
+        dotnet publish --configuration Release --sc -r linux-x64 --output ../output
 
     - name: Copy assets folder to output directory
       run: |
@@ -141,7 +141,7 @@ jobs:
     - name: Publish
       run: |
         cd ./Leditor
-        dotnet publish --configuration Release --output ../output
+        dotnet publish --configuration Release --sc -r win-x64 --output ../output
 
     - name: Copy assets folder to output directory
       run: Copy-Item -Recurse -Path ./Leditor/assets -Destination ./output/assets
@@ -191,7 +191,7 @@ jobs:
     - name: Publish
       run: |
         cd ./Leditor
-        dotnet publish --configuration Release --output ../output
+        dotnet publish --configuration Release --sc -r win-x64 --output ../output
 
     - name: Copy assets folder to output directory
       run: |
