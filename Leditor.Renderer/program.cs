@@ -6,6 +6,14 @@ using static Raylib_cs.Raylib;
 
 public class Program
 {
+    private static string GetEmbeddedResource(string resourceName)
+    {
+        var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+        using Stream stream = assembly.GetManifestResourceStream(resourceName)!;
+        using StreamReader reader = new(stream);
+        return reader.ReadToEnd();
+    }
+
     public static void Main(string[] args)
     {
         //
