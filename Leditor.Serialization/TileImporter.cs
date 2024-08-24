@@ -1,13 +1,9 @@
 ﻿using Drizzle.Lingo.Runtime.Parser;
 using Leditor.Data.Tiles;
-using Leditor.Data.Geometry;
 using Leditor.Serialization.Exceptions;
 using Pidgin;
 using Color = Leditor.Data.Color;
 using ParseException = Leditor.Serialization.Exceptions.ParseException;
-using Texture2D = Leditor.RL.Managed.Texture2D;
-// ReSharper disable CollectionNeverQueried.Global
-// ReSharper disable CollectionNeverUpdated.Global
 
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -465,5 +461,60 @@ public class TileImporter
         }
 
         return (categories, definitions);
+    }
+
+    public static async Task<TileDefinition[]> ParseInitAsync_NoCategories(string initPath, Serilog.ILogger? logger = null)
+    {
+        var initData = await File.ReadAllTextAsync(initPath);
+
+        if (string.IsNullOrEmpty(initData))
+            throw new Exception("Tile definitions text cannot be empty");
+
+        var lines = initData.ReplaceLineEndings().Split(Environment.NewLine);
+
+        List<Task<TileDefinition>> tileTasks = new(lines.Length);
+
+        for (var l = 0; l < lines.Length; l++)
+        {
+            var line = lines[l];
+            
+            if (string.IsNullOrEmpty(line) || line.StartsWith("--")) continue;
+
+            if (line.StartsWith('-')) continue;
+
+            tileTasks.Add(Task.Factory.StartNew(() =>
+            {
+                AstNode.Base tileObject;
+
+                try
+                {
+                    tileObject = LingoParser.Expression.ParseOrThrow(line);
+                }
+                catch (Exception e)
+                {
+                    logger?.Error(e, $"[ParseInitAsync_NoCategories] Failed to parse tile definition from string at line {l + 1}: "+"{Exception}");
+                    throw new ParseException($"[ParseInitAsync_NoCategories] Failed to parse tile definition from string at line {l + 1}", e);
+                }
+
+                try
+                {
+                    return GetTile(tileObject);
+                }
+                catch (ParseException e)
+                {
+                    logger?.Error(e, $"[ParseInitAsync_NoCategories] Failed to get tile definition from parsed string at line {l + 1}: "+"{Exception}");
+
+                    throw new ParseException($"[ParseInitAsync_NoCategories] Failed to get tile definition from parsed string at line {l + 1}", e);
+                }
+            }));
+            
+        }
+        
+        await Task.WhenAll(tileTasks);
+
+        return tileTasks
+            .Where(t => t.IsCompletedSuccessfully)
+            .Select(t => t.Result)
+            .ToArray();
     }
 }

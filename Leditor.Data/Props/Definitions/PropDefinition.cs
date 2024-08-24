@@ -5,7 +5,7 @@ using Raylib_cs;
 namespace Leditor.Data.Props.Definitions;
 
 public abstract class PropDefinition(string name, int depth) 
-    : IIdentifiable<string>
+    : IIdentifiable<string>, ITexture
 {
     public abstract PropSettings NewSettings(
         int renderOrder = 0, 
@@ -23,7 +23,7 @@ public abstract class PropDefinition(string name, int depth)
     /// This class is not responsible for managing the texture and should be disposed separately.
     /// </para>
     /// </summary>
-    public Texture2D Texture { get; internal set; }
+    public Texture2D Texture { get; set; }
 
     private readonly int _hashCode = name.GetHashCode();
 

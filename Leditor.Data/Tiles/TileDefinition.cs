@@ -30,7 +30,7 @@ public sealed class TileDefinition(
     int[,,] specs,
     int[] repeat,
     string[] tags
-) : IIdentifiable<string>
+) : IIdentifiable<string>, ITexture
 {
     /// <summary>
     /// The name of the tile - Must be unique.
@@ -77,7 +77,7 @@ public sealed class TileDefinition(
     /// This class is not responsible for managing the texture and should be disposed separately.
     /// </para>
     /// </summary>
-    public Texture2D Texture { get; internal set; }
+    public Texture2D Texture { get; set; }
     
     //
 
