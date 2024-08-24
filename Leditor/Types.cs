@@ -100,10 +100,10 @@ public sealed class LevelState
     internal Geo[,,] GeoMatrix { get; private set; } = new Geo[0, 0, 0];
     internal TileCell[,,] TileMatrix { get; private set; } = new TileCell[0, 0, 0];
     internal Color[,,] MaterialColors { get; private set; } = new Color[0, 0, 0];
-    internal (string, EffectOptions[], double[,])[] Effects { get; set; } = [];
+    internal (string, Data.EffectOptions[], double[,])[] Effects { get; set; } = [];
     internal Prop[] Props { get; set; } = [];
 
-    internal Data.Materials.Material DefaultMaterial { get; set; }
+    internal Data.Materials.MaterialDefinition DefaultMaterial { get; set; }
     
     internal string ProjectName { get; set; } = "New Project";
     
@@ -121,7 +121,7 @@ public sealed class LevelState
         Geo[,,] geoMatrix,
         TileCell[,,] tileMatrix,
         Color[,,] materialColorMatrix,
-        (string, EffectOptions[], double[,])[] effects,
+        (string, Data.EffectOptions[], double[,])[] effects,
         List<RenderCamera> cameras,
         Prop[] props,
         (int angle, int flatness) lightSettings,
@@ -130,7 +130,7 @@ public sealed class LevelState
         int seed,
         int waterLevel,
         bool waterInFront,
-        Data.Materials.Material defaultMaterial,
+        MaterialDefinition defaultMaterial,
         string projectName = "New Project"
     )
     {
@@ -406,11 +406,11 @@ public class LoadFileResult
     public int Height { get; init; } = 0;
 
     public BufferTiles BufferTiles { get; init; } = new();
-    public (string, EffectOptions[], double[,])[] Effects { get; init; } = [];
+    public (string, Data.EffectOptions[], double[,])[] Effects { get; init; } = [];
 
     public bool LightMode { get; init; }
     public bool DefaultTerrain { get; set; }
-    public Data.Materials.Material DefaultMaterial { get; set; }
+    public MaterialDefinition DefaultMaterial { get; set; }
 
     public Geo[,,]? GeoMatrix { get; init; } = null;
     public TileCell[,,]? TileMatrix { get; init; } = null;
@@ -472,13 +472,6 @@ public enum EffectColored
 {
     White,
     None
-}
-
-public class EffectOptions(string name, IEnumerable<string> options, dynamic choice)
-{
-    public string Name { get; set; } = name;
-    public string[] Options { get; set; } = [.. options];
-    public dynamic Choice { get; set; } = choice;
 }
 
 public record struct ConColor(

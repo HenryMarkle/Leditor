@@ -4,6 +4,7 @@ using rlImGui_cs;
 using static Raylib_cs.Raylib;
 using Leditor.Types;
 
+using Leditor.Data;
 
 namespace Leditor.Pages;
 
@@ -128,14 +129,14 @@ internal class EffectsEditorPage : EditorPage
         BeginTextureMode(GLOBALS.Textures.GeneralLevel);
         ClearBackground(
             GLOBALS.Settings.GeneralSettings.DarkTheme
-                ? new Color(50, 50, 50, 255)
-                : Color.White);
+                ? new Raylib_cs.Color(50, 50, 50, 255)
+                : Raylib_cs.Color.White);
 
-        Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(150, 150, 150, 255) : Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
+        Printers.DrawGeoLayer(2, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Raylib_cs.Color(150, 150, 150, 255) : Raylib_cs.Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
         if (_showTiles) Printers.DrawTileLayer(GLOBALS.Layer, 2, GLOBALS.Scale, false, TileDrawMode.Preview);
         if(_showProps) Printers.DrawPropLayer(2, _tintedProps, GLOBALS.Scale);
         
-        Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Color(100, 100, 100, 255) : Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
+        Printers.DrawGeoLayer(1, GLOBALS.Scale, false, GLOBALS.Settings.GeneralSettings.DarkTheme ? new Raylib_cs.Color(100, 100, 100, 255) : Raylib_cs.Color.Black with { A = 150 }, GLOBALS.LayerStackableFilter);
         if (_showTiles) Printers.DrawTileLayer(GLOBALS.Layer, 1, GLOBALS.Scale, false, TileDrawMode.Preview);
         if(_showProps) Printers.DrawPropLayer(1, _tintedProps, GLOBALS.Scale);
         
@@ -146,11 +147,11 @@ internal class EffectsEditorPage : EditorPage
                 (GLOBALS.Level.Height - GLOBALS.Level.WaterLevel - GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
                 (GLOBALS.Level.Width + 2) * GLOBALS.Scale,
                 (GLOBALS.Level.WaterLevel + GLOBALS.Level.Padding.bottom) * GLOBALS.Scale,
-                new Color(0, 0, 255, 110)
+                new Raylib_cs.Color(0, 0, 255, 110)
             );
         }
         
-        Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Color.Black with { A = 255 });
+        Printers.DrawGeoLayer(0, GLOBALS.Scale, false, Raylib_cs.Color.Black with { A = 255 });
         if (_showTiles) Printers.DrawTileLayer(GLOBALS.Layer, 0, GLOBALS.Scale, false, TileDrawMode.Preview);
         if(_showProps) Printers.DrawPropLayer(0, _tintedProps, GLOBALS.Scale);
         
@@ -271,7 +272,7 @@ internal class EffectsEditorPage : EditorPage
                     0,
                     GetScreenWidth(),
                     GetScreenHeight(),
-                    new Color(0, 0, 0, 90)
+                    new Raylib_cs.Color(0, 0, 0, 90)
                 );
 
                 // ImGui
@@ -598,7 +599,7 @@ internal class EffectsEditorPage : EditorPage
                             effectsMatrixX != _prevMatrixX || effectsMatrixY != _prevMatrixY || !_clickTracker
                         ))
                 {
-                    (string, EffectOptions[], double[,]) mtx;
+                    (string, Data.EffectOptions[], double[,]) mtx;
 
                     #if DEBUG
                     try
@@ -643,7 +644,7 @@ internal class EffectsEditorPage : EditorPage
                             effectsMatrixX != _prevMatrixX || effectsMatrixY != _prevMatrixY || !_clickTracker
                         ))
                 {
-                    (string, EffectOptions[], double[,]) mtx;
+                    (string, Data.EffectOptions[], double[,]) mtx;
 
                     #if DEBUG
                     try
@@ -794,7 +795,7 @@ internal class EffectsEditorPage : EditorPage
                     _shouldRedrawLevel = false;
                 }
 
-                ClearBackground(new Color(0, 0, 0, 255));
+                ClearBackground(new Raylib_cs.Color(0, 0, 0, 255));
 
                 BeginMode2D(_camera);
                 {
@@ -806,12 +807,12 @@ internal class EffectsEditorPage : EditorPage
                             (GLOBALS.Level.Height * GLOBALS.Scale) + 6
                         ),
                         3f,
-                        Color.White
+                        Raylib_cs.Color.White
                     );
                     
                     BeginShaderMode(GLOBALS.Shaders.VFlip);
                     SetShaderValueTexture(GLOBALS.Shaders.VFlip, GetShaderLocation(GLOBALS.Shaders.VFlip, "inputTexture"), GLOBALS.Textures.GeneralLevel.Texture);
-                    DrawTexture(GLOBALS.Textures.GeneralLevel.Texture, 0, 0, Color.White);
+                    DrawTexture(GLOBALS.Textures.GeneralLevel.Texture, 0, 0, Raylib_cs.Color.White);
                     EndShaderMode();
 
                     // Effect matrix
@@ -847,9 +848,9 @@ internal class EffectsEditorPage : EditorPage
                     // Brush
 
                     if (GLOBALS.Settings.EffectsSettings.BlockyBrush) {
-                        Printers.DrawCircularSquareLines(effectsMatrixX, effectsMatrixY, _brushRadius, 20, 2, Color.White);
+                        Printers.DrawCircularSquareLines(effectsMatrixX, effectsMatrixY, _brushRadius, 20, 2, Raylib_cs.Color.White);
                     } else {
-                        DrawCircleLines(effectsMatrixX * 20, effectsMatrixY * 20, _brushRadius * 20, Color.White);
+                        DrawCircleLines(effectsMatrixX * 20, effectsMatrixY * 20, _brushRadius * 20, Raylib_cs.Color.White);
                     }
 
                 }

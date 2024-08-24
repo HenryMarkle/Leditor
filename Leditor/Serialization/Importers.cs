@@ -102,7 +102,7 @@ public static class Importers {
         }
     }
 
-    public static Data.Materials.Material GetInitMaterial(AstNode.Base @base)
+    public static Data.Materials.MaterialDefinition GetInitMaterial(AstNode.Base @base)
     {
         #nullable enable
         var propertyList = (AstNode.PropertyList)@base;
@@ -127,13 +127,13 @@ public static class Importers {
         return new(((AstNode.String)nameBase).Value, color, Data.Materials.MaterialRenderType.CustomUnified);
     }
 
-    public static (string[] categories, Data.Materials.Material[][]) GetMaterialInit(string text)
+    public static (string[] categories, Data.Materials.MaterialDefinition[][]) GetMaterialInit(string text)
     {
         #nullable enable
         var lines = text.ReplaceLineEndings().Split(Environment.NewLine);
 
         List<string> categories = [];
-        List<Data.Materials.Material[]> materials = [];
+        List<Data.Materials.MaterialDefinition[]> materials = [];
 
         foreach (var line in lines)
         {
@@ -651,7 +651,7 @@ public static class Importers {
         return result.ToList();
     }
 
-    public static (string Name, EffectOptions[] options, double[,] Matrix)[] GetEffects(AstNode.Base @base, int width, int height) {
+    public static (string Name, Data.EffectOptions[] options, double[,] Matrix)[] GetEffects(AstNode.Base @base, int width, int height) {
         var matrixProp = ((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "effects").Value;
 
         var effectList = ((AstNode.List)matrixProp).Values.Select(e => {
@@ -681,7 +681,7 @@ public static class Importers {
                         var b => throw new Exception($"Invalid effect option choice: {StringifyBase(b)}")
                     };
 
-                    return new EffectOptions(optionName, options, choice);
+                    return new Data.EffectOptions(optionName, options, choice);
                 }).ToArray() ?? throw new NullReferenceException($"No options found for effect \"{name}\"");
             
             var matrix = new double[height, width];

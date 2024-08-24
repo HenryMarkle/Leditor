@@ -125,7 +125,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    private static string Export((string name, EffectOptions[] options, double[,] matrix)[] effects)
+    private static string Export((string name, Data.EffectOptions[] options, double[,] matrix)[] effects)
     {
         System.Text.StringBuilder builder = new();
 

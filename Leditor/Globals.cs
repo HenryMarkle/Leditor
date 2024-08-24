@@ -373,7 +373,7 @@ internal static class GLOBALS
     ];
     
     /// Embedded material definitions
-    internal static Data.Materials.Material[][] Materials { get; set; } = [
+    internal static Data.Materials.MaterialDefinition[][] Materials { get; set; } = [
         [
             new( "Standard",         new(150, 150, 150, 255), MaterialRenderType.Unified    ),
             new( "Concrete",         new(150, 255, 255, 255), MaterialRenderType.Unified    ),

@@ -12,6 +12,10 @@ public class MaterialParseException(string message, string init) : ParseExceptio
     public string Init { get; set; } = init;
 }
 
+public class UndefinedMaterialException(string name, string init) : MaterialParseException($"Undefined material: \"{name}\"", init)
+{
+}
+
 public class EffectParseException(string message, string effect) : Exception(message)
 {
     public string Effect { get; set; } = effect;

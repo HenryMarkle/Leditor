@@ -33,18 +33,16 @@ public sealed class TileLoader
 
     private Serilog.ILogger? Logger { get; init; }
 
-    public TileLoader(in Folders folders, Serilog.ILogger? logger)
+    public TileLoader(string[] folders, Serilog.ILogger? logger)
     {
         logger?.Information("[TileLoader] Begin loading tiles");
-
-        var tileFolders = folders.Tiles;
 
         var tileCount = 0;
 
         _loadTask = Task.Factory.StartNew(() => {
             List<(string folder, Task<TileDefinition[]> task)> imported = [];
             
-            foreach (var folder in tileFolders)
+            foreach (var folder in folders)
             {
                 if (!Directory.Exists(folder)) {
                     logger?.Error("[TileLoader] Failed to load init; folder not found: \"{}\"", folder);

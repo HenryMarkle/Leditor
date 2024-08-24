@@ -4,8 +4,7 @@ using Raylib_cs;
 
 namespace Leditor.Data.Props.Definitions;
 
-public abstract class PropDefinition(string name, int depth) 
-    : IIdentifiable<string>, ITexture
+public abstract class PropDefinition(string name, int depth) : IDefinition
 {
     public abstract PropSettings NewSettings(
         int renderOrder = 0, 

@@ -30,7 +30,7 @@ public sealed class TileDefinition(
     int[,,] specs,
     int[] repeat,
     string[] tags
-) : IIdentifiable<string>, ITexture
+) : IDefinition
 {
     /// <summary>
     /// The name of the tile - Must be unique.

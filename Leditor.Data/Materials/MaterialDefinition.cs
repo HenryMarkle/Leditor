@@ -1,4 +1,5 @@
 ﻿using Leditor.Data.Generic;
+using Raylib_cs;
 
 namespace Leditor.Data.Materials;
 
@@ -24,16 +25,17 @@ public enum MaterialRenderType {
     CustomUnified
 }
 
-public class Material : IIdentifiable<string>
+public class MaterialDefinition : IDefinition
 {
-
     public string Name { get; init; }
     public Color Color { get; init; }
     public MaterialRenderType RenderType { get; init; }
 
+    public Texture2D Texture { get; set; }
+
     private readonly int _hashCode;
 
-    public Material(string name, Color color, MaterialRenderType renderType)
+    public MaterialDefinition(string name, Color color, MaterialRenderType renderType)
     {
         Name = name;
         Color = color;
@@ -42,7 +44,7 @@ public class Material : IIdentifiable<string>
         _hashCode = name.GetHashCode();
     }
 
-    public Material(string name, Color color)
+    public MaterialDefinition(string name, Color color)
     {
         Name = name;
         Color = color;
@@ -51,9 +53,9 @@ public class Material : IIdentifiable<string>
         _hashCode = name.GetHashCode();
     }
 
-    public static implicit operator (string, Color)(Material m) => (m.Name, m.Color);
+    public static implicit operator (string, Color)(MaterialDefinition m) => (m.Name, m.Color);
 
-    public static bool operator ==(Material? lhs, Material? rhs)
+    public static bool operator ==(MaterialDefinition? lhs, MaterialDefinition? rhs)
     {
         if (lhs is null && rhs is null) return true;
         if (lhs is null || rhs is null) return false;
@@ -61,7 +63,7 @@ public class Material : IIdentifiable<string>
         return lhs.GetHashCode() == rhs.GetHashCode();
     }
 
-    public static bool operator !=(Material? lhs, Material? rhs)
+    public static bool operator !=(MaterialDefinition? lhs, MaterialDefinition? rhs)
     {
         if (lhs is null && rhs is null) return false;
         if (lhs is null || rhs is null) return true;
@@ -78,7 +80,7 @@ public class Material : IIdentifiable<string>
 
     public override bool Equals(object? obj)
     {
-        if (obj is not Material m) return false;
+        if (obj is not MaterialDefinition m) return false;
 
         return _hashCode == m.GetHashCode();
     }

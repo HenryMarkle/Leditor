@@ -113,7 +113,6 @@ public static class PropImporter
                     randomAst is not null && Utils.GetInt(randomAst) != 0
                 );
             }
-                break;   
             
             case "antimatter": return new Antimatter(name, depth);    
             case "softEffect": return new SoftEffect(name, depth);
@@ -439,6 +438,74 @@ public static class PropImporter
         }
 
         return (categories, definitions);
+    }
+
+    public static async Task<PropDefinition[]> ParseInitAsync_NoCategories(string initPath, Serilog.ILogger? logger = null)
+    {
+        var text = await File.ReadAllTextAsync(initPath);
+        
+        if (string.IsNullOrEmpty(text)) return [];
+
+        var lines = text.ReplaceLineEndings().Split(Environment.NewLine);
+
+        List<Task<PropDefinition>> definitionTasks = [];
+
+        definitionTasks.Capacity = lines.Length;
+
+        for (var l = 0; l < lines.Length; l++)
+        {
+            var line = lines[l];
+            
+            if (string.IsNullOrEmpty(line) || line.StartsWith('-')) continue;
+
+            var l1 = l;
+
+            definitionTasks.Add(Task.Factory.StartNew(() =>
+            {
+                AstNode.Base propObject;
+
+                try
+                {
+                    propObject = LingoParser.Expression.ParseOrThrow(line);
+                }
+                catch (Exception e)
+                {
+                    logger?.Error(e, "[ParseInitAsync_NoCategories] Failed to parse tile definition from string at line {l1}: {NewLine}{Exception}", l1 + 1);
+                    throw new ParseException($"Failed to parse tile definition from string at line {l1 + 1}", e);
+                }
+
+                try
+                {
+                    if (propObject is not AstNode.PropertyList propList)
+                    {
+                        logger?.Error("[ParseInitAsync_NoCategories] Prop definition is not a property list at line {l1}", l1 + 1);
+                        throw new ParseException($"Prop definition is not a property list at line {l1 + 1}");   
+                    }
+                    
+                    return GetPropDefinition(propList);
+                }
+                catch (ParseException e)
+                {
+                    logger?.Error(e, "[ParseInitAsync_NoCategories] Failed to get tile definition from parsed string at line {l1}: {NewLine}{Exception}", l1 + 1);
+                    throw new ParseException($"Failed to get tile definition from parsed string at line {l1 + 1}", e);
+                }
+            }));
+        }
+        
+        return definitionTasks
+            .Where(t => {
+                if (t.IsFaulted)
+                {
+                    logger?.Error(
+                        t.Exception, 
+                        "[ParseInitAsync_NoCategories] Failed to parse prop: {NewLine}{Exception}"
+                    );
+                }
+
+                return t.IsCompletedSuccessfully;
+            })
+            .Select(t => t.Result)
+            .ToArray();
     }
 
     internal static Prop GetProp(AstNode.List list, PropDex dex)

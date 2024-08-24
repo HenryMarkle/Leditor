@@ -291,7 +291,7 @@ internal static class Utils
         var effects = Serialization.Importers.GetEffects(effObj, givenWidth, givenHeight);
         var cams = Serialization.Importers.GetCameras(camsObj);
 
-        Data.Materials.Material defMatFound = GLOBALS.Materials[0][1];
+        Data.Materials.MaterialDefinition defMatFound = GLOBALS.Materials[0][1];
 
         foreach (var category in GLOBALS.Materials) {
             foreach (var m in category) {
@@ -927,9 +927,9 @@ internal static class Utils
         _ => false
     };
 
-    public static EffectOptions[] NewEffectOptions(string name)
+    public static Data.EffectOptions[] NewEffectOptions(string name)
     {
-        EffectOptions[] options = name switch
+        Data.EffectOptions[] options = name switch
         {
             "Slime" => [
                 new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
@@ -2000,7 +2000,7 @@ internal static class Utils
     }
 
     [Obsolete]
-    internal static void Resize((string, EffectOptions, double[,])[] list, int width, int height, int newWidth, int newHeight)
+    internal static void Resize((string, Data.EffectOptions, double[,])[] list, int width, int height, int newWidth, int newHeight)
     {
         for (int i = 0; i < list.Length; i++)
         {

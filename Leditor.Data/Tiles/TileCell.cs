@@ -13,14 +13,14 @@ public enum TileCellType
 /// <summary>
 /// Represents a single tile cell instance
 /// </summary>
-public readonly struct TileCell
+public readonly struct Tile
 {
     /// <summary>
     /// Check the type before accessing the other properties
     /// </summary>
     public TileCellType Type { get; } = TileCellType.Default;
 
-    public Material? MaterialDefinition { get; } = null;
+    public MaterialDefinition? MaterialDefinition { get; } = null;
     public TileDefinition? TileDefinition { get; } = null;
     public (int X, int Y, int Z) HeadPosition { get; } = (0, 0, 0);
 
@@ -29,7 +29,7 @@ public readonly struct TileCell
     /// <summary>
     /// Creates a new default tile cell
     /// </summary>
-    public TileCell()
+    public Tile()
     {
         Type = TileCellType.Default;
         
@@ -43,7 +43,7 @@ public readonly struct TileCell
     /// </summary>
     /// <param name="definition">A pointer to a <see cref="MaterialDefinition"/></param>
     /// <exception cref="NullReferenceException">Material definition is a null pointer</exception>
-    public TileCell(Material definition)
+    public Tile(MaterialDefinition definition)
     {
         Type = TileCellType.Material;
 
@@ -59,7 +59,7 @@ public readonly struct TileCell
     /// </summary>
     /// <param name="definition">A pointer to a <see cref="TileDefinition"/></param>
     /// <exception cref="NullReferenceException">Tile definition is a null pointer</exception>
-    public TileCell(TileDefinition definition)
+    public Tile(TileDefinition definition)
     {
         Type = TileCellType.Head;
 
@@ -76,7 +76,7 @@ public readonly struct TileCell
     /// <param name="y">Tile head's Y coordinates</param>
     /// <param name="z">Tile head's Z coordinates (layer)</param>
     /// <param name="definition">An optional definition of the tile head</param>
-    public TileCell(int x, int y, int z, TileDefinition? definition = null)
+    public Tile(int x, int y, int z, TileDefinition? definition = null)
     {
         Type = TileCellType.Body;
         
@@ -89,7 +89,7 @@ public readonly struct TileCell
     /// Clones a pre-existing tile cell
     /// </summary>
     /// <param name="cell">A tile cell to clone</param>
-    public TileCell(TileCell cell)
+    public Tile(Tile cell)
     {
         Type = cell.Type;
 

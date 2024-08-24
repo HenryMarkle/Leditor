@@ -1,186 +1,190 @@
-// namespace Leditor.Renderer;
+namespace Leditor.Renderer.Generic;
 
-// using Leditor.Serialization;
-// using Leditor.Data.Tiles;
+using Leditor.Serialization;
+using Leditor.Data.Tiles;
 
-// using Raylib_cs;
-// using Leditor.Data.Generic;
-// using Leditor.Data;
+using Raylib_cs;
+using Leditor.Data.Generic;
+using Leditor.Data;
 
-// public sealed class DefinitionLoader<T> 
-//     where T : IIdentifiable<string>, ITexture
-// {
-//     private readonly record struct ImagePair(T Tile, Image Image);
-//     private readonly record struct Pack(ImagePair[] Pairs, string Folder);
+public sealed class DefinitionLoader<T> 
+    where T : IIdentifiable<string>, ITexture
+{
+    private readonly record struct ImagePair(T Tile, Image Image);
+    private readonly record struct Pack(ImagePair[] Pairs, string Folder);
 
-//     /// <summary>
-//     /// Is set to true when _loadTask is completed.
-//     /// </summary>
-//     public bool IsReady { get; private set; }
+    /// <summary>
+    /// Is set to true when _loadTask is completed.
+    /// </summary>
+    public bool IsReady { get; private set; }
 
-//     /// <summary>
-//     /// Indicates that the process is completed.
-//     /// </summary>
-//     public bool IsCompleted { get; private set; }
+    /// <summary>
+    /// Indicates that the process is completed.
+    /// </summary>
+    public bool IsCompleted { get; private set; }
 
-//     /// <summary>
-//     /// Is set by the constructor.
-//     /// </summary>
-//     private Task<List<Pack>>? _loadTask;
+    public int TotalProgress { get; private set; }
+    public int Progress { get; private set; }
 
-//     private T[] _resultTiles;
+    /// <summary>
+    /// Is set by the constructor.
+    /// </summary>
+    private Task<List<Pack>>? _loadTask;
 
-//     private int _packCursor;
-//     private int _tileCursor;
-//     private int _resultCursor;
+    private T[] _resultTiles;
 
-//     private Serilog.ILogger? Logger { get; init; }
+    private int _packCursor;
+    private int _tileCursor;
+    private int _resultCursor;
 
-//     public DefinitionLoader(in Folders folders, Serilog.ILogger? logger)
-//     {
-//         logger?.Information("[TileLoader] Begin loading tiles");
+    private Serilog.ILogger? Logger { get; init; }
 
-//         var tileFolders = folders.Tiles;
+    public DefinitionLoader(
+        string[] folders, 
+        Func<string, Serilog.ILogger?, Task<T[]>> asyncInitParser, 
+        Serilog.ILogger? logger
+    )
+    {
+        logger?.Information("[TileLoader] Begin loading tiles");
 
-//         var tileCount = 0;
+        var tileCount = 0;
 
-//         _loadTask = Task.Factory.StartNew(() => {
-//             List<(string folder, Task<T[]> task)> imported = [];
+        _loadTask = Task.Factory.StartNew(() => {
+            List<(string folder, Task<T[]> task)> imported = [];
             
-//             foreach (var folder in tileFolders)
-//             {
-//                 if (!Directory.Exists(folder)) {
-//                     logger?.Error("[TileLoader] Failed to load init; folder not found: \"{}\"", folder);
-//                     continue;
-//                 }
+            foreach (var folder in folders)
+            {
+                if (!Directory.Exists(folder)) {
+                    logger?.Error("[TileLoader] Failed to load init; folder not found: \"{}\"", folder);
+                    continue;
+                }
 
-//                 if (!Program.FileExistsInFolder(folder, "init.txt"))
-//                 {
-//                     logger?.Error("[TileLoader] init.txt was not found in folder \"{folder}\"", folder);
-//                     continue;
-//                 }
+                if (!Program.FileExistsInFolder(folder, "init.txt"))
+                {
+                    logger?.Error("[TileLoader] init.txt was not found in folder \"{folder}\"", folder);
+                    continue;
+                }
 
-//                 var initPath = Program.GetFilePathInFolder(folder, "init.txt");
+                var initPath = Program.GetFilePathInFolder(folder, "init.txt");
 
-//                 if (initPath is null) {
-//                     logger?.Error("[TileLoader] init.txt was not found in folder \"{folder}\"", folder);
-//                     continue;
-//                 }
+                if (initPath is null) {
+                    logger?.Error("[TileLoader] init.txt was not found in folder \"{folder}\"", folder);
+                    continue;
+                }
 
-//                 if (typeof(T) == typeof(TileDefinition)) {
-//                     var t = TileImporter.ParseInitAsync_NoCategories(initPath, logger);
+                var t = asyncInitParser(initPath, logger);
 
-//                     imported.Add((folder, t));
-//                 }
+                imported.Add((folder, t));
+            }
 
-//             }
+            Task.WhenAll(imported.Select(i => i.task)).Wait();
 
-//             Task.WhenAll(imported.Select(i => i.task)).Wait();
-
-//             logger?.Information("[TileLoader] Load complete");
+            logger?.Information("[TileLoader] Load complete");
 
 
-//             var filtered = imported
-//                 .Where(t => {
-//                     if (t.task.IsFaulted) {
-//                         logger?.Error(t.task.Exception, "[TileLoader] Failed to load and parse init.txt: {NewLine}{Exception}");
-//                         Console.WriteLine(t.task.Exception);
-//                     }
+            var filtered = imported
+                .Where(t => {
+                    if (t.task.IsFaulted) {
+                        logger?.Error(t.task.Exception, "[TileLoader] Failed to load and parse init.txt: {NewLine}{Exception}");
+                        Console.WriteLine(t.task.Exception);
+                    }
 
-//                     return t.task.IsCompletedSuccessfully;
-//                 })
-//                 .Select(pack => {
-//                     var imagePairTasks = pack.task.Result
-//                         .Where(tile => {
-//                             var exists = Program.FileExistsInFolder(pack.folder, $"{tile.Name}.png");
+                    return t.task.IsCompletedSuccessfully;
+                })
+                .Select(pack => {
+                    var imagePairTasks = pack.task.Result
+                        .Where(tile => {
+                            var exists = Program.FileExistsInFolder(pack.folder, $"{tile.Name}.png");
 
-//                             if (!exists)
-//                             {
-//                                 Logger?.Error($"[TileLoader] Could not find image for tile \"{tile.Name}\"; path does not exists: \"{Path.Combine(pack.folder, $"{tile.Name}.png")}\"");
-//                             }
+                            if (!exists)
+                            {
+                                Logger?.Error($"[TileLoader] Could not find image for tile \"{tile.Name}\"; path does not exists: \"{Path.Combine(pack.folder, $"{tile.Name}.png")}\"");
+                            }
 
-//                             return exists;
-//                         })
-//                         .Select(tile => {
-//                             string imagePath = Program.GetFilePathInFolder(pack.folder, $"{tile.Name}.png")!;
+                            return exists;
+                        })
+                        .Select(tile => {
+                            string imagePath = Program.GetFilePathInFolder(pack.folder, $"{tile.Name}.png")!;
 
-//                             return Task.Factory.StartNew(() => (tile, Raylib.LoadImage(imagePath)));
-//                         });
+                            return Task.Factory.StartNew(() => (tile, Raylib.LoadImage(imagePath)));
+                        });
 
-//                     Task.WhenAll(imagePairTasks).Wait();
+                    Task.WhenAll(imagePairTasks).Wait();
 
-//                     var imagePairs = imagePairTasks
-//                         .Where(task => {
-//                             if (task.IsFaulted)
-//                             {
-//                                 Logger?.Error(task.Exception, "[TileLoader] Failed to load tile image: {Exception}");
-//                             }
+                    var imagePairs = imagePairTasks
+                        .Where(task => {
+                            if (task.IsFaulted)
+                            {
+                                Logger?.Error(task.Exception, "[TileLoader] Failed to load tile image: {Exception}");
+                            }
 
-//                             return task.IsCompletedSuccessfully;
-//                         })
-//                         .Select(task => {
-//                             tileCount++;
-//                             return new ImagePair(task.Result.Item1, task.Result.Item2);
-//                         })
-//                         .ToArray();
+                            return task.IsCompletedSuccessfully;
+                        })
+                        .Select(task => {
+                            tileCount++;
+                            return new ImagePair(task.Result.Item1, task.Result.Item2);
+                        })
+                        .ToArray();
 
-//                     return new Pack(imagePairs, pack.folder);
-//                 })
-//                 .ToList();
+                    return new Pack(imagePairs, pack.folder);
+                })
+                .ToList();
 
-//             IsReady = true;
+            IsReady = true;
 
-//             return filtered;        
-//         });
+            return filtered;        
+        });
 
-//         _resultTiles = new T[tileCount];
+        _resultTiles = new T[tileCount];
+        TotalProgress = tileCount;
+        Logger = logger;
+    }
 
-//         Logger = logger;
-//     }
+    public bool LoadNext()
+    {
+        if (!IsReady || _loadTask is null || !_loadTask.IsCompleted) return false;
 
-//     public bool LoadNext()
-//     {
-//         if (!IsReady || _loadTask is null || !_loadTask.IsCompleted) return false;
+        if (_packCursor >= _loadTask.Result.Count) {
+            IsCompleted = true;
+            return true;
+        }
 
-//         if (_packCursor >= _loadTask.Result.Count) {
-//             IsCompleted = true;
-//             return true;
-//         }
+        var currentPack = _loadTask.Result[_packCursor];
 
-//         var currentPack = _loadTask.Result[_packCursor];
+        if (_tileCursor >= currentPack.Pairs.Length)
+        {
+            _tileCursor = 0;
+            _packCursor++;
+            return false;
+        }
 
-//         if (_tileCursor >= currentPack.Pairs.Length)
-//         {
-//             _tileCursor = 0;
-//             _packCursor++;
-//             return false;
-//         }
+        var currentPair = currentPack.Pairs[_tileCursor];
 
-//         var currentPair = currentPack.Pairs[_tileCursor];
+        var texture = Raylib.LoadTextureFromImage(currentPair.Image);
 
-//         var texture = Raylib.LoadTextureFromImage(currentPair.Image);
+        currentPair.Tile.Texture = texture;
 
-//         currentPair.Tile.Texture = texture;
+        Raylib.UnloadImage(currentPair.Image);
 
-//         Raylib.UnloadImage(currentPair.Image);
+        #if DEBUG
+        if (_resultCursor >= _resultTiles.Length)
+        {
+            Logger?.Fatal("[TileLoader::LoadNext] Result cursor was out of bounds");
+            throw new IndexOutOfRangeException($"{nameof(_resultCursor)} was out of bounds ({_resultCursor})");
+        }
+        #endif
 
-//         #if DEBUG
-//         if (_resultCursor >= _resultTiles.Length)
-//         {
-//             Logger?.Fatal("[TileLoader::LoadNext] Result cursor was out of bounds");
-//             throw new IndexOutOfRangeException($"{nameof(_resultCursor)} was out of bounds ({_resultCursor})");
-//         }
-//         #endif
+        _resultTiles[_resultCursor] = currentPair.Tile;
+        _resultCursor++;
 
-//         _resultTiles[_resultCursor] = currentPair.Tile;
-//         _resultCursor++;
+        Progress++;
 
-//         return false;
-//     }
+        return false;
+    }
 
-//     /// <summary>
-//     /// Must be called only when IsCompleted is true.
-//     /// </summary>
-//     /// <returns></returns>
-//     public T[] GetTiles() => _resultTiles;
-// }
+    /// <summary>
+    /// Must be called only when IsCompleted is true.
+    /// </summary>
+    /// <returns></returns>
+    public T[] GetResult() => _resultTiles;
+}

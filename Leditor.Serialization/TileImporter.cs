@@ -1,4 +1,5 @@
 ﻿using Drizzle.Lingo.Runtime.Parser;
+using Leditor.Data.Materials;
 using Leditor.Data.Tiles;
 using Leditor.Serialization.Exceptions;
 using Pidgin;
@@ -492,7 +493,7 @@ public class TileImporter
                 }
                 catch (Exception e)
                 {
-                    logger?.Error(e, $"[ParseInitAsync_NoCategories] Failed to parse tile definition from string at line {l + 1}: "+"{Exception}");
+                    logger?.Error(e, $"[ParseInitAsync_NoCategories] Failed to parse tile definition from string at line {l + 1}");
                     throw new ParseException($"[ParseInitAsync_NoCategories] Failed to parse tile definition from string at line {l + 1}", e);
                 }
 
@@ -502,7 +503,7 @@ public class TileImporter
                 }
                 catch (ParseException e)
                 {
-                    logger?.Error(e, $"[ParseInitAsync_NoCategories] Failed to get tile definition from parsed string at line {l + 1}: "+"{Exception}");
+                    logger?.Error(e, $"[ParseInitAsync_NoCategories] Failed to get tile definition from parsed string at line {l + 1}");
 
                     throw new ParseException($"[ParseInitAsync_NoCategories] Failed to get tile definition from parsed string at line {l + 1}", e);
                 }
@@ -516,5 +517,123 @@ public class TileImporter
             .Where(t => t.IsCompletedSuccessfully)
             .Select(t => t.Result)
             .ToArray();
+    }
+
+    public static Tile GetTileCell(
+        AstNode.Base node,
+        IDictionary<string, MaterialDefinition> materials,
+        IDictionary<string, TileDefinition> tiles
+    )
+    {
+        string tp = ((AstNode.String)((AstNode.PropertyList)node).Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "tp").Value).Value;
+        AstNode.Base data = ((AstNode.PropertyList)node).Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "data").Value;
+
+        Tile cell;
+
+        switch (tp) {
+            case "default":
+                cell = new();                
+                break;
+            
+            case "material": 
+            {
+                var name = ((AstNode.String)data).Value;
+
+                if (!materials.TryGetValue(name, out var material))
+                    throw new MaterialNotFoundException(name);
+
+                cell = new(material);
+                break;
+            }
+
+            case "tileHead":
+            {
+                AstNode.Base[] asList = ((AstNode.List)data).Values;
+
+                var name2 = ((AstNode.String)asList[1]).Value;
+                
+                if (!tiles.TryGetValue(name2, out var tileDefinition))
+                    throw new TileNotFoundException(name2);
+
+                cell = new(tileDefinition);
+                break;
+            }
+
+            case "tileBody":
+            {
+                AstNode.Base[] asList2 = ((AstNode.List)data).Values;
+
+                var zPosition = ((AstNode.Number)asList2[1]).Value.IntValue;
+                
+                AstNode.Base[] pointArgs2 = ((AstNode.GlobalCall)asList2[0]).Arguments;
+                var category2 = ((AstNode.Number)pointArgs2[0]).Value.IntValue;
+                var position2 = ((AstNode.Number)pointArgs2[1]).Value.IntValue;
+
+                cell = new(category2, position2, zPosition);
+                break;
+            }
+
+            default:
+                throw new Exception($"Unknown tile type: \"{tp}\"");
+        };
+
+        return cell;
+    }
+
+    public static async Task<Tile[,,]> GetTileMatrixAsync(
+        AstNode.Base node, 
+        IDictionary<string, MaterialDefinition> materials,
+        IDictionary<string, TileDefinition> tiles
+    )
+    {
+        if (node is not AstNode.PropertyList) throw new ArgumentException("object is not a property list", nameof(node));
+
+        var tlMatrix = (AstNode.List)((AstNode.PropertyList)node).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "tlmatrix").Value;
+
+        var columns = tlMatrix.Values;
+
+        var height = 0;
+        var width = columns.Length;
+
+        for (int x = 0; x < columns.Length; x++) {
+            if (columns[x] is not AstNode.List) throw new Exception($"column ({x}) is not a list");
+
+            for (int y = 0; y < ((AstNode.List)columns[x]).Values.Length; y++) {
+                height = ((AstNode.List)columns[x]).Values.Length;
+
+
+                if (((AstNode.List)((AstNode.List)columns[x]).Values[y]) is not AstNode.List)
+                    throw new Exception($"element ({y}) at row ({x}) is not a list");
+            }
+        }
+
+        Tile[,,] matrix = new Tile[height, width, 3];
+
+        List<Task> parseTasks = [];
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                var layer1 = ((AstNode.List)((AstNode.List)columns[x]).Values[y]).Values[0];
+                var layer2 = ((AstNode.List)((AstNode.List)columns[x]).Values[y]).Values[1];
+                var layer3 = ((AstNode.List)((AstNode.List)columns[x]).Values[y]).Values[2];
+
+                if (layer1 is not AstNode.PropertyList || layer2 is not AstNode.PropertyList || layer3 is not AstNode.PropertyList)
+                    throw new Exception($"Layers are not property lists at column ({x}), row ({y})");
+
+                parseTasks.Add(Task.Run(async () => {
+                    var tile1 = Task.Factory.StartNew(() => GetTileCell(layer1, materials, tiles));
+                    var tile2 = Task.Factory.StartNew(() => GetTileCell(layer2, materials, tiles));
+                    var tile3 = Task.Factory.StartNew(() => GetTileCell(layer3, materials, tiles));
+
+                    matrix[y, x, 0] = await tile1;
+                    matrix[y, x, 1] = await tile2;
+                    matrix[y, x, 2] = await tile3;
+                }));
+            }
+        }
+
+        await Task.WhenAll(parseTasks);
+
+        return matrix;
     }
 }
