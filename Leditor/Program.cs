@@ -17,6 +17,8 @@ using Drizzle.Logic;
 using Leditor.Pages;
 using Leditor.Renderer;
 using System.Reflection;
+using Leditor.Data.Materials;
+using Leditor.Data.Props.Legacy;
 
 #nullable enable
 
@@ -299,52 +301,10 @@ class Program
         return Importers.GetMaterialInit(text);
     }
 
-    private static ((string, Color)[], InitTile[][]) LoadTileInit()
-    {
-        var path = GLOBALS.Paths.TilesInitPath;
-
-        var text = File.ReadAllText(path).ReplaceLineEndings();
-
-        return Importers.GetTileInit(text);
-    }
-
-    private static ((string, Color)[], InitTile[][]) LoadTileInitFromRenderer()
-    {
-        var path = Path.Combine(GLOBALS.Paths.RendererDirectory, "Graphics", "Init.txt");
-
-        var text = File.ReadAllText(path).ReplaceLineEndings();
-
-        return Importers.GetTileInit(text);
-    }
-
     private static async Task<((string, Data.Color)[], Data.Tiles.TileDefinition[][])> LoadTileInitFromRendererAsync()
     {
         return await TileImporter.ParseInitAsync(Path.Combine(GLOBALS.Paths.RendererDirectory, "Graphics",
             "Init.txt"));
-    }
-
-    private static async Task<TileInitLoadInfo[]> LoadTileInitPackages()
-    {
-        var packageDirectories = Directory.GetDirectories(GLOBALS.Paths.TilePackagesDirectory);
-        
-        IEnumerable<(string directory, string file)> initPaths = packageDirectories.Select(directory => (directory, Path.Combine(directory, "init.txt")));
-
-        var initLoadTasks = initPaths
-            .Where(p => File.Exists(p.Item2))
-            .Select(p => 
-                Task.Factory.StartNew(() => {
-                        var (categories, tiles) = Importers.GetTileInit(File.ReadAllText(p.file).ReplaceLineEndings());
-
-                        return new TileInitLoadInfo(categories, tiles, p.directory);
-                })
-                )
-            .ToArray();
-
-        List<TileInitLoadInfo> inits = [];
-
-        foreach (var task in initLoadTasks) inits.Add(await task);
-
-        return [..inits];
     }
 
     private static async Task<((string name, Data.Color color)[], Data.Tiles.TileDefinition[][], string directory)[]>
@@ -656,10 +616,9 @@ class Program
 
         allCacheTasks = Task.WhenAll([loadRecentProjectsTask]);
 
-        var tilePackagesTask = Task.FromResult<TileInitLoadInfo[]>([]);
 
-        (string name, Color color)[] loadedPackageTileCategories = [];
-        InitTile[][] loadedPackageTiles = [];
+        // (string name, Color color)[] loadedPackageTileCategories = [];
+        // InitTile[][] loadedPackageTiles = [];
         
         if (!failedIntegrity)
         {
@@ -702,6 +661,26 @@ class Program
                         }
                     }
                 }
+
+                var matCategory = new Dictionary<MaterialDefinition, string>();
+                var matColor = new Dictionary<string, Data.Color>();
+
+                for (var c = 0; c < GLOBALS.Materials.Length; c++)
+                {
+                    for (var m = 0; m < GLOBALS.Materials[c].Length; m++)
+                    {
+                        matCategory.Add(GLOBALS.Materials[c][m], GLOBALS.MaterialCategories[c]);
+                        matColor.Add(GLOBALS.Materials[c][m].Name, GLOBALS.Materials[c][m].Color);
+                    }
+                }
+
+                GLOBALS.MaterialDex = new(
+                    GLOBALS.Materials.SelectMany(m => m).ToDictionary(m => m.Name, m => m),
+                    GLOBALS.MaterialCategories.Select((c, i) => (c, i)).ToDictionary(item => item.c, item => GLOBALS.Materials[item.i]),
+                    matCategory,
+                    matColor,
+                    GLOBALS.MaterialCategories
+                );
             }
             catch (Exception e)
             {
@@ -713,6 +692,8 @@ class Program
             {
                 (GLOBALS.PropCategories, GLOBALS.Props) = LoadPropInitFromRenderer();
                 _propLoader = new([GLOBALS.Paths.PropsAssetsDirectory]);
+
+                _propLoader!.Start();
             }
             catch (Exception e)
             {
@@ -723,35 +704,6 @@ class Program
             }
             
             //
-
-            // Merge tile packages
-            
-            logger.Debug("Loading custom tiles");
-
-            if (Directory.Exists(GLOBALS.Paths.TilePackagesDirectory))
-            {
-                logger.Debug("Loading pack tiles");
-                
-                try
-                {
-                    tilePackagesTask = LoadTileInitPackages();
-                    
-                    tilePackagesTask.Wait();
-
-                    var packages = tilePackagesTask.Result;
-
-                    if (packages.Length > 0)
-                    {
-                        loadedPackageTileCategories = packages.SelectMany(p => p.Categories).ToArray();
-                        
-                        loadedPackageTiles = packages.SelectMany(p => p.Tiles).ToArray();
-                    }
-                }
-                catch (Exception e)
-                {
-                    logger.Error($"Failed to load tile packages: {e}"); 
-                }
-            }
         }
         
         // Load Tile Textures
@@ -847,8 +799,8 @@ class Program
         
         logger.Debug("Merging custom tiles");
         
-        GLOBALS.TileCategories = [..GLOBALS.TileCategories, ..loadedPackageTileCategories];
-        GLOBALS.Tiles = [..GLOBALS.Tiles, ..loadedPackageTiles];
+        // GLOBALS.TileCategories = [..GLOBALS.TileCategories, ..loadedPackageTileCategories];
+        // GLOBALS.Tiles = [..GLOBALS.Tiles, ..loadedPackageTiles];
         
         // 3. Load the images
         
@@ -2668,6 +2620,9 @@ void main() {
         GLOBALS.TileDex!.TextureUpdated -= propsPage!.OnGlobalResourcesUpdated;
         GLOBALS.TileDex!.TextureUpdated -= lightPage!.OnGlobalResourcesUpdated;
         GLOBALS.TileDex!.TextureUpdated -= camerasPage!.OnGlobalResourcesUpdated;
+
+        GLOBALS.TileDex?.Dispose();
+        GLOBALS.MaterialDex?.Dispose();
 
         startPage!.ProjectLoaded -= propsPage.OnProjectLoaded;
         startPage.ProjectLoaded -= mainPage.OnProjectLoaded;

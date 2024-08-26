@@ -158,7 +158,7 @@ internal class LightEditorPage : EditorPage, IContextListener
     private bool _shouldRedrawLevel = true;
 
     private int _quadLock;
-    private readonly QuadVectors _quadPoints = new();
+    private Data.Quad _quadPoints = new();
 
     private bool _stretchMode;
 
@@ -280,6 +280,8 @@ internal class LightEditorPage : EditorPage, IContextListener
         _quadPoints.TopRight = new Vector2(width, 0);
         _quadPoints.BottomRight = new Vector2(width, height);;
         _quadPoints.BottomLeft = new Vector2(0, height);
+
+        
         
         _stretchTexture?.Dispose();
 

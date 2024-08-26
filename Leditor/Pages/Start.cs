@@ -4,6 +4,8 @@ using rlImGui_cs;
 using static Raylib_cs.Raylib;
 
 using Leditor.Data.Geometry;
+using Leditor.Data.Tiles;
+using Leditor.Data.Props.Legacy;
 
 namespace Leditor.Pages;
 
@@ -54,20 +56,20 @@ internal class StartPage : EditorPage
                 {
                     var cell = res.TileMatrix![y, x, z];
 
-                    if (cell.Data is TileHead h)
+                    if (cell.Type is TileCellType.Head)
                     {
-                        if (h.Definition is null) {
+                        if (cell.TileDefinition is null) {
                             result = TileCheckResultEnum.Missing;
-                            missingDefs.Add(h.Name);    
+                            missingDefs.Add(cell.UndefinedName ?? "NULL");    
                         }
-                        else if (h.Definition.Texture.Id == 0) {
+                        else if (cell.TileDefinition.Texture.Id == 0) {
                             result = TileCheckResultEnum.MissingTexture;
-                            missingTextures.Add(h.Name);
+                            missingTextures.Add(cell.TileDefinition.Name);
                         }
                     }
-                    else if (cell.Type == TileType.Material)
+                    else if (cell.Type == TileCellType.Material)
                     {
-                        var materialName = ((TileMaterial)cell.Data).Name;
+                        var materialName = cell.MaterialDefinition?.Name ?? cell.UndefinedName ?? "NULL";
 
                         if (!GLOBALS.MaterialColors.ContainsKey(materialName))
                         {
@@ -106,9 +108,9 @@ internal class StartPage : EditorPage
             {
                 _ = prop.Type switch
                 {
-                    InitPropType.Long => GLOBALS.Textures.LongProps[prop.Position.index],
-                    InitPropType.Rope => GLOBALS.Textures.RopeProps[prop.Position.index],
-                    InitPropType.Tile => prop.Tile?.Texture ?? throw new NullReferenceException(),
+                    InitPropType_Legacy.Long => GLOBALS.Textures.LongProps[prop.Position.index],
+                    InitPropType_Legacy.Rope => GLOBALS.Textures.RopeProps[prop.Position.index],
+                    InitPropType_Legacy.Tile => prop.Tile?.Texture ?? throw new NullReferenceException(),
                     _ => GLOBALS.Textures.Props[prop.Position.category][prop.Position.index]
                 };
 
@@ -116,7 +118,7 @@ internal class StartPage : EditorPage
             }
             catch
             {
-                var path = prop.Type == InitPropType.Tile
+                var path = prop.Type == InitPropType_Legacy.Tile
                     ? Path.Combine(GLOBALS.Paths.TilesAssetsDirectory, prop.Name+".png")
                     : Path.Combine(GLOBALS.Paths.PropsAssetsDirectory, prop.Name + ".png");
                 

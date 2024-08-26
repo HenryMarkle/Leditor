@@ -4,6 +4,7 @@ using Drizzle.Lingo.Runtime;
 using Drizzle.Ported;
 using Leditor.Pages;
 using Leditor.Data.Props.Definitions;
+using Leditor.Data.Props.Legacy;
 using Leditor.Data.Materials;
 
 namespace Leditor;
@@ -185,6 +186,7 @@ internal static class GLOBALS
 
     internal static Data.Tiles.TileDex? TileDex { get; set; }
     internal static Data.Props.PropDex? PropDex { get; set; }
+    internal static Data.Materials.MaterialDex? MaterialDex { get; set; }
     
     internal static LingoRuntime LingoRuntime { get; set; } = new(typeof(MovieScript).Assembly);
     internal static Task LingoRuntimeInitTask { get; set; } = default!;
@@ -275,43 +277,29 @@ internal static class GLOBALS
 
     internal static Texture2D? SelectedPalette { get; set; }
     
-    internal static (string, Color)[] TileCategories { get; set; } = [];
-    
     internal static (string, Color)[] PropCategories { get; set; } = [ ("Ropes", new(255, 0, 0, 255)), ("Long Props", new(0, 255, 0, 255)) ];
     
-    /// Tile definitions
-    internal static InitTile[][] Tiles { get; set; } = [];
-
-    internal static InitTile MissingTile { get; } = new()
-    {
-        Name = "Undefined",
-        Specs = [],
-        Specs2 = [],
-        Repeat = [],
-        Tags = []
-    };
-
     /// Embedded rope prop definitions
     internal static InitRopeProp[] RopeProps { get; } =
     [
-        new(name: "Wire", type: InitPropType.Rope, depth: 0, segmentLength: 3, collisionDepth: 0, segmentRadius: 1f, gravity: 0.5f, friction: 0.5f, airFriction: 0.9f, stiff: false, previewColor: new(255, 0, 0, 255), previewEvery: 4, edgeDirection: 0, rigid: 0, selfPush: 0, sourcePush: 0),
-        new("Tube", InitPropType.Rope, 4, 10, 2, 4.5f, 0.5f, 0.5f, 0.9f, true, new(0, 0, 255, 255), 2, 5, 1.6f, 0, 0),
-        new("ThickWire", InitPropType.Rope, 3, 4, 1, 2f, 0.5f, 0.8f, 0.9f, true, new(255, 255, 0, 255), 2, 0, 0.2f, 0, 0),
-        new("RidgedTube", InitPropType.Rope, 4, 5, 2, 5, 0.5f, 0.3f, 0.7f, true, new Color(255, 0, 255, 255), 2, 0, 0.1f, 0, 0),
-        new("Fuel Hose", InitPropType.Rope, 5, 16, 1, 7, 0.5f, 0.8f, 0.9f, true, new(255, 150, 0, 255), 1, 1.4f, 0.2f, 0, 0),
-        new("Broken Fuel Hose", InitPropType.Rope, 6, 16, 1, 7, 0.5f, 0.8f, 0.9f, true, new(255, 150, 0, 255), 1, 1.4f, 0.2f, 0, 0),
-        new("Large Chain", InitPropType.Rope, 9, 28, 3, 9.5f, 0.9f, 0.8f, 0.95f, true, new(0, 255, 0, 255), 1, 0, 0, 6.5f, 0),
-        new("Large Chain 2", InitPropType.Rope, 9, 28, 3, 9.5f, 0.9f, 0.8f, 0.95f, true, new(20, 205, 0, 255), 1, 0, 0, 6.5f, 0),
-        new("Bike Chain", InitPropType.Rope, 9, 38, 3, 6.5f, 0.9f, 0.8f, 0.95f, true, new(100, 100, 100, 255), 1, 0, 0, 16.5f, 0),
-        new("Zero-G Tube", InitPropType.Rope, 4, 10, 2, 4.5f, 0, 0.5f, 0.9f, true, new(0, 255, 0, 255), 2, 0, 0.6f, 2, 0.5f),
-        new("Zero-G Wire", InitPropType.Rope, 0, 8, 0, 1, 0, 0.5f, 0.9f, true, new(255, 0, 0, 255), 2, 0.3f, 0.5f, 1.2f, 0.5f),
-        new("Fat Hose", InitPropType.Rope, 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, new(0, 100, 255, 255), 1, 0.1f, 0.2f, 10, 0.1f),
-        new("Wire Bunch", InitPropType.Rope, 9, 50, 3, 20, 0.9f, 0.6f, 0.95f, true, new(255, 100, 150, 255), 1, 0.1f, 0.2f, 10, 0.1f),
-        new("Wire Bunch 2", InitPropType.Rope, 9, 50, 3, 20, 0.9f, 0.6f, 0.95f, true, new(255, 100, 150, 255), 1, 0.1f, 0.2f, 10, 0.1f),
-        new("Big Big Pipe", InitPropType.Rope, 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, new(50, 150, 210, 255), 1, 0.1f, 0.2f, 10, 0.1f),
-        new("Ring Chain", InitPropType.Rope, 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, new(100, 200, 0, 255), 1, 0.1f, 0.2f, 10, 0.1f),
-        new("Christmas Wire", InitPropType.Rope, 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, new(200, 0, 200, 255), 1, 0, 0, 0, 0),
-        new("Ornate Wire", InitPropType.Rope, 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, new(0, 200, 200, 255), 1, 0, 0, 0, 0),
+        new(name: "Wire", type: InitPropType_Legacy.Rope, depth: 0, segmentLength: 3, collisionDepth: 0, segmentRadius: 1f, gravity: 0.5f, friction: 0.5f, airFriction: 0.9f, stiff: false, previewColor: new(255, 0, 0, 255), previewEvery: 4, edgeDirection: 0, rigid: 0, selfPush: 0, sourcePush: 0),
+        new("Tube", InitPropType_Legacy.Rope, 4, 10, 2, 4.5f, 0.5f, 0.5f, 0.9f, true, new(0, 0, 255, 255), 2, 5, 1.6f, 0, 0),
+        new("ThickWire", InitPropType_Legacy.Rope, 3, 4, 1, 2f, 0.5f, 0.8f, 0.9f, true, new(255, 255, 0, 255), 2, 0, 0.2f, 0, 0),
+        new("RidgedTube", InitPropType_Legacy.Rope, 4, 5, 2, 5, 0.5f, 0.3f, 0.7f, true, new Color(255, 0, 255, 255), 2, 0, 0.1f, 0, 0),
+        new("Fuel Hose", InitPropType_Legacy.Rope, 5, 16, 1, 7, 0.5f, 0.8f, 0.9f, true, new(255, 150, 0, 255), 1, 1.4f, 0.2f, 0, 0),
+        new("Broken Fuel Hose", InitPropType_Legacy.Rope, 6, 16, 1, 7, 0.5f, 0.8f, 0.9f, true, new(255, 150, 0, 255), 1, 1.4f, 0.2f, 0, 0),
+        new("Large Chain", InitPropType_Legacy.Rope, 9, 28, 3, 9.5f, 0.9f, 0.8f, 0.95f, true, new(0, 255, 0, 255), 1, 0, 0, 6.5f, 0),
+        new("Large Chain 2", InitPropType_Legacy.Rope, 9, 28, 3, 9.5f, 0.9f, 0.8f, 0.95f, true, new(20, 205, 0, 255), 1, 0, 0, 6.5f, 0),
+        new("Bike Chain", InitPropType_Legacy.Rope, 9, 38, 3, 6.5f, 0.9f, 0.8f, 0.95f, true, new(100, 100, 100, 255), 1, 0, 0, 16.5f, 0),
+        new("Zero-G Tube", InitPropType_Legacy.Rope, 4, 10, 2, 4.5f, 0, 0.5f, 0.9f, true, new(0, 255, 0, 255), 2, 0, 0.6f, 2, 0.5f),
+        new("Zero-G Wire", InitPropType_Legacy.Rope, 0, 8, 0, 1, 0, 0.5f, 0.9f, true, new(255, 0, 0, 255), 2, 0.3f, 0.5f, 1.2f, 0.5f),
+        new("Fat Hose", InitPropType_Legacy.Rope, 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, new(0, 100, 255, 255), 1, 0.1f, 0.2f, 10, 0.1f),
+        new("Wire Bunch", InitPropType_Legacy.Rope, 9, 50, 3, 20, 0.9f, 0.6f, 0.95f, true, new(255, 100, 150, 255), 1, 0.1f, 0.2f, 10, 0.1f),
+        new("Wire Bunch 2", InitPropType_Legacy.Rope, 9, 50, 3, 20, 0.9f, 0.6f, 0.95f, true, new(255, 100, 150, 255), 1, 0.1f, 0.2f, 10, 0.1f),
+        new("Big Big Pipe", InitPropType_Legacy.Rope, 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, new(50, 150, 210, 255), 1, 0.1f, 0.2f, 10, 0.1f),
+        new("Ring Chain", InitPropType_Legacy.Rope, 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, new(100, 200, 0, 255), 1, 0.1f, 0.2f, 10, 0.1f),
+        new("Christmas Wire", InitPropType_Legacy.Rope, 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, new(200, 0, 200, 255), 1, 0, 0, 0, 0),
+        new("Ornate Wire", InitPropType_Legacy.Rope, 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, new(0, 200, 200, 255), 1, 0, 0, 0, 0),
     ];
 
     internal static Rope[] Ropes => 
@@ -352,15 +340,15 @@ internal static class GLOBALS
     /// Embedded long prop definitions
     internal static InitLongProp[] LongProps { get; } = 
     [
-        new("Cabinet Clamp", InitPropType.Long, 0),
-        new("Drill Suspender", InitPropType.Long, 5),
-        new("Thick Chain", InitPropType.Long, 0),
-        new("Drill", InitPropType.Long, 10),
-        new("Piston", InitPropType.Long, 4),
+        new("Cabinet Clamp", InitPropType_Legacy.Long, 0),
+        new("Drill Suspender", InitPropType_Legacy.Long, 5),
+        new("Thick Chain", InitPropType_Legacy.Long, 0),
+        new("Drill", InitPropType_Legacy.Long, 10),
+        new("Piston", InitPropType_Legacy.Long, 4),
         
-        new("Stretched Pipe", InitPropType.Long, 0),
-        new("Twisted Thread", InitPropType.Long, 0),
-        new("Stretched Wire", InitPropType.Long, 0),
+        new("Stretched Pipe", InitPropType_Legacy.Long, 0),
+        new("Twisted Thread", InitPropType_Legacy.Long, 0),
+        new("Stretched Wire", InitPropType_Legacy.Long, 0),
     ];
     
     /// Prop definitions
@@ -433,7 +421,7 @@ internal static class GLOBALS
     ];
     
     /// A map of each material and its associated color; used when loading a level.
-    internal static Dictionary<string, Color> MaterialColors { get; set; } = new()
+    internal static Dictionary<string, Data.Color> MaterialColors { get; set; } = new()
     {
         ["Standard"] = new(150, 150, 150, 255),
         ["Concrete"] = new(150, 255, 255, 255),

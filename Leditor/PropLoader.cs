@@ -4,11 +4,9 @@ using Color = Leditor.Data.Color;
 
 namespace Leditor;
 
-#nullable enable
-
 internal sealed class PropLoader : IDisposable
 {
-    #region DisposePattern
+    #region Dispose Pattern
     public bool Disposed { get; private set; }
 
     public void Dispose()
@@ -18,6 +16,8 @@ internal sealed class PropLoader : IDisposable
 
         _propPackTasks = [];
         _propPacks.Clear();
+
+        DexTask = null;
     }
     #endregion
     
@@ -28,6 +28,8 @@ internal sealed class PropLoader : IDisposable
         internal PropDefinition[][] Props { get; init; }
         internal RL.Managed.Texture2D[][] Textures { get; init; }
     }
+
+    public  Task<Data.Props.PropDex>? DexTask { get; private set; }
 
     internal bool Done { get; private set; }
     internal int TotalProgress { get; private set; }

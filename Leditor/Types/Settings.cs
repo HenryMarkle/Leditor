@@ -3,11 +3,11 @@ using System.Security.Authentication.ExtendedProtection;
 using System.Text.Json.Serialization;
 namespace Leditor.Types;
 
-public class LayerColors(ConColor layer1, ConColor layer2, ConColor layer3)
+public class LayerColors(Data.Color layer1, Data.Color layer2, Data.Color layer3)
 {
-    public ConColor Layer1 { get; set; } = layer1;
-    public ConColor Layer2 { get; set; } = layer2;
-    public ConColor Layer3 { get; set; } = layer3;
+    public Data.Color Layer1 { get; set; } = layer1;
+    public Data.Color Layer2 { get; set; } = layer2;
+    public Data.Color Layer3 { get; set; } = layer3;
 }
 
 public class GeoEditor
@@ -28,7 +28,7 @@ public class GeoEditor
 
     public GeoEditor(
         LayerColors layerColors,
-        ConColor waterColor,
+        Data.Color waterColor,
         bool legacyGeoTools = false,
         bool allowOutboundsPlacement = false,
         bool showCameras = false,
@@ -58,7 +58,7 @@ public class GeoEditor
     public LayerColors LayerColors { get; set; }
 
     [SettingName("Water Color")]
-    public ConColor WaterColor { get; set; }
+    public Data.Color WaterColor { get; set; }
 
     [SettingName("Lgacy Geo Tools", Hidden = true)]
     public bool LegacyGeoTools { get; set; }
@@ -252,13 +252,13 @@ public class TileEditorSettings
 public class LightEditorSettings
 {
     [SettingName("View Background Color")]
-    public ConColor Background { get; set; }
+    public Data.Color Background { get; set; }
 
     [SettingName("Level Background Color (Light Mode)")]
-    public ConColor LevelBackgroundLight { get; set; }
+    public Data.Color LevelBackgroundLight { get; set; }
     
     [SettingName("Level Background Color (Dark Mode)")]
-    public ConColor LevelBackgroundDark { get; set; }
+    public Data.Color LevelBackgroundDark { get; set; }
 
     public enum ScreenRelativePosition { 
         TopLeft, 
@@ -295,9 +295,9 @@ public class LightEditorSettings
     }
 
     public LightEditorSettings(
-        ConColor background, 
-        ConColor levelBackgroundLight, 
-        ConColor levelBackgroundDark,
+        Data.Color background, 
+        Data.Color levelBackgroundLight, 
+        Data.Color levelBackgroundDark,
         ScreenRelativePosition lightIndicatorPos,
         LightProjection projection,
         int undoLimit
@@ -367,10 +367,10 @@ public class CameraEditorSettings(bool snap = true, bool alignment = false)
 public class EffectsSettings
 {
     public EffectsSettings(
-        ConColor effectColorLight,
-        ConColor effectColorDark,
-        ConColor effectCanvasColorLight,
-        ConColor effectCanvasColorDark,
+        Data.Color effectColorLight,
+        Data.Color effectColorDark,
+        Data.Color effectCanvasColorLight,
+        Data.Color effectCanvasColorDark,
         bool blockyBrush)
     {
         EffectColorLight = effectColorLight;
@@ -384,17 +384,17 @@ public class EffectsSettings
     
     public EffectsSettings()
     {
-        EffectColorLight = new ConColor(0, 255, 0, 255);
+        EffectColorLight = new Data.Color(0, 255, 0, 255);
         EffectColorDark = Color.Yellow;
-        EffectsCanvasColorLight = new ConColor(215, 66, 245, 100);
-        EffectsCanvasColorDark = new ConColor(0, 0, 0, 0);
+        EffectsCanvasColorLight = new Data.Color(215, 66, 245, 100);
+        EffectsCanvasColorDark = new Data.Color(0, 0, 0, 0);
         BlockyBrush = true;
     }
     
-    public ConColor EffectColorLight { get; set; }
-    public ConColor EffectColorDark { get; set; }
-    public ConColor EffectsCanvasColorLight { get; set; }
-    public ConColor EffectsCanvasColorDark { get; set; }
+    public Data.Color EffectColorLight { get; set; }
+    public Data.Color EffectColorDark { get; set; }
+    public Data.Color EffectsCanvasColorLight { get; set; }
+    public Data.Color EffectsCanvasColorDark { get; set; }
 
     [SettingName("Blocky Brush")]
     public bool BlockyBrush { get; set; }
@@ -505,16 +505,16 @@ public class GeneralSettings
 public class L4MakerSettings {
 
     [SettingName("Background Color")]
-    public ConColor BackgroundColor { get; set; } = new(0, 0, 0, 255);
+    public Data.Color BackgroundColor { get; set; } = new(0, 0, 0, 255);
 
     [SettingName("Layer 3 Color")]
-    public ConColor Layer3Color { get; set; } = new(50, 50, 50, 255);
+    public Data.Color Layer3Color { get; set; } = new(50, 50, 50, 255);
     
     [SettingName("Layer 2 Color")]
-    public ConColor Layer2Color { get; set; } = new(100, 100, 100, 255);
+    public Data.Color Layer2Color { get; set; } = new(100, 100, 100, 255);
     
     [SettingName("Layer 1 Color")]
-    public ConColor Layer1Color { get; set; } = new(150, 150, 150, 255);
+    public Data.Color Layer1Color { get; set; } = new(150, 150, 150, 255);
 }
 
 public class Settings
@@ -541,7 +541,7 @@ public class Settings
         TileEditor = new();
         CameraSettings = new();
         LightEditor = new LightEditorSettings(
-            background: new ConColor(66, 108, 245, 255),
+            background: new Data.Color(66, 108, 245, 255),
             levelBackgroundLight: Color.White,
             levelBackgroundDark: new Color(200, 0, 0, 255),
             LightEditorSettings.ScreenRelativePosition.TopLeft,
@@ -551,8 +551,8 @@ public class Settings
         EffectsSettings = new(
             Color.Green, 
             Color.Yellow, 
-            new ConColor(215, 66, 245, 100), 
-            new ConColor(0, 0, 0, 0),
+            new Data.Color(215, 66, 245, 100), 
+            new Data.Color(0, 0, 0, 0),
             true
         );
         PropEditor = new();

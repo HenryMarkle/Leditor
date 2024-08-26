@@ -1,12 +1,12 @@
 using static Raylib_cs.Raymath;
-using Leditor.Data.Geometry;
 using System.Numerics;
+using Leditor.Data.Props.Legacy;
 
 namespace Leditor;
 
 public class RopeModel
 {
-    private Prop Rope { get; init; }
+    private Prop_Legacy Rope { get; init; }
     private InitRopeProp Init { get; set; }
 
     private int _segmentCount = 0;
@@ -72,7 +72,7 @@ public class RopeModel
         (0, 0), (-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (1, 1), (-1, 1)
     ];
 
-    public RopeModel(Prop prop, InitRopeProp init)
+    public RopeModel(Prop_Legacy prop, InitRopeProp init)
     {
         Rope = prop;
         Init = init;
@@ -102,7 +102,7 @@ public class RopeModel
         BezierHandles = [ Utils.QuadsCenter(ref quad) ];
     }
     
-    public void Reset(PropQuad quads)
+    public void Reset(Data.Quad quads)
     {
         var (pointA, pointB) = Utils.RopeEnds(quads);
     
@@ -220,7 +220,7 @@ public class RopeModel
             return 1;
     }
 
-    public void Update(PropQuad quad, int layer) 
+    public void Update(Data.Quad quad, int layer) 
     {
         var (posA, posB) = Utils.RopeEnds(quad);
         var segments = Rope.Extras.RopePoints;
@@ -393,7 +393,7 @@ public class RopeModel
         func(4);
     }
 
-    private Vector2 SmoothPos(PropQuad quad, int A)
+    private Vector2 SmoothPos(Data.Quad quad, int A)
     {
         var (posA, posB) = Utils.RopeEnds(quad);
         var segments = Rope.Extras.RopePoints;
@@ -420,7 +420,7 @@ public class RopeModel
     }
 
     // not in the lingo source code
-    private Vector2 SmoothPosOld(PropQuad quad, int A)
+    private Vector2 SmoothPosOld(Data.Quad quad, int A)
     {
         var (posA, posB) = Utils.RopeEnds(quad);
         var segments = Rope.Extras.RopePoints;

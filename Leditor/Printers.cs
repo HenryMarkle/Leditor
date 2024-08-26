@@ -3,6 +3,7 @@ using System.Numerics;
 using Leditor.Types;
 using Leditor.Data.Tiles;
 using Leditor.Data.Geometry;
+using Leditor.Data.Props.Legacy;
 
 namespace Leditor;
 
@@ -549,12 +550,14 @@ internal static class Printers
                 }
 
                 if (renderMaterials) {
-                    switch (GLOBALS.Level.TileMatrix[y, x, layer].Data) {
-                        case TileMaterial m:
-                        DrawMaterialTexture(m.Name, cell.Type, x, y, scale, 255);
+                    ref var matCell = ref GLOBALS.Level.TileMatrix[y, x, layer];
+
+                    switch (matCell.Type) {
+                        case TileCellType.Material:
+                        DrawMaterialTexture(matCell.MaterialDefinition!.Name, cell.Type, x, y, scale, 255);
                         break;
 
-                        case TileDefault:
+                        case TileCellType.Default:
                         DrawMaterialTexture(GLOBALS.Level.DefaultMaterial.Name, cell.Type, x, y, scale, 255);
                         break;
                     }
@@ -1141,7 +1144,7 @@ internal static class Printers
                     new(255, 255, 255, 100)
                 );
                 
-                TileCell tileCell;
+                Tile tileCell;
 
                 #if DEBUG
                 try
@@ -1156,20 +1159,18 @@ internal static class Printers
                 tileCell = GLOBALS.Level.TileMatrix[y, x, targetLayer];
                 #endif
                 
-                if (tileCell.Type == TileType.TileHead)
+                if (tileCell.Type == TileCellType.Head)
                 {
-                    var data = (TileHead)tileCell.Data;
-
-                    TileDefinition? init = data.Definition;
+                    TileDefinition? init = tileCell.TileDefinition;
                     var undefined = init is null;
 
                     var tileTexture = undefined
                         ? GLOBALS.Textures.MissingTile 
-                        : data.Definition!.Texture;
+                        : tileCell.TileDefinition!.Texture;
 
                     var color = Color.Purple;
 
-                    if (GLOBALS.TileDex?.TryGetTileColor(data.Definition?.Name ?? "", out var foundColor) ?? false)
+                    if (GLOBALS.TileDex?.TryGetTileColor(tileCell.TileDefinition?.Name ?? "", out var foundColor) ?? false)
                     {
                         color = unifiedTileColor ?? foundColor;
                     }
@@ -1227,7 +1228,7 @@ internal static class Printers
 
                                 var quadOrigin = (new Vector2(x, y) - Vector2.One * init.BufferTiles - Utils.GetTileHeadOrigin(init))*scale;
 
-                                var quad = new PropQuad(
+                                var quad = new Data.Quad(
                                     quadOrigin,
                                     quadOrigin + new Vector2(init.Size.Width + init.BufferTiles * 2,                0) * scale,
                                     quadOrigin + new Vector2(init.Size.Width + init.BufferTiles * 2, init.Size.Height + init.BufferTiles * 2) * scale,
@@ -1249,11 +1250,11 @@ internal static class Printers
                         }
                     }
                 }
-                else if (tileCell.Type == TileType.TileBody)
+                else if (tileCell.Type == TileCellType.Body)
                 {
                     var missingTexture = GLOBALS.Textures.MissingTile;
                     
-                    var (hx, hy, hz) = ((TileBody)tileCell.Data).HeadPosition;
+                    var (hx, hy, hz) = tileCell.HeadPosition;
 
                     if (hy < 1 || 
                         hy > GLOBALS.Level.Height || 
@@ -1271,7 +1272,7 @@ internal static class Printers
                     } else {
                         var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
                     
-                        if (supposedHead.Data is TileHead { Definition: null } or not TileHead && visibleStrays) {
+                        if (supposedHead is { Type: not TileCellType.Head } or { TileDefinition: null } && visibleStrays) {
                             DrawTexturePro(
                                 GLOBALS.Textures.MissingTile, 
                                 new Rectangle(0, 0, missingTexture.Width, missingTexture.Height),
@@ -1283,13 +1284,13 @@ internal static class Printers
                         }
                     }
                 }
-                else if (tileCell.Type == TileType.Material)
+                else if (tileCell.Type == TileCellType.Material)
                 {
                     // var materialName = ((TileMaterial)tileCell.Data).Name;
                     var origin = new Vector2(x * scale + 5, y * scale + 5);
                     var color = GLOBALS.Level.MaterialColors[y, x, targetLayer];
 
-                    color.A = (byte)((targetLayer == currentLayer) ? 255 : opacity);
+                    color = color with { A = (byte)((targetLayer == currentLayer) ? 255 : opacity) };
 
                     if (color.R != 0 || color.G != 0 || color.B != 0)
                     {
@@ -1358,19 +1359,17 @@ internal static class Printers
                 if (crop && targetLayer is not 0) {
                     var prevTileCell = GLOBALS.Level.TileMatrix[y, x, targetLayer - 1];
 
-                    if (prevTileCell.Data is TileHead h && h.Definition is not null) {
-                        var data = h;
-
-                        TileDefinition? init = data.Definition;
+                    if (prevTileCell is { Type: TileCellType.Head, TileDefinition: not null }) {
+                        TileDefinition? init = prevTileCell.TileDefinition;
                         var undefined = init is null;
 
                         var tileTexture = undefined
                             ? GLOBALS.Textures.MissingTile 
-                            : data.Definition!.Texture;
+                            : prevTileCell.TileDefinition!.Texture;
 
                         var color = Color.Purple;
 
-                        if (GLOBALS.TileDex?.TryGetTileColor(data.Definition?.Name ?? "", out var foundColor) ?? false)
+                        if (GLOBALS.TileDex?.TryGetTileColor(prevTileCell.TileDefinition?.Name ?? "", out var foundColor) ?? false)
                         {
                             color = foundColor;
                         }
@@ -1459,7 +1458,7 @@ internal static class Printers
         {
             for (var x = 0; x < GLOBALS.Level.Width; x++)
             {
-                TileCell tileCell;
+                Tile tileCell;
 
                 #if DEBUG
                 try
@@ -1502,21 +1501,19 @@ internal static class Printers
                     );
                 }
 
-                switch (tileCell.Data) {
-                    case TileHead h:
+                switch (tileCell.Type) {
+                    case TileCellType.Head:
                     {
-                        var data = h;
-
-                        TileDefinition? init = data.Definition;
+                        TileDefinition? init = tileCell.TileDefinition;
                         var undefined = init is null;
 
                         var tileTexture = undefined
                             ? GLOBALS.Textures.MissingTile 
-                            : data.Definition!.Texture;
+                            : tileCell.TileDefinition!.Texture;
 
                         var color = Color.Purple;
 
-                        if (GLOBALS.TileDex?.TryGetTileColor(data.Definition?.Name ?? "", out var foundColor) ?? false)
+                        if (GLOBALS.TileDex?.TryGetTileColor(tileCell.TileDefinition?.Name ?? "", out var foundColor) ?? false)
                         {
                             color = foundColor;
                         }
@@ -1563,11 +1560,11 @@ internal static class Printers
                     }
                     break;
 
-                    case TileBody b:
+                    case TileCellType.Body:
                     {
                         var missingTexture = GLOBALS.Textures.MissingTile;
                     
-                        var (hx, hy, hz) = b.HeadPosition;
+                        var (hx, hy, hz) = tileCell.HeadPosition;
 
                         if (hy < 1 || 
                             hy > GLOBALS.Level.Height || 
@@ -1585,7 +1582,7 @@ internal static class Printers
                         } else {
                             var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
                         
-                            if (supposedHead.Data is TileHead { Definition: null } or not TileHead) {
+                            if (supposedHead is { Type: not TileCellType.Head } or { TileDefinition: null }) {
                                 DrawTexturePro(
                                     GLOBALS.Textures.MissingTile, 
                                     new Rectangle(0, 0, missingTexture.Width, missingTexture.Height),
@@ -1599,12 +1596,12 @@ internal static class Printers
                     }
                     break;
 
-                    case TileMaterial m:
-                        DrawMaterialTexture(m.Name, GLOBALS.Level.GeoMatrix[y, x, layer].Type, x, y, scale, 255);
+                    case TileCellType.Material:
+                        DrawMaterialTexture(tileCell.MaterialDefinition!.Name, GLOBALS.Level.GeoMatrix[y, x, layer].Type, x, y, scale, 255);
 
                     break;
 
-                    case TileDefault:
+                    case TileCellType.Default:
                         DrawMaterialTexture(GLOBALS.Level.DefaultMaterial.Name, GLOBALS.Level.GeoMatrix[y, x, layer].Type, x, y, scale, 255);
                     break;
                 }
@@ -1629,7 +1626,7 @@ internal static class Printers
             DrawProp(current.Type, current.Tile, category, index, current, tinted);
             
             // Draw Rope Point
-            if (current.Type != InitPropType.Rope) continue;
+            if (current.Type != InitPropType_Legacy.Rope) continue;
             
             foreach (var point in current.Extras.RopePoints)
                 DrawCircleV(point, 3f, Color.White);
@@ -1653,7 +1650,7 @@ internal static class Printers
             DrawProp(current.Type, current.Tile, category, index, current, scale, tinted);
             
             // Draw Rope Point
-            if (current.Type != InitPropType.Rope) continue;
+            if (current.Type != InitPropType_Legacy.Rope) continue;
             
             foreach (var point in current.Extras.RopePoints)
                 DrawCircleV(point * (scale / 16f), 3f, Color.White);
@@ -1680,7 +1677,7 @@ internal static class Printers
             DrawProp(category, index, current, scale, drawMode, palette, invInterpolate);
             
             // Draw Rope Point
-            if (current.Type != InitPropType.Rope) continue;
+            if (current.Type != InitPropType_Legacy.Rope) continue;
             
             foreach (var point in current.Extras.RopePoints)
                 DrawCircleV(point, 3f, Color.White);
@@ -3101,7 +3098,7 @@ internal static class Printers
     
     internal static void DrawTextureQuad(
         in Texture2D texture, 
-        in PropQuad quad
+        in Data.Quad quad
     )
     {
         var flippedX = quad.TopLeft.X > quad.TopRight.X + 0.5f && quad.BottomLeft.X > quad.BottomRight.X + 0.5f;
@@ -3150,7 +3147,7 @@ internal static class Printers
 
     internal static void DrawTextureQuad(
         in Texture2D texture, 
-        in PropQuad quads,
+        in Data.Quad quads,
         in Color color
     )
     {
@@ -3180,85 +3177,7 @@ internal static class Printers
     
     internal static void DrawTextureQuad(
         in Texture2D texture, 
-        in QuadVectors quad
-    )
-    {
-        var flippedX = quad.TopLeft.X > quad.TopRight.X && quad.BottomLeft.X > quad.BottomRight.X;
-        var flippedY = quad.TopLeft.Y > quad.BottomLeft.Y && quad.TopRight.Y > quad.BottomRight.Y;
-
-        var (topRight, topLeft, bottomLeft, bottomRight) = (flippedX, flippedY) switch
-        {
-            (false, false) => (quad.TopRight, quad.TopLeft, quad.BottomLeft, quad.BottomRight),
-            (false, true ) => (quad.BottomRight, quad.BottomLeft, quad.TopLeft, quad.TopRight),
-            (true , false) => (quad.TopLeft, quad.TopRight, quad.BottomRight, quad.BottomLeft),
-            (true , true ) => (quad.BottomLeft, quad.BottomRight, quad.TopRight, quad.TopLeft)
-        };
-
-        var ((vTopRightX, vTopRightY), (vTopLeftX, vTopLeftY), (vBottomLeftX, vBottomLeftY), (vBottomRightX, vBottomRightY)) = (flippedX, flippedY) switch
-        {
-            (false, false) => ((1.0f, 0.0f), (0.0f, 0.0f), (0.0f, 1.0f), (1.0f, 1.0f)),
-            (false, true) => ((1.0f, 1.0f), (0.0f, 1.0f), (0.0f, 0.0f), (1.0f, 0.0f)),
-            (true, false) => ((0.0f, 0.0f), (1.0f, 0.0f), (1.0f, 1.0f), (0.0f, 1.0f)),
-            (true, true) => ((0.0f, 1.0f), (1.0f, 1.0f), (1.0f, 0.0f), (0.0f, 0.0f))
-        };
-
-        Rlgl.SetTexture(texture.Id);
-
-        Rlgl.Begin(0x0007);
-        Rlgl.Color4ub(Color.White.R, Color.White.G, Color.White.B, Color.White.A);
-
-        Rlgl.TexCoord2f(vTopRightX, vTopRightY);
-        Rlgl.Vertex2f(topRight.X, topRight.Y);
-        
-        Rlgl.TexCoord2f(vTopLeftX, vTopLeftY);
-        Rlgl.Vertex2f(topLeft.X, topLeft.Y);
-        
-        Rlgl.TexCoord2f(vBottomLeftX, vBottomLeftY);
-        Rlgl.Vertex2f(bottomLeft.X, bottomLeft.Y);
-        
-        Rlgl.TexCoord2f(vBottomRightX, vBottomRightY);
-        Rlgl.Vertex2f(bottomRight.X, bottomRight.Y);
-        
-        Rlgl.TexCoord2f(vTopRightX, vTopRightY);
-        Rlgl.Vertex2f(topRight.X, topRight.Y);
-        Rlgl.End();
-
-        Rlgl.SetTexture(0);
-    }
-    
-    internal static void DrawTextureQuad(
-        in Texture2D texture, 
-        in QuadVectors quads,
-        in Color tint
-    )
-    {
-        Rlgl.SetTexture(texture.Id);
-        
-        Rlgl.Begin(0x0007);
-        Rlgl.Color4ub(tint.R, tint.G, tint.B, tint.A);
-
-        Rlgl.TexCoord2f(1.0f, 0.0f);
-        Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
-        
-        Rlgl.TexCoord2f(0.0f, 0.0f);
-        Rlgl.Vertex2f(quads.TopLeft.X, quads.TopLeft.Y);
-        
-        Rlgl.TexCoord2f(0.0f, 1.0f);
-        Rlgl.Vertex2f(quads.BottomLeft.X, quads.BottomLeft.Y);
-        
-        Rlgl.TexCoord2f(1.0f, 1.0f);
-        Rlgl.Vertex2f(quads.BottomRight.X, quads.BottomRight.Y);
-        
-        Rlgl.TexCoord2f(1.0f, 0.0f);
-        Rlgl.Vertex2f(quads.TopRight.X, quads.TopRight.Y);
-        Rlgl.End();
-
-        Rlgl.SetTexture(0);
-    }
-    
-    internal static void DrawTextureQuad(
-        in Texture2D texture, 
-        in PropQuad quad,
+        in Data.Quad quad,
         bool flipX,
         bool flipY
     )
@@ -3305,7 +3224,7 @@ internal static class Printers
 
     internal static void DrawTextureQuad(
         in Texture2D texture, 
-        in PropQuad quads,
+        in Data.Quad quads,
         Color tint,
         bool flipX,
         bool flipY
@@ -3430,7 +3349,7 @@ internal static class Printers
         SetShaderValue(GLOBALS.Shaders.TilePreview, heightLoc, calcTextureHeight, ShaderUniformDataType.Float);
         SetShaderValue(GLOBALS.Shaders.TilePreview, widthLoc, calcTextureWidth, ShaderUniformDataType.Float);
 
-        var quads = new PropQuad
+        var quads = new Data.Quad
         {
             TopLeft = position * scale,
             TopRight = (position + new Vector2(init.Size.Item1, 0)) * scale,
@@ -3474,7 +3393,7 @@ internal static class Printers
         SetShaderValue(GLOBALS.Shaders.TilePreview, heightLoc, calcTextureHeight, ShaderUniformDataType.Float);
         SetShaderValue(GLOBALS.Shaders.TilePreview, widthLoc, calcTextureWidth, ShaderUniformDataType.Float);
 
-        var quads = new PropQuad
+        var quads = new Data.Quad
         {
             TopLeft = (position + offset) * scale,
             TopRight = (position + new Vector2(init.Size.Item1, 0) + offset) * scale,
@@ -3568,7 +3487,7 @@ internal static class Printers
     /// <returns>two boolean values that signal whether the camera was click/dragged</returns>
     internal static (bool clicked, bool hovered) DrawCameraSprite(
         Vector2 origin,
-        CameraQuad quad,
+        Data.CameraQuad quad,
         Camera2D camera,
         int index = 0)
     {
@@ -3871,7 +3790,7 @@ internal static class Printers
 
         var size = new Vector2(init.Size.Item1+init.BufferTiles*2, init.Size.Item2+init.BufferTiles*2)*8;
         
-        var quads = new PropQuad(
+        var quads = new Data.Quad(
             center - size,
             new Vector2(center.X + size.X, center.Y - size.Y),
             center + size,
@@ -3892,7 +3811,7 @@ internal static class Printers
     /// <param name="quads">target placement quads</param>
     internal static void DrawTileAsProp(
         in TileDefinition init,
-        PropQuad quads,
+        Data.Quad quads,
         int depth = 0,
         int alpha = 255
     )
@@ -3935,7 +3854,7 @@ internal static class Printers
     /// <param name="quads">target placement quads</param>
     internal static void DrawTileAsProp_Intrpolated(
         in TileDefinition init,
-        PropQuad quads,
+        Data.Quad quads,
         int depth = 0,
         int alpha = 255
     )
@@ -4183,89 +4102,8 @@ internal static class Printers
     }
     
     internal static void DrawTileAsPropColored(
-        ref Texture2D texture, 
-        ref InitTile init, 
-        PropQuad quads,
-        Color tint,
-        int depth = 0
-    )
-    {
-        var scale = GLOBALS.Scale;
-
-        if (init.Type == InitTileType.Box)
-        {
-            var height = (init.Size.Item2 + init.BufferTiles*2) * scale;
-            var offset = new Vector2(init.Size.Item2 > 1 ? GLOBALS.Scale : 0, scale * init.Size.Item1 * init.Size.Item2);
-            
-            float calcHeight = (float)height / (float)texture.Height;
-            Vector2 calcOffset = Raymath.Vector2Divide(offset, new(texture.Width, texture.Height));
-            float calcWidth = (float)init.Size.Item1 * GLOBALS.Scale / texture.Width;
-            
-            var textureLoc = GetShaderLocation(GLOBALS.Shaders.ColoredBoxTileProp, "inputTexture");
-
-            var widthLoc = GetShaderLocation(GLOBALS.Shaders.ColoredBoxTileProp, "width");
-            var heightLoc = GetShaderLocation(GLOBALS.Shaders.ColoredBoxTileProp, "height");
-            var offsetLoc = GetShaderLocation(GLOBALS.Shaders.ColoredBoxTileProp, "offset");
-            var colorLoc = GetShaderLocation(GLOBALS.Shaders.ColoredBoxTileProp, "tint");
-            var depthLoc = GetShaderLocation(GLOBALS.Shaders.ColoredBoxTileProp, "depth");
-
-            BeginShaderMode(GLOBALS.Shaders.ColoredBoxTileProp);
-
-            SetShaderValueTexture(GLOBALS.Shaders.ColoredBoxTileProp, textureLoc, texture);
-            
-            SetShaderValue(GLOBALS.Shaders.ColoredBoxTileProp, widthLoc, calcWidth, ShaderUniformDataType.Float);
-            
-            SetShaderValue(GLOBALS.Shaders.ColoredBoxTileProp, heightLoc, calcHeight,
-                ShaderUniformDataType.Float);
-            
-            SetShaderValue(GLOBALS.Shaders.ColoredBoxTileProp, offsetLoc, calcOffset,
-                ShaderUniformDataType.Vec2);
-            
-            SetShaderValue(GLOBALS.Shaders.ColoredBoxTileProp, colorLoc,
-                new Vector4(tint.R / 255f, tint.G / 255f, tint.B / 255f, 1.0f),
-                ShaderUniformDataType.Vec4);
-            
-            SetShaderValue(GLOBALS.Shaders.ColoredBoxTileProp, depthLoc, depth, ShaderUniformDataType.Int);
-
-            DrawTextureQuad(texture, quads);
-            EndShaderMode();
-        }
-        else
-        {
-            var layerHeight = (init.Size.Item2 + (init.BufferTiles * 2)) * scale;
-            float calLayerHeight = (float)layerHeight / (float)texture.Height;
-            var textureCutWidth = (init.Size.Item1 + (init.BufferTiles * 2)) * scale;
-            float calTextureCutWidth = (float)textureCutWidth / (float)texture.Width;
-
-            var textureLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "inputTexture");
-            var layerNumLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "layerNum");
-            var layerHeightLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "layerHeight");
-            var layerWidthLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "layerWidth");
-            var colorLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "tint");
-            var depthLoc = GetShaderLocation(GLOBALS.Shaders.ColoredTileProp, "depth");
-
-            BeginShaderMode(GLOBALS.Shaders.ColoredTileProp);
-
-            SetShaderValueTexture(GLOBALS.Shaders.ColoredTileProp, textureLoc, texture);
-            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, layerNumLoc, init.Type == InitTileType.VoxelStructRockType ? 1 : init.Repeat.Length,
-                ShaderUniformDataType.Int);
-            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, layerHeightLoc, calLayerHeight,
-                ShaderUniformDataType.Float);
-            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, layerWidthLoc, calTextureCutWidth,
-                ShaderUniformDataType.Float);
-            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, colorLoc,
-                new Vector4(tint.R / 255f, tint.G / 255f, tint.B / 255f, 1.0f),
-                ShaderUniformDataType.Vec4);
-            SetShaderValue(GLOBALS.Shaders.ColoredTileProp, depthLoc, depth, ShaderUniformDataType.Int);
-
-            DrawTextureQuad(texture, quads);
-            EndShaderMode();
-        }
-    }
-    
-    internal static void DrawTileAsPropColored(
         in TileDefinition init, 
-        PropQuad quad,
+        Data.Quad quad,
         Color tint,
         int depth = 0
     )
@@ -4352,7 +4190,7 @@ internal static class Printers
     
     internal static void DrawTileAsPropColored_Interpolated(
         in TileDefinition init, 
-        PropQuad quad,
+        Data.Quad quad,
         Color tint,
         int depth = 0
     )
@@ -4459,7 +4297,7 @@ internal static class Printers
     {
         var texture = init.Texture;
         
-        var scaledQuads = new PropQuad
+        var scaledQuads = new Data.Quad
         {
             TopLeft = position*scale - originOffset,
             TopRight = (position + new Vector2(init.Size.Item1, 0) * scale) - originOffset,
@@ -4589,7 +4427,7 @@ internal static class Printers
     internal static void DrawProp(
         in InitPropBase init, 
         in Texture2D texture, 
-        in PropQuad quad,
+        in Data.Quad quad,
         int variation = 0,
         int depth = 0)
     {
@@ -4629,13 +4467,13 @@ internal static class Printers
         }
     }
 
-    internal static void DrawProp(InitPropType type, TileDefinition? tile, int category, int index, Prop prop, bool tintedTiles = true)
+    internal static void DrawProp(InitPropType_Legacy type, TileDefinition? tile, int category, int index, Prop_Legacy prop, bool tintedTiles = true)
     {
         var depth = -prop.Depth - GLOBALS.Layer*10;
 
         switch (type)
         {
-            case InitPropType.Tile:
+            case InitPropType_Legacy.Tile:
             {
                 if (GLOBALS.TileDex is null || tile is null) return;
                 
@@ -4648,14 +4486,14 @@ internal static class Printers
             }
                 break;
 
-            case InitPropType.Long:
+            case InitPropType_Legacy.Long:
             {
                 var texture = GLOBALS.Textures.LongProps[index];
                 DrawLongProp(texture, prop.Quad, depth, 0);
             }
                 break;
 
-            case InitPropType.Rope:
+            case InitPropType_Legacy.Rope:
                 break;
 
             default:
@@ -4703,7 +4541,7 @@ internal static class Printers
         }
     }
     
-    internal static void DrawProp(InitPropType type, TileDefinition? tile, int category, int index, Prop prop, int scale, bool tintedTiles = true)
+    internal static void DrawProp(InitPropType_Legacy type, TileDefinition? tile, int category, int index, Prop_Legacy prop, int scale, bool tintedTiles = true)
     {
         var depth = -prop.Depth - GLOBALS.Layer*10;
 
@@ -4716,7 +4554,7 @@ internal static class Printers
 
         switch (type)
         {
-            case InitPropType.Tile:
+            case InitPropType_Legacy.Tile:
             {
                 if (GLOBALS.TileDex is null || tile is null) return;
                 
@@ -4729,14 +4567,14 @@ internal static class Printers
             }
                 break;
 
-            case InitPropType.Long:
+            case InitPropType_Legacy.Long:
             {
                 var texture = GLOBALS.Textures.LongProps[index];
                 DrawLongProp(texture, quads, depth, 0);
             }
                 break;
 
-            case InitPropType.Rope:
+            case InitPropType_Legacy.Rope:
                 break;
 
             default:
@@ -4788,7 +4626,7 @@ internal static class Printers
     internal static void DrawProp(
         int category, 
         int index, 
-        Prop prop, 
+        Prop_Legacy prop, 
         int scale, 
         PropDrawMode drawMode, 
         Texture2D? palette,
@@ -4806,7 +4644,7 @@ internal static class Printers
 
         switch (prop.Type)
         {
-            case InitPropType.Tile:
+            case InitPropType_Legacy.Tile:
             {
                 if (GLOBALS.TileDex is null || prop.Tile is null) return;
                 
@@ -4831,14 +4669,14 @@ internal static class Printers
             }
                 break;
 
-            case InitPropType.Long:
+            case InitPropType_Legacy.Long:
             {
                 var texture = GLOBALS.Textures.LongProps[index];
                 DrawLongProp(texture, quads, depth, 0);
             }
                 break;
 
-            case InitPropType.Rope:
+            case InitPropType_Legacy.Rope:
                 break;
 
             default:
@@ -4935,7 +4773,7 @@ internal static class Printers
         }
     } 
     #endregion
-    internal static void DrawProp(InitPropType type, TileDefinition? tile, int category, int index, Prop prop, int scale, Vector2 offset, bool tintedTiles = true)
+    internal static void DrawProp(InitPropType_Legacy type, TileDefinition? tile, int category, int index, Prop_Legacy prop, int scale, Vector2 offset, bool tintedTiles = true)
     {
         var depth = -prop.Depth - GLOBALS.Layer*10;
 
@@ -4953,7 +4791,7 @@ internal static class Printers
 
         switch (type)
         {
-            case InitPropType.Tile:
+            case InitPropType_Legacy.Tile:
             {
                 if (GLOBALS.TileDex is null || tile is null) return;
 
@@ -4966,14 +4804,14 @@ internal static class Printers
             }
                 break;
 
-            case InitPropType.Long:
+            case InitPropType_Legacy.Long:
             {
                 var texture = GLOBALS.Textures.LongProps[index];
                 DrawLongProp(texture, quads, depth, 0);
             }
                 break;
 
-            case InitPropType.Rope:
+            case InitPropType_Legacy.Rope:
                 break;
 
             default:
@@ -5025,7 +4863,7 @@ internal static class Printers
         BasicPropSettings settings, 
         InitPropBase init, 
         in Texture2D texture, 
-        in PropQuad quads,
+        in Data.Quad quads,
         int depth)
     {
         switch (init)
@@ -5064,7 +4902,7 @@ internal static class Printers
         BasicPropSettings settings, 
         InitPropBase init, 
         in Texture2D texture, 
-        in PropQuad quads,
+        in Data.Quad quads,
         int depth,
         int rotation)
     {
@@ -5108,7 +4946,7 @@ internal static class Printers
         }
     }
 
-    internal static void DrawPropDefault(in Texture2D texture, in PropQuad quads, int depth, int rotation)
+    internal static void DrawPropDefault(in Texture2D texture, in Data.Quad quads, int depth, int rotation)
     {
         var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
         var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
@@ -5127,7 +4965,7 @@ internal static class Printers
         EndShaderMode();
     }
 
-    internal static void DrawAntimatterProp(in Texture2D texture, in PropQuad quads, int depth, int rotation)
+    internal static void DrawAntimatterProp(in Texture2D texture, in Data.Quad quads, int depth, int rotation)
     {
         var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
         var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
@@ -5146,7 +4984,7 @@ internal static class Printers
         EndShaderMode();
     }
 
-    internal static void DrawLongProp(in Texture2D texture, in PropQuad quads, int depth, int rotation)
+    internal static void DrawLongProp(in Texture2D texture, in Data.Quad quads, int depth, int rotation)
     {
         var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
         var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
@@ -5202,7 +5040,7 @@ internal static class Printers
     internal static void DrawStandardProp(
         InitStandardProp init, 
         in Texture2D texture, 
-        PropQuad quads,
+        Data.Quad quads,
         int depth
     )
     {
@@ -5238,7 +5076,7 @@ internal static class Printers
         InitStandardProp init, 
         in Texture2D texture, 
         Color tint,
-        PropQuad quads,
+        Data.Quad quads,
         int depth
     )
     {
@@ -5286,7 +5124,7 @@ internal static class Printers
     internal static void DrawStandardProp(
         InitStandardProp init, 
         in Texture2D texture, 
-        PropQuad quads,
+        Data.Quad quads,
         int depth,
         int rotation
     )
@@ -5363,7 +5201,7 @@ internal static class Printers
     internal static void DrawVariedStandardProp(
         InitVariedStandardProp init, 
         in Texture2D texture, 
-        PropQuad quads,
+        Data.Quad quads,
         int variation,
         int depth
     )
@@ -5403,7 +5241,7 @@ internal static class Printers
         InitVariedStandardProp init, 
         in Texture2D texture,
         Color tint,
-        PropQuad quads,
+        Data.Quad quads,
         int variation,
         int depth
     )
@@ -5453,7 +5291,7 @@ internal static class Printers
     internal static void DrawVariedStandardProp(
         InitVariedStandardProp init, 
         in Texture2D texture, 
-        PropQuad quads,
+        Data.Quad quads,
         int variation,
         int depth,
         int rotation
@@ -5514,7 +5352,7 @@ internal static class Printers
         EndShaderMode();
     }
     
-    internal static void DrawSoftProp(in Texture2D texture, in PropQuad quads, int depth)
+    internal static void DrawSoftProp(in Texture2D texture, in Data.Quad quads, int depth)
     {
         var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
         var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
@@ -5531,7 +5369,7 @@ internal static class Printers
         EndShaderMode();
     }
 
-    internal static void DrawSoftPropColored(in Texture2D texture, in PropQuad quads, int depth, Color tint)
+    internal static void DrawSoftPropColored(in Texture2D texture, in Data.Quad quads, int depth, Color tint)
     {
         var shader = GLOBALS.Shaders.SoftPropColored;
 
@@ -5550,7 +5388,7 @@ internal static class Printers
         EndShaderMode();
     }
     
-    internal static void DrawSoftProp(in Texture2D texture, in PropQuad quads, int depth, int rotation)
+    internal static void DrawSoftProp(in Texture2D texture, in Data.Quad quads, int depth, int rotation)
     {
         var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
         var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
@@ -5622,7 +5460,7 @@ internal static class Printers
     internal static void DrawVariedSoftProp(
         InitVariedSoftProp init, 
         in Texture2D texture, 
-        PropQuad quads,
+        Data.Quad quads,
         int variation,
         int depth
     )
@@ -5657,7 +5495,7 @@ internal static class Printers
     internal static void DrawVariedSoftPropColored(
         InitVariedSoftProp init, 
         in Texture2D texture, 
-        PropQuad quads,
+        Data.Quad quads,
         Color tint,
         int variation,
         int depth
@@ -5695,7 +5533,7 @@ internal static class Printers
     internal static void DrawVariedSoftProp(
         InitVariedSoftProp init, 
         in Texture2D texture, 
-        PropQuad quads,
+        Data.Quad quads,
         int variation,
         int depth,
         int rotation
@@ -5751,7 +5589,7 @@ internal static class Printers
         EndShaderMode();
     }
     
-    internal static void DrawSimpleDecalProp(in Texture2D texture, in PropQuad quads, int depth = 0)
+    internal static void DrawSimpleDecalProp(in Texture2D texture, in Data.Quad quads, int depth = 0)
     {
         var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
         var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
@@ -5768,7 +5606,7 @@ internal static class Printers
         EndShaderMode();
     }
     
-    internal static void DrawSimpleDecalProp(in Texture2D texture, in PropQuad quads, int depth, int rotation)
+    internal static void DrawSimpleDecalProp(in Texture2D texture, in Data.Quad quads, int depth, int rotation)
     {
         var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
         var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
@@ -5833,7 +5671,7 @@ internal static class Printers
     internal static void DrawVariedDecalProp(
         InitVariedDecalProp init, 
         in Texture2D texture, 
-        in PropQuad quads,
+        in Data.Quad quads,
         int variation,
         int depth
     )
@@ -5868,7 +5706,7 @@ internal static class Printers
     internal static void DrawVariedDecalProp(
         InitVariedDecalProp init, 
         in Texture2D texture, 
-        in PropQuad quads,
+        in Data.Quad quads,
         int variation,
         int depth,
         int rotation
@@ -6566,13 +6404,13 @@ internal static class Printers
         }
     }
 
-    internal static void DrawDepthIndicator(Prop prop)
+    internal static void DrawDepthIndicator(Prop_Legacy prop)
     {
         var (c, i) = prop.Position;
         
         switch (prop.Type)
         {
-            case InitPropType.Tile:
+            case InitPropType_Legacy.Tile:
             {
                 var init = prop.Tile;
 
@@ -6594,10 +6432,10 @@ internal static class Printers
             }
                 break;
             
-            case InitPropType.Long:
+            case InitPropType_Legacy.Long:
                 break;
             
-            case InitPropType.Rope:
+            case InitPropType_Legacy.Rope:
                 break;
 
             default:
@@ -6921,7 +6759,7 @@ internal static class Printers
         {
             for (var x = 0; x < GLOBALS.Level.Width; x++)
             {
-                TileCell tileCell;
+                Tile tileCell;
 
                 #if DEBUG
                 try
@@ -6936,20 +6774,18 @@ internal static class Printers
                 tileCell = GLOBALS.Level.TileMatrix[y, x, targetLayer];
                 #endif
                 
-                if (tileCell.Type == TileType.TileHead)
+                if (tileCell.Type is TileCellType.Head)
                 {
-                    var data = (TileHead)tileCell.Data;
-
-                    TileDefinition? init = data.Definition;
+                    TileDefinition? init = tileCell.TileDefinition;
                     var undefined = init is null;
 
                     var tileTexture = undefined
                         ? GLOBALS.Textures.MissingTile 
-                        : data.Definition!.Texture;
+                        : tileCell.TileDefinition!.Texture;
 
                     var color = Color.Purple;
 
-                    if (GLOBALS.TileDex?.TryGetTileColor(data.Definition?.Name ?? "", out var foundColor) ?? false)
+                    if (GLOBALS.TileDex?.TryGetTileColor(tileCell.TileDefinition?.Name ?? "", out var foundColor) ?? false)
                     {
                         color = foundColor;
                     }
@@ -6999,11 +6835,11 @@ internal static class Printers
                         );
                     }
                 }
-                else if (tileCell.Type == TileType.TileBody)
+                else if (tileCell.Type is TileCellType.Body)
                 {
                     var missingTexture = GLOBALS.Textures.MissingTile;
                     
-                    var (hx, hy, hz) = ((TileBody)tileCell.Data).HeadPosition;
+                    var (hx, hy, hz) = tileCell.HeadPosition;
 
                     if (hy < 1 || 
                             hy > GLOBALS.Level.Height || 
@@ -7021,7 +6857,7 @@ internal static class Printers
                         } else {
                             var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
                         
-                            if (supposedHead.Data is TileHead { Definition: null } or not TileHead && visibleStrays) {
+                            if (supposedHead is { Type: not TileCellType.Head } or { TileDefinition: null } && visibleStrays) {
                                 DrawTexturePro(
                                     GLOBALS.Textures.MissingTile, 
                                     new Rectangle(0, 0, missingTexture.Width, missingTexture.Height),
@@ -7033,12 +6869,12 @@ internal static class Printers
                             }
                         }
                 }
-                else if (!renderMaterials && tileCell.Type == TileType.Material) {
+                else if (!renderMaterials && tileCell.Type is TileCellType.Material) {
                     // var materialName = ((TileMaterial)tileCell.Data).Name;
                     var origin = new Vector2(x * scale + 5, y * scale + 5);
                     var color = GLOBALS.Level.MaterialColors[y, x, targetLayer];
 
-                    color.A = (byte)((targetLayer == currentLayer) ? 255 : opacity);
+                    color = color with { A = (byte)((targetLayer == currentLayer) ? 255 : opacity) };
 
                     if (color.R != 0 || color.G != 0 || color.B != 0)
                     {
@@ -7217,7 +7053,7 @@ internal static class Printers
     internal static void DrawTileWithPalette(
         in TileDefinition init,
         in Texture2D palette,
-        PropQuad quads,
+        Data.Quad quads,
         int depth = 0,
         float alpha = 1
     )
@@ -7305,7 +7141,7 @@ internal static class Printers
     internal static void DrawTileWithPalette_Interpolated(
         in TileDefinition init,
         in Texture2D palette,
-        PropQuad quads,
+        Data.Quad quads,
         int depth = 0,
         float alpha = 1
     )
@@ -7400,7 +7236,7 @@ internal static class Printers
         InitStandardProp init,
         in Texture2D texture, 
         in Texture2D palette,
-        PropQuad quads,
+        Data.Quad quads,
         int depth
     )
     {
@@ -7442,7 +7278,7 @@ internal static class Printers
         InitVariedStandardProp init, 
         in Texture2D texture,
         in Texture2D palette,
-        PropQuad quads,
+        Data.Quad quads,
         int variation,
         int depth
     )
@@ -7482,7 +7318,7 @@ internal static class Printers
         EndShaderMode();
     }
 
-    internal static void DrawSoftPropWithPalette(in Texture2D texture, in Texture2D palette, in PropQuad quads, int depth)
+    internal static void DrawSoftPropWithPalette(in Texture2D texture, in Texture2D palette, in Data.Quad quads, int depth)
     {
         var shader = GLOBALS.Shaders.SoftPropPalette;
 
@@ -7509,7 +7345,7 @@ internal static class Printers
         InitVariedSoftProp init, 
         in Texture2D texture,
         in Texture2D palette,
-        PropQuad quads,
+        Data.Quad quads,
         int variation,
         int depth
     )
@@ -8234,13 +8070,13 @@ internal static class Printers
                             setting.SetValue(obj, value);
                             updated = true;
                         }
-                    } else if (type == typeof(ConColor)) {
-                        var value = ((ConColor?) setting.GetValue(obj)) ?? new(0, 0, 0, 255);
+                    } else if (type == typeof(Data.Color)) {
+                        var value = ((Data.Color?) setting.GetValue(obj)) ?? new(0, 0, 0, 255);
 
                         var valueVec = new Vector4(value.R/255f, value.G/255f, value.B/255f, value.A/255f);
 
                         if (ImGuiNET.ImGui.ColorEdit4($"{attribute?.Name ?? ""}##{setting.Name}", ref valueVec)) {
-                            value = new ConColor((byte)(valueVec.X * 255), (byte)(valueVec.Y * 255), (byte)(valueVec.Z * 255), (byte)(valueVec.W * 255));
+                            value = new Data.Color((byte)(valueVec.X * 255), (byte)(valueVec.Y * 255), (byte)(valueVec.Z * 255), (byte)(valueVec.W * 255));
 
                             setting.SetValue(obj, value);
                             updated = true;
@@ -8376,13 +8212,13 @@ internal static class Printers
                         }
 
                         active = active || ImGuiNET.ImGui.IsItemActive();
-                    } else if (type == typeof(ConColor)) {
-                        var value = ((ConColor?) setting.GetValue(obj)) ?? new(0, 0, 0, 255);
+                    } else if (type == typeof(Data.Color)) {
+                        var value = ((Data.Color?) setting.GetValue(obj)) ?? new(0, 0, 0, 255);
 
                         var valueVec = new Vector4(value.R/255f, value.G/255f, value.B/255f, value.A/255f);
 
                         if (ImGuiNET.ImGui.ColorEdit4($"{attribute?.Name ?? ""}##{setting.Name}", ref valueVec)) {
-                            value = new ConColor((byte)(valueVec.X * 255), (byte)(valueVec.Y * 255), (byte)(valueVec.Z * 255), (byte)(valueVec.W * 255));
+                            value = new Data.Color((byte)(valueVec.X * 255), (byte)(valueVec.Y * 255), (byte)(valueVec.Z * 255), (byte)(valueVec.W * 255));
 
                             setting.SetValue(obj, value);
                         }

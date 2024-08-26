@@ -65,7 +65,7 @@ public class AutoTiler
         TileDefinition BottomRight,
         TileDefinition BottomLeft,
 
-        (TileDefinition, TileCell[,,])[] Inside
+        (TileDefinition, Tile[,,])[] Inside
     );
 
     internal struct Node
@@ -152,7 +152,7 @@ public class AutoTiler
 
             var insideTiles = pack.Inside.Select(i => {
                 var tile = GLOBALS.TileDex.GetTile(i);
-                var mtx = new TileCell[tile.Size.Height, tile.Size.Width, 3];
+                var mtx = new Tile[tile.Size.Height, tile.Size.Width, 3];
                 var center = Utils.GetTileHeadOrigin(tile);
                 Utils.ForcePlaceTileWithoutGeo(mtx, tile, ((int)center.X, (int)center.Y, 0));
 
@@ -324,16 +324,16 @@ public class AutoTiler
     }
 
     // Generate Rect
-    internal TileCell[,,] GenerateBox(int width, int height) {
+    internal Tile[,,] GenerateBox(int width, int height) {
         if (width == 0 || height == 0) 
             throw new ArgumentException($"Cannot supply zero dimensions (width: {width}, height: {height}).");
 
-        var matrix = new TileCell[height, width, 3];
+        var matrix = new Tile[height, width, 3];
 
         for (var y = 0; y < height; y++) {
             for (var x = 0; x < width; x++) {
                 for (var z = 0; z < 3; z++) {
-                    matrix[y, x, z] = new TileCell();
+                    matrix[y, x, z] = new Tile();
                 }
             }
         }
@@ -379,7 +379,7 @@ public class AutoTiler
 
                 if (SelectedBoxPack!.Inside is []) continue;
 
-                if (matrix[y, x, 0].Data is not TileDefault) continue;
+                if (matrix[y, x, 0].Type is not TileCellType.Default) continue;
 
                 var (tile, mtx) = SelectedBoxPack!.Inside[rnd.Next(SelectedBoxPack!.Inside.Length)];
                 
@@ -393,12 +393,10 @@ public class AutoTiler
 
                             var cell = mtx[ty, tx, tz];
                             
-                            if (cell.Data is TileBody b) {
-                                var (bx, by, bz) = b.HeadPosition;
+                            if (cell.Type is TileCellType.Body) {
+                                var (bx, by, bz) = cell.HeadPosition;
 
-                                b.HeadPosition = (x + bx, y + by, bz);
-
-                                cell.Data = b;
+                                cell = cell with { HeadPosition = (x + bx, y + by, bz) };
                             }
 
                             matrix[y + ty, x + tx, tz] = cell;

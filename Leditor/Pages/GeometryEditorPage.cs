@@ -2154,7 +2154,7 @@ internal class ExperimentalGeometryPage : EditorPage
                 ImGui.SetNextItemWidth(250);
                 if (ImGui.ColorEdit4("Layer 1", ref layer1ColorVec)) {
                     _shouldRedrawLevel = true;
-                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer1 = new ConColor((byte)(layer1ColorVec.X * 255),
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer1 = new Data.Color((byte)(layer1ColorVec.X * 255),
                         (byte)(layer1ColorVec.Y * 255), (byte)(layer1ColorVec.Z * 255), (byte)(layer1ColorVec.W * 255));
                 }
 
@@ -2164,7 +2164,7 @@ internal class ExperimentalGeometryPage : EditorPage
                 if (ImGui.ColorEdit4("Layer 2", ref layer2ColorVec)) {
                     _shouldRedrawLevel = true;
 
-                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 = new ConColor((byte)(layer2ColorVec.X * 255),
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 = new Data.Color((byte)(layer2ColorVec.X * 255),
                         (byte)(layer2ColorVec.Y * 255), (byte)(layer2ColorVec.Z * 255), (byte)(layer2ColorVec.W * 255));
                 }
 
@@ -2173,7 +2173,7 @@ internal class ExperimentalGeometryPage : EditorPage
                 ImGui.SetNextItemWidth(250);
                 if (ImGui.ColorEdit4("Layer 3", ref layer3ColorVec)) {
                     _shouldRedrawLevel = true;
-                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 = new ConColor((byte)(layer3ColorVec.X * 255),
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 = new Data.Color((byte)(layer3ColorVec.X * 255),
                         (byte)(layer3ColorVec.Y * 255), (byte)(layer3ColorVec.Z * 255), (byte)(layer3ColorVec.W * 255));
                 }
 
@@ -2183,7 +2183,7 @@ internal class ExperimentalGeometryPage : EditorPage
                 if (ImGui.ColorEdit4("Water", ref waterColorVec)) {
                     _shouldRedrawLevel = true;
 
-                    GLOBALS.Settings.GeometryEditor.WaterColor = new ConColor((byte)(waterColorVec.X * 255),
+                    GLOBALS.Settings.GeometryEditor.WaterColor = new Data.Color((byte)(waterColorVec.X * 255),
                         (byte)(waterColorVec.Y * 255), (byte)(waterColorVec.Z * 255), (byte)(waterColorVec.W * 255));
                 }
                 
@@ -2202,9 +2202,9 @@ internal class ExperimentalGeometryPage : EditorPage
                     _shouldRedrawLevel = true;
                     
                     GLOBALS.Settings.GeometryEditor.LayerColors.Layer1 = Color.Black;
-                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 = new ConColor(0, 255, 0, 50);
-                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 = new ConColor(255, 0, 0, 50);
-                    GLOBALS.Settings.GeometryEditor.WaterColor = new ConColor(0, 0, 255, 70);
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer2 = new Data.Color(0, 255, 0, 50);
+                    GLOBALS.Settings.GeometryEditor.LayerColors.Layer3 = new Data.Color(255, 0, 0, 50);
+                    GLOBALS.Settings.GeometryEditor.WaterColor = new Data.Color(0, 0, 255, 70);
                 }
                 
                 // Visibility

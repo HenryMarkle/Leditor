@@ -2,6 +2,7 @@ using System.Numerics;
 using ImGuiNET;
 using Leditor.Data.Tiles;
 using Leditor.Data.Geometry;
+using Leditor.Data.Props.Legacy;
 using static Raylib_cs.Raylib;
 
 namespace Leditor.Pages;
@@ -429,7 +430,7 @@ void main() {
 
     private void DrawTileAsProp(
         in TileDefinition init, 
-        in PropQuad quad,
+        in Data.Quad quad,
         in Color color,
         int depth,
         bool flat
@@ -519,7 +520,7 @@ void main() {
     internal void DrawVariedStandardProp(
         InitVariedStandardProp init, 
         in Texture2D texture, 
-        PropQuad quads,
+        Data.Quad quads,
         Color color,
         int variation,
         int depth,
@@ -564,7 +565,7 @@ void main() {
     internal void DrawStandardProp(
         InitStandardProp init, 
         in Texture2D texture, 
-        PropQuad quads,
+        Data.Quad quads,
         Color color,
         int depth,
         bool flat
@@ -605,7 +606,7 @@ void main() {
     internal void DrawVariedSoftProp(
         InitVariedSoftProp init, 
         in Texture2D texture, 
-        PropQuad quads,
+        Data.Quad quads,
         Color color,
         int variation,
         int depth,
@@ -642,7 +643,7 @@ void main() {
         EndShaderMode();
     }
 
-    internal void DrawSoftProp(in Texture2D texture, in PropQuad quads, Color color, int depth, bool flat)
+    internal void DrawSoftProp(in Texture2D texture, in Data.Quad quads, Color color, int depth, bool flat)
     {
         var shader = _softPropShader.Raw;
 
@@ -663,7 +664,7 @@ void main() {
         EndShaderMode();
     }
 
-    private void DrawProp(InitPropType type, TileDefinition? tile, Color color, int category, int index, Prop prop, bool flat) {
+    private void DrawProp(InitPropType_Legacy type, TileDefinition? tile, Color color, int category, int index, Prop_Legacy prop, bool flat) {
         var depth = -prop.Depth + GLOBALS.Layer*10;
 
         var quads = prop.Quad;
@@ -677,7 +678,7 @@ void main() {
 
         switch (type)
         {
-            case InitPropType.Tile:
+            case InitPropType_Legacy.Tile:
             {
                 if (GLOBALS.TileDex is null || tile is null) return;
                 
@@ -685,8 +686,8 @@ void main() {
             }
                 break;
 
-            case InitPropType.Rope:
-            case InitPropType.Long:
+            case InitPropType_Legacy.Rope:
+            case InitPropType_Legacy.Long:
             break;
 
 
@@ -729,7 +730,7 @@ void main() {
         {
             for (var x = 0; x < GLOBALS.Level.Width; x++)
             {
-                TileCell tileCell;
+                Tile tileCell;
 
                 #if DEBUG
                 try
@@ -772,21 +773,19 @@ void main() {
                     );
                 }
 
-                switch (tileCell.Data) {
-                    case TileHead h:
+                switch (tileCell.Type) {
+                    case TileCellType.Head:
                     {
-                        var data = h;
-
-                        TileDefinition? init = data.Definition;
+                        TileDefinition? init = tileCell.TileDefinition;
                         var undefined = init is null;
 
                         var tileTexture = undefined
                             ? GLOBALS.Textures.MissingTile 
-                            : data.Definition!.Texture;
+                            : tileCell.TileDefinition!.Texture;
 
                         var fcolor = Color.Purple;
 
-                        if (GLOBALS.TileDex?.TryGetTileColor(data.Definition?.Name ?? "", out var foundColor) ?? false)
+                        if (GLOBALS.TileDex?.TryGetTileColor(tileCell.TileDefinition?.Name ?? "", out var foundColor) ?? false)
                         {
                             fcolor = foundColor;
                         }
@@ -832,7 +831,7 @@ void main() {
 
                             var quadOrigin = (new Vector2(x, y) - Vector2.One * init.BufferTiles - Utils.GetTileHeadOrigin(init))*scale;
 
-                            var quad = new PropQuad(
+                            var quad = new Data.Quad(
                                 quadOrigin,
                                 quadOrigin + new Vector2(init.Size.Width + init.BufferTiles * 2,                0) * scale,
                                 quadOrigin + new Vector2(init.Size.Width + init.BufferTiles * 2, init.Size.Height + init.BufferTiles * 2) * scale,
@@ -851,15 +850,15 @@ void main() {
                     }
                     break;
 
-                    case TileBody b:
+                    case TileCellType.Body:
                     {
                         var missingTexture = GLOBALS.Textures.MissingTile;
                     
-                        var (hx, hy, hz) = b.HeadPosition;
+                        var (hx, hy, hz) = tileCell.HeadPosition;
 
                         var supposedHead = GLOBALS.Level.TileMatrix[hy - 1, hx - 1, hz - 1];
 
-                        if (supposedHead.Data is TileHead { Definition: null } or not TileHead)
+                        if (supposedHead is { Type: not TileCellType.Head } or { TileDefinition: null })
                         {
                             // DrawTexturePro(
                             //     GLOBALS.Textures.MissingTile, 
@@ -1040,7 +1039,7 @@ void main() {
                     SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), _layer3Buffer.Raw.Texture);
                     SetShaderValue(shader, GetShaderLocation(shader, "flipV"), 0, ShaderUniformDataType.Int);
 
-                    QuadVectors l3Quad = new(_l3TopLeftQuadHandle + new Vector2(50, 50), _l3TopRightQuadHandle + new Vector2(-50, 50), _l3BottomRightQuadHandle + new Vector2(-50, -50), _l3BottomLeftQuadHandle + new Vector2(50, -50));
+                    Data.Quad l3Quad = new(_l3TopLeftQuadHandle + new Vector2(50, 50), _l3TopRightQuadHandle + new Vector2(-50, 50), _l3BottomRightQuadHandle + new Vector2(-50, -50), _l3BottomLeftQuadHandle + new Vector2(50, -50));
                     Printers.DrawTextureQuad(_layer3Buffer.Raw.Texture, l3Quad);
 
                     EndShaderMode();
@@ -1052,7 +1051,7 @@ void main() {
                     SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), _layer2Buffer.Raw.Texture);
                     SetShaderValue(shader, GetShaderLocation(shader, "flipV"), 0, ShaderUniformDataType.Int);
 
-                    QuadVectors l2Quad = new(_l2TopLeftQuadHandle + new Vector2(30, 30), _l2TopRightQuadHandle + new Vector2(-30, 30), _l2BottomRightQuadHandle + new Vector2(-30, -30), _l2BottomLeftQuadHandle + new Vector2(30, -30));
+                    Data.Quad l2Quad = new(_l2TopLeftQuadHandle + new Vector2(30, 30), _l2TopRightQuadHandle + new Vector2(-30, 30), _l2BottomRightQuadHandle + new Vector2(-30, -30), _l2BottomLeftQuadHandle + new Vector2(30, -30));
                     Printers.DrawTextureQuad(_layer2Buffer.Raw.Texture, l2Quad);
 
                     EndShaderMode();
@@ -1064,7 +1063,7 @@ void main() {
                     SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), _layer1Buffer.Raw.Texture);
                     SetShaderValue(shader, GetShaderLocation(shader, "flipV"), 0, ShaderUniformDataType.Int);
 
-                    QuadVectors l1Quad = new(_l1TopLeftQuadHandle + new Vector2(10, 10), _l1TopRightQuadHandle + new Vector2(-10, 10), _l1BottomRightQuadHandle + new Vector2(-10, -10), _l1BottomLeftQuadHandle + new Vector2(10, -10));
+                    Data.Quad l1Quad = new(_l1TopLeftQuadHandle + new Vector2(10, 10), _l1TopRightQuadHandle + new Vector2(-10, 10), _l1BottomRightQuadHandle + new Vector2(-10, -10), _l1BottomLeftQuadHandle + new Vector2(10, -10));
                     Printers.DrawTextureQuad(_layer1Buffer.Raw.Texture, l1Quad);
                     
                     EndShaderMode();
@@ -1115,7 +1114,7 @@ void main() {
                     SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), _layer3Buffer.Raw.Texture);
                     SetShaderValue(shader, GetShaderLocation(shader, "flipV"), 1, ShaderUniformDataType.Int);
 
-                    QuadVectors l3Quad = new(_l3TopLeftQuadHandle + new Vector2(50, 50), _l3TopRightQuadHandle + new Vector2(-50, 50), _l3BottomRightQuadHandle + new Vector2(-50, -50), _l3BottomLeftQuadHandle + new Vector2(50, -50));
+                    Data.Quad l3Quad = new(_l3TopLeftQuadHandle + new Vector2(50, 50), _l3TopRightQuadHandle + new Vector2(-50, 50), _l3BottomRightQuadHandle + new Vector2(-50, -50), _l3BottomLeftQuadHandle + new Vector2(50, -50));
                     Printers.DrawTextureQuad(_layer3Buffer.Raw.Texture, l3Quad);
 
                     EndShaderMode();
@@ -1127,7 +1126,7 @@ void main() {
                     SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), _layer2Buffer.Raw.Texture);
                     SetShaderValue(shader, GetShaderLocation(shader, "flipV"), 1, ShaderUniformDataType.Int);
 
-                    QuadVectors l2Quad = new(_l2TopLeftQuadHandle + new Vector2(30, 30), _l2TopRightQuadHandle + new Vector2(-30, 30), _l2BottomRightQuadHandle + new Vector2(-30, -30), _l2BottomLeftQuadHandle + new Vector2(30, -30));
+                    Data.Quad l2Quad = new(_l2TopLeftQuadHandle + new Vector2(30, 30), _l2TopRightQuadHandle + new Vector2(-30, 30), _l2BottomRightQuadHandle + new Vector2(-30, -30), _l2BottomLeftQuadHandle + new Vector2(30, -30));
                     Printers.DrawTextureQuad(_layer2Buffer.Raw.Texture, l2Quad);
 
                     EndShaderMode();
@@ -1139,7 +1138,7 @@ void main() {
                     SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), _layer1Buffer.Raw.Texture);
                     SetShaderValue(shader, GetShaderLocation(shader, "flipV"), 1, ShaderUniformDataType.Int);
 
-                    QuadVectors l1Quad = new(_l1TopLeftQuadHandle + new Vector2(10, 10), _l1TopRightQuadHandle + new Vector2(-10, 10), _l1BottomRightQuadHandle + new Vector2(-10, -10), _l1BottomLeftQuadHandle + new Vector2(10, -10));
+                    Data.Quad l1Quad = new(_l1TopLeftQuadHandle + new Vector2(10, 10), _l1TopRightQuadHandle + new Vector2(-10, 10), _l1BottomRightQuadHandle + new Vector2(-10, -10), _l1BottomLeftQuadHandle + new Vector2(10, -10));
                     Printers.DrawTextureQuad(_layer1Buffer.Raw.Texture, l1Quad);
                     
                     EndShaderMode();

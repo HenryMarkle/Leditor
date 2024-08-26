@@ -4,6 +4,8 @@ using Leditor.Data.Tiles;
 using Pidgin;
 using System.Text.Json;
 using Leditor.Data.Geometry;
+using Leditor.Data.Props.Legacy;
+using Leditor.Data.Effects;
 
 namespace Leditor;
 
@@ -46,12 +48,12 @@ internal static class Utils
         if (value < min) value = max;
     }
 
-    internal static void VFlipQuad(ref PropQuad quad) {
+    internal static void VFlipQuad(ref Data.Quad quad) {
         (quad.TopLeft, quad.BottomLeft) = (quad.BottomLeft, quad.TopLeft);
         (quad.TopRight, quad.BottomRight) = (quad.BottomRight, quad.TopRight);
     }
 
-    internal static void HFlipQuad(ref PropQuad quad) {
+    internal static void HFlipQuad(ref Data.Quad quad) {
         (quad.TopLeft, quad.TopRight) = (quad.TopRight, quad.TopLeft);
         (quad.BottomLeft, quad.BottomRight) = (quad.BottomRight, quad.BottomLeft);
     }
@@ -281,7 +283,8 @@ internal static class Utils
         }
 
         var mtx = Serialization.Importers.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
-        var tlMtx = Serialization.Importers.GetTileMatrix(tilesObj, out _, out _);
+        // var tlMtx = Serialization.Importers.GetTileMatrix(tilesObj, out _, out _);
+        var tlMtx2 = Serialization.TileImporter.GetTileMatrix_NoExcept(tilesObj, GLOBALS.MaterialDex!.DefMap, GLOBALS.TileDex!.DefMap);
         var defaultMaterial = Serialization.Importers.GetDefaultMaterial(tilesObj);
         var buffers = Serialization.Importers.GetBufferTiles(obj2);
         var terrain = Serialization.Importers.GetTerrainMedium(terrainModeObj);
@@ -290,6 +293,39 @@ internal static class Utils
         var waterData = Serialization.Importers.GetWaterData(waterObj);
         var effects = Serialization.Importers.GetEffects(effObj, givenWidth, givenHeight);
         var cams = Serialization.Importers.GetCameras(camsObj);
+
+        for (var x = 0; x < givenWidth; x++) {
+            for (var y = 0; y < givenHeight; y++) {
+                for (var z = 0; z < 3; z++) {
+                    var body = tlMtx2[y, x, z];
+
+                    if (body.Type is TileCellType.Body)
+                    {
+                        var (hx, hy, hz) = body.HeadPosition;
+
+                        hx--;
+                        hy--;
+                        hz--;
+                    
+                        if (
+                            hx < 0 || hx >= tlMtx2.GetLength(1) ||
+                            hy < 0 || hy >= tlMtx2.GetLength(0) ||
+                            hz < 0 || hz >= 3) continue;
+
+                        var head = tlMtx2[hy, hx, hz];
+
+                        if (head.Type is not TileCellType.Head) continue;
+
+                        var newBody = body with {
+                            TileDefinition = head.TileDefinition,
+                            UndefinedName = head.UndefinedName     
+                        };
+
+                        tlMtx2[y, x, z] = newBody;
+                    }
+                }
+            }
+        }
 
         Data.Materials.MaterialDefinition defMatFound = GLOBALS.Materials[0][1];
 
@@ -311,7 +347,7 @@ internal static class Utils
 
         // map material colors
 
-        Color[,,] materialColors = Utils.NewMaterialColorMatrix(givenWidth, givenHeight, new(0, 0, 0, 255));
+        Data.Color[,,] materialColors = Utils.NewMaterialColorMatrix(givenWidth, givenHeight, new(0, 0, 0, 255));
 
         for (int y = 0; y < givenHeight; y++)
         {
@@ -319,13 +355,13 @@ internal static class Utils
             {
                 for (int z = 0; z < 3; z++)
                 {
-                    var cell = tlMtx[y, x, z];
+                    var cell = tlMtx2[y, x, z];
 
-                    if (cell.Type != TileType.Material) continue;
+                    if (cell.Type is not TileCellType.Material) continue;
 
-                    var materialName = ((TileMaterial)cell.Data).Name;
+                    var materialName = cell.MaterialDefinition?.Name ?? cell.UndefinedName;
 
-                    if (GLOBALS.MaterialColors.TryGetValue(materialName, out Color color))
+                    if (GLOBALS.MaterialColors.TryGetValue(materialName!, out Data.Color color))
                         materialColors[y, x, z] = color;
                 }
             }
@@ -350,7 +386,7 @@ internal static class Utils
             DefaultMaterial = defMatFound,
             BufferTiles = buffers,
             GeoMatrix = mtx,
-            TileMatrix = tlMtx,
+            TileMatrix = tlMtx2,
             LightMode = lightMode,
             DefaultTerrain = terrain,
             MaterialColorMatrix = materialColors,
@@ -370,16 +406,16 @@ internal static class Utils
         
         var cell = GLOBALS.Level.TileMatrix[y, x, z];
 
-        if (cell.Data is TileHead h) return h.Definition;
+        if (cell.Type is TileCellType.Head) return cell.TileDefinition;
 
-        if (cell.Data is not TileBody b) return null;
+        if (cell.Type is not TileCellType.Body) return null;
         
         // fetch the head
-        var (headX, headY, headZ) = b.HeadPosition;
+        var (headX, headY, headZ) = cell.HeadPosition;
         // This is done because Lingo is 1-based index
         var supposedHead = GLOBALS.Level.TileMatrix[headY - 1, headX - 1, headZ - 1];
 
-        if (supposedHead.Data is TileHead { Definition: not null } sh) return sh.Definition;
+        if (supposedHead.Type is TileCellType.Head && supposedHead is { TileDefinition: not null }) return supposedHead.TileDefinition;
             
         return null;
     }
@@ -409,13 +445,13 @@ internal static class Utils
     {
         var cell = GLOBALS.Level.TileMatrix[y, x, z];
 
-        if (cell.Type == TileType.Material)
+        if (cell.Type is TileCellType.Material)
         {
             for (int c = 0; c < GLOBALS.Materials.Length; c++)
             {
                 for (int i = 0; i < GLOBALS.Materials[c].Length; i++)
                 {
-                    if (string.Equals(GLOBALS.Materials[c][i].Name, ((TileMaterial)cell.Data).Name, StringComparison.InvariantCulture)) return (c, i);
+                    if (string.Equals(GLOBALS.Materials[c][i].Name, cell.MaterialDefinition?.Name ?? cell.UndefinedName, StringComparison.Ordinal)) return (c, i);
                 }
             }
 
@@ -438,117 +474,26 @@ internal static class Utils
                coords.Y >= 0 && coords.Y < matrix.GetLength(0);
     }
 
-    public static bool IsTileLegal(
-        in Geo[,,] geoMatrix, 
-        in TileCell[,,] tileMatrix, 
-        in TileDefinition? init, 
-        Vector2 point
-    )
-    {
-        if (init is null) return false;
-        
-        var (width, height) = init.Size;
-        var specs = init.Specs;
-
-        // get the "middle" point of the tile
-        var head = Utils.GetTileHeadOrigin(init);
-
-        // the top-left of the tile
-        var start = Raymath.Vector2Subtract(point, head);
-
-        for (var y = 0; y < height; y++)
-        {
-            for (var x = 0; x < width; x++)
-            {
-                var matrixX = x + (int)start.X;
-                var matrixY = y + (int)start.Y;
-
-                // This function depends on the rest of the program to guarantee that all level matrices have the same x and y dimensions
-                if (
-                    matrixX >= 0 &&
-                    matrixX < geoMatrix.GetLength(1) &&
-                    matrixY >= 0 &&
-                    matrixY < geoMatrix.GetLength(0)
-                )
-                {
-                    var tileCell = tileMatrix[matrixY, matrixX, GLOBALS.Layer];
-                    var geoCell = geoMatrix[matrixY, matrixX, GLOBALS.Layer];
-
-                    var spec = specs[y, x, 0];
-                    var spec2 = specs[y, x, 1];
-                    var spec3 = specs[y, x, 2];
-
-                    var isLegal = spec == -1 ||
-                                  ((int)geoCell.Type == spec && tileCell.Type is TileType.Default or TileType.Material);
-
-                    if (tileCell.Type is TileType.Material && !GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials) isLegal = false;
-
-                    if (GLOBALS.Layer != 2)
-                    {
-                        var tileCellNextLayer = tileMatrix[matrixY, matrixX, GLOBALS.Layer + 1];
-                        var geoCellNextLayer = geoMatrix[matrixY, matrixX, GLOBALS.Layer + 1];
-
-                        isLegal = isLegal && (spec2 == -1 || ((int)geoCellNextLayer.Type == spec2 &&
-                                                     tileCellNextLayer.Type is TileType.Default or TileType.Material));
-
-                        if (tileCellNextLayer.Type is TileType.Material && !GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials) isLegal = false;
-                    }
-
-                    if (GLOBALS.Layer == 0)
-                    {
-                        var tileCellNextLayer = tileMatrix[matrixY, matrixX, 2];
-                        var geoCellNextLayer = geoMatrix[matrixY, matrixX, 2];
-                        
-                        isLegal = isLegal && (spec3 == -1 || ((int)geoCellNextLayer.Type == spec3 &&
-                                                              tileCellNextLayer.Type is TileType.Default or TileType.Material));
-
-                        if (tileCellNextLayer.Type is TileType.Material && !GLOBALS.Settings.TileEditor.ImplicitOverrideMaterials) isLegal = false;
-                    }
-
-                    if (!isLegal) return false;
-                }
-                else return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static TileCell CopyTileCell(TileCell cell) => new()
-    {
-        Type = cell.Type,
-        Data = cell.Data switch
-        {
-            TileDefault => new TileDefault(),
-            TileMaterial m => new TileMaterial(m.Name),
-            TileHead h => new TileHead(h.Definition),
-            TileBody b => new TileBody(b.HeadPosition.x, b.HeadPosition.y, b.HeadPosition.z),
-                                            
-            _ => new TileDefault()
-        }
-    };
-
     internal static void RemoveTile(int mx, int my, int mz)
     {
         while (true)
         {
             var cell = GLOBALS.Level.TileMatrix[my, mx, mz];
 
-            if (cell.Data is TileHead h)
+            if (cell.Type is TileCellType.Head)
             {
                 // tile is undefined
-                if (h.Definition is null)
+                if (cell.TileDefinition is null)
                 {
                     var oldCell = GLOBALS.Level.TileMatrix[my, mx, mz];
-                    var newCell = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                    var newCell = new Tile();
 
                     GLOBALS.Level.TileMatrix[my, mx, mz] = newCell;
 
                     return;
                 }
 
-                var data = h;
-                var tileInit = h.Definition;
+                var tileInit = cell.TileDefinition;
                 var (width, height) = tileInit.Size;
 
                 var specs = tileInit.Specs;
@@ -568,49 +513,44 @@ internal static class Utils
 
                         if (matrixX < 0 || matrixX >= GLOBALS.Level.Width || matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
 
-                        var specsIndex = x * height + y;
-
                         var spec = specs[y, x, 0];
                         var spec2 = specs[y, x, 1];
                         var spec3 = specs[y, x, 2];
 
                         if (spec != -1)
                         {
-                            var oldCell = GLOBALS.Level.TileMatrix[matrixY, matrixX, mz];
-                            var newCell = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                            var newCell = new Tile();
 
                             GLOBALS.Level.TileMatrix[matrixY, matrixX, mz] = newCell;
                         }
 
                         if (mz != 2 && spec2 != -1)
                         {
-                            var oldCell2 = GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1];
-                            var newCell2 = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                            var newCell2 = new Tile();
 
                             GLOBALS.Level.TileMatrix[matrixY, matrixX, mz + 1] = newCell2;
                         }
 
                         if (mz == 0 && spec3 != -1)
                         {
-                            var oldCell3 = GLOBALS.Level.TileMatrix[matrixY, matrixX, 2];
-                            var newCell3 = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                            var newCell3 = new Tile();
 
                             GLOBALS.Level.TileMatrix[matrixY, matrixX, 2] = newCell3;
                         }
                     }
                 }
             }
-            else if (cell.Type == TileType.TileBody)
+            else if (cell.Type == TileCellType.Body)
             {
-                var (headX, headY, headZ) = ((TileBody)cell.Data).HeadPosition;
+                var (headX, headY, headZ) = cell.HeadPosition;
 
                 // This is done because Lingo is 1-based index
                 var supposedHead = GLOBALS.Level.TileMatrix[headY - 1, headX - 1, headZ - 1];
 
                 // if the head was not found, only delete the given tile body
-                if (supposedHead.Data is not TileHead)
+                if (supposedHead.Type is not TileCellType.Head)
                 {
-                    GLOBALS.Level.TileMatrix[my, mx, mz] = new TileCell { Type = TileType.Default, Data = new TileDefault() };
+                    GLOBALS.Level.TileMatrix[my, mx, mz] = new Tile();
                     return;
                 }
 
@@ -625,7 +565,7 @@ internal static class Utils
     }
 
     internal static void ForcePlaceTileWithoutGeo(
-        in TileCell[,,] tileMatrix,
+        in Tile[,,] tileMatrix,
         in TileDefinition init,
         (int x, int y, int z) matrixPosition
     )
@@ -661,13 +601,13 @@ internal static class Utils
 
                 if (spec != -1)
                 {
-                    if (tileMatrix[matrixY, matrixX, mz].Data is TileHead)
+                    if (tileMatrix[matrixY, matrixX, mz].Type is TileCellType.Head)
                         RemoveTile(matrixX, matrixY, mz);
                 }
 
                 if (spec2 != -1 && mz != 2)
                 {
-                    if (tileMatrix[matrixY, matrixX, mz+1].Data is TileHead)
+                    if (tileMatrix[matrixY, matrixX, mz+1].Type is TileCellType.Head)
                         RemoveTile(matrixX, matrixY, mz+1);
                 }
             }
@@ -688,8 +628,6 @@ internal static class Utils
                     matrixY < tileMatrix.GetLength(0)
                 )
                 {
-                    var specsIndex = x*height + y;
-
                     var spec = specs[y, x, 0];
                     var spec2 = specs[y, x, 1];
                     var spec3 = specs[y, x, 2];
@@ -698,11 +636,7 @@ internal static class Utils
                     if (x == (int)head.X && y == (int)head.Y)
                     {
                         // Place the head of the tile at matrixPosition
-                        var newHead = new TileCell
-                        {
-                            Type = TileType.TileHead,
-                            Data = new TileHead(init)
-                        };
+                        var newHead = new Tile(init);
                         
                         tileMatrix[my, mx, mz] = newHead;
                     }
@@ -712,11 +646,11 @@ internal static class Utils
                         // If it's the tile head
                         if (!(x == (int)head.X && y == (int)head.Y))
                         {
-                            var newCell = new TileCell
-                            {
-                                Type = TileType.TileBody,
-                                Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
-                            };
+                            var newCell = new Tile(
+                                mx + 1, my + 1, mz + 1,
+                                tileMatrix[my + 1, mx + 1, mz + 1].TileDefinition,
+                                tileMatrix[my + 1, mx + 1, mz + 1].UndefinedName
+                            );
                             
                             tileMatrix[matrixY, matrixX, mz] = newCell;
                         }
@@ -724,11 +658,11 @@ internal static class Utils
                     
                     if (spec2 != -1 && mz != 2)
                     {
-                        var newerCell = new TileCell
-                        {
-                            Type = TileType.TileBody,
-                            Data = new TileBody(mx + 1, my + 1, mz + 1) // <- Indices are incremented by 1 because Lingo is 1-based indexed
-                        };
+                        var newerCell = new Tile(
+                            mx + 1, my + 1, mz + 1,
+                            tileMatrix[my + 1, mx + 1, mz + 1].TileDefinition,
+                            tileMatrix[my + 1, mx + 1, mz + 1].UndefinedName
+                        );
                         
                         tileMatrix[matrixY, matrixX, mz + 1] = newerCell;
                     }
@@ -737,63 +671,6 @@ internal static class Utils
         }
         
         return;
-    }
-
-    internal static bool IsStrayTileBodyFragment(
-        in TileCell[,,] tileMatrix,
-        int x, int y, int z
-    ) {
-        if (x < 0 || x >= tileMatrix.GetLength(1) ||
-            y < 0 || y >= tileMatrix.GetLength(0) ||
-            z < 0 || z > 2) return false;
-
-        var cell = tileMatrix[y, x, z];
-
-        if (cell.Data is not TileBody b) return false;
-
-        var headPos = b.HeadPosition;
-
-        var hx = headPos.x - 1;
-        var hy = headPos.y - 1;
-        var hz = headPos.z - 1;
-
-        if (hx < 0 || hx > tileMatrix.GetLength(1) ||
-            hy < 1 || hy > tileMatrix.GetLength(0) ||
-            hz < 1 || hz > 3) return true;
-    
-        var head = tileMatrix[hy, hx, hz];
-
-        return head.Data is not TileHead;
-    }
-
-    [Obsolete]
-    public static void PlaceMaterial((string name, Color color) material, (int x, int y, int z) position, int radius)
-    {
-        var (x, y, z) = position;
-
-        for (var lx = -radius; lx < radius + 1; lx++)
-        {
-            var matrixX = x + lx;
-
-            if (matrixX < 0 || matrixX >= GLOBALS.Level.Width) continue;
-
-            for (var ly = -radius; ly < radius + 1; ly++)
-            {
-                var matrixY = y + ly;
-
-                if (matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
-
-                var cell = GLOBALS.Level.TileMatrix[matrixY, matrixX, z];
-
-                if (cell.Type != TileType.Default && cell.Type != TileType.Material) continue;
-
-                cell.Type = TileType.Material;
-                cell.Data = new TileMaterial(material.name);
-
-                GLOBALS.Level.TileMatrix[matrixY, matrixX, z] = cell;
-                GLOBALS.Level.MaterialColors[matrixY, matrixX, z] = material.color;
-            }
-        }
     }
 
     internal static bool InBounds<T>(int index, T[] array) => index >= 0 && index < array.Length;
@@ -878,34 +755,6 @@ internal static class Utils
         return (left, top, right, bottom);
     }
 
-
-    [Obsolete]
-    public static void RemoveMaterial(int x, int y, int z, int radius)
-        {
-            for (var lx = -radius; lx < radius+1; lx++)
-            {
-                var matrixX = x + lx;
-                
-                if (matrixX < 0 || matrixX >= GLOBALS.Level.Width) continue;
-                
-                for (var ly = -radius; ly < radius+1; ly++)
-                {
-                    var matrixY = y + ly;
-                    
-                    if (matrixY < 0 || matrixY >= GLOBALS.Level.Height) continue;
-
-                    var cell = GLOBALS.Level.TileMatrix[matrixY, matrixX, z];
-                    
-                    if (cell.Type != TileType.Default && cell.Type != TileType.Material) continue;
-                    
-                    cell.Type = TileType.Default;
-                    cell.Data = new TileDefault();
-
-                    GLOBALS.Level.TileMatrix[matrixY, matrixX, z] = cell;
-                }
-            }
-        }
-
     public static bool EffectCoversScreen(string effect) => effect switch {
         "BlackGoo" or "Super BlackGoo" => true,
         _ => false
@@ -927,9 +776,9 @@ internal static class Utils
         _ => false
     };
 
-    public static Data.EffectOptions[] NewEffectOptions(string name)
+    public static EffectOptions[] NewEffectOptions(string name)
     {
-        Data.EffectOptions[] options = name switch
+        EffectOptions[] options = name switch
         {
             "Slime" => [
                 new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
@@ -1186,16 +1035,6 @@ internal static class Utils
         return number / 2;
     }
 
-    /// <summary>
-    /// Determines the "middle" of a tile, which where the tile head is positioned.
-    /// </summary>
-    /// <param name="init">a reference to the tile definition</param>
-    internal static Vector2 GetTileHeadOrigin(in InitTile init)
-    {
-        var (width, height) = init.Size;
-        return new Vector2(GetMiddle(width), GetMiddle(height));
-    }
-    
     /// <summary>
     /// Determines the "middle" of a tile, which where the tile head is positioned.
     /// </summary>
@@ -1688,17 +1527,17 @@ internal static class Utils
         return newMatrix;
     }
 
-    internal static Color[,,] Resize(
-        Color[,,] matrix,
+    internal static Data.Color[,,] Resize(
+        Data.Color[,,] matrix,
         
         int left,
         int top,
         int right,
         int bottom,
 
-        Color layer1Fill,
-        Color layer2Fill,
-        Color layer3Fill
+        Data.Color layer1Fill,
+        Data.Color layer2Fill,
+        Data.Color layer3Fill
     ) {
         if (left == 0 && top == 0 && right == 0 && bottom == 0) return matrix;
         if (-left == matrix.GetLength(1) || -right == matrix.GetLength(1) ||
@@ -1712,7 +1551,7 @@ internal static class Utils
 
         var depth = matrix.GetLength(2);
 
-        Color[,,] newMatrix = new Color[newHeight, newWidth, depth];
+        Data.Color[,,] newMatrix = new Data.Color[newHeight, newWidth, depth];
 
         // Default value
 
@@ -1804,97 +1643,6 @@ internal static class Utils
                 newMatrix[ny, nx, 0] = matrix[y, x, 0];
                 newMatrix[ny, nx, 1] = matrix[y, x, 1];
                 newMatrix[ny, nx, 2] = matrix[y, x, 2];
-            }
-        }
-
-        return newMatrix;
-    }
-
-    internal static TileCell[,,] Resize(
-        TileCell[,,] matrix,
-        
-        int left,
-        int top,
-        int right,
-        int bottom,
-
-        TileCell layer1Fill,
-        TileCell layer2Fill,
-        TileCell layer3Fill
-    ) {
-        if (left == 0 && top == 0 && right == 0 && bottom == 0) return matrix;
-        if (-left == matrix.GetLength(1) || -right == matrix.GetLength(1) ||
-            -top == matrix.GetLength(0) || -bottom == matrix.GetLength(0)) return matrix;
-
-        var width = matrix.GetLength(1);
-        var height = matrix.GetLength(0);
-
-        var newWidth = width + left + right;
-        var newHeight = height + top + bottom;
-
-        var depth = matrix.GetLength(2);
-
-        TileCell[,,] newMatrix = new TileCell[newHeight, newWidth, depth];
-
-        // Default value
-
-        for (var y = 0; y < newHeight; y++) {
-            for (var x = 0; x < newWidth; x++) {
-                newMatrix[y, x, 0] = new TileCell(layer1Fill);
-                newMatrix[y, x, 1] = new TileCell(layer2Fill);
-                newMatrix[y, x, 2] = new TileCell(layer3Fill);
-            }
-        } 
-
-        // Copy old matrix to new matrix
-
-        for (var y = 0; y < height; y++) {
-            var ny = y + top;
-
-            if (ny >= newHeight) break;
-            if (ny < 0) continue;
-
-            for (var x = 0; x < width; x++) {
-                var nx = x + left;
-
-                if (nx >= newWidth) break;
-                if (nx < 0) continue;
-
-                //
-
-                newMatrix[ny, nx, 0] = matrix[y, x, 0];
-                newMatrix[ny, nx, 1] = matrix[y, x, 1];
-                newMatrix[ny, nx, 2] = matrix[y, x, 2];
-
-                if (newMatrix[ny, nx, 0].Data is TileBody b) {
-                    var (hx, hy, hz) = b.HeadPosition;
-
-                    hx += left;
-                    hy += top;
-
-                    b.HeadPosition = (hx, hy, hz);
-                    newMatrix[ny, nx, 0].Data = b;
-                }
-
-                if (newMatrix[ny, nx, 1].Data is TileBody b1) {
-                    var (hx, hy, hz) = b1.HeadPosition;
-
-                    hx += left;
-                    hy += top;
-
-                    b1.HeadPosition = (hx, hy, hz);
-                    newMatrix[ny, nx, 1].Data = b1;
-                }
-
-                if (newMatrix[ny, nx, 2].Data is TileBody b2) {
-                    var (hx, hy, hz) = b2.HeadPosition;
-
-                    hx += left;
-                    hy += top;
-
-                    b2.HeadPosition = (hx, hy, hz);
-                    newMatrix[ny, nx, 2].Data = b2;
-                }
             }
         }
 
@@ -1999,110 +1747,9 @@ internal static class Utils
         return newArray;
     }
 
-    [Obsolete]
-    internal static void Resize((string, Data.EffectOptions, double[,])[] list, int width, int height, int newWidth, int newHeight)
+    internal static Data.Color[,,] NewMaterialColorMatrix(int width, int height, Data.Color @default)
     {
-        for (int i = 0; i < list.Length; i++)
-        {
-            var array = list[i].Item3;
-            var newArray = new double[newHeight, newWidth];
-
-            if (height > newHeight)
-            {
-                if (width > newWidth)
-                {
-                    for (int y = 0; y < newHeight; y++)
-                    {
-                        for (int x = 0; x < newWidth; x++)
-                        {
-                            newArray[y, x] = array[y, x];
-                            newArray[y, x] = array[y, x];
-                            newArray[y, x] = array[y, x];
-                        }
-                    }
-                }
-                else
-                {
-                    for (int y = 0; y < newHeight; y++)
-                    {
-                        for (int x = 0; x < width; x++)
-                        {
-                            newArray[y, x] = array[y, x];
-                            newArray[y, x] = array[y, x];
-                            newArray[y, x] = array[y, x];
-                        }
-
-                        for (int x = width; x < newWidth; x++)
-                        {
-                            newArray[y, x] = 0;
-                            newArray[y, x] = 0;
-                            newArray[y, x] = 0;
-                        }
-                    }
-                }
-
-            }
-            else
-            {
-                if (width > newWidth)
-                {
-                    for (int y = 0; y < height; y++)
-                    {
-                        for (int x = 0; x < newWidth; x++)
-                        {
-                            newArray[y, x] = array[y, x];
-                            newArray[y, x] = array[y, x];
-                            newArray[y, x] = array[y, x];
-                        }
-                    }
-
-                    for (int y = height; y < newHeight; y++)
-                    {
-                        for (int x = 0; x < newWidth; x++)
-                        {
-                            newArray[y, x] = 0;
-                            newArray[y, x] = 0;
-                            newArray[y, x] = 0;
-                        }
-                    }
-                }
-                else
-                {
-                    for (int y = 0; y < height; y++)
-                    {
-                        for (int x = 0; x < width; x++)
-                        {
-                            newArray[y, x] = array[y, x];
-                            newArray[y, x] = array[y, x];
-                            newArray[y, x] = array[y, x];
-                        }
-
-                        for (int x = width; x < newWidth; x++)
-                        {
-                            newArray[y, x] = 0;
-                            newArray[y, x] = 0;
-                            newArray[y, x] = 0;
-                        }
-                    }
-
-                    for (int y = height; y < newHeight; y++)
-                    {
-                        for (int x = 0; x < newWidth; x++)
-                        {
-                            newArray[y, x] = 0;
-                            newArray[y, x] = 0;
-                            newArray[y, x] = 0;
-                        }
-                    }
-                }
-            }
-            list[i].Item3 = newArray;
-        }
-    }
-
-    internal static Color[,,] NewMaterialColorMatrix(int width, int height, Color @default)
-    {
-        Color[,,] matrix = new Color[height, width, 3];
+        Data.Color[,,] matrix = new Data.Color[height, width, 3];
 
         for (int y = 0; y < height; y++)
         {
@@ -2521,73 +2168,6 @@ internal static class Utils
         return newArray;
     }
 
-    [Obsolete]
-    internal static TileCell[,,] NewTileMatrix(int width, int height)
-    {
-        TileCell[,,] matrix = new TileCell[height, width, 3];
-
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                matrix[y, x, 0] = new()
-                {
-                    Type = TileType.Default,
-                    Data = new TileDefault()
-                };
-
-                matrix[y, x, 1] = new()
-                {
-                    Type = TileType.Default,
-                    Data = new TileDefault()
-                };
-
-                matrix[y, x, 2] = new()
-                {
-                    Type = TileType.Default,
-                    Data = new TileDefault()
-                };
-            }
-        }
-
-        return matrix;
-    }
-
-    internal static bool[] NewStackables(bool fill = false)
-    {
-        var array = new bool[22];
-        
-        for (var i = 0; i < array.Length; i++) array[i] = fill;
-
-        return array;
-    }
-
-    /// <summary>
-    /// Determines where the tile preview texture starts in the tile texture.
-    /// </summary>
-    /// <param name="init">a reference to the tile definition</param>
-    /// <returns>a number representing the y-depth value where the tile preview starts</returns>
-    internal static int GetTilePreviewStartingHeight(in InitTile init)
-    {
-        var (width, height) = init.Size;
-        var bufferTiles = init.BufferTiles;
-        var repeatL = init.Repeat.Length;
-        var scale = GLOBALS.Scale;
-
-        var offset = init.Type switch
-        {
-            InitTileType.VoxelStruct => 1 + scale * ((bufferTiles * 2) + height) * repeatL,
-            InitTileType.VoxelStructRockType => 1 + scale * ((bufferTiles * 2) + height),
-            InitTileType.Box => scale * height * width + (scale * (height + (2 * bufferTiles))),
-            InitTileType.VoxelStructRandomDisplaceVertical => 1 + scale * ((bufferTiles * 2) + height) * repeatL,
-            InitTileType.VoxelStructRandomDisplaceHorizontal => 1 + scale * ((bufferTiles * 2) + height) * repeatL,
-
-            _ => 1 + scale * ((bufferTiles * 2) + height) * repeatL
-        };
-
-        return offset;
-    }
-    
     /// <summary>
     /// Determines where the tile preview texture starts in the tile texture.
     /// </summary>
@@ -2614,7 +2194,7 @@ internal static class Utils
         return offset;
     }
 
-    internal static Rectangle EncloseQuads(PropQuad quads)
+    internal static Rectangle EncloseQuads(Data.Quad quads)
     {
         var nearestX = Math.Min(Math.Min(quads.TopLeft.X, quads.TopRight.X), Math.Min(quads.BottomLeft.X, quads.BottomRight.X));
         var nearestY = Math.Min(Math.Min(quads.TopLeft.Y, quads.TopRight.Y), Math.Min(quads.BottomLeft.Y, quads.BottomRight.Y));
@@ -2626,7 +2206,7 @@ internal static class Utils
     }
     
     [Obsolete]
-    internal static Rectangle EncloseQuads(in PropQuad quads)
+    internal static Rectangle EncloseQuads(in Data.Quad quads)
     {
         var nearestX = Math.Min(Math.Min(quads.TopLeft.X, quads.TopRight.X), Math.Min(quads.BottomLeft.X, quads.BottomRight.X));
         var nearestY = Math.Min(Math.Min(quads.TopLeft.Y, quads.TopRight.Y), Math.Min(quads.BottomLeft.Y, quads.BottomRight.Y));
@@ -2637,7 +2217,7 @@ internal static class Utils
         return new Rectangle(nearestX, nearestY, furthestX - nearestX, furthestY - nearestY);
     }
     
-    internal static Rectangle EncloseProps(IEnumerable<PropQuad> quadsList)
+    internal static Rectangle EncloseProps(IEnumerable<Data.Quad> quadsList)
     {
         float 
             minX = float.MaxValue, 
@@ -2683,7 +2263,7 @@ internal static class Utils
         return new Rectangle(minX, minY, maxX - minX, maxY - minY);
     }
 
-    internal static PropQuad RotatePropQuads(PropQuad quads, float angle)
+    internal static Data.Quad RotatePropQuads(Data.Quad quads, float angle)
     {
         // Convert angle to radians
 
@@ -2750,7 +2330,7 @@ internal static class Utils
         return new(newTopLeft, newTopRight, newBottomRight, newBottomLeft);
     }
     
-    internal static PropQuad RotatePropQuads(PropQuad quads, float angle, Vector2 center)
+    internal static Data.Quad RotatePropQuads(Data.Quad quads, float angle, Vector2 center)
     {
         // Convert angle to radians
 
@@ -2838,7 +2418,7 @@ internal static class Utils
         }
     }
 
-    internal static Vector2 QuadsCenter(ref PropQuad quads)
+    internal static Vector2 QuadsCenter(ref Data.Quad quads)
     {
         var rect = EncloseQuads(quads);
         return new(rect.X + rect.Width/2, rect.Y + rect.Height/2);
@@ -2847,7 +2427,7 @@ internal static class Utils
     internal static Vector2 RectangleCenter(ref Rectangle rectangle) => new(rectangle.X + rectangle.Width / 2, rectangle.Y + rectangle.Height / 2);
 
     [Obsolete]
-    internal static void ScaleQuads(ref PropQuad quads, float factor)
+    internal static void ScaleQuads(ref Data.Quad quads, float factor)
     {
         var enclose = EncloseQuads(quads);
         var center = RectangleCenter(ref enclose);
@@ -2885,7 +2465,7 @@ internal static class Utils
         );
     }
     
-    internal static void ScaleQuads(ref PropQuad quads, Vector2 center, float factor)
+    internal static void ScaleQuads(ref Data.Quad quads, Vector2 center, float factor)
     {
         quads.TopLeft = Raymath.Vector2Add(
             Raymath.Vector2Scale(
@@ -2920,7 +2500,7 @@ internal static class Utils
         );
     }
 
-    internal static void ScaleQuadsX(ref PropQuad quads, Vector2 center, float factor)
+    internal static void ScaleQuadsX(ref Data.Quad quads, Vector2 center, float factor)
     {
         quads.TopLeft = quads.TopLeft with { X = (quads.TopLeft.X - center.X) * factor + center.X };
         quads.BottomLeft = quads.BottomLeft with { X = (quads.BottomLeft.X - center.X) * factor + center.X };
@@ -2928,7 +2508,7 @@ internal static class Utils
         quads.BottomRight = quads.BottomRight with { X = (quads.BottomRight.X - center.X) * factor + center.X };
     }
 
-    internal static void ScaleQuadsY(ref PropQuad quads, Vector2 center, float factor)
+    internal static void ScaleQuadsY(ref Data.Quad quads, Vector2 center, float factor)
     {
         quads.TopLeft = quads.TopLeft with { Y = (quads.TopLeft.Y - center.Y) * factor + center.Y };
         quads.BottomLeft = quads.BottomLeft with { Y = (quads.BottomLeft.Y - center.Y) * factor + center.Y };
@@ -2937,7 +2517,7 @@ internal static class Utils
     }
 
     [Obsolete]
-    internal static (Vector2 pA, Vector2 pB) RopeEnds(in PropQuad quads)
+    internal static (Vector2 pA, Vector2 pB) RopeEnds(in Data.Quad quads)
     {
         return (
             Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), new(2f, 2f)), 
@@ -2945,7 +2525,7 @@ internal static class Utils
         );
     }
     
-    internal static (Vector2 pA, Vector2 pB) RopeEnds(PropQuad quads)
+    internal static (Vector2 pA, Vector2 pB) RopeEnds(Data.Quad quads)
     {
         return (
             Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), new(2f, 2f)), 
@@ -2953,7 +2533,7 @@ internal static class Utils
         );
     }
 
-    internal static (Vector2 left, Vector2 top, Vector2 right, Vector2 bottom) LongSides(in PropQuad quad)
+    internal static (Vector2 left, Vector2 top, Vector2 right, Vector2 bottom) LongSides(in Data.Quad quad)
     {
         var (left, right) = RopeEnds(quad);
 

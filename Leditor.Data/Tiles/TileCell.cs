@@ -18,11 +18,13 @@ public readonly struct Tile
     /// <summary>
     /// Check the type before accessing the other properties
     /// </summary>
-    public TileCellType Type { get; } = TileCellType.Default;
+    public TileCellType Type { get; init; } = TileCellType.Default;
 
-    public MaterialDefinition? MaterialDefinition { get; } = null;
-    public TileDefinition? TileDefinition { get; } = null;
-    public (int X, int Y, int Z) HeadPosition { get; } = (0, 0, 0);
+    public MaterialDefinition? MaterialDefinition { get; init; } = null;
+    public TileDefinition? TileDefinition { get; init; } = null;
+    public (int X, int Y, int Z) HeadPosition { get; init; } = (0, 0, 0);
+
+    public string? UndefinedName { get; init; }
 
     //
 
@@ -43,11 +45,12 @@ public readonly struct Tile
     /// </summary>
     /// <param name="definition">A pointer to a <see cref="MaterialDefinition"/></param>
     /// <exception cref="NullReferenceException">Material definition is a null pointer</exception>
-    public Tile(MaterialDefinition definition)
+    public Tile(MaterialDefinition? definition, string? undefinedName = null)
     {
         Type = TileCellType.Material;
 
         MaterialDefinition = definition;
+        UndefinedName = undefinedName;
         
         TileDefinition = null;
         HeadPosition = (0, 0, 0);
@@ -59,7 +62,7 @@ public readonly struct Tile
     /// </summary>
     /// <param name="definition">A pointer to a <see cref="TileDefinition"/></param>
     /// <exception cref="NullReferenceException">Tile definition is a null pointer</exception>
-    public Tile(TileDefinition definition)
+    public Tile(TileDefinition? definition, string? undefinedName = null)
     {
         Type = TileCellType.Head;
 
@@ -67,6 +70,8 @@ public readonly struct Tile
         TileDefinition = definition
                          ?? throw new NullReferenceException("Could not create a new head tile cell");
         HeadPosition = (0, 0, 0);
+
+        UndefinedName = undefinedName;
     }
 
     /// <summary>
@@ -76,13 +81,15 @@ public readonly struct Tile
     /// <param name="y">Tile head's Y coordinates</param>
     /// <param name="z">Tile head's Z coordinates (layer)</param>
     /// <param name="definition">An optional definition of the tile head</param>
-    public Tile(int x, int y, int z, TileDefinition? definition = null)
+    public Tile(int x, int y, int z, TileDefinition? definition = null, string? undefinedName = null)
     {
         Type = TileCellType.Body;
         
         MaterialDefinition = null;
         TileDefinition = definition;
         HeadPosition = (x, y, z);
+
+        UndefinedName = undefinedName;
     }
 
     /// <summary>

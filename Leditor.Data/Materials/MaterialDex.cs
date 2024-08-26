@@ -5,8 +5,10 @@ using System.Collections.Immutable;
 /// <summary>
 /// <see cref="IDisposable.Dispose"/> must be called by the consumer.
 /// </summary>
-public class MaterialDex
+public class MaterialDex : IDisposable
 {
+    public bool Disposed { get; private set;}
+
     /// <summary>
     /// Tile -> Definition
     /// </summary>
@@ -33,6 +35,24 @@ public class MaterialDex
     /// Gets the number of registered tiles.
     /// </summary>
     public int Count => _definitions.Count;
+
+    public ImmutableDictionary<string, MaterialDefinition> DefMap => _definitions;
+
+    public void Dispose()
+    {
+        if (Disposed) return;
+
+        Disposed = true;
+
+        foreach (var m in _definitions) {
+            if (m.Value.Texture.Id != 0) Raylib_cs.Raylib.UnloadTexture(m.Value.Texture);
+        }
+    }
+
+    ~MaterialDex()
+    {
+        if (!Disposed) throw new InvalidOperationException("MaterialDex was not disposed by consumer.");
+    }
 
     /// <summary>
     /// Get the definition of tile

@@ -1,10 +1,11 @@
 ﻿using System.Numerics;
 using ImGuiNET;
 using rlImGui_cs;
+
 using static Raylib_cs.Raylib;
 using Leditor.Types;
 
-using Leditor.Data;
+using Leditor.Data.Effects;
 
 namespace Leditor.Pages;
 
@@ -254,11 +255,11 @@ internal class EffectsEditorPage : EditorPage
 
                 GLOBALS.Level.Effects = [
                     .. GLOBALS.Level.Effects,
-                    (
-                        effectToAdd,
-                        Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
-                        matrixToAdd
-                    )
+                    new() {
+                        Name = effectToAdd,
+                        Options = Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
+                        Matrix = matrixToAdd
+                    }
                 ];
 
                 _addNewEffectMode = false;
@@ -332,11 +333,11 @@ internal class EffectsEditorPage : EditorPage
 
                                     GLOBALS.Level.Effects = [
                                         .. GLOBALS.Level.Effects,
-                                        (
-                                            effectToAdd,
-                                            Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
-                                            matrixToAdd
-                                        )
+                                        new (){
+                                            Name = effectToAdd,
+                                            Options = Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
+                                            Matrix = matrixToAdd
+                                        }
                                     ];
 
                                     _addNewEffectMode = false;
@@ -365,11 +366,11 @@ internal class EffectsEditorPage : EditorPage
                     {
                         GLOBALS.Level.Effects = [
                             .. GLOBALS.Level.Effects,
-                            (
-                                GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue],
-                                Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
-                                new double[GLOBALS.Level.Height, GLOBALS.Level.Width]
-                            )
+                            new() {
+                                Name = GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue],
+                                Options = Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
+                                Matrix = new double[GLOBALS.Level.Height, GLOBALS.Level.Width]
+                            }
                         ];
 
                         _addNewEffectMode = false;
@@ -530,7 +531,7 @@ internal class EffectsEditorPage : EditorPage
             var effectsMouseWheel = GetMouseWheelMove();
             var isBrushSizeConstrained = _currentAppliedEffect >= 0 && 
                                          _currentAppliedEffect < GLOBALS.Level.Effects.Length && 
-                                         Utils.IsEffectBruhConstrained(GLOBALS.Level.Effects[_currentAppliedEffect].Item1);
+                                         Utils.IsEffectBruhConstrained(GLOBALS.Level.Effects[_currentAppliedEffect].Name);
 
             if (isBrushSizeConstrained)
             {
@@ -599,7 +600,7 @@ internal class EffectsEditorPage : EditorPage
                             effectsMatrixX != _prevMatrixX || effectsMatrixY != _prevMatrixY || !_clickTracker
                         ))
                 {
-                    (string, Data.EffectOptions[], double[,]) mtx;
+                    Effect mtx;
 
                     #if DEBUG
                     try
@@ -614,12 +615,12 @@ internal class EffectsEditorPage : EditorPage
                     mtx = GLOBALS.Level.Effects[_currentAppliedEffect];
                     #endif
 
-                    var strength = Utils.GetEffectBrushStrength(mtx.Item1);
+                    var strength = Utils.GetEffectBrushStrength(mtx.Name);
                     Utils.Restrict (ref strength, 0, 100);
                     var useStrong = _shortcuts.StrongBrush.Check(ctrl, shift, alt, true);
                     
                     PaintEffectCircular(
-                        mtx.Item3,
+                        mtx.Matrix,
                         (effectsMatrixX, effectsMatrixY),
                         _brushRadius,
                         useStrong ? strength + 10  : strength
@@ -644,7 +645,7 @@ internal class EffectsEditorPage : EditorPage
                             effectsMatrixX != _prevMatrixX || effectsMatrixY != _prevMatrixY || !_clickTracker
                         ))
                 {
-                    (string, Data.EffectOptions[], double[,]) mtx;
+                    Effect mtx;
 
                     #if DEBUG
                     try
@@ -659,11 +660,11 @@ internal class EffectsEditorPage : EditorPage
                     mtx = GLOBALS.Level.Effects[_currentAppliedEffect];
                     #endif
                     
-                    var strength = -Utils.GetEffectBrushStrength(mtx.Item1);
+                    var strength = -Utils.GetEffectBrushStrength(mtx.Name);
                     var useStrong = _shortcuts.StrongBrush.Check(ctrl, shift, alt, true);
                     
                     PaintEffectCircular(
-                        mtx.Item3,
+                        mtx.Matrix,
                         (effectsMatrixX, effectsMatrixY),
                         _brushRadius,
                         useStrong ? strength - 10 : strength
@@ -710,19 +711,19 @@ internal class EffectsEditorPage : EditorPage
                 if (_shortcuts.CycleEffectOptionsUp.Check(ctrl, shift, alt))
                 {
                     _optionsIndex--;
-                    if (_optionsIndex < 1) _optionsIndex = GLOBALS.Level.Effects[_currentAppliedEffect].Item2.Length - 1;
+                    if (_optionsIndex < 1) _optionsIndex = GLOBALS.Level.Effects[_currentAppliedEffect].Options.Length - 1;
                 }
                 else if (_shortcuts.CycleEffectOptionsDown.Check(ctrl, shift, alt))
                 {
-                    if (GLOBALS.Level.Effects[_currentAppliedEffect].Item2.Length > 0) {
+                    if (GLOBALS.Level.Effects[_currentAppliedEffect].Options.Length > 0) {
 
-                        _optionsIndex = ++_optionsIndex % GLOBALS.Level.Effects[_currentAppliedEffect].Item2.Length;
+                        _optionsIndex = ++_optionsIndex % GLOBALS.Level.Effects[_currentAppliedEffect].Options.Length;
                         if (_optionsIndex == 0) _optionsIndex = 1;
                     }
                 }
                 else if (_shortcuts.CycleEffectOptionChoicesRight.Check(ctrl, shift, alt))
                 {
-                    var option = GLOBALS.Level.Effects[_currentAppliedEffect].Item2[_optionsIndex];
+                    var option = GLOBALS.Level.Effects[_currentAppliedEffect].Options[_optionsIndex];
                     if (option.Options.Length > 0) {
                         var choiceIndex = Array.FindIndex(option.Options, op => op == option.Choice);
                         choiceIndex = ++choiceIndex % option.Options.Length;
@@ -731,7 +732,7 @@ internal class EffectsEditorPage : EditorPage
                 }
                 else if (_shortcuts.CycleEffectOptionChoicesLeft.Check(ctrl, shift, alt))
                 {
-                    var option = GLOBALS.Level.Effects[_currentAppliedEffect].Item2[_optionsIndex];
+                    var option = GLOBALS.Level.Effects[_currentAppliedEffect].Options[_optionsIndex];
                     var choiceIndex = Array.FindIndex(option.Options, op => op == option.Choice);
                     choiceIndex--;
                     if (choiceIndex < 0) choiceIndex = option.Options.Length - 1;
@@ -839,7 +840,7 @@ internal class EffectsEditorPage : EditorPage
                                     y * GLOBALS.Scale, 
                                     GLOBALS.Scale, 
                                     GLOBALS.Scale, 
-                                    brushColor with { A = (byte)((GLOBALS.Level.Effects[_currentAppliedEffect].Item3[y, x] * 255 / 100) * 0.9f) }
+                                    brushColor with { A = (byte)((GLOBALS.Level.Effects[_currentAppliedEffect].Matrix[y, x] * 255 / 100) * 0.9f) }
                                 );
                             }
                         }
@@ -975,10 +976,10 @@ internal class EffectsEditorPage : EditorPage
                         var textHeight = ImGui.GetTextLineHeight();
 
                         // i is index relative to the GLOBALS.Page; oi is index relative to the whole list
-                        foreach (var (i, (name, _, _)) in GLOBALS.Level.Effects.Select((value, i) => (i, value)))
+                        foreach (var (i, eff) in GLOBALS.Level.Effects.Select((value, i) => (i, value)))
                         {
                             var options = GLOBALS.Level.Effects.Length > 0
-                                ? GLOBALS.Level.Effects[i].Item2
+                                ? GLOBALS.Level.Effects[i].Options
                                 : [];
 
                             var option = options.Length > 0 
@@ -986,7 +987,7 @@ internal class EffectsEditorPage : EditorPage
                                 : null;
 
                             if (option is null) {
-                                if (ImGui.Selectable($"      {i}. {name}", i == _currentAppliedEffect)) _currentAppliedEffect = i;
+                                if (ImGui.Selectable($"      {i}. {eff.Name}", i == _currentAppliedEffect)) _currentAppliedEffect = i;
                             } else {
                                 var cursor = ImGui.GetCursorScreenPos();
 
@@ -1117,7 +1118,7 @@ internal class EffectsEditorPage : EditorPage
                                     break;
                                 }
 
-                                if (ImGui.Selectable($"      {i}. {name}", i == _currentAppliedEffect)) _currentAppliedEffect = i;
+                                if (ImGui.Selectable($"      {i}. {eff.Name}", i == _currentAppliedEffect)) _currentAppliedEffect = i;
                             }
                             
                         }
@@ -1131,7 +1132,7 @@ internal class EffectsEditorPage : EditorPage
                 // Options
                 {
                     var options = GLOBALS.Level.Effects.Length > 0
-                        ? GLOBALS.Level.Effects[_currentAppliedEffect].Item2
+                        ? GLOBALS.Level.Effects[_currentAppliedEffect].Options
                         : [];
 
                     var optionsOpened = ImGui.Begin("Options");
@@ -1267,11 +1268,11 @@ internal class EffectsEditorPage : EditorPage
                     ImGui.SetNextItemWidth(250);
                     ImGui.ColorEdit3("Dark-mode effect", ref darkColor);
 
-                    GLOBALS.Settings.EffectsSettings.EffectColorLight = new ConColor((byte)(lightColor.X * 255), (byte)
-                        (lightColor.Y * 255), (byte)(lightColor.Z * 255), 255);
+                    GLOBALS.Settings.EffectsSettings.EffectColorLight = new Data.Color((byte)(lightColor.X * 255), (byte)
+                        (lightColor.Y * 255), (byte)(lightColor.Z * 255), (byte)255);
                     
-                    GLOBALS.Settings.EffectsSettings.EffectColorDark = new ConColor((byte)(darkColor.X * 255), (byte)
-                        (darkColor.Y * 255), (byte)(darkColor.Z * 255), 255);
+                    GLOBALS.Settings.EffectsSettings.EffectColorDark = new Data.Color((byte)(darkColor.X * 255), (byte)
+                        (darkColor.Y * 255), (byte)(darkColor.Z * 255), (byte)255);
                     
                     ImGui.SeparatorText("Effects Canvas Colors");
 
@@ -1323,7 +1324,7 @@ internal class EffectsEditorPage : EditorPage
 
         {
             var options = GLOBALS.Level.Effects.Length > 0
-                            ? GLOBALS.Level.Effects[_currentAppliedEffect].Item2
+                            ? GLOBALS.Level.Effects[_currentAppliedEffect].Options
                             : [];
 
             Printers.Debug.EnqueueF3(new(options.Length) { Name = "Options", SameLine = true });

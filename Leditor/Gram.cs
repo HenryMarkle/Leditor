@@ -1,5 +1,6 @@
-using System.Numerics;
 using Leditor.Data.Geometry;
+using Leditor.Data.Tiles;
+using Leditor.Data.Props.Legacy;
 
 namespace Leditor;
 
@@ -174,19 +175,19 @@ public class TileGram(int limit)
     
     //
 
-    public record struct TileAction(Coords Position, TileCell Old, TileCell New) : ISingleMatrixAction<TileCell>;
+    public record struct TileAction(Coords Position, Tile Old, Tile New) : ISingleMatrixAction<Tile>;
 
-    public record struct TileGeoAction(Coords Position, (TileCell, Geo) Old, (TileCell, Geo) New)
-        : ISingleMatrixAction<(TileCell, Geo)>;
+    public record struct TileGeoAction(Coords Position, (Tile, Geo) Old, (Tile, Geo) New)
+        : ISingleMatrixAction<(Tile, Geo)>;
     public record struct GroupAction<TG>(IEnumerable<ISingleAction<TG>> Actions) : IGroupAction<TG>;
 
 }
 
 public class PropGram {
-    private LinkedList<Prop[]> _snapshots;
-    private LinkedListNode<Prop[]>? _current;
+    private LinkedList<Prop_Legacy[]> _snapshots;
+    private LinkedListNode<Prop_Legacy[]>? _current;
 
-    public Prop[]? CurrentAction => _current?.Value;
+    public Prop_Legacy[]? CurrentAction => _current?.Value;
 
     public int Limit { get; set; }
 
@@ -195,13 +196,13 @@ public class PropGram {
         Limit = limit;
     }
 
-    public void Proceed(Prop[] snapshot) {
-        var newArray = new Prop[snapshot.Length];
+    public void Proceed(Prop_Legacy[] snapshot) {
+        var newArray = new Prop_Legacy[snapshot.Length];
 
         for (var i = 0; i < snapshot.Length; i++) {
             newArray[i] = snapshot[i];
-            newArray[i] = new Prop(snapshot[i].Depth, snapshot[i].Name, snapshot[i].IsTile, new PropQuad(snapshot[i].Quad)) {
-                Extras = new PropExtras(snapshot[i].Extras.Settings.Clone(), [..snapshot[i].Extras.RopePoints]),
+            newArray[i] = new Prop_Legacy(snapshot[i].Depth, snapshot[i].Name, snapshot[i].Quad) {
+                Extras = new PropExtras_Legacy(snapshot[i].Extras.Settings.Clone(), [..snapshot[i].Extras.RopePoints]),
                 Position = snapshot[i].Position,
                 Type = snapshot[i].Type,
                 Tile = snapshot[i].Tile

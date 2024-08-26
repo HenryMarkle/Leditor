@@ -124,7 +124,7 @@ internal class CamerasEditorPage : EditorPage, IContextListener
         {
             if (draggedCamera == -1)
             {
-                GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new RenderCamera() { Coords = new Vector2(0, 0), Quad = new(new(), new(), new(), new()) }];
+                GLOBALS.Level.Cameras = [.. GLOBALS.Level.Cameras, new Data.RenderCamera() { Coords = new Vector2(0, 0), Quad = new(new(), new(), new(), new()) }];
                 GLOBALS.CamQuadLocks = [..GLOBALS.CamQuadLocks, 0];
                 draggedCamera = GLOBALS.Level.Cameras.Count - 1;
                 _currentCamera = draggedCamera;
@@ -283,9 +283,11 @@ internal class CamerasEditorPage : EditorPage, IContextListener
                 
                 #endregion
 
-                foreach (var (index, cam) in GLOBALS.Level.Cameras.Select((camera, index) => (index, camera)))
+                for (var c = 0; c <  GLOBALS.Level.Cameras.Count; c++)
                 {
-                    if (index == draggedCamera)
+                    var cam = GLOBALS.Level.Cameras[c];
+
+                    if (c == draggedCamera)
                     {
                         var draggedOrigin = worldMouse - new Vector2(
                             (72 * GLOBALS.Scale - 40) / 2f,
@@ -397,16 +399,16 @@ internal class CamerasEditorPage : EditorPage, IContextListener
                             cam.Coords = draggedOrigin;
                         }
                         
-                        Printers.DrawCameraSprite(cam.Coords, cam.Quad, _camera, index);
+                        Printers.DrawCameraSprite(cam.Coords, cam.Quad, _camera, c);
                     }
                     else
                     {
-                        var (clicked, _) = Printers.DrawCameraSprite(cam.Coords, cam.Quad, _camera, index);
+                        var (clicked, _) = Printers.DrawCameraSprite(cam.Coords, cam.Quad, _camera, c);
 
                         if (clicked && !clickTracker)
                         {
-                            draggedCamera = index;
-                            _currentCamera = index;
+                            draggedCamera = c;
+                            _currentCamera = c;
                             Utils.Restrict(ref _currentCamera, 0, GLOBALS.Level.Cameras.Count-1);
                             clickTracker = true;
                         }
@@ -481,10 +483,9 @@ internal class CamerasEditorPage : EditorPage, IContextListener
                     ImGui.SeparatorText("Camera Quad Points");
                     
                     if (ImGui.Button("Reset All", ImGui.GetContentRegionAvail() with { Y = 20 })) {
-                        currentCam.Quad.TopLeft = (0, 0);
-                        currentCam.Quad.TopRight = (0, 0);
-                        currentCam.Quad.BottomRight = (0, 0);
-                        currentCam.Quad.BottomLeft = (0, 0);
+                        var q = currentCam.Quad;
+                        q.Reset();
+                        currentCam.Quad = q;
                     }
 
                     ImGui.Spacing();
@@ -495,21 +496,30 @@ internal class CamerasEditorPage : EditorPage, IContextListener
                     {
                         var (angle, radius) = currentCam.Quad.TopLeft;
                         ImGui.SetNextItemWidth(100);
-                        if (ImGui.InputInt("Angle##TopLeftAngle", ref angle)) currentCam.Quad.TopLeft = (angle, radius);
+                        if (ImGui.InputInt("Angle##TopLeftAngle", ref angle))
+                        {
+                            var q = currentCam.Quad;
+                            q.TopLeft = (angle, radius);
+                            currentCam.Quad = q;
+                        }
                         
                         _isTextInputBusy = _isTextInputBusy || ImGui.IsAnyItemActive();
                         
                         ImGui.SetNextItemWidth(100);
                         if (ImGui.InputFloat("Radius##TopLeftRadius", ref radius, 0.1f)) {
                             Utils.Restrict(ref radius, 0);
-                            currentCam.Quad.TopLeft = (angle, radius);
+                            var q = currentCam.Quad;
+                            q.TopLeft = (angle, radius);
+                            currentCam.Quad= q;
                         }
 
                         _isTextInputBusy = _isTextInputBusy || ImGui.IsAnyItemActive();
 
                         ImGui.Spacing();
                         if (ImGui.Button("Copy To All##CopyToAll_TopLeft", ImGui.GetContentRegionAvail() with { Y = 20 })) {
-                            currentCam.Quad.TopRight = currentCam.Quad.BottomRight = currentCam.Quad.BottomLeft = currentCam.Quad.TopLeft;
+                            var q = currentCam.Quad;
+                            q.TopRight = q.BottomRight = q.BottomLeft = q.TopLeft;
+                            currentCam.Quad = q;
                         }
                     }
 
@@ -517,21 +527,30 @@ internal class CamerasEditorPage : EditorPage, IContextListener
                     {
                         var (angle, radius) = currentCam.Quad.BottomLeft;
                         ImGui.SetNextItemWidth(100);
-                        if (ImGui.InputInt("Angle##BottomLeftAngle", ref angle)) currentCam.Quad.BottomLeft = (angle, radius);
+                        if (ImGui.InputInt("Angle##BottomLeftAngle", ref angle))
+                        {
+                            var q = currentCam.Quad;
+                            q.BottomLeft = (angle, radius);
+                            currentCam.Quad = q;
+                        }
                         
                         _isTextInputBusy = _isTextInputBusy || ImGui.IsAnyItemActive();
                         
                         ImGui.SetNextItemWidth(100);
                         if (ImGui.InputFloat("Radius##BottomLeftRadius", ref radius, 0.1f)) {
                             Utils.Restrict(ref radius, 0);
-                            currentCam.Quad.BottomLeft = (angle, radius);
+                            var q = currentCam.Quad;
+                            q.BottomLeft = (angle, radius);
+                            currentCam.Quad = q;
                         }
 
                         _isTextInputBusy = _isTextInputBusy || ImGui.IsAnyItemActive();
 
                         ImGui.Spacing();
                         if (ImGui.Button("Copy To All##CopyToAll_BottomLeft", ImGui.GetContentRegionAvail() with { Y = 20 })) {
-                            currentCam.Quad.TopRight = currentCam.Quad.BottomRight = currentCam.Quad.TopLeft = currentCam.Quad.BottomLeft;
+                            var q = currentCam.Quad;
+                            q.TopRight = q.BottomRight = q.TopLeft = q.BottomLeft;
+                            currentCam.Quad = q;
                         }
                     }
 
@@ -541,21 +560,30 @@ internal class CamerasEditorPage : EditorPage, IContextListener
                     {
                         var (angle, radius) = currentCam.Quad.TopRight;
                         ImGui.SetNextItemWidth(100);
-                        if (ImGui.InputInt("Angle##TopRightAngle", ref angle)) currentCam.Quad.TopRight = (angle, radius);
+                        if (ImGui.InputInt("Angle##TopRightAngle", ref angle))
+                        {
+                            var q = currentCam.Quad;
+                            q.TopRight = (angle, radius);
+                            currentCam.Quad = q;
+                        }
                         
                         _isTextInputBusy = _isTextInputBusy || ImGui.IsAnyItemActive();
                         
                         ImGui.SetNextItemWidth(100);
                         if (ImGui.InputFloat("Radius##TopRightRadius", ref radius, 0.1f)) {
                             Utils.Restrict(ref radius, 0);
-                            currentCam.Quad.TopRight = (angle, radius);
+                            var q = currentCam.Quad;
+                            q.TopRight = (angle, radius);
+                            currentCam.Quad = q;
                         }
 
                         _isTextInputBusy = _isTextInputBusy || ImGui.IsAnyItemActive();
 
                         ImGui.Spacing();
                         if (ImGui.Button("Copy To All##CopyToAll_TopRight", ImGui.GetContentRegionAvail() with { Y = 20 })) {
-                            currentCam.Quad.BottomLeft = currentCam.Quad.BottomRight = currentCam.Quad.TopLeft = currentCam.Quad.TopRight;
+                            var q = currentCam.Quad;
+                            q.BottomLeft = q.BottomRight = q.TopLeft = q.TopRight;
+                            currentCam.Quad = q;
                         }
                     }
 
@@ -563,21 +591,30 @@ internal class CamerasEditorPage : EditorPage, IContextListener
                     {
                         var (angle, radius) = currentCam.Quad.BottomRight;
                         ImGui.SetNextItemWidth(100);
-                        if (ImGui.InputInt("Angle##BottomRightAngle", ref angle)) currentCam.Quad.BottomRight = (angle, radius);
+                        if (ImGui.InputInt("Angle##BottomRightAngle", ref angle))
+                        {
+                            var q = currentCam.Quad;
+                            q.BottomRight = (angle, radius);
+                            currentCam.Quad = q;
+                        }
                         
                         _isTextInputBusy = _isTextInputBusy || ImGui.IsAnyItemActive();
                         
                         ImGui.SetNextItemWidth(100);
                         if (ImGui.InputFloat("Radius##BottomRightRadius", ref radius, 0.1f)) {
                             Utils.Restrict(ref radius, 0);
-                            currentCam.Quad.BottomRight = (angle, radius);
+                            var q = currentCam.Quad;
+                            q.BottomRight = (angle, radius);
+                            currentCam.Quad = q;
                         }
 
                         _isTextInputBusy = _isTextInputBusy || ImGui.IsAnyItemActive();
 
                         ImGui.Spacing();
                         if (ImGui.Button("Copy To All##CopyToAll_BottomRight", ImGui.GetContentRegionAvail() with { Y = 20 })) {
-                            currentCam.Quad.BottomLeft = currentCam.Quad.TopRight = currentCam.Quad.TopLeft = currentCam.Quad.BottomRight;
+                            var q  = currentCam.Quad;
+                            q.BottomLeft = q.TopRight = q.TopLeft = q.BottomRight;
+                            currentCam.Quad = q;
                         }
                     }
                     

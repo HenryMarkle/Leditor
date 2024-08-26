@@ -172,7 +172,7 @@ internal class TileViewerPage : EditorPage {
 
         var origin = new Vector2(4, 4);
 
-        var quad = new PropQuad(
+        var quad = new Data.Quad(
             origin,
             origin + new Vector2(scaledWidth, 0),
             origin + new Vector2(scaledWidth, scaledHeight),
@@ -240,7 +240,7 @@ internal class TileViewerPage : EditorPage {
                 
             Printers.DrawTileAsPropColored(
                 _hoveredTile, 
-                new PropQuad(
+                new Data.Quad(
                     new Vector2(0, 0),
                     new Vector2(totalWidth, 0),
                     new Vector2(totalWidth, totalHeight),

@@ -1,4 +1,7 @@
 using Leditor.Data.Geometry;
+using Leditor.Data.Tiles;
+using Leditor.Data.Effects;
+using Leditor.Data.Props.Legacy;
 
 namespace Leditor.Serialization;
 
@@ -68,7 +71,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    private static string Export(TileCell[,,] matrix, string defaultMaterial)
+    private static string Export(Tile[,,] matrix, string defaultMaterial)
     {
         System.Text.StringBuilder builder = new();
 
@@ -88,20 +91,20 @@ public static class Exporters
                     
                     var tp = cell.Type switch
                     {
-                        TileType.Default => "default",
-                        TileType.Material => "material",
-                        TileType.TileHead => "tileHead",
-                        TileType.TileBody => "tileBody",
+                        TileCellType.Default => "default",
+                        TileCellType.Material => "material",
+                        TileCellType.Head => "tileHead",
+                        TileCellType.Body => "tileBody",
                         
                         _ => throw new Exception("Invalid tile type")
                     };
 
-                    var data = cell.Data switch
+                    var data = cell.Type switch
                     {
-                        TileDefault => "0",
-                        TileMaterial m => $"\"{m.Name}\"",
-                        TileHead h => $"[point(1, 1), \"{(h.Definition?.Name ?? h.Name)}\"]",
-                        TileBody b => $"[point({b.HeadPosition.x}, {b.HeadPosition.y}), {b.HeadPosition.z}]",
+                        TileCellType.Default => "0",
+                        TileCellType.Material => $"\"{cell.MaterialDefinition?.Name ?? cell.UndefinedName}\"",
+                        TileCellType.Head => $"[point(1, 1), \"{cell.TileDefinition?.Name ?? cell.UndefinedName}\"]",
+                        TileCellType.Body => $"[point({cell.HeadPosition.X}, {cell.HeadPosition.Y}), {cell.HeadPosition.Z}]",
                         
                         _ => throw new Exception("Invalid tile data")
                     };
@@ -125,7 +128,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    private static string Export((string name, Data.EffectOptions[] options, double[,] matrix)[] effects)
+    private static string Export(Effect[] effects)
     {
         System.Text.StringBuilder builder = new();
 
@@ -134,42 +137,42 @@ public static class Exporters
         
         for (var e = 0; e < effects.Length; e++)
         {
-            var (name, options, mtx) = effects[e];
+            var eff = effects[e];
             
-            builder.Append($"[#nm: \"{name}\", #tp: \"{GLOBALS.EffectType(name)}\", #mtrx: [");
+            builder.Append($"[#nm: \"{eff.Name}\", #tp: \"{GLOBALS.EffectType(eff.Name)}\", #mtrx: [");
 
-            for (var x = 0; x < mtx.GetLength(1); x++)
+            for (var x = 0; x < eff.Matrix.GetLength(1); x++)
             {
                 builder.Append('[');
                 
-                for (var y = 0; y < mtx.GetLength(0); y++)
+                for (var y = 0; y < eff.Matrix.GetLength(0); y++)
                 {
-                    builder.Append($"{mtx[y, x]:0.0000}");
-                    if (y != mtx.GetLength(0) - 1) builder.Append(", ");
+                    builder.Append($"{eff.Matrix[y, x]:0.0000}");
+                    if (y != eff.Matrix.GetLength(0) - 1) builder.Append(", ");
                 }
 
                 builder.Append(']');
 
-                if (x != mtx.GetLength(1) - 1) builder.Append(", ");
+                if (x != eff.Matrix.GetLength(1) - 1) builder.Append(", ");
             }
             
             builder.Append("], #Options: [");
 
-            for (var op = 0; op < options.Length; op++)
+            for (var op = 0; op < eff.Options.Length; op++)
             {
-                var option = options[op];
+                var option = eff.Options[op];
                 
                 builder.Append($"[\"{option.Name}\", [{string.Join(", ", option.Options.Select(str => $"\"{str}\""))}], {(option.Choice is string s ? $"\"{s}\"" : option.Choice)}]");
                 
-                if (op != options.Length - 1) builder.Append(", ");
+                if (op != eff.Options.Length - 1) builder.Append(", ");
             }
             
             builder.Append(']');
 
-            if (GLOBALS.EffectType(name) == "standardErosion")
+            if (GLOBALS.EffectType(eff.Name) == "standardErosion")
             {
-                var repeatsExists = GLOBALS.EffectRepeats.TryGetValue(name, out var repeats);
-                var openAreasExists = GLOBALS.EffectOpenAreas.TryGetValue(name, out var openAreas);
+                var repeatsExists = GLOBALS.EffectRepeats.TryGetValue(eff.Name, out var repeats);
+                var openAreasExists = GLOBALS.EffectOpenAreas.TryGetValue(eff.Name, out var openAreas);
                 builder.Append($", #repeats: {(repeatsExists ? repeats : 0)}, #affectOpenAreas: {(openAreasExists ? openAreas : 0):0.0000}");
             }
 
@@ -205,7 +208,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    private static string Export(List<RenderCamera> cameras)
+    private static string Export(List<Data.RenderCamera> cameras)
     {
         System.Text.StringBuilder builder = new();
 
@@ -227,7 +230,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    private static string Export(Prop[] props)
+    private static string Export(Prop_Legacy[] props)
     {
         System.Text.StringBuilder builder = new();
 
@@ -263,7 +266,7 @@ public static class Exporters
 
             var pointsString = string.Join(", ", prop.Extras.RopePoints.Select(point => $"point({point.X:0.0000}, {point.Y:0.0000})"));
             
-            builder.Append($"[#settings: {settingsString}{(prop.Type == InitPropType.Rope ? $", #points: [{pointsString}]" : "")}]");
+            builder.Append($"[#settings: {settingsString}{(prop.Type == InitPropType_Legacy.Rope ? $", #points: [{pointsString}]" : "")}]");
             
             builder.Append(']');
             if (p != props.Length - 1) builder.Append(", ");

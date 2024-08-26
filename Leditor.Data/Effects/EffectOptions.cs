@@ -1,4 +1,4 @@
-namespace Leditor.Data;
+namespace Leditor.Data.Effects;
 
 public class EffectOptions(string name, IEnumerable<string> options, dynamic choice)
 {

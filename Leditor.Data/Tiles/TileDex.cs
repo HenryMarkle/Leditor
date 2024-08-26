@@ -52,6 +52,8 @@ public class TileDex : IDisposable
     /// </summary>
     public int Count => _definitions.Count;
 
+    public ImmutableDictionary<string, TileDefinition> DefMap => _definitions;
+
     /// <summary>
     /// Get the definition of tile
     /// </summary>

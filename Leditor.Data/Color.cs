@@ -7,6 +7,9 @@ public readonly record struct Color(byte R = 255, byte G = 255, byte B = 255, by
     public Color((byte, byte, byte) tuple) : this(tuple.Item1, tuple.Item2, tuple.Item3) {}
     public Color((byte, byte, byte, byte) tuple) : this(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4) {}
 
+    public Color(int r, int g, int b) : this((byte)r, (byte)g, (byte)b) {}
+    public Color(int r, int g, int b, int a) : this((byte)r, (byte)g, (byte)b, (byte)a) {}
+
     public Color(Vector4 vector4) 
         : this((byte) vector4.X, (byte) vector4.Y, (byte) vector4.Z, (byte) vector4.W) { }
     
@@ -29,8 +32,11 @@ public readonly record struct Color(byte R = 255, byte G = 255, byte B = 255, by
 
     public static implicit operator Color(Vector4 v) => new(v);
     public static implicit operator Color(Vector3 v) => new(v);
-    
+
     //
+
+    public Vector4 NormalizedV4() => new(R / 255f, G / 255f, B / 255f, A / 255f);
+    public Vector3 NormalizedV3() => new(R / 255f, G / 255f, B / 255f);
 
     public void Deconstruct(out byte r, out byte g, out byte b)
     {
