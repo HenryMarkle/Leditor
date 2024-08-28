@@ -31,6 +31,12 @@
     </ItemGroup>
 
     <!-- <ItemGroup>
+      <Reference Include="Drizzle.Lingo.Runtime">
+        <HintPath>..\Drizzle\Drizzle.Lingo.Runtime\obj\Release\net8.0\Drizzle.Lingo.Runtime.dll</HintPath>
+      </Reference>
+    </ItemGroup> -->
+
+    <!-- <ItemGroup>
       <EmbeddedResource Include=".\Oswald-Regular.ttf"/>
     </ItemGroup> -->
 

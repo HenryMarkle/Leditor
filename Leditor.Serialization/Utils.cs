@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics.Contracts;
 using System.Numerics;
-using Drizzle.Lingo.Runtime.Parser;
 using Leditor.Data;
 using Leditor.Serialization.Exceptions;
+using Leditor.Serialization.Parser;
 
 namespace Leditor.Serialization;
 

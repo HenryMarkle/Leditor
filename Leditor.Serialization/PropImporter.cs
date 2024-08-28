@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics.Contracts;
-using Drizzle.Lingo.Runtime.Parser;
+using System.Numerics;
+using Leditor.Serialization.Parser;
 using Leditor.Data;
 using Leditor.Data.Props;
+using Leditor.Data.Props.Legacy;
 using Leditor.Data.Props.Definitions;
 using Leditor.Data.Props.Settings;
 using Leditor.Data.Tiles;
@@ -12,10 +14,138 @@ using PropNotFoundException = Leditor.Data.Props.Exceptions.PropNotFoundExceptio
 
 namespace Leditor.Serialization;
 
-#nullable enable
-
 public static class PropImporter
 {
+    
+    public static List<Prop_Legacy>GetProps_Legacy(
+        AstNode.Base? @base, 
+        IDictionary<string, InitPropBase> propDefs,
+        IDictionary<string, TileDefinition> tileDefs,
+        Serilog.ILogger? logger = null
+    )
+    {
+        if (@base is null) {
+            return [];
+        }
+
+        var list = (AstNode.List)((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "props").Value;
+
+        List<Prop_Legacy> props = [];
+
+        Random rng = new();
+
+        foreach (var prop in list.Values)
+        {
+            var casted = ((AstNode.List)prop).Values;
+
+            var depth = Utils.GetInt(casted[0]);
+            var name = ((AstNode.String)casted[1]).Value;
+
+            var indexGlobalCall = (AstNode.GlobalCall)casted[2];
+
+            var quads = ((AstNode.List)casted[3]).Values.Select(q =>
+            {
+                var globalCallArgs = ((AstNode.GlobalCall)q).Arguments;
+
+                return new Vector2(Utils.GetInt(globalCallArgs[0]) * 1.25f, Utils.GetInt(globalCallArgs[1]) * 1.25f);
+            }).ToArray();
+
+            var type = InitPropType_Legacy.Tile;
+
+            (int category, int index) position;
+            TileDefinition? tileDefinition = null;
+            InitPropBase? init = null;
+            
+            if (!tileDefs.TryGetValue(name, out tileDefinition)) {
+
+                if (propDefs.TryGetValue(name, out init))
+                {
+                    type = init.Type;
+                }
+            }
+
+            position = (-1, -1);
+
+            var extraPropList = (AstNode.PropertyList)casted[4];
+
+            var settingsPropList = (AstNode.PropertyList)extraPropList.Values.Single(p => ((AstNode.Symbol)p.Key).Value == "settings").Value;
+            AstNode.List? ropePoints = (AstNode.List?) extraPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "points").Value;
+
+            AstNode.Number? variation = (AstNode.Number?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "variation").Value;
+            AstNode.Base? release = (AstNode.Base?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "release").Value;
+            AstNode.Base? customDepth = (AstNode.Base?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "customdepth").Value;
+            AstNode.Number? applyColor = (AstNode.Number?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "applycolor").Value;
+            AstNode.Number? thickness = (AstNode.Number?) settingsPropList.Values.SingleOrDefault(p => ((AstNode.Symbol)p.Key).Value == "thickness").Value;
+
+            int baseToNumber(AstNode.Base? @base) {
+                if (@base is null) return 0;
+
+                switch (@base) {
+                    case AstNode.Number number: return number.Value.IntValue;
+                    
+                    case AstNode.UnaryOperator op:
+                        if (op.Type == AstNode.UnaryOperatorType.Negate) {
+                            if (op.Expression is AstNode.Number containedNumber) {
+                                return containedNumber.Value.IntValue * -1; 
+                            }
+                            else throw new Exception($"Prop \"{name}\" had a value that was expected to be a number");
+                        } else throw new Exception($"Prop \"{name}\" had an invalid operator");
+
+                    default:
+                        throw new Exception($"Prop \"{name}\" had a value that was expected to be a number");
+                }
+            }
+
+            int getIntProperty(AstNode.Number? property, string propertyName = "") => property is null
+                    ? throw new Exception($"{name}: #{propertyName}")
+                    : Utils.GetInt(property);
+
+            var deNullVariation = variation is null ? 0 : getIntProperty(variation, "variation") - 1;
+
+            if (deNullVariation < 0) deNullVariation = 0;
+
+            BasicPropSettings settings = type switch
+            {
+                InitPropType_Legacy.VariedStandard => new PropVariedSettings(depth, rng.Next(1000), 0, deNullVariation),
+                InitPropType_Legacy.Rope => new PropRopeSettings(depth, rng.Next(1000), 0, getIntProperty(release switch
+                {
+                    AstNode.Number n => n,
+                    AstNode.UnaryOperator u => (AstNode.Number)u.Expression,
+                    _ => null
+                }, "release") switch { 1 => PropRopeRelease.Right, -1 => PropRopeRelease.Left, _ => PropRopeRelease.None }, 
+                    name is "Wire" or "Zero-G Wire" ? thickness is null ? 2 : Utils.GetInt(thickness) : null, 
+                    name == "Zero-G Tube" ? (applyColor is null ? 0 : getIntProperty(applyColor, "applyColor")) : null),
+                InitPropType_Legacy.VariedDecal => new PropVariedDecalSettings(depth, rng.Next(1000), 0, deNullVariation, baseToNumber(customDepth)),
+                InitPropType_Legacy.VariedSoft => new PropVariedSoftSettings(depth, rng.Next(1000), 0, deNullVariation, baseToNumber(customDepth),
+                    (init as InitVariedSoftProp)!.Colorize == 1 ? (applyColor is null ? 0 : getIntProperty(applyColor, "applyColor")) : null),
+                InitPropType_Legacy.SimpleDecal => new PropSimpleDecalSettings(depth, rng.Next(1000), 0, baseToNumber(customDepth)),
+                InitPropType_Legacy.Soft => new PropSoftSettings(depth, rng.Next(1000), 0, baseToNumber(customDepth)),
+                InitPropType_Legacy.SoftEffect => new PropSoftEffectSettings(depth, rng.Next(1000), 0, baseToNumber(customDepth)),
+                InitPropType_Legacy.Antimatter => new PropAntimatterSettings(depth, rng.Next(1000), 0, baseToNumber(customDepth)),
+                _ => new BasicPropSettings(seed: rng.Next(1000))
+            };
+
+            var parsedProp = new Prop_Legacy(depth, name,
+                new(quads[0], quads[1], quads[2], quads[3]))
+            {
+                Extras = new PropExtras_Legacy(
+                    settings: settings, 
+                    ropePoints: (ropePoints?.Values.Select(p =>
+                    {
+                        var args = ((AstNode.GlobalCall)p).Arguments;
+                        return new Vector2(Utils.GetInt(args[0]), Utils.GetInt(args[1]));
+                    }).ToArray() ?? [])
+                ),
+                Type = type,
+                Tile = tileDefinition,
+                Position = position
+            };
+
+            props.Add(parsedProp);
+        }
+        return props;
+    }
+
     internal static PropDefinition GetPropDefinition(AstNode.PropertyList properties)
     {
         var nameAst = Utils.TryGet<AstNode.String>(properties, "nm") ??
@@ -491,14 +621,16 @@ public static class PropImporter
                 }
             }));
         }
-        
+
+        await Task.WhenAll(definitionTasks);
+
         return definitionTasks
             .Where(t => {
                 if (t.IsFaulted)
                 {
                     logger?.Error(
                         t.Exception, 
-                        "[ParseInitAsync_NoCategories] Failed to parse prop: {NewLine}{Exception}"
+                        "[ParseInitAsync_NoCategories] Failed to parse prop"
                     );
                 }
 
@@ -506,6 +638,203 @@ public static class PropImporter
             })
             .Select(t => t.Result)
             .ToArray();
+    }
+
+    public static InitPropBase GetLegacyInitProp(AstNode.Base @base)
+    {
+        var propertList = ((AstNode.PropertyList)@base).Values;
+
+        string name = ((AstNode.String)propertList.Single(p => ((AstNode.Symbol)p.Key).Value == "nm").Value).Value;
+        string typeStr = ((AstNode.String)propertList.Single(p => ((AstNode.Symbol)p.Key).Value == "tp").Value).Value;
+
+        // retrieve all possible properties
+
+        AstNode.String? colorTreatment      = (AstNode.String?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "colortreatment").Value;
+        AstNode.Number? bevel               = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "bevel").Value;
+        AstNode.Number? depth               = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "depth").Value;
+        AstNode.GlobalCall? sz              = (AstNode.GlobalCall?) propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "sz").Value;
+        AstNode.GlobalCall? pxlSize         = (AstNode.GlobalCall?) propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "pxlsize").Value;
+        AstNode.List? repeatL               = (AstNode.List?)       propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "repeatl").Value;
+        AstNode.Number? vars                = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "vars").Value;
+        AstNode.Number? round               = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "round").Value;
+        AstNode.Number? selfShade           = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "selfshade").Value;
+        AstNode.Number? highLightBorder     = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "highlightborder").Value;
+        AstNode.Number? depthAffectHilites  = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "depthaffecthilites").Value;
+        AstNode.Number? shadowBorder        = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "shadowborder").Value;
+        AstNode.Number? smoothShading       = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "smoothshading").Value;
+        AstNode.Number? random              = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "random").Value;
+        AstNode.Number? colorize            = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "colorize").Value;
+        AstNode.Number? contourExp          = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "contourexp").Value;
+
+        InitPropColorTreatment getColorTreatment() => colorTreatment is null
+                    ? InitPropColorTreatment.Standard
+                    : colorTreatment.Value switch { "standard" => InitPropColorTreatment.Standard, "bevel" => InitPropColorTreatment.Bevel, _ => throw new Exception() };
+
+        int getIntProperty(AstNode.Number? property) => property is null
+                    ? throw new Exception()
+                    : Utils.GetInt(property);
+
+        float getFloatProperty(AstNode.Number? property) => property is null
+                    ? throw new Exception()
+                    : Utils.GetInt(property);
+
+        //
+
+        var type = typeStr switch
+        {
+            "standard"          => InitPropType_Legacy.Standard,
+            "variedStandard"    => InitPropType_Legacy.VariedStandard,
+            "soft"              => InitPropType_Legacy.Soft,
+            "variedSoft"        => InitPropType_Legacy.VariedSoft,
+            "simpleDecal"       => InitPropType_Legacy.SimpleDecal,
+            "variedDecal"       => InitPropType_Legacy.VariedDecal,
+            "antimatter"        => InitPropType_Legacy.Antimatter,
+            "softEffect"        => InitPropType_Legacy.SoftEffect,
+            "long"              => InitPropType_Legacy.Long,
+            "coloredSoft"       => InitPropType_Legacy.ColoredSoft,
+
+            _ => throw new InvalidPropTypeException(typeStr)
+        };
+
+        InitPropBase init = type switch
+        {
+            InitPropType_Legacy.Standard => new InitStandardProp(
+                name, 
+                type,
+                depth is null ? 0 :  getIntProperty(depth),
+                getColorTreatment(),
+                getColorTreatment() is InitPropColorTreatment.Bevel 
+                    ? getIntProperty(bevel) 
+                    : bevel is null 
+                        ? 0 
+                        : Utils.GetInt(bevel),
+                sz is null
+                    ? throw new Exception()
+                    : (Utils.GetInt((AstNode.Number)sz.Arguments[0]), Utils.GetInt((AstNode.Number)sz.Arguments[1])),
+                repeatL is null
+                    ? throw new Exception()
+                    : repeatL.Values.Select(n => Utils.GetInt((AstNode.Number)n)).ToArray()
+                ),
+
+            InitPropType_Legacy.VariedStandard => new InitVariedStandardProp(
+                name, 
+                type,
+                depth is null ? 0 :  getIntProperty(depth),
+                getColorTreatment(),
+                getColorTreatment() is InitPropColorTreatment.Bevel 
+                    ? getIntProperty(bevel) 
+                    : bevel is null 
+                        ? 0 
+                        : Utils.GetInt(bevel),
+                sz is null
+                    ? throw new Exception()
+                    : (Utils.GetInt((AstNode.Number)sz.Arguments[0]), Utils.GetInt((AstNode.Number)sz.Arguments[1])),
+                repeatL is null
+                    ? throw new Exception()
+                    : repeatL.Values.Select(n => Utils.GetInt((AstNode.Number)n)).ToArray(),
+                getIntProperty(vars),
+                random is null ? 0 : getIntProperty(random)
+                ),
+            
+            InitPropType_Legacy.Soft => new InitSoftProp(
+                name,
+                type,
+                depth is null ? 0 :  getIntProperty(depth),
+                getIntProperty(round),
+                getFloatProperty(contourExp),
+                getIntProperty(selfShade),
+                getFloatProperty(highLightBorder),
+                getFloatProperty(depthAffectHilites),
+                getFloatProperty(shadowBorder),
+                getIntProperty(smoothShading)
+                ),
+            
+            InitPropType_Legacy.SoftEffect => new InitSoftEffectProp(
+                name,
+                type,
+                depth is null ? 0 :  getIntProperty(depth)
+            ),
+
+            InitPropType_Legacy.VariedSoft => new InitVariedSoftProp(
+                name,
+                type,
+                depth is null ? 0 :  getIntProperty(depth),
+                getIntProperty(round),
+                getIntProperty(contourExp),
+                getIntProperty(selfShade),
+                getFloatProperty(highLightBorder),
+                getIntProperty(depthAffectHilites),
+                getIntProperty(shadowBorder),
+                getIntProperty(smoothShading),
+                pxlSize is null
+                    ? throw new Exception()
+                    : (Utils.GetInt((AstNode.Number)pxlSize.Arguments[0]), Utils.GetInt((AstNode.Number)pxlSize.Arguments[1])),
+                getIntProperty(vars),
+                random is null ? 0 : getIntProperty(random),
+                getIntProperty(colorize)),
+
+            InitPropType_Legacy.SimpleDecal => new InitSimpleDecalProp(name, type, depth is null ? 0 :  getIntProperty(depth)),
+            InitPropType_Legacy.VariedDecal => new InitVariedDecalProp(
+                name, 
+                type, 
+                depth is null ? 0 :  getIntProperty(depth),
+                pxlSize is null
+                    ? throw new Exception()
+                    : (Utils.GetInt((AstNode.Number)pxlSize.Arguments[0]), Utils.GetInt((AstNode.Number)pxlSize.Arguments[1])),
+                getIntProperty(vars),
+                random is null ? 0 : getIntProperty(random)
+            ),
+            InitPropType_Legacy.Antimatter => new InitAntimatterProp(name, type, depth is null ? 0 :  getIntProperty(depth), getFloatProperty(contourExp)),
+            InitPropType_Legacy.Long => new InitLongProp(name, type, depth is null ? 0 : getIntProperty(depth)),
+            InitPropType_Legacy.ColoredSoft => new InitColoredSoftProp(name, type, 
+                depth is null ? 0 : getIntProperty(depth), 
+                pxlSize is null
+                ? throw new Exception()
+                : (Utils.GetInt((AstNode.Number)pxlSize.Arguments[0]), 
+                    Utils.GetInt((AstNode.Number)pxlSize.Arguments[1])), 
+                round is null ? 0 : getIntProperty(round), 
+                getFloatProperty(contourExp),
+                getIntProperty(selfShade),
+                getFloatProperty(highLightBorder),
+                getFloatProperty(depthAffectHilites),
+                getFloatProperty(shadowBorder),
+                getIntProperty(smoothShading),
+                getIntProperty(colorize)),
+            _ => throw new InvalidPropTypeException(typeStr)
+        };
+
+        return init;
+    }
+
+    public static async Task<InitPropBase[]> ParseLegacyInitAsync_NoCategories(string initPath, Serilog.ILogger? logger = null)
+    {
+        var text = await File.ReadAllTextAsync(initPath);
+        var lines = text.ReplaceLineEndings().Split(Environment.NewLine);
+
+        List<InitPropBase> props = [];
+
+        var counter = 0;
+
+        foreach (var line in lines)
+        {
+            counter++;
+
+            if (string.IsNullOrEmpty(line) || line.StartsWith('-')) continue;
+
+            var obj = LingoParser.Expression.ParseOrThrow(line);
+
+            InitPropBase prop;
+
+            try {
+                prop = GetLegacyInitProp(obj);
+            } catch (Exception e) {
+                throw new Exception($"Failed to load prop init at line {counter}.", e);
+            }
+
+            props.Add(prop);
+        }
+
+        return props.ToArray();
     }
 
     internal static Prop GetProp(AstNode.List list, PropDex dex)
@@ -551,11 +880,66 @@ public static class PropImporter
         return new Prop(definition, settings, quad, depth);
     }
 
-    internal static async IAsyncEnumerable<Prop> GetPropsAsync(AstNode.List list, PropDex dex) 
+    internal static Prop GetProp(AstNode.List list, IDictionary<string, PropDefinition> props)
     {
+        int depth;
+        string name;
+        Quad quad;
+        
+        if (list.Values[1] is not AstNode.String s)
+            throw new PropParseException("Invalid prop name");
+        name = s.Value;
+        
+        //
+        if (!props.TryGetValue(name, out var definition) || definition is null) 
+            throw new PropNotFoundException(name);
+        //
+        
+        if (!Utils.TryGetInt(list.Values[0], out depth)) 
+            throw new PropParseException($"Prop \"{name}\" has invalid depth value");
+
+
+        if (list.Values[3] is not AstNode.List l) 
+            throw new PropParseException($"Prop \"{name}\" has invalid quad format: expected a list of quad points");
+
+        if (!Utils.TryGetQuad(l, out quad))
+            throw new PropParseException($"Prop \"{name}\" has invalid quad points");
+        
+
+        // Extras
+
+        var extras = list.Values[4];
+
+        if (extras is not AstNode.PropertyList pl) 
+            throw new PropParseException($"Prop \"{name}\" was expected to have additional information after quad points");
+
+        var settingsAst = Utils.TryGet<AstNode.PropertyList>(pl, "settings") 
+                       ?? throw new PropParseException($"Prop \"{name}\" has no settings");
+
+        var settings = GetPropSettings(settingsAst, definition);
+
+        //
+
+        return new Prop(definition, settings, quad, depth);
+    }
+
+    internal static async Task<Prop[]> GetPropsAsync(AstNode.Base node, IDictionary<string, PropDefinition> props) 
+    {
+        if (node is null) {
+            return [];
+        }
+
+        var list = (AstNode.List)((AstNode.PropertyList)node).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "props").Value;
+
         var propsAst = list.Values.Cast<AstNode.List>();
 
-        foreach (var prop in propsAst) yield return await Task.Factory.StartNew(() => GetProp(prop, dex));
+        List<Task<Prop>> parsed = [];
+
+        foreach (var prop in propsAst) parsed.Add(Task.Factory.StartNew(() => GetProp(prop, props)));
+
+        await Task.WhenAll(parsed);
+
+        return parsed.Select(t => t.Result).ToArray();
     }
 
     public static async Task<List<Prop>> GetPropsAsync(string propsLine, PropDex dex)

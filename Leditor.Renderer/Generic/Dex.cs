@@ -1,6 +1,6 @@
 using Leditor.Data;
 using Leditor.Data.Generic;
-
+using System.Collections;
 using System.Collections.Immutable;
 
 namespace Leditor.Renderer.Generic;
@@ -36,7 +36,13 @@ public class Dex<T> where T : IIdentifiable<string>, ITexture
         Definitions = [ ..definintions ];
         _names = new(definintions.Length);
 
-        foreach (var d in definintions) _names.Add(d.Name, d);
+        foreach (var d in definintions)
+        {
+            if (!_names.TryAdd(d.Name, d))
+            {
+                Raylib_cs.Raylib.UnloadTexture(d.Texture);
+            }
+        }
     }
 
     public Dex(T[][] definitions)

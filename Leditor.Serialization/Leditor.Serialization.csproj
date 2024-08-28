@@ -16,11 +16,11 @@
       <ProjectReference Include="..\Leditor.Data\Leditor.Data.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
+    <!-- <ItemGroup>
       <Reference Include="Drizzle.Lingo.Runtime">
         <HintPath>..\Drizzle\Drizzle.Lingo.Runtime\obj\Release\net8.0\Drizzle.Lingo.Runtime.dll</HintPath>
       </Reference>
-    </ItemGroup>
+    </ItemGroup> -->
 
     <ItemGroup>
       <PackageReference Include="Pidgin" Version="3.2.3" />

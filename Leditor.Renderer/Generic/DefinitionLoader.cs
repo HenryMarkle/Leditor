@@ -45,30 +45,32 @@ public sealed class DefinitionLoader<T>
         Serilog.ILogger? logger
     )
     {
-        logger?.Information("[TileLoader] Begin loading tiles");
+        logger?.Information("[DefinitionLoader] Begin loading definitions");
 
-        var tileCount = 0;
 
         _loadTask = Task.Factory.StartNew(() => {
             List<(string folder, Task<T[]> task)> imported = [];
+            var tileCount = 0;
             
             foreach (var folder in folders)
             {
+                logger?.Information($"[DefinitionLoader] Loading definition in \"{folder}\"");
+
                 if (!Directory.Exists(folder)) {
-                    logger?.Error("[TileLoader] Failed to load init; folder not found: \"{}\"", folder);
+                    logger?.Error("[DefinitionLoader] Failed to load init; folder not found: \"{}\"", folder);
                     continue;
                 }
 
                 if (!Program.FileExistsInFolder(folder, "init.txt"))
                 {
-                    logger?.Error("[TileLoader] init.txt was not found in folder \"{folder}\"", folder);
+                    logger?.Error("[DefinitionLoader] init.txt was not found in folder \"{folder}\"", folder);
                     continue;
                 }
 
                 var initPath = Program.GetFilePathInFolder(folder, "init.txt");
 
                 if (initPath is null) {
-                    logger?.Error("[TileLoader] init.txt was not found in folder \"{folder}\"", folder);
+                    logger?.Error("[DefinitionLoader] init.txt was not found in folder \"{folder}\"", folder);
                     continue;
                 }
 
@@ -79,70 +81,70 @@ public sealed class DefinitionLoader<T>
 
             Task.WhenAll(imported.Select(i => i.task)).Wait();
 
-            logger?.Information("[TileLoader] Load complete");
-
-
             var filtered = imported
                 .Where(t => {
                     if (t.task.IsFaulted) {
-                        logger?.Error(t.task.Exception, "[TileLoader] Failed to load and parse init.txt: {NewLine}{Exception}");
+                        logger?.Error(t.task.Exception, "[DefinitionLoader] Failed to load and parse init.txt");
                         Console.WriteLine(t.task.Exception);
                     }
 
                     return t.task.IsCompletedSuccessfully;
-                })
-                .Select(pack => {
-                    var imagePairTasks = pack.task.Result
-                        .Where(tile => {
-                            var exists = Program.FileExistsInFolder(pack.folder, $"{tile.Name}.png");
+                });
 
-                            if (!exists)
-                            {
-                                Logger?.Error($"[TileLoader] Could not find image for tile \"{tile.Name}\"; path does not exists: \"{Path.Combine(pack.folder, $"{tile.Name}.png")}\"");
-                            }
+            List<Pack> packs = new(imported.Count);
 
-                            return exists;
-                        })
-                        .Select(tile => {
-                            string imagePath = Program.GetFilePathInFolder(pack.folder, $"{tile.Name}.png")!;
+            foreach (var t in filtered)
+            {
+                var imagePairTasks = t.task.Result
+                    .Where(tile => {
+                        var exists = Program.FileExistsInFolder(t.folder, $"{tile.Name}.png");
 
-                            return Task.Factory.StartNew(() => (tile, Raylib.LoadImage(imagePath)));
-                        });
+                        if (!exists)
+                        {
+                            Logger?.Error($"[DefinitionLoader] Could not find image for tile \"{tile.Name}\"; path does not exists: \"{Path.Combine(t.folder, $"{tile.Name}.png")}\"");
+                        }
 
-                    Task.WhenAll(imagePairTasks).Wait();
+                        return exists;
+                    })
+                    .Select(tile => {
+                        string imagePath = Program.GetFilePathInFolder(t.folder, $"{tile.Name}.png")!;
 
-                    var imagePairs = imagePairTasks
-                        .Where(task => {
-                            if (task.IsFaulted)
-                            {
-                                Logger?.Error(task.Exception, "[TileLoader] Failed to load tile image: {Exception}");
-                            }
+                        return (tile, Raylib.LoadImage(imagePath));
+                    });
 
-                            return task.IsCompletedSuccessfully;
-                        })
-                        .Select(task => {
-                            tileCount++;
-                            return new ImagePair(task.Result.Item1, task.Result.Item2);
-                        })
-                        .ToArray();
+                List<ImagePair> imagePairs = new();
 
-                    return new Pack(imagePairs, pack.folder);
-                })
-                .ToList();
+                foreach (var i in imagePairTasks)
+                {
+                    tileCount++;
+                    imagePairs.Add(new ImagePair(i.Item1, i.Item2));
+                }
 
+                packs.Add(new Pack([..imagePairs], t.folder));
+            }
+
+            _resultTiles = new T[tileCount];
+            TotalProgress = tileCount;
+            
             IsReady = true;
 
-            return filtered;        
-        });
+            logger?.Information($"[DefinitionLoader] {tileCount} loaded");
 
-        _resultTiles = new T[tileCount];
-        TotalProgress = tileCount;
+            return packs;        
+        });
+        
         Logger = logger;
     }
 
     public bool LoadNext()
     {
         if (!IsReady || _loadTask is null || !_loadTask.IsCompleted) return false;
+
+        if (_loadTask.IsFaulted)
+        {
+            Logger?.Error(_loadTask.Exception, $"[DefinitionLoader::LoadNext] Awaited load task has faulted");
+            return true;
+        }
 
         if (_packCursor >= _loadTask.Result.Count) {
             IsCompleted = true;
@@ -169,13 +171,14 @@ public sealed class DefinitionLoader<T>
         #if DEBUG
         if (_resultCursor >= _resultTiles.Length)
         {
-            Logger?.Fatal("[TileLoader::LoadNext] Result cursor was out of bounds");
+            Logger?.Fatal("[DefinitionLoader::LoadNext] Result cursor was out of bounds");
             throw new IndexOutOfRangeException($"{nameof(_resultCursor)} was out of bounds ({_resultCursor})");
         }
         #endif
 
         _resultTiles[_resultCursor] = currentPair.Tile;
         _resultCursor++;
+        _tileCursor++;
 
         Progress++;
 

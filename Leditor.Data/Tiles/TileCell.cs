@@ -67,8 +67,7 @@ public readonly struct Tile
         Type = TileCellType.Head;
 
         MaterialDefinition = null;
-        TileDefinition = definition
-                         ?? throw new NullReferenceException("Could not create a new head tile cell");
+        TileDefinition = definition;
         HeadPosition = (0, 0, 0);
 
         UndefinedName = undefinedName;

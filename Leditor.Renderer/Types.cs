@@ -9,35 +9,15 @@ using Leditor.Data.Materials;
 using Leditor.Data.Props.Definitions;
 
 using System.Numerics;
-
-public class Context
-{
-    public delegate void PageChangedEventHandler(int previous, int next);
-    public event PageChangedEventHandler? PageChanged;
-
-    private int _page;
-
-    public int PrevPage { get; private set; }
-
-    public int Page
-    {
-        get => _page;
-
-        set
-        {
-            PrevPage = _page;
-            _page = value;
-
-            PageChanged?.Invoke(PrevPage, Page);
-        }
-    }
-}
+using Leditor.Data.Props.Legacy;
 
 public class Registry
 {
-    public Dex<TileDefinition> Tiles { get; set; }
-    public Dex<PropDefinition> Props { get; set; }
-    public Dex<MaterialDefinition> Materials { get; set; }
+    public Dex<TileDefinition>? Tiles { get; set; }
+    public Dex<InitPropBase>? Props { get; set; }
+    public Dex<MaterialDefinition>? Materials { get; set; }
+
+    public CastLibrary[] CastLibraries { get; set; } = [];
 }
 
 public class Folders

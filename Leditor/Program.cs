@@ -20,8 +20,6 @@ using System.Reflection;
 using Leditor.Data.Materials;
 using Leditor.Data.Props.Legacy;
 
-#nullable enable
-
 namespace Leditor;
 
 class Program
@@ -336,17 +334,8 @@ class Program
         return [..inits];
     }
     
-    // TODO: add packed props
 
-    private static ((string category, Color color)[] categories, InitPropBase[][] init) LoadPropInit()
-    {
-        var text = File.ReadAllText(GLOBALS.Paths.PropsInitPath).ReplaceLineEndings();
-        return Importers.GetPropsInit(text);
-    }
-    
-
-
-    private static ((string category, Color color)[] categories, InitPropBase[][] init) LoadPropInitFromRenderer()
+    private static ((string category, Raylib_cs.Color color)[] categories, InitPropBase[][] init) LoadPropInitFromRenderer()
     {
         var text = File.ReadAllText(Path.Combine(GLOBALS.Paths.RendererDirectory, "Props", "Init.txt")).ReplaceLineEndings();
         return Importers.GetPropsInit(text);

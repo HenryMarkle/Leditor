@@ -9,12 +9,16 @@ using Raylib_cs;
 using static Raylib_cs.Raylib;
 
 using Leditor.Data.Tiles;
+using Leditor.Data.Props.Legacy;
 using Leditor.Data.Props.Definitions;
 using Leditor.Serialization;
+using Leditor.Serialization.Frame;
 
 using Leditor.Renderer.RL;
 using Leditor.Renderer.Generic;
 using Leditor.Renderer.Pages;
+using Leditor.Data;
+using Leditor.Data.Materials;
 
 public class Program
 {
@@ -93,10 +97,11 @@ public class Program
                 (id, wt) => wt.File(
                     Path.Combine(executableDir, "logs", $"logs-{id}.log"),
                     fileSizeLimitBytes: 50000000,
-                    rollOnFileSizeLimit: true
+                    rollOnFileSizeLimit: true,
+                    restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Debug
                 )
             )
-            .WriteTo.Console()
+            .WriteTo.Console(Serilog.Events.LogEventLevel.Debug)
             .CreateLogger();
 
 
@@ -138,40 +143,56 @@ public class Program
 
         #endregion
 
-        logger.Information("Loading tiles");
+        logger.Information("Loading resources");
 
-        TileDefinition[] tiles = [];
-        PropDefinition[] props = [];
+        Registry registry = new()
+        {
+            Materials = new Dex<MaterialDefinition>(Utils.GetEmbeddedMaterials())
+        };
+
+        CastLibrary[] castLibraries = [];
+
+        var castLibrariesLoader = new CastLoader(folders.LegacyCastMembers, logger);
 
         var tileLoader = new DefinitionLoader<TileDefinition>(folders.Tiles, TileImporter.ParseInitAsync_NoCategories, logger);
-        var propLoader = new DefinitionLoader<PropDefinition>(folders.Props, PropImporter.ParseInitAsync_NoCategories, logger);
+        var propLoader = new DefinitionLoader<InitPropBase>(folders.Props, PropImporter.ParseLegacyInitAsync_NoCategories, logger);
 
-        var tileTextureLoadComplete = false;
-        var propTextureLoadComplete = false;
-        var materialTextureLoadComplete = false;
 
         #region Init Pages
 
         int page = 0;
 
-        Context context = new() { Page = page };
+        Context context = new()
+        { 
+            Page = page, 
+            Registry = registry 
+        };
 
         context.PageChanged += (_, next) => { page = next; };
+        context.LevelLoaded += (_, _) => { page = 1; };
 
-
-
-        MainPage mainPage = new()
+        StartPage startPage = new()
         {
             ProjectsFolder = folders.Projects,
             Logger = logger,
             Context = context
         };
 
+        MainPage mainPage = new()
+        {
+            Logger = logger,
+            Context = context
+        };
+
+        LevelLoadingPage levelLoadingPage = new();
+
         #endregion
         
         SetTargetFPS(60);
 
         #if RELEASE
+        SetTraceLogLevel(TraceLogLevel.Error);
+        #else
         SetTraceLogLevel(TraceLogLevel.Error);
         #endif
 
@@ -193,28 +214,45 @@ public class Program
             {
                 #region Loading
 
-                if (!tileTextureLoadComplete)
+                loading:
+
+                if (!castLibrariesLoader.IsCompleted)
                 {
-                    if (tileLoader.IsReady && tileLoader.LoadNext())
+                    if (castLibrariesLoader.IsReady && castLibrariesLoader.LoadNext())
                     {
-                        tiles = tileLoader.GetResult();
-                        tileTextureLoadComplete = true;
+                        if (castLibrariesLoader.IsCompleted)
+                        {
+                            castLibraries = castLibrariesLoader.GetLibs();
+                        }
                     }
                 }
 
-                if (!propTextureLoadComplete)
+                if (!tileLoader.IsCompleted)
+                {
+                    if (tileLoader.IsReady && tileLoader.LoadNext())
+                    {
+                        registry.Tiles = new Dex<TileDefinition>(tileLoader.GetResult());
+                    }
+                }
+
+                if (!propLoader.IsCompleted)
                 {
                     if (propLoader.IsReady && propLoader.LoadNext())
                     {
-                        props = propLoader.GetResult();
-                        propTextureLoadComplete = true;
+                        registry.Props = new Dex<InitPropBase>(propLoader.GetResult());
                     }
+                }
 
+                if (!castLibrariesLoader.IsCompleted || !tileLoader.IsCompleted || !propLoader.IsCompleted)
+                {
                     Draw.LoadingScreen(
+                        (float)castLibrariesLoader.Progress / castLibrariesLoader.TotalProgress,
                         (float)tileLoader.Progress / tileLoader.TotalProgress, 
                         (float)propLoader.Progress / propLoader.TotalProgress, 
                         0
                     );
+
+                    if (++frame % 100 != 0) goto loading;
 
                     EndDrawing();
                     continue;
@@ -222,7 +260,15 @@ public class Program
 
                 #endregion
 
-                Draw.MainScreen();
+                #region Pages
+
+                switch (page)
+                {
+                    case 0: startPage.Draw(); break;
+                    case 1: mainPage.Draw(); break;
+                }
+
+                #endregion
             }
             EndDrawing();
 
@@ -236,8 +282,8 @@ public class Program
 
         logger.Information("Unloading resources");
 
-        foreach (var tile in tiles) UnloadTexture(tile.Texture);
-        foreach (var prop in props) UnloadTexture(prop.Texture);
+        if (registry.Tiles is not null) foreach (var tile in registry.Tiles.Definitions) UnloadTexture(tile.Texture);
+        if (registry.Props is not null) foreach (var prop in registry.Props.Definitions) UnloadTexture(prop.Texture);
         
         #endregion
 

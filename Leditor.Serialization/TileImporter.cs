@@ -1,4 +1,4 @@
-﻿using Drizzle.Lingo.Runtime.Parser;
+﻿using Leditor.Serialization.Parser;
 using Leditor.Data.Materials;
 using Leditor.Data.Tiles;
 using Leditor.Serialization.Exceptions;
@@ -389,6 +389,7 @@ public class TileImporter
         for (var l = 0; l < lines.Length; l++)
         {
             var line = lines[l];
+            var lineNumber = l + 1;
             
             if (string.IsNullOrEmpty(line) || line.StartsWith("--")) continue;
 
@@ -405,7 +406,7 @@ public class TileImporter
                     }
                     catch (Exception e)
                     {
-                        throw new ParseException($"Failed to parse tile definition category from string at line {l + 1}", e);
+                        throw new ParseException($"Failed to parse tile definition category from string at line {lineNumber}", e);
                     }
 
                     try
@@ -415,7 +416,7 @@ public class TileImporter
                     catch (Exception e)
                     {
                         throw new ParseException(
-                            $"Failed to get tile definition category from parsed string at line {l + 1}", e);
+                            $"Failed to get tile definition category from parsed string at line {lineNumber}", e);
                     }
 
                     return category;
@@ -435,7 +436,7 @@ public class TileImporter
                     }
                     catch (Exception e)
                     {
-                        throw new ParseException($"Failed to parse tile definition from string at line {l + 1}", e);
+                        throw new ParseException($"Failed to parse tile definition from string at line {lineNumber}", e);
                     }
 
                     try
@@ -444,7 +445,7 @@ public class TileImporter
                     }
                     catch (ParseException e)
                     {
-                        throw new ParseException($"Failed to get tile definition from parsed string at line {l + 1}", e);
+                        throw new ParseException($"Failed to get tile definition from parsed string at line {lineNumber}", e);
                     }
                 }));
             }
@@ -478,6 +479,7 @@ public class TileImporter
         for (var l = 0; l < lines.Length; l++)
         {
             var line = lines[l];
+            var lineNumber = line + 1;
             
             if (string.IsNullOrEmpty(line) || line.StartsWith("--")) continue;
 
@@ -493,8 +495,8 @@ public class TileImporter
                 }
                 catch (Exception e)
                 {
-                    logger?.Error(e, $"[ParseInitAsync_NoCategories] Failed to parse tile definition from string at line {l + 1}");
-                    throw new ParseException($"[ParseInitAsync_NoCategories] Failed to parse tile definition from string at line {l + 1}", e);
+                    logger?.Error(e, $"[ParseInitAsync_NoCategories] Failed to parse tile definition from string at line {lineNumber}");
+                    throw new ParseException($"[ParseInitAsync_NoCategories] Failed to parse tile definition from string at line {lineNumber}", e);
                 }
 
                 try
@@ -503,9 +505,9 @@ public class TileImporter
                 }
                 catch (ParseException e)
                 {
-                    logger?.Error(e, $"[ParseInitAsync_NoCategories] Failed to get tile definition from parsed string at line {l + 1}");
+                    logger?.Error(e, $"[ParseInitAsync_NoCategories] Failed to get tile definition from parsed string at line {lineNumber}");
 
-                    throw new ParseException($"[ParseInitAsync_NoCategories] Failed to get tile definition from parsed string at line {l + 1}", e);
+                    throw new ParseException($"[ParseInitAsync_NoCategories] Failed to get tile definition from parsed string at line {lineNumber}", e);
                 }
             }));
             
@@ -560,7 +562,7 @@ public class TileImporter
                     logger?.Warning($"[TileImporter::GetTileCell_NoExcept] Undefined tile \"{name2}\"");
                 }
 
-                cell = new(tileDefinition, name2);
+                cell = new Tile(tileDefinition, name2);
                 break;
             }
 
@@ -677,6 +679,7 @@ public class TileImporter
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
+
                 var layer1 = ((AstNode.List)((AstNode.List)columns[x]).Values[y]).Values[0];
                 var layer2 = ((AstNode.List)((AstNode.List)columns[x]).Values[y]).Values[1];
                 var layer3 = ((AstNode.List)((AstNode.List)columns[x]).Values[y]).Values[2];

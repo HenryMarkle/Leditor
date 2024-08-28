@@ -1,11 +1,11 @@
 using Pidgin;
 using System.Numerics;
-using Drizzle.Lingo.Runtime.Parser;
 
 using Leditor.Data.Effects;
 using Leditor.Data.Tiles;
 using Leditor.Data.Geometry;
 using Leditor.Data.Props.Legacy;
+using Leditor.Serialization.Parser;
 
 namespace Leditor.Serialization;
 
@@ -157,6 +157,30 @@ public static class Importers {
         return ([..categories], [..materials]);
     }
     
+     public static (int angle, int flatness) GetLightSettings(AstNode.Base @base)
+    {
+        var propList = (AstNode.PropertyList)@base;
+
+        var angleBase = propList.Values.Single(p => ((AstNode.Symbol)p.Key).Value == "lightangle").Value;
+        var flatnessBase = propList.Values.Single(p => ((AstNode.Symbol)p.Key).Value == "flatness").Value;
+
+        var angle = angleBase switch
+        {
+            AstNode.Number n => n.Value.IntValue,
+            AstNode.UnaryOperator u => ((AstNode.Number)u.Expression).Value.IntValue * -1,
+            _ => throw new Exception($"Invalid light angle value: {StringifyBase(angleBase)}")
+        };
+        
+        var flatness = flatnessBase switch
+        {
+            AstNode.Number n => n.Value.IntValue,
+            AstNode.UnaryOperator u => ((AstNode.Number)u.Expression).Value.IntValue * -1,
+            _ => throw new Exception($"Invalid flatness value: {StringifyBase(flatnessBase)}")
+        };
+
+        return (angle, flatness);
+    }
+
     public static InitPropBase GetInitProp(AstNode.Base @base)
     {
         var propertList = ((AstNode.PropertyList)@base).Values;
@@ -323,29 +347,7 @@ public static class Importers {
         return init;
     }
 
-    public static (int angle, int flatness) GetLightSettings(AstNode.Base @base)
-    {
-        var propList = (AstNode.PropertyList)@base;
-
-        var angleBase = propList.Values.Single(p => ((AstNode.Symbol)p.Key).Value == "lightangle").Value;
-        var flatnessBase = propList.Values.Single(p => ((AstNode.Symbol)p.Key).Value == "flatness").Value;
-
-        var angle = angleBase switch
-        {
-            AstNode.Number n => n.Value.IntValue,
-            AstNode.UnaryOperator u => ((AstNode.Number)u.Expression).Value.IntValue * -1,
-            _ => throw new Exception($"Invalid light angle value: {StringifyBase(angleBase)}")
-        };
-        
-        var flatness = flatnessBase switch
-        {
-            AstNode.Number n => n.Value.IntValue,
-            AstNode.UnaryOperator u => ((AstNode.Number)u.Expression).Value.IntValue * -1,
-            _ => throw new Exception($"Invalid flatness value: {StringifyBase(flatnessBase)}")
-        };
-
-        return (angle, flatness);
-    }
+   
 
     public static ((string category, Color color)[] categories, InitPropBase[][] init) GetPropsInit(string text)
     {

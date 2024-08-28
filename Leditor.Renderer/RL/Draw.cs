@@ -31,14 +31,21 @@ public static class Draw
     /// <param name="tiles">tiles loading progress</param>
     /// <param name="props">props loading progress</param>
     /// <param name="materials">materials loading progress</param>
-    public static void LoadingScreen(float tiles, float props, float materials)
+    public static void LoadingScreen(
+        float cast,
+        float tiles, 
+        float props, 
+        float materials
+    )
     {
         ClearBackground(Color.Black);
 
-        var tilesRect = new Rectangle((GetScreenWidth() - 200)/2, 200, 100, 30);
-        var propsRect = new Rectangle((GetScreenWidth() - 200)/2, 250, 100, 30);
-        var materRect = new Rectangle((GetScreenWidth() - 200)/2, 250, 100, 30);
+        var castRect = new Rectangle(100, 200, GetScreenWidth() - 200, 30);
+        var tilesRect = new Rectangle(100, 250, GetScreenWidth() - 200, 30);
+        var propsRect = new Rectangle(100, 300, GetScreenWidth() - 200, 30);
+        var materRect = new Rectangle(100, 350, GetScreenWidth() - 200, 30);
 
+        ProgressBar(castRect, cast, Color.White);
         ProgressBar(tilesRect, tiles, Color.White);
         ProgressBar(propsRect, props, Color.White);
         ProgressBar(materRect, materials, Color.White);

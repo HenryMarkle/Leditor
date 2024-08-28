@@ -23,14 +23,12 @@ internal abstract class EditorPage : IDrawable, IDisposable
     public abstract void Dispose();
     
     public Serilog.ILogger Logger { get; set; }
-    public Context Context { get; set; }
 
     internal EditorPage() { }
 
-    internal EditorPage(Serilog.ILogger logger, Context context)
+    internal EditorPage(Serilog.ILogger logger)
     {
         Logger = logger;
-        Context = context;
     }
 }
 

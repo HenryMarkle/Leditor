@@ -4,6 +4,8 @@ using Leditor.Data.Tiles;
 using Leditor.Data.Props.Definitions;
 
 using System.Numerics;
+using Leditor.Data.Generic;
+using Raylib_cs;
 
 public interface IVariableInit { int Variations { get; } }
 public interface IVariable { int Variation { get; set; } }
@@ -11,6 +13,7 @@ public interface IVariable { int Variation { get; set; } }
 public class Prop_Legacy(int depth, string name, Quad quads)
 {
     public InitPropType_Legacy Type { get; set; }
+    public InitPropBase? Init { get; set; }
     public TileDefinition? Tile { get; set; }
     public (int category, int index) Position { get; set; }
     public PropDefinition? Definition { get; set; }
@@ -162,11 +165,13 @@ public enum InitPropType_Legacy
 public enum InitPropColorTreatment { Standard, Bevel }
 
 
-public abstract class InitPropBase(string name, InitPropType_Legacy type, int depth)
+public abstract class InitPropBase(string name, InitPropType_Legacy type, int depth) : IIdentifiable<string>, ITexture
 {
     public string Name { get; init; } = name;
     public InitPropType_Legacy Type { get; init; } = type;
     public int Depth { get; init; } = depth;
+
+    public Texture2D Texture { get; set; }
 
     public override string ToString() => 
         $"({Type}) - {Name}\n" +

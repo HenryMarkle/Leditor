@@ -257,7 +257,6 @@ internal static class GLOBALS
     internal delegate void PageUpdateHandler(int previous, int @new);
     internal static event PageUpdateHandler? PageUpdated;
     
-    internal static Pager? Pager { get; set; }
     internal static int NavSignal { get; set; }
     internal static bool LockNavigation { get; set; }
 
@@ -361,7 +360,7 @@ internal static class GLOBALS
     ];
     
     /// Embedded material definitions
-    internal static Data.Materials.MaterialDefinition[][] Materials { get; set; } = [
+    internal static MaterialDefinition[][] Materials { get; set; } = [
         [
             new( "Standard",         new(150, 150, 150, 255), MaterialRenderType.Unified    ),
             new( "Concrete",         new(150, 255, 255, 255), MaterialRenderType.Unified    ),
@@ -671,5 +670,5 @@ internal static class GLOBALS
     internal static TileGram Gram { get; set; } = new(100);
 
     /// The current loaded level
-    internal static LevelState Level { get; set; } = new(InitialMatrixWidth, InitialMatrixHeight, (6, 3, 6, 5));
+    internal static Data.LevelState Level { get; set; } = new(InitialMatrixWidth, InitialMatrixHeight, (6, 3, 6, 5), Materials[0][1]);
 }

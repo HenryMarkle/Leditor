@@ -189,6 +189,7 @@ internal class NewLevelPage : EditorPage
                         _matrixWidthValue,
                         _matrixHeightValue,
                         (_leftPadding, _topPadding, _rightPadding, _bottomPadding),
+                        GLOBALS.Materials[0][1],
                         [GeoType.Solid, GeoType.Solid, GeoType.Air]
                     );
 
@@ -278,6 +279,7 @@ internal class NewLevelPage : EditorPage
                         _columns * 52 + 20,
                         _rows * 40 + 3,
                         (6, 3, 6, 5),
+                        GLOBALS.Materials[0][1],
                         [_simpleFillLayer1 ? GeoType.Solid : GeoType.Air, _simpleFillLayer2 ? GeoType.Solid : GeoType.Air, _simpleFillLayer3 ? GeoType.Solid : GeoType.Air]
                     );
 

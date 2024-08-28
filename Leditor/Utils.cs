@@ -6,10 +6,9 @@ using System.Text.Json;
 using Leditor.Data.Geometry;
 using Leditor.Data.Props.Legacy;
 using Leditor.Data.Effects;
+using Leditor.Serialization.Parser;
 
 namespace Leditor;
-
-#nullable enable
 
 /// A collection of helper functions used across pages
 internal static class Utils
@@ -178,7 +177,7 @@ internal static class Utils
             .ReplaceLineEndings()
             .Split(Environment.NewLine);
 
-        var matrixObject = Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[0]);
+        var matrixObject = LingoParser.Expression.ParseOrThrow(text[0]);
     
         var matrix = Serialization.Importers.GetGeoMatrix(matrixObject, out _, out _);
 
@@ -195,34 +194,34 @@ internal static class Utils
         if (text.Length < 7) return new LoadFileResult();
 
         var objTask = Task.Factory.StartNew(() =>
-            Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[0]));
+            LingoParser.Expression.ParseOrThrow(text[0]));
         var tilesObjTask = Task.Factory.StartNew(() =>
-            Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[1]));
+            LingoParser.Expression.ParseOrThrow(text[1]));
         var terrainObjTask = Task.Factory.StartNew(() =>
-            Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[4]));
+            LingoParser.Expression.ParseOrThrow(text[4]));
         var obj2Task = Task.Factory.StartNew(() =>
-            Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[5]));
+            LingoParser.Expression.ParseOrThrow(text[5]));
         var effObjTask = Task.Factory.StartNew(() =>
-            Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[2]));
+            LingoParser.Expression.ParseOrThrow(text[2]));
         var lightObjTask = Task.Factory.StartNew(() =>
-            Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[3]));
+            LingoParser.Expression.ParseOrThrow(text[3]));
         var camsObjTask = Task.Factory.StartNew(() =>
-            Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[6]));
+            LingoParser.Expression.ParseOrThrow(text[6]));
         var waterObjTask = Task.Factory.StartNew(() =>
-            Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[7]));
+            LingoParser.Expression.ParseOrThrow(text[7]));
         
         var propsObjTask = string.IsNullOrEmpty(text[8]) ? null : Task.Factory.StartNew(() =>
-            Drizzle.Lingo.Runtime.Parser.LingoParser.Expression.ParseOrThrow(text[8]));
+            LingoParser.Expression.ParseOrThrow(text[8]));
 
-        Drizzle.Lingo.Runtime.Parser.AstNode.Base obj;
-        Drizzle.Lingo.Runtime.Parser.AstNode.Base tilesObj;
-        Drizzle.Lingo.Runtime.Parser.AstNode.Base terrainModeObj;
-        Drizzle.Lingo.Runtime.Parser.AstNode.Base obj2;
-        Drizzle.Lingo.Runtime.Parser.AstNode.Base effObj;
-        Drizzle.Lingo.Runtime.Parser.AstNode.Base lightObj;
-        Drizzle.Lingo.Runtime.Parser.AstNode.Base camsObj;
-        Drizzle.Lingo.Runtime.Parser.AstNode.Base waterObj;
-        Drizzle.Lingo.Runtime.Parser.AstNode.Base? propsObj;
+        AstNode.Base obj;
+        AstNode.Base tilesObj;
+        AstNode.Base terrainModeObj;
+        AstNode.Base obj2;
+        AstNode.Base effObj;
+        AstNode.Base lightObj;
+        AstNode.Base camsObj;
+        AstNode.Base waterObj;
+        AstNode.Base? propsObj;
 
         Exception? propsLoadException = null;
 

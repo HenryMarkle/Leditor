@@ -1,13 +1,9 @@
 namespace Leditor.Serialization;
 
-using Drizzle.Lingo.Runtime.Parser;
-using Leditor.Data.Materials;
+using Leditor.Serialization.Parser;
+
 using Leditor.Data.Geometry;
-using Leditor.Data.Tiles;
-using Leditor.Serialization.Exceptions;
 using Pidgin;
-using Color = Leditor.Data.Color;
-using ParseException = Leditor.Serialization.Exceptions.ParseException;
 
 public static class GeoImporter
 {
@@ -50,20 +46,23 @@ public static class GeoImporter
                 var layer2 = ((AstNode.List)((AstNode.List)columns[x]).Values[y]).Values[1];
                 var layer3 = ((AstNode.List)((AstNode.List)columns[x]).Values[y]).Values[2];
 
+                var xx = x;
+                var yy = y;
+
                 parseTasks.Add(Task.Run(async () => {
                     if (layer1 is not AstNode.List || layer2 is not AstNode.List || layer3 is not AstNode.List)
                     {
-                        logger?.Error($"[GeoImporter::GetGeoMatrixAsync] Invalid layer format (x: {x}, y: {y})");
-                        throw new Exception($"layers are not lists at column ({x}), row ({y})");
+                        logger?.Error($"[GeoImporter::GetGeoMatrixAsync] Invalid layer format (x: {xx}, y: {yy})");
+                        throw new Exception($"layers are not lists at column ({xx}), row ({yy})");
                     }
 
                     var cell1 = Task.Factory.StartNew(() => {
                         if (((AstNode.List)layer1).Values[0] is not AstNode.Number || 
                             ((AstNode.List)layer1).Values[1] is not AstNode.List ||
                             ((AstNode.List)((AstNode.List)layer1).Values[1]).Values.Any(e => e is not AstNode.Number || ((AstNode.Number)e).Value.IsDecimal))
-                                throw new Exception($"invalid cell at column ({x}), row ({y}), layer (1)");
+                                throw new Exception($"invalid cell at column ({xx}), row ({yy}), layer (1)");
                         
-                        matrix[y, x, 0] = new() { 
+                        matrix[yy, xx, 0] = new() { 
                             Type = (GeoType) ((AstNode.Number)((AstNode.List)layer1).Values[0]).Value.IntValue,
                             Features = GetGeoFeaturesFromList(((AstNode.List)((AstNode.List)layer1).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
                         };
@@ -73,9 +72,9 @@ public static class GeoImporter
                         if (((AstNode.List)layer2).Values[0] is not AstNode.Number || 
                             ((AstNode.List)layer2).Values[1] is not AstNode.List ||
                             ((AstNode.List)((AstNode.List)layer2).Values[1]).Values.Any(e => e is not AstNode.Number || ((AstNode.Number)e).Value.IsDecimal))
-                                throw new Exception($"invalid cell at column ({x}), row ({y}), layer (2)");
+                                throw new Exception($"invalid cell at column ({xx}), row ({yy}), layer (2)");
                         
-                        matrix[y, x, 1] = new() {
+                        matrix[yy, xx, 1] = new() {
                             Type = (GeoType) ((AstNode.Number)((AstNode.List)layer2).Values[0]).Value.IntValue,
                             Features = GetGeoFeaturesFromList(((AstNode.List)((AstNode.List)layer2).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
                         };
@@ -85,9 +84,9 @@ public static class GeoImporter
                         if (((AstNode.List)layer3).Values[0] is not AstNode.Number || 
                             ((AstNode.List)layer3).Values[1] is not AstNode.List ||
                             ((AstNode.List)((AstNode.List)layer3).Values[1]).Values.Any(e => e is not AstNode.Number || ((AstNode.Number)e).Value.IsDecimal))
-                                throw new Exception($"invalid cell at column ({x}), row ({y}), layer (3)");
+                                throw new Exception($"invalid cell at column ({xx}), row ({yy}), layer (3)");
 
-                        matrix[y, x, 2] = new() {
+                        matrix[yy, xx, 2] = new() {
                             Type = (GeoType) ((AstNode.Number)((AstNode.List)layer3).Values[0]).Value.IntValue,
                             Features = GetGeoFeaturesFromList(((AstNode.List)((AstNode.List)layer3).Values[1]).Values.Select(e => ((AstNode.Number)e).Value.IntValue))
                         };
@@ -106,5 +105,14 @@ public static class GeoImporter
         await Task.WhenAll(parseTasks);
 
         return matrix;
+    }
+
+    public static async Task<Geo[,,]> GetGeoMatrixAsync(string file, Serilog.ILogger? logger = null)
+    {
+        var lines = File.ReadAllText(file).ReplaceLineEndings().Split(Environment.NewLine);
+
+        var obj = LingoParser.Expression.ParseOrThrow(lines[0]);
+    
+        return await GetGeoMatrixAsync(obj, logger);
     }
 }
