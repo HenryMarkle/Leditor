@@ -1,7 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿/*
+    Code in this file was taken from Drizzle.Lingo.Runtime/Parser (https://github.com/SlimeCubed/Drizzle/tree/community/Drizzle.Lingo.Runtime/Parser)
+*/
+
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using Pidgin;
 using Pidgin.Expression;
 using static Pidgin.Parser;

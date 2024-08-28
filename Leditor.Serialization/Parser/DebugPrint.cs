@@ -1,4 +1,8 @@
-﻿using System.Text;
+﻿/*
+    Code in this file was taken from Drizzle.Lingo.Runtime/Parser (https://github.com/SlimeCubed/Drizzle/tree/community/Drizzle.Lingo.Runtime/Parser)
+*/
+
+using System.Text;
 
 namespace Leditor.Serialization.Parser;
 

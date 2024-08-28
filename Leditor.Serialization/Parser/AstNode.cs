@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿/*
+    Code in this file was taken from Drizzle.Lingo.Runtime/Parser (https://github.com/SlimeCubed/Drizzle/tree/community/Drizzle.Lingo.Runtime/Parser)
+*/
+
 using System.Text;
 
 using Leditor.Serialization.Parser.Data;
+
 namespace Leditor.Serialization.Parser;
 
 public static class AstNode
