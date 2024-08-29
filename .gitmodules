@@ -5,5 +5,5 @@
 
 [submodule "Data"]
 	path = Leditor.Renderer/Data
-	url = https://github.com/SlimeCubed/Drizzle.Data.git
+	url = https://github.com/SlimeCubed/Drizzle.Data
 	branch = community
