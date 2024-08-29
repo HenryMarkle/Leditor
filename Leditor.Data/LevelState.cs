@@ -15,6 +15,8 @@ using Leditor.Data.Materials;
 /// </summary>
 public sealed class LevelState
 {
+    public Image LightMap { get; private set; }
+
     private (int left, int top, int right, int bottom) _padding;
     
     public int Width { get; private set; }
@@ -68,6 +70,11 @@ public sealed class LevelState
         New(width, height, padding, defaultMaterial, [GeoType.Solid, GeoType.Solid, GeoType.Air]);
     }
 
+    ~LevelState()
+    {
+        Raylib.UnloadImage(LightMap);
+    }
+
     public void Import(
         int width,
         int height,
@@ -84,6 +91,7 @@ public sealed class LevelState
         int seed,
         int waterLevel,
         bool waterInFront,
+        Image lightmap,
         MaterialDefinition defaultMaterial,
         string projectName = "New Project"
     )
@@ -110,6 +118,9 @@ public sealed class LevelState
         LightMode = lightMode;
         DefaultTerrain = terrainMedium;
 
+        if (LightMap is not { Width: 0 } or { Height: 0 }) Raylib.UnloadImage(LightMap);
+        LightMap = lightmap;
+
         LevelCreated?.Invoke();
     }
 
@@ -129,6 +140,9 @@ public sealed class LevelState
         LightAngle = 180;
 
         Cameras = [new RenderCamera { Coords = new Vector2(20f, 30f), Quad = new(new(), new(), new(), new()) }];
+
+        if (LightMap is not { Width: 0 } or { Height: 0 }) Raylib.UnloadImage(LightMap);
+        LightMap = Raylib.GenImageColor(width * 20 + 300, height * 20 + 300, Raylib_cs.Color.White);
 
         Effects = [];
         
@@ -213,6 +227,10 @@ public sealed class LevelState
         TileMatrix = Utils.Resize(TileMatrix, left, top, right, bottom, [ new(), new(), new() ]);
         MaterialColors = Utils.Resize(MaterialColors, left, top, right, bottom, [ new Color(0, 0, 0, 255), new Color(0, 0, 0, 255), new Color(0, 0, 0, 255) ]);
 
+        Image lm = LightMap;
+        Raylib.ImageResize(ref lm, Width + left + right, Height + top + bottom);
+        LightMap = lm;
+
         for (var e = 0; e < Effects.Length; e++) {
             Effects[e].Matrix = Utils.Resize(Effects[e].Matrix, left, top, right, bottom);
         }
@@ -251,6 +269,10 @@ public sealed class LevelState
         ReadOnlySpan<GeoType> geoIdFill
     )
     {
+        Image lm = LightMap;
+        Raylib.ImageResize(ref lm, Width, Height);
+        LightMap = lm;
+
         // Geo Matrix
         GeoMatrix = Utils.Resize(
             GeoMatrix,

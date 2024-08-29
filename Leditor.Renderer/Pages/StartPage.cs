@@ -14,12 +14,30 @@ using Leditor.Data.Geometry;
 public sealed class StartPage
 {
     public Serilog.ILogger? Logger { get; init; }
-    public required Context Context { get; init; }
+    public Context Context { get; init; }
 
     private Task<Geo[,,]>? _geoLoadTask;
     private RenderTexture2D _previewRT;
 
-    private int _x, _y, _z;
+    private int _x, _y;
+
+    private bool _disposed;
+
+    public void OnTermination(object? sender, EventArgs e)
+    {
+    }
+
+    public StartPage(Context context)
+    {
+        Context = context;
+
+        Context.TerminationSignal += OnTermination;
+    }
+
+    ~StartPage()
+    {
+        Context.TerminationSignal -= OnTermination;
+    }
 
     private void PreparePreview()
     {
@@ -45,7 +63,7 @@ public sealed class StartPage
             _previewRT = LoadRenderTexture(matrix.GetLength(1) * 4, matrix.GetLength(0) * 4);
 
             BeginTextureMode(_previewRT);
-            ClearBackground(Color.DarkGray);
+            ClearBackground(new Color(170, 170, 170, 255));
             EndTextureMode();
 
             _x = _y = 0;
@@ -72,7 +90,7 @@ public sealed class StartPage
 
         if (cell2.Type == GeoType.Solid)
         {
-            DrawRectangle(_x * 4, _y * 4, 4, 4, new Color(100, 100, 100, 255));
+            DrawRectangle(_x * 4, _y * 4, 4, 4, new Color(80, 80, 80, 255));
         }
 
         if (cell1.Type == GeoType.Solid)
@@ -98,6 +116,13 @@ public sealed class StartPage
     public string[] ProjectFiles { get; private set; } = [];
     public string[] ProjectNames { get; private set; } = [];
 
+    private void ListFiles(string folder)
+    {
+        ProjectFiles = Directory.GetFiles(folder).Where(f => f.EndsWith(".txt")).ToArray();
+        ProjectNames = ProjectFiles.Select(f => Path.GetFileNameWithoutExtension(f)!).ToArray();
+        CurrentProject = 0;
+        PreparePreview();
+    }
 
     public required string ProjectsFolder
     { 
@@ -107,14 +132,20 @@ public sealed class StartPage
             if (!Directory.Exists(value)) throw new DirectoryNotFoundException(value);
 
             _projects = value;
-
-            ProjectFiles = Directory.GetFiles(value).Where(f => f.EndsWith(".txt")).ToArray();
-            ProjectNames = ProjectFiles.Select(f => Path.GetFileNameWithoutExtension(f)!).ToArray();
-            CurrentProject = 0;
+            ListFiles(value);
         } 
     }
 
     private int _column1Width;
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+
+        _disposed = true;
+
+        UnloadRenderTexture(_previewRT);
+    }
 
     public void Draw()
     {
@@ -128,11 +159,6 @@ public sealed class StartPage
             {
                 Logger?.Information("Loading level \"{Name}\"", ProjectFiles[CurrentProject]);
                 Context.LoadLevelFromFile(ProjectFiles[CurrentProject]);
-            }
-
-            if (Context.LT?.IsFaulted ?? false)
-            {
-                Console.WriteLine(Context.LT?.Exception);
             }
 
             // Serialization.Level.Importers.LoadProjectAsync(
@@ -176,20 +202,40 @@ public sealed class StartPage
                     ImGui.SetColumnWidth(0, _column1Width);
                 }
 
-                if (ImGui.BeginListBox("##ProjectsList", ImGui.GetContentRegionAvail()))
+                if (ImGui.Button("Refresh"))
+                {
+                    ListFiles(ProjectsFolder);
+                    PreparePreview();
+                }
+
+                var listSpace = ImGui.GetContentRegionAvail();
+
+                if (ImGui.BeginListBox("##ProjectsList", listSpace with { Y = listSpace.Y - 30 }))
                 {
                     for (var p = 0; p < ProjectNames.Length; p++)
                     {
                         if (ImGui.Selectable(ProjectNames[p], p == CurrentProject))
                         {
+                            if (CurrentProject != p) PreparePreview();
                             CurrentProject = p;
-                            PreparePreview();
                         }
                     }
 
 
                     ImGui.EndListBox();
                 }
+
+                var outbounds = CurrentProject < 0 || CurrentProject >= ProjectNames.Length;
+
+                if (outbounds) ImGui.BeginDisabled(); 
+
+                if (ImGui.Button("Load", ImGui.GetContentRegionAvail() with { Y = 20 }))
+                {
+                    Logger?.Information("Loading level \"{Name}\"", ProjectFiles[CurrentProject]);
+                    Context.LoadLevelFromFile(ProjectFiles[CurrentProject]);
+                }
+
+                if (outbounds) ImGui.EndDisabled();
 
                 ImGui.NextColumn();
 

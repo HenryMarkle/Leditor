@@ -165,30 +165,37 @@ public class Program
         Context context = new()
         { 
             Page = page, 
-            Registry = registry 
+            Registry = registry ,
         };
 
         context.PageChanged += (_, next) => { page = next; };
-        context.LevelLoaded += (_, _) => { page = 1; };
 
-        StartPage startPage = new()
+        context.LevelLoaded += (_, _) => { page = 1; };
+        context.LevelLoadingStarted += (_, _) => { page = 2; };
+        context.LevelLoadingFailed += (_, _) => { page = 0; };
+
+        StartPage startPage = new(context)
         {
             ProjectsFolder = folders.Projects,
             Logger = logger,
-            Context = context
         };
 
-        MainPage mainPage = new()
+        MainPage mainPage = new(context)
         {
             Logger = logger,
-            Context = context
         };
 
         LevelLoadingPage levelLoadingPage = new();
 
+        RenderingPage renderingPage = new(context)
+        {
+            Logger = logger
+        };
+
         #endregion
         
         SetTargetFPS(60);
+        SetWindowState(ConfigFlags.ResizableWindow);
 
         #if RELEASE
         SetTraceLogLevel(TraceLogLevel.Error);
@@ -199,6 +206,8 @@ public class Program
         //---------------------------------------------------------
         InitWindow(2000 * 2/3, 1200 * 2/3, "Henry's Renderer");
         //---------------------------------------------------------
+
+        context.Engine = new();
 
         rlImGui.Setup(true, true);
         
@@ -266,6 +275,10 @@ public class Program
                 {
                     case 0: startPage.Draw(); break;
                     case 1: mainPage.Draw(); break;
+                    case 2: levelLoadingPage.Draw(); break;
+                    case 3: renderingPage.Draw(); break;
+
+                    default: startPage.Draw(); break;
                 }
 
                 #endregion
@@ -282,8 +295,15 @@ public class Program
 
         logger.Information("Unloading resources");
 
+        foreach (var lib in castLibraries)
+        {
+            foreach (var (_, member) in lib.Members) UnloadTexture(member.Texture);
+        }
+
         if (registry.Tiles is not null) foreach (var tile in registry.Tiles.Definitions) UnloadTexture(tile.Texture);
         if (registry.Props is not null) foreach (var prop in registry.Props.Definitions) UnloadTexture(prop.Texture);
+
+        context.Engine.Dispose();
         
         #endregion
 

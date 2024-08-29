@@ -5,12 +5,19 @@ using Leditor.Serialization.IO;
 
 namespace Leditor.Renderer;
 
+/// <summary>
+/// Shared state between pages
+/// </summary>
 public class Context
 {
     public delegate void PageChangedEventHandler(int previous, int next);
     public event PageChangedEventHandler? PageChanged;
 
+    public event EventHandler? LevelLoadingStarted;
+    public event EventHandler? LevelLoadingFailed;
     public event EventHandler? LevelLoaded;
+
+    public event EventHandler? TerminationSignal;
 
     private int _page;
 
@@ -35,51 +42,65 @@ public class Context
     public Registry? Registry { get; set; }
 
     public LevelState? Level { get; private set; }
+    public Engine? Engine { get; set; }
 
     private Task? _levelLoadTask;
 
     public bool IsLoadingLevel => _levelLoadTask is { IsCompleted: false, IsFaulted: false };
-    public Task? LT => _levelLoadTask;
+
+    public void SignalTermination(object sender)
+    {
+        if (sender.GetType() == typeof(Program)) TerminationSignal?.Invoke(this, EventArgs.Empty);
+    }
 
     public void LoadLevelFromFile(string path)
     {
         if (Registry is not { Tiles: not null, Props: not null, Materials: not null }) return;
 
+        LevelLoadingStarted?.Invoke(this, EventArgs.Empty);
+
         _levelLoadTask = Task.Factory.StartNew(() => {
-            var resultTask = Serialization.Level.Importers.LoadProjectAsync(
-                path, 
-                Registry.Tiles.Names, 
-                Registry.Props.Names,
-                Registry.Materials.Names
-            );
+            try {
+                var resultTask = Serialization.Level.Importers.LoadProjectAsync(
+                    path, 
+                    Registry.Tiles.Names, 
+                    Registry.Props.Names,
+                    Registry.Materials.Names
+                );
 
-            resultTask.Wait();
+                resultTask.Wait();
 
-            var result = resultTask.Result;
+                var result = resultTask.Result;
 
-            Level ??= new(0, 0, (0, 0, 0, 0), null);
+                Level ??= new(0, 0, (0, 0, 0, 0), null);
 
-            Level.Import(
-                result.Width,
-                result.Height,
-                (result.BufferTiles.Left, result.BufferTiles.Top, result.BufferTiles.Right, result.BufferTiles.Bottom),
-                result.GeoMatrix,
-                result.TileMatrix,
-                result.MaterialColorMatrix,
-                result.Effects,
-                result.Cameras,
-                result.PropsArray,
-                result.LightSettings,
-                result.LightMode,
-                result.DefaultTerrain,
-                result.Seed,
-                result.WaterLevel,
-                result.WaterInFront,
-                result.DefaultMaterial,
-                result.Name
-            );
+                Level.Import(
+                    result.Width,
+                    result.Height,
+                    (result.BufferTiles.Left, result.BufferTiles.Top, result.BufferTiles.Right, result.BufferTiles.Bottom),
+                    result.GeoMatrix,
+                    result.TileMatrix,
+                    result.MaterialColorMatrix,
+                    result.Effects,
+                    result.Cameras,
+                    result.PropsArray,
+                    result.LightSettings,
+                    result.LightMode,
+                    result.DefaultTerrain,
+                    result.Seed,
+                    result.WaterLevel,
+                    result.WaterInFront,
+                    result.LightMapImage,
+                    result.DefaultMaterial,
+                    result.Name
+                );
+                
+                LevelLoaded?.Invoke(this, EventArgs.Empty);
+            } catch (Exception e) {
+                Logger?.Error(e, "[Context] Failed to load level");
+                LevelLoadingFailed?.Invoke(this, EventArgs.Empty);
+            }
 
-            LevelLoaded?.Invoke(this, EventArgs.Empty);
         });
     }
 }
