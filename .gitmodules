@@ -4,6 +4,6 @@
 	branch = embedded
 
 [submodule "Data"]
-	path = Leditor.Renderer/Data
-	url = https://github.com/SlimeCubed/Drizzle.Data
+	path = Data
+	url = https://github.com/SlimeCubed/Drizzle.Data.git
 	branch = community
