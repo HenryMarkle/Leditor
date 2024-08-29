@@ -2,8 +2,7 @@
 	path = Drizzle
 	url = https://github.com/HenryMarkle/Drizzle
 	branch = embedded
-
-[submodule "Data"]
-	path = Data
+[submodule "Leditor.Renderer/Data"]
+	path = Leditor.Renderer/Data
 	url = https://github.com/SlimeCubed/Drizzle.Data.git
 	branch = community
