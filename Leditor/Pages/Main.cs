@@ -574,6 +574,7 @@ internal class MainPage : EditorPage, IContextListener
                             result.Seed,
                             result.WaterLevel,
                             result.WaterInFront,
+                            result.LightMapImage,
                             result.DefaultMaterial,
                             result.Name
                         );

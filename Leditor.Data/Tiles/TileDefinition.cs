@@ -29,7 +29,8 @@ public sealed class TileDefinition(
     int bufferTiles,
     int[,,] specs,
     int[] repeat,
-    string[] tags
+    string[] tags,
+    int rnd
 ) : IDefinition
 {
     /// <summary>
@@ -69,6 +70,8 @@ public sealed class TileDefinition(
     /// </summary>
     public string[] Tags { get; } = tags;
 
+    public int Rnd { get; } = rnd;
+
     private readonly int _hashCode  = name.GetHashCode();
     
     /// <summary>
@@ -96,4 +99,19 @@ public sealed class TileDefinition(
     public static implicit operator string(TileDefinition d) => d.Name;
 
     public override int GetHashCode() => _hashCode;
+
+    public bool HasSpecsLayer(int layer)
+    {
+        if (layer < 0 || layer > 2) return false;
+
+        for (var x = 0; x < Specs.GetLength(1); x++)
+        {
+            for (var y = 0; y < Specs.GetLength(0); y++)
+            {
+                if (Specs[y, x, layer] != -1) return true;
+            }
+        }
+
+        return false;
+    }
 }

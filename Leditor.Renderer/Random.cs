@@ -1,3 +1,7 @@
+/*
+
+*/
+
 namespace Leditor.Renderer;
 
 public class RNG
@@ -20,7 +24,7 @@ public class RNG
         }
     }
 
-    public int Random(int clamp)
+    public int Generate(int clamp)
     {
         return Random(ref _rngState, clamp);
     }

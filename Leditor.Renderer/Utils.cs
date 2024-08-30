@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Leditor.Data;
 using Leditor.Data.Materials;
 using Leditor.Data.Props.Legacy;
@@ -7,13 +8,17 @@ namespace Leditor.Renderer;
 
 public static class Utils
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Restrict(int value, int min, int max)
     {
-        if (value < min) value = min;
-        if (value > max) value = max;
+        if (value < min) return min;
+        if (value > max) return max;
 
         return value;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BoolInt(bool value) => value ? 1 : 0;
 
     public static MaterialDefinition[] GetEmbeddedMaterials()
     {

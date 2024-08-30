@@ -465,6 +465,7 @@ internal class StartPage : EditorPage
                     result.Seed,
                     result.WaterLevel,
                     result.WaterInFront,
+                    result.LightMapImage,
                     result.DefaultMaterial,
                     result.Name
                 );

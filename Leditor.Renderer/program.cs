@@ -65,11 +65,14 @@ public class Program
             ?? throw new Exception("unable to retreive current executable's path");
 
         string dataDir;
+        string resDir;
         
         #if DEBUG
         dataDir = Path.Combine(executableDir, "..", "..", "..", "..", "Data");
+        resDir = Path.Combine(executableDir, "..", "..", "..", "..", "Resources");
         #else
         dataDir = Path.Combine(executableDir, "Data");
+        resDir = Path.Combine(executableDir, "Resources");
         #endif
 
         var folders = new Folders
@@ -82,7 +85,8 @@ public class Program
             Props = [ Path.Combine(dataDir, "Props") ],
             Materials = [ Path.Combine(dataDir, "Materials") ],
 
-            Projects = Path.Combine(dataDir, "LevelEditorProjects")
+            Projects = Path.Combine(dataDir, "LevelEditorProjects"),
+            Resources = resDir
         };
 
         var files = new Files {
@@ -207,7 +211,15 @@ public class Program
         InitWindow(2000 * 2/3, 1200 * 2/3, "Henry's Renderer");
         //---------------------------------------------------------
 
-        context.Engine = new();
+        logger.Information("Loading shaders");
+
+        Shaders shaders = Shaders.LoadFrom(folders.Shaders);
+
+        context.Engine = new()
+        {
+            Shaders = shaders,
+            Registry = registry
+        };
 
         rlImGui.Setup(true, true);
         
@@ -304,6 +316,7 @@ public class Program
         if (registry.Props is not null) foreach (var prop in registry.Props.Definitions) UnloadTexture(prop.Texture);
 
         context.Engine.Dispose();
+        shaders.Dispose();
         
         #endregion
 

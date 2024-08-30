@@ -32,6 +32,19 @@ public class Folders
 
     public string? Projects { get; set; }
 
+    public string Shaders { get; protected set; } = "";
+
+    protected string _resources = "";
+    public required string Resources 
+    { 
+        get => _resources; 
+        set
+        {
+            Shaders = Path.Combine(_resources, "Shaders");
+            _resources = value;
+        } 
+    }
+
     public readonly struct CheckResult
     {
         public bool Executable          { get; init; }
@@ -42,6 +55,9 @@ public class Folders
         public string[] NotFoundMaterials { get; init; }
 
         public bool Projects { get; init; }
+
+        public bool Resources { get; init; }
+        public bool Shaders { get; init; }
     }
 
     public CheckResult CheckIntegrity() => new() {
@@ -52,18 +68,15 @@ public class Folders
         NotFoundProps = Props.Where(p => !Directory.Exists(p)).ToArray(),
         NotFoundMaterials = Materials.Where(p => !Directory.Exists(p)).ToArray(),
 
-        Projects = File.Exists(Projects)
+        Projects = File.Exists(Projects),
+        Resources = Directory.Exists(Resources),
+        Shaders = Directory.Exists(Shaders)
     };
 }
 
 public class Files
 {
     public string? Logs { get; set; }
-}
-
-public class Shaders
-{
-
 }
 
 public class Textures

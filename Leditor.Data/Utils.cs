@@ -1,7 +1,47 @@
+using System.Numerics;
+using Leditor.Data.Tiles;
+
 namespace Leditor.Data;
 
 public static class Utils
 {
+    public static int GetMiddle(int number)
+    {
+        if (number < 3) return 0;
+        if (number % 2 == 0) return number / 2 - 1;
+        return number / 2;
+    }
+
+    /// <summary>
+    /// Determines the "middle" of a tile, which where the tile head is positioned.
+    /// </summary>
+    /// <param name="init">a reference to the tile definition</param>
+    public static Vector2 GetTileHeadPosition(in TileDefinition init)
+    {
+        var (width, height) = init.Size;
+        return new Vector2(GetMiddle(width), GetMiddle(height));
+    }
+
+    /// <summary>
+    /// Determines the "middle" of a tile, which where the tile head is positioned.
+    /// </summary>
+    /// <param name="init">a reference to the tile definition</param>
+    public static (int, int) GetTileHeadPositionI(in TileDefinition init)
+    {
+        var (width, height) = init.Size;
+        return (GetMiddle(width), GetMiddle(height));
+    }
+
+    public static bool InBounds<T>(T[,,] matrix, int x, int y)
+    {
+        return x >= 0 && x < matrix.GetLength(1) && y >= 0 && y < matrix.GetLength(0);
+    }
+
+    public static bool InBounds<T>(T[,] matrix, int x, int y)
+    {
+        return x >= 0 && x < matrix.GetLength(1) && y >= 0 && y < matrix.GetLength(0);
+    }
+
     internal static T[,,] Resize<T>(
         T[,,] matrix,
         

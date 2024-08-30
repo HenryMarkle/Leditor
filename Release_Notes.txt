@@ -1,17 +1,1 @@
-- You can now choose to draw tiles-as-props using `Inverse Bilinear Interpolation`.
-    - The option is enabled by default.
-    - It does not affect rendering as it's used by default.
-    - You may choose to disable this option to save some performace.
-
-- When an input is active, navigation will be locked.
-
-- Changed page navigation's default shortcuts again:
-    - Main screen       -> 1
-    - Geometry editor   -> 2
-    - Tile editor       -> 3
-    - Camera editor     -> 4
-    - Light editor      -> 5
-    - Dimensions editor -> 6
-    - Effects editor    -> 7
-    - Props editor      -> 8
-    - Settings          -> 9
+- fixed materials pre-rendering with the wrong slope type

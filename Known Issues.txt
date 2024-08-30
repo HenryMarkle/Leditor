@@ -1,2 +1,3 @@
 - Props editor's undo/redo feature is incomplete.
 - Geometry editor's undo/redo feature does not behave properly when a large brush is applied continouosly.
+- There's a rare chance the geometry editor becomes unresponsive for unknown reason. 

@@ -562,7 +562,7 @@ internal static class Printers
                         break;
                     }
                 } 
-                // else if (!renderMaterials && tileCell.Type == TileType.Material) {
+                // else if (!renderMaterials && tileCell.Type == TileCellType.Material) {
                 //     // var materialName = ((TileMaterial)tileCell.Data).Name;
                 //     var origin = new Vector2(x * scale + 5, y * scale + 5);
                 //     var color = GLOBALS.Level.MaterialColors[y, x, targetLayer];
@@ -3910,7 +3910,7 @@ internal static class Printers
         var scale = GLOBALS.Scale;
         var texture = init.Texture;
 
-        if (init.Type == Data.Tiles.TileType.Box)
+        if (init.Type == TileType.Box)
         {
             var shader = GLOBALS.Shaders.BoxTile;
 
@@ -3974,7 +3974,7 @@ internal static class Printers
             BeginShaderMode(shader);
 
             SetShaderValueTexture(shader, textureLoc, texture);
-            SetShaderValue(shader, layerNumLoc, init.Type == Data.Tiles.TileType.VoxelStructRockType ? 1 : init.Repeat.Length,
+            SetShaderValue(shader, layerNumLoc, init.Type == TileType.VoxelStructRockType ? 1 : init.Repeat.Length,
                 ShaderUniformDataType.Int);
             SetShaderValue(shader, layerHeightLoc, calLayerHeight,
                 ShaderUniformDataType.Float);
@@ -4356,7 +4356,7 @@ internal static class Printers
             var calTextureCutWidth = (float)textureCutWidth / (float)texture.Width;
             var calcOffset = new Vector2(init.BufferTiles, init.BufferTiles) * 20;
 
-            //if (init.Type is InitTileType.VoxelStruct) calcOffset.Y += 1;
+            //if (init.Type is InitTileCellType.VoxelStruct) calcOffset.Y += 1;
 
             calcOffset /= new Vector2(texture.Width, texture.Height);
             
@@ -6667,13 +6667,14 @@ internal static class Printers
                 break;
 
             case GeoType.SlopeES:
+
                 DrawTextureTriangle(
                     texture,
                     new(tx, ty),
-                    new(tsx, tsy),
+                    new(tx, tsy),
                     new(tsx, ty),
                     new(x, y),
-                    new(x + scale, y + scale),
+                    new(x, y + scale),
                     new(x + scale, y),
                     tint
                 );
@@ -6683,10 +6684,10 @@ internal static class Printers
                 DrawTextureTriangle(
                     texture,
                     new(tx, ty),
-                    new(tx, tsy),
+                    new(tsx, tsy),
                     new(tsx, ty),
                     new(x, y),
-                    new(x, y + scale),
+                    new(x + scale, y + scale),
                     new(x + scale, y),
                     tint
                 );
@@ -6715,9 +6716,9 @@ internal static class Printers
         //         {
         //             var cell = GLOBALS.Level.TileMatrix[y, x, targetLayer];
 
-        //             if (cell.Type != TileType.Material && cell.Type != TileType.Default) continue;
+        //             if (cell.Type != TileCellType.Material && cell.Type != TileCellType.Default) continue;
 
-        //             var isDefault = cell.Type == TileType.Default;
+        //             var isDefault = cell.Type == TileCellType.Default;
 
         //             DrawMaterialTexture(isDefault 
         //                 ? GLOBALS.Level.DefaultMaterial 

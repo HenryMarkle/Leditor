@@ -113,12 +113,14 @@ public class TileImporter
         var repeatLAst = Utils.TryGet<AstNode.List>(propertyList, "repeatl");
         var bfTilesAst = Utils.TryGet<AstNode.Number>(propertyList, "bftiles");
         var tagsAst = Utils.TryGet<AstNode.List>(propertyList, "tags");
+        var rndAst = Utils.TryGet<AstNode.Number>(propertyList, "rnd");
 
         var name = nameAst?.Value ?? throw new MissingTileDefinitionPropertyException("nm");
         
         var sizeArgs = sizeAst ?? throw new MissingTileDefinitionPropertyException(name, "sz");
         var size = Utils.GetIntPair(sizeArgs);
         var bfTiles = Utils.GetInt(bfTilesAst ?? throw new MissingTileDefinitionPropertyException(name, "bfTiles"));
+        var rnd = rndAst is null ? 0 : Utils.GetInt(rndAst);
         
         // specs
         
@@ -277,7 +279,7 @@ public class TileImporter
             }).ToArray() ?? [];
 
         
-        return new TileDefinition(name, size, tp, bfTiles, specs, repeatL, tags);
+        return new TileDefinition(name, size, tp, bfTiles, specs, repeatL, tags, rnd);
     }
 
     /// <summary>
