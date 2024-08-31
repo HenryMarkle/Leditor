@@ -558,13 +558,17 @@ public class TileImporter
                 AstNode.Base[] asList = ((AstNode.List)data).Values;
 
                 var name2 = ((AstNode.String)asList[1]).Value;
-                
+
                 if (!tiles.TryGetValue(name2, out var tileDefinition))
                 {
                     logger?.Warning($"[TileImporter::GetTileCell_NoExcept] Undefined tile \"{name2}\"");
                 }
 
-                cell = new Tile(tileDefinition, name2);
+                var secondChainHolder = (tileDefinition!.Tags.Contains("Chain Holder") && asList.Length > 2)
+                    ? (asList[2] is AstNode.GlobalCall gc ? Utils.GetIntPair(gc) : (-1, -1)) 
+                    : (-1, -1);;
+
+                cell = new Tile(tileDefinition, name2) { SecondChainHolderPosition = secondChainHolder };
                 break;
             }
 
@@ -625,7 +629,11 @@ public class TileImporter
                 if (!tiles.TryGetValue(name2, out var tileDefinition))
                     throw new TileNotFoundException(name2);
 
-                cell = new(tileDefinition);
+                var secondChainHolder = (tileDefinition!.Tags.Contains("Chain Holder") && asList.Length > 2)
+                    ? (asList[2] is AstNode.GlobalCall gc ? Utils.GetIntPair(gc) : (-1, -1)) 
+                    : (-1, -1);
+
+                cell = new(tileDefinition) { SecondChainHolderPosition = secondChainHolder };
                 break;
             }
 

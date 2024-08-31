@@ -10,6 +10,7 @@ public class Shaders : IDisposable
     public Shader Invb { get; protected set; }
     public Shader Silhoutte { get; protected set; }
     public Shader WhiteRemover { get; protected set; }
+    public Shader WhiteRemoverApplyColor { get; protected set; }
 
     protected Shaders() {}
 
@@ -21,7 +22,8 @@ public class Shaders : IDisposable
 
         UnloadShader(Invb); 
         UnloadShader(Silhoutte);   
-        UnloadShader(WhiteRemover);   
+        UnloadShader(WhiteRemover);
+        UnloadShader(WhiteRemoverApplyColor);
     }
 
     public static Shaders LoadFrom(string shadersFolder)
@@ -30,7 +32,8 @@ public class Shaders : IDisposable
         {
             Invb = LoadShader(Path.Combine(shadersFolder, "invb.vert"), Path.Combine(shadersFolder, "invb.frag")),
             Silhoutte = LoadShader(null, Path.Combine(shadersFolder, "silhoutte.frag")),
-            WhiteRemover = LoadShader(null, Path.Combine(shadersFolder, "white_remover.frag"))
+            WhiteRemover = LoadShader(null, Path.Combine(shadersFolder, "white_remover.frag")),
+            WhiteRemoverApplyColor = LoadShader(null, Path.Combine(shadersFolder, "white_remover_colored.frag"))
         };
     }
 }

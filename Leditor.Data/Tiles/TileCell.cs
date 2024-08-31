@@ -23,6 +23,7 @@ public readonly struct Tile
     public MaterialDefinition? MaterialDefinition { get; init; } = null;
     public TileDefinition? TileDefinition { get; init; } = null;
     public (int X, int Y, int Z) HeadPosition { get; init; } = (0, 0, 0);
+    public (int x, int y) SecondChainHolderPosition { get; init; } = (0, 0);
 
     public string? UndefinedName { get; init; }
 

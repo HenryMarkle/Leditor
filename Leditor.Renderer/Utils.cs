@@ -1,13 +1,180 @@
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using Leditor.Data;
 using Leditor.Data.Materials;
 using Leditor.Data.Props.Legacy;
-using static Raylib_cs.Raylib;
+using Raylib_cs;
+
+using Color = Raylib_cs.Color;
 
 namespace Leditor.Renderer;
 
 public static class Utils
 {
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector2 GetMiddleCellPos(Vector2 pos) => pos * 20 / 2;
+
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector2 GetMiddleCellPos(int x, int y) => new Vector2(x, y)  * 20 / 2;
+
+    public static float Diag(Vector2 p1, Vector2 p2)
+    {
+        var rectHeight = Math.Abs(p1.Y - p2.Y);
+        var rectWidth = Math.Abs(p1.X - p2.X);
+    
+        return (float) Math.Sqrt(rectHeight * rectHeight + rectWidth * rectWidth);
+    }
+
+    public static Vector2 MoveToPoint(Vector2 p1, Vector2 p2, float move)
+    {
+        var p3 = p2 - p1;
+        var diag = Diag(Vector2.Zero, p3);
+    
+        Vector2 dirVec;
+
+        if (diag > 0)
+        {
+            dirVec = p3 / diag;
+        }
+        else
+        {
+            dirVec = new Vector2(0, 1);
+        }
+
+        return dirVec * move;
+    }
+
+    public static float LookAtPoint(Vector2 p, Vector2 target)
+    {
+        var dy = target.Y - p.Y;
+        var dx = p.X - target.X;
+
+        float rotation;
+
+        if (dx != 0)
+        {
+            rotation = (float) Math.Atan(dy / dx);
+        }
+        else
+        {
+            rotation = (float) (1.5f * Math.PI);
+        }
+
+        float fuckedUpAngleFix;
+
+        if (target.Y > p.Y)
+        {
+            fuckedUpAngleFix = 0;
+        }
+        else
+        {
+            fuckedUpAngleFix = (float) Math.PI;
+        }
+
+        rotation = fuckedUpAngleFix - rotation;
+
+        return rotation * 180 / (float)Math.PI + 90;
+    }
+
+    public static Vector2 DegToVec(float degree)
+    {
+        degree += 90;
+        degree *= -1;
+        
+        var rad = degree / 100 * (float)Math.PI * 2;
+
+        return new Vector2((float)-Math.Cos(rad), (float)Math.Sin(rad));
+    }
+
+    public static Vector2 GiveDirFor90degrToLine(Vector2 p1, Vector2 p2)
+    {
+        var x1 = p1.X;
+        var y1 = p1.Y;
+
+        var x2 = p2.X;
+        var y2 = p2.Y;
+
+        var dy = y1 - y2;
+        var dx = x1 - x2;
+
+        float dir, newDir;
+
+        if (dx != 0)
+        {
+            dir = dy / dx;
+        }
+        else
+        {
+            dir = 1;
+        }
+
+        if (dir != 0)
+        {
+            newDir = -1f / dir;
+        }
+        else
+        {
+            newDir = 1;
+        }
+
+        Vector2 newPoint = new(1, newDir);
+
+        int fac = 1;
+
+        if (x2 < x1)
+        {
+            if (y2 < y1)
+            {
+                fac = 1;
+            }
+            else
+            {
+                fac = -1;
+            }
+        }
+        else
+        {
+            if (y2 < y1)
+            {
+                fac = 1;
+            }
+            else
+            {
+                fac = -1;
+            }
+        }
+
+        newPoint *= fac;
+
+        newPoint /= Diag(Vector2.Zero, newPoint);
+
+        return newPoint;
+    }
+
+    public static Quad RotateRect(Rectangle rect, float degree)
+    {
+        var dir = DegToVec(degree);
+
+        var midPoint = new Vector2((rect.X + rect.Width)/2f, (rect.Y + rect.Height)/2f);
+        var topPoint = midPoint + dir * rect.Height / 2f;
+        var botPoint = midPoint - dir * rect.Height / 2f;
+
+        var crossDir = GiveDirFor90degrToLine(-dir, dir);
+
+        var point1 = topPoint + crossDir * rect.Width / 2f;
+        var point2 = topPoint - crossDir * rect.Width / 2f;
+        var point3 = botPoint - crossDir * rect.Width / 2f;
+        var point4 = botPoint + crossDir * rect.Width / 2f;
+    
+        return new(
+            point2, // top left 
+            point1, // top right
+            point4, // bottom right
+            point3  // bottom left
+        );
+    }
+
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Restrict(int value, int min, int max)
     {

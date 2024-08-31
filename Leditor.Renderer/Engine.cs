@@ -12,7 +12,6 @@ using Leditor.Data.Geometry;
 
 using Color = Raylib_cs.Color;
 using Leditor.Data.Materials;
-using Microsoft.Win32;
 using Leditor.Renderer.RL;
 
 namespace Leditor.Renderer;
@@ -30,14 +29,30 @@ public class Engine
         public RenderTexture2D vertImg;
         public RenderTexture2D horiImg;
 
+        /// <summary>
+        /// Unmanaged by the state
+        /// </summary>
+        public Texture2D bigChainHolder;
+
+        /// <summary>
+        /// Unmanaged by the state
+        /// </summary>
+        public Texture2D fanBlade;
+        
+        /// <summary>
+        /// Unmanaged by the state
+        /// </summary>
+        public Texture2D BigWheelGraf;
+        //
+
         public void Initialize(Registry registry)
         {
             if (Initialized) return;
 
             var lib = registry.CastLibraries.Single(l => l.Name == "levelEditor");
 
-            var vTexture = lib.Members["vertImg"].Texture;
-            var hTexture = lib.Members["horiImg"].Texture;
+            var vTexture = lib["vertImg"].Texture;
+            var hTexture = lib["horiImg"].Texture;
 
             vertImg = LoadRenderTexture(vTexture.Width, vTexture.Height);
             horiImg = LoadRenderTexture(hTexture.Width, hTexture.Height);
@@ -56,6 +71,12 @@ public class Engine
             }
             EndTextureMode();
 
+            var internalLib = registry.CastLibraries.Single(l => l.Name == "Internal");
+
+            bigChainHolder = internalLib["bigChainSegment"].Texture;
+            fanBlade = internalLib["fanBlade"].Texture;
+            BigWheelGraf = internalLib["Big Wheel Graf"].Texture;
+
             Initialized = true;
         }
 
@@ -63,8 +84,8 @@ public class Engine
         {
             var lib = registry.CastLibraries.Single(l => l.Name == "levelEditor");
 
-            var vTexture = lib.Members["vertImg"].Texture;
-            var hTexture = lib.Members["horiImg"].Texture;
+            var vTexture = lib["vertImg"].Texture;
+            var hTexture = lib["horiImg"].Texture;
 
             BeginTextureMode(vertImg);
             {
@@ -272,7 +293,7 @@ public class Engine
     /// <param name="camera">The current render camera</param>
     /// <param name="rt">the temprary canvas to draw on</param>
     protected virtual void DrawTile_MTX(
-        TileDefinition tile, 
+        Tile cell, 
         int x, 
         int y, 
         int layer,
@@ -280,6 +301,7 @@ public class Engine
         RenderTexture2D rt
     )
     {
+        var tile = cell.TileDefinition!;
         var (hx, hy) = Data.Utils.GetTileHeadPositionI(tile);
 
         int startX = x - hx;
@@ -896,7 +918,137 @@ public class Engine
 
         foreach (var tag in tile.Tags)
         {
+            switch (tag)
+            {
+                case "Chain Holder":
+                {
+                    var (cx, cy) = cell.SecondChainHolderPosition;
 
+                    if (cx is -1 || cy is -1) continue;
+
+                    Vector2 p1 = new Vector2(x, y) * 20 / 2 + new Vector2(10.1f, 10.1f);
+                    Vector2 p2 = (new Vector2(cx, cy) - camera.Coords) * 20 / 2 + new Vector2(10.1f, 10.1f);
+
+                    var sublayer = layer * 10 + 2;
+
+                    var steps = (int)(Utils.Diag(p1, p2) / 12.0f + 0.4999f);
+                    var dr = Utils.MoveToPoint(p1, p2, 1.0f);
+                    var ornt = Random.Generate(2) - 1;
+                    var degDir = Utils.LookAtPoint(p1, p2);
+                    var stp = Random.Generate(100) * 0.01f;
+
+                    for (var q = 1; q <= steps; q++)
+                    {
+                        var pos = p1 + (dr * 12 * (q - stp));
+
+                        Rectangle dest, src;
+
+                        if (ornt != 0)
+                        {
+                            dest = new(
+                                pos.X - 6,
+                                pos.Y - 10,
+                                12,
+                                20
+                            );
+
+                            src = new(
+                                0,
+                                0,
+                                12,
+                                20
+                            );
+
+                            ornt = 0;
+                        }
+                        else
+                        {
+                            dest = new(
+                                pos.X - 2,
+                                pos.Y - 10,
+                                4,
+                                10
+                            );
+
+                            src = new(
+                                13,
+                                0,
+                                29,
+                                20
+                            );
+
+                            ornt = 1;
+                        }
+
+                        BeginTextureMode(_layers[sublayer]);
+                        {
+                            var shader = Shaders.WhiteRemoverApplyColor;
+                            BeginShaderMode(shader);
+                            SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.bigChainHolder);
+                            Draw.DrawQuad(
+                                State.bigChainHolder,
+                                src,
+                                Utils.RotateRect(dest, degDir),
+                                Color.Red
+                            );
+                            EndShaderMode();
+                        }
+                        EndTextureMode();
+                    }
+                }
+                break;
+                case "fanBlade":
+                {
+                    var sublayer = (layer + 1) * 10;
+
+                    if (sublayer > 20) sublayer -= 5;
+
+                    var middle = Utils.GetMiddleCellPos(x, y);
+
+                    Rectangle dest = new(
+                        -23 + middle.X,
+                        -23 + middle.Y,
+                         46,
+                         46
+                    );
+
+                    BeginTextureMode(_layers[sublayer - 2]);
+                    {
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.fanBlade);
+                        Draw.DrawQuad(
+                            State.fanBlade,
+                            Utils.RotateRect(dest, Random.Generate(360)),
+                            Color.Green
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    BeginTextureMode(_layers[sublayer]);
+                    {
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.fanBlade);
+                        Draw.DrawQuad(
+                            State.fanBlade,
+                            Utils.RotateRect(dest, Random.Generate(360)),
+                            Color.Green
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+                }
+                break;
+                case "Big Wheel Graf":
+                {
+
+                }
+                break;
+            }
         }
     }
 
@@ -1043,7 +1195,7 @@ public class Engine
                 {
                     if (queuedCell.TileDefinition is not null)
                     {
-                        DrawTile_MTX(queuedCell.TileDefinition, tile.x, tile.y, layer, camera, frontRT);
+                        DrawTile_MTX(queuedCell, tile.x, tile.y, layer, camera, frontRT);
                     }
                 }
                 break;

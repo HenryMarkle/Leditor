@@ -61,6 +61,103 @@ public static class Draw
 
         Rlgl.SetTexture(0);
     }
+    
+    public static void DrawQuad(Texture2D texture, Quad quad, Color color)
+    {
+        var flippedX = quad.TopLeft.X > quad.TopRight.X + 0.5f && quad.BottomLeft.X > quad.BottomRight.X + 0.5f;
+        var flippedY = quad.TopLeft.Y > quad.BottomLeft.Y + 0.5f && quad.TopRight.Y > quad.BottomRight.Y + 0.5f;
+
+        var (topRight, topLeft, bottomLeft, bottomRight) = (flippedX, flippedY) switch
+        {
+            (false, false) => (quad.TopRight, quad.TopLeft, quad.BottomLeft, quad.BottomRight),
+            (false, true ) => (quad.BottomRight, quad.BottomLeft, quad.TopLeft, quad.TopRight),
+            (true , false) => (quad.TopLeft, quad.TopRight, quad.BottomRight, quad.BottomLeft),
+            (true , true ) => (quad.BottomLeft, quad.BottomRight, quad.TopRight, quad.TopLeft)
+        };
+
+        var ((vTopRightX, vTopRightY), (vTopLeftX, vTopLeftY), (vBottomLeftX, vBottomLeftY), (vBottomRightX, vBottomRightY)) = (flippedX, flippedY) switch
+        {
+            (false, false) => ((1.0f, 0.0f), (0.0f, 0.0f), (0.0f, 1.0f), (1.0f, 1.0f)),
+            (false, true) => ((1.0f, 1.0f), (0.0f, 1.0f), (0.0f, 0.0f), (1.0f, 0.0f)),
+            (true, false) => ((0.0f, 0.0f), (1.0f, 0.0f), (1.0f, 1.0f), (0.0f, 1.0f)),
+            (true, true) => ((0.0f, 1.0f), (1.0f, 1.0f), (1.0f, 0.0f), (0.0f, 0.0f))
+        };
+
+        Rlgl.SetTexture(texture.Id);
+
+        Rlgl.Begin(0x0007);
+        Rlgl.Color4ub(color.R, color.G, color.B, color.A);
+        
+        Rlgl.TexCoord2f(vTopRightX, vTopRightY);
+        Rlgl.Vertex2f(topRight.X, topRight.Y);
+        
+        Rlgl.TexCoord2f(vTopLeftX, vTopLeftY);
+        Rlgl.Vertex2f(topLeft.X, topLeft.Y);
+
+        Rlgl.TexCoord2f(vBottomLeftX, vBottomLeftY);
+        Rlgl.Vertex2f(bottomLeft.X, bottomLeft.Y);
+        
+        Rlgl.TexCoord2f(vBottomRightX, vBottomRightY);
+        Rlgl.Vertex2f(bottomRight.X, bottomRight.Y);
+
+        Rlgl.TexCoord2f(vTopRightX, vTopRightY);
+        Rlgl.Vertex2f(topRight.X, topRight.Y);
+        
+        Rlgl.End();
+
+        Rlgl.SetTexture(0);
+    }
+
+    public static void DrawQuad(Texture2D texture, Rectangle source, Quad quad, Color color)
+    {
+        var flippedX = quad.TopLeft.X > quad.TopRight.X + 0.5f && quad.BottomLeft.X > quad.BottomRight.X + 0.5f;
+        var flippedY = quad.TopLeft.Y > quad.BottomLeft.Y + 0.5f && quad.TopRight.Y > quad.BottomRight.Y + 0.5f;
+
+        var (topRight, topLeft, bottomLeft, bottomRight) = (flippedX, flippedY) switch
+        {
+            (false, false) => (quad.TopRight, quad.TopLeft, quad.BottomLeft, quad.BottomRight),
+            (false, true ) => (quad.BottomRight, quad.BottomLeft, quad.TopLeft, quad.TopRight),
+            (true , false) => (quad.TopLeft, quad.TopRight, quad.BottomRight, quad.BottomLeft),
+            (true , true ) => (quad.BottomLeft, quad.BottomRight, quad.TopRight, quad.TopLeft)
+        };
+
+        var left = source.X / texture.Width;
+        var top = source.Y / texture.Height;
+        var right = (source.X + source.Width) / texture.Width;
+        var bottom = (source.Y + source.Height) / texture.Height;
+
+        var ((vTopRightX, vTopRightY), (vTopLeftX, vTopLeftY), (vBottomLeftX, vBottomLeftY), (vBottomRightX, vBottomRightY)) = (flippedX, flippedY) switch
+        {
+            (false, false) => ((right, top), (left, top), (left, bottom), (right, bottom)),
+            (false, true) => ((right, bottom), (left, bottom), (left, top), (right, top)),
+            (true, false) => ((left, top), (right, top), (right, bottom), (left, bottom)),
+            (true, true) => ((left, bottom), (right, bottom), (right, top), (left, top))
+        };
+
+        Rlgl.SetTexture(texture.Id);
+
+        Rlgl.Begin(0x0007);
+        Rlgl.Color4ub(color.R, color.G, color.B, color.A);
+        
+        Rlgl.TexCoord2f(vTopRightX, vTopRightY);
+        Rlgl.Vertex2f(topRight.X, topRight.Y);
+        
+        Rlgl.TexCoord2f(vTopLeftX, vTopLeftY);
+        Rlgl.Vertex2f(topLeft.X, topLeft.Y);
+
+        Rlgl.TexCoord2f(vBottomLeftX, vBottomLeftY);
+        Rlgl.Vertex2f(bottomLeft.X, bottomLeft.Y);
+        
+        Rlgl.TexCoord2f(vBottomRightX, vBottomRightY);
+        Rlgl.Vertex2f(bottomRight.X, bottomRight.Y);
+
+        Rlgl.TexCoord2f(vTopRightX, vTopRightY);
+        Rlgl.Vertex2f(topRight.X, topRight.Y);
+        
+        Rlgl.End();
+
+        Rlgl.SetTexture(0);
+    }
 
     public static void DrawQuad(Texture2D texture, Quad quad, bool flipX, bool flipY)
     {
