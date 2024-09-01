@@ -96,14 +96,11 @@ public class Program
         #endregion
 
         using var logger = new LoggerConfiguration()
-            .WriteTo.Map(
-                _ => Environment.CurrentManagedThreadId,
-                (id, wt) => wt.File(
-                    Path.Combine(executableDir, "logs", $"logs-{id}.log"),
-                    fileSizeLimitBytes: 50000000,
-                    rollOnFileSizeLimit: true,
-                    restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Debug
-                )
+            .WriteTo.File(
+                Path.Combine(executableDir, "logs", $"logs.log"),
+                fileSizeLimitBytes: 50000000,
+                rollOnFileSizeLimit: true,
+                restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Debug
             )
             .WriteTo.Console(Serilog.Events.LogEventLevel.Debug)
             .CreateLogger();
@@ -117,10 +114,13 @@ public class Program
 
         var foldersCheckResult = folders.CheckIntegrity();
 
+        logger.Information("Check result:\n\n{Result}\n", foldersCheckResult);
+
         if (!foldersCheckResult.Executable) logger.Fatal("Executable's path not found");
         if (!foldersCheckResult.LegacyCastMembers) logger.Fatal("Cast folder not found");
         if (!foldersCheckResult.Projects)
         {
+            Console.WriteLine(folders.Projects);
             #if DEBUG
             try
             {
@@ -154,15 +154,11 @@ public class Program
             Materials = new Dex<MaterialDefinition>(Utils.GetEmbeddedMaterials())
         };
 
-        CastLibrary[] castLibraries = [];
-
         var castLibrariesLoader = new CastLoader(folders.LegacyCastMembers, logger);
 
         var tileLoader = new DefinitionLoader<TileDefinition>(folders.Tiles, TileImporter.ParseInitAsync_NoCategories, logger);
         var propLoader = new DefinitionLoader<InitPropBase>(folders.Props, PropImporter.ParseLegacyInitAsync_NoCategories, logger);
 
-
-        #region Init Pages
 
         int page = 0;
 
@@ -178,25 +174,6 @@ public class Program
         context.LevelLoadingStarted += (_, _) => { page = 2; };
         context.LevelLoadingFailed += (_, _) => { page = 0; };
 
-        StartPage startPage = new(context)
-        {
-            ProjectsFolder = folders.Projects,
-            Logger = logger,
-        };
-
-        MainPage mainPage = new(context)
-        {
-            Logger = logger,
-        };
-
-        LevelLoadingPage levelLoadingPage = new();
-
-        RenderingPage renderingPage = new(context)
-        {
-            Logger = logger
-        };
-
-        #endregion
         
         SetTargetFPS(60);
         SetWindowState(ConfigFlags.ResizableWindow);
@@ -217,9 +194,40 @@ public class Program
 
         context.Engine = new()
         {
+            Logger = logger,
             Shaders = shaders,
             Registry = registry
         };
+
+        #region Load Assets
+
+        Textures textures = new();
+        textures.Inititialize(folders.Textures);
+        context.Textures = textures;
+        
+        #endregion
+
+        #region Init Pages
+
+        StartPage startPage = new(context)
+        {
+            ProjectsFolder = folders.Projects,
+            Logger = logger,
+        };
+
+        MainPage mainPage = new(context)
+        {
+            Logger = logger,
+        };
+
+        LevelLoadingPage levelLoadingPage = new();
+
+        RenderingPage renderingPage = new(context)
+        {
+            Logger = logger
+        };
+
+        #endregion
 
         rlImGui.Setup(true, true);
         
@@ -239,13 +247,7 @@ public class Program
 
                 if (!castLibrariesLoader.IsCompleted)
                 {
-                    if (castLibrariesLoader.IsReady && castLibrariesLoader.LoadNext())
-                    {
-                        if (castLibrariesLoader.IsCompleted)
-                        {
-                            castLibraries = castLibrariesLoader.GetLibs();
-                        }
-                    }
+                    if (castLibrariesLoader.LoadNext()) registry.CastLibraries = castLibrariesLoader.GetLibs();
                 }
 
                 if (!tileLoader.IsCompleted)
@@ -307,7 +309,7 @@ public class Program
 
         logger.Information("Unloading resources");
 
-        foreach (var lib in castLibraries)
+        foreach (var lib in registry.CastLibraries)
         {
             foreach (var (_, member) in lib.Members) UnloadTexture(member.Texture);
         }

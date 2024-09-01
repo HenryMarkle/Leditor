@@ -10,6 +10,7 @@ using Leditor.Data.Props.Definitions;
 
 using System.Numerics;
 using Leditor.Data.Props.Legacy;
+using Raylib_cs;
 
 public class Registry
 {
@@ -32,6 +33,7 @@ public class Folders
 
     public string? Projects { get; set; }
 
+    public string Textures { get; protected set; } = "";
     public string Shaders { get; protected set; } = "";
 
     protected string _resources = "";
@@ -40,8 +42,10 @@ public class Folders
         get => _resources; 
         set
         {
-            Shaders = Path.Combine(_resources, "Shaders");
             _resources = value;
+
+            Shaders = Path.Combine(_resources, "Shaders");
+            Textures = Path.Combine(_resources, "Textures");
         } 
     }
 
@@ -57,7 +61,35 @@ public class Folders
         public bool Projects { get; init; }
 
         public bool Resources { get; init; }
+        public bool Textures { get; init; }
         public bool Shaders { get; init; }
+
+        public override string ToString()
+        {
+            var tiles = NotFoundTiles.Length > 0 
+                ? "\n\t" + string.Join("\n\t", NotFoundTiles) 
+                : "OK";
+            
+            var props = NotFoundProps.Length > 0 
+                ? "\n\t" + string.Join("\n\t", NotFoundProps) 
+                : "OK";
+            
+            var mater = NotFoundMaterials.Length > 0 
+                ? "\n\t" + string.Join("\n\t", NotFoundMaterials) 
+                : "OK";
+
+            static string IsOk(bool v) => v ? "OK" : "MISSING";
+
+            return $"Executable: {IsOk(Executable)}\n"
+            + $"Cast: {IsOk(LegacyCastMembers)}\n"
+            + $"Tile: {tiles}\n"
+            + $"Prop: {props}\n"
+            + $"Material: {mater}\n"
+            + $"Projects: {IsOk(Projects)}\n"
+            + $"Resources: {IsOk(Resources)}\n"
+            + $"Textures: {IsOk(Textures)}\n"
+            + $"Shaders: {IsOk(Shaders)}";
+        }
     }
 
     public CheckResult CheckIntegrity() => new() {
@@ -68,8 +100,9 @@ public class Folders
         NotFoundProps = Props.Where(p => !Directory.Exists(p)).ToArray(),
         NotFoundMaterials = Materials.Where(p => !Directory.Exists(p)).ToArray(),
 
-        Projects = File.Exists(Projects),
+        Projects = Directory.Exists(Projects),
         Resources = Directory.Exists(Resources),
+        Textures = Directory.Exists(Textures),
         Shaders = Directory.Exists(Shaders)
     };
 }
@@ -79,7 +112,30 @@ public class Files
     public string? Logs { get; set; }
 }
 
-public class Textures
+public class Textures : IDisposable
 {
+    public bool Disposed { get; protected set; }
+    public bool Initialized { get; protected set;}
 
+    public Texture2D Folder { get; protected set; }
+    public Texture2D File { get; protected set; }
+
+    public void Inititialize(string assetsFolder)
+    {
+        if (Initialized) return;
+
+        Folder = Raylib.LoadTexture(Path.Combine(assetsFolder, "folder icon.png"));
+        File = Raylib.LoadTexture(Path.Combine(assetsFolder, "file icon.png"));
+
+        Initialized = true;
+    }
+
+    public void Dispose()
+    {
+        if (Disposed || !Initialized) return;
+        Disposed = true;
+
+        Raylib.UnloadTexture(Folder);
+        Raylib.UnloadTexture(File);
+    }
 }

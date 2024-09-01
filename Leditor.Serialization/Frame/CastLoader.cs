@@ -7,27 +7,27 @@ using Raylib_cs;
 
 public class CastLoader
 {
-    private Serilog.ILogger? Logger { get; init; }
+    protected Serilog.ILogger? Logger { get; init; }
 
-    private readonly Task<(Image image, string name)>[] _images;
-    private readonly Task _allImages;
+    protected readonly Task<(Image image, string name)>[] _images;
+    protected readonly Task _allImages;
 
-    public bool IsReady => _allImages.IsCompleted;
-    public bool IsLoaded { get; private set; }
-    public bool IsCompleted => _libTask?.IsCompleted == true;
+    public bool IsReady => _allImages.IsCompletedSuccessfully;
+    public bool IsLoaded { get; protected set; }
+    public bool IsCompleted { get; protected set; }
 
-    private int _taskCursor;
+    protected int _taskCursor;
 
-    private readonly List<(string lib, string name, Texture2D texture)> _parsed = [];
-    private CastLibrary[] _libs = [];
-    private Task? _libTask;
+    protected readonly List<(string lib, string name, Texture2D texture)> _parsed = [];
+    protected CastLibrary[] _libs = [];
+    protected Task? _libTask;
 
-    public int TotalProgress { get; private set; }
-    public int Progress { get; private set; }
+    public int TotalProgress { get; protected set; }
+    public int Progress { get; protected set; }
     
     public CastLoader(string folder, Serilog.ILogger? logger = null)
     {
-        logger?.Information("[CastLoader] Loading cast members started");
+        logger?.Information("[CastLoader] Begin loading cast members");
 
         var files = Directory
             .GetFiles(folder)
@@ -50,60 +50,57 @@ public class CastLoader
     {
         if (!IsReady) return false;
 
-        if (IsLoaded) return true;
+        if (IsLoaded) return _libTask?.IsCompleted ?? false;
 
         if (_taskCursor >= _images.Length)
         {
-            _libTask = Task.Factory.StartNew(() => {
-                _libs = _parsed
-                    .GroupBy(p => p.lib)
-                    .Select(g => {
-                        var dict = g.ToDictionary(g => g.name, g => new CastMember(g.name, 0, g.texture));
-                    
-                        return new CastLibrary {
-                            Name = g.Key,
-                            Members = dict
-                        };
-                    })
-                    .ToArray();
+            _libTask = Task.Run(() => {
+                var groups =  _parsed.GroupBy(p => p.lib);
+
+                List<CastLibrary> libs = new(groups.Count());
+
+                foreach (var g in groups) libs.Add(new() {
+                    Name = g.Key,
+                    Members = g.ToDictionary(g => g.name, g => new CastMember(g.name, 0, g.texture))
+                });
+
+                _libs = [..libs];
             });
 
             IsLoaded = true;
-            return true;
+            return false;
         }
 
         var (image, name) = _images[_taskCursor].Result;
-
-        var texture = LoadTextureFromImage(image);
-        UnloadImage(image);
 
         var segments = name.Split('_');
 
         if (segments.Length != 3)
         {
-            UnloadTexture(texture);
-            _taskCursor++;
-
             Logger?.Error("[CastLoader::LoadNext] Invalid cast member name");
         }
+        else
+        {
+            var lib = segments[0];
+            // var offset = segments[1];
+            var memberName = segments[2];
 
-        var lib = segments[0];
-        // var offset = segments[1];
-        var memberName = segments[2];
-
-        _parsed.Add((lib, memberName, texture));
-
+            if (!string.IsNullOrEmpty(memberName))
+            {
+                _parsed.Add((lib, memberName, LoadTextureFromImage(image)));
+            }
+        }
+        
         _taskCursor++;
-
         Progress++;
-
+        UnloadImage(image);
         return false;
     }
 
     public CastLibrary[] GetLibs()
     {
-        if (!IsCompleted) throw new InvalidOperationException("Texture loading is not done");
-
+        IsCompleted = true;
+        
         return _libs;
     }
 }

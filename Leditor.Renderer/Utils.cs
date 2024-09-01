@@ -185,6 +185,15 @@ public static class Utils
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int Cycle(int value, int min, int max)
+    {
+        if (value < min) return max;
+        if (value > max) return min;
+
+        return value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int BoolInt(bool value) => value ? 1 : 0;
 
     public static MaterialDefinition[] GetEmbeddedMaterials()

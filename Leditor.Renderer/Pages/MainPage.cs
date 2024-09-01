@@ -155,6 +155,14 @@ public class MainPage
         {
             Context.Page = 0;
         }
+        else if (IsKeyDown(KeyboardKey.LeftControl) && IsKeyDown(KeyboardKey.LeftShift) && IsKeyPressed(KeyboardKey.R))
+        {
+            if (Context.Engine is not null && Context.Level is not null)
+            {
+                Context.Engine.Load(Context.Level);
+                Context.Page = 3;
+            }
+        }
 
         ClearBackground(Color.DarkGray);
 

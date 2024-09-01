@@ -63,7 +63,7 @@ void main() {
 	
 	vec2 uv = invbilinear(p, a, b, c, d);
 
-	vec4 c = texture(inputTexture, uv);
+	vec4 color = texture(inputTexture, uv);
 
-	FragColor = c;
+	FragColor = color;
 }

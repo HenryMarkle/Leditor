@@ -39,6 +39,8 @@ public class Context
 
     public Serilog.ILogger? Logger { get; init; }
 
+    public Textures? Textures { get; set; }
+
     public Registry? Registry { get; set; }
 
     public LevelState? Level { get; private set; }
@@ -72,18 +74,18 @@ public class Context
 
                 var result = resultTask.Result;
 
-                Level ??= new(0, 0, (0, 0, 0, 0), null);
+                Level ??= new(0, 0, (0, 0, 0, 0), new("Undefined", new()));
 
                 Level.Import(
                     result.Width,
                     result.Height,
                     (result.BufferTiles.Left, result.BufferTiles.Top, result.BufferTiles.Right, result.BufferTiles.Bottom),
-                    result.GeoMatrix,
-                    result.TileMatrix,
-                    result.MaterialColorMatrix,
+                    result.GeoMatrix!,
+                    result.TileMatrix!,
+                    result.MaterialColorMatrix!,
                     result.Effects,
                     result.Cameras,
-                    result.PropsArray,
+                    result.PropsArray ?? [],
                     result.LightSettings,
                     result.LightMode,
                     result.DefaultTerrain,

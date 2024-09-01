@@ -18,9 +18,15 @@ namespace Leditor.Renderer;
 
 /// <summary>
 /// The main class responsible for rendering the whole level.
+/// Is the rendering code is too big to be contained in a single file, 
+/// therefor the class had to be partial.
 /// </summary>
-public class Engine
+public partial class Engine
 {
+    /// <summary>
+    /// Stores textures that are acquired from cast members. 
+    /// This class does not manage any <see cref="Texture2D"/> field or property.
+    /// </summary>
     protected class RenderState
     {
         private bool Initialized { get; set; }
@@ -29,26 +35,25 @@ public class Engine
         public RenderTexture2D vertImg;
         public RenderTexture2D horiImg;
 
-        /// <summary>
-        /// Unmanaged by the state
-        /// </summary>
         public Texture2D bigChainHolder;
-
-        /// <summary>
-        /// Unmanaged by the state
-        /// </summary>
         public Texture2D fanBlade;
-        
-        /// <summary>
-        /// Unmanaged by the state
-        /// </summary>
         public Texture2D BigWheelGraf;
-        //
+        public Texture2D sawbladeGraf;
+        public Texture2D randomCords;
+        public Texture2D bigSigns1;
+        public Texture2D bigSigns2;
+        public Texture2D bigSignGradient;
+        public Texture2D bigWesternSigns;
+        public Texture2D smallAsianSigns;
+        public Texture2D smallAsianSignsStation;
+        public Texture2D glassImage;
+        public Texture2D HarvesterAEye;
+        public Texture2D HarvesterBEye;
 
         public void Initialize(Registry registry)
         {
             if (Initialized) return;
-
+            
             var lib = registry.CastLibraries.Single(l => l.Name == "levelEditor");
 
             var vTexture = lib["vertImg"].Texture;
@@ -72,10 +77,22 @@ public class Engine
             EndTextureMode();
 
             var internalLib = registry.CastLibraries.Single(l => l.Name == "Internal");
+            var droughtLib = registry.CastLibraries.Single(l => l.Name == "Drought");
 
             bigChainHolder = internalLib["bigChainSegment"].Texture;
             fanBlade = internalLib["fanBlade"].Texture;
             BigWheelGraf = internalLib["Big Wheel Graf"].Texture;
+            sawbladeGraf = droughtLib["sawbladeGraf"].Texture;
+            randomCords = lib["randomCords"].Texture;
+            bigSigns1 = internalLib["bigSigns1"].Texture;
+            bigSigns2 = internalLib["bigSigns2"].Texture;
+            bigSignGradient = internalLib["bigSignGradient"].Texture;
+            bigWesternSigns = internalLib["bigWesternSigns"].Texture;
+            smallAsianSigns = internalLib["smallAsianSigns"].Texture;
+            smallAsianSignsStation = droughtLib["smallAsianSignsStation"].Texture;
+            glassImage = lib["glassImage"].Texture;
+            HarvesterAEye = lib["HarvesterAEye"].Texture;
+            HarvesterBEye = lib["HarvesterBEye"].Texture;
 
             Initialized = true;
         }
@@ -137,10 +154,13 @@ public class Engine
     {
         get
         {
-            Compose();
             return _canvas;
         }
     }
+
+    #if DEBUG
+    public RenderTexture2D[] Layers => _layers;
+    #endif
 
     /// <summary>
     /// The level's state is not managed by <see cref="Engine"/>
@@ -170,9 +190,14 @@ public class Engine
         if (!Disposed) throw new InvalidOperationException("Engine was not disposed by consumer");
     }
 
+    /// <summary>
+    /// Must be called within a GL context.
+    /// </summary>
     public void Initialize()
     {
         if (Initialized) return;
+
+        Logger?.Information("[Engine::Initialize] Begin initializing renderer");
 
         for (var l = 0; l < 30; l++)
         {
@@ -180,6 +205,22 @@ public class Engine
             _layersDC[l] = LoadRenderTexture(Width, Height);
             _gradientA[l] = LoadRenderTexture(Width, Height);
             _gradientB[l] = LoadRenderTexture(Width, Height);
+
+            BeginTextureMode(_layers[l]);
+            ClearBackground(Color.White);
+            EndTextureMode();
+
+            BeginTextureMode(_layersDC[l]);
+            ClearBackground(Color.White);
+            EndTextureMode();
+
+            BeginTextureMode(_gradientA[l]);
+            ClearBackground(Color.White);
+            EndTextureMode();
+
+            BeginTextureMode(_gradientB[l]);
+            ClearBackground(Color.White);
+            EndTextureMode();
         }
 
         _canvas = LoadRenderTexture(Width, Height);
@@ -187,23 +228,32 @@ public class Engine
         BeginTextureMode(_canvas);
         ClearBackground(Color.White);
         EndTextureMode();
+
+        State.Initialize(Registry);
+
+        Initialized = true;
     }
 
-    protected void Compose()
+    public void Compose()
     {
-        var shader = Shaders.WhiteRemover;
+        var shader = Shaders.WhiteRemoverVFlip;
 
         BeginTextureMode(_canvas);
 
         ClearBackground(Color.White);
-        foreach (var layer in _layers)
+
+        for (var l = 29; l >= 0; l--)
         {
+            var layer = _layers[l];
+
             BeginShaderMode(shader);
             SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), layer.Texture);
 
-            DrawTexture(layer.Texture, 0, 0, Color.White);
+            DrawTexture(layer.Texture, 29 - l, 29 - l, Color.White);
 
             EndShaderMode();
+
+            // DrawRectangle(0, 0, _canvas.Texture.Width, _canvas.Texture.Height, Color.White with { A = (byte)(30 + l) });
         }
 
         EndTextureMode();
@@ -222,6 +272,14 @@ public class Engine
             EndTextureMode();
 
             BeginTextureMode(_layersDC[l]);
+            ClearBackground(Color.White);
+            EndTextureMode();
+
+            BeginTextureMode(_gradientA[l]);
+            ClearBackground(Color.White);
+            EndTextureMode();
+
+            BeginTextureMode(_gradientB[l]);
             ClearBackground(Color.White);
             EndTextureMode();
         }
@@ -472,7 +530,7 @@ public class Engine
 
                 for (var l = 0; l < tile.Repeat.Length; l++)
                 {
-                    for (var repeat = 0; repeat < tile.Repeat[l]; l++)
+                    for (var repeat = 0; repeat < tile.Repeat[l]; repeat++)
                     {
                         d++;
 
@@ -1045,7 +1103,1169 @@ public class Engine
                 break;
                 case "Big Wheel Graf":
                 {
+                    int[] dpsL = layer switch {
+                        0 => [  0,  7 ],
+                        1 => [  9, 17 ],
+                        _ => [ 19, 27 ]
+                    };
 
+                    Vector2 offset = Utils.GetMiddleCellPos(x, y) + new Vector2(10, 10);
+
+                    Rectangle rect = new(
+                        -90 + offset.X,
+                        -90 + offset.Y,
+                        180,
+                        180
+                    );
+
+                    foreach (var l in dpsL)
+                    {
+                        var rnd = Random.Generate(360);
+
+                        foreach (var dp in new int[3] { l, l + 1, l + 2 })
+                        {
+                            BeginTextureMode(_layers[dp]);
+                            
+                            var shader = Shaders.WhiteRemoverApplyColor;
+                            BeginShaderMode(shader);
+                            SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.BigWheelGraf);
+                            Draw.DrawQuad(
+                                State.BigWheelGraf,
+                                Utils.RotateRect(rect, rnd + 0.001f),
+                                Color.Green
+                            );
+                            EndShaderMode();
+
+                            EndTextureMode();
+                        }
+                    }
+                }
+                break;
+                case "Sawblades":
+                {
+                    int[] dpsL = layer switch {
+                        0 => [  0,  7 ],
+                        1 => [  9, 17 ],
+                        _ => [ 19, 27 ]
+                    };
+
+                    Vector2 offset = Utils.GetMiddleCellPos(x, y) + new Vector2(10, 10);
+
+                    Rectangle rect = new(
+                        -90 + offset.X,
+                        -90 + offset.Y,
+                        180,
+                        180
+                    );
+
+                    foreach (var l in dpsL)
+                    {
+                        var rnd = Random.Generate(360);
+
+                        foreach (var dp in new int[3] { l, l + 1, l + 2 })
+                        {
+                            BeginTextureMode(_layers[dp]);
+                            
+                            var shader = Shaders.WhiteRemoverApplyColor;
+                            BeginShaderMode(shader);
+                            SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.sawbladeGraf);
+                            Draw.DrawQuad(
+                                State.sawbladeGraf,
+                                Utils.RotateRect(rect, rnd + 0.001f),
+                                Color.Green
+                            );
+                            EndShaderMode();
+
+                            EndTextureMode();
+                        }
+                    }
+                }
+                break;
+            
+                case "randomCords":
+                {
+                    var sublayer = layer * 10 + Random.Generate(9);
+                
+                    var pnt = Utils.GetMiddleCellPos(new Vector2(x, y + tile.Size.Height/2f));
+
+                    Rectangle rect = new(
+                        -50 + pnt.X,
+                        -50 + pnt.Y,
+                        100,
+                        100
+                    );
+
+                    var rnd = Random.Generate(7);
+
+                    BeginTextureMode(_layers[sublayer]);
+                    {
+                        var shader = Shaders.WhiteRemover;
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.randomCords);
+                        Draw.DrawQuad(
+                            State.randomCords,
+                            new Rectangle((rnd - 1)*100 + 1, 1, 100, 100),
+                            Utils.RotateRect(rect, -30+Random.Generate(60))
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+                }
+                break;
+                case "Big Sign":
+                case "Big SignB":
+                {
+                    var sublayer = layer * 10;
+
+                    var texture = LoadRenderTexture(60, 60);
+
+                    var rnd = Random.Generate(20);
+
+                    Rectangle dest = new(3, 3, 26, 30);
+
+                    BeginTextureMode(texture);
+                    {
+                        ClearBackground(Color.White);
+
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.bigSigns1);
+                        DrawTexturePro(
+                            State.bigSigns1,
+                            new((rnd - 1)*26, 0, 26, 30),
+                            dest,
+                            Vector2.Zero,
+                            0,
+                            Color.Black
+                        );
+                        EndShaderMode();
+
+                        rnd = Random.Generate(20);
+                        dest = new(31, 3, 57, 30);
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.bigSigns1);
+                        DrawTexturePro(
+                            State.bigSigns1,
+                            new((rnd - 1)*26, 0, 26, 30),
+                            dest,
+                            Vector2.Zero,
+                            0,
+                            Color.Black
+                        );
+                        EndShaderMode();
+
+                        rnd = Random.Generate(14);
+                        dest = new(3, 35, 55, 24);
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.bigSigns2);
+                        DrawTexturePro(
+                            State.bigSigns2,
+                            new((rnd - 1)*55, 0, 55, 24),
+                            dest,
+                            Vector2.Zero,
+                            0,
+                            Color.Black
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    BeginTextureMode(rt);
+                    {
+                        var middle = Utils.GetMiddleCellPos(x, y);
+
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        foreach (
+                            var (pos, color) 
+                            in 
+                            new ReadOnlySpan<(Vector2 pos, Color color)>([ 
+                                (new(-4, -4), Color.Blue ), 
+                                (new(-3, -3), Color.Blue ), 
+                                (new( 3,  3), Color.Red  ), 
+                                (new( 4,  4), Color.Red  ), 
+                                (new(-2, -2), Color.Green), 
+                                (new(-1, -1), Color.Green), 
+                                (new( 0,  0), Color.Green), 
+                                (new( 1,  1), Color.Green), 
+                                (new( 2,  2), Color.Green), 
+                                (new( 2,  2), Color.Green), 
+                            ])
+                        )
+                        {
+
+                            BeginShaderMode(shader);
+                            SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                            DrawTexturePro(
+                                texture.Texture,
+                                new(0, 0, 60, 60),
+                                new(
+                                    -30 + middle.X + pos.X,
+                                    -30 + middle.Y + pos.Y,
+                                    60,
+                                    60
+                                ),
+                                Vector2.Zero,
+                                0,
+                                color
+                            );
+                            EndShaderMode();
+                        }
+                    
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                        DrawTexturePro(
+                            texture.Texture,
+                            new(0, 0, 60, 60),
+                            new(
+                                -30 + middle.X,
+                                -30 + middle.Y,
+                                60,
+                                60
+                            ),
+                            Vector2.Zero,
+                            0,
+                            new Color(255, 0, 255, 255)
+                        );
+                        EndShaderMode();                     
+                    }
+                    EndTextureMode();
+
+
+                    Draw.DrawToEffectColor(
+                        State.bigSignGradient, 
+                        new(0, 0, 60, 60), 
+                        new(-30, -30, 60, 60), 
+                        tag == "Big Sign" ? _gradientA : _gradientB, 
+                        sublayer, 
+                        1, 
+                        1
+                    );
+
+                    UnloadRenderTexture(texture);
+                }
+                break;
+                
+                // Highly repetative code incoming.
+
+                case "Big Western Sign":
+                case "Big Western Sign Titled":
+                {
+                    var texture = LoadRenderTexture(36, 48);
+                    var rnd = Random.Generate(20);
+                    var middle = Utils.GetMiddleCellPos(x, y);
+                    middle.X += 10;
+
+                    BeginTextureMode(texture);
+                    {
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        DrawTexturePro(
+                            State.bigWesternSigns,
+                            new((rnd - 1)*36, 0, 36, 48),
+                            new(0, 0, texture.Texture.Width, texture.Texture.Height),
+                            Vector2.Zero,
+                            0,
+                            Color.Black
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    ReadOnlySpan<(Vector2, Color)> list = [
+                        (new(-4, -4), Color.Blue),
+                        (new(-3, -3), Color.Blue),
+                        (new( 3,  3), Color.Red),
+                        (new( 4,  4), Color.Red),
+                        (new(-2, -2), Color.Green),
+                        (new(-1, -1), Color.Green),
+                        (new( 0,  0), Color.Green),
+                        (new( 1,  1), Color.Green),
+                        (new( 2,  2), Color.Green),
+                        (new( 0,  0), new(255, 0, 255, 255)),
+                    ];
+
+                    BeginTextureMode(rt);
+                    {
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                        if (tag == "Big Western Sign Titled")
+                        {
+                            var tilt = -45.1f + Random.Generate(90);
+
+
+                            foreach (var (point, color) in list)
+                            {
+                                Draw.DrawQuad(
+                                    texture.Texture,
+                                    Utils.RotateRect(new Rectangle(
+                                            middle.X - 18 + point.X,
+                                            middle.Y - 24 + point.Y,
+                                            36,
+                                            48
+                                        ),
+                                        tilt
+                                    ),
+                                    color
+                                );
+                            }
+                        }
+                        else
+                        {
+                            foreach (var (point, color) in list)
+                            {
+                                DrawTexturePro(
+                                    texture.Texture,
+                                    new Rectangle(0, 0, 36, 48),
+                                    new Rectangle(
+                                        middle.X - 18 + point.X,
+                                        middle.Y - 24 + point.Y,
+                                        36,
+                                        48
+                                    ),
+                                    Vector2.Zero,
+                                    0,
+                                    color
+                                );
+                            }
+                        }
+
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    var sublayer = layer * 10;
+
+                    Draw.DrawToEffectColor(
+                        State.bigSignGradient,
+                        new Rectangle(0, 0, 60, 60),
+                        new Rectangle(
+                            middle.X - 25,
+                            middle.Y - 30,
+                            50,
+                            60
+                        ),
+                        _gradientA,
+                        sublayer,
+                        1,
+                        1
+                    );
+
+                    UnloadRenderTexture(texture);
+                }
+                break;
+            
+                case "Big Western Sign B":
+                case "Big Western Sign Titled B":
+                {
+                    var texture = LoadRenderTexture(36, 48);
+                    var rnd = Random.Generate(20);
+                    var middle = Utils.GetMiddleCellPos(x, y);
+                    middle.X += 10;
+
+                    BeginTextureMode(texture);
+                    {
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        DrawTexturePro(
+                            State.bigWesternSigns,
+                            new((rnd - 1)*36, 0, 36, 48),
+                            new(0, 0, texture.Texture.Width, texture.Texture.Height),
+                            Vector2.Zero,
+                            0,
+                            Color.Black
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    ReadOnlySpan<(Vector2, Color)> list = [
+                        (new(-4, -4), Color.Blue),
+                        (new(-3, -3), Color.Blue),
+                        (new( 3,  3), Color.Red),
+                        (new( 4,  4), Color.Red),
+                        (new(-2, -2), Color.Green),
+                        (new(-1, -1), Color.Green),
+                        (new( 0,  0), Color.Green),
+                        (new( 1,  1), Color.Green),
+                        (new( 2,  2), Color.Green),
+                        (new( 0,  0), new(255, 0, 255, 255)),
+                    ];
+
+                    BeginTextureMode(rt);
+                    {
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                        if (tag == "Big Western Sign Titled B")
+                        {
+                            var tilt = -45.1f + Random.Generate(90);
+
+
+                            foreach (var (point, color) in list)
+                            {
+                                Draw.DrawQuad(
+                                    texture.Texture,
+                                    Utils.RotateRect(new Rectangle(
+                                            middle.X - 18 + point.X,
+                                            middle.Y - 24 + point.Y,
+                                            36,
+                                            48
+                                        ),
+                                        tilt
+                                    ),
+                                    color
+                                );
+                            }
+                        }
+                        else
+                        {
+                            foreach (var (point, color) in list)
+                            {
+                                DrawTexturePro(
+                                    texture.Texture,
+                                    new Rectangle(0, 0, 36, 48),
+                                    new Rectangle(
+                                        middle.X - 18 + point.X,
+                                        middle.Y - 24 + point.Y,
+                                        36,
+                                        48
+                                    ),
+                                    Vector2.Zero,
+                                    0,
+                                    color
+                                );
+                            }
+                        }
+
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    var sublayer = layer * 10;
+
+                    Draw.DrawToEffectColor(
+                        State.bigSignGradient,
+                        new Rectangle(0, 0, 60, 60),
+                        new Rectangle(
+                            middle.X - 25,
+                            middle.Y - 30,
+                            50,
+                            60
+                        ),
+                        _gradientB,
+                        sublayer,
+                        1,
+                        1
+                    );
+
+                    UnloadRenderTexture(texture);
+                }
+                break;
+            
+                case "Small Asian Sign": 
+                case "small asian sign on wall":
+                {
+                    var texture = LoadRenderTexture(20, 20);
+                    var rnd = Random.Generate(14);
+
+                    Rectangle dest = new(
+                        0,
+                        1,
+                        20,
+                        17
+                    );
+
+                    BeginTextureMode(texture);
+                    {
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.smallAsianSigns);
+                        DrawTexturePro(
+                            State.smallAsianSigns,
+                            dest,
+                            new Rectangle(
+                                (rnd - 1) * 20,
+                                0,
+                                20,
+                                17
+                            ),
+                            Vector2.Zero,
+                            0,
+                            Color.Black
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    ReadOnlySpan<(Vector2, Color)> list = [
+                        (new(-4, -4), Color.Blue),
+                        (new(-3, -3), Color.Blue),
+                        (new( 3,  3), Color.Red),
+                        (new( 4,  4), Color.Red),
+                        (new(-2, -2), Color.Green),
+                        (new(-1, -1), Color.Green),
+                        (new( 0,  0), Color.Green),
+                        (new( 1,  1), Color.Green),
+                        (new( 2,  2), Color.Green),
+                        (new( 0,  0), new Color(255, 0, 255, 255)),
+                    ];
+
+                    if (tag == "Small Asian Sign")
+                    {
+                        var middle = Utils.GetMiddleCellPos(x, y);
+
+                        BeginTextureMode(rt);
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+
+                        foreach (var (point, color) in list)
+                        {
+                            DrawTexturePro(
+                                texture.Texture,
+                                new Rectangle(0, 0, 20, 20),
+                                new Rectangle(
+                                    -10 + middle.X + point.X,
+                                    -10 + middle.Y + point.Y,
+                                    20,
+                                    20
+                                ),
+                                Vector2.Zero,
+                                0,
+                                color
+                            );
+                        }
+
+                        EndShaderMode();
+
+                        EndTextureMode();
+
+                        Draw.DrawToEffectColor(
+                            State.bigSignGradient,
+                            new Rectangle(0, 0, 60, 60),
+                            new Rectangle(-13, -13, 26, 26),
+                            _gradientA,
+                            layer * 10,
+                            1
+                        );
+                    }
+                    else
+                    {
+                        var sublayer = layer * 10 + 8;
+                        var middle = Utils.GetMiddleCellPos(x, y);
+
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        foreach (var (point, color) in list)
+                        {
+                            BeginTextureMode(_layers[sublayer]);
+                            {
+                                BeginShaderMode(shader);
+                                SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                                DrawTexturePro(
+                                    texture.Texture,
+                                    new Rectangle(0, 0, 20, 20),
+                                    new Rectangle(
+                                        -10 + middle.X + point.X,
+                                        -10 + middle.Y + point.Y,
+                                        20,
+                                        20
+                                    ),
+                                    Vector2.Zero,
+                                    0,
+                                    color
+                                );
+                                EndShaderMode();
+                            }
+                            EndTextureMode();
+
+                            BeginTextureMode(_layers[sublayer + 1]);
+                            {
+                                BeginShaderMode(shader);
+                                SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                                DrawTexturePro(
+                                    texture.Texture,
+                                    new Rectangle(0, 0, 20, 20),
+                                    new Rectangle(
+                                        -10 + middle.X + point.X,
+                                        -10 + middle.Y + point.Y,
+                                        20,
+                                        20
+                                    ),
+                                    Vector2.Zero,
+                                    0,
+                                    color
+                                );
+                                EndShaderMode();
+                            }
+                            EndTextureMode();
+                        }
+                    
+                        Draw.DrawToEffectColor(
+                            State.bigSignGradient,
+                            new Rectangle(0, 0, 60, 60),
+                            new Rectangle(middle.X -13, middle.Y - 13, 26, 26),
+                            _gradientA,
+                            sublayer,
+                            1,
+                            1
+                        );
+                    }
+
+                    UnloadRenderTexture(texture);
+                }
+                break;
+
+                case "Small Asian Sign B": 
+                case "small asian sign on wall B":
+                {
+                    var texture = LoadRenderTexture(20, 20);
+                    var rnd = Random.Generate(14);
+
+                    Rectangle dest = new(
+                        0,
+                        1,
+                        20,
+                        17
+                    );
+
+                    BeginTextureMode(texture);
+                    {
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.smallAsianSigns);
+                        DrawTexturePro(
+                            State.smallAsianSigns,
+                            dest,
+                            new Rectangle(
+                                (rnd - 1) * 20,
+                                0,
+                                20,
+                                17
+                            ),
+                            Vector2.Zero,
+                            0,
+                            Color.Black
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    ReadOnlySpan<(Vector2, Color)> list = [
+                        (new(-4, -4), Color.Blue),
+                        (new(-3, -3), Color.Blue),
+                        (new( 3,  3), Color.Red),
+                        (new( 4,  4), Color.Red),
+                        (new(-2, -2), Color.Green),
+                        (new(-1, -1), Color.Green),
+                        (new( 0,  0), Color.Green),
+                        (new( 1,  1), Color.Green),
+                        (new( 2,  2), Color.Green),
+                        (new( 0,  0), new Color(255, 0, 255, 255)),
+                    ];
+
+                    if (tag == "Small Asian Sign B")
+                    {
+                        var middle = Utils.GetMiddleCellPos(x, y);
+
+                        BeginTextureMode(rt);
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+
+                        foreach (var (point, color) in list)
+                        {
+                            DrawTexturePro(
+                                texture.Texture,
+                                new Rectangle(0, 0, 20, 20),
+                                new Rectangle(
+                                    -10 + middle.X + point.X,
+                                    -10 + middle.Y + point.Y,
+                                    20,
+                                    20
+                                ),
+                                Vector2.Zero,
+                                0,
+                                color
+                            );
+                        }
+
+                        EndShaderMode();
+
+                        EndTextureMode();
+
+                        Draw.DrawToEffectColor(
+                            State.bigSignGradient,
+                            new Rectangle(0, 0, 60, 60),
+                            new Rectangle(-13, -13, 26, 26),
+                            _gradientB,
+                            layer * 10,
+                            1
+                        );
+                    }
+                    else
+                    {
+                        var sublayer = layer * 10 + 8;
+                        var middle = Utils.GetMiddleCellPos(x, y);
+
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        foreach (var (point, color) in list)
+                        {
+                            BeginTextureMode(_layers[sublayer]);
+                            {
+                                BeginShaderMode(shader);
+                                SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                                DrawTexturePro(
+                                    texture.Texture,
+                                    new Rectangle(0, 0, 20, 20),
+                                    new Rectangle(
+                                        -10 + middle.X + point.X,
+                                        -10 + middle.Y + point.Y,
+                                        20,
+                                        20
+                                    ),
+                                    Vector2.Zero,
+                                    0,
+                                    color
+                                );
+                                EndShaderMode();
+                            }
+                            EndTextureMode();
+
+                            BeginTextureMode(_layers[sublayer + 1]);
+                            {
+                                BeginShaderMode(shader);
+                                SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                                DrawTexturePro(
+                                    texture.Texture,
+                                    new Rectangle(0, 0, 20, 20),
+                                    new Rectangle(
+                                        -10 + middle.X + point.X,
+                                        -10 + middle.Y + point.Y,
+                                        20,
+                                        20
+                                    ),
+                                    Vector2.Zero,
+                                    0,
+                                    color
+                                );
+                                EndShaderMode();
+                            }
+                            EndTextureMode();
+                        }
+                    
+                        Draw.DrawToEffectColor(
+                            State.bigSignGradient,
+                            new Rectangle(0, 0, 60, 60),
+                            new Rectangle(middle.X -13, middle.Y - 13, 26, 26),
+                            _gradientB,
+                            sublayer,
+                            1,
+                            1
+                        );
+                    }
+
+                    UnloadRenderTexture(texture);
+                }
+                break;
+
+                case "Small Asian Sign Station": 
+                case "Small Asian Sign On Wall Station":
+                {
+                    var texture = LoadRenderTexture(20, 20);
+                    var rnd = Random.Generate(14);
+
+                    Rectangle dest = new(
+                        0,
+                        1,
+                        20,
+                        17
+                    );
+
+                    BeginTextureMode(texture);
+                    {
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.smallAsianSignsStation);
+                        DrawTexturePro(
+                            State.smallAsianSignsStation,
+                            dest,
+                            new Rectangle(
+                                (rnd - 1) * 20,
+                                0,
+                                20,
+                                17
+                            ),
+                            Vector2.Zero,
+                            0,
+                            Color.Black
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    ReadOnlySpan<(Vector2, Color)> list = [
+                        (new(-4, -4), Color.Blue),
+                        (new(-3, -3), Color.Blue),
+                        (new( 3,  3), Color.Red),
+                        (new( 4,  4), Color.Red),
+                        (new(-2, -2), Color.Green),
+                        (new(-1, -1), Color.Green),
+                        (new( 0,  0), Color.Green),
+                        (new( 1,  1), Color.Green),
+                        (new( 2,  2), Color.Green),
+                        (new( 0,  0), new Color(255, 0, 255, 255)),
+                    ];
+
+                    if (tag == "Small Asian Sign Station")
+                    {
+                        var middle = Utils.GetMiddleCellPos(x, y);
+
+                        BeginTextureMode(rt);
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+
+                        foreach (var (point, color) in list)
+                        {
+                            DrawTexturePro(
+                                texture.Texture,
+                                new Rectangle(0, 0, 20, 20),
+                                new Rectangle(
+                                    -10 + middle.X + point.X,
+                                    -10 + middle.Y + point.Y,
+                                    20,
+                                    20
+                                ),
+                                Vector2.Zero,
+                                0,
+                                color
+                            );
+                        }
+
+                        EndShaderMode();
+
+                        EndTextureMode();
+
+                        Draw.DrawToEffectColor(
+                            State.bigSignGradient,
+                            new Rectangle(0, 0, 60, 60),
+                            new Rectangle(-13, -13, 26, 26),
+                            _gradientA,
+                            layer * 10,
+                            1
+                        );
+                    }
+                    else
+                    {
+                        var sublayer = layer * 10 + 8;
+                        var middle = Utils.GetMiddleCellPos(x, y);
+
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        foreach (var (point, color) in list)
+                        {
+                            BeginTextureMode(_layers[sublayer]);
+                            {
+                                BeginShaderMode(shader);
+                                SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                                DrawTexturePro(
+                                    texture.Texture,
+                                    new Rectangle(0, 0, 20, 20),
+                                    new Rectangle(
+                                        -10 + middle.X + point.X,
+                                        -10 + middle.Y + point.Y,
+                                        20,
+                                        20
+                                    ),
+                                    Vector2.Zero,
+                                    0,
+                                    color
+                                );
+                                EndShaderMode();
+                            }
+                            EndTextureMode();
+
+                            BeginTextureMode(_layers[sublayer + 1]);
+                            {
+                                BeginShaderMode(shader);
+                                SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                                DrawTexturePro(
+                                    texture.Texture,
+                                    new Rectangle(0, 0, 20, 20),
+                                    new Rectangle(
+                                        -10 + middle.X + point.X,
+                                        -10 + middle.Y + point.Y,
+                                        20,
+                                        20
+                                    ),
+                                    Vector2.Zero,
+                                    0,
+                                    color
+                                );
+                                EndShaderMode();
+                            }
+                            EndTextureMode();
+                        }
+                    
+                        Draw.DrawToEffectColor(
+                            State.bigSignGradient,
+                            new Rectangle(0, 0, 60, 60),
+                            new Rectangle(middle.X -13, middle.Y - 13, 26, 26),
+                            _gradientA,
+                            sublayer,
+                            1,
+                            1
+                        );
+                    }
+
+                    UnloadRenderTexture(texture);
+                }
+                break;
+            
+                case "Small Asian Sign Station B": 
+                case "Small Asian Sign On Wall Station B":
+                {
+                    var texture = LoadRenderTexture(20, 20);
+                    var rnd = Random.Generate(14);
+
+                    Rectangle dest = new(
+                        0,
+                        1,
+                        20,
+                        17
+                    );
+
+                    BeginTextureMode(texture);
+                    {
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.smallAsianSignsStation);
+                        DrawTexturePro(
+                            State.smallAsianSignsStation,
+                            dest,
+                            new Rectangle(
+                                (rnd - 1) * 20,
+                                0,
+                                20,
+                                17
+                            ),
+                            Vector2.Zero,
+                            0,
+                            Color.Black
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    ReadOnlySpan<(Vector2, Color)> list = [
+                        (new(-4, -4), Color.Blue),
+                        (new(-3, -3), Color.Blue),
+                        (new( 3,  3), Color.Red),
+                        (new( 4,  4), Color.Red),
+                        (new(-2, -2), Color.Green),
+                        (new(-1, -1), Color.Green),
+                        (new( 0,  0), Color.Green),
+                        (new( 1,  1), Color.Green),
+                        (new( 2,  2), Color.Green),
+                        (new( 0,  0), new Color(255, 0, 255, 255)),
+                    ];
+
+                    if (tag == "Small Asian Sign Station")
+                    {
+                        var middle = Utils.GetMiddleCellPos(x, y);
+
+                        BeginTextureMode(rt);
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+
+                        foreach (var (point, color) in list)
+                        {
+                            DrawTexturePro(
+                                texture.Texture,
+                                new Rectangle(0, 0, 20, 20),
+                                new Rectangle(
+                                    -10 + middle.X + point.X,
+                                    -10 + middle.Y + point.Y,
+                                    20,
+                                    20
+                                ),
+                                Vector2.Zero,
+                                0,
+                                color
+                            );
+                        }
+
+                        EndShaderMode();
+
+                        EndTextureMode();
+
+                        Draw.DrawToEffectColor(
+                            State.bigSignGradient,
+                            new Rectangle(0, 0, 60, 60),
+                            new Rectangle(-13, -13, 26, 26),
+                            _gradientB,
+                            layer * 10,
+                            1
+                        );
+                    }
+                    else
+                    {
+                        var sublayer = layer * 10 + 8;
+                        var middle = Utils.GetMiddleCellPos(x, y);
+
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        foreach (var (point, color) in list)
+                        {
+                            BeginTextureMode(_layers[sublayer]);
+                            {
+                                BeginShaderMode(shader);
+                                SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                                DrawTexturePro(
+                                    texture.Texture,
+                                    new Rectangle(0, 0, 20, 20),
+                                    new Rectangle(
+                                        -10 + middle.X + point.X,
+                                        -10 + middle.Y + point.Y,
+                                        20,
+                                        20
+                                    ),
+                                    Vector2.Zero,
+                                    0,
+                                    color
+                                );
+                                EndShaderMode();
+                            }
+                            EndTextureMode();
+
+                            BeginTextureMode(_layers[sublayer + 1]);
+                            {
+                                BeginShaderMode(shader);
+                                SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                                DrawTexturePro(
+                                    texture.Texture,
+                                    new Rectangle(0, 0, 20, 20),
+                                    new Rectangle(
+                                        -10 + middle.X + point.X,
+                                        -10 + middle.Y + point.Y,
+                                        20,
+                                        20
+                                    ),
+                                    Vector2.Zero,
+                                    0,
+                                    color
+                                );
+                                EndShaderMode();
+                            }
+                            EndTextureMode();
+                        }
+                    
+                        Draw.DrawToEffectColor(
+                            State.bigSignGradient,
+                            new Rectangle(0, 0, 60, 60),
+                            new Rectangle(middle.X -13, middle.Y - 13, 26, 26),
+                            _gradientB,
+                            sublayer,
+                            1,
+                            1
+                        );
+                    }
+
+                    UnloadRenderTexture(texture);
+                }
+                break;
+            
+                // deprecated?
+                case "glass":
+                if (layer == 0) {
+                    var middle = Utils.GetMiddleCellPos(x, y);
+
+                    Rectangle dest = new(
+                        width * -10 + middle.X,
+                        height * -10 + middle.Y,
+                        20,
+                        20
+                    );
+
+                    // Unknown behaviour..
+                    // (An image gets modified and then never used again)
+                }
+                break;
+            
+                case "harvester":
+                {
+                    var middle = Utils.GetMiddleCellPos(x, y);
+
+                    var big = tile.Name == "Harvester B";
+
+                    char letter;
+                    Vector2 eye, arm, lowerPart = Vector2.Zero;
+
+                    if (big)
+                    {
+                        letter = 'B';
+                        middle.X += 10;
+                        eye = new(75, -126);
+                        arm = new(105, 108);
+                    }
+                    else
+                    {
+                        letter = 'A';
+                        middle.X += 10;
+                        eye = new(37, -85);
+                        arm = new(58, 60);
+                    }
+
+                    var absX = x + (int)(camera.Coords.X / 20);
+                    var absY = y + (int)(camera.Coords.Y / 20);
+                                        
+                    for (var h = absY; h < Level!.Height; h++)
+                    {
+                        if ((letter == 'A' && Level!.TileMatrix[h, absX, layer] is { Type: TileCellType.Head, TileDefinition.Name: "Harvester Arm A" }) ||
+                            (letter == 'B' && Level!.TileMatrix[h, absX, layer] is { Type: TileCellType.Head, TileDefinition.Name: "Harvester Arm B" }))
+                        {
+                            if (Level!.TileMatrix[h, absX, layer] is { Type: TileCellType.Head, TileDefinition.Name: "Harvester Arm A" })
+                            {
+                                lowerPart = new Vector2(x, h - camera.Coords.Y/20f);
+                            }
+                        }
+                    }
+
+                    var lowerMiddle = Vector2.Zero;
+                    if (lowerPart != Vector2.Zero)
+                    {
+                        lowerMiddle = Utils.GetMiddleCellPos(lowerPart);
+                        if (big) lowerMiddle.X += 10;
+                    }
+
+                    for (var side = 1; side <= 2; side++)
+                    {
+                        var dr = side == 1 ? -1 : 1;
+
+                        var eyePastePos = middle + new Vector2(eye.X * dr, eye.Y);
+
+                    }
                 }
                 break;
             }
@@ -1055,11 +2275,11 @@ public class Engine
     /// <summary>
     /// This gets called each frame
     /// </summary>
-    public virtual void Render()
+    public virtual void Render(int l)
     {
         if (Level is null || !Initialized) return;
 
-        var layer = 2;
+        var layer = l;
 
         var frontRT = LoadRenderTexture(Width, Height);
         var middleRT = LoadRenderTexture(Width, Height);
@@ -1084,12 +2304,11 @@ public class Engine
             for (var y = 0; y < Rows; y++)
             {
                 // Acquire absolute position
-                var mx = x + (int)camera.Coords.X;
-                var my = y + (int)camera.Coords.Y;
-            
+                var mx = x + (int)camera.Coords.X / 20;
+                var my = y + (int)camera.Coords.Y / 20;
+
                 // Must be in matrix bounds
                 if (mx < 0 || mx >= Level.Width || my < 0 || my >= Level.Height) continue;
-
 
                 ref var geoCell = ref Level.GeoMatrix[my, mx, layer];
                 ref var topCell = ref Level.GeoMatrix[my, mx, 0];
@@ -1131,6 +2350,7 @@ public class Engine
 
                 ref var tileCell = ref Level.TileMatrix[my, mx, layer];
 
+
                 if (tileCell.Type is TileCellType.Head)
                 {
                     if (tileCell.TileDefinition?.Tags.Contains("drawLast") == true)
@@ -1139,12 +2359,12 @@ public class Engine
                     }
                     else
                     {
-                        drawLastTiles.Add((Random.Generate(999), mx, my));
+                        drawLaterTiles.Add((Random.Generate(999), mx, my));
                     }
                 }
                 else if (tileCell.Type is not TileCellType.Body)
                 {
-                    drawLastTiles.Add((Random.Generate(999), mx, my));
+                    drawLaterTiles.Add((Random.Generate(999), mx, my));
                 }
             }
         }
@@ -1153,11 +2373,10 @@ public class Engine
 
         EndTextureMode();
 
-
         // Draw
-        foreach (var tile in drawLastTiles)
+        foreach (var tile in drawLaterTiles)
         {
-            // var tileSeed = GenSeedForTile(tile.x, tile.y, Level.Width, Level.Seed + layer); // unuse?
+            // var tileSeed = GenSeedForTile(tile.x, tile.y, Level.Width, Level.Seed + layer); // unused?
             ref var queuedCell = ref Level.TileMatrix[tile.y, tile.x, layer];
 
             switch (queuedCell.Type)

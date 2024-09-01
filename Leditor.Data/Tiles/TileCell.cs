@@ -104,4 +104,15 @@ public readonly struct Tile
         TileDefinition = cell.TileDefinition;
         HeadPosition = cell.HeadPosition;
     }
+
+    public override string ToString()
+    {
+        return Type switch {
+            TileCellType.Default => "Default",
+            TileCellType.Material => $"Material \"{MaterialDefinition?.Name ?? $"{UndefinedName} (Undefined)" ?? "NULL"}\"",
+            TileCellType.Head => $"Head \"{TileDefinition?.Name ?? $"{UndefinedName} (Undefined)" ?? "NULL"}\"",
+            TileCellType.Body => $"Body ({HeadPosition.X}, {HeadPosition.Y}, {HeadPosition.Y}) \"{TileDefinition?.Name ?? UndefinedName ?? "NULL"}\"",
+            _ => "Undefined Type"
+        };
+    }
 }

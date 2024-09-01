@@ -23,25 +23,28 @@ public sealed class StartPage
 
     private bool _disposed;
 
-    public void OnTermination(object? sender, EventArgs e)
+    private bool _loadFailedMessage;
+
+    public void OnLevelLoadFail(object? sender, EventArgs e)
     {
+        _loadFailedMessage = true;
     }
 
     public StartPage(Context context)
     {
         Context = context;
 
-        Context.TerminationSignal += OnTermination;
+        Context.LevelLoadingFailed += OnLevelLoadFail;
     }
 
     ~StartPage()
     {
-        Context.TerminationSignal -= OnTermination;
+        Context.LevelLoadingFailed -= OnLevelLoadFail;
     }
 
     private void PreparePreview()
     {
-        _geoLoadTask = Task.Run(() => GeoImporter.GetGeoMatrixAsync(ProjectFiles[CurrentProject], Logger));
+        _geoLoadTask = Task.Run(() => GeoImporter.GetGeoMatrixAsync(ProjectEntries[CurrentEntry], Logger));
 
         if (_previewRT.Id != 0)
         {
@@ -105,23 +108,25 @@ public sealed class StartPage
 
     private string _projects = "";
 
-    private int _currentProject;
+    private int _currentEntry;
 
-    public int CurrentProject
+    public int CurrentEntry
     {
-        get => _currentProject;
-        set => _currentProject = value;
+        get => _currentEntry;
+        set => _currentEntry = value;
     }
 
-    public string[] ProjectFiles { get; private set; } = [];
+    public bool[] IsDirectory { get; private set; } = [];
+    public string[] ProjectEntries { get; private set; } = [];
     public string[] ProjectNames { get; private set; } = [];
 
     private void ListFiles(string folder)
     {
-        ProjectFiles = Directory.GetFiles(folder).Where(f => f.EndsWith(".txt")).ToArray();
-        ProjectNames = ProjectFiles.Select(f => Path.GetFileNameWithoutExtension(f)!).ToArray();
-        CurrentProject = 0;
-        PreparePreview();
+        ProjectEntries = Directory.GetFileSystemEntries(folder).Where(e => e.EndsWith(".txt") || Directory.Exists(e)).ToArray();
+        ProjectNames = ProjectEntries.Select(f => Path.GetFileNameWithoutExtension(f)!).ToArray();
+        IsDirectory = ProjectEntries.Select(Directory.Exists).ToArray();
+        CurrentEntry = 0;
+        if (ProjectEntries.Length > 0 && !IsDirectory[CurrentEntry]) PreparePreview();
     }
 
     public required string ProjectsFolder
@@ -131,8 +136,18 @@ public sealed class StartPage
         {
             if (!Directory.Exists(value)) throw new DirectoryNotFoundException(value);
 
-            _projects = value;
             ListFiles(value);
+
+            for (var p = 0; p < ProjectEntries.Length; p++)
+            {
+                if (ProjectEntries[p] == _projects)
+                {
+                    CurrentEntry = p;
+                    break;
+                }
+            }
+
+            _projects = value;
         } 
     }
 
@@ -155,10 +170,17 @@ public sealed class StartPage
 
         if (IsKeyPressed(KeyboardKey.Enter))
         {
-            if (!Context.IsLoadingLevel)
+            if (IsDirectory[CurrentEntry])
             {
-                Logger?.Information("Loading level \"{Name}\"", ProjectFiles[CurrentProject]);
-                Context.LoadLevelFromFile(ProjectFiles[CurrentProject]);
+                ProjectsFolder = ProjectEntries[CurrentEntry];
+            }
+            else
+            {
+                if (!Context.IsLoadingLevel)
+                {
+                    Logger?.Information("Loading level \"{Name}\"", ProjectEntries[CurrentEntry]);
+                    Context.LoadLevelFromFile(ProjectEntries[CurrentEntry]);
+                }
             }
 
             // Serialization.Level.Importers.LoadProjectAsync(
@@ -171,17 +193,25 @@ public sealed class StartPage
 
         if (IsKeyPressed(KeyboardKey.Down))
         {
-            CurrentProject++;
-            CurrentProject %= ProjectFiles.Length;
+            CurrentEntry++;
+            CurrentEntry %= ProjectEntries.Length;
 
-            PreparePreview();
+            if (ProjectEntries.Length > 0 && !IsDirectory[CurrentEntry]) PreparePreview();
         }
         else if (IsKeyPressed(KeyboardKey.Up))
         {
-            CurrentProject--;
-            CurrentProject =  Utils.Restrict(CurrentProject, 0, ProjectFiles.Length);
+            CurrentEntry--;
+            CurrentEntry =  Utils.Cycle(CurrentEntry, 0, ProjectEntries.Length - 1);
 
-            PreparePreview();
+            if (ProjectEntries.Length > 0 && !IsDirectory[CurrentEntry]) PreparePreview();
+        }
+        else if (IsKeyPressed(KeyboardKey.Left))
+        {
+            ProjectsFolder = Directory.GetParent(ProjectsFolder)!.FullName;
+        }
+        else if (IsKeyPressed(KeyboardKey.Right) && ProjectEntries.Length > 0 && IsDirectory[CurrentEntry])
+        {
+            ProjectsFolder = ProjectEntries[CurrentEntry];
         }
 
         rlImGui.Begin();
@@ -205,19 +235,41 @@ public sealed class StartPage
                 if (ImGui.Button("Refresh"))
                 {
                     ListFiles(ProjectsFolder);
-                    PreparePreview();
+                    if (ProjectEntries.Length > 0 && !IsDirectory[CurrentEntry]) PreparePreview();
                 }
 
                 var listSpace = ImGui.GetContentRegionAvail();
+
+                if (Context?.IsLoadingLevel ?? false) ImGui.BeginDisabled();
 
                 if (ImGui.BeginListBox("##ProjectsList", listSpace with { Y = listSpace.Y - 30 }))
                 {
                     for (var p = 0; p < ProjectNames.Length; p++)
                     {
-                        if (ImGui.Selectable(ProjectNames[p], p == CurrentProject))
+                        if (Context?.Textures is not null)
                         {
-                            if (CurrentProject != p) PreparePreview();
-                            CurrentProject = p;
+                            if (IsDirectory[p]) rlImGui.ImageSize(Context.Textures.Folder, new(23, 23));
+                            else rlImGui.ImageSize(Context.Textures.File, new(23, 23));
+
+                            ImGui.SameLine();
+                        }
+                        
+                        if (ImGui.Selectable(ProjectNames[p], p == CurrentEntry, ImGuiSelectableFlags.None, ImGui.GetContentRegionAvail() with { Y = 23 }))
+                        {
+                            if (CurrentEntry == p)
+                            {
+                                if (IsDirectory[p]) ProjectsFolder = ProjectEntries[p];
+                                else
+                                {
+                                    Logger?.Information("Loading level \"{Name}\"", ProjectNames[CurrentEntry]);
+                                    Context?.LoadLevelFromFile(ProjectEntries[CurrentEntry]);
+                                }
+                            }
+                            else
+                            {
+                                CurrentEntry = p;
+                                if (!IsDirectory[p]) PreparePreview();
+                            }
                         }
                     }
 
@@ -225,14 +277,16 @@ public sealed class StartPage
                     ImGui.EndListBox();
                 }
 
-                var outbounds = CurrentProject < 0 || CurrentProject >= ProjectNames.Length;
+                if (Context?.IsLoadingLevel ?? false) ImGui.EndDisabled();
+
+                var outbounds = CurrentEntry < 0 || CurrentEntry >= ProjectNames.Length;
 
                 if (outbounds) ImGui.BeginDisabled(); 
 
                 if (ImGui.Button("Load", ImGui.GetContentRegionAvail() with { Y = 20 }))
                 {
-                    Logger?.Information("Loading level \"{Name}\"", ProjectFiles[CurrentProject]);
-                    Context.LoadLevelFromFile(ProjectFiles[CurrentProject]);
+                    Logger?.Information("Loading level \"{Name}\"", ProjectEntries[CurrentEntry]);
+                    Context?.LoadLevelFromFile(ProjectEntries[CurrentEntry]);
                 }
 
                 if (outbounds) ImGui.EndDisabled();
@@ -240,6 +294,19 @@ public sealed class StartPage
                 ImGui.NextColumn();
 
                 rlImGui.ImageRenderTextureFit(_previewRT, false);
+
+                if (_loadFailedMessage) ImGui.OpenPopup("Load Failed");
+
+                if (ImGui.BeginPopupModal("Load Failed"))
+                {
+                    ImGui.Text("Failed to load the level.");
+                    if (ImGui.Button("Ok"))
+                    {
+                        _loadFailedMessage = false;
+                        ImGui.CloseCurrentPopup();
+                    }
+                    ImGui.EndPopup();
+                }
 
                 ImGui.End();
             }
