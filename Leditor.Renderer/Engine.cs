@@ -4135,7 +4135,8 @@ public partial class Engine
         int y,
         int layer,
         RenderCamera camera,
-        List<(int, int, int)> list,
+        List<(int x, int y)> list,
+        List<(int x, int y)>[] corners,
         TileDefinition tile,
         RenderTexture2D rt
     )
@@ -4167,6 +4168,16 @@ public partial class Engine
             camera,
             rt
         );
+
+        if (tile.Name is "Big Temple Stone No Slopes")
+        {
+            corners[0].Add((x - 1, y - 1));
+            corners[1].Add((x + 2, y - 1));
+            corners[2].Add((x + 2, y + 1));
+            corners[3].Add((x - 1, y + 1));
+        }
+
+        foreach (var o in occupy) list.Remove((x + o.x, y + o.y));
     }
 
     /// <summary>
@@ -4244,7 +4255,7 @@ public partial class Engine
                     var SmallStoneSlopeSE = Registry.Tiles!.Get("Small Stone Slope SE");
                     var SmallStoneFloor = Registry.Tiles!.Get("Small Stone Floor");
 
-                    for (var q = 0; q < orderedTiles.Count; q++)
+                    for (var q = 0; q <= orderedTiles.Count; q++)
                     {
                         var queued = orderedTiles[^q];
 
@@ -4384,7 +4395,7 @@ public partial class Engine
                     var SmallStoneSlopeSE = Registry.Tiles!.Get("Small Stone Slope SE");
                     var SmallStoneFloor = Registry.Tiles!.Get("Small Stone Floor");
 
-                    for (var q = 0; q < orderedTiles.Count; q++)
+                    for (var q = 0; q <= orderedTiles.Count; q++)
                     {
                         var queued = orderedTiles[^q];
 
@@ -4465,7 +4476,7 @@ public partial class Engine
                     var SmallMachineSlopeSE = Registry.Tiles!.Get("Small Machine Slope SE");
                     var SmallMachineFloor = Registry.Tiles!.Get("Small Machine Floor");
 
-                    for (var q = 0; q < orderedTiles.Count; q++)
+                    for (var q = 0; q <= orderedTiles.Count; q++)
                     {
                         var queued = orderedTiles[^q];
 
@@ -4615,7 +4626,7 @@ public partial class Engine
                     var SmallMetalSlopeSE = Registry.Tiles!.Get("Small Metal Slope SE");
                     var SmallMetalFloor = Registry.Tiles!.Get("Small Metal Floor");
 
-                    for (var q = 0; q < orderedTiles.Count; q++)
+                    for (var q = 0; q <= orderedTiles.Count; q++)
                     {
                         var queued = orderedTiles[^q];
 
@@ -4768,7 +4779,7 @@ public partial class Engine
                     var SmallStoneSlopeSE = Registry.Tiles!.Get("Small Stone Slope SE");
                     var SmallStoneFloor = Registry.Tiles!.Get("Small Stone Floor");
 
-                    for (var q = 0; q < orderedTiles.Count; q++)
+                    for (var q = 0; q <= orderedTiles.Count; q++)
                     {
                         var queued = orderedTiles[^q];
 
@@ -4917,7 +4928,7 @@ public partial class Engine
                     var SmallMetalSlopeSE = Registry.Tiles!.Get("Small Metal Slope SE");
                     var SmallMetalFloor = Registry.Tiles!.Get("Small Metal Floor");
 
-                    for (var q = 0; q < orderedTiles.Count; q++)
+                    for (var q = 0; q <= orderedTiles.Count; q++)
                     {
                         var queued = orderedTiles[^q];
 
@@ -5091,7 +5102,10 @@ public partial class Engine
                 var TempleStoneSlopeSE = Registry.Tiles!.Get("Temple Stone Slope SE");
                 var TempleStoneFloor = Registry.Tiles!.Get("Temple Stone Floor");
 
-                for (var q = 0; q < orderedTiles.Count; q++)
+                var bigNoSlopes = Registry.Tiles!.Get("Big Temple Stone No Slopes");
+                var wideTempleStone = Registry.Tiles!.Get("Wide Temple Stone");
+
+                for (var q = 0; q <= orderedTiles.Count; q++)
                 {
                     var queued = orderedTiles[^q];
 
@@ -5133,8 +5147,119 @@ public partial class Engine
                         break;
                     }
                 }
-            
 
+                List<(int x, int y)> orderedTilesWithoutRND = orderedTiles.Select(o => (o.x, o.y)).ToList();
+                List<(int x, int y)> duplicated = [..orderedTilesWithoutRND];
+                List<(int x, int y)>[] corners = [ [], [], [], [] ];
+            
+                foreach (var t in duplicated)
+                {
+                    var (tx, ty) = t;
+
+                    if ((tx % 6 == 0 && ty % 4 == 0) || (tx % 6 == 3 && ty % 4 == 2))
+                    {
+                        AttemptDrawTempleStone_MTX(
+                            tx,
+                            ty,
+                            layer,
+                            camera,
+                            orderedTilesWithoutRND,
+                            corners,
+                            bigNoSlopes,
+                            rt
+                        );
+                    }
+                }
+
+                for (var c = 1; c <= corners[0].Count; c++)
+                {
+                    var corner = corners[0][^c];
+
+                    if (corners[2].Contains(corners[0][^c]))
+                    {
+                        orderedTilesWithoutRND.Remove(corners[0][^c]);
+                    }
+                }
+
+                for (var c = 1; c <= corners[1].Count; c++)
+                {
+                    var corner = corners[1][^c];
+
+                    if (corners[3].Contains(corners[1][^c]))
+                    {
+                        orderedTilesWithoutRND.Remove(corners[1][^c]);
+                    }
+                }
+
+                while (orderedTilesWithoutRND.Count > 0)
+                {
+                    // Get a random item from the list
+                    var t = orderedTilesWithoutRND[Random.Generate(orderedTilesWithoutRND.Count - 1)];
+
+                    var drawn = false;
+
+                    if (corners[0].Contains(t))
+                    {
+                        DrawTile_MTX(
+                            Level!.TileMatrix[t.y, t.x, layer],
+                            TempleStoneSlopeSE,
+                            t.x,
+                            t.y,
+                            layer,
+                            camera,
+                            rt
+                        );
+
+                        drawn = true;
+                    }
+                    else if (corners[1].Contains(t))
+                    {
+                        DrawTile_MTX(
+                            Level!.TileMatrix[t.y, t.x, layer],
+                            TempleStoneSlopeSW,
+                            t.x,
+                            t.y,
+                            layer,
+                            camera,
+                            rt
+                        );
+
+                        drawn = true;
+                    }
+                    else if (corners[2].Contains(t))
+                    {
+                        DrawTile_MTX(
+                            Level!.TileMatrix[t.y, t.x, layer],
+                            TempleStoneSlopeNW,
+                            t.x,
+                            t.y,
+                            layer,
+                            camera,
+                            rt
+                        );
+
+                        drawn = true;
+                    }
+                    else if (corners[3].Contains(t))
+                    {
+                        DrawTile_MTX(
+                            Level!.TileMatrix[t.y, t.x, layer],
+                            TempleStoneSlopeNE,
+                            t.x,
+                            t.y,
+                            layer,
+                            camera,
+                            rt
+                        );
+
+                        drawn = true;
+                    }
+
+                    if (!drawn)
+                    {
+                        
+                    }
+                }
             }
             break;
         }
