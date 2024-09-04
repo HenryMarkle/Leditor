@@ -18,7 +18,7 @@ public class Registry
     public Dex<InitPropBase>? Props { get; set; }
     public Dex<MaterialDefinition>? Materials { get; set; }
 
-    public CastLibrary[] CastLibraries { get; set; } = [];
+    public Dictionary<string, CastLibrary> CastLibraries { get; set; } = [];
 }
 
 public class Folders

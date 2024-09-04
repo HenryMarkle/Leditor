@@ -149,16 +149,20 @@ public class Program
 
         logger.Information("Loading resources");
 
-        Registry registry = new()
-        {
-            Materials = new Dex<MaterialDefinition>(Utils.GetEmbeddedMaterials())
-        };
+        var embeddedMaterials = Utils.GetEmbeddedMaterials();
+
+        Registry registry = new();
 
         var castLibrariesLoader = new CastLoader(folders.LegacyCastMembers, logger);
 
         var tileLoader = new DefinitionLoader<TileDefinition>(folders.Tiles, TileImporter.ParseInitAsync_NoCategories, logger);
         var propLoader = new DefinitionLoader<InitPropBase>(folders.Props, PropImporter.ParseLegacyInitAsync_NoCategories, logger);
+        var mateLoader = new MaterialLoader(folders.Materials, MaterialImporter.GetMaterialInitAsync, logger);
 
+        Task<TileDefinition[]>? embeddedTilesTask = null;
+        Task? embeddedMaterialsTask = null;
+
+        var embeddedTasksDone = false;
 
         int page = 0;
 
@@ -181,7 +185,7 @@ public class Program
         #if RELEASE
         SetTraceLogLevel(TraceLogLevel.Error);
         #else
-        SetTraceLogLevel(TraceLogLevel.Error);
+        SetTraceLogLevel(TraceLogLevel.Warning);
         #endif
 
         //---------------------------------------------------------
@@ -241,13 +245,14 @@ public class Program
         {
             BeginDrawing();
             {
+                // This section may need abstracting..
                 #region Loading
 
                 loading:
 
                 if (!castLibrariesLoader.IsCompleted)
                 {
-                    if (castLibrariesLoader.LoadNext()) registry.CastLibraries = castLibrariesLoader.GetLibs();
+                    if (castLibrariesLoader.LoadNext()) registry.CastLibraries = castLibrariesLoader.GetLibs().ToDictionary(l => l.Name);
                 }
 
                 if (!tileLoader.IsCompleted)
@@ -266,19 +271,58 @@ public class Program
                     }
                 }
 
-                if (!castLibrariesLoader.IsCompleted || !tileLoader.IsCompleted || !propLoader.IsCompleted)
+                if (!mateLoader.IsCompleted)
+                {
+                    if (mateLoader.IsReady && mateLoader.LoadNext())
+                    {
+                        registry.Materials = new Dex<MaterialDefinition>(mateLoader.GetResult());
+                    }
+                }
+
+                if (
+                    !castLibrariesLoader.IsCompleted || 
+                    !tileLoader.IsCompleted || 
+                    !propLoader.IsCompleted || 
+                    !mateLoader.IsCompleted
+                )
                 {
                     Draw.LoadingScreen(
                         (float)castLibrariesLoader.Progress / castLibrariesLoader.TotalProgress,
                         (float)tileLoader.Progress / tileLoader.TotalProgress, 
                         (float)propLoader.Progress / propLoader.TotalProgress, 
-                        0
+                        (float)mateLoader.Progress / mateLoader.TotalProgress
                     );
 
                     if (++frame % 100 != 0) goto loading;
 
                     EndDrawing();
                     continue;
+                }
+                else if (embeddedMaterialsTask is null)
+                {
+                    embeddedMaterialsTask = Utils.FetchEmbeddedTextures(embeddedMaterials, registry.CastLibraries);
+                }
+                else if (embeddedTilesTask is null)
+                {
+                    embeddedTilesTask = Utils.LoadEmbeddedTiles(
+                        Path.Combine(
+                            folders.LegacyCastMembers, 
+                            "Drought_393439_Drought Needed Init.txt"
+                        ), 
+                        registry.CastLibraries
+                    );
+                }
+                else if (!embeddedMaterialsTask.IsCompleted || !embeddedTilesTask.IsCompleted)
+                {
+                    Draw.PleaseWaitScreen();
+                    EndDrawing();
+                    continue;
+                }
+                else if (!embeddedTasksDone)
+                {
+                    registry.Tiles?.Register(embeddedTilesTask.Result);
+                    registry.Materials?.Register(embeddedMaterials);
+                    embeddedTasksDone = true;
                 }
 
                 #endregion
@@ -301,7 +345,7 @@ public class Program
 
             unchecked
             {
-                frame++;
+                context.Frame = ++frame;
             }
         }
 
@@ -309,13 +353,14 @@ public class Program
 
         logger.Information("Unloading resources");
 
-        foreach (var lib in registry.CastLibraries)
+        foreach (var lib in registry.CastLibraries.Values)
         {
             foreach (var (_, member) in lib.Members) UnloadTexture(member.Texture);
         }
 
         if (registry.Tiles is not null) foreach (var tile in registry.Tiles.Definitions) UnloadTexture(tile.Texture);
         if (registry.Props is not null) foreach (var prop in registry.Props.Definitions) UnloadTexture(prop.Texture);
+        if (registry.Materials is not null) foreach (var mater in registry.Materials.Definitions) if (mater.RenderType is MaterialRenderType.CustomUnified) UnloadTexture(mater.Texture);
 
         context.Engine.Dispose();
         shaders.Dispose();

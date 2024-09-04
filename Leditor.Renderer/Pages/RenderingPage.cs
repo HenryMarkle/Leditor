@@ -17,6 +17,9 @@ public class RenderingPage
 
     private bool _disposed;
 
+    private int _canvasOffsetX = 1;
+    private int _canvasOffsetY = 1;
+
     private void OnLevelLoaded(object? sender, EventArgs e)
     {
         ren = false;
@@ -53,12 +56,15 @@ public class RenderingPage
         {
             Context.Engine.Initialize();
             Context.Engine.Load(Context.Level);
-            Context.Engine.Render(2);
-            Context.Engine.Render(1);
-            Context.Engine.Render(0);
-            Context.Engine.Compose();
             ren = true;
         }
+
+        if ((Context.Frame + 1) % 5 == 0)
+        {
+            Context.Engine.Render();
+            Context.Engine.Compose(_canvasOffsetX, _canvasOffsetY);
+        }
+
 
         rlImGui.Begin();
         {
@@ -71,6 +77,9 @@ public class RenderingPage
 
                 ImGui.Columns(2);
                 ImGui.SetColumnWidth(0, ImGui.GetContentRegionAvail().Y / 3);
+
+                if (ImGui.SliderInt("Offset X", ref _canvasOffsetX, -100, 100)) Context.Engine.Compose(_canvasOffsetX, _canvasOffsetY);
+                if (ImGui.SliderInt("Offset Y", ref _canvasOffsetY, -100, 100)) Context.Engine.Compose(_canvasOffsetX, _canvasOffsetY);
 
                 if (ImGui.Button("Cancel", ImGui.GetContentRegionAvail() with { Y = 20 }))
                 {

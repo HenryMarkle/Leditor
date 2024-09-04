@@ -61,7 +61,7 @@ public class CastLoader
 
                 foreach (var g in groups) libs.Add(new() {
                     Name = g.Key,
-                    Members = g.ToDictionary(g => g.name, g => new CastMember(g.name, 0, g.texture))
+                    Members = g.ToDictionary(g => g.name, g => new CastMember(g.name, 0, g.texture), StringComparer.OrdinalIgnoreCase)
                 });
 
                 _libs = [..libs];

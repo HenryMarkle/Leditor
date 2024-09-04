@@ -36,6 +36,7 @@ public class Context
         }
     }
 
+    public long Frame { get; set; }
 
     public Serilog.ILogger? Logger { get; init; }
 

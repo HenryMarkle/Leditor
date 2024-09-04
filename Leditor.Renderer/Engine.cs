@@ -5,6 +5,7 @@ using Raylib_cs;
 using static Raylib_cs.Raylib;
 
 using System.Numerics;
+using System.Linq;
 
 using Leditor.Data;
 using Leditor.Data.Tiles;
@@ -34,6 +35,56 @@ public partial class Engine
 
         public RenderTexture2D vertImg;
         public RenderTexture2D horiImg;
+        public RenderTexture2D largeSignGrad2;
+        public RenderTexture2D TinySignsTexture;
+
+        public TileDefinition? TempleStoneWedge;
+        public TileDefinition? TempleStoneSlopeSE;
+        public TileDefinition? TempleStoneSlopeSW;
+
+        public TileDefinition? SGFL;
+        public TileDefinition? tileSetBigMetalFloor;
+
+        public MaterialDefinition? templeStone;
+
+        /// <summary>
+        /// An array of tiles organized by size
+        /// </summary>
+        // public List<TileDefinition>[,] randomMachinesPool = new List<TileDefinition>[9, 9];
+
+        /// A list of tiles `Random Machines` material pulls from
+        public TileDefinition[] randomMachinesPool = [];
+
+        /// A list of tiles `Random Metal` material pulls from
+        public TileDefinition[] randomMetalPool = [];
+
+        /// A list of tiles `Random Metals` material pulls from.
+        /// Don't confuse it with `Random Metal`; There's a `s` in there.
+        public TileDefinition[] randomMetalsPool = [];
+
+        /// A list of tiles `Chaotic Stone 2` material pulls from
+        public TileDefinition[] chaoticStone2Pool = [];
+
+        /// <summary>
+        /// A list of tiles used to render 'Dune Sand' material.
+        /// </summary>
+        public TileDefinition[] sandPool = [];
+
+        public Dictionary<string, Texture2D> tileSets = [];
+
+        /// <summary>
+        /// Used for rendering `Random Metal` material
+        /// </summary>
+        public virtual string[] DR_RandomMetalsNeeded { get; } = [
+            "Small Metal", "Metal Floor", "Square Metal", 
+            "Big Metal", "Big Metal Marked", "Four Holes", 
+            "Cross Beam Intersection"
+        ];
+
+        /// Used for (you guessed it) rendering `Chaotic Stone 2` material
+        public virtual string[] ChaoticStone2Needed { get; } = ["Small Stone", "Square Stone", "Tall Stone", "Wide Stone", "Big Stone", "Big Stone Marked"];
+        
+        public virtual string[] RandomMetalsAllowed { get; } = ["Small Metal", "Metal Floor", "Square Metal", "Big Metal", "Big Metal Marked", "C Beam Horizontal AA", "C Beam Horizontal AB", "C Beam Vertical AA", "C Beam Vertical BA", "Plate 2"];
 
         public Texture2D bigChainHolder;
         public Texture2D fanBlade;
@@ -49,18 +100,183 @@ public partial class Engine
         public Texture2D glassImage;
         public Texture2D HarvesterAEye;
         public Texture2D HarvesterBEye;
+        public Texture2D largerSigns;
+        public Texture2D largeSignGrad;
+        public Texture2D largerSignsStation;
+        public Texture2D StationLamp;
+        public Texture2D StationLampGradient;
+        public Texture2D LumiaireH;
+        public Texture2D LumHGrad;
+        public Texture2D LumiaireV;
+        public Texture2D LumVGrad;
+        public Texture2D tinySigns;
 
-        public void Initialize(Registry registry)
+        public virtual void Initialize(Registry registry)
         {
             if (Initialized) return;
-            
-            var lib = registry.CastLibraries.Single(l => l.Name == "levelEditor");
 
-            var vTexture = lib["vertImg"].Texture;
-            var hTexture = lib["horiImg"].Texture;
+            var levelEditorLib = registry.CastLibraries["levelEditor"];
+            var internalLib = registry.CastLibraries["Internal"];
+            var droughtLib = registry.CastLibraries["Drought"];
+            var dryLib = registry.CastLibraries["Dry Editor"];
+
+            var tileSetsTask = Task.Run(() => {
+                foreach (var lib in registry.CastLibraries.Values)
+                {
+                    foreach (var (key, member) in lib.Members)
+                    {
+                        if (key.StartsWith("tileSet")) tileSets[key] = member.Texture;
+                    }
+                }
+            });
+
+            var randomMachinesTilePoolTask = Task.Run(() => {
+                // I had to hardcode them for now. Forgive me.
+                string[] poolNames = [
+                    // Machinery
+                    "Metal Holes", "Dyson Fan", "Big Fan", "machine box A",
+                    "machine box B", "machine box C_E", "machine box C_W",
+                    "machine box C_Sym", "Tank Holder", "Machine Box D",
+                    "Machine Box E L", "Machine Box E R", "Pillar Machine",
+                    "Mud Elevator", "Elevator Track", "Huge Fan", "Sky Box",
+                    "Pole Holder", "valve", "Hub Machine", "Monster Fan", 
+                    "Compressor L", "Compressor R",
+                    "Compressor Segment", "Giant Screw", "Pipe Box R", "Pipe Box L",
+                    "Door Holder R", "Door Holder L",
+
+                    // Machinery2
+                    "Piston Top", "Piston Segment Empty", "Piston Head",
+                    "Piston Segment Filled", "Piston Bottom",
+                    "Piston Segment Horizontal A", "Piston Segment Horizontal B",
+                    "Vertical Conveyor Belt B",
+                    "Ventilation Box Empty", "Drill Head", "Drill A",
+                    "Drill B", "Conveyor Belt Segment", "Conveyor Belt Wheel",
+                    "Conveyor Belt Covered", "Conveyor Belt L", "Conveyor Belt R",
+                    "Drill Shell A", "Drill Shell B", "Drill Shell Top",
+                    "Drill Shell Bottom", "Big Drill", "Drill Rim",
+
+                    // Small machines
+                    "Small Machine A", "Small Machine B", "Small Machine C",
+                    "Small Machine D", "Small Machine E", "Small Machine F",
+                    "Small Machine G"
+                ];
+
+                randomMachinesPool = poolNames
+                    .AsParallel()
+                    .Where(n => registry.Tiles!.Names.ContainsKey(n))
+                    .Select(registry.Tiles!.Get)
+                    .Where(t => t.Size.Width <= 8 && t.Size.Height <= 8)
+                    .ToArray();
+                
+                // for (int x = 1; x < 9; x++)
+                // {
+                //     for (int y = 1; y < 9; y++) randomMachinesPool[x, y] = [];
+                // }
+                    
+                // foreach (var t in randomMachines) randomMachinesPool[t.Size.Width, t.Size.Height].Add(t);
+            });
+
+            var randomMetalPoolTask = Task.Run(() => {
+                string[] names = [
+                    "Small Metal", "Metal Floor", "Square Metal", 
+                    "Big Metal", "Big Metal Marked", "C Beam Horizontal AA", 
+                    "C Beam Horizontal AB", "C Beam Vertical AA", "C Beam Vertical BA", 
+                    "Plate 2"
+                ];
+
+                randomMetalPool = names
+                    .AsParallel()
+                    .Select(registry.Tiles!.Get)
+                    .ToArray();
+            });
+
+            var randomMetalsPoolTask = Task.Run(() => {
+                randomMetalsPool = registry.Tiles!.Names.Values
+                    .AsParallel()
+                    .Where(t => t.Size.Width <= 8 && t.Size.Height <= 8 && !t.HasSpecsLayer(1) && RandomMetalsAllowed.Contains(t.Name))
+                    .ToArray();
+            });
+
+            var chaoticStone2PoolTask = Task.Run(() => {
+                chaoticStone2Pool = registry.Tiles!.Names.Values
+                    .AsParallel()
+                    .Where(t => 
+                        t.Tags.Contains("chaoticStone2") || 
+                        t.Tags.Contains("chaoticStone2 : rare") || 
+                        t.Tags.Contains("chaoticStone2 : very rare") ||
+                        ChaoticStone2Needed.Contains(t.Name)
+                    ).ToArray();
+            });
+
+            var sandPoolTask = Task.Run(() => {
+                sandPool = registry.Tiles!.Names.Values
+                    .AsParallel()
+                    .Where(t => t is { Size: (1, 1), Type: TileType.VoxelStructSandType } )
+                    .ToArray();
+            });
+
+
+            var memberTask = Task.Run(() => {
+                registry.Tiles?.Names.TryGetValue("Temple Stone Wedge", out TempleStoneWedge);
+                registry.Tiles?.Names.TryGetValue("Temple Stone Slope SE", out TempleStoneSlopeSE);
+                registry.Tiles?.Names.TryGetValue("Temple Stone Slope SW", out TempleStoneSlopeSW);
+
+                // Creating tiles out of thin air because of course we should.
+                SGFL = new TileDefinition("SGFL", (1, 1), TileType.VoxelStruct, 0, new int[0,0,0], [10], [], 1)
+                {
+                    Texture = droughtLib["SGFL"].Texture
+                };
+
+                tileSetBigMetalFloor = new TileDefinition(
+                    "tileSetBigMetalFloor", 
+                    (1, 1),
+                    TileType.VoxelStruct,
+                    1,
+                    new int[0,0,0],
+                    [6, 1, 1, 1, 1],
+                    [],
+                    1
+                )
+                {
+                    Texture = droughtLib["tileSetBigMetalFloor"].Texture
+                };
+
+                bigChainHolder = internalLib["bigChainSegment"].Texture;
+                fanBlade = internalLib["fanBlade"].Texture;
+                BigWheelGraf = internalLib["Big Wheel Graf"].Texture;
+                sawbladeGraf = droughtLib["sawbladeGraf"].Texture;
+                randomCords = levelEditorLib["randomCords"].Texture;
+                bigSigns1 = internalLib["bigSigns1"].Texture;
+                bigSigns2 = internalLib["bigSigns2"].Texture;
+                bigSignGradient = internalLib["bigSignGradient"].Texture;
+                bigWesternSigns = internalLib["bigWesternSigns"].Texture;
+                smallAsianSigns = internalLib["smallAsianSigns"].Texture;
+                smallAsianSignsStation = droughtLib["smallAsianSignsStation"].Texture;
+                glassImage = levelEditorLib["glassImage"].Texture;
+                HarvesterAEye = levelEditorLib["HarvesterAEye"].Texture;
+                HarvesterBEye = levelEditorLib["HarvesterBEye"].Texture;
+                largerSigns = internalLib["largerSigns"].Texture;
+                largeSignGrad = internalLib["largeSignGrad"].Texture;
+                largerSignsStation = droughtLib["largerSignsStation"].Texture;
+                StationLamp = dryLib["StationLamp"].Texture;
+                StationLampGradient = dryLib["StationLampGradient"].Texture;
+                LumiaireH = dryLib["LumiaireH"].Texture;
+                LumHGrad = dryLib["LumHGrad"].Texture;
+                LumiaireV = dryLib["LumiaireV"].Texture;
+                LumVGrad = dryLib["LumVGrad"].Texture;
+                tinySigns = internalLib["tinySigns"].Texture;
+            });
+
+            var vTexture = levelEditorLib["vertImg"].Texture;
+            var hTexture = levelEditorLib["horiImg"].Texture;
+            var largeSignGrad2Texture = internalLib["largeSignGrad2"].Texture;
 
             vertImg = LoadRenderTexture(vTexture.Width, vTexture.Height);
             horiImg = LoadRenderTexture(hTexture.Width, hTexture.Height);
+            largeSignGrad2 = LoadRenderTexture(largeSignGrad2Texture.Width, largeSignGrad2Texture.Height);
+            
+            var texture = internalLib["Tiny SignsTexture"].Texture;
+            TinySignsTexture = LoadRenderTexture(texture.Width, texture.Height);
 
             BeginTextureMode(vertImg);
             {
@@ -76,30 +292,37 @@ public partial class Engine
             }
             EndTextureMode();
 
-            var internalLib = registry.CastLibraries.Single(l => l.Name == "Internal");
-            var droughtLib = registry.CastLibraries.Single(l => l.Name == "Drought");
+            BeginTextureMode(largeSignGrad2);
+            {
+                ClearBackground(Color.White);
+                DrawTexture(largeSignGrad2Texture, 0, 0, Color.White);
+            }
+            EndTextureMode();
 
-            bigChainHolder = internalLib["bigChainSegment"].Texture;
-            fanBlade = internalLib["fanBlade"].Texture;
-            BigWheelGraf = internalLib["Big Wheel Graf"].Texture;
-            sawbladeGraf = droughtLib["sawbladeGraf"].Texture;
-            randomCords = lib["randomCords"].Texture;
-            bigSigns1 = internalLib["bigSigns1"].Texture;
-            bigSigns2 = internalLib["bigSigns2"].Texture;
-            bigSignGradient = internalLib["bigSignGradient"].Texture;
-            bigWesternSigns = internalLib["bigWesternSigns"].Texture;
-            smallAsianSigns = internalLib["smallAsianSigns"].Texture;
-            smallAsianSignsStation = droughtLib["smallAsianSignsStation"].Texture;
-            glassImage = lib["glassImage"].Texture;
-            HarvesterAEye = lib["HarvesterAEye"].Texture;
-            HarvesterBEye = lib["HarvesterBEye"].Texture;
+            BeginTextureMode(TinySignsTexture);
+            {
+                ClearBackground(Color.White);
+                DrawTexture(internalLib["Tiny SignsTexture"].Texture, 0, 0, Color.White);
+            }
+            EndTextureMode();
+
+            registry.Materials?.Names.TryGetValue("Temple Stone", out templeStone);
+            
+            memberTask.Wait();
+            tileSetsTask.Wait();
+            randomMachinesTilePoolTask.Wait();
+            randomMetalPoolTask.Wait();
+            chaoticStone2PoolTask.Wait();
+            randomMetalsPoolTask.Wait();
+            sandPoolTask.Wait();
 
             Initialized = true;
         }
 
         public void Reset(Registry registry)
         {
-            var lib = registry.CastLibraries.Single(l => l.Name == "levelEditor");
+            var lib = registry.CastLibraries["levelEditor"];
+            var internalLib = registry.CastLibraries["Internal"];
 
             var vTexture = lib["vertImg"].Texture;
             var hTexture = lib["horiImg"].Texture;
@@ -115,6 +338,20 @@ public partial class Engine
             {
                 ClearBackground(Color.White);
                 DrawTexture(hTexture, 0, 0, Color.White);
+            }
+            EndTextureMode();
+
+            BeginTextureMode(largeSignGrad2);
+            {
+                ClearBackground(Color.White);
+                DrawTexture(internalLib["largeSignGrad2"].Texture, 0, 0, Color.White);
+            }
+            EndTextureMode();
+
+            BeginTextureMode(TinySignsTexture);
+            {
+                ClearBackground(Color.White);
+                DrawTexture(internalLib["Tiny SignsTexture"].Texture, 0, 0, Color.White);
             }
             EndTextureMode();
         }
@@ -126,7 +363,15 @@ public partial class Engine
 
             UnloadRenderTexture(vertImg);
             UnloadRenderTexture(horiImg);
+            UnloadRenderTexture(largeSignGrad2);
+            UnloadRenderTexture(TinySignsTexture);
         }
+    }
+
+    public class Config
+    {
+        public bool InvisibleMarterialFix { get; set; }
+        public bool MaterialFixes { get; set; }
     }
 
     /// <summary>
@@ -149,6 +394,10 @@ public partial class Engine
 
     protected const int Width = 2000;
     protected const int Height = 1200;
+
+    protected bool _tinySignsDrawn;
+
+    protected int _currentLayer;
 
     public RenderTexture2D Canvas
     {
@@ -174,6 +423,8 @@ public partial class Engine
 
     protected RenderState State { get; set; }
 
+    protected Config Configuration { get; set; }
+
 
     public Engine()
     {
@@ -183,6 +434,7 @@ public partial class Engine
         _gradientB = new RenderTexture2D[30];
 
         State = new();
+        Configuration = new();
     }
 
     ~Engine()
@@ -234,9 +486,14 @@ public partial class Engine
         Initialized = true;
     }
 
-    public void Compose()
+    public void Configure(in Config c)
     {
-        var shader = Shaders.WhiteRemoverVFlip;
+        Configuration = c;
+    }
+
+    public void Compose(int offsetX, int offsetY)
+    {
+        var shader = Shaders.WhiteRemoverVFlipDepthAccumulator;
 
         BeginTextureMode(_canvas);
 
@@ -248,12 +505,11 @@ public partial class Engine
 
             BeginShaderMode(shader);
             SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), layer.Texture);
+            SetShaderValue(shader, GetShaderLocation(shader, "d"), l / 30f, ShaderUniformDataType.Float);
 
-            DrawTexture(layer.Texture, 29 - l, 29 - l, Color.White);
+            DrawTexture(layer.Texture, 29 - l * offsetX, 29 - l * offsetY, Color.White);
 
             EndShaderMode();
-
-            // DrawRectangle(0, 0, _canvas.Texture.Width, _canvas.Texture.Height, Color.White with { A = (byte)(30 + l) });
         }
 
         EndTextureMode();
@@ -295,6 +551,8 @@ public partial class Engine
         }
 
         Level = null;
+        _tinySignsDrawn = false;
+        _currentLayer = 0;
     }
 
     public void Dispose()
@@ -345,13 +603,14 @@ public partial class Engine
     /// Draws a tile into the canvas
     /// </summary>
     /// <param name="tile">Tile definition</param>
-    /// <param name="x">X coordinates relative to the canvas</param>
-    /// <param name="y">Y coordinates relative to the canvas</param>
+    /// <param name="x">Matrix X coordinates</param>
+    /// <param name="y">Matrix Y coordinates</param>
     /// <param name="layer">The current layer (0, 1, 2)</param>
     /// <param name="camera">The current render camera</param>
     /// <param name="rt">the temprary canvas to draw on</param>
     protected virtual void DrawTile_MTX(
-        Tile cell, 
+        Tile cell,
+        TileDefinition tile,
         int x, 
         int y, 
         int layer,
@@ -359,7 +618,6 @@ public partial class Engine
         RenderTexture2D rt
     )
     {
-        var tile = cell.TileDefinition!;
         var (hx, hy) = Data.Utils.GetTileHeadPositionI(tile);
 
         int startX = x - hx;
@@ -1061,13 +1319,13 @@ public partial class Engine
 
                     if (sublayer > 20) sublayer -= 5;
 
-                    var middle = Utils.GetMiddleCellPos(x, y);
+                    var middle = new Vector2(x * 20 - 10, y * 20 - 10);
 
-                    Rectangle dest = new(
-                        -23 + middle.X,
-                        -23 + middle.Y,
-                         46,
-                         46
+                    Quad q = new(
+                        middle,                             // Top left
+                        new(middle.X + 46, middle.Y),       // Top right
+                        new(middle.X + 46, middle.Y + 46),  // Bottom right
+                        new(middle.X, middle.Y + 46)        // bottom left
                     );
 
                     BeginTextureMode(_layers[sublayer - 2]);
@@ -1076,11 +1334,13 @@ public partial class Engine
 
                         BeginShaderMode(shader);
                         SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.fanBlade);
+
                         Draw.DrawQuad(
                             State.fanBlade,
-                            Utils.RotateRect(dest, Random.Generate(360)),
+                            q.Rotated(Random.Generate(360)),
                             Color.Green
                         );
+
                         EndShaderMode();
                     }
                     EndTextureMode();
@@ -1091,17 +1351,19 @@ public partial class Engine
 
                         BeginShaderMode(shader);
                         SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.fanBlade);
+
                         Draw.DrawQuad(
                             State.fanBlade,
-                            Utils.RotateRect(dest, Random.Generate(360)),
+                            q.Rotated(Random.Generate(360)),
                             Color.Green
                         );
+
                         EndShaderMode();
                     }
                     EndTextureMode();
                 }
                 break;
-                case "Big Wheel Graf":
+                case "Big Wheel":
                 {
                     int[] dpsL = layer switch {
                         0 => [  0,  7 ],
@@ -1109,13 +1371,13 @@ public partial class Engine
                         _ => [ 19, 27 ]
                     };
 
-                    Vector2 offset = Utils.GetMiddleCellPos(x, y) + new Vector2(10, 10);
+                    Vector2 offset = new Vector2(x, y) * 20 + Vector2.One * 10; // Needs tweaking
 
-                    Rectangle rect = new(
-                        -90 + offset.X,
-                        -90 + offset.Y,
-                        180,
-                        180
+                    Quad q = new(
+                        new(-90 + offset.X      , -90 + offset.Y      ),    // Top left
+                        new(-90 + offset.X + 180, -90 + offset.Y      ),    // Top right
+                        new(-90 + offset.X + 180, -90 + offset.Y + 180),    // Bottom right
+                        new(-90 + offset.X      , -90 + offset.Y + 180)     // Bottom left
                     );
 
                     foreach (var l in dpsL)
@@ -1131,7 +1393,7 @@ public partial class Engine
                             SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.BigWheelGraf);
                             Draw.DrawQuad(
                                 State.BigWheelGraf,
-                                Utils.RotateRect(rect, rnd + 0.001f),
+                                q.Rotated(rnd + 0.001f),
                                 Color.Green
                             );
                             EndShaderMode();
@@ -2264,7 +2526,1588 @@ public partial class Engine
                         var dr = side == 1 ? -1 : 1;
 
                         var eyePastePos = middle + new Vector2(eye.X * dr, eye.Y);
+                        
+                        var eyeMember = letter == 'A' ? State.HarvesterAEye : State.HarvesterBEye;
+                        
+                        var quad = Utils.RotateRect(new Rectangle(
+                                eyePastePos.X - eyeMember.Width / 2,
+                                eyePastePos.Y = eyeMember.Height / 2,
+                                eyeMember.Width,
+                                eyeMember.Height
+                            ),
+                            Random.Generate(360)
+                        );
 
+
+                        var shader = Shaders.WhiteRemoverApplyColor;
+
+                        for (var depth = layer * 10 +3; depth <= layer * 10 + 6; depth++)
+                        {
+                            BeginTextureMode(_layers[depth]);
+                            BeginShaderMode(shader);
+                            SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), eyeMember);
+                            Draw.DrawQuad(
+                                eyeMember,
+                                quad,
+                                Color.Green
+                            );
+                            EndShaderMode();
+                            EndTextureMode();
+                        }
+                    }
+                }
+                break;
+            
+                // incomplete
+                case "Temple Floor":
+                if (State.TempleStoneWedge is not null &&
+                    State.TempleStoneSlopeSW is not null &&
+                    State.TempleStoneSlopeSE is not null) {
+                    var absX = x + (int)(camera.Coords.X / 20);
+                    var absY = y + (int)(camera.Coords.Y / 20);
+                
+                    var nextIsFloor = false;
+                    
+                    if (absY + 8 < Level!.Height && 
+                        Level!.TileMatrix[absY + 8, absX, layer] is { Type: TileCellType.Head, TileDefinition.Name: "Temple Floor" })
+                    {
+                        nextIsFloor = true;
+                    }
+
+                    var prevIsFloor = false;
+
+
+                    if (absY - 8 >= 0 && 
+                        Level!.TileMatrix[absY + 8, absX, layer] is { Type: TileCellType.Head, TileDefinition.Name: "Temple Floor" })
+                    {
+                        prevIsFloor = true;
+                    }
+
+                    BeginTextureMode(rt);
+                    if (prevIsFloor)
+                    {
+                        DrawTile_MTX(new(), State.TempleStoneWedge, x + (int)camera.Coords.X - 4, y + (int)camera.Coords.Y - 1, layer, camera, rt);
+                    }
+                    else
+                    {
+                        DrawTile_MTX(new(), State.TempleStoneSlopeSE, x + (int)camera.Coords.X - 3, y + (int)camera.Coords.Y - 1, layer, camera, rt);
+                    }
+
+                    if (!nextIsFloor)
+                    {
+                        DrawTile_MTX(new(), State.TempleStoneSlopeSW, x + (int)camera.Coords.X + 4, y + (int)camera.Coords.Y - 1, layer, camera, rt);
+                    }
+                    EndTextureMode();
+                }
+                break;
+            
+                case "Larger Sign":
+                case "Larger Sign B":
+                {
+                    var texture = LoadRenderTexture(86, 106);
+                    var rnd = Random.Generate(14);
+                    var dest = new Rectangle(3, 3, 80, 100);
+                    var shader = Shaders.WhiteRemoverApplyColor;
+
+                    BeginTextureMode(texture);
+                    {
+                        ClearBackground(Color.White);
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.largerSigns);
+
+                        DrawTexturePro(
+                            State.largerSigns,
+                            new Rectangle(
+                                (rnd - 1) * 80,
+                                0,
+                                80,
+                                100
+                            ),
+                            dest,
+                            Vector2.Zero,
+                            0,
+                            Color.Black
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    var sublayer = layer * 10;
+
+                    var middle = Utils.GetMiddleCellPos(x, y);
+
+                    middle.X += 10;
+
+                    ReadOnlySpan<(Vector2, Color)> list = [
+                        (new(-4, -4), Color.Blue),
+                        (new(-3, -3), Color.Blue),
+                        (new( 3,  3), Color.Red),
+                        (new( 4,  4), Color.Red),
+                        (new(-2, -2), Color.Green),
+                        (new(-1, -1), Color.Green),
+                        (new( 0,  0), Color.Green),
+                        (new( 1,  1), Color.Green),
+                        (new( 2,  2), Color.Green),
+                        (new( 2,  2), Color.Green),
+                    ];
+
+                    foreach (var (point, color) in list)
+                    {
+                        BeginTextureMode(_layers[sublayer]);
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                        DrawTextureV(
+                            texture.Texture,
+                            middle + point - new Vector2(43, 53),
+                            color
+                        );
+                        EndShaderMode();
+                        EndTextureMode();
+
+                        BeginTextureMode(_layers[sublayer + 1]);
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                        DrawTextureV(
+                            texture.Texture,
+                            middle + point - new Vector2(43, 53),
+                            color
+                        );
+                        EndShaderMode();
+                        EndTextureMode();
+                    }
+
+                    BeginTextureMode(_layers[sublayer]);
+                    BeginShaderMode(shader);
+                    SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                    DrawTextureV(
+                        texture.Texture,
+                        middle - new Vector2(43, 53),
+                        Color.White
+                    );
+                    EndShaderMode();
+                    EndTextureMode();
+
+                    BeginTextureMode(_layers[sublayer + 1]);
+                    BeginShaderMode(shader);
+                    SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                    DrawTextureV(
+                        texture.Texture,
+                        middle - new Vector2(43, 53),
+                        new Color(255, 0, 255, 255)
+                    );
+                    EndShaderMode();
+                    EndTextureMode();
+
+                    BeginTextureMode(State.largeSignGrad2);
+                    {
+                        DrawTexture(State.largeSignGrad, 0, 0, Color.White);
+                    }
+                    EndTextureMode();
+
+                    BeginTextureMode(State.largeSignGrad2);
+                    for (var a = 0; a <= 6; a++)
+                    {
+                        for (var b = 0; b <= 13; b++)
+                        {
+                            Rectangle rect = new(
+                                a * 16 - 6,
+                                b * 8 - 1,
+                                16,
+                                8
+                            );
+
+                            if (Random.Generate(7) == 1)
+                            {
+                                var blend = Random.Generate(Random.Generate(100));
+
+                                DrawRectangleRec(
+                                    rect with {
+                                        Width = rect.Width + 1,
+                                        Height = rect.Height + 1
+                                    },
+                                    Color.White with { A = (byte)(blend/2) }
+                                );
+
+                                DrawRectangleRec(
+                                    rect with {
+                                        X = rect.X + 1,
+                                        Y = rect.Y + 1,
+                                        Width = rect.Width - 1,
+                                        Height = rect.Height - 1
+                                    },
+                                    Color.White with { A = (byte)(blend/2) }
+                                );
+                            }
+                            else if (Random.Generate(7) == 1)
+                            {
+                                DrawRectangleRec(
+                                    rect with {
+                                        X = rect.X + 1,
+                                        Y = rect.Y + 1,
+                                        Width = rect.Width - 1,
+                                        Height = rect.Height - 1
+                                    },
+                                    Color.Black with { A = (byte)Random.Generate(Random.Generate(60)) }
+                                );
+                            }
+
+                            DrawRectangleRec(
+                                rect with { Height = 1 },
+                                Color.White with { A = 20 }
+                            );
+
+                            DrawRectangleRec(
+                                rect with {
+                                    Y = rect.Y + 1, 
+                                    Width = 1 
+                                },
+                                Color.White with { A = 20 }
+                            );
+
+                        }
+                    }
+                    EndTextureMode();
+                
+                    Draw.DrawToEffectColor(
+                        State.largeSignGrad2.Texture, 
+                        new Rectangle(0, 0, 86, 106),
+                        new Rectangle(
+                            -43 + middle.X,
+                            -53 + middle.Y,
+                            86,
+                            106
+                        ),
+                        tag == "Larger Sign B" ? _gradientB : _gradientA,
+                        sublayer + 1,
+                        1,
+                        1
+                    );
+
+                    UnloadRenderTexture(texture);
+                }
+                break;
+            
+                case "Station Larger Sign":
+                case "Station Larger Sign B":
+                {
+                    var texture = LoadRenderTexture(86, 106);
+                    var rnd = Random.Generate(14);
+                    var dest = new Rectangle(3, 3, 80, 100);
+                    var shader = Shaders.WhiteRemoverApplyColor;
+
+                    BeginTextureMode(texture);
+                    {
+                        ClearBackground(Color.White);
+
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.largerSignsStation);
+
+                        DrawTexturePro(
+                            State.largerSignsStation,
+                            new Rectangle(
+                                (rnd - 1) * 80,
+                                0,
+                                80,
+                                100
+                            ),
+                            dest,
+                            Vector2.Zero,
+                            0,
+                            Color.Black
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    var sublayer = layer * 10;
+
+                    var middle = Utils.GetMiddleCellPos(x, y);
+
+                    middle.X += 10;
+
+                    ReadOnlySpan<(Vector2, Color)> list = [
+                        (new(-4, -4), Color.Blue),
+                        (new(-3, -3), Color.Blue),
+                        (new( 3,  3), Color.Red),
+                        (new( 4,  4), Color.Red),
+                        (new(-2, -2), Color.Green),
+                        (new(-1, -1), Color.Green),
+                        (new( 0,  0), Color.Green),
+                        (new( 1,  1), Color.Green),
+                        (new( 2,  2), Color.Green),
+                        (new( 2,  2), Color.Green),
+                    ];
+
+                    foreach (var (point, color) in list)
+                    {
+                        BeginTextureMode(_layers[sublayer]);
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                        DrawTextureV(
+                            texture.Texture,
+                            middle + point - new Vector2(43, 53),
+                            color
+                        );
+                        EndShaderMode();
+                        EndTextureMode();
+
+                        BeginTextureMode(_layers[sublayer + 1]);
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                        DrawTextureV(
+                            texture.Texture,
+                            middle + point - new Vector2(43, 53),
+                            color
+                        );
+                        EndShaderMode();
+                        EndTextureMode();
+                    }
+
+                    BeginTextureMode(_layers[sublayer]);
+                    BeginShaderMode(shader);
+                    SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                    DrawTextureV(
+                        texture.Texture,
+                        middle - new Vector2(43, 53),
+                        Color.White
+                    );
+                    EndShaderMode();
+                    EndTextureMode();
+
+                    BeginTextureMode(_layers[sublayer + 1]);
+                    BeginShaderMode(shader);
+                    SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                    DrawTextureV(
+                        texture.Texture,
+                        middle - new Vector2(43, 53),
+                        new Color(255, 0, 255, 255)
+                    );
+                    EndShaderMode();
+                    EndTextureMode();
+
+                    BeginTextureMode(State.largeSignGrad2);
+                    {
+                        DrawTexture(State.largeSignGrad, 0, 0, Color.White);
+                    }
+                    EndTextureMode();
+
+                    BeginTextureMode(State.largeSignGrad2);
+                    for (var a = 0; a <= 6; a++)
+                    {
+                        for (var b = 0; b <= 13; b++)
+                        {
+                            Rectangle rect = new(
+                                a * 16 - 6,
+                                b * 8 - 1,
+                                16,
+                                8
+                            );
+
+                            if (Random.Generate(7) == 1)
+                            {
+                                var blend = Random.Generate(Random.Generate(100));
+
+                                DrawRectangleRec(
+                                    rect with {
+                                        Width = rect.Width + 1,
+                                        Height = rect.Height + 1
+                                    },
+                                    Color.White with { A = (byte)(blend/2) }
+                                );
+
+                                DrawRectangleRec(
+                                    rect with {
+                                        X = rect.X + 1,
+                                        Y = rect.Y + 1,
+                                        Width = rect.Width - 1,
+                                        Height = rect.Height - 1
+                                    },
+                                    Color.White with { A = (byte)(blend/2) }
+                                );
+                            }
+                            else if (Random.Generate(7) == 1)
+                            {
+                                DrawRectangleRec(
+                                    rect with {
+                                        X = rect.X + 1,
+                                        Y = rect.Y + 1,
+                                        Width = rect.Width - 1,
+                                        Height = rect.Height - 1
+                                    },
+                                    Color.Black with { A = (byte)Random.Generate(Random.Generate(60)) }
+                                );
+                            }
+
+                            DrawRectangleRec(
+                                rect with { Height = 1 },
+                                Color.White with { A = 20 }
+                            );
+
+                            DrawRectangleRec(
+                                rect with {
+                                    Y = rect.Y + 1, 
+                                    Width = 1 
+                                },
+                                Color.White with { A = 20 }
+                            );
+
+                        }
+                    }
+                    EndTextureMode();
+                
+                    Draw.DrawToEffectColor(
+                        State.largeSignGrad2.Texture, 
+                        new Rectangle(0, 0, 86, 106),
+                        new Rectangle(
+                            -43 + middle.X,
+                            -53 + middle.Y,
+                            86,
+                            106
+                        ),
+                        tag == "Station Larger Sign B" ? _gradientB : _gradientA,
+                        sublayer + 1,
+                        1,
+                        1
+                    );
+
+                    UnloadRenderTexture(texture);
+                }
+                break;
+            
+                case "Station Lamp":
+                {
+                    var texture = LoadRenderTexture(40, 20);
+                    var rnd = Random.Generate(1);
+                    var rect = new Rectangle(1, 1, 38, 18);
+                    var middle = Utils.GetMiddleCellPos(x, y);
+
+                    middle.X += 11;
+                    middle.Y += 1;
+                    
+                    var shader = Shaders.WhiteRemoverApplyColor;
+
+                    BeginTextureMode(texture);
+                    {
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.StationLamp);
+                        DrawTexturePro(
+                            State.StationLamp,
+                            new Rectangle(
+                                (rnd - 1) * 40, 
+                                0, 
+                                40, 
+                                20
+                            ),
+                            new Rectangle(0, 0, texture.Texture.Width, texture.Texture.Height),
+                            Vector2.Zero,
+                            0,
+                            Color.Black
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    BeginTextureMode(rt);
+                    {
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                        DrawTexturePro(
+                            texture.Texture,
+                            new Rectangle(),
+                            new Rectangle(
+                                -20 + middle.X,
+                                -10 + middle.Y,
+                                40,
+                                20
+                            ),
+                            Vector2.Zero,
+                            0,
+                            new Color(255, 0, 255, 255)
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    var sublayer = layer * 10 + 1;
+
+                    Draw.DrawToEffectColor(
+                        State.StationLampGradient,
+                        new Rectangle(0, 0, 40, 20),
+                        new Rectangle(
+                            middle.X - 20, 
+                            middle.Y - 10, 
+                            40, 
+                            20
+                        ),
+                        _gradientA,
+                        sublayer,
+                        1
+                    );
+
+                    UnloadRenderTexture(texture);
+                }
+                break;
+            
+                case "LumiaireH":
+                {
+                    var sublayer = layer * 10 + 7;
+                    var middle = Utils.GetMiddleCellPos(x, y);
+                    var shader = Shaders.WhiteRemoverApplyColor;
+
+                    var dest = new Rectangle(
+                        -29 + middle.X + 10,
+                        -11 + middle.Y + 10,
+                        58,
+                        22
+                    );
+
+                    BeginTextureMode(_layers[sublayer]);
+                    {
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.LumiaireH);
+                        DrawTexturePro(
+                            State.LumiaireH,
+                            new Rectangle(0, 0, State.LumiaireH.Width, State.LumiaireH.Height),
+                            dest,
+                            Vector2.Zero,
+                            0,
+                            new Color(255, 0, 255, 255)
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    BeginTextureMode(_gradientA[sublayer]);
+                    {
+                        Draw.DrawTextureDarkest(
+                            State.LumHGrad,
+                            new Rectangle(0, 0, State.LumHGrad.Width, State.LumHGrad.Height),
+                            dest
+                        );
+                    }
+                    EndTextureMode();
+                }
+                break;
+            
+                case "LumiaireV":
+                {
+                    var sublayer = layer * 10 + 7;
+                    var middle = Utils.GetMiddleCellPos(x, y);
+                    var shader = Shaders.WhiteRemoverApplyColor;
+
+                    var dest = new Rectangle(
+                        -11 + middle.X + 10,
+                        -29 + middle.Y + 10,
+                        22,
+                        58
+                    );
+
+                    BeginTextureMode(_layers[sublayer]);
+                    {
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.LumiaireV);
+                        DrawTexturePro(
+                            State.LumiaireV,
+                            new Rectangle(0, 0, State.LumiaireV.Width, State.LumiaireV.Height),
+                            dest,
+                            Vector2.Zero,
+                            0,
+                            new Color(255, 0, 255, 255)
+                        );
+                        EndShaderMode();
+                    }
+                    EndTextureMode();
+
+                    BeginTextureMode(_gradientA[sublayer]);
+                    {
+                        Draw.DrawTextureDarkest(
+                            State.LumVGrad,
+                            new Rectangle(0, 0, State.LumVGrad.Width, State.LumVGrad.Height),
+                            dest
+                        );
+                    }
+                    EndTextureMode();
+                }
+                break;
+            }
+        }
+    }
+
+    protected virtual bool IsMyTileOpenToThisTile(
+        MaterialDefinition material,
+        int x,
+        int y,
+        int layer
+    )
+    {
+        if (Data.Utils.InBounds(Level!.GeoMatrix, x, y))
+        {
+            ref var geoCell = ref Level!.GeoMatrix[y, x, layer];
+
+            if (geoCell.IsSlope || geoCell.Type is GeoType.Solid)
+            {
+                ref var tileCell = ref Level!.TileMatrix[y, x, layer];
+                
+                if (tileCell.Type is TileCellType.Material && tileCell.MaterialDefinition == material)
+                {
+                    return true;
+                }
+
+                if (tileCell.Type is TileCellType.Default && Level!.DefaultMaterial == material)
+                {
+                    return true;
+                }
+            }
+        }
+        else return Level?.DefaultMaterial == material;
+
+        return false;
+    }
+
+    protected virtual void DrawTinySigns()
+    {
+        BeginTextureMode(State.TinySignsTexture);
+        {
+            ClearBackground(Color.Green);
+        }
+        EndTextureMode();
+
+        var lang = 1;
+
+        Vector2[] blueList = [new( 1,  1), new( 1,  0), new( 0,  1)]; 
+        Vector2[] redList =  [new(-1, -1), new(-1,  0), new( 0, -1)];
+
+        var shader = Shaders.WhiteRemoverApplyColor;
+
+        var size = 8;
+
+        for (var c = 0; c <= 100; c++)
+        {
+            for (var q = 0; q <= 135; q++)
+            {
+                var middle = new Vector2((c + 0.5f) * size, (q + 0.5f) * size);
+            
+                var gtPos = new Vector2(Random.Generate(new ReadOnlySpan<int>([20, 14, 1])[lang]), lang + 1);
+
+                if (Random.Generate(50) == 1)
+                {
+                    lang = 2;
+                }
+                else if (Random.Generate(80) == 1)
+                {
+                    lang = 1;
+                }
+
+                if (Random.Generate(7) == 1)
+                {
+                    if (Random.Generate(3) == 1)
+                    {
+                        gtPos = new Vector2(1, 3);
+                    }
+                    else
+                    {
+                        gtPos = new Vector2(Random.Generate(Random.Generate(7)), 3);
+                    
+                        if (Random.Generate(5) == 1)
+                        {
+                            lang = 2;
+                        }
+                        else if (Random.Generate(10) == 1)
+                        {
+                            lang = 1;
+                        }
+                    }
+                }
+
+                BeginTextureMode(State.TinySignsTexture);
+                {
+                    foreach (var p in redList)
+                    {
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.tinySigns);
+                        DrawTexturePro(
+                            State.tinySigns,
+                            new Rectangle(
+                                (gtPos.X - 1)*6,
+                                (gtPos.Y - 1)*6,
+                                6,
+                                6
+                            ),
+                            new Rectangle(
+                                middle.X - 3 + p.X,
+                                middle.Y - 3 + p.Y,
+                                6,
+                                6
+                            ),
+                            Vector2.Zero,
+                            0,
+                            Color.Red
+                        );
+                        EndShaderMode();
+                    }
+
+                    foreach (var p in blueList)
+                    {
+                        BeginShaderMode(shader);
+                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.tinySigns);
+                        DrawTexturePro(
+                            State.tinySigns,
+                            new Rectangle(
+                                (gtPos.X - 1)*6,
+                                (gtPos.Y - 1)*6,
+                                6,
+                                6
+                            ),
+                            new Rectangle(
+                                middle.X - 3 + p.X,
+                                middle.Y - 3 + p.Y,
+                                6,
+                                6
+                            ),
+                            Vector2.Zero,
+                            0,
+                            Color.Blue
+                        );
+                        EndShaderMode();
+                    }
+
+                    BeginShaderMode(shader);
+                    SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), State.tinySigns);
+                    DrawTexturePro(
+                        State.tinySigns,
+                        new Rectangle(
+                            (gtPos.X - 1)*6,
+                            (gtPos.Y - 1)*6,
+                            6,
+                            6
+                        ),
+                        new Rectangle(
+                            middle.X - 3,
+                            middle.Y - 3,
+                            6,
+                            6
+                        ),
+                        Vector2.Zero,
+                        0,
+                        Color.Green
+                    );
+                    EndShaderMode();
+                }
+                EndTextureMode();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Draws materials
+    /// </summary>
+    /// <param name="x">Matrix X coordinates</param>
+    /// <param name="y">Matrix Y coordinates</param>
+    /// <param name="layer">Current layer (0, 1, 2)</param>
+    /// <param name="camera">The current rendering camera</param>
+    /// <param name="mat">The material definition</param>
+    /// <param name="rt">The render texture (canvas)</param>
+    protected virtual void DrawMaterial_MTX(
+        int x,
+        int y,
+        int layer,
+        in RenderCamera camera,
+        in MaterialDefinition mat,
+        RenderTexture2D rt
+    )
+    {
+        var sublayer = layer * 10;
+        var cellRect = new Rectangle(x * 20, y * 20, 20, 20);
+
+        var tileSetName = mat.Name;
+
+        if (mat.Name == "Scaffolding" && Configuration.MaterialFixes)
+        {
+            tileSetName += "DR";
+        }
+        else if (mat.Name == "Invisible")
+        {
+            tileSetName = "SuperStructure";
+        }
+
+        var tileSet = State.tileSets.TryGetValue(tileSetName, out var foundTileSet) ? foundTileSet : mat.Texture;
+
+        ref var cell = ref Level!.GeoMatrix[y, x, layer];
+
+        switch (cell.Type)
+        {
+            case GeoType.Solid:
+            {
+                for (var f = 1; f <= 4; f++)
+                {
+                    (Vector2, Vector2) profL;
+                    int gtAtV, gtAtH;
+                    Rectangle pstRect;
+
+                    switch (f)
+                    {
+                        case 1:
+                            profL = (new(-1, 0), new(0, -1));
+                            gtAtV = 2;
+                            pstRect = cellRect with {
+                                Width = cellRect.Width - 10,
+                                Height = cellRect.Height -10
+                            };
+                            break;
+
+                        case 2:
+                            profL = (new(1, 0), new(0, -1));
+                            gtAtV = 4;
+                            pstRect = cellRect with {
+                                X = cellRect.X + 10,
+                                Width = cellRect.Width - 10,
+                                Height = cellRect.Height -10
+                            };
+                            break;
+
+                        case 3:
+                            profL = (new(1, 0), new(0, 1));
+                            gtAtV = 6;
+                            pstRect = cellRect with {
+                                X = cellRect.X + 10,
+                                Y = cellRect.Y + 10,
+                                Width = cellRect.Width - 10,
+                                Height = cellRect.Height -10
+                            };
+                            break;
+
+                        default:
+                            profL = (new(-1, 0), new(0, 1));
+                            gtAtV = 6;
+                            pstRect = cellRect with {
+                                X = cellRect.X,
+                                Y = cellRect.Y + 10,
+                                Width = cellRect.Width - 10,
+                                Height = cellRect.Height -10
+                            };
+                            break;
+                    }
+                
+                    (bool, bool) id = (
+                        IsMyTileOpenToThisTile(mat, x + (int)profL.Item1.X, y + (int)profL.Item1.Y, layer), 
+                        IsMyTileOpenToThisTile(mat, x + (int)profL.Item2.X, y + (int)profL.Item2.Y, layer) 
+                    );
+
+                    if (id is (true, true))
+                    {
+                        if (IsMyTileOpenToThisTile(mat, x + (int)(profL.Item1.X + profL.Item2.X), y + (int)(profL.Item1.Y + profL.Item2.Y), layer))
+                        {
+                            gtAtH = 10;
+                            gtAtV = 2;
+                        }
+                        else
+                        {
+                            gtAtH = 8;
+                        }
+                    }
+                    else
+                    {
+                        gtAtH = id switch {
+                            (false, false) => 2,
+                            (false, true) => 4,
+                            (true, false) => 6,
+                            _ => 0
+                        };
+                    }
+                
+                    // Don't even ask me what the fuck is this
+                    if (gtAtH == 4)
+                    {
+                        if (gtAtV == 6)
+                        {
+                            gtAtV = 4;
+                        }
+                        else if (gtAtV == 8)
+                        {
+                            gtAtV = 2;
+                        }
+                    }
+                    else if (gtAtH == 6)
+                    {
+                        if (gtAtV is 4 or 8)
+                        {
+                            gtAtV -= 2;
+                        }
+                    }
+
+                    Rectangle gtRect = new(
+                        (gtAtH - 1) * 10 - 5,
+                        (gtAtV - 1) * 10 - 5,
+                        20,
+                        20
+                    );
+
+                    // pstRect = pstRect with {
+                    //     X = pstRect.X - camera.Coords.X,
+                    //     Y = pstRect.Y - camera.Coords.Y
+                    // };
+
+                    if (mat.Name != "Sand Block")
+                    {
+                        var shader = Shaders.WhiteRemover;
+
+                        BeginTextureMode(rt);
+                        {
+                            BeginShaderMode(shader);
+                            SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), tileSet);
+                            DrawTexturePro(
+                                tileSet,
+                                gtRect,
+                                pstRect with {
+                                    X = pstRect.X - 5,
+                                    Y = pstRect.Y - 5,
+                                    Width = pstRect.Width + 10,
+                                    Height = pstRect.Height + 10
+                                },
+                                Vector2.Zero,
+                                0,
+                                Color.White
+                            );
+                            EndShaderMode();
+                        }
+                        EndTextureMode();
+
+                        for (var d = sublayer + 1; d <= sublayer + 9; d++)
+                        {
+                            BeginTextureMode(_layers[d]);
+                            {
+                                BeginShaderMode(shader);
+                                SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), tileSet);
+                                DrawTexturePro(
+                                    tileSet,
+                                    gtRect with {
+                                        X = gtRect.X + 120
+                                    },
+                                    pstRect with {
+                                        X = pstRect.X - 5,
+                                        Y = pstRect.Y - 5,
+                                        Width = pstRect.Width + 10,
+                                        Height = pstRect.Height + 10
+                                    },
+                                    Vector2.Zero,
+                                    0,
+                                    Color.White
+                                );
+                                EndShaderMode();
+                            }
+                            EndTextureMode();
+                        }
+                    }
+                }
+            }
+            break;
+            
+            case GeoType.SlopeNW:
+            case GeoType.SlopeNE:
+            case GeoType.SlopeSW:
+            case GeoType.SlopeES:
+            {
+                var slope = cell.Type;
+
+                (Vector2, Vector2) dir;
+
+                if (Configuration.MaterialFixes)
+                {
+                    dir = slope switch {
+                        GeoType.SlopeNE => (new(-1,  0), new(0,  1)),
+                        GeoType.SlopeNW => (new( 0,  1), new(1,  0)),
+                        GeoType.SlopeES => (new(-1,  0), new(0, -1)),
+                        GeoType.SlopeSW => (new( 0, -1), new(1,  0)),
+                        _ => (Vector2.Zero, Vector2.Zero)
+                    };
+                }
+                else
+                {
+                    dir = slope switch {
+                        GeoType.SlopeNE => (new(-1,  0), new(0,  1)),
+                        GeoType.SlopeNW => (new( 1,  0), new(0,  1)),
+                        GeoType.SlopeES => (new(-1,  0), new(0, -1)),
+                        GeoType.SlopeSW => (new( 1,  0), new(0, -1)),
+                        _ => (Vector2.Zero, Vector2.Zero)
+                    };
+                }
+
+                Rectangle pstRect = new(
+                    x * 20 + camera.Coords.X, 
+                    y * 20 + camera.Coords.Y, 
+                    20, 
+                    20
+                );
+
+                // Expanded loop
+
+                Rectangle gtRect;
+                var shader = Shaders.WhiteRemover;
+
+                // First iteration (i = dir.Item1)
+
+                {
+                    gtRect.X = 10;
+                    gtRect.Y = 90 + 30 * ((int)cell.Type - 2);
+                    gtRect.Width = 20;
+                    gtRect.Height = 20;
+
+                    if (IsMyTileOpenToThisTile(mat, x + (int)dir.Item1.X, y + (int)dir.Item1.Y, layer))
+                    {
+                        gtRect.X += 30;
+                    }
+
+                    gtRect.X -= 5;
+                    gtRect.Y -= 5;
+                    gtRect.Width += 10;
+                    gtRect.Height += 10;
+
+                    pstRect.X -= 5;
+                    pstRect.Y -= 5;
+                    pstRect.Width += 10;
+                    pstRect.Height += 10;
+
+                    if (mat.Name == "Scaffolding" && !Configuration.MaterialFixes)
+                    {
+                        gtRect.X += 120;
+                        
+                        SDraw.Draw_NoWhite_NoColor(_layers[sublayer + 5], tileSet, shader, gtRect, pstRect);
+                        SDraw.Draw_NoWhite_NoColor(_layers[sublayer + 6], tileSet, shader, gtRect, pstRect);
+                        SDraw.Draw_NoWhite_NoColor(_layers[sublayer + 8], tileSet, shader, gtRect, pstRect);
+                        SDraw.Draw_NoWhite_NoColor(_layers[sublayer + 9], tileSet, shader, gtRect, pstRect);
+                    }
+                    else if (mat.Name != "Sand Block")
+                    {
+                        SDraw.Draw_NoWhite_NoColor(rt, tileSet, shader, gtRect, pstRect);
+
+                        gtRect.X += 120;
+
+                        for (var d = sublayer + 1; d <= sublayer + 9; d++)
+                        {
+                            SDraw.Draw_NoWhite_NoColor(_layers[d], tileSet, shader, gtRect, pstRect);
+                        }
+                    }
+                }
+
+                // Second iteration (i = dir.Item2)
+
+                {
+                    gtRect.X = 10;
+                    gtRect.Y = 90 + 30 * ((int)cell.Type - 2);
+                    gtRect.Width = 20;
+                    gtRect.Height = 20;
+
+                    if (IsMyTileOpenToThisTile(mat, x + (int)dir.Item2.X, y + (int)dir.Item2.Y, layer))
+                    {
+                        gtRect.X += 30;
+                    }
+
+                    gtRect.X -= 5;
+                    gtRect.Y -= 5;
+                    gtRect.Width += 10;
+                    gtRect.Height += 10;
+
+                    pstRect.X -= 5;
+                    pstRect.Y -= 5;
+                    pstRect.Width += 10;
+                    pstRect.Height += 10;
+
+                    if (mat.Name == "Scaffolding" && !Configuration.MaterialFixes)
+                    {
+                        gtRect.X += 120;
+                        
+                        SDraw.Draw_NoWhite_NoColor(_layers[sublayer + 5], tileSet, shader, gtRect, pstRect);
+                        SDraw.Draw_NoWhite_NoColor(_layers[sublayer + 6], tileSet, shader, gtRect, pstRect);
+                        SDraw.Draw_NoWhite_NoColor(_layers[sublayer + 8], tileSet, shader, gtRect, pstRect);
+                        SDraw.Draw_NoWhite_NoColor(_layers[sublayer + 9], tileSet, shader, gtRect, pstRect);
+                    }
+                    else if (mat.Name != "Sand Block")
+                    {
+                        SDraw.Draw_NoWhite_NoColor(rt, tileSet, shader, gtRect, pstRect);
+
+                        gtRect.X += 120;
+
+                        for (var d = sublayer + 1; d <= sublayer + 9; d++)
+                        {
+                            SDraw.Draw_NoWhite_NoColor(_layers[d], tileSet, shader, gtRect, pstRect);
+                        }
+                    }
+                }
+            }
+            break;
+
+            case GeoType.Platform:
+            if (mat.Name != "Invisible") {
+                
+                Rectangle pstRect = new(
+                    x * 20 - camera.Coords.X,
+                    y * 20 - camera.Coords.Y,
+                    20,
+                    20
+                );
+
+                if (mat.Name == "Stained Glass")
+                {
+                    DrawTile_MTX(Level!.TileMatrix[y, x, layer], State.SGFL!, x, y, layer, camera, rt);
+                }
+                else if (
+                    Configuration.MaterialFixes ||
+                    (mat.Name != "Sand Block" && mat.Name != "Scaffolding" && mat.Name != "Tiny Signs")
+                )
+                {
+                    // Fine. You win.
+                    DrawTile_MTX(
+                        Level!.TileMatrix[y, x, layer], 
+                        new TileDefinition(
+                            $"tileSet{tileSetName}Floor", 
+                            (1, 1), 
+                            TileType.VoxelStruct, 
+                            1, 
+                            new int[0,0,0], 
+                            [6, 1, 1, 1, 1], 
+                            [], 1
+                        ) { Texture = State.tileSets[$"tileSet{tileSetName}Floor"] },
+                        x,
+                        y,
+                        layer,
+                        camera,
+                        rt
+                    );
+                }
+                else
+                {
+                    DrawTile_MTX(
+                        Level!.TileMatrix[y, x, layer],
+                        State.tileSetBigMetalFloor!,
+                        x,
+                        y
+                        ,
+                        layer,
+                        camera,
+                        rt
+                    );
+                }
+            }
+            break;
+        }
+    
+        var modder = mat.Name switch {
+            "Concrete"          => 45,
+            "RainStone"         => 6,
+            "Bricks"            => 1,
+            "Tiny Signs"        => 10,
+            "Cliff"             => 45,
+            "Non-Slip Metal"    => 5,
+            "BulkMetal"         => 5,
+            "MassiveBulkMetal"  => 10,
+            "Asphalt"           => 45,
+            
+            _ => 0
+        };
+
+        if (modder is not 0)
+        {
+            Rectangle gtRect = new (
+                (x % modder) * 20,
+                (y % modder) * 20,
+                20,
+                20
+            );
+
+            if (mat.Name is "Bricks")
+            {
+                gtRect = new Rectangle(0, 0, 20, 20);
+            }
+
+            if (mat.Name is "Tiny Signs")
+            {
+                DrawTinySigns();
+                _tinySignsDrawn = true;
+            }
+
+            if (cell[GeoType.Solid])
+            {
+                Rectangle pstRect = new (
+                    x * 20,
+                    y * 20,
+                    20,
+                    20
+                );
+
+                SDraw.Draw_NoWhite_NoColor(
+                    _layers[sublayer],
+                    mat.Texture,
+                    Shaders.WhiteRemover,
+                    gtRect,
+                    pstRect
+                );
+            }
+            else if (cell.IsSlope)
+            {
+                // This rectangle was not initialized within the scope
+                // of this code block.
+                // In fact, I do not know where the initialization is supposed to be.
+                Rectangle pstRect = new(
+                    x * 20 + camera.Coords.X, 
+                    y * 20 + camera.Coords.Y, 
+                    20, 
+                    20
+                );
+
+                SDraw.Draw_NoWhite_NoColor(
+                    _layers[sublayer],
+                    mat.Texture,
+                    Shaders.WhiteRemover,
+                    gtRect,
+                    pstRect
+                );
+
+                var pos = new Vector2(x, y) * 20;
+                var offPos = new Vector2(x + 1, y + 1) * 20;
+
+                var topLeft = pos;
+                var bottomLeft = new Vector2(pos.X, offPos.Y);
+                var topRight = new Vector2(offPos.X, pos.Y);
+                var bottomRight = offPos;
+
+                (Vector2, Vector2, Vector2) triangle = cell.Type switch {
+                    // The triangles are in the reverse order because these are
+                    // for cropping a square into a triangle.
+                    GeoType.SlopeSW => (topLeft    , bottomRight, bottomLeft),
+                    GeoType.SlopeES => (topRight   , bottomLeft , offPos    ),
+                    GeoType.SlopeNW => (bottomLeft , topRight   , topLeft   ),
+                    GeoType.SlopeNE => (bottomRight, topLeft    , topRight  ),
+                    
+                    _ => (Vector2.Zero, Vector2.Zero, Vector2.Zero)
+                };
+
+                // Translate to absolute position
+                triangle.Item1 -= camera.Coords;
+                triangle.Item2 -= camera.Coords;
+                triangle.Item3 -= camera.Coords;
+            
+                BeginTextureMode(_layers[sublayer]);
+                {
+                    DrawTriangle(
+                        triangle.Item1, 
+                        triangle.Item2,
+                        triangle.Item3,
+                        Color.White
+                    );
+                }
+                EndTextureMode();
+            }
+        }
+    
+        if (mat.Name is "Stained Glass")
+        {
+            // The original code was very confusing.
+
+            modder = 1;
+
+            var imgLoad = "SG";
+            Rectangle gtRect = new (0, 0, 20, 20);
+
+            var v = "1";
+            var clr1 = "A";
+            var clr2 = "B";
+
+            var x2 = x + camera.Coords.X;
+            var y2 = y + camera.Coords.Y;
+        
+            foreach (var effect in Level!.Effects)
+            {
+                if (effect.Name is not "Stained Glass Properties") continue;
+                if (effect.Matrix[y, x] < 0) continue;
+
+                var varOpt = effect.Options.FirstOrDefault(o => o.Name is "Variation");
+                var clr1Opt = effect.Options.FirstOrDefault(o => o.Name is "Color 1");
+                var clr2Opt = effect.Options.FirstOrDefault(o => o.Name is "Color 2");
+            
+                if (varOpt is { Choice: string })
+                {
+                    v = varOpt.Choice is "1" or "2" or "3" 
+                        ? varOpt.Choice 
+                        : "1";
+                }
+
+                if (clr1Opt is { Choice: string })
+                {
+                    clr1 = clr1Opt.Choice switch 
+                    {
+                        "EffectColor1" => "A",
+                        "EffectColor2" => "B",
+                        "None" => "C",
+                        _ => "A"
+                    };
+                }
+
+                if (clr2Opt is { Choice: string })
+                {
+                    clr2 = clr2Opt.Choice switch 
+                    {
+                        "EffectColor1" => "A",
+                        "EffectColor2" => "B",
+                        "None" => "C",
+                        _ => "B"
+                    };
+                }
+
+                break;
+            }
+        
+            // Really bad, but temporary.
+
+            var lib = Registry.CastLibraries["Drought"];
+
+            var textureSocket = lib[$"{imgLoad}{v}Socket"].Texture;
+            var textureGrad = lib[$"{imgLoad}{v}Grad"].Texture;
+            var textureClr = lib[$"{imgLoad}{v}{clr1}{clr2}"].Texture;
+
+            // The original code duplicated this section three times and then cropped
+            // the cell to match the shape.
+
+            Rectangle pstRect = new(x * 20, y * 20, 20, 20);
+
+            pstRect.X -= camera.Coords.X;
+            pstRect.Y -= camera.Coords.Y;
+
+            SDraw.Draw_NoWhite_Color(
+                _layers[sublayer],
+                textureSocket,
+                Shaders.WhiteRemoverApplyColor,
+                gtRect,
+                pstRect,
+                Color.Green
+            );
+
+            SDraw.Draw_NoWhite_Color(
+                _layers[sublayer + 1],
+                textureSocket,
+                Shaders.WhiteRemoverApplyColor,
+                gtRect,
+                pstRect,
+                Color.Green
+            );
+
+            SDraw.Draw_NoWhite_Color(
+                _layers[sublayer + 1],
+                textureClr,
+                Shaders.WhiteRemoverApplyColor,
+                gtRect,
+                pstRect,
+                Color.Green
+            );
+
+            BeginTextureMode(_gradientA[sublayer + 1]);
+            Draw.DrawTextureDarkest(
+                textureGrad,
+                gtRect,
+                pstRect
+            );
+            EndTextureMode();
+
+            BeginTextureMode(_gradientB[sublayer + 1]);
+            Draw.DrawTextureDarkest(
+                textureGrad,
+                gtRect,
+                pstRect
+            );
+            EndTextureMode();
+            
+            if (cell.IsSlope)
+            {
+                // Code copied from earlier
+
+                var pos = new Vector2(x, y) * 20;
+                var offPos = new Vector2(x + 1, y + 1) * 20;
+
+                var topLeft = pos;
+                var bottomLeft = new Vector2(pos.X, offPos.Y);
+                var topRight = new Vector2(offPos.X, pos.Y);
+                var bottomRight = offPos;
+
+                (Vector2, Vector2, Vector2) triangle = cell.Type switch {
+                    // The triangles are in the reverse order because these are
+                    // for cropping a square into a triangle.
+                    GeoType.SlopeSW => (topLeft    , bottomRight, bottomLeft),
+                    GeoType.SlopeES => (topRight   , bottomLeft , offPos    ),
+                    GeoType.SlopeNW => (bottomLeft , topRight   , topLeft   ),
+                    GeoType.SlopeNE => (bottomRight, topLeft    , topRight  ),
+                    
+                    _ => (Vector2.Zero, Vector2.Zero, Vector2.Zero)
+                };
+
+                // Translate to absolute position
+                triangle.Item1 -= camera.Coords;
+                triangle.Item2 -= camera.Coords;
+                triangle.Item3 -= camera.Coords;
+
+                // Expanded loop
+
+                BeginTextureMode(_layers[sublayer]);
+                {
+                    DrawTriangle(
+                        triangle.Item1,
+                        triangle.Item2,
+                        triangle.Item3,
+                        Color.White
+                    );
+                }
+                EndTextureMode();
+
+                BeginTextureMode(_layers[sublayer + 1]);
+                {
+                    DrawTriangle(
+                        triangle.Item1,
+                        triangle.Item2,
+                        triangle.Item3,
+                        Color.White
+                    );
+                }
+                EndTextureMode();
+            }
+            else if (cell.Type is GeoType.Platform)
+            {
+                Rectangle halfACell = new(x * 20, y * 20 + 10, 20, 20);
+
+                halfACell.X -= camera.Coords.X;
+                halfACell.Y -= camera.Coords.Y;
+
+                // Expanded loop
+
+                BeginTextureMode(_layers[sublayer]);
+                {
+                    DrawRectangleRec(halfACell, Color.White);
+                }
+                EndTextureMode();
+
+                BeginTextureMode(_layers[sublayer + 1]);
+                {
+                    DrawRectangleRec(halfACell, Color.White);
+                }
+                EndTextureMode();
+            }
+        }
+    
+        // At last. The final battle
+        else if (mat.Name is "Sand Block")
+        {
+            modder = 28;
+
+            Rectangle gtRect = new (
+                (x % modder) * 20 - camera.Coords.X,
+                (y % modder) * 20 - camera.Coords.Y,
+                20,
+                20
+            );
+
+            switch (cell.Type)
+            {
+                case GeoType.Solid:
+                {
+                    var rnd = Random.Generate(4);
+                    Rectangle pstRect = new (
+                        x * 20 - camera.Coords.X,
+                        y * 20 - camera.Coords.Y,
+                        20,
+                        20
+                    );
+
+                    for (var d = 0; d <= 9; d++)
+                    {
+                        var texture = Registry.CastLibraries["Drought"][$"Sand BlockTexture{Random.Generate(4)}"].Texture;
+
+                        SDraw.Draw_NoWhite_NoColor(
+                            _layers[sublayer + d],
+                            texture,
+                            Shaders.WhiteRemover,
+                            gtRect,
+                            pstRect
+                        );
+                    }
+                }
+                break;
+
+                case GeoType.SlopeNE:
+                case GeoType.SlopeNW:
+                case GeoType.SlopeES:
+                case GeoType.SlopeSW:
+                {
+                    var rnd = Random.Generate(4);
+                    Rectangle pstRect = new (
+                        x * 20 - camera.Coords.X,
+                        y * 20 - camera.Coords.Y,
+                        20,
+                        20
+                    );
+
+                    for (var d = 0; d <= 9; d++)
+                    {
+                        SDraw.Draw_NoWhite_NoColor(
+                            _layers[d + sublayer],
+                            Registry.CastLibraries["Drought"][$"Sand BlockTexture{Random.Generate(4)}"].Texture,
+                            Shaders.WhiteRemover,
+                            gtRect,
+                            pstRect
+                        );
+                    }
+
+                    var pos = new Vector2(x, y) * 20;
+                    var offPos = new Vector2(x + 1, y + 1) * 20;
+
+                    var topLeft = pos;
+                    var bottomLeft = new Vector2(pos.X, offPos.Y);
+                    var topRight = new Vector2(offPos.X, pos.Y);
+                    var bottomRight = offPos;
+
+                    (Vector2, Vector2, Vector2) triangle = cell.Type switch {
+                        // The triangles are in the reverse order because these are
+                        // for cropping a square into a triangle.
+                        GeoType.SlopeSW => (topLeft    , bottomRight, bottomLeft),
+                        GeoType.SlopeES => (topRight   , bottomLeft , offPos    ),
+                        GeoType.SlopeNW => (bottomLeft , topRight   , topLeft   ),
+                        GeoType.SlopeNE => (bottomRight, topLeft    , topRight  ),
+                        
+                        _ => (Vector2.Zero, Vector2.Zero, Vector2.Zero)
+                    };
+
+                    // Translate to absolute position
+                    triangle.Item1 -= camera.Coords;
+                    triangle.Item2 -= camera.Coords;
+                    triangle.Item3 -= camera.Coords;
+
+                    for (var d = 0; d <= 9; d++)
+                    {
+                        DrawTriangle(
+                            triangle.Item1,
+                            triangle.Item2,
+                            triangle.Item3,
+                            Color.White
+                        );
+                    }
+                }
+                break;
+            
+                case GeoType.Platform:
+                {
+                    Rectangle halfACell = new (
+                        x * 20      - camera.Coords.X, 
+                        y * 20 + 10 - camera.Coords.Y,
+                        20, 
+                        20
+                    );
+
+                    for (var d = 0; d <= 9; d++)
+                    {
+                        SDraw.Draw_NoWhite_NoColor(
+                            _layers[sublayer + d],
+                            Registry.CastLibraries["Drought"][$"Sand BlockTexture{Random.Generate(4)}"].Texture,
+                            Shaders.WhiteRemover,
+                            gtRect,
+                            halfACell
+                        );
                     }
                 }
                 break;
@@ -2272,14 +4115,1031 @@ public partial class Engine
         }
     }
 
+    protected virtual bool CheckIfAMaterialIsSolidAndSameMaterial(
+        int x, int y, int layer,
+        MaterialDefinition? mat
+    ) {
+        x = Utils.Restrict(x, 0, Level!.Width  - 1);
+        y = Utils.Restrict(y, 0, Level!.Height - 1);
+
+        if (Level!.GeoMatrix[y, x, layer] is not { Type: GeoType.Solid }) return false;
+
+        ref var cell = ref Level!.TileMatrix[y, x, layer];
+
+        return cell.Type is TileCellType.Material && cell.MaterialDefinition == mat 
+            || cell.Type is TileCellType.Default && Level!.DefaultMaterial == mat; 
+    }
+
+    protected virtual void AttemptDrawTempleStone_MTX(
+        int x,
+        int y,
+        List<(int, int, int)> list,
+        TileDefinition tile,
+        int layer,
+        RenderTexture2D rt
+    )
+    {
+        List<(int x, int y)> occupy = [];
+
+        switch (tile.Name)
+        {
+            case "Big Temple Stone No Slopes":
+            occupy = [ (-1, 0), (0, -1), (0, 0), (0, 1), (1, -1), (1, 0), (1, 1), (2, 0) ];
+            break;
+
+            case "Wide Temple Stone":
+            occupy = [ (0, 0), (1, 0) ];
+            break;
+        }
+
+        foreach (var o in occupy)
+        {
+            if (!CheckIfAMaterialIsSolidAndSameMaterial(x + o.x, y + o.y, layer, State.templeStone)) return;
+
+            
+        }
+    }
+
+    /// <summary>
+    /// Draws a material of "tile" render type.
+    /// </summary>
+    /// <param name="layer">The current layer</param>
+    /// <param name="camera">The current rendering camera</param>
+    /// <param name="mat">The material definition</param>
+    /// <param name="rt">The render texture</param>
+    protected virtual void RenderTileMaterial_MTX(
+        int layer,
+        in RenderCamera camera,
+        in MaterialDefinition mat,
+        RenderTexture2D rt
+    ) {
+        List<(int rnd, int x, int y)> orderedTiles = [];
+
+        for (var mx = 0; mx < Level!.Width; mx++)
+        {
+            for (var my = 0; my < Level!.Height; my++)
+            {
+                ref var geoCell = ref Level!.GeoMatrix[my, mx, layer];
+
+                if (geoCell[GeoType.Air]) continue;
+
+                ref var tileCell = ref Level!.TileMatrix[my, mx, layer];
+
+                if (
+                    !(tileCell.Type is TileCellType.Material && 
+                    tileCell.MaterialDefinition == mat) 
+                    &&
+                    !(tileCell.Type is TileCellType.Default &&
+                    Level!.DefaultMaterial == mat)
+                ) continue;
+
+                if (
+                    geoCell[GeoType.Solid] ||
+                    Configuration.MaterialFixes 
+                        && mat.Name is 
+                        not "Tiled Stone" 
+                        or "Chaotic Stone" 
+                        or "Random Machines" 
+                        or "3DBricks"
+                )
+                {
+                    orderedTiles.Add((Random.Generate(Level!.Width + Level!.Height), mx, my));
+                }
+                else if (CheckCollisionPointRec(new Vector2(mx, my), new Rectangle(camera.Coords/20, new Vector2(100, 60))))
+                {
+                    DrawMaterial_MTX(mx, my, layer, camera, Registry.Materials!.Get("Standard"), rt);
+                }
+            }
+        }
+    
+        orderedTiles.Sort((l1, l2) => {
+            if (l1.rnd > l2.rnd) return 1;
+            if (l2.rnd > l1.rnd) return -1;
+            if (l1.rnd == l2.rnd) return 0;
+            return 0;
+        });
+
+        switch (mat.Name)
+        {
+            case "Chaotic Stone":
+            {
+                bool[,] waiting = new bool[Level!.Height, Level!.Width];
+                bool[,] deleted = new bool[Level!.Height, Level!.Width];
+
+                // Draw Chaotic Stone corners and platoform
+                if (Configuration.MaterialFixes)
+                {
+                    var SmallStoneSlopeNE = Registry.Tiles!.Get("Small Stone Slope NE");
+                    var SmallStoneSlopeNW = Registry.Tiles!.Get("Small Stone Slope NW");
+                    var SmallStoneSlopeSW = Registry.Tiles!.Get("Small Stone Slope SW");
+                    var SmallStoneSlopeSE = Registry.Tiles!.Get("Small Stone Slope SE");
+                    var SmallStoneFloor = Registry.Tiles!.Get("Small Stone Floor");
+
+                    for (var q = 0; q < orderedTiles.Count; q++)
+                    {
+                        var queued = orderedTiles[^q];
+
+                        switch (Level!.GeoMatrix[queued.y, queued.x, layer].Type)
+                        {
+                            case GeoType.SlopeNE:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneSlopeNE, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeNW:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneSlopeNW, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeES:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneSlopeSE, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeSW:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneSlopeSW, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.Platform:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneFloor, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.Solid:
+                            waiting[queued.y, queued.x] = true;
+                            continue;
+                        }
+
+                        orderedTiles.Remove(queued);
+                        deleted[queued.y, queued.x] = true;
+                    }
+                }
+            
+                var SquareStone = Registry.Tiles!.Get("Square Stone");
+                var SmallStone = Registry.Tiles!.Get("Small Stone");
+
+                foreach (var (_, mx, my) in orderedTiles)
+                {
+                    // At this point, all deleted tiles should not appear in the list.
+                    // if (deleted[my, mx]) continue;
+
+                    var hts = 0;
+                    
+                    // Expanded loop
+
+                    { // First iteration (dir = point(1, 0))
+
+                        hts += Utils.BoolInt(orderedTiles.Any(v => v == (v.rnd, v.x + 1, v.y))) * Utils.BoolInt(deleted[my, mx+1]);
+                    }
+                    { // Second iteration (dir = point(0, 1))
+
+                        hts += Utils.BoolInt(orderedTiles.Any(v => v == (v.rnd, v.x, v.y + 1))) * Utils.BoolInt(deleted[my+1, mx]);
+                    }
+                    { // Third iteration (dir = point(1, 1))
+
+                        hts += Utils.BoolInt(orderedTiles.Any(v => v == (v.rnd, v.x + 1, v.y + 1))) * Utils.BoolInt(deleted[my+1, mx+1]);
+                    }
+
+                    // Big boy (2 x 2)
+                    if (hts is not 3) continue;
+
+                    // Check if the tile is in the camera bounds
+                    if (CheckCollisionPointRec(new Vector2(mx, my), new Rectangle(camera.Coords/20, new Vector2(100, 60))))
+                    {
+                        DrawTile_MTX(
+                            Level!.TileMatrix[my, mx, layer],
+                            SquareStone,
+                            mx,
+                            my,
+                            layer,
+                            camera,
+                            rt
+                        );
+                    }
+
+                    // Now mark the cells as used or unavailable
+
+                    // Expanded loop
+
+                    { // First iteration (dir = point(1, 0))
+                        deleted[mx+1, my] = true;
+                        waiting[mx+1, my] = false;
+                    }
+                    { // Second iteration (dir = point(0, 1))
+                        deleted[mx, my+1] = true;
+                        waiting[mx, my+1] = false;
+                    }
+                    { // Third iteration (dir = point(1, 1))
+                        deleted[mx+1, my+1] = true;
+                        waiting[mx+1, my+1] = false;
+                    }
+
+                    deleted[my, mx] = true;
+                    waiting[mx, my] = false;
+                }
+            
+                orderedTiles = orderedTiles.Where(t => !deleted[t.y, t.x]).ToList();
+
+                while (orderedTiles.Count > 0)
+                {
+                    var index = Random.Generate(orderedTiles.Count - 1);
+                    var (_, tx, ty) = orderedTiles[index];
+                    
+                    // Check if it's in camera bounds
+                    if (CheckCollisionPointRec(new Vector2(tx, ty), new Rectangle(camera.Coords/20, new Vector2(100, 60))))
+                    {
+                        DrawTile_MTX(
+                            Level!.TileMatrix[ty, tx, layer],
+                            SmallStone,
+                            tx,
+                            ty,
+                            layer,
+                            camera,
+                            rt
+                        );
+                    }
+
+                    orderedTiles.RemoveAt(index);
+                }
+            }
+            break;
+        
+            // Same as "Chaotic Stone", but without placing Square Stone.
+            case "Tiled Stone":
+            {
+                bool[,] waiting = new bool[Level!.Height, Level!.Width];
+                bool[,] deleted = new bool[Level!.Height, Level!.Width];
+
+                // Draw Chaotic Stone corners and platoform
+                if (Configuration.MaterialFixes)
+                {
+                    var SmallStoneSlopeNE = Registry.Tiles!.Get("Small Stone Slope NE");
+                    var SmallStoneSlopeNW = Registry.Tiles!.Get("Small Stone Slope NW");
+                    var SmallStoneSlopeSW = Registry.Tiles!.Get("Small Stone Slope SW");
+                    var SmallStoneSlopeSE = Registry.Tiles!.Get("Small Stone Slope SE");
+                    var SmallStoneFloor = Registry.Tiles!.Get("Small Stone Floor");
+
+                    for (var q = 0; q < orderedTiles.Count; q++)
+                    {
+                        var queued = orderedTiles[^q];
+
+                        switch (Level!.GeoMatrix[queued.y, queued.x, layer].Type)
+                        {
+                            case GeoType.SlopeNE:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneSlopeNE, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeNW:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneSlopeNW, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeES:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneSlopeSE, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeSW:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneSlopeSW, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.Platform:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneFloor, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.Solid:
+                            waiting[queued.y, queued.x] = true;
+                            continue;
+                        }
+
+                        orderedTiles.Remove(queued);
+                        deleted[queued.y, queued.x] = true;
+                    }
+                }
+            
+                var SmallStone = Registry.Tiles!.Get("Small Stone");
+
+                while (orderedTiles.Count > 0)
+                {
+                    var index = Random.Generate(orderedTiles.Count);
+                    var (_, tx, ty) = orderedTiles[index];
+                    
+                    // Check if it's in camera bounds
+                    if (CheckCollisionPointRec(new Vector2(tx, ty), new Rectangle(camera.Coords/20, new Vector2(100, 60))))
+                    {
+                        DrawTile_MTX(
+                            Level!.TileMatrix[ty, tx, layer],
+                            SmallStone,
+                            tx,
+                            ty,
+                            layer,
+                            camera,
+                            rt
+                        );
+                    }
+
+                    orderedTiles.RemoveAt(index);
+                }
+            }
+            break;
+            
+            // The reason I grouped all three together
+            // is because all of them are pulling from the 
+            // exact same tile pool.
+            case "Random Machines":
+            case "Random Machines 2":
+            case "Small Machines":
+            {
+                bool[,] waiting = new bool[Level!.Height, Level!.Width];
+                bool[,] deleted = new bool[Level!.Height, Level!.Width];
+
+                // Draw Chaotic Stone corners and platoform
+                if (Configuration.MaterialFixes)
+                {
+                    var SmallMachineSlopeNE = Registry.Tiles!.Get("Small Machine Slope NE");
+                    var SmallMachineSlopeNW = Registry.Tiles!.Get("Small Machine Slope NW");
+                    var SmallMachineSlopeSW = Registry.Tiles!.Get("Small Machine Slope SW");
+                    var SmallMachineSlopeSE = Registry.Tiles!.Get("Small Machine Slope SE");
+                    var SmallMachineFloor = Registry.Tiles!.Get("Small Machine Floor");
+
+                    for (var q = 0; q < orderedTiles.Count; q++)
+                    {
+                        var queued = orderedTiles[^q];
+
+                        switch (Level!.GeoMatrix[queued.y, queued.x, layer].Type)
+                        {
+                            case GeoType.SlopeNE:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMachineSlopeNE, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeNW:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMachineSlopeNW, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeES:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMachineSlopeSE, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeSW:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMachineSlopeSW, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.Platform:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMachineFloor, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.Solid:
+                            waiting[queued.y, queued.x] = true;
+                            continue;
+                        }
+
+                        orderedTiles.RemoveAt(orderedTiles.Count - q);
+                        deleted[queued.y, queued.x] = true;
+                    }
+                }
+
+                // You could probably turn them into hash sets.
+                Dictionary<(int x, int y), bool> delL = [];
+                Dictionary<(int x, int y), bool> blocks = [];
+
+                foreach (var (_, mx, my) in orderedTiles) blocks[(mx, my)] = true;
+
+                foreach (var (_, mx, my) in orderedTiles)
+                {
+                    if (delL.ContainsKey((mx, my))) continue;
+
+                    List<(int rnd, TileDefinition tile)> randomMachines = State.randomMachinesPool
+                        .Select(t => (Random.Generate(1000), t))
+                        .ToList();
+
+                    randomMachines.Sort((r1, r2) => {
+                        if (r1.rnd >  r2.rnd) return  1;
+                        if (r1.rnd <  r2.rnd) return -1;
+                        if (r1.rnd == r2.rnd) return  0;
+                        return 0;
+                    });
+
+                    foreach (var (_, tile) in randomMachines)
+                    {
+                        // Testing if we can place the tile.
+
+                        var legal = true;
+
+                        for (var sx = 0; sx < tile.Size.Width; sx++)
+                        {
+                            for (var sy = 0; sy < tile.Size.Height; sy++)
+                            {
+                                var tx = mx + sx;
+                                var ty = my + sy;
+
+                                var spec = tile.Specs[sy, sx, 0];
+
+                                if (!blocks.ContainsKey((tx, ty)))
+                                {
+                                    legal = false;
+                                    goto stop_testing;
+                                }
+
+                                if (spec is -1) continue;
+
+                                if (delL.ContainsKey((tx, ty)))
+                                {
+                                    legal = false;
+                                    goto stop_testing;
+                                }
+
+                                if (
+                                    !Data.Utils.InBounds(Level!.GeoMatrix, tx, ty) ||
+                                    spec != (int)Level!.GeoMatrix[ty, tx, layer].Type
+                                ) {
+                                    legal = false;
+                                    goto stop_testing;
+                                }
+                            }
+                        }
+
+                        stop_testing:
+
+                        if (!legal) continue;
+
+                        // Determining the tile head position, I suppose.
+                        var rootPosX = mx + (int)(tile.Size.Width /2f + 0.4999f) - 1;
+                        var rootPosY = my + (int)(tile.Size.Height/2f + 0.4999f) - 1;
+
+                        // Drawing the tile if it's in camera bounds.
+                        if (CheckCollisionPointRec(new Vector2(rootPosX, rootPosY), new Rectangle(camera.Coords/20f, new Vector2(100, 60))))
+                        {
+                            DrawTile_MTX(
+                                Level!.TileMatrix[rootPosY, rootPosX, layer],
+                                tile,
+                                rootPosX,
+                                rootPosY,
+                                layer,
+                                camera,
+                                rt
+                            );
+                        }
+
+                        for (var w = 0; w < tile.Size.Width; w++)
+                        {
+                            for (var h = 0; h < tile.Size.Height; h++)
+                            {
+                                var spec = tile.Specs[h, w, 0];
+
+                                if (spec is not -1) delL[(mx + w, my + h)] = true;
+                            }
+                        }
+
+                        break;
+                    }
+
+                }
+            }
+            break;
+
+            // The code was basically copied from previous cases.
+            case "Random Metal":
+            {
+                bool[,] waiting = new bool[Level!.Height, Level!.Width];
+                bool[,] deleted = new bool[Level!.Height, Level!.Width];
+
+                // Draw Chaotic Stone corners and platoform
+                if (Configuration.MaterialFixes)
+                {
+                    var SmallMetalSlopeNE = Registry.Tiles!.Get("Small Metal Slope NE");
+                    var SmallMetalSlopeNW = Registry.Tiles!.Get("Small Metal Slope NW");
+                    var SmallMetalSlopeSW = Registry.Tiles!.Get("Small Metal Slope SW");
+                    var SmallMetalSlopeSE = Registry.Tiles!.Get("Small Metal Slope SE");
+                    var SmallMetalFloor = Registry.Tiles!.Get("Small Metal Floor");
+
+                    for (var q = 0; q < orderedTiles.Count; q++)
+                    {
+                        var queued = orderedTiles[^q];
+
+                        switch (Level!.GeoMatrix[queued.y, queued.x, layer].Type)
+                        {
+                            case GeoType.SlopeNE:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMetalSlopeNE, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeNW:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMetalSlopeNW, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeES:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMetalSlopeSE, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeSW:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMetalSlopeSW, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.Platform:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMetalFloor, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.Solid:
+                            waiting[queued.y, queued.x] = true;
+                            continue;
+                        }
+
+                        orderedTiles.RemoveAt(orderedTiles.Count - q);
+                        deleted[queued.y, queued.x] = true;
+                    }
+                }
+
+
+
+                // You could probably turn them into hash sets.
+                Dictionary<(int x, int y), bool> delL = [];
+                Dictionary<(int x, int y), bool> blocks = [];
+
+                foreach (var (_, mx, my) in orderedTiles) blocks[(mx, my)] = true;
+
+                foreach (var (_, mx, my) in orderedTiles)
+                {
+                    if (delL.ContainsKey((mx, my))) continue;
+
+                    List<(int rnd, TileDefinition tile)> randomMetals = State.randomMetalPool
+                        .Select(t => (Random.Generate(1000), t))
+                        .ToList();
+
+                    randomMetals.Sort((r1, r2) => {
+                        if (r1.rnd >  r2.rnd) return  1;
+                        if (r1.rnd <  r2.rnd) return -1;
+                        if (r1.rnd == r2.rnd) return  0;
+                        return 0;
+                    });
+
+                    foreach (var (_, tile) in randomMetals)
+                    {
+                        // Testing if we can place the tile.
+
+                        var legal = true;
+
+                        for (var sx = 0; sx < tile.Size.Width; sx++)
+                        {
+                            for (var sy = 0; sy < tile.Size.Height; sy++)
+                            {
+                                var tx = mx + sx;
+                                var ty = my + sy;
+
+                                var spec = tile.Specs[sy, sx, 0];
+
+                                if (!blocks.ContainsKey((tx, ty)))
+                                {
+                                    legal = false;
+                                    goto stop_testing;
+                                }
+
+                                if (spec is -1) continue;
+
+                                if (delL.ContainsKey((tx, ty)))
+                                {
+                                    legal = false;
+                                    goto stop_testing;
+                                }
+
+                                if (
+                                    !Data.Utils.InBounds(Level!.GeoMatrix, tx, ty) ||
+                                    spec != (int)Level!.GeoMatrix[ty, tx, layer].Type
+                                ) {
+                                    legal = false;
+                                    goto stop_testing;
+                                }
+                            }
+                        }
+
+                        stop_testing:
+
+                        if (!legal) continue;
+
+                        // Determining the tile head position, I suppose.
+                        var rootPosX = mx + (int)(tile.Size.Width /2f + 0.4999f) - 1;
+                        var rootPosY = my + (int)(tile.Size.Height/2f + 0.4999f) - 1;
+
+                        // Drawing the tile if it's in camera bounds.
+                        if (CheckCollisionPointRec(new Vector2(rootPosX, rootPosY), new Rectangle(camera.Coords/20f, new Vector2(100, 60))))
+                        {
+                            DrawTile_MTX(
+                                Level!.TileMatrix[rootPosY, rootPosX, layer],
+                                tile,
+                                rootPosX,
+                                rootPosY,
+                                layer,
+                                camera,
+                                rt
+                            );
+                        }
+
+                        for (var w = 0; w < tile.Size.Width; w++)
+                        {
+                            for (var h = 0; h < tile.Size.Height; h++)
+                            {
+                                var spec = tile.Specs[h, w, 0];
+
+                                if (spec is not -1) delL[(mx + w, my + h)] = true;
+                            }
+                        }
+
+                        break;
+                    }
+
+                }
+            }
+            break;
+        
+            // The code was basically copied from previous cases.
+            case "Chaotic Stone 2":
+            {
+                bool[,] waiting = new bool[Level!.Height, Level!.Width];
+                bool[,] deleted = new bool[Level!.Height, Level!.Width];
+
+                
+                // Draw Chaotic Stone corners and platoform
+                if (Configuration.MaterialFixes)
+                {
+                    var SmallStoneSlopeNE = Registry.Tiles!.Get("Small Stone Slope NE");
+                    var SmallStoneSlopeNW = Registry.Tiles!.Get("Small Stone Slope NW");
+                    var SmallStoneSlopeSW = Registry.Tiles!.Get("Small Stone Slope SW");
+                    var SmallStoneSlopeSE = Registry.Tiles!.Get("Small Stone Slope SE");
+                    var SmallStoneFloor = Registry.Tiles!.Get("Small Stone Floor");
+
+                    for (var q = 0; q < orderedTiles.Count; q++)
+                    {
+                        var queued = orderedTiles[^q];
+
+                        switch (Level!.GeoMatrix[queued.y, queued.x, layer].Type)
+                        {
+                            case GeoType.SlopeNE:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneSlopeNE, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeNW:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneSlopeNW, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeES:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneSlopeSE, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeSW:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneSlopeSW, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.Platform:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallStoneFloor, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.Solid:
+                            waiting[queued.y, queued.x] = true;
+                            continue;
+                        }
+
+                        orderedTiles.RemoveAt(orderedTiles.Count - q);
+                        deleted[queued.y, queued.x] = true;
+                    }
+                }
+
+                // You could probably turn them into hash sets.
+                Dictionary<(int x, int y), bool> delL = [];
+                Dictionary<(int x, int y), bool> blocks = [];
+
+                foreach (var (_, mx, my) in orderedTiles) blocks[(mx, my)] = true;
+
+                foreach (var (_, mx, my) in orderedTiles)
+                {
+                    if (delL.ContainsKey((mx, my))) continue;
+
+                    List<(int rnd, TileDefinition tile)> chaoticStone2 = State.chaoticStone2Pool
+                        .Select(t => (Random.Generate(1000), t))
+                        .ToList();
+
+                    chaoticStone2.Sort((r1, r2) => {
+                        if (r1.rnd >  r2.rnd) return  1;
+                        if (r1.rnd <  r2.rnd) return -1;
+                        if (r1.rnd == r2.rnd) return  0;
+                        return 0;
+                    });
+
+                    foreach (var (_, tile) in chaoticStone2)
+                    {
+                        // Testing if we can place the tile.
+
+                        var legal = true;
+
+                        for (var sx = 0; sx < tile.Size.Width; sx++)
+                        {
+                            for (var sy = 0; sy < tile.Size.Height; sy++)
+                            {
+                                var tx = mx + sx;
+                                var ty = my + sy;
+
+                                var spec = tile.Specs[sy, sx, 0];
+
+                                if (!blocks.ContainsKey((tx, ty)))
+                                {
+                                    legal = false;
+                                    goto stop_testing;
+                                }
+
+                                if (spec is -1) continue;
+
+                                if (delL.ContainsKey((tx, ty)))
+                                {
+                                    legal = false;
+                                    goto stop_testing;
+                                }
+
+                                if (
+                                    !Data.Utils.InBounds(Level!.GeoMatrix, tx, ty) ||
+                                    spec != (int)Level!.GeoMatrix[ty, tx, layer].Type
+                                ) {
+                                    legal = false;
+                                    goto stop_testing;
+                                }
+                            }
+                        }
+
+                        stop_testing:
+
+                        if (!legal) continue;
+
+                        // Determining the tile head position, I suppose.
+                        var rootPosX = mx + (int)(tile.Size.Width /2f + 0.4999f) - 1;
+                        var rootPosY = my + (int)(tile.Size.Height/2f + 0.4999f) - 1;
+
+                        // Drawing the tile if it's in camera bounds.
+                        if (CheckCollisionPointRec(new Vector2(rootPosX, rootPosY), new Rectangle(camera.Coords/20f, new Vector2(100, 60))))
+                        {
+                            DrawTile_MTX(
+                                Level!.TileMatrix[rootPosY, rootPosX, layer],
+                                tile,
+                                rootPosX,
+                                rootPosY,
+                                layer,
+                                camera,
+                                rt
+                            );
+                        }
+
+                        for (var w = 0; w < tile.Size.Width; w++)
+                        {
+                            for (var h = 0; h < tile.Size.Height; h++)
+                            {
+                                var spec = tile.Specs[h, w, 0];
+
+                                if (spec is not -1) delL[(mx + w, my + h)] = true;
+                            }
+                        }
+
+                        break;
+                    }
+
+                }
+            }
+            break;
+        
+            case "Random Metals":
+            {
+                bool[,] waiting = new bool[Level!.Height, Level!.Width];
+                bool[,] deleted = new bool[Level!.Height, Level!.Width];
+
+                // Draw Chaotic Stone corners and platoform
+                if (Configuration.MaterialFixes)
+                {
+                    var SmallMetalSlopeNE = Registry.Tiles!.Get("Small Metal Slope NE");
+                    var SmallMetalSlopeNW = Registry.Tiles!.Get("Small Metal Slope NW");
+                    var SmallMetalSlopeSW = Registry.Tiles!.Get("Small Metal Slope SW");
+                    var SmallMetalSlopeSE = Registry.Tiles!.Get("Small Metal Slope SE");
+                    var SmallMetalFloor = Registry.Tiles!.Get("Small Metal Floor");
+
+                    for (var q = 0; q < orderedTiles.Count; q++)
+                    {
+                        var queued = orderedTiles[^q];
+
+                        switch (Level!.GeoMatrix[queued.y, queued.x, layer].Type)
+                        {
+                            case GeoType.SlopeNE:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMetalSlopeNE, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeNW:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMetalSlopeNW, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeES:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMetalSlopeSE, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.SlopeSW:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMetalSlopeSW, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.Platform:
+                            DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], SmallMetalFloor, queued.x, queued.y, layer, camera, rt);
+                            break;
+
+                            case GeoType.Solid:
+                            waiting[queued.y, queued.x] = true;
+                            continue;
+                        }
+
+                        orderedTiles.RemoveAt(orderedTiles.Count - q);
+                        deleted[queued.y, queued.x] = true;
+                    }
+                }
+
+
+                // You could probably turn them into hash sets.
+                Dictionary<(int x, int y), bool> delL = [];
+                Dictionary<(int x, int y), bool> blocks = [];
+
+                foreach (var (_, mx, my) in orderedTiles) blocks[(mx, my)] = true;
+
+                foreach (var (_, mx, my) in orderedTiles)
+                {
+                    if (delL.ContainsKey((mx, my))) continue;
+
+                    List<(int rnd, TileDefinition tile)> randomMetals = State.randomMetalsPool
+                        .Select(t => (Random.Generate(1000), t))
+                        .ToList();
+
+                    randomMetals.Sort((r1, r2) => {
+                        if (r1.rnd >  r2.rnd) return  1;
+                        if (r1.rnd <  r2.rnd) return -1;
+                        if (r1.rnd == r2.rnd) return  0;
+                        return 0;
+                    });
+
+                    foreach (var (_, tile) in randomMetals)
+                    {
+                        // Testing if we can place the tile.
+
+                        var legal = true;
+
+                        for (var sx = 0; sx < tile.Size.Width; sx++)
+                        {
+                            for (var sy = 0; sy < tile.Size.Height; sy++)
+                            {
+                                var tx = mx + sx;
+                                var ty = my + sy;
+
+                                var spec = tile.Specs[sy, sx, 0];
+
+                                if (!blocks.ContainsKey((tx, ty)))
+                                {
+                                    legal = false;
+                                    goto stop_testing;
+                                }
+
+                                if (spec is -1) continue;
+
+                                if (delL.ContainsKey((tx, ty)))
+                                {
+                                    legal = false;
+                                    goto stop_testing;
+                                }
+
+                                if (
+                                    !Data.Utils.InBounds(Level!.GeoMatrix, tx, ty) ||
+                                    spec != (int)Level!.GeoMatrix[ty, tx, layer].Type
+                                ) {
+                                    legal = false;
+                                    goto stop_testing;
+                                }
+                            }
+                        }
+
+                        stop_testing:
+
+                        if (!legal) continue;
+
+                        // Determining the tile head position, I suppose.
+                        var rootPosX = mx + (int)(tile.Size.Width /2f + 0.4999f) - 1;
+                        var rootPosY = my + (int)(tile.Size.Height/2f + 0.4999f) - 1;
+
+                        // Drawing the tile if it's in camera bounds.
+                        if (CheckCollisionPointRec(new Vector2(rootPosX, rootPosY), new Rectangle(camera.Coords/20f, new Vector2(100, 60))))
+                        {
+                            DrawTile_MTX(
+                                Level!.TileMatrix[rootPosY, rootPosX, layer],
+                                tile,
+                                rootPosX,
+                                rootPosY,
+                                layer,
+                                camera,
+                                rt
+                            );
+                        }
+
+                        for (var w = 0; w < tile.Size.Width; w++)
+                        {
+                            for (var h = 0; h < tile.Size.Height; h++)
+                            {
+                                var spec = tile.Specs[h, w, 0];
+
+                                if (spec is not -1) delL[(mx + w, my + h)] = true;
+                            }
+                        }
+
+                        break;
+                    }
+
+                }
+            }
+            break;
+        
+            case "Dune Sand":
+            {
+                for (var index = 1; index < orderedTiles.Count; index++)
+                {
+                    var (_, tx, ty) = orderedTiles[^index];
+                
+                    if (
+                        !(!Data.Utils.InBounds(Level!.GeoMatrix, tx, ty) ||
+                        Level!.GeoMatrix[ty, tx, layer].Type is not GeoType.Solid)
+                    )
+                    {
+                        DrawTile_MTX(
+                            Level!.TileMatrix[ty, tx, layer],
+                            State.sandPool[Random.Generate(State.sandPool.Length - 1)],
+                            tx,
+                            ty,
+                            layer,
+                            camera,
+                            rt
+                        );
+                    }
+                    
+                    orderedTiles.RemoveAt(orderedTiles.Count - index);
+                }
+            }
+            break;
+
+            case "Temple Stone":
+            {
+                bool[,] waiting = new bool[Level!.Height, Level!.Width];
+                bool[,] deleted = new bool[Level!.Height, Level!.Width];
+
+                var TempleStoneSlopeNE = Registry.Tiles!.Get("Temple Stone Slope NE");
+                var TempleStoneSlopeNW = Registry.Tiles!.Get("Temple Stone Slope NW");
+                var TempleStoneSlopeSW = Registry.Tiles!.Get("Temple Stone Slope SW");
+                var TempleStoneSlopeSE = Registry.Tiles!.Get("Temple Stone Slope SE");
+                var TempleStoneFloor = Registry.Tiles!.Get("Temple Stone Floor");
+
+                for (var q = 0; q < orderedTiles.Count; q++)
+                {
+                    var queued = orderedTiles[^q];
+
+                    switch (Level!.GeoMatrix[queued.y, queued.x, layer].Type)
+                    {
+                        case GeoType.SlopeNE:
+                        DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], TempleStoneSlopeNE, queued.x, queued.y, layer, camera, rt);
+                        orderedTiles.Remove(queued);
+                        deleted[queued.y, queued.x] = true;
+                        break;
+
+                        case GeoType.SlopeNW:
+                        DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], TempleStoneSlopeNW, queued.x, queued.y, layer, camera, rt);
+                        orderedTiles.Remove(queued);
+                        deleted[queued.y, queued.x] = true;
+                        break;
+
+                        case GeoType.SlopeES:
+                        DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], TempleStoneSlopeSE, queued.x, queued.y, layer, camera, rt);
+                        orderedTiles.Remove(queued);
+                        deleted[queued.y, queued.x] = true;
+                        break;
+
+                        case GeoType.SlopeSW:
+                        DrawTile_MTX(Level!.TileMatrix[queued.y, queued.x, layer], TempleStoneSlopeSW, queued.x, queued.y, layer, camera, rt);
+                        orderedTiles.Remove(queued);
+                        deleted[queued.y, queued.x] = true;
+                        break;
+
+                        case GeoType.Solid:
+                        waiting[queued.y, queued.x] = true;
+                        continue;
+
+                        case GeoType.Glass:
+                        if (Configuration.MaterialFixes) {
+                            orderedTiles.Remove(queued);
+                            deleted[queued.y, queued.x] = true;
+                        }
+                        break;
+                    }
+                }
+            
+
+            }
+            break;
+        }
+    }
+
     /// <summary>
     /// This gets called each frame
     /// </summary>
-    public virtual void Render(int l)
+    public virtual void Render()
     {
         if (Level is null || !Initialized) return;
+        if (_currentLayer > 2) return;
 
-        var layer = l;
+        var layer = _currentLayer++;
 
         var frontRT = LoadRenderTexture(Width, Height);
         var middleRT = LoadRenderTexture(Width, Height);
@@ -2294,7 +5154,7 @@ public partial class Engine
         List<(int rnd, int x, int y)> entrances = [];
         List<(int x, int y)> shortcuts = [];
 
-        Dictionary<string, List<(int rnd, int x, int y)>> drawMaterials = [];
+        Dictionary<MaterialDefinition, List<(int rnd, int x, int y)>> drawMaterials = [];
 
         BeginTextureMode(middleRT);
 
@@ -2369,7 +5229,12 @@ public partial class Engine
             }
         }
 
-        drawLastTiles.Sort();
+        drawLastTiles.Sort((t1, t2) => {
+            if (t1.rnd > t2.rnd) return 1;
+            if (t1.rnd < t2.rnd) return -1;
+            if (t1.rnd == t2.rnd) return 0;
+            return 0;
+        });
 
         EndTextureMode();
 
@@ -2385,13 +5250,13 @@ public partial class Engine
                 {
                     if (queuedCell.MaterialDefinition is not null)
                     {
-                        if (drawMaterials.TryGetValue(queuedCell.MaterialDefinition.Name, out var list))
+                        if (drawMaterials.TryGetValue(queuedCell.MaterialDefinition, out var list))
                         {
                             list.Add(tile);
                         }
                         else
                         {
-                            drawMaterials[queuedCell.MaterialDefinition.Name] = [ tile ];
+                            drawMaterials[queuedCell.MaterialDefinition] = [ tile ];
                         }
                     }
                     break;
@@ -2399,13 +5264,13 @@ public partial class Engine
 
                 case TileCellType.Default:
                 {
-                    if (drawMaterials.TryGetValue(Level.DefaultMaterial.Name, out var list))
+                    if (drawMaterials.TryGetValue(Level.DefaultMaterial, out var list))
                     {
                         list.Add(tile);
                     }
                     else
                     {
-                        drawMaterials[Level.DefaultMaterial.Name] = [ tile ];
+                        drawMaterials[Level.DefaultMaterial] = [ tile ];
                     }
                 }
                     break;
@@ -2414,13 +5279,43 @@ public partial class Engine
                 {
                     if (queuedCell.TileDefinition is not null)
                     {
-                        DrawTile_MTX(queuedCell, tile.x, tile.y, layer, camera, frontRT);
+                        DrawTile_MTX(queuedCell, queuedCell.TileDefinition, tile.x, tile.y, layer, camera, frontRT);
                     }
                 }
                 break;
             }
         }
 
+        foreach (var (material, queued) in drawMaterials)
+        {
+            // May be redundant
+            if (queued.Count == 0) continue;
+
+            Console.WriteLine($"{material.Name}: {queued.Count}");
+
+            switch (material.RenderType)
+            {
+                case MaterialRenderType.Invisible:
+                if (!Configuration.InvisibleMarterialFix) {
+                    foreach (var q in queued) DrawMaterial_MTX(q.x, q.y, layer, camera, material, frontRT);
+                }
+                break;
+
+                case MaterialRenderType.Unified:
+                foreach (var q in queued) DrawMaterial_MTX(q.x, q.y, layer, camera, material, frontRT);
+                break;
+
+                case MaterialRenderType.CustomUnified:
+                {
+                    // To be implemented
+                }
+                break;
+
+                case MaterialRenderType.Tiles:
+                RenderTileMaterial_MTX(layer, camera, material, frontRT);
+                break;
+            }
+        }
 
         UnloadRenderTexture(frontRT);
         UnloadRenderTexture(middleRT);

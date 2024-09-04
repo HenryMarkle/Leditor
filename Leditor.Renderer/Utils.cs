@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using Leditor.Data;
 using Leditor.Data.Materials;
 using Leditor.Data.Props.Legacy;
+using Leditor.Data.Tiles;
 using Raylib_cs;
 
 using Color = Raylib_cs.Color;
@@ -12,10 +13,10 @@ namespace Leditor.Renderer;
 public static class Utils
 {
     // [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 GetMiddleCellPos(Vector2 pos) => pos * 20 / 2;
+    public static Vector2 GetMiddleCellPos(Vector2 pos) => new Vector2(pos.X, pos.Y) * 20 - Vector2.One * 10;
 
     // [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 GetMiddleCellPos(int x, int y) => new Vector2(x, y)  * 20 / 2;
+    public static Vector2 GetMiddleCellPos(int x, int y) => new Vector2(x, y)  * 20 - Vector2.One * 10;
 
     public static float Diag(Vector2 p1, Vector2 p2)
     {
@@ -291,5 +292,74 @@ public static class Utils
             new("Christmas Wire", InitPropType_Legacy.Rope, 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, new(200, 0, 200, 255), 1, 0, 0, 0, 0),
             new("Ornate Wire", InitPropType_Legacy.Rope, 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, new(0, 200, 200, 255), 1, 0, 0, 0, 0),
         ];
+    }
+
+    public class MeteredTask
+    {
+        public Task? Task { get; set; }
+
+        public int TotalProgress { get; set; }
+        public int Progress { get; set; }
+
+        public static implicit operator Task?(MeteredTask m) => m.Task;
+    }
+
+    public static Task FetchEmbeddedTextures(MaterialDefinition[] defs, Dictionary<string, CastLibrary> libs)
+    {
+        var tasks = defs.SelectMany((d, index) => 
+            libs.Values.Select(l => 
+                Task.Run(() => {
+                    if (l.Members.TryGetValue(d.Name+"Texture", out var foundMember))
+                    {
+                        defs[index].Texture = foundMember.Texture;
+                    }
+                })
+            )
+        );
+
+        return Task.WhenAll(tasks);
+    }
+
+    public static MeteredTask FetchEmbeddedTextures(TileDefinition[] defs, CastLibrary[] libs)
+    {
+        var metered = new MeteredTask()
+        {
+            TotalProgress = defs.Length
+        };
+
+        var tasks = defs.SelectMany((d, index) => 
+            libs.Select(l => 
+                Task.Run(() => {
+                    if (l.Members.TryGetValue(d.Name, out var foundMember))
+                    {
+                        defs[index].Texture = foundMember.Texture;
+                        metered.Progress++;
+                    }
+                })
+            )
+        );
+
+        metered.Task = Task.WhenAll(tasks);
+        return metered;
+    }
+
+    public static async Task<TileDefinition[]> LoadEmbeddedTiles(string initPath, Dictionary<string, CastLibrary> libs)
+    {
+        var embedded = await Serialization.TileImporter.ParseInitAsync_NoCategories(initPath);
+    
+        var tasks = embedded.SelectMany(d => 
+            libs.Values.Select(l => 
+                Task.Run(() => {
+                    if (l.Members.TryGetValue(d.Name, out var foundMemeber))
+                    {
+                        d.Texture = foundMemeber.Texture;
+                    }
+                })
+            )
+        );
+
+        await Task.WhenAll(tasks);
+
+        return embedded;
     }
 }

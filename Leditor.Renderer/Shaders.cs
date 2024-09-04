@@ -29,6 +29,11 @@ public class Shaders : IDisposable
     /// Same as <see cref="WhiteRemover"/> except it vertically flips the texture.
     /// </summary>
     public Shader WhiteRemoverVFlip { get; protected set; }
+    
+    /// <summary>
+    /// Same as <see cref="WhiteRemoverVFlip"/> except it adds a color onto the existing onec.
+    /// </summary>
+    public Shader WhiteRemoverVFlipDepthAccumulator { get; protected set; }
 
     /// <summary>
     /// Ignores white pixels and draws a given color otherwise.
@@ -47,6 +52,7 @@ public class Shaders : IDisposable
         UnloadShader(Silhoutte);   
         UnloadShader(WhiteRemover);
         UnloadShader(WhiteRemoverVFlip);
+        UnloadShader(WhiteRemoverVFlipDepthAccumulator);
         UnloadShader(WhiteRemoverApplyColor);
     }
 
@@ -58,6 +64,7 @@ public class Shaders : IDisposable
             Silhoutte = LoadShader(null, Path.Combine(shadersFolder, "silhoutte.frag")),
             WhiteRemover = LoadShader(null, Path.Combine(shadersFolder, "white_remover.frag")),
             WhiteRemoverVFlip = LoadShader(null, Path.Combine(shadersFolder, "white_remover_vflip.frag")),
+            WhiteRemoverVFlipDepthAccumulator = LoadShader(null, Path.Combine(shadersFolder, "white_remover_vflip_depth_accumulator.frag")),
             WhiteRemoverApplyColor = LoadShader(null, Path.Combine(shadersFolder, "white_remover_colored.frag"))
         };
     }

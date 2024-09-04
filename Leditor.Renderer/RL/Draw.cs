@@ -61,6 +61,7 @@ public static class Draw
 
         Rlgl.SetTexture(0);
     }
+
     
     public static void DrawQuad(Texture2D texture, Quad quad, Color color)
     {
@@ -371,5 +372,14 @@ public static class Draw
         ProgressBar(tilesRect, tiles, Color.White);
         ProgressBar(propsRect, props, Color.White);
         ProgressBar(materRect, materials, Color.White);
+    }
+
+    public static void PleaseWaitScreen()
+    {
+        var text = "Please wait..";
+
+        ClearBackground(Color.Black);
+
+        DrawText(text, (GetScreenWidth() - MeasureText(text, 30))/2, (GetScreenHeight() - 30)/2, 30, Color.White);
     }
 }
