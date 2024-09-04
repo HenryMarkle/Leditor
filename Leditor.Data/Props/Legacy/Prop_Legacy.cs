@@ -10,7 +10,7 @@ using Raylib_cs;
 public interface IVariableInit { int Variations { get; } }
 public interface IVariable { int Variation { get; set; } }
 
-public class Prop_Legacy(int depth, string name, Quad quads)
+public class Prop_Legacy
 {
     public InitPropType_Legacy Type { get; set; }
     public InitPropBase? Init { get; set; }
@@ -18,19 +18,40 @@ public class Prop_Legacy(int depth, string name, Quad quads)
     public (int category, int index) Position { get; set; }
     public PropDefinition? Definition { get; set; }
 
-    public int Depth { get; set; } = depth;
-    public string Name { get; set; } = name;
+    public int Depth { get; set; }
+    public string Name { get; set; }
     public float Rotation { get; set; }
     public Quad OriginalQuad { get; init; }
-    public Quad Quad { get; set; } = quads;
-    
+    public Quad Quad { get; set; }
+
+    public Prop_Legacy(int depth, string name, Quad quad)
+    {
+        Name = name;
+        Depth = depth;
+        Quad = quad;
+    }
+
     public PropExtras_Legacy Extras { get; set; } = new(new BasicPropSettings(), []);
+
+    public Prop_Legacy Clone() => new(Depth, Name, Quad)
+    {
+        Type = Type,
+        Init = Init,
+        Tile = Tile,
+        Position = Position,
+        Definition = Definition,
+        Rotation = Rotation,
+        OriginalQuad = OriginalQuad,
+        Extras = Extras.Clone()
+    };
 }
 
 public class PropExtras_Legacy(BasicPropSettings settings, Vector2[] ropePoints)
 {
     public BasicPropSettings Settings { get; set; } = settings;
     public Vector2[] RopePoints { get; set; } = ropePoints;
+
+    public PropExtras_Legacy Clone() => new(Settings.Clone(), [..RopePoints]);
 }
 
 

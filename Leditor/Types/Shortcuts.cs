@@ -1113,6 +1113,8 @@ public class PropsShortcuts : IEditorShortcuts
     private KeyboardShortcut reallyFastMoveViewRight = new(KeyboardKey.Right, alt:true);
     private KeyboardShortcut reallyFastMoveViewBottom = new(KeyboardKey.Down, alt:true);
 
+    private KeyboardShortcut addPreset = new(KeyboardKey.Y, shift: true);
+
     //
 
     [ShortcutName("Cycle Layers")]
@@ -1307,6 +1309,7 @@ public class PropsShortcuts : IEditorShortcuts
     [ShortcutName("Move View Bottom Really Quickly", Group = "Movement")]
     public KeyboardShortcut ReallyFastMoveViewBottom { get => reallyFastMoveViewBottom; set { reallyFastMoveViewBottom = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     
+    public KeyboardShortcut AddPreset { get => addPreset; set { addPreset = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
 
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }

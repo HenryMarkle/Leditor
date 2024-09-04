@@ -2261,6 +2261,52 @@ internal static class Utils
         
         return new Rectangle(minX, minY, maxX - minX, maxY - minY);
     }
+    
+    internal static Rectangle EncloseProps(Data.Quad[] quadsList)
+    {
+        float 
+            minX = float.MaxValue, 
+            minY = float.MaxValue, 
+            maxX = float.MinValue, 
+            maxY = float.MinValue;
+
+        foreach (var q in quadsList)
+        {
+            minX = Math.Min(
+                minX, 
+                Math.Min(
+                    Math.Min(q.TopLeft.X, q.TopRight.X), 
+                    Math.Min(q.BottomLeft.X, q.BottomRight.X)
+                )
+            );
+            
+            minY = Math.Min(
+                minY, 
+                Math.Min(
+                    Math.Min(q.TopLeft.Y, q.TopRight.Y), 
+                    Math.Min(q.BottomLeft.Y, q.BottomRight.Y)
+                )
+            );
+            
+            maxX = Math.Max(
+                maxX, 
+                Math.Max(
+                    Math.Max(q.TopLeft.X, q.TopRight.X), 
+                    Math.Max(q.BottomLeft.X, q.BottomRight.X)
+                )
+            );
+            
+            maxY = Math.Max(
+                maxY, 
+                Math.Max(
+                    Math.Max(q.TopLeft.Y, q.TopRight.Y), 
+                    Math.Max(q.BottomLeft.Y, q.BottomRight.Y)
+                )
+            );
+        }
+        
+        return new Rectangle(minX, minY, maxX - minX, maxY - minY);
+    }
 
     internal static Data.Quad RotatePropQuads(Data.Quad quads, float angle)
     {

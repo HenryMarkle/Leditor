@@ -345,11 +345,15 @@ public class PropEditor
     [SettingName("Auto-Simulate Selected Ropes")]
     public bool SimulateSelectedRopes { get; set; }
 
+    [SettingName("Show Presets Window")]
+    public bool PresetsWindow { get; set; }
+
     //
 
     public PropEditor()
     {
         LayerIndicatorPosition = ScreenRelativePosition.TopLeft;
+        PresetsWindow = false;
     }
 
     public PropEditor(ScreenRelativePosition layerIndicatorPosition)

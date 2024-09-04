@@ -1,1 +1,6 @@
-- fixed materials pre-rendering with the wrong slope type
+- Added a new props presets option
+  - Select the props you want to save as a preset
+  - Press SHIFT + Y to save
+  - They'll appear in the new `presets` window
+  - The feature is not 100% finished; expect bugs.
+- Prop placement stuck to long/rope prop placement mode has been mostly fixed.
