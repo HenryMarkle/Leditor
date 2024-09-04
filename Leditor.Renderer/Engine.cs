@@ -4133,9 +4133,10 @@ public partial class Engine
     protected virtual void AttemptDrawTempleStone_MTX(
         int x,
         int y,
+        int layer,
+        RenderCamera camera,
         List<(int, int, int)> list,
         TileDefinition tile,
-        int layer,
         RenderTexture2D rt
     )
     {
@@ -4155,9 +4156,17 @@ public partial class Engine
         foreach (var o in occupy)
         {
             if (!CheckIfAMaterialIsSolidAndSameMaterial(x + o.x, y + o.y, layer, State.templeStone)) return;
-
-            
         }
+
+        DrawTile_MTX(
+            Level!.TileMatrix[y, x, layer],
+            tile,
+            x,
+            y,
+            layer,
+            camera,
+            rt
+        );
     }
 
     /// <summary>

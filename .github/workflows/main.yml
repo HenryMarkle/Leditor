@@ -53,7 +53,7 @@ jobs:
       run: zip -r linux-x64.zip ./output
 
     - name: Upload Linux Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: linux-binaries
         path: ./linux-x64.zip
@@ -102,7 +102,7 @@ jobs:
       run: zip -r linux-minimal-x64.zip ./output
 
     - name: Upload Linux Artifact (minimal)
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: linux-binaries-minimal
         path: ./linux-minimal-x64.zip
@@ -153,7 +153,7 @@ jobs:
       run: Compress-Archive -Path ./output/* -DestinationPath windows-x64.zip
 
     - name: Upload Windows Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: windows-binaries
         path: ./windows-x64.zip
@@ -210,7 +210,7 @@ jobs:
       run: Compress-Archive -Path ./output/* -DestinationPath windows-minimal-x64.zip
 
     - name: Upload Windows Artifact (minimal)
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: windows-binaries-minimal
         path: ./windows-minimal-x64.zip
