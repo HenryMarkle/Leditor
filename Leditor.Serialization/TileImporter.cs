@@ -578,11 +578,9 @@ public class TileImporter
 
                 var zPosition = ((AstNode.Number)asList2[1]).Value.IntValue;
                 
-                AstNode.Base[] pointArgs2 = ((AstNode.GlobalCall)asList2[0]).Arguments;
-                var category2 = ((AstNode.Number)pointArgs2[0]).Value.IntValue;
-                var position2 = ((AstNode.Number)pointArgs2[1]).Value.IntValue;
+                var (category, position) = Utils.GetIntPair((AstNode.GlobalCall)asList2[0]);
 
-                cell = new(category2, position2, zPosition);
+                cell = new(category, position, zPosition);
                 break;
             }
 
@@ -643,11 +641,9 @@ public class TileImporter
 
                 var zPosition = ((AstNode.Number)asList2[1]).Value.IntValue;
                 
-                AstNode.Base[] pointArgs2 = ((AstNode.GlobalCall)asList2[0]).Arguments;
-                var category2 = ((AstNode.Number)pointArgs2[0]).Value.IntValue;
-                var position2 = ((AstNode.Number)pointArgs2[1]).Value.IntValue;
+                var (category, position) = Utils.GetIntPair((AstNode.GlobalCall)asList2[0]);
 
-                cell = new(category2, position2, zPosition);
+                cell = new(category, position, zPosition);
                 break;
             }
 

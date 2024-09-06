@@ -59,11 +59,13 @@ public class RenderingPage
             ren = true;
         }
 
+        #if !DEBUG
         if ((Context.Frame + 1) % 5 == 0)
         {
             Context.Engine.Render();
             Context.Engine.Compose(_canvasOffsetX, _canvasOffsetY);
         }
+        #endif
 
 
         rlImGui.Begin();
@@ -81,6 +83,14 @@ public class RenderingPage
                 if (ImGui.SliderInt("Offset X", ref _canvasOffsetX, -100, 100)) Context.Engine.Compose(_canvasOffsetX, _canvasOffsetY);
                 if (ImGui.SliderInt("Offset Y", ref _canvasOffsetY, -100, 100)) Context.Engine.Compose(_canvasOffsetX, _canvasOffsetY);
 
+                #if DEBUG
+                if (ImGui.Button("Render Next Layer", ImGui.GetContentRegionAvail() with { Y = 20 }))
+                {
+                    Context.Engine.Render();
+                    Context.Engine.Compose(_canvasOffsetX, _canvasOffsetY);
+                }
+                #endif
+                
                 if (ImGui.Button("Cancel", ImGui.GetContentRegionAvail() with { Y = 20 }))
                 {
                     Context.Page = 0;
@@ -116,6 +126,12 @@ public class RenderingPage
 
                     ImGui.EndListBox();
                 }
+                ImGui.End();
+            }
+
+            if (ImGui.Begin("Front Buffer##LevelRenderingFrontBuffer"))
+            {
+                rlImGui.ImageRenderTexture(Context.Engine.FrontImage);
                 ImGui.End();
             }
         }

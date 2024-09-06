@@ -313,6 +313,7 @@ internal class SaveProjectPage : EditorPage
             }
             else
             {
+                GLOBALS.LockNavigation = _isInputBusy;
                 _isInputBusy = false;
 
                 if (GLOBALS.Settings.GeneralSettings.DarkTheme) ClearBackground(new Color(100, 100, 100, 255));
