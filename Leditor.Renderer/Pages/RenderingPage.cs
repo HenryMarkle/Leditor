@@ -17,8 +17,8 @@ public class RenderingPage
 
     private bool _disposed;
 
-    private int _canvasOffsetX = 1;
-    private int _canvasOffsetY = 1;
+    private float _canvasOffsetX = 1;
+    private float _canvasOffsetY = 1;
 
     private void OnLevelLoaded(object? sender, EventArgs e)
     {
@@ -80,8 +80,8 @@ public class RenderingPage
                 ImGui.Columns(2);
                 ImGui.SetColumnWidth(0, ImGui.GetContentRegionAvail().Y / 3);
 
-                if (ImGui.SliderInt("Offset X", ref _canvasOffsetX, -100, 100)) Context.Engine.Compose(_canvasOffsetX, _canvasOffsetY);
-                if (ImGui.SliderInt("Offset Y", ref _canvasOffsetY, -100, 100)) Context.Engine.Compose(_canvasOffsetX, _canvasOffsetY);
+                if (ImGui.SliderFloat("Offset X", ref _canvasOffsetX, -100, 100)) Context.Engine.Compose(_canvasOffsetX, _canvasOffsetY);
+                if (ImGui.SliderFloat("Offset Y", ref _canvasOffsetY, -100, 100)) Context.Engine.Compose(_canvasOffsetX, _canvasOffsetY);
 
                 #if DEBUG
                 if (ImGui.Button("Render Next Layer", ImGui.GetContentRegionAvail() with { Y = 20 }))

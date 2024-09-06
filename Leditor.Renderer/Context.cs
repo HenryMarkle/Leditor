@@ -101,6 +101,7 @@ public class Context
                 LevelLoaded?.Invoke(this, EventArgs.Empty);
             } catch (Exception e) {
                 Logger?.Error(e, "[Context] Failed to load level");
+                Console.WriteLine("Failed to load level: "+e);
                 LevelLoadingFailed?.Invoke(this, EventArgs.Empty);
             }
 

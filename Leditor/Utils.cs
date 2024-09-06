@@ -340,7 +340,14 @@ internal static class Utils
         skipMatSearch:
 
         // TODO: catch PropNotFoundException
-        var  props =  Serialization.Importers.GetProps(propsObj);;
+        List<Prop_Legacy> props;
+
+        try {
+            props = Serialization.Importers.GetProps(propsObj);
+        } catch (Exception e) {
+            props = [];
+            Console.WriteLine("Failed to load props: "+e);
+        }
 
         var lightSettings = Serialization.Importers.GetLightSettings(lightObj);
 

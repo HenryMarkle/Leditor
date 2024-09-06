@@ -77,6 +77,11 @@ public partial class Engine
         /// Used to cache tiles used for large trash material.
         /// </summary>
         public TileDefinition[] largeTrashPool = [];
+        
+        /// <summary>
+        /// Used to cache tiles used for mega trash material.
+        /// </summary>
+        public TileDefinition[] megaTrashPool = [];
 
         public List<Prop_Legacy> largeTrashRenderQueue = [];
 
@@ -133,6 +138,8 @@ public partial class Engine
         public Texture2D rockTiles;
 
         public Texture2D bigJunk;
+        public Texture2D roughRock;
+        public Texture2D sandRR;
 
         public virtual void Initialize(Registry registry)
         {
@@ -245,6 +252,23 @@ public partial class Engine
                     .ToArray();
             });
 
+            var megaTrashPoolTask = Task.Run(() => {
+                megaTrashPool = registry.Tiles!.Names.Values
+                    .AsParallel()
+                    .Where(t => 
+                        t.Size.Width >= 4 && 
+                        t.Size.Width >= 4 && 
+                        t.Size.Width <= 2 && 
+                        t.Size.Height <= 20 &&
+                        !t.Tags.Contains("notMegaTrashProp") &&
+                        !t.Tags.Contains("colored") &&
+                        !t.Tags.Contains("colored") &&
+                        !t.Tags.Contains("effectColorA") &&
+                        !t.Tags.Contains("effectColorB")
+                    )
+                    .ToArray();
+            });
+
 
             var memberTask = Task.Run(() => {
                 registry.Tiles?.Names.TryGetValue("Temple Stone Wedge", out TempleStoneWedge);
@@ -308,6 +332,8 @@ public partial class Engine
                 rockTiles = droughtLib["rockTiles"].Texture;
 
                 bigJunk = levelEditorLib["bigJunk"].Texture;
+                roughRock = droughtLib["roughRock"].Texture;
+                sandRR = droughtLib["sandRR"].Texture;
             });
 
             var vTexture = levelEditorLib["vertImg"].Texture;
@@ -360,6 +386,7 @@ public partial class Engine
             randomMetalsPoolTask.Wait();
             sandPoolTask.Wait();
             largeTrashPoolTask.Wait();
+            megaTrashPoolTask.Wait();
 
             Initialized = true;
         }
@@ -419,6 +446,7 @@ public partial class Engine
     {
         public bool InvisibleMarterialFix { get; set; }
         public bool MaterialFixes { get; set; }
+        public bool RoughRockSpreadsMore { get; set; }
     }
 
     /// <summary>
@@ -550,7 +578,7 @@ public partial class Engine
         Configuration = c;
     }
 
-    public void Compose(int offsetX, int offsetY)
+    public void Compose(float offsetX, float offsetY)
     {
         var shader = Shaders.WhiteRemoverVFlipDepthAccumulator;
 
@@ -566,7 +594,7 @@ public partial class Engine
             SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), layer.Texture);
             SetShaderValue(shader, GetShaderLocation(shader, "d"), l / 30f, ShaderUniformDataType.Float);
 
-            DrawTexture(layer.Texture, 29 - l * offsetX, 29 - l * offsetY, Color.White);
+            DrawTextureRec(layer.Texture, new(0, 0, layer.Texture.Width, layer.Texture.Height), new(29 - l * offsetX, 29 - l * offsetY), Color.White);
 
             EndShaderMode();
         }
@@ -699,7 +727,7 @@ public partial class Engine
         var (width, height) = tile.Size;
         var bf = tile.BufferTiles;
 
-        SetTextureWrap(tile.Texture, TextureWrap.Clamp);
+        SetTextureWrap(tile.Texture, TextureWrap.MirrorClamp);
 
         switch (tile.Type)
         {
@@ -4325,7 +4353,7 @@ public partial class Engine
                     var SmallStoneSlopeSE = Registry.Tiles!.Get("Small Stone Slope SE");
                     var SmallStoneFloor = Registry.Tiles!.Get("Small Stone Floor");
 
-                    for (var q = orderedTiles.Count - 1; q >= 0; q--)
+                    for (var q = orderedTiles.Count; q >= 0; q--)
                     {
                         var queued = orderedTiles[q];
 
@@ -4428,7 +4456,7 @@ public partial class Engine
 
                 while (orderedTiles.Count > 0)
                 {
-                    var index = Random.Generate(orderedTiles.Count - 1);
+                    var index = Random.Generate(orderedTiles.Count) - 1;
                     var (_, tx, ty) = orderedTiles[index];
                     
                     // Check if it's in camera bounds
@@ -5941,7 +5969,7 @@ public partial class Engine
 
             { // First iteration (dir = (-1, 0))
 
-                if (!Level!.GeoMatrix[y, x - 1, layer][GeoType.Solid])
+                if (Utils.GetGeoCellType(Level!.GeoMatrix, x - 1, y, layer) != GeoType.Solid)
                 {
                     distanceToAir = dist;
                     continue;
@@ -5950,7 +5978,7 @@ public partial class Engine
 
             { // First iteration (dir = (0, -1))
 
-                if (!Level!.GeoMatrix[y - 1, x, layer][GeoType.Solid])
+                if (Utils.GetGeoCellType(Level!.GeoMatrix, x, y - 1, layer) != GeoType.Solid)
                 {
                     distanceToAir = dist;
                     continue;
@@ -5959,7 +5987,7 @@ public partial class Engine
 
             { // First iteration (dir = (1, 0))
 
-                if (!Level!.GeoMatrix[y, x + 1, layer][GeoType.Solid])
+                if (Utils.GetGeoCellType(Level!.GeoMatrix, x + 1, y, layer) != GeoType.Solid)
                 {
                     distanceToAir = dist;
                     continue;
@@ -5968,7 +5996,7 @@ public partial class Engine
 
             { // First iteration (dir = (0, 1))
 
-                if (!Level!.GeoMatrix[y + 1, x, layer][GeoType.Solid])
+                if (Utils.GetGeoCellType(Level!.GeoMatrix, x, y + 1, layer) != GeoType.Solid)
                 {
                     distanceToAir = dist;
                     continue;
@@ -6006,6 +6034,7 @@ public partial class Engine
                     );
 
                     State.largeTrashRenderQueue.Add(new Prop_Legacy(-sublayer, trashTile.Name, quad) {
+                        Tile = trashTile,
                         Extras = new PropExtras_Legacy(new BasicPropSettings(seed: Random.Generate(1000)), [])
                     });
                 }
@@ -6060,8 +6089,418 @@ public partial class Engine
                     quad.Rotated(Random.Generate(360))
                 );
             }
-
         }
+    }
+
+    protected virtual void DrawRoughRockMaterial_MTX(
+        in MaterialDefinition mat,
+        int x,
+        int y,
+        int layer,
+        in RenderCamera camera,
+        in RenderTexture2D rt
+    ) {
+        Texture2D imgR = new();
+        var szR = 0;
+        var intOp = 1;
+
+        switch (mat.Name) {
+            case "Rough Rock":
+                imgR = State.roughRock;
+                szR = 60;
+                intOp = 6;
+            break;
+
+            case "Sandy Dirt":
+                imgR = State.sandRR;
+                szR = 20;
+                intOp = 2;
+            break;
+        }
+
+        var distanceToAir = -1;
+
+        for (var dist = 1; dist <= 5; dist++)
+        {
+            // Expanded loop
+
+            { // First iteration (dir = (-1, 0))
+
+                if (!Level!.GeoMatrix[y, x - 1, layer][GeoType.Solid])
+                {
+                    distanceToAir = dist;
+                    continue;
+                }
+            }
+
+            { // First iteration (dir = (0, -1))
+
+                if (!Level!.GeoMatrix[y - 1, x, layer][GeoType.Solid])
+                {
+                    distanceToAir = dist;
+                    continue;
+                }
+            }
+
+            { // First iteration (dir = (1, 0))
+
+                if (!Level!.GeoMatrix[y, x + 1, layer][GeoType.Solid])
+                {
+                    distanceToAir = dist;
+                    continue;
+                }
+            }
+
+            { // First iteration (dir = (0, 1))
+
+                if (!Level!.GeoMatrix[y + 1, x, layer][GeoType.Solid])
+                {
+                    distanceToAir = dist;
+                    continue;
+                }
+            }
+
+            if (dist != -1) break;
+        }
+    
+        if (Configuration.RoughRockSpreadsMore) {
+            distanceToAir++;
+        }
+
+        if (distanceToAir < 5) {
+            switch (mat.Name) {
+                case "Rough Rock":
+                    DrawRockMaterial_MTX(mat, x, y, layer, camera, true);
+                break;
+
+                case "Sandy Dirt":
+                    DrawPipeMaterial_MTX(mat, x, y, layer, camera);
+                    distanceToAir++;
+                break;
+            }
+        }
+
+        int variable;
+        float fat, mSzR;
+        Quad quad;
+
+        if (distanceToAir > 2) {
+            var sublayer = layer * 10;
+            var pos = new Vector2(x - camera.Coords.X, y - camera.Coords.Y) * 20 + Vector2.One * 10;
+
+            if (Random.Generate(5) <= distanceToAir) {
+                BeginTextureMode(_layers[sublayer]);
+                DrawRectangleRec(
+                    new Rectangle(
+                        pos.X - 10,
+                        pos.Y - 10,
+                        20,
+                        20
+                    ),
+                    Color.Red
+                );
+                EndTextureMode();
+
+                variable = Random.Generate(intOp);
+                fat = Random.Generate(3) switch {
+                    1 => 1f,
+                    2 => 1.05f,
+                    3 => 1.1f
+                };
+
+                mSzR = szR * fat;
+                
+                quad = new Quad(
+                    new Vector2(pos.X - mSzR, pos.Y - mSzR),
+                    new Vector2(pos.X + mSzR, pos.Y - mSzR),
+                    new Vector2(pos.X + mSzR, pos.Y + mSzR),
+                    new Vector2(pos.X - mSzR, pos.Y + mSzR)
+                );
+
+                SDraw.Draw_NoWhite_NoColor(
+                    rt,
+                    imgR,
+                    Shaders.WhiteRemover,
+                    new Rectangle((variable - 1) * szR * 2, 1, szR * 2, szR*2),
+                    quad.Rotated(Random.Generate(360))
+                );
+            }
+
+            pos = new Vector2(x - camera.Coords.X, y - camera.Coords.Y) * 20 + Vector2.One * 10 + new Vector2(Random.Generate(21) - 11, Random.Generate(21) - 11);
+            variable = Random.Generate(intOp);
+            fat = Random.Generate(3) switch {
+                1 => 1f,
+                2 => 1.05f,
+                3 => 1.1f
+            };
+
+            mSzR = szR * fat;
+        
+            quad = new Quad(
+                new Vector2(pos.X - mSzR, pos.Y - mSzR),
+                new Vector2(pos.X + mSzR, pos.Y - mSzR),
+                new Vector2(pos.X + mSzR, pos.Y + mSzR),
+                new Vector2(pos.X - mSzR, pos.Y + mSzR)
+            );
+
+            SDraw.Draw_NoWhite_NoColor(
+                rt,
+                imgR,
+                Shaders.WhiteRemover,
+                new Rectangle((variable - 1) * szR * 2, 1, szR * 2, szR*2),
+                quad.Rotated(Random.Generate(360))
+            );
+
+            for (var q = 1; q <= distanceToAir; q++)
+            {
+                variable = Random.Generate(intOp);
+                pos = new Vector2(x - camera.Coords.X, y - camera.Coords.Y) * 20 + Vector2.One * 10 + new Vector2(Random.Generate(21) - 11, Random.Generate(21) - 11);
+
+                fat = Random.Generate(3) switch {
+                    1 => 1f,
+                    2 => 1.05f,
+                    3 => 1.1f
+                };
+
+                mSzR = szR * fat;
+
+                quad = new Quad(
+                    new Vector2(pos.X - mSzR, pos.Y - mSzR),
+                    new Vector2(pos.X + mSzR, pos.Y - mSzR),
+                    new Vector2(pos.X + mSzR, pos.Y + mSzR),
+                    new Vector2(pos.X - mSzR, pos.Y + mSzR)
+                );
+
+                SDraw.Draw_NoWhite_NoColor(
+                    rt,
+                    imgR,
+                    Shaders.WhiteRemover,
+                    new Rectangle((variable - 1) * szR * 2, 1, szR * 2, szR*2),
+                    quad.Rotated(Random.Generate(360))
+                );
+            }
+
+            if (mat.Name == "Sandy Dirt" && Random.Generate(2) == 1) {
+                pos = new Vector2(x - camera.Coords.X, y - camera.Coords.Y) * 20;
+
+                if (Random.Generate(5) <= distanceToAir) {
+                    BeginTextureMode(_layers[sublayer]);
+                    DrawRectangleRec(
+                        new Rectangle(
+                            pos.X - 10,
+                            pos.Y - 10,
+                            20,
+                            20
+                        ),
+                        Color.Red
+                    );
+                    EndTextureMode();
+
+                    variable = Random.Generate(intOp);
+                    fat = Random.Generate(3) switch {
+                        1 => 1f,
+                        2 => 1.05f,
+                        3 => 1.1f
+                    };
+
+                    mSzR = szR * fat;
+
+                    quad = new Quad(
+                        new Vector2(pos.X - mSzR, pos.Y - mSzR),
+                        new Vector2(pos.X + mSzR, pos.Y - mSzR),
+                        new Vector2(pos.X + mSzR, pos.Y + mSzR),
+                        new Vector2(pos.X - mSzR, pos.Y + mSzR)
+                    );
+
+                    SDraw.Draw_NoWhite_NoColor(
+                        rt,
+                        imgR,
+                        Shaders.WhiteRemover,
+                        new Rectangle((variable - 1) * szR * 2, 1, szR * 2, szR*2),
+                        quad.Rotated(Random.Generate(360))
+                    );
+                }
+
+                for (var q = 1; q <= distanceToAir; q++) {
+                    sublayer = layer * 10 + Random.Generate(10) - 1;
+                    pos = new Vector2(x - camera.Coords.X, y - camera.Coords.Y) * 20 + Vector2.One * 10 + new Vector2(Random.Generate(21) - 11, Random.Generate(21) - 11);
+                    variable = Random.Generate(intOp);
+                    fat = Random.Generate(3) switch {
+                        1 => 1f,
+                        2 => 1.05f,
+                        3 => 1.1f
+                    };
+
+                    mSzR = szR * fat;
+
+                    quad = new Quad(
+                        new Vector2(pos.X - mSzR, pos.Y - mSzR),
+                        new Vector2(pos.X + mSzR, pos.Y - mSzR),
+                        new Vector2(pos.X + mSzR, pos.Y + mSzR),
+                        new Vector2(pos.X - mSzR, pos.Y + mSzR)
+                    );
+
+                    SDraw.Draw_NoWhite_NoColor(
+                        _layers[sublayer],
+                        imgR,
+                        Shaders.WhiteRemover,
+                        new Rectangle((variable - 1) * szR * 2, 1, szR * 2, szR*2),
+                        quad.Rotated(Random.Generate(360))
+                    );
+                }
+            }
+        }
+    }
+
+    protected virtual void DrawMegaTrashMaterial_MTX(
+        in MaterialDefinition mat,
+        int x,
+        int y,
+        int layer,
+        in RenderCamera camera,
+        in RenderTexture2D rt
+    ) {
+        var distanceToAir = -1;
+
+        for (var dist = 1; dist <= 5; dist++)
+        {
+            // Expanded loop
+
+            { // First iteration (dir = (-1, 0))
+
+                if (!Level!.GeoMatrix[y, x - 1, layer][GeoType.Solid])
+                {
+                    distanceToAir = dist;
+                    continue;
+                }
+            }
+
+            { // First iteration (dir = (0, -1))
+
+                if (!Level!.GeoMatrix[y - 1, x, layer][GeoType.Solid])
+                {
+                    distanceToAir = dist;
+                    continue;
+                }
+            }
+
+            { // First iteration (dir = (1, 0))
+
+                if (!Level!.GeoMatrix[y, x + 1, layer][GeoType.Solid])
+                {
+                    distanceToAir = dist;
+                    continue;
+                }
+            }
+
+            { // First iteration (dir = (0, 1))
+
+                if (!Level!.GeoMatrix[y + 1, x, layer][GeoType.Solid])
+                {
+                    distanceToAir = dist;
+                    continue;
+                }
+            }
+
+            if (dist != -1) break;
+        }
+    
+        if (distanceToAir == -1) distanceToAir = 5;
+
+        if (distanceToAir < 5) {
+            DrawPipeMaterial_MTX(Registry.Materials!.Get("Trash"), x, y, layer, camera);
+        }
+
+        int sublayer;
+        Vector2 pos;
+        Quad quad;
+
+        if (distanceToAir < 3 && State.megaTrashPool.Length > 0) {
+            for (var q = 1; q <= distanceToAir + Random.Generate(2) - 1; q++) {
+                sublayer = Utils.Restrict(layer * 10 + Random.Generate(Random.Generate(10)) - 1 + Random.Generate(3), 0, 29);
+                pos = new Vector2(x, y) * 20 - camera.Coords + Vector2.One * 10 + new Vector2(Random.Generate(21) - 11, Random.Generate(21) - 11);
+
+                var tile = State.megaTrashPool[Random.Generate(State.megaTrashPool.Length) - 1];
+                var (width, height) = tile.Size;
+
+                width  *= 10;
+                height *= 10;
+
+                quad = new Quad(
+                    new Vector2(pos.X - width, pos.Y - height),
+                    new Vector2(pos.X + width, pos.Y - height),
+                    new Vector2(pos.X + width, pos.Y + height),
+                    new Vector2(pos.X - width, pos.Y + height)
+                );
+
+                State.largeTrashRenderQueue.Add(new Prop_Legacy(-sublayer, tile.Name, quad) {
+                    Tile = tile,
+                    Extras = new PropExtras_Legacy(new BasicPropSettings(seed: Random.Generate(1000)), [])
+                });
+            }
+        }
+    
+        // Copied from large trash code
+        if (distanceToAir > 2)
+        {
+            sublayer = layer * 10;
+            pos = new Vector2(x, y) * 20 - camera.Coords;
+
+            if (Random.Generate(5) <= distanceToAir)
+            {
+                BeginTextureMode(_layers[sublayer]);
+                DrawRectangleRec(new Rectangle(pos.X, pos.Y, 20, 20), Color.Green);
+                EndTextureMode();
+
+                var variable = Random.Generate(14);
+                quad = new Quad(
+                    new Vector2(-30, -30),
+                    new Vector2( 30, -30),
+                    new Vector2( 30,  30),
+                    new Vector2(-30,  30)
+                );
+
+                SDraw.Draw_NoWhite_NoColor(
+                    _layers[sublayer],
+                    State.bigJunk,
+                    Shaders.WhiteRemover,
+                    new Rectangle((variable - 1) * 60, 1, 60, 60),
+                    quad.Rotated(Random.Generate(360))
+                );
+            }
+
+            for (var q = 1; q <= distanceToAir; q++)
+            {
+                sublayer = layer * 10 + Random.Generate(10) - 1;
+                pos = new Vector2(x, y) * 20 - camera.Coords + new Vector2(Random.Generate(21) - 11, Random.Generate(21) - 11);
+                var variable = Random.Generate(14) - 1;
+                quad = new Quad(
+                    new Vector2(pos.X - 30, pos.Y - 30),
+                    new Vector2(pos.X + 30, pos.Y - 30),
+                    new Vector2(pos.X + 30, pos.Y + 30),
+                    new Vector2(pos.X - 30, pos.Y + 30)
+                );
+
+                SDraw.Draw_NoWhite_NoColor(
+                    _layers[sublayer],
+                    State.bigJunk,
+                    Shaders.WhiteRemover,
+                    new Rectangle(variable*60, 1, 60, 60),
+                    quad.Rotated(Random.Generate(360))
+                );
+            }
+        }
+    }
+
+    protected virtual void DrawDirtMaterial_MTX(
+        in MaterialDefinition mat,
+        int x,
+        int y,
+        int layer,
+        in RenderCamera camera,
+        in RenderTexture2D rt
+    ) {
+
     }
 
     /// <summary>
@@ -6292,7 +6731,38 @@ public partial class Engine
                             DrawLargeTrashMaterial_MTX(material, q.x, q.y, layer, camera, _frontImage);
                         }
                     }
+                }
+                break;
+            
+                case MaterialRenderType.RoughRock:
+                foreach (var q in queued) {
+                    ref var cell = ref Level.GeoMatrix[q.y, q.x, layer];
 
+                    if (cell.IsSlope || cell[GeoType.Platform]) {
+                        if (material.Name == "Rough Rock") {
+                            DrawRockMaterial_MTX(material, q.x, q.y, layer, camera, true);
+                        } else if (material.Name == "Sandy Dirt") {
+                            DrawPipeMaterial_MTX(material, q.x, q.y, layer, camera);
+                        }
+                    }
+
+                    if (cell[GeoType.Solid]) {
+                        DrawRoughRockMaterial_MTX(material, q.x, q.y, layer, camera, _frontImage);
+                    }
+                }
+                break;
+            
+                case MaterialRenderType.MegaTrash:
+                foreach (var q in queued) {
+                    ref var cell = ref Level.GeoMatrix[q.y, q.x, layer];
+
+                    if (cell.IsSlope || cell[GeoType.Solid]) {
+                        DrawPipeMaterial_MTX(material, q.x, q.y, layer, camera);
+                    }
+
+                    if (!cell[GeoType.Air]) {
+                        DrawMegaTrashMaterial_MTX(material, q.x, q.y, layer, camera, _frontImage);
+                    }
                 }
                 break;
             }

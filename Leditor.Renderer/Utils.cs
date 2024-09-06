@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Leditor.Data;
+using Leditor.Data.Geometry;
 using Leditor.Data.Materials;
 using Leditor.Data.Props.Legacy;
 using Leditor.Data.Tiles;
@@ -17,6 +18,8 @@ public static class Utils
 
     // [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2 GetMiddleCellPos(int x, int y) => new Vector2(x, y)  * 20 - Vector2.One * 10;
+
+    public static GeoType GetGeoCellType(Geo[,,] matrix, int x, int y, int z) => (Data.Utils.InBounds(matrix, x, y) && z < 3 && z >= 0) ? matrix[y, x, z].Type : GeoType.Solid;
 
     public static float Diag(Vector2 p1, Vector2 p2)
     {

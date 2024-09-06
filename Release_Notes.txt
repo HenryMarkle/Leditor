@@ -1,7 +1,2 @@
-- Added a new props presets option
-  - Select the props you want to save as a preset
-  - Press SHIFT + Y to save
-  - They'll appear in the new `presets` window
-  - The feature is not 100% finished; expect bugs and potential crashes.
-  - This option is opt-in; you need to enable the presets window in the settings.
-- Prop placement stuck to long/rope prop placement mode has been mostly fixed.
+- Fixed a load error when attempting to load a level without props.
+- Fixed a load problem when tiles are saved with negative numbers.

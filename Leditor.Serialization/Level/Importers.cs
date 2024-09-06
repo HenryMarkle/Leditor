@@ -464,7 +464,14 @@ public static class Importers
         skipMatSearch:
 
         // TODO: catch PropNotFoundException
-        var  legacy_props =  PropImporter.GetProps_Legacy(propsObj, props, tiles);
+        List<Prop_Legacy>  legacy_props;
+
+        try {
+            legacy_props = PropImporter.GetProps_Legacy(propsObj, props, tiles);
+        } catch (Exception e) {
+            legacy_props = [];
+            propsLoadException = e;
+        }
 
         // var parsed_props = propsObj is null 
         //     ? default! 
