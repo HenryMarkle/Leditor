@@ -529,6 +529,7 @@ internal class StartPage : EditorPage
                 GLOBALS.Level.ProjectName = Path.GetFileNameWithoutExtension(_dirEntries[_currentIndex].path);
 
                 _uiLocked = false;
+                GLOBALS.NewlyCreated = false;
             }
             else
             {

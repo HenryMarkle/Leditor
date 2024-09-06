@@ -5120,7 +5120,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     for (var i = 0; i < _selected.Length; i++) _selected[i] = true;
                 }
 
-                if (ImGui.BeginListBox("Props", ImGui.GetContentRegionAvail() with { Y = ImGui.GetContentRegionAvail().Y - 350 }))
+                if (ImGui.BeginListBox("##Props", ImGui.GetContentRegionAvail() with { Y = ImGui.GetContentRegionAvail().Y - 350 }))
                 {
                     for (var index = 0; index < GLOBALS.Level.Props.Length; index++)
                     {
