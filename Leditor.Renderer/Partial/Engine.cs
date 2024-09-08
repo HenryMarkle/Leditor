@@ -86,6 +86,7 @@ public partial class Engine
         public Dictionary<string, Texture2D> tileSets = [];
         public Dictionary<string, Texture2D> wvTiles = [];
         public Dictionary<string, Texture2D> densePipesImages = [];
+        public Dictionary<string, Texture2D> densePipesImages2 = [];
 
         /// <summary>
         /// Used for rendering `Random Metal` material
@@ -302,6 +303,17 @@ public partial class Engine
                     })
                     .ToDictionary(m => m.Item1, m => m.Item2, StringComparer.OrdinalIgnoreCase);
             });
+            
+            var desnsePipesImages2Task = Task.Run(() => {
+                densePipesImages2 = registry.Materials!.Names.Values
+                    .Where(m => m.RenderType == MaterialRenderType.DensePipe)
+                    .Select(m => {
+                        var texture = registry.CastLibraries.Values.Where(c => c.Members.ContainsKey($"{m.Name}Image2")).Select(c => c[$"{m.Name}WVTiles"]).First().Texture;
+                    
+                        return (m.Name, texture);
+                    })
+                    .ToDictionary(m => m.Item1, m => m.Item2, StringComparer.OrdinalIgnoreCase);
+            });
 
             var memberTask = Task.Run(() => {
                 registry.Tiles?.Names.TryGetValue("Temple Stone Wedge", out TempleStoneWedge);
@@ -433,6 +445,7 @@ public partial class Engine
             megaTrashPoolTask.Wait();
             wvTilesTask.Wait();
             desnsePipesImagesTask.Wait();
+            desnsePipesImages2Task.Wait();
 
             Initialized = true;
         }
@@ -1216,6 +1229,12 @@ public partial class Engine
                     if (Level!.GeoMatrix[q.y, q.x, layer][GeoType.Air]) continue;
 
                     DrawDensePipeMaterial_MTX(material, q.x, q.y, layer, camera, _frontImage);
+                }
+                break;
+            
+                case MaterialRenderType.RandomPipes:
+                {
+
                 }
                 break;
             }

@@ -37,9 +37,14 @@ internal class NewLevelPage : EditorPage
 
     private bool _isBufferControlActive;
 
+    private bool _isInputBusy;
+
     public override void Draw()
     {
         // BeginDrawing();
+
+        GLOBALS.LockNavigation = _isInputBusy;
+        _isInputBusy = false;
         
         ClearBackground(GLOBALS.Settings.GeneralSettings.DarkTheme 
             ? new Color(100, 100, 100, 255) 
@@ -124,11 +129,13 @@ internal class NewLevelPage : EditorPage
                 ImGui.SetNextItemWidth(200);
                 ImGui.InputInt("Width", ref _matrixWidthValue);
 
+                _isInputBusy = _isInputBusy || ImGui.IsItemActive();
                 _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 ImGui.SetNextItemWidth(200);
                 ImGui.InputInt("Height", ref _matrixHeightValue);
 
+                _isInputBusy = _isInputBusy || ImGui.IsItemActive();
                 _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 Utils.Restrict(ref _matrixWidthValue, 1);
@@ -139,21 +146,25 @@ internal class NewLevelPage : EditorPage
                 ImGui.SetNextItemWidth(200);
                 ImGui.InputInt("Left", ref _leftPadding);
 
+                _isInputBusy = _isInputBusy || ImGui.IsItemActive();
                 _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 ImGui.SetNextItemWidth(200);
                 ImGui.InputInt("Top", ref _topPadding);
 
+                _isInputBusy = _isInputBusy || ImGui.IsItemActive();
                 _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 ImGui.SetNextItemWidth(200);
                 ImGui.InputInt("Right", ref _rightPadding);
 
+                _isInputBusy = _isInputBusy || ImGui.IsItemActive();
                 _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 ImGui.SetNextItemWidth(200);
                 ImGui.InputInt("Bottom", ref _bottomPadding);
 
+                _isInputBusy = _isInputBusy || ImGui.IsItemActive();
                 _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 Utils.Restrict(ref _leftPadding, 0);
@@ -225,13 +236,16 @@ internal class NewLevelPage : EditorPage
                 var col1Space = ImGui.GetContentRegionAvail();
 
                 ImGui.SetNextItemWidth(100);
+
                 ImGui.InputInt("Rows", ref _rows);
 
+                _isInputBusy = _isInputBusy || ImGui.IsItemActive();
                 _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 ImGui.SetNextItemWidth(100);
                 ImGui.InputInt("Columns", ref _columns);
 
+                _isInputBusy = _isInputBusy || ImGui.IsItemActive();
                 _isBufferControlActive = _isBufferControlActive || ImGui.IsItemActive();
                 
                 Utils.Restrict(ref _rows, 1);

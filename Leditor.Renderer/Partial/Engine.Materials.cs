@@ -3577,7 +3577,7 @@ public partial class Engine
                 } else {
                     SDraw.Draw_NoWhite_NoColor(
                         _layers[q],
-                        State.densePipesImages[$"{mat.Name}image"],
+                        State.densePipesImages[mat.Name],
                         Shaders.WhiteRemover,
                         new Rectangle((variable - 1) * 40, 1, 40, 40),
                         new Rectangle(pos - Vector2.One * 20, Vector2.One * 40)
@@ -3677,13 +3677,155 @@ public partial class Engine
                 } else {
                     SDraw.Draw_NoWhite_NoColor(
                         _layers[q],
-                        State.densePipesImages[$"{mat.Name}image"],
+                        State.densePipesImages[mat.Name],
                         Shaders.WhiteRemover,
                         new Rectangle(variable*40, 1 + (rand - 1)*40, 40, 40),
                         new Rectangle(pos - Vector2.One * 20, Vector2.One * 40)
                     );
                 }
             }
+        }
+    }
+
+    protected virtual void DrawRandomPipesMaterial_MTX(
+        in MaterialDefinition mat,
+        int x,
+        int y,
+        int layer,
+        in RenderCamera camera,
+        in RenderTexture2D rt
+    ) {
+        var pos = (new Vector2(x, y) - camera.Coords/20f) * 20 - Vector2.One * 10;
+
+        var cellType = Utils.GetGeoCellType(Level!.GeoMatrix, x, y, layer);
+
+        if (cellType is not GeoType.Air or GeoType.Solid) {
+            var variable = 16;
+
+            variable = cellType switch {
+                GeoType.SlopeNE => 20,
+                GeoType.SlopeNW => 19,
+                GeoType.SlopeES => 17,
+                GeoType.SlopeSW => 18,
+                GeoType.Platform => Random.Generate(2) - 1 == 1 ? 25 : 21,
+                GeoType.Glass => 22,
+                
+                _ => variable
+            };
+
+            var sublayer = layer * 10;
+
+            if (cellType is GeoType.Platform) {
+                for (var d = 0; d <= 9; d++) {
+                    SDraw.Draw_NoWhite_NoColor(
+                        _layers[sublayer + d],
+                        State.densePipesImages2[mat.Name],
+                        Shaders.WhiteRemover,
+                        new Rectangle((variable - 1)*20, d * 20, 20, 20),
+                        new Rectangle(pos - Vector2.One * 10, Vector2.One * 20)
+                    );
+                }
+            }
+            else {
+                for (var d = 0; d <= 2; d++) {
+                    SDraw.Draw_NoWhite_NoColor(
+                        _layers[sublayer + d],
+                        State.densePipesImages2[mat.Name],
+                        Shaders.WhiteRemover,
+                        new Rectangle((variable - 1)*20, d * 20, 20, 20),
+                        new Rectangle(pos - Vector2.One * 10, Vector2.One * 20)
+                    );
+                }
+
+                for (var d = 3; d <= 6; d++) {
+                    SDraw.Draw_NoWhite_NoColor(
+                        _layers[sublayer + d],
+                        State.densePipesImages2[mat.Name],
+                        Shaders.WhiteRemover,
+                        new Rectangle((variable - 1)*20, 3 * 20, 20, 20),
+                        new Rectangle(pos - Vector2.One * 10, Vector2.One * 20)
+                    );
+                }
+
+                var tf = 7;
+                
+                for (var d = 4; d <= 6; d++) {
+                    SDraw.Draw_NoWhite_NoColor(
+                        _layers[sublayer + tf],
+                        State.densePipesImages2[mat.Name],
+                        Shaders.WhiteRemover,
+                        new Rectangle((variable - 1)*20, d * 20, 20, 20),
+                        new Rectangle(pos - Vector2.One * 10, Vector2.One * 20)
+                    );
+
+                    tf++;
+                }
+            }
+        }
+        else {
+            ReadOnlySpan<string> list = [
+                "0000", "1111", "0101", "1010", 
+                "0001", "1000", "0100", "0010", 
+                "1001", "1100", "0110", "0011", 
+                "1011", "1101", "1110", "0111"
+            ];
+
+            var sublayer = layer * 10;
+
+            var left = Utils.BoolInt(Utils.IsGeoCellSolid(Level!.GeoMatrix, x - 1, y, layer)) * DPCircuitConnection().x;
+            var right = Utils.BoolInt(Utils.IsGeoCellSolid(Level!.GeoMatrix, x + 1, y, layer)) * DPCircuitConnection().x;
+            var top = Utils.BoolInt(Utils.IsGeoCellSolid(Level!.GeoMatrix, x, y - 1, layer)) * DPCircuitConnection().y;
+            var bottom = Utils.BoolInt(Utils.IsGeoCellSolid(Level!.GeoMatrix, x, y + 1, layer)) * DPCircuitConnection().y;
+
+            if (
+                Utils.GetGeoCellType(Level!.GeoMatrix, x - 1, y, layer) is not GeoType.Air &&
+                (
+                    !Configuration.MaterialFixes || 
+                    Utils.GetGeoCellType(Level!.GeoMatrix, x - 1, y, layer) is not GeoType.Glass
+                )
+            ) {
+                left = 1;
+            }
+
+            if (
+                Utils.GetGeoCellType(Level!.GeoMatrix, x + 1, y, layer) is not GeoType.Air &&
+                (
+                    !Configuration.MaterialFixes || 
+                    Utils.GetGeoCellType(Level!.GeoMatrix, x + 1, y, layer) is not GeoType.Glass
+                )
+            ) {
+                right = 1;
+            }
+
+            if (
+                Utils.GetGeoCellType(Level!.GeoMatrix, x, y - 1, layer) is not GeoType.Air &&
+                (
+                    !Configuration.MaterialFixes || 
+                    Utils.GetGeoCellType(Level!.GeoMatrix, x, y - 1, layer) is not GeoType.Glass
+                )
+            ) {
+                top = 1;
+            }
+
+            if (
+                Utils.GetGeoCellType(Level!.GeoMatrix, x, y + 1, layer) is not GeoType.Air &&
+                (
+                    !Configuration.MaterialFixes || 
+                    Utils.GetGeoCellType(Level!.GeoMatrix, x, y + 1, layer) is not GeoType.Glass
+                )
+            ) {
+                bottom = 1;
+            }
+
+            var variable = list.IndexOf($"{left}{top}{right}{bottom}") + 1;
+
+            variable = variable switch {
+                3 => Random.Generate(2) == 2 ? 23 : 3,
+                4 => Random.Generate(2) == 2 ? 24 : 4,
+                _ => Random.Generate(3) switch { 1 => 1, 2 => 26, _ => 27 },
+            };
+
+            
         }
     }
 }
