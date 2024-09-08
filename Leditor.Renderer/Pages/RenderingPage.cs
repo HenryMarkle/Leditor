@@ -6,7 +6,7 @@ using static Raylib_cs.Raylib;
 
 using System.Numerics;
 
-using Leditor.Data.Geometry;
+using Leditor.Renderer.Partial;
 
 namespace Leditor.Renderer.Pages;
 

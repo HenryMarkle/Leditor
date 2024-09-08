@@ -20,6 +20,22 @@ public static class Utils
     public static Vector2 GetMiddleCellPos(int x, int y) => new Vector2(x, y)  * 20 - Vector2.One * 10;
 
     public static GeoType GetGeoCellType(Geo[,,] matrix, int x, int y, int z) => (Data.Utils.InBounds(matrix, x, y) && z < 3 && z >= 0) ? matrix[y, x, z].Type : GeoType.Solid;
+    
+    /// <summary>
+    /// Checks if a geo cell has solid type and no cracked terrain
+    /// </summary>
+    public static bool IsGeoCellSolid(Geo[,,] matrix, int x, int y, int z) {
+        if (!(Data.Utils.InBounds(matrix, x, y) && z < 3 && z >= 0)) return true;
+
+        ref var cell = ref matrix[y, x, z];
+
+        return cell[GeoType.Solid] && !cell[GeoFeature.CrackedTerrain];
+    }
+
+
+    public static (int x, int y) GetGridPos(Vector2 pos) => ((int)(pos.X / 20f + 0.4999f), (int)(pos.Y / 20f + 0.4999f)); 
+
+    public static float Lerp(float x, float y, float a) => x + a * (y - x);
 
     public static float Diag(Vector2 p1, Vector2 p2)
     {
