@@ -1,4 +1,1 @@
-- Fixed a load error when attempting to load a level without props.
-- Fixed a load problem when tiles are saved with negative numbers.
-- Fixed navigation not being locked when typing in project name in the save dialog.
-- Hopefully fixed the render button taking the user to the save dialog even if the project was loaded and not created.
+- Fixed the new level advanced mode not capturing number input.
