@@ -3825,7 +3825,39 @@ public partial class Engine
                 _ => Random.Generate(3) switch { 1 => 1, 2 => 26, _ => 27 },
             };
 
+            for (var d = 0; d <= 2; d++) {
+                SDraw.Draw_NoWhite_NoColor(
+                    _layers[sublayer + d],
+                    State.densePipesImages2[mat.Name],
+                    Shaders.WhiteRemover,
+                    new Rectangle((variable - 1)*20, d * 20, 20, 20),
+                    new Rectangle(pos - Vector2.One * 10, Vector2.One * 20)
+                );
+            }
+
+            for (var d = 3; d <= 6; d++) {
+                SDraw.Draw_NoWhite_NoColor(
+                    _layers[sublayer + d],
+                    State.densePipesImages2[mat.Name],
+                    Shaders.WhiteRemover,
+                    new Rectangle((variable - 1)*20, 3 * 20, 20, 20),
+                    new Rectangle(pos - Vector2.One * 10, Vector2.One * 20)
+                );
+            }
+
+            var tf = 7;
             
+            for (var d = 4; d <= 6; d++) {
+                SDraw.Draw_NoWhite_NoColor(
+                    _layers[sublayer + tf],
+                    State.densePipesImages2[mat.Name],
+                    Shaders.WhiteRemover,
+                    new Rectangle((variable - 1)*20, d * 20, 20, 20),
+                    new Rectangle(pos - Vector2.One * 10, Vector2.One * 20)
+                );
+
+                tf++;
+            }
         }
     }
 }

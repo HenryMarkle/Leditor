@@ -414,6 +414,8 @@ internal class CamerasEditorPage : EditorPage, IContextListener
                         }
                     }
                     
+                
+                    GLOBALS.Level.Cameras[c] = cam;
                 }
 
                 DrawRectangleLinesEx(

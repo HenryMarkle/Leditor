@@ -1233,8 +1233,10 @@ public partial class Engine
                 break;
             
                 case MaterialRenderType.RandomPipes:
-                {
+                foreach (var q in queued) {
+                    if (Level.GeoMatrix[q.y, q.x, layer][GeoType.Air]) continue;
 
+                    DrawRandomPipesMaterial_MTX(material, q.x, q.y, layer, camera, _frontImage);
                 }
                 break;
             }
