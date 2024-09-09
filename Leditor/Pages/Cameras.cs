@@ -398,12 +398,18 @@ internal class CamerasEditorPage : EditorPage, IContextListener
                         {
                             cam.Coords = draggedOrigin;
                         }
+
+                        var q = cam.Quad;
                         
-                        Printers.DrawCameraSprite(cam.Coords, cam.Quad, _camera, c);
+                        Printers.DrawCameraSprite(cam.Coords, ref q, _camera, c);
+
+                        cam.Quad = q;
                     }
                     else
                     {
-                        var (clicked, _) = Printers.DrawCameraSprite(cam.Coords, cam.Quad, _camera, c);
+                        var q = cam.Quad;
+                        var (clicked, _) = Printers.DrawCameraSprite(cam.Coords, ref q, _camera, c);
+                        cam.Quad = q;
 
                         if (clicked && !clickTracker)
                         {

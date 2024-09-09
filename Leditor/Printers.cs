@@ -3487,7 +3487,7 @@ internal static class Printers
     /// <returns>two boolean values that signal whether the camera was click/dragged</returns>
     internal static (bool clicked, bool hovered) DrawCameraSprite(
         Vector2 origin,
-        Data.CameraQuad quad,
+        ref Data.CameraQuad quad,
         Camera2D camera,
         int index = 0)
     {
@@ -3618,12 +3618,6 @@ internal static class Printers
             Color.Red
         );
 
-        // var quarter1 = new Rectangle(origin.X - 150, origin.Y - 150, GLOBALS.EditorCameraWidth / 2 + 150, GLOBALS.EditorCameraHeight / 2 + 150);
-        // var quarter2 = new Rectangle(GLOBALS.EditorCameraWidth / 2 + origin.X, origin.Y - 150, GLOBALS.EditorCameraWidth / 2 + 150, GLOBALS.EditorCameraHeight / 2 + 150);
-        // var quarter3 = new Rectangle(GLOBALS.EditorCameraWidth / 2 + origin.X, origin.Y + GLOBALS.EditorCameraHeight / 2, GLOBALS.EditorCameraWidth / 2 + 150, GLOBALS.EditorCameraHeight / 2 + 150);
-        // var quarter4 = new Rectangle(origin.X - 150 , GLOBALS.EditorCameraHeight / 2 + origin.Y, GLOBALS.EditorCameraWidth / 2 + 150, GLOBALS.EditorCameraHeight / 2 + 150);
-        
-        
         DrawLineV(topLeftV, topRightV, color);
         DrawLineV(topRightV, bottomRightV, color);
         DrawLineV(bottomRightV, bottomLeftV, color);
