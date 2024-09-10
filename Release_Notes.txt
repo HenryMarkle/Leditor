@@ -1,1 +1,1 @@
-- Midigated the chances of the program crashing when loading levels with malformed props line.
+- Fixed a crash when loading a second level.

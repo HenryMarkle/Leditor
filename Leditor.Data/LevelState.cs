@@ -15,6 +15,9 @@ using Leditor.Data.Materials;
 /// </summary>
 public sealed class LevelState
 {
+    /// <summary>
+    /// Owned and managed by the class
+    /// </summary>
     public Image LightMap { get; private set; }
 
     private (int left, int top, int right, int bottom) _padding;
@@ -72,7 +75,7 @@ public sealed class LevelState
 
     ~LevelState()
     {
-        Raylib.UnloadImage(LightMap);
+        if (LightMap is not { Width: 0 } or { Height: 0 }) Raylib.UnloadImage(LightMap);
     }
 
     public void Import(
@@ -118,7 +121,10 @@ public sealed class LevelState
         LightMode = lightMode;
         DefaultTerrain = terrainMedium;
 
-        if (LightMap is not { Width: 0 } or { Height: 0 }) Raylib.UnloadImage(LightMap);
+        if (LightMap is not { Width: 0 } or { Height: 0 }) {
+            Raylib.UnloadImage(LightMap);
+        }
+
         LightMap = lightmap;
 
         LevelCreated?.Invoke();

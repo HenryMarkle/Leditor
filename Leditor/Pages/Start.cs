@@ -499,7 +499,7 @@ internal class StartPage : EditorPage
                 
                 EndTextureMode();
 
-                UnloadImage(result.LightMapImage);
+                // UnloadImage(result.LightMapImage);
 
                 UnloadTexture(lightMapTexture);
                 
