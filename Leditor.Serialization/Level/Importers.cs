@@ -322,7 +322,7 @@ public static class Importers
             LingoParser.Expression.ParseOrThrow(text[7]));
         
         var propsObjTask = string.IsNullOrEmpty(text[8]) ? null : Task.Factory.StartNew(() =>
-            LingoParser.Expression.ParseOrThrow(text[8]));
+            LingoParser.Expression.Parse(text[8]));
 
         AstNode.Base sizeObj;
         AstNode.Base obj;
@@ -392,7 +392,9 @@ public static class Importers
         }
 
         try {
-            propsObj = propsObjTask is null ? null : await propsObjTask;
+            var parseRes = propsObjTask is null ? null : await propsObjTask;
+
+            propsObj = parseRes?.Success == true ? parseRes.Value : null;
         } catch (Exception e) {
             propsObj = null;
             propsLoadException = e;

@@ -260,6 +260,38 @@ public class Program
                     if (tileLoader.IsReady && tileLoader.LoadNext())
                     {
                         registry.Tiles = new Dex<TileDefinition>(tileLoader.GetResult());
+                        registry.Tiles.Register([
+                            new TileDefinition(
+                                "shortCutHorizontal", 
+                                (1, 1), 
+                                TileType.VoxelStruct, 
+                                0, 
+                                new int[1,1,3], 
+                                [1, 9], 
+                                [], 
+                                1
+                            ) { Texture = LoadTexture(Path.Combine(folders.Tiles[0], "shortCutHorizontal.png")) },
+                            new TileDefinition(
+                                "shortCutVertical", 
+                                (1, 1), 
+                                TileType.VoxelStruct, 
+                                0, 
+                                new int[1,1,3], 
+                                [1, 9], 
+                                [], 
+                                1
+                            ) { Texture = LoadTexture(Path.Combine(folders.Tiles[0], "shortCutVertical.png")) },
+                            new TileDefinition(
+                                "shortCutTile", 
+                                (1, 1), 
+                                TileType.VoxelStruct, 
+                                0, 
+                                new int[1,1,3], 
+                                [1, 9], 
+                                [], 
+                                1
+                            ) { Texture = LoadTexture(Path.Combine(folders.Tiles[0], "shortCutTile.png")) }
+                        ]);
                     }
                 }
 

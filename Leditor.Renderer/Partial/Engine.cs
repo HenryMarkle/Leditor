@@ -46,6 +46,10 @@ public partial class Engine
         public TileDefinition? SGFL;
         public TileDefinition? tileSetBigMetalFloor;
 
+        public TileDefinition? shortCutHorizontal;
+        public TileDefinition? shortCutVertical;
+        public TileDefinition? shortCutTile;
+
         public MaterialDefinition? templeStone;
         public MaterialDefinition? standard;
 
@@ -166,7 +170,15 @@ public partial class Engine
         public Texture2D ceramicTileSilhCPSE;
         public Texture2D ceramicTileSilhCPNE;
         public Texture2D ceramicTileSilhCPFL;
+        
+        public Texture2D ceramicTileSilh2;
+        public Texture2D ceramicTileSilh2SW;
+        public Texture2D ceramicTileSilh2NW;
+        public Texture2D ceramicTileSilh2SE;
+        public Texture2D ceramicTileSilh2NE;
+        public Texture2D ceramicTileSilh2FL;
 
+        public Texture2D MatTexImport;
 
         public virtual void Initialize(Registry registry)
         {
@@ -358,6 +370,13 @@ public partial class Engine
                 ceramicTileSilhCPSE = droughtLib["ceramicTileSilhCPSE"].Texture;
                 ceramicTileSilhCPNE = droughtLib["ceramicTileSilhCPNE"].Texture;
                 ceramicTileSilhCPFL = droughtLib["ceramicTileSilhCPFL"].Texture;
+
+                ceramicTileSilh2 = droughtLib["ceramicTileSilh2"].Texture;
+                ceramicTileSilh2SW = droughtLib["ceramicTileSilh2SW"].Texture;
+                ceramicTileSilh2NW = droughtLib["ceramicTileSilh2NW"].Texture;
+                ceramicTileSilh2SE = droughtLib["ceramicTileSilh2SE"].Texture;
+                ceramicTileSilh2NE = droughtLib["ceramicTileSilh2NE"].Texture;
+                ceramicTileSilh2FL = droughtLib["ceramicTileSilh2FL"].Texture;
             });
 
             var memberTask = Task.Run(() => {
@@ -437,6 +456,12 @@ public partial class Engine
                 densePipesImage = droughtLib["dense PipesImage"].Texture;
 
                 standard = registry.Materials!.Get("Standard");
+                
+                shortCutHorizontal = registry.Tiles!.Get("shortCutHorizontal");
+                shortCutVertical = registry.Tiles!.Get("shortCutVertical");
+                shortCutTile = registry.Tiles!.Get("shortCutTile");
+
+                MatTexImport = droughtLib["MatTexImport"].Texture;
             });
 
             var vTexture = levelEditorLib["vertImg"].Texture;
@@ -589,6 +614,8 @@ public partial class Engine
     protected bool _anyDecals;
 
     protected int _currentLayer;
+
+    protected (string[] scs, (int x, int y)[] index) _shortcuts = ([], []);
 
     public RenderTexture2D Canvas
     {
@@ -749,6 +776,7 @@ public partial class Engine
         _tinySignsDrawn = false;
         _anyDecals = false;
         _currentLayer = 0;
+        _shortcuts = ([], []);
     }
 
     public void Dispose()
@@ -788,6 +816,8 @@ public partial class Engine
         
         Logger?.Information("[Engine::Load] Loading a new level \"{name}\"", level.ProjectName);
 
+        var shortcutsTask = Task.Run(ProcessShortcuts);
+
         Clear();
 
         Level = level;
@@ -798,6 +828,9 @@ public partial class Engine
         Random.Seed = (uint)Level.Seed;
 
         State.Reset(Registry);
+
+        shortcutsTask.Wait();
+        _shortcuts = shortcutsTask.Result;
     }
 
     protected virtual int GenSeedForTile(int x, int y, int columns, int seed)
@@ -805,7 +838,99 @@ public partial class Engine
         return seed + x + y * columns;
     }
 
-    
+    protected virtual (string[], (int, int)[]) ProcessShortcuts() {
+        if (!Initialized || Disposed || Level is null) return default;
+
+        List<string> scs = [];
+        List<(int x, int y)> ind = [];
+
+        for (var x = 1; x < Level.Width - 1; x++) {
+            for (var y = 1; y < Level.Height - 1; y++) {
+                var cell = Level.GeoMatrix[y, x, 0];
+
+                if (!cell[GeoFeature.ShortcutEntrance]) continue;
+
+                var didItWork = true;
+                var holeDir = (0, 0);
+                var stps = 0;
+                var stp = 0;
+                var lastDir = (0, 0);
+                var rpt = 0;
+                var pos = (x, y);
+                string tp = "";
+
+                while (stp == 0) {
+                    rpt++;
+
+                    if (rpt > 1000) {
+                        didItWork = false;
+                        stp = 1;
+                    }
+
+                    List<(int x, int y)> dirs = [ (-1, 0),  (0,-1),  (1,0),  (0,1) ];
+                    dirs.Remove(lastDir);
+                    dirs.Insert(0, lastDir);
+                    dirs.Remove((-lastDir.Item1, -lastDir.Item2));
+
+                    foreach (var (dx, dy) in dirs) {
+                        var tx = pos.x + dx;
+                        var ty = pos.y + dy;
+                        
+                        if (tx < 0 || tx >= Level.Width || ty < 0 || ty >= Level.Height) continue;
+
+                        cell = Level.GeoMatrix[ty, tx, 0];
+
+                        if (cell[GeoFeature.RoomEntrance]) {
+                            stp = 1;
+                            tp = "playerHole";
+                            pos = (x, y);
+                            lastDir = (dx, dy);
+                            break;
+                        }else if (cell[GeoFeature.DragonDen]) {
+                            stp = 1;
+                            tp = "lizardHole";
+                            pos = (x, y);
+                            lastDir = (dx, dy);
+                            break;
+                        } else if (cell[GeoFeature.WackAMoleHole]) {
+                            stp = 1;
+                            tp = "WHAMH";
+                            pos = (x, y);
+                            lastDir = (dx, dy);
+                            break;
+                        } else if (cell[GeoFeature.ScavengerHole]) {
+                            stp = 1;
+                            tp = "scavengerHole";
+                            pos = (x, y);
+                            lastDir = (dx, dy);
+                            break;
+                        } else if (cell[GeoFeature.ShortcutEntrance]) {
+                            stp = 1;
+                            pos = (tx, ty);
+                            lastDir = (dx, dy);
+                            break;
+                        } else if (cell[GeoFeature.ShortcutPath]) {
+                            stps++;
+                            pos = (tx, ty);
+                            lastDir = (dx, dy);
+                            break;
+                        }
+                    }
+                
+                    if (holeDir == (0, 0)) holeDir = lastDir;
+                }
+
+                if (didItWork) {
+                    ind.Add((x, y));
+                    scs.Add(tp);
+                }
+            }
+        }
+
+
+        return ([..scs], [..ind]);
+    }
+
     protected virtual bool IsMyTileOpenToThisTile(
         MaterialDefinition material,
         int x,
@@ -1002,6 +1127,13 @@ public partial class Engine
         List<(int rnd, int x, int y)> entrances = [];
         List<(int x, int y)> shortcuts = [];
 
+        var entSortTask = Task.Run(() => entrances.Sort((e1, e2) => {
+            if (e1.rnd > e2.rnd) return 1;
+            if (e1.rnd < e2.rnd) return -1;
+            return 0;
+        }));
+        bool[,] shortcutMtx = new bool[Level.Height, Level.Width];
+
         Dictionary<MaterialDefinition, List<(int rnd, int x, int y)>> drawMaterials = [];
 
         BeginTextureMode(_middleImage);
@@ -1046,6 +1178,7 @@ public partial class Engine
                         Level.TileMatrix[my, mx, 0].Type is TileCellType.Default or TileCellType.Material)
                     {
                         shortcuts.Add((mx, my));
+                        shortcutMtx[my, mx] = true;
                     }
                     else if (layer == 1 && 
                         Level.GeoMatrix[my, mx, 1][GeoType.Solid] &&
@@ -1053,6 +1186,7 @@ public partial class Engine
                         Level.TileMatrix[my, mx, 1].Type is TileCellType.Default or TileCellType.Material)
                     {
                         shortcuts.Add((mx, my));
+                        shortcutMtx[my, mx] = true;
                     }
                 }
 
@@ -1305,7 +1439,62 @@ public partial class Engine
                     }
                 }
                 break;
+            
+                case MaterialRenderType.CeramicA:
+                foreach (var q in queued) {
+                    if (Utils.GetGeoCellType(Level.GeoMatrix, q.x, q.y, layer) is GeoType.Solid or GeoType.Platform or GeoType.SlopeNE or GeoType.SlopeNW or GeoType.SlopeES or GeoType.SlopeSW or GeoType.Platform) {
+                        DrawCeramicAMaterial_MTX(material, q.x, q.y, layer, camera, _frontImage);
+                    }
+                }
+                break;
+
+                case MaterialRenderType.CeramicB:
+                foreach (var q in queued) {
+                    if (Utils.GetGeoCellType(Level.GeoMatrix, q.x, q.y, layer) is GeoType.Solid or GeoType.Platform or GeoType.SlopeNE or GeoType.SlopeNW or GeoType.SlopeES or GeoType.SlopeSW or GeoType.Platform) {
+                        DrawCeramicBMaterial_MTX(material, q.x, q.y, layer, camera, _frontImage);
+                    }
+                }
+                break;
             }
         }
+
+        Logger?.Information("Shortcuts: {count}", shortcuts.Count);
+
+        foreach (var (sx, sy) in shortcuts) {
+            var right = sx + 1;
+            var left = sx - 1;
+            var top = sy + 1;
+            var bottom = sy - 1;
+
+            if (
+                right < shortcutMtx.GetLength(1) && left >= 0 &&
+                shortcutMtx[sy, left] && shortcutMtx[sy, right]
+            ) {
+                DrawTile_MTX(Level.TileMatrix[sy, sx, layer], State.shortCutHorizontal!, sx, sy, layer, camera, _frontImage);
+            } else if (
+                bottom < shortcutMtx.GetLength(0) && top >= 0 &&
+                shortcutMtx[top, sx] && shortcutMtx[bottom, sx]
+            ) {
+                DrawTile_MTX(Level.TileMatrix[sy, sx, layer], State.shortCutVertical!, sx, sy, layer, camera, _frontImage);
+            } else {
+                DrawTile_MTX(Level.TileMatrix[sy, sx, layer], State.shortCutTile!, sx, sy, layer, camera, _frontImage);
+            }
+        }
+
+        foreach (var (_, tx, ty) in drawLastTiles) {
+            DrawTile_MTX(
+                Level.TileMatrix[ty, tx, layer], 
+                Level.TileMatrix[ty, tx, layer].TileDefinition!, 
+                tx, 
+                ty, 
+                layer, 
+                camera, 
+                _frontImage
+            );
+        }
+
+        entSortTask.Wait();
+
+
     }
 }

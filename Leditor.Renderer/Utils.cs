@@ -365,6 +365,12 @@ public static class Utils
     public static async Task<TileDefinition[]> LoadEmbeddedTiles(string initPath, Dictionary<string, CastLibrary> libs)
     {
         var embedded = await Serialization.TileImporter.ParseInitAsync_NoCategories(initPath);
+
+        TileDefinition[] shortcuts = [
+            new TileDefinition("shortCutHorizontal", (1, 1), TileType.VoxelStruct, 0, new int[1,1,3], [1, 9], [], 1),
+            new TileDefinition("shortCutVertical", (1, 1), TileType.VoxelStruct, 0, new int[1,1,3], [1, 9], [], 1),
+            new TileDefinition("shortCutTile", (1, 1), TileType.VoxelStruct, 0, new int[1,1,3], [1, 9], [], 1)
+        ];
     
         var tasks = embedded.SelectMany(d => 
             libs.Values.Select(l => 
