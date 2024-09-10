@@ -3944,6 +3944,9 @@ public partial class Engine
             _ => State.ceramicTileSilhCPFL
         };
 
+        var chaosCubed = (float) Math.Pow(chaos, 3);
+        var chaosCubed100 = chaosCubed*100;
+
         if (thisCell is 
             GeoType.Solid or 
             GeoType.SlopeNE or 
@@ -3951,17 +3954,401 @@ public partial class Engine
             GeoType.SlopeES or 
             GeoType.SlopeSW
         ) {
+            var dcolor = new Color(255 * (1 - doColor), 255*doColor, 0, 255);
+
             if (thisCell is GeoType.Solid) {
                 for (var q = 1; q <= 9; q++) {
                     BeginTextureMode(_layers[sublayer + q]);
                     DrawRectangleRec(
-                        new Rectangle(-10+left, -10+top, 20-left-right, 20-top-bottom),
-                        new Color(255 * (1 - doColor), 255*doColor, 0, 255)
+                        new Rectangle(pos.X-10+left, pos.Y-10+top, 20-left-right, 20-top-bottom),
+                        dcolor
                     );
                     EndTextureMode();
                 }
             } else {
+                for (var q = 1; q <= 9; q++) {
+                    SDraw.Draw_NoWhite_Color(
+                        _layers[sublayer + q],
+                        texture,
+                        Shaders.WhiteRemoverApplyColor,
+                        new Quad(
+                            new Vector2(pos.X -10+left , pos.Y-10+top   ), // Top left
+                            new Vector2(pos.X +10-right, pos.Y-10+top   ), // Top right
+                            new Vector2(pos.X +10-right, pos.Y+10-bottom), // Bottom right
+                            new Vector2(pos.X -10+left , pos.Y+10-bottom)  // Bottom left
+                        ),
+                        dcolor
+                    );
+                }
+            }
+
+            SDraw.Draw_NoWhite_Color(
+                _layers[sublayer + 1],
+                socketTexture,
+                Shaders.WhiteRemoverApplyColor,
+                new Quad(
+                    new Vector2(pos.X - 8, pos.Y - 8),
+                    new Vector2(pos.X + 8, pos.Y - 8),
+                    new Vector2(pos.X + 8, pos.Y + 8),
+                    new Vector2(pos.X - 8, pos.Y + 8)
+                ),
+                dcolor
+            );
+
+            // Repetitive code incoming
+
+            if (thisCell is GeoType.Solid or GeoType.SlopeNE or GeoType.SlopeES) {
+                if (left > 0 && Random.Generate(120) > chaosCubed100) {
+                    for (var q = 2; q <= 8; q++) {
+                        BeginTextureMode(_layers[sublayer + q]);
+                        DrawRectangleRec(
+                            new Rectangle(pos - new Vector2(11, 9), new Vector2(3, 18)),
+                            Color.Green
+                        );
+                        DrawRectangleRec(
+                            new Rectangle(pos - new Vector2(11, 9), new Vector2(3, 1)),
+                            Color.Blue
+                        );
+                        EndTextureMode();
+
+                        if (doColor > 0) {
+                            BeginTextureMode(_layersDC[sublayer + q]);
+                            DrawRectangleRec(
+                                new Rectangle(pos - new Vector2(11, 9), new Vector2(3, 18)),
+                                color
+                            );
+                            EndTextureMode();
+                        }
+                    }
+                }
+            }
+
+            if (thisCell is GeoType.Solid or GeoType.SlopeNW or GeoType.SlopeSW) {
+                if (right > 0 && Random.Generate(120) > chaosCubed100) {
+                    for (var q = 2; q <= 8; q++) {
+                        BeginTextureMode(_layers[sublayer + q]);
+                        DrawRectangleRec(
+                            new Rectangle(pos + new Vector2(9, -9), new Vector2(3, 18)),
+                            Color.Green
+                        );
+                        DrawRectangleRec(
+                            new Rectangle(pos + new Vector2(9, -9), new Vector2(3, 1)),
+                            Color.Blue
+                        );
+                        EndTextureMode();
+
+                        if (doColor > 0) {
+                            BeginTextureMode(_layersDC[sublayer + q]);
+                            DrawRectangleRec(
+                                new Rectangle(pos + new Vector2(9, -9), new Vector2(3, 18)),
+                                color
+                            );
+                            EndTextureMode();
+                        }
+                    }
+                }
+            }
+
+            if (thisCell is GeoType.Solid or GeoType.SlopeES or GeoType.SlopeSW) {
+                if (top > 0 && Random.Generate(120) > chaosCubed100) {
+                    for (var q = 2; q <= 8; q++) {
+                        BeginTextureMode(_layers[sublayer + q]);
+                        DrawRectangleRec(
+                            new Rectangle(pos - new Vector2(9, 11), new Vector2(3, 18)),
+                            Color.Green
+                        );
+                        DrawRectangleRec(
+                            new Rectangle(pos - new Vector2(9, 11), new Vector2(3, 1)),
+                            Color.Blue
+                        );
+                        EndTextureMode();
+
+                        if (doColor > 0) {
+                            BeginTextureMode(_layersDC[sublayer + q]);
+                            DrawRectangleRec(
+                                new Rectangle(pos - new Vector2(9, 11), new Vector2(3, 18)),
+                                color
+                            );
+                            EndTextureMode();
+                        }
+                    }
+                }
+            }
+
+            if (thisCell is GeoType.Solid or GeoType.SlopeNE or GeoType.SlopeNW) {
+                if (bottom > 0 && Random.Generate(120) > chaosCubed100) {
+                    for (var q = 2; q <= 8; q++) {
+                        BeginTextureMode(_layers[sublayer + q]);
+                        DrawRectangleRec(
+                            new Rectangle(pos + new Vector2(-9, 9), new Vector2(3, 18)),
+                            Color.Green
+                        );
+                        DrawRectangleRec(
+                            new Rectangle(pos + new Vector2(-9, 9), new Vector2(3, 1)),
+                            Color.Blue
+                        );
+                        EndTextureMode();
+
+                        if (doColor > 0) {
+                            BeginTextureMode(_layersDC[sublayer + q]);
+                            DrawRectangleRec(
+                                new Rectangle(pos + new Vector2(-9, 9), new Vector2(3, 18)),
+                                color
+                            );
+                            EndTextureMode();
+                        }
+                    }
+                }
+            }
+        
+            var pos2 = pos + new Vector2(Random.Generate(13) - 7, Random.Generate(13) - 7) * chaosCubed * Random.Generate(100) * 0.01f;
+
+            if (chaos == 0 || Random.Generate(300 - (int)(298 * chaosCubed)) > 0) {
+                int f;
                 
+                if (Random.Generate(100) < chaos * 100) {
+                    f = (int)(Random.Generate(1000 + (int)(4000 * chaos)) * chaos);
+                
+                    for (var a = 1; a <= (1.0 - chaos)*4; a++) {
+                        f = Random.Generate(7);
+
+                        if (f == 1) break;
+                    }
+                }
+                else {
+                    f = 1;
+                }
+
+                if (Math.Abs(f) > 1) {
+                    f--;
+
+                    if (Random.Generate(2) == 1) f *= -1;
+
+                    SDraw.Draw_NoWhite_NoColor(
+                        _layers[sublayer],
+                        socketTexture,
+                        Shaders.WhiteRemover,
+                        new Quad(
+                            new Vector2(pos2.X - 9, pos2.Y - 9),
+                            new Vector2(pos2.X + 9, pos2.Y - 9),
+                            new Vector2(pos2.X + 9, pos2.Y + 9),
+                            new Vector2(pos2.X - 9, pos2.Y + 9)
+                        ).Rotated(-90.05122f + f*0.01f)
+                    );
+
+                    if (doColor > 0) {
+                        SDraw.Draw_NoWhite_Color(
+                            _layersDC[sublayer],
+                            texture,
+                            Shaders.WhiteRemoverApplyColor,
+                            new Quad(
+                                new Vector2(pos2.X - 9, pos2.Y - 9),
+                                new Vector2(pos2.X + 9, pos2.Y - 9),
+                                new Vector2(pos2.X + 9, pos2.Y + 9),
+                                new Vector2(pos2.X - 9, pos2.Y + 9)
+                            ).Rotated(-90.05122f + f*0.01f),
+                            color
+                        );
+                    }
+                }
+                else {
+                    SDraw.Draw_NoWhite_NoColor(
+                        _layers[sublayer],
+                        socketTexture,
+                        Shaders.WhiteRemover,
+                        new Quad(
+                            new Vector2(pos2.X - 9, pos2.Y - 9),
+                            new Vector2(pos2.X + 9, pos2.Y - 9),
+                            new Vector2(pos2.X + 9, pos2.Y + 9),
+                            new Vector2(pos2.X - 9, pos2.Y + 9)
+                        )
+                    );
+
+                    if (doColor > 0) {
+                        SDraw.Draw_NoWhite_Color(
+                            _layersDC[sublayer],
+                            texture,
+                            Shaders.WhiteRemoverApplyColor,
+                            new Quad(
+                                new Vector2(pos2.X - 9, pos2.Y - 9),
+                                new Vector2(pos2.X + 9, pos2.Y - 9),
+                                new Vector2(pos2.X + 9, pos2.Y + 9),
+                                new Vector2(pos2.X - 9, pos2.Y + 9)
+                            ),
+                            color
+                        );
+                    }
+                }
+            }
+        }
+        else if (thisCell is GeoType.Platform) {
+
+            for (var q = 1; q <= 9; q++) {
+                SDraw.Draw_NoWhite_Color(
+                    _layers[sublayer + q],
+                    State.ceramicTileSilhCPFL,
+                    Shaders.WhiteRemoverApplyColor,
+                    new Rectangle(pos.X - 10 + left, pos.Y - 10 + top, 20 -left-right, 20-top-bottom),
+                    new Color(255 * (1 - doColor), 255*doColor, 0, 2555)
+                );
+            }
+
+            SDraw.Draw_NoWhite_Color(
+                _layers[sublayer],
+                State.ceramicTileSocketFL,
+                Shaders.WhiteRemoverApplyColor,
+                new Rectangle(pos.X - 8, pos.Y - 8, 16, 12),
+                new Color(255 * doColor, 255*(1 - doColor), 0, 2555)
+            );
+
+            if (left > 0 && Random.Generate(120) > chaosCubed100) {
+                for (var q = 2; q <= 8; q++) {
+                    BeginTextureMode(_layers[sublayer + q]);
+                    DrawRectangleRec(
+                        new Rectangle(pos.X - 11, pos.Y - 9, 3, 9 + 4.5f),
+                        Color.Green
+                    );
+                    DrawRectangleRec(
+                        new Rectangle(pos.X - 11, pos.Y - 9, 3, 1),
+                        Color.Blue
+                    );
+                    EndTextureMode();
+
+                    if (doColor > 0) {
+                        BeginTextureMode(_layersDC[sublayer + q]);
+                            DrawRectangleRec(
+                            new Rectangle(pos.X - 11, pos.Y - 9, 3, 9 + 4.5f),
+                            color
+                        );
+                        EndTextureMode();
+                    }
+                }
+            }
+
+            if (right > 0 && Random.Generate(120) > chaosCubed100) {
+                for (var q = 2; q <= 8; q++) {
+                    BeginTextureMode(_layers[sublayer + q]);
+                    DrawRectangleRec(
+                        new Rectangle(pos.X + 9, pos.Y - 9, 3, 9 + 4.5f),
+                        Color.Green
+                    );
+                    DrawRectangleRec(
+                        new Rectangle(pos.X + 9, pos.Y - 9, 3, 1),
+                        Color.Blue
+                    );
+                    EndTextureMode();
+
+                    if (doColor > 0) {
+                        BeginTextureMode(_layersDC[sublayer + q]);
+                            DrawRectangleRec(
+                            new Rectangle(pos.X + 9, pos.Y - 9, 3, 9 + 4.5f),
+                            color
+                        );
+                        EndTextureMode();
+                    }
+                }
+            }
+
+            if (top > 0 && Random.Generate(120) > chaosCubed100) {
+                for (var q = 2; q <= 8; q++) {
+                    BeginTextureMode(_layers[sublayer + q]);
+                    DrawRectangleRec(
+                        new Rectangle(pos.X + 9, pos.Y - 11, 18, 3),
+                        Color.Green
+                    );
+                    DrawRectangleRec(
+                        new Rectangle(pos.X + 9, pos.Y - 11, 18, 3),
+                        Color.Blue
+                    );
+                    EndTextureMode();
+
+                    if (doColor > 0) {
+                        BeginTextureMode(_layersDC[sublayer + q]);
+                            DrawRectangleRec(
+                            new Rectangle(pos.X + 9, pos.Y - 11, 18, 3),
+                            color
+                        );
+                        EndTextureMode();
+                    }
+                }
+            }
+
+            var pos2 = pos + new Vector2(Random.Generate(13) - 7, Random.Generate(13) - 7) * chaosCubed * Random.Generate(100) * 0.01f;
+        
+            if (chaos == 0 || Random.Generate(300 - (int)(298 - chaosCubed)) > 1) {
+                int f;
+
+                if (Random.Generate(100) < chaos*100) {
+                    f = (int)(Random.Generate(1000 + (int)(4000*chaos)) * chaos);
+                
+                    for (var a = 1; a <= (1.0 - chaos)*4; a++) {
+                        f = Random.Generate(f);
+
+                        if (f == 1) break;
+                    }
+                } else {
+                    f = 1;
+                }
+
+                if (Math.Abs(f) > 1) {
+                    f--;
+
+                    if (Random.Generate(2) == 1) f *= -1;
+
+                    SDraw.Draw_NoWhite_NoColor(
+                        _layers[sublayer],
+                        State.ceramicTileSocketFL,
+                        Shaders.WhiteRemover,
+                        new Quad(
+                            new Vector2(pos2.X - 9, pos2.Y - 9),
+                            new Vector2(pos2.X + 9, pos2.Y - 9),
+                            new Vector2(pos2.X + 9, pos2.Y + 9/2f),
+                            new Vector2(pos2.X - 9, pos2.Y + 9/2f)
+                        ).Rotated(-90.05122f + f*0.01f)
+                    );
+
+                    if (doColor > 0) {
+                        SDraw.Draw_NoWhite_Color(
+                            _layersDC[sublayer],
+                            State.ceramicTileSilhCPFL,
+                            Shaders.WhiteRemover,
+                            new Quad(
+                                new Vector2(pos2.X - 9, pos2.Y - 9),
+                                new Vector2(pos2.X + 9, pos2.Y - 9),
+                                new Vector2(pos2.X + 9, pos2.Y + 9/2f),
+                                new Vector2(pos2.X - 9, pos2.Y + 9/2f)
+                            ).Rotated(-90.05122f + f*0.01f),
+                            color
+                        );
+                    }
+                } else {
+                    SDraw.Draw_NoWhite_NoColor(
+                        _layers[sublayer],
+                        State.ceramicTileSocketFL,
+                        Shaders.WhiteRemover,
+                        new Quad(
+                            new Vector2(pos2.X - 9, pos2.Y - 9),
+                            new Vector2(pos2.X + 9, pos2.Y - 9),
+                            new Vector2(pos2.X + 9, pos2.Y + 9/2f),
+                            new Vector2(pos2.X - 9, pos2.Y + 9/2f)
+                        )
+                    );
+
+                    if (doColor > 0) {
+                        SDraw.Draw_NoWhite_Color(
+                            _layersDC[sublayer],
+                            State.ceramicTileSilhCPFL,
+                            Shaders.WhiteRemover,
+                            new Quad(
+                                new Vector2(pos2.X - 9, pos2.Y - 9),
+                                new Vector2(pos2.X + 9, pos2.Y - 9),
+                                new Vector2(pos2.X + 9, pos2.Y + 9/2f),
+                                new Vector2(pos2.X - 9, pos2.Y + 9/2f)
+                            ),
+                            color
+                        );
+                    }
+                }
             }
         }
     }

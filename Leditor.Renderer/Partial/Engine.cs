@@ -47,6 +47,7 @@ public partial class Engine
         public TileDefinition? tileSetBigMetalFloor;
 
         public MaterialDefinition? templeStone;
+        public MaterialDefinition? standard;
 
         /// <summary>
         /// An array of tiles organized by size
@@ -300,10 +301,15 @@ public partial class Engine
                 wvTiles = registry.Materials!.Names.Values
                     .Where(m => m.RenderType == MaterialRenderType.WV)
                     .Select(m => {
-                        var texture = registry.CastLibraries.Values.Where(c => c.Members.ContainsKey($"{m.Name}WVTiles")).Select(c => c[$"{m.Name}WVTiles"]).First().Texture;
+                        var texture = registry.CastLibraries.Values
+                            .Where(c => c.Members.ContainsKey($"{m.Name}WVTile"))
+                            .Select(c => c.Members[$"{m.Name}WVTile"])
+                            .FirstOrDefault()
+                            .Texture;
                     
                         return (m.Name, texture);
                     })
+                    .Where(i => i.Item2.Id != 0)
                     .ToDictionary(m => m.Item1, m => m.Item2, StringComparer.OrdinalIgnoreCase);
             });
 
@@ -311,10 +317,15 @@ public partial class Engine
                 densePipesImages = registry.Materials!.Names.Values
                     .Where(m => m.RenderType == MaterialRenderType.DensePipe)
                     .Select(m => {
-                        var texture = registry.CastLibraries.Values.Where(c => c.Members.ContainsKey($"{m.Name}Image")).Select(c => c[$"{m.Name}WVTiles"]).First().Texture;
+                        var texture = registry.CastLibraries.Values
+                            .Where(c => c.Members.ContainsKey($"{m.Name}Image"))
+                            .Select(c => c[$"{m.Name}Image"])
+                            .FirstOrDefault()
+                            .Texture;
                     
                         return (m.Name, texture);
                     })
+                    .Where(i => i.Item2.Id != 0)
                     .ToDictionary(m => m.Item1, m => m.Item2, StringComparer.OrdinalIgnoreCase);
             });
             
@@ -322,10 +333,15 @@ public partial class Engine
                 densePipesImages2 = registry.Materials!.Names.Values
                     .Where(m => m.RenderType == MaterialRenderType.DensePipe)
                     .Select(m => {
-                        var texture = registry.CastLibraries.Values.Where(c => c.Members.ContainsKey($"{m.Name}Image2")).Select(c => c[$"{m.Name}WVTiles"]).First().Texture;
+                        var texture = registry.CastLibraries.Values
+                            .Where(c => c.Members.ContainsKey($"{m.Name}Image2"))
+                            .Select(c => c[$"{m.Name}Image2"])
+                            .FirstOrDefault()
+                            .Texture;
                     
                         return (m.Name, texture);
                     })
+                    .Where(i => i.Item2.Id != 0)
                     .ToDictionary(m => m.Item1, m => m.Item2, StringComparer.OrdinalIgnoreCase);
             });
 
@@ -419,6 +435,8 @@ public partial class Engine
 
                 circuitsImage = droughtLib["circuitsImage"].Texture;
                 densePipesImage = droughtLib["dense PipesImage"].Texture;
+
+                standard = registry.Materials!.Get("Standard");
             });
 
             var vTexture = levelEditorLib["vertImg"].Texture;
@@ -1269,6 +1287,22 @@ public partial class Engine
                     if (Level.GeoMatrix[q.y, q.x, layer][GeoType.Air]) continue;
 
                     DrawRandomPipesMaterial_MTX(material, q.x, q.y, layer, camera, _frontImage);
+                }
+                break;
+            
+                case MaterialRenderType.Ceramic:
+                foreach (var q in queued) {
+                    var cell = Utils.GetGeoCellType(Level.GeoMatrix, q.x, q.y, layer);
+
+                    if (
+                        CheckCollisionPointRec(new Vector2(q.x, q.y), new Rectangle(camera.Coords, new Vector2(100, 60))) && 
+                        !Configuration.MaterialFixes && 
+                        cell != GeoType.Solid
+                    ) {
+                        DrawMaterial_MTX(q.x, q.y, layer, camera, State.standard!, _frontImage);
+                    } else if (cell is GeoType.Solid or GeoType.Platform or GeoType.SlopeNE or GeoType.SlopeNW or GeoType.SlopeNW or GeoType.SlopeSW) {
+                        DrawCeramicMaterial_MTX(material, q.x, q.y, layer, camera, _frontImage);
+                    }
                 }
                 break;
             }

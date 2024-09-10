@@ -60,6 +60,27 @@ public static class SDraw
         }
         EndTextureMode();
     }
+    
+    public static void Draw_NoWhite_NoColor(
+        RenderTexture2D rt, 
+        Texture2D texture, 
+        Shader shader, 
+        Quad dest
+    )
+    {
+        BeginTextureMode(rt);
+        {
+            BeginShaderMode(shader);
+            SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture);
+            Draw.DrawQuad(
+                texture,
+                new Rectangle(0, 0, texture.Width, texture.Height),
+                dest
+            );
+            EndShaderMode();
+        }
+        EndTextureMode();
+    }
 
     public static void Draw_NoWhite_Color(
         RenderTexture2D rt, 
