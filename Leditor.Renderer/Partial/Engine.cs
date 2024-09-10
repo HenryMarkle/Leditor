@@ -153,6 +153,20 @@ public partial class Engine
         public Texture2D circuitsImage;
         public Texture2D densePipesImage;
 
+        public Texture2D ceramicTileSocket;
+        public Texture2D ceramicTileSocketNE;
+        public Texture2D ceramicTileSocketNW;
+        public Texture2D ceramicTileSocketSW;
+        public Texture2D ceramicTileSocketSE;
+        public Texture2D ceramicTileSocketFL;
+
+        public Texture2D ceramicTileSilhCPSW;
+        public Texture2D ceramicTileSilhCPNW;
+        public Texture2D ceramicTileSilhCPSE;
+        public Texture2D ceramicTileSilhCPNE;
+        public Texture2D ceramicTileSilhCPFL;
+
+
         public virtual void Initialize(Registry registry)
         {
             if (Initialized) return;
@@ -315,6 +329,21 @@ public partial class Engine
                     .ToDictionary(m => m.Item1, m => m.Item2, StringComparer.OrdinalIgnoreCase);
             });
 
+            var ceramicTilesTask = Task.Run(() => {
+                ceramicTileSocket = internalLib["ceramicTileSocket"].Texture;
+                ceramicTileSocketNE = droughtLib["ceramicTileSocketNE"].Texture;
+                ceramicTileSocketNW = droughtLib["ceramicTileSocketNW"].Texture;
+                ceramicTileSocketSW = droughtLib["ceramicTileSocketSW"].Texture;
+                ceramicTileSocketSE = droughtLib["ceramicTileSocketSE"].Texture;
+                ceramicTileSocketFL = droughtLib["ceramicTileSocketFL"].Texture;
+
+                ceramicTileSilhCPSW = droughtLib["ceramicTileSilhCPSW"].Texture;
+                ceramicTileSilhCPNW = droughtLib["ceramicTileSilhCPNW"].Texture;
+                ceramicTileSilhCPSE = droughtLib["ceramicTileSilhCPSE"].Texture;
+                ceramicTileSilhCPNE = droughtLib["ceramicTileSilhCPNE"].Texture;
+                ceramicTileSilhCPFL = droughtLib["ceramicTileSilhCPFL"].Texture;
+            });
+
             var memberTask = Task.Run(() => {
                 registry.Tiles?.Names.TryGetValue("Temple Stone Wedge", out TempleStoneWedge);
                 registry.Tiles?.Names.TryGetValue("Temple Stone Slope SE", out TempleStoneSlopeSE);
@@ -446,6 +475,7 @@ public partial class Engine
             wvTilesTask.Wait();
             desnsePipesImagesTask.Wait();
             desnsePipesImages2Task.Wait();
+            ceramicTilesTask.Wait();
 
             Initialized = true;
         }
@@ -538,6 +568,7 @@ public partial class Engine
     protected const int Height = 1200;
 
     protected bool _tinySignsDrawn;
+    protected bool _anyDecals;
 
     protected int _currentLayer;
 
@@ -698,6 +729,7 @@ public partial class Engine
 
         Level = null;
         _tinySignsDrawn = false;
+        _anyDecals = false;
         _currentLayer = 0;
     }
 

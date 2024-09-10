@@ -3860,4 +3860,109 @@ public partial class Engine
             }
         }
     }
+
+    protected virtual void DrawCeramicMaterial_MTX(
+        in MaterialDefinition mat,
+        int x,
+        int y,
+        int layer,
+        in RenderCamera camera,
+        in RenderTexture2D rt
+    ) {
+        double chaos = 0;
+        var doColor = 0;
+
+        var eff = Level!.Effects.FirstOrDefault(e => e.Name == "Ceramic Chaos");
+
+        if (eff != null && eff.Options.Length > 1) {
+            var opt = eff.Options[2];
+
+            var (dmin, dmax) = (opt.Choice as string) switch {
+                "1" => (0, 0),
+                "2" => (1, 1),
+                "3" => (2, 2),
+                "1:st and 2:nd" => (0, 1),
+                "2:nd and 3:rd" => (1, 2),
+                _ => (0, 2)
+            };
+
+            if (layer <= dmax && layer >= dmin) 
+                chaos = Data.Utils.InBounds(eff.Matrix, x, y) ? eff.Matrix[y, x] : 0;
+        
+            doColor = Utils.BoolInt(eff.Options[1].Choice is "Colored");
+        }
+
+        if (doColor > 0) _anyDecals = true;
+
+        chaos *= 0.01;
+
+        var sublayer = layer * 10;
+        var pos = (new Vector2(x, y) - camera.Coords/20f) * 20 - Vector2.One * 10;
+        var color = new Color(239, 255, 255, 255);
+
+        int left = 0, top = 0, right = 0, bottom = 0;
+
+        var leftCell = Utils.GetGeoCellType(Level!.GeoMatrix, x - 1, y, layer);
+        var topCell = Utils.GetGeoCellType(Level!.GeoMatrix, x, y - 1, layer);
+        var rightCell = Utils.GetGeoCellType(Level!.GeoMatrix, x + 1, y, layer);
+        var bottomCell = Utils.GetGeoCellType(Level!.GeoMatrix, x, y + 1, layer);
+    
+        if (leftCell != GeoType.Solid && (!Configuration.MaterialFixes || leftCell is not GeoType.SlopeNE or GeoType.SlopeNW or GeoType.SlopeES or GeoType.SlopeSW or GeoType.Platform))
+        {
+            left = 1;
+        }
+        if (topCell != GeoType.Solid && (!Configuration.MaterialFixes || topCell is not GeoType.SlopeNE or GeoType.SlopeNW or GeoType.SlopeES or GeoType.SlopeSW or GeoType.Platform))
+        {
+            top = 1;
+        }
+        if (rightCell != GeoType.Solid && (!Configuration.MaterialFixes || rightCell is not GeoType.SlopeNE or GeoType.SlopeNW or GeoType.SlopeES or GeoType.SlopeSW or GeoType.Platform))
+        {
+            right = 1;
+        }
+        if (bottomCell != GeoType.Solid && (!Configuration.MaterialFixes || bottomCell is not GeoType.SlopeNE or GeoType.SlopeNW or GeoType.SlopeES or GeoType.SlopeSW or GeoType.Platform))
+        {
+            bottom = 1;
+        }
+
+        var thisCell = Utils.GetGeoCellType(Level!.GeoMatrix, x, y, layer);
+        
+        var socketTexture = thisCell switch {
+            GeoType.SlopeNE => State.ceramicTileSocketNE,
+            GeoType.SlopeNW => State.ceramicTileSocketNW,
+            GeoType.SlopeES => State.ceramicTileSocketSE,
+            GeoType.SlopeSW => State.ceramicTileSocketSW,
+            GeoType.Platform => State.ceramicTileSocketFL,
+            _ => State.ceramicTileSocket
+        };
+
+        var texture = thisCell switch {
+            GeoType.SlopeNE => State.ceramicTileSilhCPNE,
+            GeoType.SlopeNW => State.ceramicTileSilhCPNW,
+            GeoType.SlopeES => State.ceramicTileSilhCPSE,
+            GeoType.SlopeSW => State.ceramicTileSilhCPSW,
+            GeoType.Platform => State.ceramicTileSilhCPFL,
+            _ => State.ceramicTileSilhCPFL
+        };
+
+        if (thisCell is 
+            GeoType.Solid or 
+            GeoType.SlopeNE or 
+            GeoType.SlopeNW or 
+            GeoType.SlopeES or 
+            GeoType.SlopeSW
+        ) {
+            if (thisCell is GeoType.Solid) {
+                for (var q = 1; q <= 9; q++) {
+                    BeginTextureMode(_layers[sublayer + q]);
+                    DrawRectangleRec(
+                        new Rectangle(-10+left, -10+top, 20-left-right, 20-top-bottom),
+                        new Color(255 * (1 - doColor), 255*doColor, 0, 255)
+                    );
+                    EndTextureMode();
+                }
+            } else {
+                
+            }
+        }
+    }
 }

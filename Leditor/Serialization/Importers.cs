@@ -416,11 +416,11 @@ public static class Importers {
     /// <exception cref="MissingInitPropertyException">retrieved prop is missing a setting</exception>
     public static List<Prop_Legacy>GetProps(AstNode.Base? @base)
     {
-        if (@base is null) {
+        if (@base is null || @base is not AstNode.PropertyList pl) {
             return [];
         }
 
-        var list = (AstNode.List)((AstNode.PropertyList)@base).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "props").Value;
+        var list = (AstNode.List)(pl).Values.Single(p => ((AstNode.Symbol)p.Key).Value == "props").Value;
 
         List<Prop_Legacy> props = [];
 

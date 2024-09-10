@@ -193,25 +193,26 @@ internal static class Utils
 
         if (text.Length < 7) return new LoadFileResult();
 
-        var objTask = Task.Factory.StartNew(() =>
+        var objTask = Task.Run(() =>
             LingoParser.Expression.ParseOrThrow(text[0]));
-        var tilesObjTask = Task.Factory.StartNew(() =>
+        var tilesObjTask = Task.Run(() =>
             LingoParser.Expression.ParseOrThrow(text[1]));
-        var terrainObjTask = Task.Factory.StartNew(() =>
+        var terrainObjTask = Task.Run(() =>
             LingoParser.Expression.ParseOrThrow(text[4]));
-        var obj2Task = Task.Factory.StartNew(() =>
+        var obj2Task = Task.Run(() =>
             LingoParser.Expression.ParseOrThrow(text[5]));
-        var effObjTask = Task.Factory.StartNew(() =>
+        var effObjTask = Task.Run(() =>
             LingoParser.Expression.ParseOrThrow(text[2]));
-        var lightObjTask = Task.Factory.StartNew(() =>
+        var lightObjTask = Task.Run(() =>
             LingoParser.Expression.ParseOrThrow(text[3]));
-        var camsObjTask = Task.Factory.StartNew(() =>
+        var camsObjTask = Task.Run(() =>
             LingoParser.Expression.ParseOrThrow(text[6]));
-        var waterObjTask = Task.Factory.StartNew(() =>
+        var waterObjTask = Task.Run(() =>
             LingoParser.Expression.ParseOrThrow(text[7]));
         
-        var propsObjTask = string.IsNullOrEmpty(text[8]) ? null : Task.Factory.StartNew(() =>
-            LingoParser.Expression.ParseOrThrow(text[8]));
+        var propsObjTask = string.IsNullOrEmpty(text[8]) 
+            ? null 
+            : Task.Run(() => LingoParser.Expression.Parse(text[8]));
 
         AstNode.Base obj;
         AstNode.Base tilesObj;
@@ -274,7 +275,8 @@ internal static class Utils
         }
 
         try {
-            propsObj = propsObjTask is null ? null : await propsObjTask;
+            var parseRes = propsObjTask is null ? null : await propsObjTask;
+            propsObj = parseRes?.Success == true ? parseRes.Value : null;
         } catch (Exception e) {
             propsObj = null;
             propsLoadException = e;

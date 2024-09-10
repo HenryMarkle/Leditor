@@ -2494,6 +2494,29 @@ void main() {
                 CloseWindow();
                 break;
             }
+            catch (InvalidCastException ice)
+            {
+                Console.WriteLine(ice);
+                logger.Fatal($"Bruh Moment detected: loop try-catch block has caught an unexpected error: {ice}");
+
+                if (GLOBALS.Settings.Misc.FunnyDeathScreen)
+                {
+                    var screenshot = LoadImageFromScreen();
+                    screenshotTexture = LoadTextureFromImage(screenshot);
+                    UnloadImage(screenshot);
+                }
+
+                deathScreen = new()
+                {
+                    Screenshot = screenshotTexture,
+                    Exception = ice,
+                    Logger = logger
+                };
+
+
+
+                GLOBALS.Page = 99; // game over
+            }
             catch (Exception e)
             {
                 logger.Fatal($"Bruh Moment detected: loop try-catch block has caught an unexpected error: {e}");

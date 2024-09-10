@@ -1,1 +1,1 @@
-- Fixed cameras snapping back afteer dragging them.
+- Midigated the chances of the program crashing when loading levels with malformed props line.
