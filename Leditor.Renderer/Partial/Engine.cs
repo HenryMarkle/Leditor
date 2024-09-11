@@ -14,6 +14,7 @@ using Leditor.Data.Geometry;
 using Color = Raylib_cs.Color;
 using Leditor.Data.Materials;
 using Leditor.Data.Props.Legacy;
+using Leditor.Renderer.RL;
 
 namespace Leditor.Renderer.Partial;
 
@@ -49,6 +50,9 @@ public partial class Engine
         public TileDefinition? shortCutHorizontal;
         public TileDefinition? shortCutVertical;
         public TileDefinition? shortCutTile;
+        public TileDefinition? shortCutArrows;
+        public TileDefinition? shortCutDots;
+        public TileDefinition? shortCut;
 
         public MaterialDefinition? templeStone;
         public MaterialDefinition? standard;
@@ -460,6 +464,9 @@ public partial class Engine
                 shortCutHorizontal = registry.Tiles!.Get("shortCutHorizontal");
                 shortCutVertical = registry.Tiles!.Get("shortCutVertical");
                 shortCutTile = registry.Tiles!.Get("shortCutTile");
+                shortCutArrows = registry.Tiles!.Get("shortCutArrows");;
+                shortCutDots = registry.Tiles!.Get("shortCutDots");;
+                shortCut = registry.Tiles!.Get("shortCut");;
 
                 MatTexImport = droughtLib["MatTexImport"].Texture;
             });
@@ -816,9 +823,9 @@ public partial class Engine
         
         Logger?.Information("[Engine::Load] Loading a new level \"{name}\"", level.ProjectName);
 
-        var shortcutsTask = Task.Run(ProcessShortcuts);
-
         Clear();
+
+        var shortcutsTask = Task.Run(ProcessShortcuts);
 
         Level = level;
 
@@ -830,7 +837,8 @@ public partial class Engine
         State.Reset(Registry);
 
         shortcutsTask.Wait();
-        _shortcuts = shortcutsTask.Result;
+        if (shortcutsTask.IsFaulted) Console.WriteLine($"Failed to resolve shortcuts: {shortcutsTask.Exception}");
+        if (shortcutsTask.IsCompletedSuccessfully) _shortcuts = shortcutsTask.Result;
     }
 
     protected virtual int GenSeedForTile(int x, int y, int columns, int seed)
@@ -1096,6 +1104,124 @@ public partial class Engine
         }
     }
 
+    protected virtual void DrawVeticalSurface(
+        int column,
+        int sublayer
+    ) {
+        var colPxl = column * 20;
+
+        var point1 = (colPxl, 0);
+        var point2 = (colPxl, Level!.Height * 20);
+
+        for (var q = 1; q <= 10; q++) {
+            var dp = sublayer + 10 - q;
+
+            SDraw.Draw_NoWhite_NoColor(
+                _layers[dp],
+                State.vertImg.Texture,
+                Shaders.WhiteRemover,
+                new Rectangle(
+                    point1.Item1 + 20 - q, // X 
+                    0,                     // Y
+                    1,                     // Width
+                    point2.Item2           // Height
+                ),
+                new Rectangle(
+                    colPxl + 15,
+                    0,
+                    5,
+                    point2.Item2
+                )
+            );
+        }
+
+        colPxl = (column - 1) * 20;
+
+        point1 = (colPxl, 0);
+        point2 = (colPxl, point2.Item2);
+
+        for (var q = 1; q <= 10; q++) {
+            var dp = sublayer + 10 - q;
+
+            SDraw.Draw_NoWhite_NoColor(
+                _layers[dp],
+                State.vertImg.Texture,
+                Shaders.WhiteRemover,
+                new Rectangle(
+                    point1.Item1 + q,      // X 
+                    0,                     // Y
+                    1,                     // Width
+                    point2.Item2           // Height
+                ),
+                new Rectangle(
+                    colPxl,
+                    0,
+                    5,
+                    point2.Item2
+                )
+            );
+        }
+    }
+
+    protected virtual void DrawHorizontalSurface(
+        int row,
+        int sublayer
+    ) {
+        var rowPxl = row * 20;
+
+        var point1 = (0, rowPxl);
+        var point2 = (Level!.Width * 20, rowPxl);
+
+        for (var q = 1; q <= 10; q++) {
+            var dp = sublayer + 10 - q;
+
+            SDraw.Draw_NoWhite_NoColor(
+                _layers[dp],
+                State.horiImg.Texture,
+                Shaders.WhiteRemover,
+                new Rectangle(
+                    point1.Item1,           // X 
+                    point1.Item2 + 20 - q,  // Y
+                    point2.Item1,           // Width
+                    1                       // Height
+                ),
+                new Rectangle(
+                    0,
+                    point1.Item2 + 15,
+                    point2.Item1,
+                    5
+                )
+            );
+        }
+
+        rowPxl = (row - 1) * 20;
+
+        point1 = (0, rowPxl);
+        point2 = (point2.Item1, rowPxl);
+
+        for (var q = 1; q <= 10; q++) {
+            var dp = sublayer + 10 - q;
+
+            SDraw.Draw_NoWhite_NoColor(
+                _layers[dp],
+                State.horiImg.Texture,
+                Shaders.WhiteRemover,
+                new Rectangle(
+                    point1.Item1,      // X 
+                    point1.Item2 + q,// Y
+                    point2.Item1,// Width
+                    1           // Height
+                ),
+                new Rectangle(
+                    point1.Item1,
+                    point1.Item2,
+                    point2.Item1,
+                    5
+                )
+            );
+        }
+    }
+
     /// <summary>
     /// This gets called each frame
     /// </summary>
@@ -1115,6 +1241,14 @@ public partial class Engine
         EndTextureMode();
         
         BeginTextureMode(_backImage);
+        ClearBackground(Color.White);
+        EndTextureMode();
+
+        BeginTextureMode(State.vertImg);
+        ClearBackground(Color.White);
+        EndTextureMode();
+
+        BeginTextureMode(State.horiImg);
         ClearBackground(Color.White);
         EndTextureMode();
 
@@ -1495,6 +1629,184 @@ public partial class Engine
 
         entSortTask.Wait();
 
+        foreach (var (_, sx, sy) in entrances) {
+            var tile = State.shortCut;
 
+            var index = Array.IndexOf(_shortcuts.index, (sx - camera.Coords.X/20, sy - camera.Coords.Y/20));
+
+            if (index != -1) {
+                tile = _shortcuts.scs[index] switch {
+                    "shortCut" => State.shortCutArrows,
+                    "playerHole" => State.shortCutDots,
+                    _ => State.shortCut
+                };
+            }
+
+            DrawTile_MTX(Level.TileMatrix[sy, sx, 0], tile!, sx, sy, 0, camera, _frontImage);
+        }
+
+        for (var q = 0; q <= Columns; q++) {
+            DrawVeticalSurface(q, layer * 10);
+        }
+
+        for (var q = 0; q <= Rows; q++) {
+            DrawHorizontalSurface(q, layer * 10);
+        }
+
+        var sublayer = layer * 10;
+
+        SDraw.Draw_NoWhite_NoColor(
+            _layers[sublayer + 5],
+            _backImage.Texture,
+            Shaders.WhiteRemoverVFlip
+        );
+
+        SDraw.Draw_NoWhite_NoColor(
+            _layers[sublayer],
+            _frontImage.Texture,
+            Shaders.WhiteRemoverVFlip
+        );
+
+        for (var c = 0; c < Columns; c++) {
+            for (var r = 0; r < Rows; r++) {
+                var sc = c + (int)camera.Coords.X/20;
+                var sr = r + (int)camera.Coords.Y/20;
+            
+                if (!Data.Utils.InBounds(Level.GeoMatrix, sc, sr)) continue;
+
+                ref var cell = ref Level.GeoMatrix[sr, sc, layer];
+
+                if (cell[GeoFeature.CrackedTerrain]) {
+                    var rect = new Rectangle(c * 20, r * 20, 20, 20);
+
+                    var left =      sc - 1; 
+                    var right =     sc + 1; 
+                    var top =       sr - 1; 
+                    var bottom =    sr + 1;
+
+                    Geo leftCell = new(), rightCell = new(), topCell = new(), bottomCell = new();
+
+                    if (left >= 0) {
+                        leftCell = Level.GeoMatrix[sr, left, layer];
+                    }
+
+                    if (right < Level.Width) {
+                        rightCell = Level.GeoMatrix[sr, right, layer];
+                    }
+
+                    if (
+                        (left >= 0 && (leftCell[GeoType.Air] || leftCell[GeoFeature.CrackedTerrain])) ||
+                        (right < Level.Width && (rightCell[GeoType.Air] || rightCell[GeoFeature.CrackedTerrain]))) {
+                        rect.X -= 10;
+                        rect.Width += 20;
+                    } else {
+                        rect.X += 5;
+                        rect.Width -= 10;
+                    }
+
+                    if (top >= 0) {
+                        topCell = Level.GeoMatrix[top, sc, layer];
+                    }
+
+                    if (right < Level.Width) {
+                        bottomCell = Level.GeoMatrix[bottom, sc, layer];
+                    }
+
+                    if (
+                        (top >= 0 && (topCell[GeoType.Air] || topCell[GeoFeature.CrackedTerrain])) ||
+                        (bottom < Level.Height && (bottomCell[GeoType.Air] || bottomCell[GeoFeature.CrackedTerrain]))) {
+                        rect.Y -= 10;
+                        rect.Height += 20;
+                    } else {
+                        rect.Y += 5;
+                        rect.Height -= 10;
+                    }
+
+                    ReadOnlySpan<(int, int)> list = [ (-1,0), (0,-1), (1,0), (0,1) ];
+
+                    foreach (var (dx, dy) in list) {
+                        var tx = dx + sc;
+                        var ty = dy + sr;
+                        
+                        if (!Data.Utils.InBounds(Level.GeoMatrix, tx, ty)) continue;
+                    
+                        ref var dirCell = ref Level.GeoMatrix[ty, tx, layer];
+
+                        if (dirCell[GeoType.Solid]) continue;
+
+                        for (var z = sublayer; z <= sublayer + 8; z++) {
+                            for (var l = 1; l <= 3; l++) {
+                                var rnd = Random.Generate(4);
+                                var texture = rnd switch {
+                                    1 => State.rubbleGraf1,
+                                    2 => State.rubbleGraf2,
+                                    3 => State.rubbleGraf3,
+                                    _ => State.rubbleGraf4
+                                };
+
+                                var rndLeft   = Random.Generate(3) - Random.Generate(8) + (z - sublayer);
+                                var rndTop    = Random.Generate(3) - Random.Generate(8) + (z - sublayer);
+                                var rndRight  = Random.Generate(8) - Random.Generate(3) - (z - sublayer);
+                                var rndBottom = Random.Generate(8) - Random.Generate(3) - (z - sublayer);
+                                
+                                SDraw.Draw_NoWhite_Color(
+                                    _layers[z],
+                                    texture,
+                                    Shaders.WhiteRemoverApplyColor,
+                                    new Quad(
+                                        new Vector2( c      * 20 + dx * 10 +  rndLeft,  r      * 20 + dy * 10 +    rndTop),
+                                        new Vector2((c + 1) * 20 + dx * 10 + rndRight,  r      * 20 + dy * 10 +    rndTop),
+                                        new Vector2((c + 1) * 20 + dx * 10 + rndRight, (r + 1) * 20 + dy * 10 + rndBottom),
+                                        new Vector2( c      * 20 + dx * 10 +  rndLeft, (r + 1) * 20 + dy * 10 + rndBottom)
+                                    ),
+                                    Color.White
+                                );
+                            }
+                        }
+
+                        for (var z = sublayer; z <= sublayer + 8; z++) {
+                            for (var l = 1; l <= 4; l++) {
+                                if ((Random.Generate(8) > (z - sublayer) && Random.Generate(3) > 1) || Random.Generate(5) == 1) {
+                                    var rnd = Random.Generate(4);
+                                    var texture = rnd switch {
+                                        1 => State.rubbleGraf1,
+                                        2 => State.rubbleGraf2,
+                                        3 => State.rubbleGraf3,
+                                        _ => State.rubbleGraf4
+                                    };
+
+                                    var rndX  = Random.Generate(8) - Random.Generate(8) + (z - sublayer);
+                                    var rndX2 = Random.Generate(8) - Random.Generate(8) - (z - sublayer);
+
+                                    var rndY  = Random.Generate(8) - Random.Generate(8) + (z - sublayer);
+                                    var rndY2 = Random.Generate(8) - Random.Generate(8) - (z - sublayer);
+
+                                    var dest = new Rectangle(
+                                        rect.X + rndX,
+                                        rect.Y + rndY,
+                                        rect.Width  - rndX + rndX2,
+                                        rect.Height - rndY + rndY2
+                                    );
+
+                                    SDraw.Draw_NoWhite_Color(
+                                        _layers[z],
+                                        texture,
+                                        Shaders.WhiteRemoverApplyColor,
+                                        dest,
+                                        Color.White
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    
+        SDraw.Draw_NoWhite_NoColor(
+            _layers[sublayer + 4],
+            _middleImage.Texture,
+            Shaders.WhiteRemoverVFlip
+        );
     }
 }

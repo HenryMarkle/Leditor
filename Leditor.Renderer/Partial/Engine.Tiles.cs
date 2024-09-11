@@ -38,6 +38,8 @@ public partial class Engine
         int startX = x - hx;
         int startY = y - hy;
 
+        var start = new Vector2(startX, startY) * 20;
+
         var colored = tile.Tags.Contains("colored");
         var effectColorA = tile.Tags.Contains("effectColorA");
         var effectColorB = tile.Tags.Contains("effectColorB");
@@ -137,19 +139,12 @@ public partial class Engine
                 {
                     rnd = 1;
 
-                    foreach (var dir in new (int x, int y)[4] { (-1, 0), (0, -1), (1, 0), (0, 1) })
+                    foreach (var dir in stackalloc (int x, int y)[4] { (-1, 0), (0, -1), (1, 0), (0, 1) })
                     {
-                        var cx = x + dir.x + (int)camera.Coords.X;
-                        var cy = y + dir.y + (int)camera.Coords.Y;
-                    
-                        GeoType cellType = GeoType.Solid;
+                        var cx = x + dir.x;
+                        var cy = y + dir.y;
 
-                        if (Data.Utils.InBounds(Level!.GeoMatrix, cx, cy))
-                        {
-                            cellType = Level!.GeoMatrix[cy, cx, 0].Type;
-                        }
-
-                        if (cellType is GeoType.Air or GeoType.Platform) break;
+                        if (Utils.GetGeoCellType(Level!.GeoMatrix, cx, cy, layer) is GeoType.Air or GeoType.Platform) break;
                         
                         rnd++;
                     }
@@ -179,7 +174,6 @@ public partial class Engine
                     }
                 }
             
-                src.X += src.Width * (rnd - 1);
                 src.Y += 1;
 
                 BeginTextureMode(rt);
@@ -189,7 +183,9 @@ public partial class Engine
                     SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), tile.Texture);
                     DrawTexturePro(
                         tile.Texture,
-                        src,
+                        src with {
+                            X = src.X + src.Width * (rnd - 1)
+                        },
                         dest,
                         Vector2.Zero,
                         0,
@@ -213,9 +209,9 @@ public partial class Engine
                         {
                             var shader = Shaders.WhiteRemover;
 
-                            var currentSrc = src with { 
-                                X = src.X + src.Width * (rnd - 1), 
-                                Y = src.Y + src.Height * l 
+                            var currentSrc = src with {
+                                X = src.X + src.Width * (rnd - 1),
+                                Y = src.Y + src.Height * l
                             };
                             
                             BeginShaderMode(shader);
@@ -795,7 +791,7 @@ public partial class Engine
                         new Vector2(-90,  90)    // Bottom left
                     );
 
-                    q += offset;
+                    q += start with { X = start.X + hx, Y = start.Y + hy };
 
                     foreach (var l in dpsL)
                     {
@@ -957,7 +953,7 @@ public partial class Engine
                     {
                         var middle = Utils.GetMiddleCellPos(x, y);
 
-                        var shader = Shaders.WhiteRemoverApplyColor;
+                        var shader = Shaders.WhiteRemoverApplyColorVFlip;
 
                         foreach (
                             var (pos, color) 
@@ -983,8 +979,8 @@ public partial class Engine
                                 texture.Texture,
                                 new(0, 0, 60, 60),
                                 new(
-                                    -30 + middle.X + pos.X,
-                                    -30 + middle.Y + pos.Y,
+                                    -30 + startX + pos.X,
+                                    -30 + startY + pos.Y,
                                     60,
                                     60
                                 ),
@@ -1001,8 +997,8 @@ public partial class Engine
                             texture.Texture,
                             new(0, 0, 60, 60),
                             new(
-                                -30 + middle.X,
-                                -30 + middle.Y,
+                                -30 + startX,
+                                -30 + startY,
                                 60,
                                 60
                             ),
@@ -1071,7 +1067,7 @@ public partial class Engine
 
                     BeginTextureMode(rt);
                     {
-                        var shader = Shaders.WhiteRemoverApplyColor;
+                        var shader = Shaders.WhiteRemoverApplyColorVFlip;
 
                         BeginShaderMode(shader);
                         SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
@@ -1085,8 +1081,8 @@ public partial class Engine
                                 Draw.DrawQuad(
                                     texture.Texture,
                                     Utils.RotateRect(new Rectangle(
-                                            middle.X - 18 + point.X,
-                                            middle.Y - 24 + point.Y,
+                                            startX - 18 + point.X,
+                                            startY - 24 + point.Y,
                                             36,
                                             48
                                         ),
@@ -1104,8 +1100,8 @@ public partial class Engine
                                     texture.Texture,
                                     new Rectangle(0, 0, 36, 48),
                                     new Rectangle(
-                                        middle.X - 18 + point.X,
-                                        middle.Y - 24 + point.Y,
+                                        startX - 18 + point.X,
+                                        startY - 24 + point.Y,
                                         36,
                                         48
                                     ),
@@ -1126,8 +1122,8 @@ public partial class Engine
                         State.bigSignGradient,
                         new Rectangle(0, 0, 60, 60),
                         new Rectangle(
-                            middle.X - 25,
-                            middle.Y - 30,
+                            startX - 25,
+                            startY - 30,
                             50,
                             60
                         ),
@@ -1181,7 +1177,7 @@ public partial class Engine
 
                     BeginTextureMode(rt);
                     {
-                        var shader = Shaders.WhiteRemoverApplyColor;
+                        var shader = Shaders.WhiteRemoverApplyColorVFlip;
 
                         BeginShaderMode(shader);
                         SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
@@ -1195,8 +1191,8 @@ public partial class Engine
                                 Draw.DrawQuad(
                                     texture.Texture,
                                     Utils.RotateRect(new Rectangle(
-                                            middle.X - 18 + point.X,
-                                            middle.Y - 24 + point.Y,
+                                            startX - 18 + point.X,
+                                            startY - 24 + point.Y,
                                             36,
                                             48
                                         ),
@@ -1214,8 +1210,8 @@ public partial class Engine
                                     texture.Texture,
                                     new Rectangle(0, 0, 36, 48),
                                     new Rectangle(
-                                        middle.X - 18 + point.X,
-                                        middle.Y - 24 + point.Y,
+                                        startX - 18 + point.X,
+                                        startY - 24 + point.Y,
                                         36,
                                         48
                                     ),
@@ -1236,8 +1232,8 @@ public partial class Engine
                         State.bigSignGradient,
                         new Rectangle(0, 0, 60, 60),
                         new Rectangle(
-                            middle.X - 25,
-                            middle.Y - 30,
+                            startX - 25,
+                            startY - 30,
                             50,
                             60
                         ),
@@ -1305,7 +1301,7 @@ public partial class Engine
                         var middle = Utils.GetMiddleCellPos(x, y);
 
                         BeginTextureMode(rt);
-                        var shader = Shaders.WhiteRemoverApplyColor;
+                        var shader = Shaders.WhiteRemoverApplyColorVFlip;
 
                         BeginShaderMode(shader);
                         SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
@@ -1316,8 +1312,8 @@ public partial class Engine
                                 texture.Texture,
                                 new Rectangle(0, 0, 20, 20),
                                 new Rectangle(
-                                    -10 + middle.X + point.X,
-                                    -10 + middle.Y + point.Y,
+                                    -10 + startX + point.X,
+                                    -10 + startY + point.Y,
                                     20,
                                     20
                                 ),
@@ -1345,7 +1341,7 @@ public partial class Engine
                         var sublayer = layer * 10 + 8;
                         var middle = Utils.GetMiddleCellPos(x, y);
 
-                        var shader = Shaders.WhiteRemoverApplyColor;
+                        var shader = Shaders.WhiteRemoverApplyColorVFlip;
 
                         foreach (var (point, color) in list)
                         {
@@ -1357,8 +1353,8 @@ public partial class Engine
                                     texture.Texture,
                                     new Rectangle(0, 0, 20, 20),
                                     new Rectangle(
-                                        -10 + middle.X + point.X,
-                                        -10 + middle.Y + point.Y,
+                                        -10 + startX + point.X,
+                                        -10 + startY + point.Y,
                                         20,
                                         20
                                     ),
@@ -1378,8 +1374,8 @@ public partial class Engine
                                     texture.Texture,
                                     new Rectangle(0, 0, 20, 20),
                                     new Rectangle(
-                                        -10 + middle.X + point.X,
-                                        -10 + middle.Y + point.Y,
+                                        -10 + startX + point.X,
+                                        -10 + startY + point.Y,
                                         20,
                                         20
                                     ),
@@ -1395,7 +1391,7 @@ public partial class Engine
                         Draw.DrawToEffectColor(
                             State.bigSignGradient,
                             new Rectangle(0, 0, 60, 60),
-                            new Rectangle(middle.X -13, middle.Y - 13, 26, 26),
+                            new Rectangle(startX -13, startY - 13, 26, 26),
                             _gradientA,
                             sublayer,
                             1,
@@ -1461,7 +1457,7 @@ public partial class Engine
                         var middle = Utils.GetMiddleCellPos(x, y);
 
                         BeginTextureMode(rt);
-                        var shader = Shaders.WhiteRemoverApplyColor;
+                        var shader = Shaders.WhiteRemoverApplyColorVFlip;
 
                         BeginShaderMode(shader);
                         SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
@@ -1472,8 +1468,8 @@ public partial class Engine
                                 texture.Texture,
                                 new Rectangle(0, 0, 20, 20),
                                 new Rectangle(
-                                    -10 + middle.X + point.X,
-                                    -10 + middle.Y + point.Y,
+                                    -10 + startX + point.X,
+                                    -10 + startY + point.Y,
                                     20,
                                     20
                                 ),
@@ -1501,7 +1497,7 @@ public partial class Engine
                         var sublayer = layer * 10 + 8;
                         var middle = Utils.GetMiddleCellPos(x, y);
 
-                        var shader = Shaders.WhiteRemoverApplyColor;
+                        var shader = Shaders.WhiteRemoverApplyColorVFlip;
 
                         foreach (var (point, color) in list)
                         {
@@ -1513,8 +1509,8 @@ public partial class Engine
                                     texture.Texture,
                                     new Rectangle(0, 0, 20, 20),
                                     new Rectangle(
-                                        -10 + middle.X + point.X,
-                                        -10 + middle.Y + point.Y,
+                                        -10 + startX + point.X,
+                                        -10 + startY + point.Y,
                                         20,
                                         20
                                     ),
@@ -1534,8 +1530,8 @@ public partial class Engine
                                     texture.Texture,
                                     new Rectangle(0, 0, 20, 20),
                                     new Rectangle(
-                                        -10 + middle.X + point.X,
-                                        -10 + middle.Y + point.Y,
+                                        -10 + startX + point.X,
+                                        -10 + startY + point.Y,
                                         20,
                                         20
                                     ),
@@ -1551,7 +1547,7 @@ public partial class Engine
                         Draw.DrawToEffectColor(
                             State.bigSignGradient,
                             new Rectangle(0, 0, 60, 60),
-                            new Rectangle(middle.X -13, middle.Y - 13, 26, 26),
+                            new Rectangle(startX -13, startY - 13, 26, 26),
                             _gradientB,
                             sublayer,
                             1,
@@ -1617,7 +1613,7 @@ public partial class Engine
                         var middle = Utils.GetMiddleCellPos(x, y);
 
                         BeginTextureMode(rt);
-                        var shader = Shaders.WhiteRemoverApplyColor;
+                        var shader = Shaders.WhiteRemoverApplyColorVFlip;
 
                         BeginShaderMode(shader);
                         SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
@@ -1628,8 +1624,8 @@ public partial class Engine
                                 texture.Texture,
                                 new Rectangle(0, 0, 20, 20),
                                 new Rectangle(
-                                    -10 + middle.X + point.X,
-                                    -10 + middle.Y + point.Y,
+                                    -10 + startX + point.X,
+                                    -10 + startY + point.Y,
                                     20,
                                     20
                                 ),
@@ -1657,7 +1653,7 @@ public partial class Engine
                         var sublayer = layer * 10 + 8;
                         var middle = Utils.GetMiddleCellPos(x, y);
 
-                        var shader = Shaders.WhiteRemoverApplyColor;
+                        var shader = Shaders.WhiteRemoverApplyColorVFlip;
 
                         foreach (var (point, color) in list)
                         {
@@ -1669,8 +1665,8 @@ public partial class Engine
                                     texture.Texture,
                                     new Rectangle(0, 0, 20, 20),
                                     new Rectangle(
-                                        -10 + middle.X + point.X,
-                                        -10 + middle.Y + point.Y,
+                                        -10 + startX + point.X,
+                                        -10 + startY + point.Y,
                                         20,
                                         20
                                     ),
@@ -1690,8 +1686,8 @@ public partial class Engine
                                     texture.Texture,
                                     new Rectangle(0, 0, 20, 20),
                                     new Rectangle(
-                                        -10 + middle.X + point.X,
-                                        -10 + middle.Y + point.Y,
+                                        -10 + startX + point.X,
+                                        -10 + startY + point.Y,
                                         20,
                                         20
                                     ),
@@ -1707,7 +1703,7 @@ public partial class Engine
                         Draw.DrawToEffectColor(
                             State.bigSignGradient,
                             new Rectangle(0, 0, 60, 60),
-                            new Rectangle(middle.X -13, middle.Y - 13, 26, 26),
+                            new Rectangle(startX -13, startY - 13, 26, 26),
                             _gradientA,
                             sublayer,
                             1,
@@ -1773,7 +1769,7 @@ public partial class Engine
                         var middle = Utils.GetMiddleCellPos(x, y);
 
                         BeginTextureMode(rt);
-                        var shader = Shaders.WhiteRemoverApplyColor;
+                        var shader = Shaders.WhiteRemoverApplyColorVFlip;
 
                         BeginShaderMode(shader);
                         SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
@@ -1784,8 +1780,8 @@ public partial class Engine
                                 texture.Texture,
                                 new Rectangle(0, 0, 20, 20),
                                 new Rectangle(
-                                    -10 + middle.X + point.X,
-                                    -10 + middle.Y + point.Y,
+                                    -10 + startX + point.X,
+                                    -10 + startY + point.Y,
                                     20,
                                     20
                                 ),
@@ -1813,7 +1809,7 @@ public partial class Engine
                         var sublayer = layer * 10 + 8;
                         var middle = Utils.GetMiddleCellPos(x, y);
 
-                        var shader = Shaders.WhiteRemoverApplyColor;
+                        var shader = Shaders.WhiteRemoverApplyColorVFlip;
 
                         foreach (var (point, color) in list)
                         {
@@ -1825,8 +1821,8 @@ public partial class Engine
                                     texture.Texture,
                                     new Rectangle(0, 0, 20, 20),
                                     new Rectangle(
-                                        -10 + middle.X + point.X,
-                                        -10 + middle.Y + point.Y,
+                                        -10 + startX + point.X,
+                                        -10 + startY + point.Y,
                                         20,
                                         20
                                     ),
@@ -1846,8 +1842,8 @@ public partial class Engine
                                     texture.Texture,
                                     new Rectangle(0, 0, 20, 20),
                                     new Rectangle(
-                                        -10 + middle.X + point.X,
-                                        -10 + middle.Y + point.Y,
+                                        -10 + startX + point.X,
+                                        -10 + startY + point.Y,
                                         20,
                                         20
                                     ),
@@ -1863,7 +1859,7 @@ public partial class Engine
                         Draw.DrawToEffectColor(
                             State.bigSignGradient,
                             new Rectangle(0, 0, 60, 60),
-                            new Rectangle(middle.X -13, middle.Y - 13, 26, 26),
+                            new Rectangle(startX -13, startY - 13, 26, 26),
                             _gradientB,
                             sublayer,
                             1,
@@ -2072,22 +2068,22 @@ public partial class Engine
                     foreach (var (point, color) in list)
                     {
                         BeginTextureMode(_layers[sublayer]);
-                        BeginShaderMode(shader);
-                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                        BeginShaderMode(Shaders.WhiteRemoverApplyColorVFlip);
+                        SetShaderValueTexture(Shaders.WhiteRemoverApplyColorVFlip, GetShaderLocation(Shaders.WhiteRemoverApplyColorVFlip, "inputTexture"), texture.Texture);
                         DrawTextureV(
                             texture.Texture,
-                            middle + point - new Vector2(43, 53),
+                            start + point,
                             color
                         );
                         EndShaderMode();
                         EndTextureMode();
 
                         BeginTextureMode(_layers[sublayer + 1]);
-                        BeginShaderMode(shader);
-                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                        BeginShaderMode(Shaders.WhiteRemoverApplyColorVFlip);
+                        SetShaderValueTexture(Shaders.WhiteRemoverApplyColorVFlip, GetShaderLocation(Shaders.WhiteRemoverApplyColorVFlip, "inputTexture"), texture.Texture);
                         DrawTextureV(
                             texture.Texture,
-                            middle + point - new Vector2(43, 53),
+                            start + point,
                             color
                         );
                         EndShaderMode();
@@ -2095,22 +2091,22 @@ public partial class Engine
                     }
 
                     BeginTextureMode(_layers[sublayer]);
-                    BeginShaderMode(shader);
-                    SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                    BeginShaderMode(Shaders.WhiteRemoverApplyColorVFlip);
+                    SetShaderValueTexture(Shaders.WhiteRemoverApplyColorVFlip, GetShaderLocation(Shaders.WhiteRemoverApplyColorVFlip, "inputTexture"), texture.Texture);
                     DrawTextureV(
                         texture.Texture,
-                        middle - new Vector2(43, 53),
+                        start,
                         Color.White
                     );
                     EndShaderMode();
                     EndTextureMode();
 
                     BeginTextureMode(_layers[sublayer + 1]);
-                    BeginShaderMode(shader);
-                    SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                    BeginShaderMode(Shaders.WhiteRemoverApplyColorVFlip);
+                    SetShaderValueTexture(Shaders.WhiteRemoverApplyColorVFlip, GetShaderLocation(Shaders.WhiteRemoverApplyColorVFlip, "inputTexture"), texture.Texture);
                     DrawTextureV(
                         texture.Texture,
-                        middle - new Vector2(43, 53),
+                        start,
                         new Color(255, 0, 255, 255)
                     );
                     EndShaderMode();
@@ -2259,22 +2255,22 @@ public partial class Engine
                     foreach (var (point, color) in list)
                     {
                         BeginTextureMode(_layers[sublayer]);
-                        BeginShaderMode(shader);
-                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                        BeginShaderMode(Shaders.WhiteRemoverApplyColorVFlip);
+                        SetShaderValueTexture(Shaders.WhiteRemoverApplyColorVFlip, GetShaderLocation(Shaders.WhiteRemoverApplyColorVFlip, "inputTexture"), texture.Texture);
                         DrawTextureV(
                             texture.Texture,
-                            middle + point - new Vector2(43, 53),
+                            start + point,
                             color
                         );
                         EndShaderMode();
                         EndTextureMode();
 
                         BeginTextureMode(_layers[sublayer + 1]);
-                        BeginShaderMode(shader);
-                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                        BeginShaderMode(Shaders.WhiteRemoverApplyColorVFlip);
+                        SetShaderValueTexture(Shaders.WhiteRemoverApplyColorVFlip, GetShaderLocation(Shaders.WhiteRemoverApplyColorVFlip, "inputTexture"), texture.Texture);
                         DrawTextureV(
                             texture.Texture,
-                            middle + point - new Vector2(43, 53),
+                            start + point,
                             color
                         );
                         EndShaderMode();
@@ -2282,22 +2278,22 @@ public partial class Engine
                     }
 
                     BeginTextureMode(_layers[sublayer]);
-                    BeginShaderMode(shader);
-                    SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                    BeginShaderMode(Shaders.WhiteRemoverApplyColorVFlip);
+                    SetShaderValueTexture(Shaders.WhiteRemoverApplyColorVFlip, GetShaderLocation(Shaders.WhiteRemoverApplyColorVFlip, "inputTexture"), texture.Texture);
                     DrawTextureV(
                         texture.Texture,
-                        middle - new Vector2(43, 53),
+                        start,
                         Color.White
                     );
                     EndShaderMode();
                     EndTextureMode();
 
                     BeginTextureMode(_layers[sublayer + 1]);
-                    BeginShaderMode(shader);
-                    SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                    BeginShaderMode(Shaders.WhiteRemoverApplyColorVFlip);
+                    SetShaderValueTexture(Shaders.WhiteRemoverApplyColorVFlip, GetShaderLocation(Shaders.WhiteRemoverApplyColorVFlip, "inputTexture"), texture.Texture);
                     DrawTextureV(
                         texture.Texture,
-                        middle - new Vector2(43, 53),
+                        start,
                         new Color(255, 0, 255, 255)
                     );
                     EndShaderMode();
@@ -2377,8 +2373,8 @@ public partial class Engine
                         State.largeSignGrad2.Texture, 
                         new Rectangle(0, 0, 86, 106),
                         new Rectangle(
-                            -43 + middle.X,
-                            -53 + middle.Y,
+                            startX,
+                            startY,
                             86,
                             106
                         ),
@@ -2427,14 +2423,14 @@ public partial class Engine
 
                     BeginTextureMode(rt);
                     {
-                        BeginShaderMode(shader);
-                        SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture.Texture);
+                        BeginShaderMode(Shaders.WhiteRemoverApplyColorVFlip);
+                        SetShaderValueTexture(Shaders.WhiteRemoverApplyColorVFlip, GetShaderLocation(Shaders.WhiteRemoverApplyColorVFlip, "inputTexture"), texture.Texture);
                         DrawTexturePro(
                             texture.Texture,
                             new Rectangle(),
                             new Rectangle(
-                                -20 + middle.X,
-                                -10 + middle.Y,
+                                -20 + startX,
+                                -10 + startY,
                                 40,
                                 20
                             ),
@@ -2547,8 +2543,6 @@ public partial class Engine
                     EndTextureMode();
                 }
                 break;
-            
-                
             }
         }
     }

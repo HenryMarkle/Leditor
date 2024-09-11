@@ -42,6 +42,31 @@ public static class SDraw
     public static void Draw_NoWhite_NoColor(
         RenderTexture2D rt, 
         Texture2D texture, 
+        Shader shader
+    )
+    {
+        var rect = new Rectangle(0, 0, texture.Width, texture.Height);
+
+        BeginTextureMode(rt);
+        {
+            BeginShaderMode(shader);
+            SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture);
+            DrawTexturePro(
+                texture,
+                rect,
+                rect,
+                Vector2.Zero,
+                0,
+                Color.White
+            );
+            EndShaderMode();
+        }
+        EndTextureMode();
+    }
+
+    public static void Draw_NoWhite_NoColor(
+        RenderTexture2D rt, 
+        Texture2D texture, 
         Shader shader, 
         Rectangle src, 
         Quad dest
@@ -99,6 +124,32 @@ public static class SDraw
                 texture,
                 src,
                 dest,
+                Vector2.Zero,
+                0,
+                color
+            );
+            EndShaderMode();
+        }
+        EndTextureMode();
+    }
+
+    public static void Draw_NoWhite_Color(
+        RenderTexture2D rt, 
+        Texture2D texture, 
+        Shader shader, 
+        Color color
+    )
+    {
+        var rect = new Rectangle(0, 0, texture.Width, texture.Height);
+
+        BeginTextureMode(rt);
+        {
+            BeginShaderMode(shader);
+            SetShaderValueTexture(shader, GetShaderLocation(shader, "inputTexture"), texture);
+            DrawTexturePro(
+                texture,
+                rect,
+                rect,
                 Vector2.Zero,
                 0,
                 color

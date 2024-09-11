@@ -98,22 +98,12 @@ public class RenderingPage
 
                 ImGui.NextColumn();
 
-                // #if DEBUG
-                // if (ImGui.BeginListBox("##Layers", ImGui.GetContentRegionAvail()))
-                // {
-                //     for (var l = 0; l < 30; l++)
-                //     {
-                //         rlImGui.ImageButton($"{29 - l}", Context.Engine.Layers[29 - l].Texture);
-                //     }
-
-                //     ImGui.EndListBox();
-                // }
-                // #else
-                // #endif
                 rlImGui.ImageRenderTextureFit(Context.Engine.Canvas, false);
 
                 ImGui.End();
             }
+
+            #if DEBUG
 
             if (ImGui.Begin("Layers##LevelRenderingLayers"))
             {
@@ -134,6 +124,20 @@ public class RenderingPage
                 rlImGui.ImageRenderTexture(Context.Engine.FrontImage);
                 ImGui.End();
             }
+            
+            if (ImGui.Begin("Middle Buffer##LevelRenderingFrontBuffer"))
+            {
+                rlImGui.ImageRenderTexture(Context.Engine.MiddleImage);
+                ImGui.End();
+            }
+            
+            if (ImGui.Begin("Back Buffer##LevelRenderingFrontBuffer"))
+            {
+                rlImGui.ImageRenderTexture(Context.Engine.BackImage);
+                ImGui.End();
+            }
+
+            #endif
         }
         rlImGui.End();
     }

@@ -290,7 +290,37 @@ public class Program
                                 [1, 9], 
                                 [], 
                                 1
-                            ) { Texture = LoadTexture(Path.Combine(folders.Tiles[0], "shortCutTile.png")) }
+                            ) { Texture = LoadTexture(Path.Combine(folders.Tiles[0], "shortCutTile.png")) },
+                            new TileDefinition(
+                                "shortCutArrows",
+                                (3, 3),
+                                TileType.VoxelStruct,
+                                1,
+                                new int[1,1,3],
+                                [1, 7, 12],
+                                [],
+                                -1
+                            ) { Texture = LoadTexture(Path.Combine(folders.Tiles[0], "shortCutArrows.png")) },
+                            new TileDefinition(
+                                "shortCutDots",
+                                (3, 3),
+                                TileType.VoxelStruct,
+                                1,
+                                new int[1,1,3],
+                                [1, 7, 12],
+                                [],
+                                -1
+                            ) { Texture = LoadTexture(Path.Combine(folders.Tiles[0], "shortCutDots.png")) },
+                            new TileDefinition(
+                                "shortCut",
+                                (3, 3),
+                                TileType.VoxelStruct,
+                                1,
+                                new int[1,1,3],
+                                [1, 7, 12],
+                                [],
+                                -1
+                            ) { Texture = LoadTexture(Path.Combine(folders.Tiles[0], "shortCut.png")) },
                         ]);
                     }
                 }

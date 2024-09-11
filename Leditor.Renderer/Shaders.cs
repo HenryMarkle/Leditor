@@ -39,6 +39,11 @@ public class Shaders : IDisposable
     /// Ignores white pixels and draws a given color otherwise.
     /// </summary>
     public Shader WhiteRemoverApplyColor { get; protected set; }
+    
+    /// <summary>
+    /// Ignores white pixels and draws a given color otherwise.
+    /// </summary>
+    public Shader WhiteRemoverApplyColorVFlip { get; protected set; }
 
     protected Shaders() {}
 
@@ -54,6 +59,7 @@ public class Shaders : IDisposable
         UnloadShader(WhiteRemoverVFlip);
         UnloadShader(WhiteRemoverVFlipDepthAccumulator);
         UnloadShader(WhiteRemoverApplyColor);
+        UnloadShader(WhiteRemoverApplyColorVFlip);
     }
 
     public static Shaders LoadFrom(string shadersFolder)
@@ -65,7 +71,8 @@ public class Shaders : IDisposable
             WhiteRemover = LoadShader(null, Path.Combine(shadersFolder, "white_remover.frag")),
             WhiteRemoverVFlip = LoadShader(null, Path.Combine(shadersFolder, "white_remover_vflip.frag")),
             WhiteRemoverVFlipDepthAccumulator = LoadShader(null, Path.Combine(shadersFolder, "white_remover_vflip_depth_accumulator.frag")),
-            WhiteRemoverApplyColor = LoadShader(null, Path.Combine(shadersFolder, "white_remover_colored.frag"))
+            WhiteRemoverApplyColor = LoadShader(null, Path.Combine(shadersFolder, "white_remover_colored.frag")),
+            WhiteRemoverApplyColorVFlip = LoadShader(null, Path.Combine(shadersFolder, "white_remover_vflip_colored.frag"))
         };
     }
 }
