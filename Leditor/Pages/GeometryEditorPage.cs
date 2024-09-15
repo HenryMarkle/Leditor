@@ -562,10 +562,10 @@ internal class ExperimentalGeometryPage : EditorPage
             _geoMenuIndex = 1;
         } else if (_shortcuts.PlatformBrush.Check(ctrl, shift, alt)) {
             _geoMenuCategory = 0;
-            _geoMenuIndex = 1;
+            _geoMenuIndex = 2;
         } else if (_shortcuts.GlassBrush.Check(ctrl, shift, alt)) {
             _geoMenuCategory = 0;
-            _geoMenuIndex = 1;
+            _geoMenuIndex = 3;
         } else if (_shortcuts.VerticalPoleBrush.Check(ctrl, shift, alt)) {
             _geoMenuCategory = 1;
             _geoMenuIndex = 0;

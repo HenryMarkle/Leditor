@@ -24,9 +24,6 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    - name: Clone Drizzle
-      run: git clone --branch embedded https://github.com/HenryMarkle/Drizzle
-
     - name: Setting up Drizzle
       run: |
         cd ./Drizzle
@@ -75,9 +72,6 @@ jobs:
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: '8.0.x'
-
-    - name: Clone Drizzle
-      run: git clone --branch embedded https://github.com/HenryMarkle/Drizzle
 
     - name: Setting up Drizzle
       run: |
@@ -130,9 +124,6 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    - name: Clone Drizzle
-      run: git clone --branch embedded https://github.com/HenryMarkle/Drizzle
-
     - name: Setting up Drizzle
       run: |
         cd ./Drizzle
@@ -182,9 +173,6 @@ jobs:
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: '8.0.x'
-
-    - name: Clone Drizzle
-      run: git clone --branch embedded https://github.com/HenryMarkle/Drizzle
 
     - name: Setting up Drizzle
       run: |

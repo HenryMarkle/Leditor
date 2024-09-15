@@ -1,47 +1,13 @@
-## Drizzle Update
+## Drizzle Update (Part Two)
 
-Upstreamed Drizzle's version to the latest version, which includes the latest new features from the Rain World's Community Editor.
-Refer to this [Discord post](https://discord.com/channels/291184728944410624/804088181904375819/1278816866764324886) for credits:
+- Added custom rope/long prop support.
+ - Custom ropes/longs follow the same format as their reqular counterparts. 
+ - To add custom ropes, append your custom rope into the `Props/Init.txt` with the following format: `[#nm:"Wire", #tp:"rope", #depth:0, #tags:[], #notes:[], #segmentLength:3, #collisionDepth:0, #segRad:1.0, #grav:0.5, #friction:0.5, #airFric:0.9, #stiff:0, #previewColor:color(255,0, 0), #previewEvery:4, #edgeDirection:0.0, #rigid:0.0, #selfPush:0.0, #sourcePush:0.0]`
+ - To add custom longs, append your custom long into the `Props/Init.txt` with the following format: `[#nm:"Stretched Pipe", #tp:"long", #depth:0, #tags:[], #notes:[]]`
+ - Texture follow the same format as in the `Cast` folder, however, the editor does not care about them pre-rendering.
+ - This feature has not been tested.
 
-### Effects
+## The Geometry Editor
 
-- Nautillo Plants
-    - Leaf Growers 
-    - Meat Growers 
-    - Hyacinths 
-    - Seed Grass
-    - Orb Plants
-    - Storm Plants
-
-- Nautillo Plants 2
-    - Coral Growers
-    - Horror Growers
-
-- Dakras Plants
-    - Dandelions
-
-- Tronsx Plants
-    - Thunder Growers
-
-- Intrepid Plants
-    - Ice Growers
-    - Grass Growers
-    - Fancy Grower
-
-### Ropes
-
-- Big Chain
-- Chunky Chain
-- Big Bike Chain
-- Huge Bike Chain
-
-### Long Props
-
-- Long Barbed Wire
-
-## The Prop Editor
-
-- Prop presets can now persist after closing the editor.
-    - Remember to click `"Save"` in the presets window first.
-    - Presets are stored in `settings.json`, under the `PropEditor` section.
-    - Despite being stored in settings, presets only save when clicking the `Save` button in the presets window.
+- Added a shortcut for each brush
+ - They're unbound, by default.

@@ -343,24 +343,61 @@ public class ExperimentalGeoShortcuts : IEditorShortcuts
     public KeyboardShortcut ToggleIndexHint { get => toggleIndexHint; set { toggleIndexHint = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
 
+    [ShortcutName("Solid", Group = "Instant Access")]
     public KeyboardShortcut SolidBrush { get => solidBrush; set { solidBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Slope", Group = "Instant Access")]
     public KeyboardShortcut SlopeBrush { get => slopeBrush; set { slopeBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Platform", Group = "Instant Access")]
     public KeyboardShortcut PlatformBrush { get => platformBrush; set { platformBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Glass", Group = "Instant Access")]
     public KeyboardShortcut GlassBrush { get => glassBrush; set { glassBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Vertical Pole", Group = "Instant Access")]
     public KeyboardShortcut VerticalPoleBrush { get => verticalPoleBrush; set { verticalPoleBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Horizontal Pole", Group = "Instant Access")]
     public KeyboardShortcut HorizontalPoleBrush { get => horizontalPoleBrush; set { horizontalPoleBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Cracked Terrain", Group = "Instant Access")]
     public KeyboardShortcut CrackedTerrainBrush { get => crackedTerrainBrush; set { crackedTerrainBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Bathive", Group = "Instant Access")]
     public KeyboardShortcut BathiveBrush { get => bathiveBrush; set { bathiveBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Forbid Fly Chains", Group = "Instant Access")]
     public KeyboardShortcut ForbidFlyChainsBrush { get => forbidFlyChainsBrush; set { forbidFlyChainsBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Waterfall", Group = "Instant Access")]
     public KeyboardShortcut WaterfallBrush { get => waterfallBrush; set { waterfallBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Worm Grass", Group = "Instant Access")]
     public KeyboardShortcut WormGrassBrush { get => wormGrassBrush; set { wormGrassBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Place Rock", Group = "Instant Access")]
     public KeyboardShortcut PlaceRockBrush { get => placeRockBrush; set { placeRockBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Place Spear", Group = "Instant Access")]
     public KeyboardShortcut PlaceSpearBrush { get => placeSpearBrush; set { placeSpearBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Shortcut Entrance", Group = "Instant Access")]
     public KeyboardShortcut ShortcutEntranceBrush { get => shortcutEntranceBrush; set { shortcutEntranceBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Shortcut Path", Group = "Instant Access")]
     public KeyboardShortcut ShortcutPathBrush { get => shortcutPathBrush; set { shortcutPathBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Room Entrance", Group = "Instant Access")]
     public KeyboardShortcut RoomEntranceBrush { get => roomEntranceBrush; set { roomEntranceBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Wack-A-Mole Hole", Group = "Instant Access")]
     public KeyboardShortcut WackBrush { get => wackBrush; set { wackBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Scavenger", Group = "Instant Access")]
     public KeyboardShortcut ScavengerBrush { get => scavengerBrush; set { scavengerBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Garbage Worm", Group = "Instant Access")]
     public KeyboardShortcut GarbageWormBrush { get => garbageWormBrush; set { garbageWormBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
