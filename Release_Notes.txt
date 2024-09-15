@@ -2,8 +2,8 @@
 
 - Added custom rope/long prop support.
  - Custom ropes/longs follow the same format as their reqular counterparts. 
- - To add custom ropes, append your custom rope into the `Props/Init.txt` with the following format: `[#nm:"Wire", #tp:"rope", #depth:0, #tags:[], #notes:[], #segmentLength:3, #collisionDepth:0, #segRad:1.0, #grav:0.5, #friction:0.5, #airFric:0.9, #stiff:0, #previewColor:color(255,0, 0), #previewEvery:4, #edgeDirection:0.0, #rigid:0.0, #selfPush:0.0, #sourcePush:0.0]`
- - To add custom longs, append your custom long into the `Props/Init.txt` with the following format: `[#nm:"Stretched Pipe", #tp:"long", #depth:0, #tags:[], #notes:[]]`
+ - To add custom ropes, append your custom rope into the `Props/Init.txt` with the following format: `[#nm:"Diagonal Chain", #tp:"customRope", #colorTreatment:"bevel", #bevel:1, #depth:3, #pixelSize:point(24, 32), #segmentLength:13, #repeatL:[2, 2], #vars:1, #random:0, #tags:[], #notes:[], #collisionDepth:3, #segRad:6.5, #grav:0.88, #friction:0.7, #airFric:0.9, #stiff:1, #previewColor:color(53, 110, 134), #previewEvery:3, #edgeDirection:0, #rigid:0.2, #selfPush:3.2, #sourcePush:0]`
+ - To add custom longs, append your custom long into the `Props/Init.txt` with the following format: `[#nm:"LongTest", #tp:"customLong", #colorTreatment:"standard", #depth:2, #pixelSize:point(10, 20), #segmentLength:20, #repeatL:[1,1,1], #vars:1, #random:0, #tags:["effectColorA"], #notes:[]]`
  - Texture follow the same format as in the `Cast` folder, however, the editor does not care about them pre-rendering.
  - This feature has not been tested.
 

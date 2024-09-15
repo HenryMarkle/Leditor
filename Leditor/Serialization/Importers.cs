@@ -209,19 +209,39 @@ public static class Importers {
 
         // Custom Ropes
 
-        AstNode.Number? rope_segmentLength  = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "segmentlength").Value;
-        AstNode.Number? rope_collisionDepth = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "collisiondepth").Value;
-        AstNode.Number? rope_segmentRadius  = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "segmentradius").Value;
-        AstNode.Number? rope_segRad         = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "segrad").Value;
-        AstNode.Number? rope_grav           = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "grav").Value;
-        AstNode.Number? rope_friction       = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "friction").Value;
-        AstNode.Number? rope_airFric        = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "airfric").Value;
-        AstNode.Number? rope_stiff          = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "stiff").Value;
-        AstNode.Number? rope_previewEvery   = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "previewevery").Value;
-        AstNode.Number? rope_edgeDirection  = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "edgedirection").Value;
-        AstNode.Number? rope_rigid          = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "rigid").Value;
-        AstNode.Number? rope_selfPush       = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "selfpush").Value;
-        AstNode.Number? rope_sourcePush     = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "sourcepush").Value;
+        AstNode.Number? rope_segmentLength  = null;
+        AstNode.Number? rope_collisionDepth = null;
+        AstNode.Number? rope_segmentRadius  = null;
+        AstNode.Number? rope_segRad         = null;
+        AstNode.Number? rope_grav           = null;
+        AstNode.Number? rope_friction       = null;
+        AstNode.Number? rope_airFric        = null;
+        AstNode.Number? rope_stiff          = null;
+        AstNode.Number? rope_previewEvery   = null;
+        AstNode.Number? rope_edgeDirection  = null;
+        AstNode.Number? rope_rigid          = null;
+        AstNode.Number? rope_selfPush       = null;
+        AstNode.Number? rope_sourcePush     = null;
+
+        if (typeStr == "customrope") {
+            rope_segmentLength          = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "segmentlength").Value;
+            rope_collisionDepth         = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "collisiondepth").Value;
+            rope_segmentRadius          = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "segmentradius").Value;
+            rope_segRad                 = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "segrad").Value;
+            rope_grav                   = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "grav").Value;
+            rope_friction               = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "friction").Value;
+            rope_airFric                = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "airfric").Value;
+            rope_stiff                  = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "stiff").Value;
+            rope_previewEvery           = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "previewevery").Value;
+            rope_edgeDirection          = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "edgedirection").Value;
+            rope_rigid                  = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "rigid").Value;
+            rope_selfPush               = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "selfpush").Value;
+            rope_sourcePush             = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "sourcepush").Value;
+        }
+
+        if (typeStr == "customLong") {
+            rope_segmentLength          = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "segmentlength").Value;
+        }
 
         InitPropColorTreatment getColorTreatment() => colorTreatment is null
                     ? InitPropColorTreatment.Standard
@@ -343,7 +363,23 @@ public static class Importers {
                 random is null ? 0 : getIntProperty(random)
             ),
             InitPropType_Legacy.Antimatter => new InitAntimatterProp(name, type, depth is null ? 0 :  getIntProperty(depth), getFloatProperty(contourExp)),
-            InitPropType_Legacy.CustomLong => new InitLongProp(name, type, depth is null ? 0 : getIntProperty(depth)),
+            InitPropType_Legacy.CustomLong => new InitCustomLongProp(
+                name, 
+                type, 
+                depth is null ? 0 : getIntProperty(depth),
+                getColorTreatment(),
+                bevel is null ? 0 : getIntProperty(bevel),
+                random is null ? 0 : getIntProperty(random),
+                repeatL is null
+                    ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(repeatL))
+                    : repeatL.Values.Select(n => NumberToInteger((AstNode.Number)n)).ToArray(),
+                pxlSize is null
+                    ? throw new MissingInitPropertyException("", StringifyBase(@base), nameof(pxlSize))
+                    : (NumberToInteger((AstNode.Number)pxlSize.Arguments[0]), NumberToInteger((AstNode.Number)pxlSize.Arguments[1])),
+                getIntProperty(rope_segmentLength),
+                vars is null ? 1 : getIntProperty(vars)
+
+            ),
             InitPropType_Legacy.CustomRope => new InitRopeProp(
                 name, 
                 type, 

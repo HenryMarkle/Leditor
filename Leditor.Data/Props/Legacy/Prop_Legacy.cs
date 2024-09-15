@@ -406,10 +406,70 @@ public class InitRopeProp(
         => new PropRopeSettings();
 }
 
+public class InitCustomRopeProp(
+    string name,
+    InitPropType_Legacy type,
+    int depth,
+    int segmentLength,
+    int collisionDepth,
+    float segmentRadius,
+    float gravity,
+    float friction,
+    float airFriction,
+    bool stiff,
+    Raylib_cs.Color previewColor,
+    int previewEvery,
+    float edgeDirection,
+    float rigid,
+    float selfPush,
+    float sourcePush,
+    InitPropColorTreatment colorTreatment,
+    int bevel
+) : InitRopeProp(name,
+type,
+depth,
+segmentLength,
+collisionDepth,
+segmentRadius,
+gravity,
+friction,
+airFriction,
+stiff,
+previewColor,
+previewEvery,
+edgeDirection,
+rigid,
+selfPush,
+sourcePush) {
+    public InitPropColorTreatment ColorTreatment { get; } = colorTreatment;
+    public int Bevel { get; } = bevel;
+}
+
 public class InitLongProp(string name, InitPropType_Legacy type, int depth) : InitPropBase(name, type, depth)
 {
     public override BasicPropSettings NewSettings()
         => new PropLongSettings();
+}
+
+public class InitCustomLongProp(
+    string name, 
+    InitPropType_Legacy type, 
+    int depth,
+    InitPropColorTreatment colorTreatment,
+    int bevel,
+    int random,
+    int[] repeat,
+    (int, int) pixelSize,
+    int segmentLength,
+    int vars
+) : InitLongProp(name, type, depth) {
+    public InitPropColorTreatment ColorTreatment { get; } = colorTreatment;
+    public int Bevel { get; } = bevel;
+    public int Random { get; } = random;
+    public int[] Repeat { get; } = repeat;
+    public (int Width, int Height) PixelSize { get; } = pixelSize;
+    public int SegmentLength { get; } = segmentLength;
+    public int Vars { get; } = vars;
 }
 
 public class InitColoredSoftProp(

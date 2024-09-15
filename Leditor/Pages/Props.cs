@@ -70,7 +70,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             );
 
             // Draw Rope Point
-            if (current.Type == InitPropType_Legacy.Rope)
+            if (current.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
             {
                 foreach (var point in current.Extras.RopePoints)
                 {
@@ -88,7 +88,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                 if (_stretchingProp)
                 {
-                    if (current.Type == InitPropType_Legacy.Rope)
+                    if (current.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                     {
                         DrawCircleV(
                             Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
@@ -109,7 +109,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         DrawCircleV(quads.BottomRight, 2f, Color.Blue);
                         DrawCircleV(quads.BottomLeft, 2f, Color.Blue);*/
                     }
-                    else if (current.Type == InitPropType_Legacy.Long)
+                    else if (current.Type is InitPropType_Legacy.Long or InitPropType_Legacy.CustomLong)
                     {
                         var sides = Utils.LongSides(current.Quad);
                         
@@ -152,7 +152,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 }
                 
                 // Draw Rope Point
-                if (current.Type == InitPropType_Legacy.Rope)
+                if (current.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                 {
                     if (_editingPropPoints)
                     {
@@ -495,7 +495,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     );
 
                     // Draw Rope Point
-                    if (current.Type == InitPropType_Legacy.Rope)
+                    if (current.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                     {
                         foreach (var point in current.Extras.RopePoints)
                         {
@@ -513,7 +513,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         if (_stretchingProp)
                         {
-                            if (current.Type == InitPropType_Legacy.Rope)
+                            if (current.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                             {
                                 DrawCircleV(
                                     Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
@@ -568,7 +568,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
                         
                         // Draw Rope Point
-                        if (current.Type == InitPropType_Legacy.Rope)
+                        if (current.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                         {
                             if (_editingPropPoints)
                             {
@@ -730,7 +730,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     );
 
                     // Draw Rope Point
-                    if (current.Type == InitPropType_Legacy.Rope)
+                    if (current.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                     {
                         foreach (var point in current.Extras.RopePoints)
                         {
@@ -748,7 +748,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         if (_stretchingProp)
                         {
-                            if (current.Type == InitPropType_Legacy.Rope)
+                            if (current.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                             {
                                 DrawCircleV(
                                     Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
@@ -803,7 +803,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
                         
                         // Draw Rope Point
-                        if (current.Type == InitPropType_Legacy.Rope)
+                        if (current.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                         {
                             if (_editingPropPoints)
                             {
@@ -975,7 +975,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     );
 
                     // Draw Rope Point
-                    if (current.Type == InitPropType_Legacy.Rope)
+                    if (current.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                     {
                         foreach (var point in current.Extras.RopePoints)
                         {
@@ -993,7 +993,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         if (_stretchingProp)
                         {
-                            if (current.Type == InitPropType_Legacy.Rope)
+                            if (current.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                             {
                                 DrawCircleV(
                                     Raymath.Vector2Divide(Raymath.Vector2Add(quads.TopLeft, quads.BottomLeft), 
@@ -1014,7 +1014,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 DrawCircleV(quads.BottomRight, 2f, Color.Blue);
                                 DrawCircleV(quads.BottomLeft, 2f, Color.Blue);*/
                             }
-                            else if (current.Type == InitPropType_Legacy.Long)
+                            else if (current.Type is InitPropType_Legacy.Long or InitPropType_Legacy.CustomLong)
                             {
                                 var sides = Utils.LongSides(current.Quad);
                                 
@@ -1057,7 +1057,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
                         
                         // Draw Rope Point
-                        if (current.Type == InitPropType_Legacy.Rope)
+                        if (current.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                         {
                             if (_editingPropPoints)
                             {
@@ -1454,7 +1454,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
         var ropes = GLOBALS.Level.Props
             .Select((rope, index) => (rope, index))
-            .Where(ropeInfo => ropeInfo.rope.Type == InitPropType_Legacy.Rope);
+            .Where(ropeInfo => ropeInfo.rope.Type == InitPropType_Legacy.Rope || ropeInfo.rope.Type == InitPropType_Legacy.CustomRope);
 
         if (!ropes.Any()) {
             _models = [];
@@ -1468,7 +1468,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             {
                 var current = GLOBALS.Level.Props[r];
                 
-                if (current.Type != InitPropType_Legacy.Rope) continue;
+                if (current.Type is not InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope) continue;
                 
                 var newModel = new RopeModel(current, GLOBALS.RopeProps[current.Position.index]);
             
@@ -2245,7 +2245,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                                         settings, 
                                                         ropePoints
                                                     ),
-                                                    Type = InitPropType_Legacy.Rope,
+                                                    Type = current.Type,
                                                     Tile = null,
                                                     Position = (-1, _propsMenuRopesIndex)
                                                 }
@@ -2305,7 +2305,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                                 )
                                                 {
                                                     Extras = new PropExtras_Legacy(settings, []),
-                                                    Type = InitPropType_Legacy.Long,
+                                                    Type = current.Type,
                                                     Tile = null,
                                                     Position = (-1, _propsMenuLongsIndex)
                                                 }
@@ -2391,7 +2391,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             }
                             
                             if (GLOBALS.Level.Props.Length > 0 && 
-                                GLOBALS.Level.Props[^1].Type != InitPropType_Legacy.Rope) _ropeInitialPlacement = false;
+                                GLOBALS.Level.Props[^1].Type is not InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope) _ropeInitialPlacement = false;
 
                             // Do not forget to update _selected and _hidden
 
@@ -2534,7 +2534,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                                         settings, 
                                                         ropePoints
                                                     ),
-                                                    Type = InitPropType_Legacy.Rope,
+                                                    Type = current.Type,
                                                     Tile = null,
                                                     Position = (-1, _propsMenuRopesIndex)
                                                 }
@@ -2592,7 +2592,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                                 {
                                                     Extras = new PropExtras_Legacy(settings, []),
                                                     Rotation = _placementRotation,
-                                                    Type = InitPropType_Legacy.Long,
+                                                    Type = current.Type,
                                                     Tile = null,
                                                     Position = (-1, _propsMenuLongsIndex)
                                                 }
@@ -2677,7 +2677,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             }
 
                             if (GLOBALS.Level.Props.Length > 0 && 
-                                GLOBALS.Level.Props[^1].Type != InitPropType_Legacy.Rope) _ropeInitialPlacement = false;
+                                GLOBALS.Level.Props[^1].Type is not InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope) _ropeInitialPlacement = false;
                             
                             // Do not forget to update _selected and _hidden
 
@@ -2880,13 +2880,13 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 }
                             }
                         }
-                        else if (current.Type == InitPropType_Legacy.Rope)
+                        else if (current.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                         {
                             _copiedRopePoints = [..current.Extras.RopePoints];
                             _copiedPropSettings = current.Extras.Settings;
                             _copiedIsTileAsProp = false;
                         }
-                        else if (current.Type == InitPropType_Legacy.Long)
+                        else if (current.Type is InitPropType_Legacy.Long or InitPropType_Legacy.CustomLong)
                         {
                             _copiedPropSettings = current.Extras.Settings;
                             _copiedIsTileAsProp = false;
@@ -2922,7 +2922,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         _selectedPropsEncloser.Height/2
                     );
 
-                    if (fetchedSelected[0].prop.Type == InitPropType_Legacy.Rope) {
+                    if (fetchedSelected[0].prop.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope) {
                         if (_shortcuts.ToggleRopeGravity.Check(ctrl, shift, alt)) {
                             for (var i = 0; i < _models.Length; i++)
                             {
@@ -2999,7 +2999,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         GLOBALS.Level.Props[p].Quad = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
 
-                        if (GLOBALS.Level.Props[p].Type == InitPropType_Legacy.Rope)
+                        if (GLOBALS.Level.Props[p].Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                         {
                             Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].Extras.RopePoints);
                         }
@@ -3022,7 +3022,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         GLOBALS.Level.Props[p].Quad = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
 
-                        if (GLOBALS.Level.Props[p].Type == InitPropType_Legacy.Rope)
+                        if (GLOBALS.Level.Props[p].Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                         {
                             Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].Extras.RopePoints);
                         }
@@ -3045,7 +3045,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         GLOBALS.Level.Props[p].Quad = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
 
-                        if (GLOBALS.Level.Props[p].Type == InitPropType_Legacy.Rope)
+                        if (GLOBALS.Level.Props[p].Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                         {
                             Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].Extras.RopePoints);
                         }
@@ -3068,7 +3068,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         GLOBALS.Level.Props[p].Quad = Utils.RotatePropQuads(quads, degree, _selectedPropsCenter);
 
-                        if (GLOBALS.Level.Props[p].Type == InitPropType_Legacy.Rope)
+                        if (GLOBALS.Level.Props[p].Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                         {
                             Utils.RotatePoints(degree, _selectedPropsCenter, GLOBALS.Level.Props[p].Extras.RopePoints);
                         }
@@ -3089,7 +3089,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         GLOBALS.Level.Props[p].Quad = Utils.RotatePropQuads(quads, -GLOBALS.Level.Props[p].Rotation, _selectedPropsCenter);
 
-                        if (GLOBALS.Level.Props[p].Type == InitPropType_Legacy.Rope)
+                        if (GLOBALS.Level.Props[p].Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                         {
                             Utils.RotatePoints(-_placementRotation, _selectedPropsCenter, GLOBALS.Level.Props[p].Extras.RopePoints);
                         }
@@ -3251,7 +3251,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     // Rope-only actions
                     else if (
                         fetchedSelected.Length == 1 &&
-                        fetchedSelected[0].prop.Type == InitPropType_Legacy.Rope
+                        fetchedSelected[0].prop.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope
                     )
                     {
                         // Edit Rope Points
@@ -3450,7 +3450,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                             #if DEBUG
                             if (current.index < 0 || 
                             current.index >= GLOBALS.Level.Props.Length || 
-                            GLOBALS.Level.Props[current.index].Type != InitPropType_Legacy.Rope) {
+                            GLOBALS.Level.Props[current.index].Type is not InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope) {
                                 throw new Exception("model's reference index was invalid or out of bounds");
                             }
                             #endif
@@ -3547,7 +3547,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         GLOBALS.Level.Props[s].Quad = quads;
 
-                        if (GLOBALS.Level.Props[s].Type == InitPropType_Legacy.Rope)
+                        if (GLOBALS.Level.Props[s].Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                         {
                             for (var r = 0; r < _models.Length; r++)
                             {
@@ -3606,7 +3606,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                         GLOBALS.Level.Props[p].Quad = Utils.RotatePropQuads(quads, delta.X, _selectedPropsCenter);
 
-                        if (GLOBALS.Level.Props[p].Type == InitPropType_Legacy.Rope)
+                        if (GLOBALS.Level.Props[p].Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                         {
                             Utils.RotatePoints(delta.X, _selectedPropsCenter, GLOBALS.Level.Props[p].Extras.RopePoints);
                         }
@@ -3708,7 +3708,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                     if (IsMouseButtonDown(_shortcuts.SelectProps.Button) || IsKeyDown(_shortcuts.SelectPropsAlt.Key))
                     {
-                        if (fetchedSelected[0].prop.Type == InitPropType_Legacy.Rope)
+                        if (fetchedSelected[0].prop.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                         {
                             var middleLeft = Raymath.Vector2Divide(
                                 Raymath.Vector2Add(currentQuads.TopLeft, currentQuads.BottomLeft),
@@ -3781,7 +3781,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 );
                             }
                         }
-                        else if (fetchedSelected[0].prop.Type == InitPropType_Legacy.Long)
+                        else if (fetchedSelected[0].prop.Type is InitPropType_Legacy.Long or InitPropType_Legacy.CustomLong)
                         {
                             var (left, top, right, bottom) = Utils.LongSides(fetchedSelected[0].prop.Quad);
                             
@@ -5328,7 +5328,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                     
                     // Rope
                     
-                    if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.Type == InitPropType_Legacy.Rope)
+                    if (fetchedSelected.Length == 1 && fetchedSelected[0].prop.Type is InitPropType_Legacy.Rope or InitPropType_Legacy.CustomRope)
                     {
                         ImGui.SeparatorText("Rope Options");
                         
