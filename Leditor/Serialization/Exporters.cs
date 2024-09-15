@@ -230,7 +230,7 @@ public static class Exporters
         return builder.ToString();
     }
 
-    private static string Export(Prop_Legacy[] props)
+    internal static string Export(Prop_Legacy[] props)
     {
         System.Text.StringBuilder builder = new();
 

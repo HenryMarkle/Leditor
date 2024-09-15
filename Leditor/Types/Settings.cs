@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Security.Authentication.ExtendedProtection;
 using System.Text.Json.Serialization;
+using Leditor.Data.Props.Legacy;
 namespace Leditor.Types;
 
 public class LayerColors(Data.Color layer1, Data.Color layer2, Data.Color layer3)
@@ -348,17 +349,23 @@ public class PropEditor
     [SettingName("Show Presets Window")]
     public bool PresetsWindow { get; set; }
 
+    [SettingName("Saved Presets", Hidden = true)]
+    [JsonInclude]
+    public List<PropPresetMeta> SavedPresets { get; set; }
+
     //
 
     public PropEditor()
     {
         LayerIndicatorPosition = ScreenRelativePosition.TopLeft;
         PresetsWindow = false;
+        SavedPresets = new();
     }
 
     public PropEditor(ScreenRelativePosition layerIndicatorPosition)
     {
         LayerIndicatorPosition = layerIndicatorPosition;
+        SavedPresets = new();
     }
 }
 
@@ -646,7 +653,7 @@ public class Shortcuts
 
 public class Misc(
     bool splashScreen = false,
-    int tileImageScansPerFrame = 20,
+    int tileImageScansPerFrame = 15,
     int fps = 60,
     bool funnyDeathScreen = false
 )

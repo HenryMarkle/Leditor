@@ -1021,7 +1021,7 @@ internal class MainPage : EditorPage, IContextListener
                     {
                         try
                         {
-                            var text = JsonSerializer.Serialize(GLOBALS.Settings, new JsonSerializerOptions { WriteIndented = true });
+                            var text = JsonSerializer.Serialize(GLOBALS.Settings, GLOBALS.JsonSerializerOptions);
                             File.WriteAllText(GLOBALS.Paths.SettingsPath, text);
                         }
                         catch (Exception e)

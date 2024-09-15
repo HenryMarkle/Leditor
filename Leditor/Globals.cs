@@ -133,6 +133,7 @@ internal static class GLOBALS
                 #endif
             }
         }
+        internal static string ConfigDirectory => Path.Combine(ExecutableDirectory, "config");
         internal static string IndexDirectory => Path.Combine(AssetsDirectory, "index");
         internal static string TilesAssetsDirectory => Path.Combine(RendererDirectory, "Graphics");
         internal static string GeoAssetsDirectory => Path.Combine(AssetsDirectory, "geo");
@@ -299,6 +300,10 @@ internal static class GLOBALS
         new("Ring Chain", InitPropType_Legacy.Rope, 6, 40, 3, 20, 0.9f, 0.6f, 0.95f, true, new(100, 200, 0, 255), 1, 0.1f, 0.2f, 10, 0.1f),
         new("Christmas Wire", InitPropType_Legacy.Rope, 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, new(200, 0, 200, 255), 1, 0, 0, 0, 0),
         new("Ornate Wire", InitPropType_Legacy.Rope, 0, 17, 0, 8.5f, 0.5f, 0.5f, 0.9f, false, new(0, 200, 200, 255), 1, 0, 0, 0, 0),
+        new("Big Chain", InitPropType_Legacy.Rope, 9, 56, 3, 19, 0.9f, 0.8f, 0.95f, true, new(0,255,40, 255), 1, 0, 0, 6.5f, 0),
+        new("Chunky Chain", InitPropType_Legacy.Rope, 9, 28, 3, 19, 0.9f, 0.8f, 0.95f, true, new(0,255,40, 255), 1, 0, 0, 6.5f, 0),
+        new("Big Bike Chain", InitPropType_Legacy.Rope, 9, 76, 3, 33, 0.9f, 0.8f, 0.95f, true, new(100,150,100, 255), 1, 0, 0, 33f, 0),
+        new("Huge Bike Chain", InitPropType_Legacy.Rope, 9, 152, 3, 66, 0.9f, 0.8f, 0.95f, true, new(100,200,100, 255), 1, 0, 0, 66f, 0),
     ];
 
     internal static Rope[] Ropes => 
@@ -334,6 +339,8 @@ internal static class GLOBALS
         new("Stretched Pipe", 0),
         new("Twisted Thread", 0),
         new("Stretched Wire", 0),
+
+        new("Long Barbed Wire", 0)
     ];
 
     /// Embedded long prop definitions
@@ -493,9 +500,12 @@ internal static class GLOBALS
         ["Super BlackGoo", "Stained Glass Properties"], // 2
         ["Colored Barnacles", "Colored Rubble", "Fat Slime"], // 3
         ["Assorted Trash", "Colored Wires", "Colored Chains", "Ring Chains"], // 4
-        ["Left Facing Kelp", "Right Facing Kelp", "Mixed Facing Kelp", "Bubble Grower", "Moss Wall", "Club Moss"], // 6
+        ["Left Facing Kelp", "Right Facing Kelp", "Mixed Facing Kelp", "Bubble Grower", "Moss Wall", "Club Moss", "Dandelions"], // 6
         ["Ivy"], // 1
-        ["Fuzzy Growers"] // 1
+        ["Fuzzy Growers", "Leaf Growers", "Meat Growers", "Hyacinths", "Seed Grass", "Orb Plants", "Storm Plants"], // 7
+        ["Coral Growers", "Horror Growers"], // 2
+        ["Thunder Growers"], // 1
+        ["Ice Growers", "Grass Growers", "Fancy Growers"] // 3
     ];
 
     public static string EffectType(string name) => name switch
@@ -560,7 +570,8 @@ internal static class GLOBALS
             "Colored Hang Roots" or "Colored Thick Roots" or "Colored Shadow Plants" or
             "Root Plants" or "Arm Growers" or "Growers" or "Mini Growers" or
             "Left Facing Kelp" or "Right Facing Kelp" or "Mixed Facing Kelp" or 
-            "Bubble Grower" => true,
+            "Bubble Grower" or "Coral Growers" or "Horror Growers" or "Thunder Growers" or
+            "Leaf Growers" or "Ice Growsers" or "Grass Growers" or "Fancy Growers" => true,
         
         _ => false
     };
@@ -584,7 +595,10 @@ internal static class GLOBALS
         "Drought Artificial",       // 15
         "Dakras Plants",            // 16
         "Leo Plants",               // 17
-        "Nautillo Plants"           // 18
+        "Nautillo Plants",          // 18
+        "Nautillo Plants 2",        // 19
+        "Tronsx Plants",            // 20
+        "Tronsx Intrepid Plants",   // 21
     ];
     
     // Layers 2 and 3 do not show geo features like shortcuts and entrances 
@@ -656,7 +670,7 @@ internal static class GLOBALS
     public static Serilog.Core.Logger? Logger { get; set; }
 
     public static JsonSerializerOptions JsonSerializerOptions { get; } =
-        new() { WriteIndented = true };
+        new() { WriteIndented = true, Converters = { new MultiDimensionalArrayConverter(), new Vector2Converter(), new IntTupleConverter() } };
     
     public static Camera2D Camera { get; set; }
 
@@ -671,4 +685,17 @@ internal static class GLOBALS
 
     /// The current loaded level
     internal static Data.LevelState Level { get; set; } = new(InitialMatrixWidth, InitialMatrixHeight, (6, 3, 6, 5), Materials[0][1]);
+
+    public delegate void PassiveEventHandler();
+
+    public static event PassiveEventHandler? TileTextureLoadingDone;
+    public static event PassiveEventHandler? PropTextureLoadingDone;
+
+
+    public static void Invoke_TileTextureLoadingDone() {
+        TileTextureLoadingDone?.Invoke();
+    }
+    public static void Invoke_PropTextureLoadingDone() {
+        PropTextureLoadingDone?.Invoke();
+    }
 }

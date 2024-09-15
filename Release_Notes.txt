@@ -1,1 +1,47 @@
-- Fixed a crash when loading a second level.
+## Drizzle Update
+
+Upstreamed Drizzle's version to the latest version, which includes the latest new features from the Rain World's Community Editor.
+Refer to this [Discord post](https://discord.com/channels/291184728944410624/804088181904375819/1278816866764324886) for credits:
+
+### Effects
+
+- Nautillo Plants
+    - Leaf Growers 
+    - Meat Growers 
+    - Hyacinths 
+    - Seed Grass
+    - Orb Plants
+    - Storm Plants
+
+- Nautillo Plants 2
+    - Coral Growers
+    - Horror Growers
+
+- Dakras Plants
+    - Dandelions
+
+- Tronsx Plants
+    - Thunder Growers
+
+- Intrepid Plants
+    - Ice Growers
+    - Grass Growers
+    - Fancy Grower
+
+### Ropes
+
+- Big Chain
+- Chunky Chain
+- Big Bike Chain
+- Huge Bike Chain
+
+### Long Props
+
+- Long Barbed Wire
+
+## The Prop Editor
+
+- Prop presets can now persist after closing the editor.
+    - Remember to click `"Save"` in the presets window first.
+    - Presets are stored in `settings.json`, under the `PropEditor` section.
+    - Despite being stored in settings, presets only save when clicking the `Save` button in the presets window.

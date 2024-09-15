@@ -782,8 +782,6 @@ public partial class Engine
                         _ => [ 19, 27 ]
                     };
 
-                    var offset = new Vector2(x, y) * 20; // Needs tweaking
-
                     Quad q = new(
                         new Vector2(-90, -90),   // Top left
                         new Vector2( 90, -90),   // Top right
@@ -791,7 +789,7 @@ public partial class Engine
                         new Vector2(-90,  90)    // Bottom left
                     );
 
-                    q += start with { X = start.X + hx, Y = start.Y + hy };
+                    q += new Vector2(x, y) * 20 + Vector2.One * 20;
 
                     foreach (var l in dpsL)
                     {

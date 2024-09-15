@@ -938,12 +938,14 @@ internal static class Utils
             "Root Grass" or "Growers" or "Cacti" or "Rain Moss" or "Dense Mold" or 
                 "Seed Pods" or "Grass" or "Arm Growers" or "Horse Tails" or "Circuit Plants" or 
                 "Feather Plants" or "Mini Growers" or "Left Facing Kelp" or "Right Facing Kelp" or 
-                "Club Moss" or "Moss Wall" or "Mixed Facing Kelp" or "Bubble Grower" => [
+                "Club Moss" or "Moss Wall" or "Mixed Facing Kelp" or "Bubble Grower" or
+                "Storm Plants" or "Seed Grass" or "Hyacinths" or "Orb Plants" or "Dandelions" => [
                 new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
                 new("Color", ["Color1", "Color2", "Dead"], "Color2")
             ],
             
-            "Rollers" or "Thorn Growers" or "Garbage Spirals" or "Spinets" or "Small Springs" or "Fuzzy Growers" => [
+            "Rollers" or "Thorn Growers" or "Garbage Spirals" or "Spinets" or "Small Springs" or "Fuzzy Growers" or
+            "Leaf Growers" or "Meat Growers" or "Thunder Growers" or "Ice Growers" or "Grass Growers" or "Fancy Growers" or "Horror Growers" => [
                 new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
                 new("Color", ["Color1", "Color2", "Dead"], "Color2")
             ],

@@ -7,6 +7,7 @@ using static Raylib_cs.Raylib;
 using RenderTexture2D = Leditor.RL.Managed.RenderTexture2D;
 using Leditor.Types;
 using System.Drawing.Printing;
+using System.Text.Json;
 
 
 namespace Leditor.Pages;
@@ -210,7 +211,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
     private void UpdatePresetsPreview(int index)
     {
-        if (index < 0 || index >= _presets.SavedProps.Count || index == _selectedPreset) return;
+        if (index < 0 || index >= _presets.SavedProps.Count || (index == _selectedPreset && (_presetPreviewRT.Raw.Texture.Width != 0 && _presetPreviewRT.Raw.Texture.Height != 0))) return;
 
         var preset = _presets.SavedProps[index].Props;
         var rect = Utils.EncloseProps(preset.Select(p => p.Quad));
@@ -1332,7 +1333,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
     private PropGram _gram = new(30);
 
-    private PropPresets _presets = new();
+    private PropPresets _presets;
 
     private int _selectedPreset;
 
@@ -1344,6 +1345,11 @@ internal class PropsEditorPage : EditorPage, IContextListener
         _otherNames = GLOBALS.Props.Select(c => c.Select(p => p.Name).ToArray()).ToArray();
 
         _gram.Proceed(GLOBALS.Level.Props);
+        _presets = new PropPresets();
+    }
+
+    public void OnPropsLoadingDone() {
+        _presets = new PropPresets(GLOBALS.Settings.PropEditor.SavedPresets);
     }
 
     private void Undo() {
@@ -4698,6 +4704,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             _currentTile =
                                                 GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][
                                                     _propsMenuTilesIndex];
+
+                                            _selectedPreset = -1;
                                         }
                                     }
                                 }
@@ -4731,6 +4739,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             _currentTile =
                                                 GLOBALS.TileDex.OrderedTilesAsProps[_propsMenuTilesCategoryIndex][
                                                     _propsMenuTilesIndex];
+
+                                            _selectedPreset = -1;
                                         }
                                     }
                                 }
@@ -4780,6 +4790,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             _mode = 1;
                                             _propsMenuTilesIndex = index;
                                             _currentTile = currentTilep;
+                                            _selectedPreset = -1;
                                         }
                                     }
                                 }
@@ -4796,6 +4807,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                             _propsMenuTilesIndex = originalIndex;
                                             _propsMenuTilesCategoryIndex = _tileAsPropSearchResult.Categories[_tileAsPropSearchCategoryIndex].originalIndex;
                                             _currentTile = tile;
+                                            _selectedPreset = -1;
                                         }
 
                                         if (ImGui.IsItemHovered())
@@ -4835,6 +4847,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     if (selected) {
                                         _mode = 1;
                                         _propsMenuRopesIndex = index;
+                                        _selectedPreset = -1;
                                     }
                                 }
                                 ImGui.EndListBox();
@@ -4852,6 +4865,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     if (selected) {
                                         _mode = 1;
                                         _propsMenuLongsIndex = index;
+                                        _selectedPreset = -1;
                                     }
                                 }
                                 ImGui.EndListBox();
@@ -4905,6 +4919,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         
                                         if (selected)
                                         {
+                                            _selectedPreset = -1;
                                             _propsMenuOthersCategoryIndex = index;
                                             Utils.Restrict(ref _propsMenuOthersIndex, 0, _otherNames[_propsMenuOthersCategoryIndex].Length-1);
                                         }
@@ -4925,6 +4940,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         var selected = ImGui.Selectable("  " + categoryName, _propSearchCategoryIndex == c);
 
                                         if (selected) {
+                                            _selectedPreset = -1;
                                             _propSearchCategoryIndex = c;
                                             _propsMenuOthersCategoryIndex = originalIndex;
                                             Utils.Restrict(ref _propsMenuOthersIndex, 0, _otherNames[_propsMenuOthersCategoryIndex].Length-1);
@@ -4965,6 +4981,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         }
                                         
                                         if (selected) {
+                                            _selectedPreset = -1;
                                             _mode = 1;
                                             _propsMenuOthersIndex = index;
                                         }
@@ -4976,6 +4993,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                         var selected = ImGui.Selectable(prop.Name, _propSearchIndex == p);
 
                                         if (selected) {
+                                            _selectedPreset = -1;
                                             _propSearchIndex = p;
                                             _mode = 1;
                                             _propsMenuOthersIndex = originalIndex;
@@ -5554,10 +5572,32 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
             if (presetsOpened)
             {
+                if (ImGui.Button("Save",  ImGui.GetContentRegionAvail() with { Y = 20 })) {
+                    try
+                    {
+                        GLOBALS.Settings.PropEditor.SavedPresets = _presets.Export();
+                        var text = JsonSerializer.Serialize(GLOBALS.Settings, GLOBALS.JsonSerializerOptions);
+                        File.WriteAllText(GLOBALS.Paths.SettingsPath, text);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error($"Failed to save changes: {e}");
+                        Console.WriteLine($"Failed to save changes: {e}");
+                    }
+                }
+
                 if (ImGui.BeginListBox("##Presets", ImGui.GetContentRegionAvail()))
                 {
                     for (var i = 0; i < _presets.SavedProps.Count; i++)
                     {
+
+                        if (ImGui.Button("[Delete]")) {
+                            _presets.Remove(i);
+                            break;
+                        }
+
+                        ImGui.SameLine();
+
                         if (ImGui.Selectable($"{i}. {_presets.SavedProps[i].Label}", i == _selectedPreset))
                         {
                             if (i == _selectedPreset)
@@ -5572,6 +5612,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
 
                             _mode = 1;
                         }
+
 
                         if (ImGui.IsItemHovered())
                         {

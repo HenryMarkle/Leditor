@@ -1,1 +1,0 @@
-Press 'N' to create a new level. Use left and right arrows to step in and out of subfolders

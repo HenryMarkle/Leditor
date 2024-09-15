@@ -466,6 +466,19 @@ class Program
             }
         }
 
+        // Check config directory
+
+        if (!Directory.Exists(GLOBALS.Paths.ConfigDirectory)) {
+            try
+            {
+                Directory.CreateDirectory(GLOBALS.Paths.ConfigDirectory);
+            }
+            catch (Exception e)
+            {
+                logger.Error($"failed to create config directory: {e}");
+            }
+        }
+
         // Import settings
 
         logger.Information("Importing settings");
@@ -482,12 +495,12 @@ class Program
             if (File.Exists(GLOBALS.Paths.SettingsPath))
             {
                 var settingsText = File.ReadAllText(Path.Combine(GLOBALS.Paths.ExecutableDirectory, "settings.json"));
-                GLOBALS.Settings = JsonSerializer.Deserialize<Settings>(settingsText, serOptions) ?? throw new Exception("failed to deserialize settings.json");
+                GLOBALS.Settings = JsonSerializer.Deserialize<Settings>(settingsText, GLOBALS.JsonSerializerOptions) ?? throw new Exception("failed to deserialize settings.json");
             }
             else
             {
                 logger.Debug("settings.json file not found; exporting default settings");
-                var text = JsonSerializer.Serialize(GLOBALS.Settings, serOptions);
+                var text = JsonSerializer.Serialize(GLOBALS.Settings, GLOBALS.JsonSerializerOptions);
                 File.WriteAllText(GLOBALS.Paths.SettingsPath, text);
             }
         }
@@ -497,7 +510,7 @@ class Program
 
             try
             {
-                var text = JsonSerializer.Serialize(GLOBALS.Settings, serOptions);
+                var text = JsonSerializer.Serialize(GLOBALS.Settings, GLOBALS.JsonSerializerOptions);
                 File.WriteAllText(GLOBALS.Paths.SettingsPath, text);
             }
             catch (Exception e2)
@@ -1169,6 +1182,8 @@ void main() {
         GLOBALS.PageUpdated += experimentalGeometryPage.OnPageUpdated;
         GLOBALS.PageUpdated += dimensionsPage.OnPageUpdated;
         GLOBALS.PageUpdated += l4MakerPage.OnPageUpdated;
+
+        GLOBALS.PropTextureLoadingDone += propsPage.OnPropsLoadingDone;
 
         //
 
@@ -2396,6 +2411,8 @@ void main() {
                                     _tileLoader.ResetTask();
                                     isLoadingTileTexturesDone = true;
 
+                                    GLOBALS.Invoke_TileTextureLoadingDone();
+
                                     goto break_tile_texture_loading;
                                 }
                             }
@@ -2429,6 +2446,8 @@ void main() {
                                     GLOBALS.Textures.LongProps = propTextures.Longs;
                                     
                                     loadPropTexturesList.Clear();
+
+                                    GLOBALS.Invoke_PropTextureLoadingDone();
 
                                     goto break_prop_texture_loading;
                                 }
@@ -2665,6 +2684,8 @@ void main() {
         GLOBALS.PageUpdated -= experimentalGeometryPage!.OnPageUpdated;
         GLOBALS.PageUpdated -= dimensionsPage.OnPageUpdated;
         GLOBALS.PageUpdated -= l4MakerPage.OnPageUpdated;
+
+        GLOBALS.PropTextureLoadingDone -= propsPage.OnPropsLoadingDone;
 
         // Unloading Pages
         
