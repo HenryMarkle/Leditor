@@ -280,7 +280,7 @@ internal static class GLOBALS
     internal static (string, Color)[] PropCategories { get; set; } = [ ("Ropes", new(255, 0, 0, 255)), ("Long Props", new(0, 255, 0, 255)) ];
     
     /// Embedded rope prop definitions
-    internal static InitRopeProp[] RopeProps { get; } =
+    internal static InitRopeProp[] RopeProps { get; set; } =
     [
         new(name: "Wire", type: InitPropType_Legacy.Rope, depth: 0, segmentLength: 3, collisionDepth: 0, segmentRadius: 1f, gravity: 0.5f, friction: 0.5f, airFriction: 0.9f, stiff: false, previewColor: new(255, 0, 0, 255), previewEvery: 4, edgeDirection: 0, rigid: 0, selfPush: 0, sourcePush: 0),
         new("Tube", InitPropType_Legacy.Rope, 4, 10, 2, 4.5f, 0.5f, 0.5f, 0.9f, true, new(0, 0, 255, 255), 2, 5, 1.6f, 0, 0),
@@ -344,7 +344,7 @@ internal static class GLOBALS
     ];
 
     /// Embedded long prop definitions
-    internal static InitLongProp[] LongProps { get; } = 
+    internal static InitLongProp[] LongProps { get; set; } = 
     [
         new("Cabinet Clamp", InitPropType_Legacy.Long, 0),
         new("Drill Suspender", InitPropType_Legacy.Long, 5),

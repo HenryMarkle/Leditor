@@ -552,6 +552,67 @@ internal class ExperimentalGeometryPage : EditorPage
             }
         }
 
+        // Brush shortcuts
+
+        if (_shortcuts.SolidBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 0;
+            _geoMenuIndex = 0;
+        } else if (_shortcuts.SlopeBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 0;
+            _geoMenuIndex = 1;
+        } else if (_shortcuts.PlatformBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 0;
+            _geoMenuIndex = 1;
+        } else if (_shortcuts.GlassBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 0;
+            _geoMenuIndex = 1;
+        } else if (_shortcuts.VerticalPoleBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 1;
+            _geoMenuIndex = 0;
+        } else if (_shortcuts.HorizontalPoleBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 1;
+            _geoMenuIndex = 1;
+        } else if (_shortcuts.CrackedTerrainBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 1;
+            _geoMenuIndex = 2;
+        } else if (_shortcuts.BathiveBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 2;
+            _geoMenuIndex = 0;
+        } else if (_shortcuts.ForbidFlyChainsBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 2;
+            _geoMenuIndex = 1;
+        } else if (_shortcuts.WaterfallBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 2;
+            _geoMenuIndex = 2;
+        } else if (_shortcuts.WormGrassBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 2;
+            _geoMenuIndex = 3;
+        } else if (_shortcuts.PlaceRockBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 2;
+            _geoMenuIndex = 4;
+        } else if (_shortcuts.PlaceSpearBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 2;
+            _geoMenuIndex = 5;
+        } else if (_shortcuts.ShortcutEntranceBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 3;
+            _geoMenuIndex = 0;
+        } else if (_shortcuts.ShortcutPathBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 3;
+            _geoMenuIndex = 1;
+        } else if (_shortcuts.RoomEntranceBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 3;
+            _geoMenuIndex = 2;
+        } else if (_shortcuts.WackBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 3;
+            _geoMenuIndex = 3;
+        } else if (_shortcuts.ScavengerBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 3;
+            _geoMenuIndex = 4;
+        } else if (_shortcuts.GarbageWormBrush.Check(ctrl, shift, alt)) {
+            _geoMenuCategory = 3;
+            _geoMenuIndex = 5;
+        }
+
         // Move level with keyboard
 
 

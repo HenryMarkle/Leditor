@@ -692,7 +692,23 @@ class Program
 
             try
             {
-                (GLOBALS.PropCategories, GLOBALS.Props) = LoadPropInitFromRenderer();
+                var (categ, props) = LoadPropInitFromRenderer();
+
+                GLOBALS.Props = props.Select(c => 
+                    c.Where(p => 
+                        p.Type != InitPropType_Legacy.CustomRope && p.Type != InitPropType_Legacy.CustomLong
+                    ).ToArray()
+                ).ToArray();
+
+                GLOBALS.PropCategories = categ
+                    .Select((c, i) => (c, i))
+                    .Where((pair) => !props[pair.Item2].All(p => p.Type == InitPropType_Legacy.CustomRope || p.Type == InitPropType_Legacy.CustomLong))
+                    .Select((pair) => pair.Item1)
+                    .ToArray();
+
+                GLOBALS.RopeProps = [..GLOBALS.RopeProps, ..props.SelectMany(c => c.Where(p => p.Type == InitPropType_Legacy.CustomRope).Cast<InitRopeProp>())];
+                GLOBALS.LongProps = [..GLOBALS.LongProps, ..props.SelectMany(c => c.Where(p => p.Type == InitPropType_Legacy.CustomLong).Cast<InitLongProp>())];
+
                 _propLoader = new([GLOBALS.Paths.PropsAssetsDirectory]);
 
                 _propLoader!.Start();

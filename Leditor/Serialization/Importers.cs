@@ -207,6 +207,22 @@ public static class Importers {
         AstNode.Number? colorize            = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "colorize").Value;
         AstNode.Number? contourExp          = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "contourexp").Value;
 
+        // Custom Ropes
+
+        AstNode.Number? rope_segmentLength  = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "segmentlength").Value;
+        AstNode.Number? rope_collisionDepth = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "collisiondepth").Value;
+        AstNode.Number? rope_segmentRadius  = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "segmentradius").Value;
+        AstNode.Number? rope_segRad         = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "segrad").Value;
+        AstNode.Number? rope_grav           = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "grav").Value;
+        AstNode.Number? rope_friction       = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "friction").Value;
+        AstNode.Number? rope_airFric        = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "airfric").Value;
+        AstNode.Number? rope_stiff          = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "stiff").Value;
+        AstNode.Number? rope_previewEvery   = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "previewevery").Value;
+        AstNode.Number? rope_edgeDirection  = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "edgedirection").Value;
+        AstNode.Number? rope_rigid          = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "rigid").Value;
+        AstNode.Number? rope_selfPush       = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "selfpush").Value;
+        AstNode.Number? rope_sourcePush     = (AstNode.Number?)     propertList.FirstOrDefault(p => ((AstNode.Symbol)p.Key).Value == "sourcepush").Value;
+
         InitPropColorTreatment getColorTreatment() => colorTreatment is null
                     ? InitPropColorTreatment.Standard
                     : colorTreatment.Value switch { "standard" => InitPropColorTreatment.Standard, "bevel" => InitPropColorTreatment.Bevel, _ => throw new InvalidInitPropertyValueException("", StringifyBase(@base), "colorTreatment", colorTreatment.Value) };
@@ -231,7 +247,8 @@ public static class Importers {
             "variedDecal"       => InitPropType_Legacy.VariedDecal,
             "antimatter"        => InitPropType_Legacy.Antimatter,
             "softEffect"        => InitPropType_Legacy.SoftEffect,
-            "long"              => InitPropType_Legacy.Long,
+            "customlong"        => InitPropType_Legacy.CustomLong,
+            "customrope"        => InitPropType_Legacy.CustomRope,
             "coloredSoft"       => InitPropType_Legacy.ColoredSoft,
 
             _ => throw new InvalidPropTypeException(typeStr, StringifyBase(@base))
@@ -326,7 +343,25 @@ public static class Importers {
                 random is null ? 0 : getIntProperty(random)
             ),
             InitPropType_Legacy.Antimatter => new InitAntimatterProp(name, type, depth is null ? 0 :  getIntProperty(depth), getFloatProperty(contourExp)),
-            InitPropType_Legacy.Long => new InitLongProp(name, type, depth is null ? 0 : getIntProperty(depth)),
+            InitPropType_Legacy.CustomLong => new InitLongProp(name, type, depth is null ? 0 : getIntProperty(depth)),
+            InitPropType_Legacy.CustomRope => new InitRopeProp(
+                name, 
+                type, 
+                depth is null ? 0 : getIntProperty(depth), 
+                getIntProperty(rope_segmentLength), 
+                getIntProperty(rope_collisionDepth), 
+                getFloatProperty(rope_segmentRadius), 
+                getFloatProperty(rope_grav), 
+                getFloatProperty(rope_friction), 
+                getFloatProperty(rope_airFric), 
+                getIntProperty(rope_stiff) > 0, 
+                Color.Red, 
+                getIntProperty(rope_previewEvery), 
+                getFloatProperty(rope_edgeDirection), 
+                getFloatProperty(rope_rigid), 
+                getFloatProperty(rope_selfPush), 
+                getFloatProperty(rope_sourcePush)
+            ),
             InitPropType_Legacy.ColoredSoft => new InitColoredSoftProp(name, type, 
                 depth is null ? 0 : getIntProperty(depth), 
                 pxlSize is null

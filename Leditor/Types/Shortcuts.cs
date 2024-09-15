@@ -195,6 +195,27 @@ public class ExperimentalGeoShortcuts : IEditorShortcuts
 
     private KeyboardShortcut toggleIndexHint = new(KeyboardKey.Null);
 
+    private KeyboardShortcut solidBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut slopeBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut platformBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut glassBrush = new(KeyboardKey.Null);
+
+    private KeyboardShortcut verticalPoleBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut horizontalPoleBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut crackedTerrainBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut bathiveBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut forbidFlyChainsBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut waterfallBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut wormGrassBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut placeRockBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut placeSpearBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut shortcutEntranceBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut shortcutPathBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut roomEntranceBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut wackBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut scavengerBrush = new(KeyboardKey.Null);
+    private KeyboardShortcut garbageWormBrush = new(KeyboardKey.Null);
+    
 
     //
 
@@ -321,6 +342,26 @@ public class ExperimentalGeoShortcuts : IEditorShortcuts
     [ShortcutName("Toggle Ruler")]
     public KeyboardShortcut ToggleIndexHint { get => toggleIndexHint; set { toggleIndexHint = value; CachedStrings = Utils.GetShortcutStrings(this); } }
 
+
+    public KeyboardShortcut SolidBrush { get => solidBrush; set { solidBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut SlopeBrush { get => slopeBrush; set { slopeBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut PlatformBrush { get => platformBrush; set { platformBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut GlassBrush { get => glassBrush; set { glassBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut VerticalPoleBrush { get => verticalPoleBrush; set { verticalPoleBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut HorizontalPoleBrush { get => horizontalPoleBrush; set { horizontalPoleBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut CrackedTerrainBrush { get => crackedTerrainBrush; set { crackedTerrainBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut BathiveBrush { get => bathiveBrush; set { bathiveBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut ForbidFlyChainsBrush { get => forbidFlyChainsBrush; set { forbidFlyChainsBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut WaterfallBrush { get => waterfallBrush; set { waterfallBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut WormGrassBrush { get => wormGrassBrush; set { wormGrassBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut PlaceRockBrush { get => placeRockBrush; set { placeRockBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut PlaceSpearBrush { get => placeSpearBrush; set { placeSpearBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut ShortcutEntranceBrush { get => shortcutEntranceBrush; set { shortcutEntranceBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut ShortcutPathBrush { get => shortcutPathBrush; set { shortcutPathBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut RoomEntranceBrush { get => roomEntranceBrush; set { roomEntranceBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut WackBrush { get => wackBrush; set { wackBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut ScavengerBrush { get => scavengerBrush; set { scavengerBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    public KeyboardShortcut GarbageWormBrush { get => garbageWormBrush; set { garbageWormBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
 

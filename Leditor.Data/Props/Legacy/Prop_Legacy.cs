@@ -179,7 +179,9 @@ public enum InitPropType_Legacy
     Antimatter,
     ColoredSoft,
     Rope,
+    CustomRope,
     Long,
+    CustomLong,
     Tile
 }
 
