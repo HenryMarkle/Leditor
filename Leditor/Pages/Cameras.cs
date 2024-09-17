@@ -627,6 +627,8 @@ internal class CamerasEditorPage : EditorPage, IContextListener
                     }
                     
                     ImGui.EndChild();
+
+                    GLOBALS.Level.Cameras[_currentCamera] = currentCam;
                 }
 
                 ImGui.End();
