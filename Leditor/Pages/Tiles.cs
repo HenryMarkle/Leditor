@@ -1647,11 +1647,17 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                                     {
                                         var pos = l2Copy.HeadPosition;
 
-                                        l2Copy= new Tile(
-                                            pos.X - difX, pos.Y - difY, GLOBALS.Layer + 1,
-                                            GLOBALS.Level.TileMatrix[pos.Y - difY, pos.X - difX, GLOBALS.Layer + 1].TileDefinition,
-                                            GLOBALS.Level.TileMatrix[pos.Y - difY, pos.X - difX, GLOBALS.Layer + 1].UndefinedName
-                                        );
+                                        var px = pos.X - difX;
+                                        var py = pos.Y - difY;
+
+                                        if (py >= 0 && py < GLOBALS.Level.Height && panelMenuHeight >= 0 && px < GLOBALS.Level.Width) {
+                                            l2Copy= new Tile(
+                                                pos.X - difX, pos.Y - difY, GLOBALS.Layer + 1,
+                                                GLOBALS.Level.TileMatrix[py, px, GLOBALS.Layer + 1].TileDefinition,
+                                                GLOBALS.Level.TileMatrix[py, px, GLOBALS.Layer + 1].UndefinedName
+                                            );
+                                        }
+
                                     } else if (_copyMaterials && l1Copy.Type is TileCellType.Material) {
                                         GLOBALS.Level.MaterialColors[my, mx, GLOBALS.Layer + 1] = _copyMaterialColorBuffer[y, x, 1];
                                     }
@@ -1698,11 +1704,17 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                                 {
                                     var pos = l1Copy.HeadPosition;
 
-                                    l1Copy= new Tile(
-                                        pos.X - difX, pos.Y - difY, GLOBALS.Layer + 1,
-                                        GLOBALS.Level.TileMatrix[pos.Y - difY, pos.X - difX, GLOBALS.Layer + 1].TileDefinition,
-                                        GLOBALS.Level.TileMatrix[pos.Y - difY, pos.X - difX, GLOBALS.Layer + 1].UndefinedName
-                                    );
+                                    var py = pos.Y - difY;
+                                    var px = pos.X - difX;
+
+                                    if (py >= 0 && py < GLOBALS.Level.Height && panelMenuHeight >= 0 && px < GLOBALS.Level.Width) {
+                                        l1Copy= new Tile(
+                                            pos.X - difX, pos.Y - difY, GLOBALS.Layer + 1,
+                                            GLOBALS.Level.TileMatrix[py, px, GLOBALS.Layer + 1].TileDefinition,
+                                            GLOBALS.Level.TileMatrix[py, px, GLOBALS.Layer + 1].UndefinedName
+                                        );
+                                    }
+
                                 } else if (_copyMaterials && l1Copy.Type is TileCellType.Material) {
                                     GLOBALS.Level.MaterialColors[my, mx, GLOBALS.Layer] = _copyMaterialColorBuffer[y, x, 0];
                                 }
@@ -3284,8 +3296,12 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                 if (ImGui.Checkbox("Current Specs", ref drawCurrentSpecs)) {
                     GLOBALS.Settings.TileEditor.DrawCurrentSpecs = drawCurrentSpecs;
                 }
+
+                var dtc = GLOBALS.Settings.TileEditor.DeepTileCopy;
                 
-                ImGui.Checkbox("Deep Tile Copy", ref _deepTileCopy);
+                if (ImGui.Checkbox("Deep Tile Copy", ref dtc)) {
+                    GLOBALS.Settings.TileEditor.DeepTileCopy = dtc;
+                }
                 ImGui.Checkbox("Copy Materials Too", ref _copyMaterials);
 
                 var hoveredInfo = GLOBALS.Settings.TileEditor.HoveredTileInfo;

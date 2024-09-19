@@ -1,1 +1,2 @@
-- Slightly improved corrupted props init reporting.
+- Fixed a crash caused from pasting tiles out of bounds.
+- `Deep Tile Copy` option now persists.

@@ -166,6 +166,9 @@ public class TileEditorSettings
     [SettingName("Show Props")]
     public bool ShowProps { get; set; } = false;
 
+    [SettingName("Deep Tile Copy", Description = "Copies two layer")]
+    public bool DeepTileCopy { get; set; } = false;
+
     public enum ScreenRelativePosition { 
         TopLeft, 
         TopRight, 
