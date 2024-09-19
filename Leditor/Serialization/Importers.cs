@@ -380,7 +380,7 @@ public static class Importers {
                 vars is null ? 1 : getIntProperty(vars)
 
             ),
-            InitPropType_Legacy.CustomRope => new InitRopeProp(
+            InitPropType_Legacy.CustomRope => new InitCustomRopeProp(
                 name, 
                 type, 
                 depth is null ? 0 : getIntProperty(depth), 
@@ -396,7 +396,9 @@ public static class Importers {
                 getFloatProperty(rope_edgeDirection), 
                 getFloatProperty(rope_rigid), 
                 getFloatProperty(rope_selfPush), 
-                getFloatProperty(rope_sourcePush)
+                getFloatProperty(rope_sourcePush),
+                getColorTreatment(),
+                bevel is null ? 0 : getIntProperty(bevel)
             ),
             InitPropType_Legacy.ColoredSoft => new InitColoredSoftProp(name, type, 
                 depth is null ? 0 : getIntProperty(depth), 
@@ -461,17 +463,15 @@ public static class Importers {
             // prop list
             else
             {
-                var obj = LingoParser.Expression.ParseOrThrow(line);
-
-                InitPropBase prop;
-
                 try {
-                    prop = GetInitProp(obj);
-                } catch (Exception e) {
-                    throw new InitParseException($"Failed to load prop init at line {counter}.", StringifyBase(obj), e);
-                }
+                    var obj = LingoParser.Expression.ParseOrThrow(line);
 
-                props[^1] = [.. props[^1], prop];
+                    InitPropBase prop;
+                    prop = GetInitProp(obj);
+                    props[^1] = [.. props[^1], prop];
+                } catch (Exception e) {
+                    throw new InitParseException($"Failed to load prop init at line {counter}.", "", e);
+                }
             }
         }
 

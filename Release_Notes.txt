@@ -1,1 +1,1 @@
-- Fixed camera data not being editable in the window.
+- Slightly improved corrupted props init reporting.
