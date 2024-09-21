@@ -1,2 +1,1 @@
-- Fixed a crash caused from pasting tiles out of bounds.
-- `Deep Tile Copy` option now persists.
+- Fixed a bug that has to do with `deep tile copy` not saving.

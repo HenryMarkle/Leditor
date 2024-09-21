@@ -52,7 +52,6 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
     private bool _eraseClickTracker;
     private bool _copyClickTracker;
 
-    private bool _deepTileCopy = true;
     private bool _copyMaterials = true;
 
     private int _prevPosX = -1;
@@ -1639,7 +1638,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                                 GLOBALS.Level.GeoMatrix[my, mx, GLOBALS.Layer] =
                                     Utils.CopyGeoCell(_copyGeoBuffer[y, x, 0]);
 
-                                if (_deepTileCopy && GLOBALS.Layer != 2)
+                                if (GLOBALS.Settings.TileEditor.DeepTileCopy && GLOBALS.Layer != 2)
                                 {
                                     var l2Copy = _copyBuffer[y, x, 1];
                                     
@@ -1728,7 +1727,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
 
                                 GLOBALS.Level.TileMatrix[my, mx, GLOBALS.Layer] = l1Copy;
 
-                                if (_deepTileCopy && GLOBALS.Layer != 2)
+                                if (GLOBALS.Settings.TileEditor.DeepTileCopy && GLOBALS.Layer != 2)
                                 {
                                     var l2Copy = _copyBuffer[y, x, 1];
                                     
@@ -2412,8 +2411,8 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                         if (_materialTileSwitch)
                         {
                             // Draw current specs
-                            if (GLOBALS.Settings.TileEditor.DrawCurrentSpecs) {
-                                var headOrigin = Utils.GetTileHeadOrigin(_currentTile!);
+                            if (GLOBALS.Settings.TileEditor.DrawCurrentSpecs && _currentTile is not null) {
+                                var headOrigin = Utils.GetTileHeadOrigin(_currentTile);
                                 
                                 Printers.DrawTileSpecs(_currentTile?.Specs, new Vector2(tileMatrixX, tileMatrixY) - headOrigin, GLOBALS.Scale);
                             }
