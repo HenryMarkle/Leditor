@@ -216,6 +216,14 @@ public class ExperimentalGeoShortcuts : IEditorShortcuts
     private KeyboardShortcut scavengerBrush = new(KeyboardKey.Null);
     private KeyboardShortcut garbageWormBrush = new(KeyboardKey.Null);
     
+    private KeyboardShortcut toggleVerticalMirror = new(KeyboardKey.V);
+    private KeyboardShortcut toggleHorizontalMirror = new(KeyboardKey.H);
+
+    private KeyboardShortcut moveVerticalMirrorRight = new(KeyboardKey.Null);
+    private KeyboardShortcut moveVerticalMirrorLeft = new(KeyboardKey.Null);
+
+    private KeyboardShortcut moveHorizontalMirrorUp = new(KeyboardKey.Null);
+    private KeyboardShortcut moveHorizontalMirrorDown = new(KeyboardKey.Null);
 
     //
 
@@ -399,7 +407,25 @@ public class ExperimentalGeoShortcuts : IEditorShortcuts
     
     [ShortcutName("Garbage Worm", Group = "Instant Access")]
     public KeyboardShortcut GarbageWormBrush { get => garbageWormBrush; set { garbageWormBrush = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+
+    [ShortcutName("Toggle Vertical Mirror", Group = "Mirrors")]    
+    public KeyboardShortcut ToggleVerticalMirror { get => toggleVerticalMirror; set { toggleVerticalMirror = value; CachedStrings = Utils.GetShortcutStrings(this); } }
     
+    [ShortcutName("Toggle Horizontal Mirror", Group = "Mirrors")]    
+    public KeyboardShortcut ToggleHorizontalMirror { get => toggleHorizontalMirror; set { toggleHorizontalMirror = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+
+    [ShortcutName("Move Vertical Mirror to The Right", Group = "Mirrors")]    
+    public KeyboardShortcut MoveVerticalMirrorRight { get => moveVerticalMirrorRight; set { moveVerticalMirrorRight = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Move Vertical Mirror to The Left", Group = "Mirrors")]    
+    public KeyboardShortcut MoveVerticalMirrorLeft { get => moveVerticalMirrorLeft; set { moveVerticalMirrorLeft = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+
+    [ShortcutName("Move Horizontal Mirror Upwards", Group = "Mirrors")]    
+    public KeyboardShortcut MoveHorizontalMirrorUp { get => moveHorizontalMirrorUp; set { moveHorizontalMirrorUp = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+    
+    [ShortcutName("Move Horizontal Mirror Downwards", Group = "Mirrors")]    
+    public KeyboardShortcut MoveHorizontalMirrorDown { get => moveHorizontalMirrorDown; set { moveHorizontalMirrorDown = value; CachedStrings = Utils.GetShortcutStrings(this); } }
+
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
 
     public ExperimentalGeoShortcuts()

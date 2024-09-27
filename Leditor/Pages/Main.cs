@@ -972,7 +972,9 @@ internal class MainPage : EditorPage, IContextListener
                         ImGui.Spacing();
                         
                         var neverShow = GLOBALS.Settings.GeneralSettings.NeverShowMissingTileTexturesAlertAgain;
-                        ImGui.Checkbox("Don't Show Again", ref neverShow);
+                        if (ImGui.Checkbox("Don't Show Again", ref neverShow)) {
+                            GLOBALS.Settings.GeneralSettings.NeverShowMissingTileTexturesAlertAgain = neverShow;
+                        }
                         
                         var okSelected = ImGui.Button("Ok", ImGui.GetContentRegionAvail() with { Y = 20 });
                         

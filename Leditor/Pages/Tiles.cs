@@ -1615,7 +1615,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
 
                                 var l1Copy = _copyBuffer[y, x, 0];
 
-                                if (l1Copy.Type is TileCellType.Body)
+                                if (GLOBALS.Layer < 2 && l1Copy.Type is TileCellType.Body)
                                 {
                                     var pos = l1Copy.HeadPosition;
 
@@ -1638,7 +1638,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                                 GLOBALS.Level.GeoMatrix[my, mx, GLOBALS.Layer] =
                                     Utils.CopyGeoCell(_copyGeoBuffer[y, x, 0]);
 
-                                if (GLOBALS.Settings.TileEditor.DeepTileCopy && GLOBALS.Layer != 2)
+                                if (GLOBALS.Settings.TileEditor.DeepTileCopy && GLOBALS.Layer < 2)
                                 {
                                     var l2Copy = _copyBuffer[y, x, 1];
                                     
@@ -1699,7 +1699,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
 
                                 var l1Copy = _copyBuffer[y, x, 0];
 
-                                if (l1Copy.Type is TileCellType.Body)
+                                if (GLOBALS.Layer < 2 && l1Copy.Type is TileCellType.Body)
                                 {
                                     var pos = l1Copy.HeadPosition;
 
@@ -1727,7 +1727,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
 
                                 GLOBALS.Level.TileMatrix[my, mx, GLOBALS.Layer] = l1Copy;
 
-                                if (GLOBALS.Settings.TileEditor.DeepTileCopy && GLOBALS.Layer != 2)
+                                if (GLOBALS.Settings.TileEditor.DeepTileCopy && GLOBALS.Layer < 2)
                                 {
                                     var l2Copy = _copyBuffer[y, x, 1];
                                     
