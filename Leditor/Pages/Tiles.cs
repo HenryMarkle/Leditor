@@ -1618,13 +1618,16 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                                 if (GLOBALS.Layer < 2 && l1Copy.Type is TileCellType.Body)
                                 {
                                     var pos = l1Copy.HeadPosition;
+                                    var py = pos.Y - difY;
+                                    var px = pos.X - difX;
 
-                                    l1Copy = new Tile(
-                                        pos.X - difX, pos.Y - difY, GLOBALS.Layer + 1,
-                                        GLOBALS.Level.TileMatrix[pos.Y - difY, pos.X - difX, GLOBALS.Layer + 1].TileDefinition,
-                                        GLOBALS.Level.TileMatrix[pos.Y - difY, pos.X - difX, GLOBALS.Layer + 1].UndefinedName
-                                    );
-
+                                    if (px >= 0 && px < GLOBALS.Level.Width && py >= 0 && panelMenuHeight < GLOBALS.Level.Height) {
+                                        l1Copy = new Tile(
+                                            pos.X - difX, pos.Y - difY, GLOBALS.Layer + 1,
+                                            GLOBALS.Level.TileMatrix[pos.Y - difY, pos.X - difX, GLOBALS.Layer + 1].TileDefinition,
+                                            GLOBALS.Level.TileMatrix[pos.Y - difY, pos.X - difX, GLOBALS.Layer + 1].UndefinedName
+                                        );
+                                    }
                                 } else if (_copyMaterials && l1Copy.Type is TileCellType.Material) {
                                     GLOBALS.Level.MaterialColors[my, mx, GLOBALS.Layer] = _copyMaterialColorBuffer[y, x, 0];
                                 }
