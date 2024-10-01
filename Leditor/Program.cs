@@ -1199,6 +1199,14 @@ void main() {
         GLOBALS.PageUpdated += dimensionsPage.OnPageUpdated;
         GLOBALS.PageUpdated += l4MakerPage.OnPageUpdated;
 
+        GLOBALS.LevelSelected += mainPage.OnLevelSelected;
+        GLOBALS.LevelSelected += experimentalGeometryPage.OnLevelSelected;
+        GLOBALS.LevelSelected += tilePage.OnLevelSelected;
+        GLOBALS.LevelSelected += lightPage.OnLevelSelected;
+        GLOBALS.LevelSelected += effectsPage.OnLevelSelected;
+        GLOBALS.LevelSelected += dimensionsPage.OnLevelSelected;
+        GLOBALS.LevelSelected += propsPage.OnLevelSelected;
+
         GLOBALS.PropTextureLoadingDone += propsPage.OnPropsLoadingDone;
 
         //
@@ -1974,12 +1982,6 @@ void main() {
 
                 if (_isGuiLocked && _globalSave)
                 {
-                    BeginDrawing();
-                    
-                    ClearBackground(Color.Black);
-                    
-                    DrawText("Please wait..", GetScreenWidth() / 2 - 100, GetScreenHeight() / 2 - 20, 30, new(255, 255, 255, 255));
-                    
                     if (_askForPath)
                     {
                         
@@ -1996,14 +1998,12 @@ void main() {
                         {
                             if (!_saveFileDialog.IsCompleted)
                             {
-                                EndDrawing();
                                 continue;
                             }
                             if (string.IsNullOrEmpty(_saveFileDialog.Result))
                             {
                                 _globalSave = false;
                                 _isGuiLocked = false;
-                                EndDrawing();
                                 continue;
                             }
 
@@ -2012,12 +2012,10 @@ void main() {
                             if (_saveResult is null)
                             {
                                 _saveResult = SaveProjectAsync(path);
-                                EndDrawing();
                                 continue;
                             }
                             if (!_saveResult.IsCompleted)
                             {
-                                EndDrawing();
                                 continue;
                             }
 
@@ -2027,7 +2025,6 @@ void main() {
                             {
                                 _globalSave = false;
                                 _isGuiLocked = false;
-                                EndDrawing();
                                 #if DEBUG
                                 if (result.Exception is not null) logger.Error($"Failed to save project: {result.Exception}");
                                 #endif
@@ -2077,9 +2074,6 @@ void main() {
                                 using var levelImg = Printers.GenerateLevelReviewImage();
 
                                 ExportImage(levelImg, Path.Combine(GLOBALS.Paths.CacheDirectory, "levelpreviews", GLOBALS.Level.ProjectName+".png"));
-
-
-                                EndDrawing();
                             }
                         }
                     }
@@ -2286,6 +2280,17 @@ void main() {
                         // TODO: Move to using Pager
                         
                         if (!GLOBALS.LockNavigation) {
+                            if (gShortcuts.MoveToNextLevel.Check(ctrl, shift, alt))
+                            {
+                                GLOBALS.SelectedLevel = ++GLOBALS.SelectedLevel % GLOBALS.Levels.Count;
+                            }
+                            else if (gShortcuts.MoveToPreviousLevel.Check(ctrl, shift, alt))
+                            {
+                                GLOBALS.SelectedLevel--;
+
+                                GLOBALS.SelectedLevel %= GLOBALS.Levels.Count;
+                            }
+                            
                             if (gShortcuts.ToMainPage.Check(ctrl, shift, alt))
                             {
 #if DEBUG
@@ -2511,6 +2516,11 @@ void main() {
 
                     if (GLOBALS.Settings.GeneralSettings.DebugScreen) Printers.Debug.F3Screen();
 
+                    if (_globalSave)
+                    {
+                        DrawText("Please wait..", 0, GetScreenHeight() - 30, 30, Color.White);
+                    }
+
                     EndDrawing();
                 }
             }
@@ -2660,7 +2670,13 @@ void main() {
 
         _tileLoader?.Dispose();
         
-        // Unlistening
+        GLOBALS.LevelSelected -= mainPage!.OnLevelSelected;
+        GLOBALS.LevelSelected -= experimentalGeometryPage!.OnLevelSelected;
+        GLOBALS.LevelSelected -= tilePage!.OnLevelSelected;
+        GLOBALS.LevelSelected -= lightPage!.OnLevelSelected;
+        GLOBALS.LevelSelected -= effectsPage!.OnLevelSelected;
+        GLOBALS.LevelSelected -= dimensionsPage!.OnLevelSelected;
+        GLOBALS.LevelSelected -= propsPage!.OnLevelSelected;
 
         GLOBALS.TileDex!.TextureUpdated -= tilePage!.OnGlobalResourcesUpdated;
         GLOBALS.TileDex!.TextureUpdated -= mainPage!.OnGlobalResourcesUpdated;

@@ -1448,6 +1448,19 @@ public class GlobalShortcuts : IEditorShortcuts
 
     public KeyboardShortcut ToggleDebugScreen { get; set; } = new(KeyboardKey.F3);
 
+    private KeyboardShortcut _moveToNextLevel = KeyboardKey.Null;
+    private KeyboardShortcut _moveToPreviousLevel = KeyboardKey.Null;
+    
+    [ShortcutName("Move To Next Level")]
+    public KeyboardShortcut MoveToNextLevel { get => _moveToNextLevel;
+        set { _moveToNextLevel = value; CachedStrings = Utils.GetShortcutStrings(this); }
+    }
+    
+    [ShortcutName("Move To Previous Level")]
+    public KeyboardShortcut MoveToPreviousLevel { get => _moveToPreviousLevel;
+        set { _moveToPreviousLevel = value; CachedStrings = Utils.GetShortcutStrings(this); }
+    }
+
     public IEnumerable<(string Name, string Shortcut)> CachedStrings { get; private set; }
 
     public GlobalShortcuts()

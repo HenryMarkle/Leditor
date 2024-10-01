@@ -265,6 +265,11 @@ internal class ExperimentalGeometryPage : EditorPage
 
         return [.. actions];
     }
+    
+    public void OnLevelSelected(int previous, int next)
+    {
+        _shouldRedrawLevel = true;
+    }
 
     private Rectangle GetLayerIndicator(int layer) => layer switch
     {

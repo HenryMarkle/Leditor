@@ -38,6 +38,16 @@ internal class PropsEditorPage : EditorPage, IContextListener
     private RenderTexture2D _propLayerRT = new(0, 0);
 
     private bool _shouldRedrawPropLayer = true;
+    
+    public void OnLevelSelected(int previous, int next)
+    {
+        _shouldRedrawLevel = true;
+        
+        ImportRopeModels();
+        
+        _selected = new bool[GLOBALS.Level.Props.Length];
+        _hidden = new bool[GLOBALS.Level.Props.Length];
+    }
 
     private void DrawPropLayerRT() {
         BeginTextureMode(_propLayerRT);
@@ -353,7 +363,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 break;
         }
     }
-
 
     private RenderTexture2D _tempGeoL = new(0, 0);
 

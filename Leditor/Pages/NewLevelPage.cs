@@ -53,16 +53,9 @@ internal class NewLevelPage : EditorPage
 
         _isBufferControlActive = false;
 
-        var createTriggered = false;
-
-        if (!_isBufferControlActive && IsKeyPressed(KeyboardKey.Enter)) {
-            createTriggered = true;
-        }
+        bool createTriggered = !_isBufferControlActive && IsKeyPressed(KeyboardKey.Enter);
         
-        if (_advanced)
-        {
-        }
-        else
+        if (!_advanced)
         {
             var dimVisualRect = new Rectangle(0, 0, GLOBALS.Textures.DimensionsVisual.Texture.Width, GLOBALS.Textures.DimensionsVisual.Texture.Height);
         
@@ -171,6 +164,14 @@ internal class NewLevelPage : EditorPage
                 Utils.Restrict(ref _topPadding, 0);
                 Utils.Restrict(ref _rightPadding, 0);
                 Utils.Restrict(ref _bottomPadding, 0);
+
+                ImGui.Spacing();
+                
+                var _appendLevel = GLOBALS.AppendNewLevels;
+                if (ImGui.Checkbox("New Tab", ref _appendLevel))
+                {
+                    GLOBALS.AppendNewLevels = _appendLevel;
+                }
                 
                 ImGui.Spacing();
 
@@ -261,6 +262,12 @@ internal class NewLevelPage : EditorPage
 
                 ImGui.Checkbox("Create Cameras", ref _createCameras);
                 
+                ImGui.Spacing();
+                var _appendLevel = GLOBALS.AppendNewLevels;
+                if (ImGui.Checkbox("New Tab", ref _appendLevel))
+                {
+                    GLOBALS.AppendNewLevels = _appendLevel;
+                }
                 ImGui.Spacing();
 
                 if (ImGui.Button("Advanced Option", col1Space with { Y = 20})) _advanced = true;

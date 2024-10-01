@@ -106,6 +106,74 @@ public static class Utils
         }
 
         return newMatrix;
+    }internal static Tile[,,] Resize(
+        Tile[,,] matrix,
+        
+        int left,
+        int top,
+        int right,
+        int bottom,
+
+        Tile[] layerFill
+    ) {
+
+        if (left == 0 && top == 0 && right == 0 && bottom == 0) return matrix;
+        if (-left == matrix.GetLength(1) || -right == matrix.GetLength(1) ||
+            -top == matrix.GetLength(0) || -bottom == matrix.GetLength(0)) return matrix;
+
+        var width = matrix.GetLength(1);
+        var height = matrix.GetLength(0);
+
+        var newWidth = width + left + right;
+        var newHeight = height + top + bottom;
+
+        var depth = matrix.GetLength(2);
+
+        var newMatrix = new Tile[newHeight, newWidth, depth];
+
+        // Default value
+
+        for (var y = 0; y < newHeight; y++) {
+            for (var x = 0; x < newWidth; x++) {
+                for (var z = 0; z < depth; z++)
+                {
+                    newMatrix[y, x, z] = layerFill[z];
+                }
+            }
+        } 
+
+        // Copy old matrix to new matrix
+
+        for (var y = 0; y < height; y++) {
+            var ny = y + top;
+
+            if (ny >= newHeight) break;
+            if (ny < 0) continue;
+
+            for (var x = 0; x < width; x++) {
+                var nx = x + left;
+
+                if (nx >= newWidth) break;
+                if (nx < 0) continue;
+
+                //
+
+                for (var z = 0; z < depth; z++)
+                {
+                    var cell = matrix[y, x, z];
+                    if (cell.Type is TileCellType.Body)
+                    {
+                        cell = cell with
+                        {
+                            HeadPosition = (cell.HeadPosition.X + left, cell.HeadPosition.Y + top, cell.HeadPosition.Z)
+                        };
+                    }
+                    newMatrix[ny, nx, z] = cell;
+                }
+            }
+        }
+
+        return newMatrix;
     }
 
     internal static T[,] Resize<T>(

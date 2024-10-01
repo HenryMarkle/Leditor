@@ -61,8 +61,7 @@ internal class LegacyGeoEditorPage : EditorPage
         false, // 21
         true
     ];
-
-
+    
     Geo[,] savedChunk = new Geo[0, 0];
 
     private readonly GeoGram _gram = new(40);

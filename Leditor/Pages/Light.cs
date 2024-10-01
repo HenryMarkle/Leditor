@@ -48,6 +48,11 @@ internal class LightEditorPage : EditorPage, IContextListener
         ClearBackground(Color.White);
         EndTextureMode();
     }
+    
+    public void OnLevelSelected(int previous, int next)
+    {
+        _shouldRedrawLevel = true;
+    }
 
     private void ResizeGram() {
         var width = GLOBALS.Level.Width * 20 + 300;

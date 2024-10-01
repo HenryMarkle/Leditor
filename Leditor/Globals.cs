@@ -36,8 +36,14 @@ internal static class GLOBALS
         public Texture2D[] PropEditModes { get; set; } = [];
         public Texture2D[] PropGenerals { get; set; } = [];
         public Texture2D[] InternalMaterials { get; set; } = [];
-        
-        public RenderTexture2D LightMap { get; set; }
+
+        public List<RenderTexture2D> LightMaps { get; set; } = [ new() ];
+
+        public RenderTexture2D LightMap
+        {
+            get => LightMaps[SelectedLevel];
+            set => LightMaps[SelectedLevel] = value;
+        }
         
         // Might be a really bad idea
         
@@ -684,13 +690,46 @@ internal static class GLOBALS
     internal static TileGram Gram { get; set; } = new(100);
 
     /// The current loaded level
-    internal static Data.LevelState Level { get; set; } = new(InitialMatrixWidth, InitialMatrixHeight, (6, 3, 6, 5), Materials[0][1]);
+    internal static List<Data.LevelState> Levels { get; set; } = [
+        new(InitialMatrixWidth, InitialMatrixHeight, (6, 3, 6, 5), Materials[0][1])
+    ];
 
+    private static int _selectedLevel;
+
+    internal static int SelectedLevel
+    {
+        get => _selectedLevel; 
+        set {
+            if (value < 0 || value >= Levels.Count) value = Levels.Count - 1;
+            
+            LevelSelected?.Invoke(_selectedLevel, value);
+            _selectedLevel = value;
+        }
+    }
+
+    internal static Data.LevelState Level
+    {
+        get
+        {
+            if (Levels.Count == 0) throw new InvalidOperationException("No levels were loaded");
+            
+            return Levels[SelectedLevel];
+        }
+    }
+
+    /// <summary>
+    /// Determines whether newly loaded levels should be appended to the levels list, or replace
+    /// the currently selected level.
+    /// </summary>
+    public static bool AppendNewLevels { get; set; }
+    
     public delegate void PassiveEventHandler();
+    public delegate void LevelSelectedEventHandler(int previous, int next);
 
     public static event PassiveEventHandler? TileTextureLoadingDone;
+    public static event LevelSelectedEventHandler? LevelSelected;
     public static event PassiveEventHandler? PropTextureLoadingDone;
-
+    
 
     public static void Invoke_TileTextureLoadingDone() {
         TileTextureLoadingDone?.Invoke();

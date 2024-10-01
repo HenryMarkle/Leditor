@@ -73,6 +73,11 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
         _bottomSideLeft = new Vector2(0, size.Y);
         _bottomSideRight = size;
     }
+    
+    public void OnLevelSelected(int previous, int next)
+    {
+        _shouldRedrawLevel = true;
+    }
 
     private (int x, int y) _originOffset = (0, 0);
 
@@ -423,7 +428,7 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
                 case Resizing.Top:
                 DrawLineEx(_topSideLeft, _topSideRight, 4, Color.Orange);
 
-                if (_topSideLeft.Y == 2) {
+                if (_resizeLock == 2) {
                     var text = $"{(int)(-_topSideLeft.Y)/20}";
                     if (GLOBALS.Font is not null) {
                         DrawTextEx(GLOBALS.Font!.Value, text, new Vector2((_rightSideTop.X - _leftSideTop.X)/2, _topSideLeft.Y - (_topSideLeft.Y + MeasureText(text, 20))/2), 20, 0, Color.White);

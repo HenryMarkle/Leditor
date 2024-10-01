@@ -156,6 +156,11 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
     private bool _isNavbarHovered;
 
     private bool _isVisibilityWinHovered;
+    
+    public void OnLevelSelected(int previous, int next)
+    {
+        _shouldRedrawLevel = true;
+    }
 
     public static void EraseStrayFragments(Tile[,,] matrix) {
         for (var y = 0; y < matrix.GetLength(0); y++) {

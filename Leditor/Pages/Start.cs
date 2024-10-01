@@ -447,61 +447,132 @@ internal class StartPage : EditorPage
 
                 Utils.AppendRecentProjectPath(_dirEntries[_currentIndex].path);
                 
-                Logger.Debug("Globals.Level.Import()");
+                if (GLOBALS.AppendNewLevels)
+                {
+                    Data.LevelState newLevel = new(
+                        10, 
+                        10, 
+                        (12, 6, 12, 5), 
+                        result.DefaultMaterial
+                    );
+                    
+                    newLevel.Import(
+                        result.Width, 
+                        result.Height,
+                        (result.BufferTiles.Left, result.BufferTiles.Top, result.BufferTiles.Right, result.BufferTiles.Bottom),
+                        result.GeoMatrix!,
+                        result.TileMatrix!,
+                        result.MaterialColorMatrix!,
+                        result.Effects,
+                        result.Cameras,
+                        result.PropsArray!,
+                        result.LightSettings,
+                        result.LightMode,
+                        result.DefaultTerrain,
+                        result.Seed,
+                        result.WaterLevel,
+                        result.WaterInFront,
+                        result.LightMapImage,
+                        result.DefaultMaterial,
+                        result.Name
+                    );
+                    
+                    GLOBALS.Levels.Add(newLevel);
+                    GLOBALS.Textures.LightMaps.Add(LoadRenderTexture(
+                        GLOBALS.Level.Width * GLOBALS.Scale + 300, 
+                        GLOBALS.Level.Height * GLOBALS.Scale + 300
+                    ));
+                    GLOBALS.SelectedLevel++;
+                    
+                    var lightMapTexture = LoadTextureFromImage(result.LightMapImage);
+
+                    BeginTextureMode(GLOBALS.Textures.LightMap);
+                    DrawTextureRec(
+                        lightMapTexture,
+                        new(0, 0, lightMapTexture.Width, lightMapTexture.Height),
+                        new(0, 0),
+                        new(255, 255, 255, 255)
+                    );
                 
-                GLOBALS.Level.Import(
-                    result.Width, 
-                    result.Height,
-                    (result.BufferTiles.Left, result.BufferTiles.Top, result.BufferTiles.Right, result.BufferTiles.Bottom),
-                    result.GeoMatrix!,
-                    result.TileMatrix!,
-                    result.MaterialColorMatrix!,
-                    result.Effects,
-                    result.Cameras,
-                    result.PropsArray!,
-                    result.LightSettings,
-                    result.LightMode,
-                    result.DefaultTerrain,
-                    result.Seed,
-                    result.WaterLevel,
-                    result.WaterInFront,
-                    result.LightMapImage,
-                    result.DefaultMaterial,
-                    result.Name
-                );
+                    EndTextureMode();
+
+                    // UnloadImage(result.LightMapImage);
+
+                    UnloadTexture(lightMapTexture);
+                }
+                else
+                {
+                    GLOBALS.Level.Import(
+                        result.Width, 
+                        result.Height,
+                        (result.BufferTiles.Left, result.BufferTiles.Top, result.BufferTiles.Right, result.BufferTiles.Bottom),
+                        result.GeoMatrix!,
+                        result.TileMatrix!,
+                        result.MaterialColorMatrix!,
+                        result.Effects,
+                        result.Cameras,
+                        result.PropsArray!,
+                        result.LightSettings,
+                        result.LightMode,
+                        result.DefaultTerrain,
+                        result.Seed,
+                        result.WaterLevel,
+                        result.WaterInFront,
+                        result.LightMapImage,
+                        result.DefaultMaterial,
+                        result.Name
+                    );
+
+                    var lightMapTexture = LoadTextureFromImage(result.LightMapImage);
+
+                    UnloadRenderTexture(GLOBALS.Textures.LightMap);
+                
+                    GLOBALS.Textures.LightMap = LoadRenderTexture(
+                        GLOBALS.Level.Width * GLOBALS.Scale + 300, 
+                        GLOBALS.Level.Height * GLOBALS.Scale + 300
+                    );
+
+                    BeginTextureMode(GLOBALS.Textures.LightMap);
+                    DrawTextureRec(
+                        lightMapTexture,
+                        new(0, 0, lightMapTexture.Width, lightMapTexture.Height),
+                        new(0, 0),
+                        new(255, 255, 255, 255)
+                    );
+                
+                    EndTextureMode();
+
+                    // UnloadImage(result.LightMapImage);
+
+                    UnloadTexture(lightMapTexture);
+                }
+                
+                // GLOBALS.Level.Import(
+                //     result.Width, 
+                //     result.Height,
+                //     (result.BufferTiles.Left, result.BufferTiles.Top, result.BufferTiles.Right, result.BufferTiles.Bottom),
+                //     result.GeoMatrix!,
+                //     result.TileMatrix!,
+                //     result.MaterialColorMatrix!,
+                //     result.Effects,
+                //     result.Cameras,
+                //     result.PropsArray!,
+                //     result.LightSettings,
+                //     result.LightMode,
+                //     result.DefaultTerrain,
+                //     result.Seed,
+                //     result.WaterLevel,
+                //     result.WaterInFront,
+                //     result.LightMapImage,
+                //     result.DefaultMaterial,
+                //     result.Name
+                // );
                 
                 #if DEBUG
                 Logger.Debug($"Adjusting {nameof(GLOBALS.CamQuadLocks)}");
                 #endif
 
                 GLOBALS.CamQuadLocks = new int[result.Cameras.Count];
-
-                #if DEBUG
-                Logger.Debug($"Importing lightmap texture");
-                #endif
-                
-                var lightMapTexture = LoadTextureFromImage(result.LightMapImage);
-
-                UnloadRenderTexture(GLOBALS.Textures.LightMap);
-                
-                GLOBALS.Textures.LightMap = LoadRenderTexture(
-                    GLOBALS.Level.Width * GLOBALS.Scale + 300, 
-                    GLOBALS.Level.Height * GLOBALS.Scale + 300
-                );
-
-                BeginTextureMode(GLOBALS.Textures.LightMap);
-                DrawTextureRec(
-                    lightMapTexture,
-                    new(0, 0, lightMapTexture.Width, lightMapTexture.Height),
-                    new(0, 0),
-                    new(255, 255, 255, 255)
-                );
-                
-                EndTextureMode();
-
-                // UnloadImage(result.LightMapImage);
-
-                UnloadTexture(lightMapTexture);
                 
                 #if DEBUG
                 Logger.Debug($"Updating project name");
@@ -619,6 +690,12 @@ internal class StartPage : EditorPage
                     }
 
                     ImGui.Spacing();
+
+                    var appendLevel = GLOBALS.AppendNewLevels;
+                    if (ImGui.Checkbox("New Tab", ref appendLevel))
+                    {
+                        GLOBALS.AppendNewLevels = appendLevel;
+                    }
 
                     ImGui.SeparatorText("Recently Opened Levels");
 

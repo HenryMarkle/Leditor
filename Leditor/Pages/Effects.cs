@@ -47,9 +47,11 @@ internal class EffectsEditorPage : EditorPage
     private bool _shouldRedrawLevel = true;
 
     private int _optionsIndex = 1;
-
-    private readonly byte[] _addNewEffectPanelBytes = "New Effect"u8.ToArray();
-    private readonly byte[] _appliedEffectsPanelBytes = "Applied Effects"u8.ToArray();
+    
+    public void OnLevelSelected(int previous, int next)
+    {
+        _shouldRedrawLevel = true;
+    }
     
     // Paints an effect in the effects editor
     static void PaintEffectCircular(double[,] matrix, (int x, int y) center, int radius, double strength)

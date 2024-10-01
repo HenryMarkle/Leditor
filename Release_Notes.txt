@@ -1,1 +1,10 @@
-Fixed a crash that could occur when attempting to paste tiles with geo partially out of bounds.
+## Multi-level support (experimental)
+
+- It's possible to load more than one level at once.
+  - A new window is added to manage loaded levels.
+  - A new option is added to load new levels as tabs or replace existing ones.
+  - Two new shortcuts are added to navigate between loaded levels (not bound by default).
+
+## Other changes
+
+- Removed the quick saving screen and is replaced with a throbber text in the lower left to the screen, to be less desruptive.

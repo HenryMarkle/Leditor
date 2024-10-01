@@ -1,5 +1,6 @@
 using static Raylib_cs.Raylib;
 using System.Numerics;
+using ImGuiNET;
 using Leditor.Types;
 using Leditor.Data.Tiles;
 using Leditor.Data.Geometry;
@@ -7871,6 +7872,52 @@ internal static class Printers
             return new Rectangle(pos.X, pos.Y, size.X, size.Y);
         }
 
+        public static bool LevelsWindow()
+        {
+            var opened = ImGuiNET.ImGui.Begin("Levels##LevelsSelectionWindow");
+
+            var pos = ImGuiNET.ImGui.GetWindowPos();
+            var size = ImGuiNET.ImGui.GetWindowSize();
+
+            if (opened)
+            {
+                if (ImGuiNET.ImGui.BeginListBox("##Levels", ImGuiNET.ImGui.GetContentRegionAvail()))
+                {
+                    for (var l = 0; l < GLOBALS.Levels.Count; l++) 
+                    {
+                        var level = GLOBALS.Levels[l];
+
+                        if (GLOBALS.Levels.Count == 1) ImGuiNET.ImGui.BeginDisabled();
+                        if (ImGuiNET.ImGui.Button($"[close]##{l}"))
+                        {
+                            GLOBALS.Levels.RemoveAt(l);
+                            
+                            UnloadRenderTexture(GLOBALS.Textures.LightMap);
+                            GLOBALS.Textures.LightMaps.RemoveAt(l);
+                            
+                            GLOBALS.SelectedLevel--;
+                            GLOBALS.SelectedLevel %= GLOBALS.Levels.Count;
+                            break;
+                        }
+                        if (GLOBALS.Levels.Count == 1) ImGuiNET.ImGui.EndDisabled();
+
+                        ImGuiNET.ImGui.SameLine();
+
+                        if (ImGuiNET.ImGui.Selectable($"{l}. {level.ProjectName}", GLOBALS.SelectedLevel == l))
+                        {
+                            GLOBALS.SelectedLevel = l;
+                        }
+                    }
+                    
+                    ImGuiNET.ImGui.EndListBox();
+                }
+                
+                ImGuiNET.ImGui.End();
+            }
+
+            return CheckCollisionPointRec(GetMousePosition(), new Rectangle(pos.X - 5, pos.Y - 5, size.X + 10, size.Y + 10));
+        }
+
         /// <summary>
         /// Draws the navigation bar
         /// </summary>
@@ -7969,7 +8016,6 @@ internal static class Printers
                 ImGuiNET.ImGui.EndMenu();
             }
 
-            
             ImGuiNET.ImGui.EndMainMenuBar();
 
             return selected;
