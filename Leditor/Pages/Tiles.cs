@@ -49,8 +49,12 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
     private bool _highlightPaths;
 
     private bool _drawClickTracker;
+    private bool _massDrawClickTracker;
     private bool _eraseClickTracker;
     private bool _copyClickTracker;
+
+    // from 0 to 100
+    private int _randomMassPlacementChance = 100;
 
     private bool _copyMaterials = true;
 
@@ -156,6 +160,8 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
     private bool _isNavbarHovered;
 
     private bool _isVisibilityWinHovered;
+
+    private bool _isMassPlacementWinHovered;
     
     public void OnLevelSelected(int previous, int next)
     {
@@ -1293,6 +1299,7 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                           !_isShortcutsWinHovered &&
                           !_isShortcutsWinDragged &&
                           !_isTexturesWinHovered &&
+                          ! _isMassPlacementWinHovered &&
                           !CheckCollisionPointRec(tileMouse, layer3Rect) &&
                           (GLOBALS.Layer != 1 || !CheckCollisionPointRec(tileMouse, layer2Rect)) &&
                           (GLOBALS.Layer != 0 || !CheckCollisionPointRec(tileMouse, layer1Rect));
@@ -1447,7 +1454,17 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                         {
                             if (_shortcuts.ForcePlaceTileWithGeo.Check(ctrl, shift, alt, true))
                             {
-                                if (!_drawClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY)
+                                if ((IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift)) && !_massDrawClickTracker)
+                                {
+                                    _massDrawClickTracker = true;
+                            
+                                    _copyFirstX = tileMatrixX;
+                                    _copyFirstY = tileMatrixY;
+
+                                    _copyRectangle = new Rectangle(_copyFirstX, _copyFirstY, 1, 1);
+                                }
+                                else if (!_massDrawClickTracker && (!_drawClickTracker || _prevPosX != tileMatrixX ||
+                                                                    _prevPosY != tileMatrixY))
                                 {
                                     var actions = ForcePlaceTileWithGeo(
                                         _currentTile!, 
@@ -1460,7 +1477,17 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                             } 
                             else if (_shortcuts.ForcePlaceTileWithoutGeo.Check(ctrl, shift, alt, true))
                             {
-                                if (!_drawClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY)
+                                if ((IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift)) && !_massDrawClickTracker)
+                                {
+                                    _massDrawClickTracker = true;
+                            
+                                    _copyFirstX = tileMatrixX;
+                                    _copyFirstY = tileMatrixY;
+
+                                    _copyRectangle = new Rectangle(_copyFirstX, _copyFirstY, 1, 1);
+                                }
+                                else if (!_massDrawClickTracker && (!_drawClickTracker || _prevPosX != tileMatrixX ||
+                                                                    _prevPosY != tileMatrixY))
                                 {
                                     var actions = ForcePlaceTileWithoutGeo(
                                         _currentTile!, 
@@ -1473,7 +1500,16 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                             }
                             else
                             {
-                                if (isTileLegal)
+                                if ((IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift)) && !_massDrawClickTracker)
+                                {
+                                    _massDrawClickTracker = true;
+                            
+                                    _copyFirstX = tileMatrixX;
+                                    _copyFirstY = tileMatrixY;
+
+                                    _copyRectangle = new Rectangle(_copyFirstX, _copyFirstY, 1, 1);
+                                }
+                                else if (!_massDrawClickTracker && isTileLegal)
                                 {
                                     if (!_drawClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY)
                                     {
@@ -1490,12 +1526,39 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                         }
                         else
                         {
-                            if (!_drawClickTracker || _prevPosX != tileMatrixX || _prevPosY != tileMatrixY)
+                            if ((IsKeyDown(KeyboardKey.LeftShift) || IsKeyDown(KeyboardKey.RightShift)) && !_massDrawClickTracker)
+                            {
+                                _massDrawClickTracker = true;
+                            
+                                _copyFirstX = tileMatrixX;
+                                _copyFirstY = tileMatrixY;
+
+                                _copyRectangle = new Rectangle(_copyFirstX, _copyFirstY, 1, 1);
+                            }
+                            else if (!_massDrawClickTracker && (!_drawClickTracker || _prevPosX != tileMatrixX ||
+                                                                _prevPosY != tileMatrixY))
                             {
                                 var actions = PlaceMaterial(currentMaterialInit, (tileMatrixX, tileMatrixY, GLOBALS.Layer), _materialBrushRadius);
 
                                 _tempActions.AddRange(actions);
                                 _shouldRedrawLevel = true;
+                            }
+                        }
+                        
+                        if (_massDrawClickTracker)
+                        {
+                            if (tileMatrixX != _copySecondX || tileMatrixY != _copySecondY)
+                            {
+                                _copySecondX = tileMatrixX;
+                                _copySecondY = tileMatrixY;
+                                
+                                _copyRectangle = Utils.RecFromTwoVecs(
+                                    new Vector2(_copyFirstX, _copyFirstY), 
+                                    new Vector2(_copySecondX, _copySecondY)
+                                );
+
+                                _copyRectangle.Width += 1;
+                                _copyRectangle.Height += 1;
                             }
                         }
 
@@ -1504,16 +1567,101 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                         
                         _drawClickTracker = true;
                     }
-                    if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw.Key)) && _drawClickTracker)
+                    if ((IsMouseButtonReleased(_shortcuts.Draw.Button) || IsKeyReleased(_shortcuts.AltDraw.Key)))
                     {
-                        GLOBALS.Gram.Proceed(new TileGram.GroupAction<Tile>([.._tempActions]));
-                        _tempActions.Clear();
+                        if (_drawClickTracker)
+                        {
+                            GLOBALS.Gram.Proceed(new TileGram.GroupAction<Tile>([.._tempActions]));
+                            _tempActions.Clear();
+                            
+                            _prevPosX = -1;
+                            _prevPosY = -1;
+                            
+                            _drawClickTracker = false;
+                        }
+
+                        if (_massDrawClickTracker)
+                        {
+                            // _shouldRedrawLevel = true;
                         
-                        _prevPosX = -1;
-                        _prevPosY = -1;
-                        
-                        _drawClickTracker = false;
-                        // _shouldRedrawLevel = true;
+                            _massDrawClickTracker = false;
+                                    
+                            // copy tiles
+
+                            var beginX = (int) _copyRectangle.X;
+                            var beginY = (int) _copyRectangle.Y;
+
+                            var width = (int)_copyRectangle.Width;
+                            var height = (int)_copyRectangle.Height;
+
+                            if (_materialTileSwitch)
+                            {
+                                List<TileGram.ISingleMatrixAction<Tile>> groupedActions = [];
+                                var head = Utils.GetTileHeadOrigin(_currentTile!);
+                                var hx = (int)head.X;
+                                var hy = (int)head.Y;
+                                
+                                for (int bx = beginX + hx; bx < beginX + width; bx ++)
+                                {
+                                    for (int by = beginY + hy; by < beginY + height; by ++)
+                                    {
+                                        if (IsTileLegal(_currentTile, new Vector2(bx, by)))
+                                        {
+                                            if (_randomMassPlacementChance == 100 ||
+                                                new Random().Next(100) < _randomMassPlacementChance)
+                                            {
+                                                groupedActions =
+                                                [
+                                                    ..groupedActions,
+                                                    ..(IsKeyDown(KeyboardKey.LeftControl) || IsKeyDown(KeyboardKey.RightControl)) 
+                                                        ? ForcePlaceTileWithGeo(
+                                                        _currentTile!,
+                                                        (bx, by, GLOBALS.Layer)
+                                                    ) : ForcePlaceTileWithoutGeo(
+                                                        _currentTile!,
+                                                        (bx, by, GLOBALS.Layer)
+                                                    )
+                                                ];
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                foreach (var action in groupedActions) _tempActions.Add(action);
+                                _shouldRedrawLevel = true;
+                            }
+                            else
+                            {
+                                List<TileGram.ISingleMatrixAction<Tile>> groupedActions = [];
+                                                                
+                                for (var bx = beginX; bx < beginX + width; bx++)
+                                {
+                                    for (var by = beginY; by < beginY + height; by++)
+                                    {
+                                        if (_randomMassPlacementChance == 100 ||
+                                            new Random().Next(100) < _randomMassPlacementChance)
+                                        {
+                                            groupedActions = [
+                                                ..groupedActions, 
+                                                ..PlaceMaterial(currentMaterialInit, (bx, by, GLOBALS.Layer), 0)
+                                            ];
+                                        } 
+                                    }
+                                }
+                                
+                                _tempActions.AddRange(groupedActions);
+                                _shouldRedrawLevel = true;
+                            }
+
+                            _prevCopiedRectangle = _copyRectangle;
+                                    
+                            _copyRectangle.X = -1;
+                            _copyRectangle.Y = -1;
+                            _copyRectangle.Width = 0;
+                            _copyRectangle.Height = 0;
+
+                            _placeMode = 0;
+                        }
                     }
                 }
                     break;
@@ -2323,7 +2471,8 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                 CropTilePrevious = GLOBALS.Settings.GeneralSettings.CropTilePreviews,
                 VisibleStrayTileFragments = GLOBALS.Settings.TileEditor.ShowStrayTileFragments,
                 UnifiedTileColor = GLOBALS.Settings.TileEditor.UnifiedPreviewColor ? Color.White : null,
-                MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace
+                MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace,
+                PropOpacity = (byte)GLOBALS.Settings.GeneralSettings.PropOpacity,
             });
             _shouldRedrawLevel = false;
         }
@@ -2407,48 +2556,65 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                 {
                     case AutoTilerMode.Normal: // none
                     {
-                        var hoverRect = GetSingleTileRect(tileMatrixX, tileMatrixY, GLOBALS.Layer, GLOBALS.Scale);
-                        
-                        if (hoverRect is not { Width: 20, Height: 20 } || !_materialTileSwitch) 
+                        if (_copyRectangle is { Width: > 0, Height: > 0 })
+                        {
+                            var rect = new Rectangle(
+                                _copyRectangle.X*GLOBALS.Scale, 
+                                _copyRectangle.Y*GLOBALS.Scale, 
+                                _copyRectangle.Width*GLOBALS.Scale, 
+                                _copyRectangle.Height*GLOBALS.Scale);
+                            
                             DrawRectangleLinesEx(
-                                hoverRect,
+                                rect,
                                 2f,
                                 Color.White
                             );
-                        
-                        if (_materialTileSwitch)
-                        {
-                            // Draw current specs
-                            if (GLOBALS.Settings.TileEditor.DrawCurrentSpecs && _currentTile is not null) {
-                                var headOrigin = Utils.GetTileHeadOrigin(_currentTile);
-                                
-                                Printers.DrawTileSpecs(_currentTile?.Specs, new Vector2(tileMatrixX, tileMatrixY) - headOrigin, GLOBALS.Scale);
-                            }
-                            
-                            // Draw current tile
-                            if (GLOBALS.Settings.TileEditor.DrawCurrentTile) {
-                                Color color = isTileLegal 
-                                    ? (GLOBALS.Settings.TileEditor.UnifiedInlinePreviewColor ? Color.Green : _currentCategory.color) 
-                                    : Color.Red;
-                                
-                                Printers.DrawTilePreview(_currentTile, color, (tileMatrixX, tileMatrixY), GLOBALS.Scale);
-
-                                // Where's BeginShaderMode()??????
-                                EndShaderMode();
-                            }
                         }
                         else
                         {
-                            if (GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer].Type is TileCellType.Default
-                                    or TileCellType.Material)
-                            {
+                            var hoverRect = GetSingleTileRect(tileMatrixX, tileMatrixY, GLOBALS.Layer, GLOBALS.Scale);
+                            
+                            if (hoverRect is not { Width: 20, Height: 20 } || !_materialTileSwitch) 
                                 DrawRectangleLinesEx(
-                                    new Rectangle(
-                                        (tileMatrixX - _materialBrushRadius) * GLOBALS.Scale, 
-                                        (tileMatrixY - _materialBrushRadius) * GLOBALS.Scale, (_materialBrushRadius*2+1)*GLOBALS.Scale, (_materialBrushRadius*2+1)*GLOBALS.Scale),
+                                    hoverRect,
                                     2f,
                                     Color.White
                                 );
+                            
+                            if (_materialTileSwitch)
+                            {
+                                // Draw current specs
+                                if (GLOBALS.Settings.TileEditor.DrawCurrentSpecs && _currentTile is not null) {
+                                    var headOrigin = Utils.GetTileHeadOrigin(_currentTile);
+                                    
+                                    Printers.DrawTileSpecs(_currentTile?.Specs, new Vector2(tileMatrixX, tileMatrixY) - headOrigin, GLOBALS.Scale);
+                                }
+                                
+                                // Draw current tile
+                                if (GLOBALS.Settings.TileEditor.DrawCurrentTile) {
+                                    Color color = isTileLegal 
+                                        ? (GLOBALS.Settings.TileEditor.UnifiedInlinePreviewColor ? Color.Green : _currentCategory.color) 
+                                        : Color.Red;
+                                    
+                                    Printers.DrawTilePreview(_currentTile, color, (tileMatrixX, tileMatrixY), GLOBALS.Scale);
+
+                                    // Where's BeginShaderMode()??????
+                                    EndShaderMode();
+                                }
+                            }
+                            else
+                            {
+                                if (GLOBALS.Level.TileMatrix[tileMatrixY, tileMatrixX, GLOBALS.Layer].Type is TileCellType.Default
+                                        or TileCellType.Material)
+                                {
+                                    DrawRectangleLinesEx(
+                                        new Rectangle(
+                                            (tileMatrixX - _materialBrushRadius) * GLOBALS.Scale, 
+                                            (tileMatrixY - _materialBrushRadius) * GLOBALS.Scale, (_materialBrushRadius*2+1)*GLOBALS.Scale, (_materialBrushRadius*2+1)*GLOBALS.Scale),
+                                        2f,
+                                        Color.White
+                                    );
+                                }
                             }
                         }
                     }
@@ -3215,6 +3381,20 @@ internal class TileEditorPage : EditorPage, IDisposable, IContextListener
                 ImGui.End();
             }
 
+            var massPlacementWinOpened = ImGui.Begin("Mass Placement##TilesEditorMassPlacementWindow");
+
+            var massPlacementWinPos = ImGui.GetWindowPos();
+            var massPlacementWinSize = ImGui.GetWindowSize();
+            
+            _isMassPlacementWinHovered = CheckCollisionPointRec(tileMouse, new(massPlacementWinPos.X - 5, massPlacementWinPos.Y-5, massPlacementWinSize.X + 10, massPlacementWinSize.Y+10));
+
+            if (massPlacementWinOpened)
+            {
+                ImGui.SliderInt("Placement Chance", ref _randomMassPlacementChance, 1, 100);
+                
+                ImGui.End();
+            }
+            
             // Settings
             #region Settings Window
 

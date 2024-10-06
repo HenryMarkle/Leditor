@@ -513,6 +513,9 @@ public class GeneralSettings
 
     [SettingName("Inverse Bilinear Interpolation", Description = "Heavy on performance and does not affect rendering")]
     public bool InverseBilinearInterpolation { get; set; } = true;
+
+    [SettingName("Prop Opacity")]
+    public int PropOpacity { get; set; } = 255;
 }
 
 

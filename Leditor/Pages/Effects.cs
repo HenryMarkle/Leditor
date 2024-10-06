@@ -794,6 +794,7 @@ internal class EffectsEditorPage : EditorPage
                         VisibleStrayTileFragments = false,
                         MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace,
                         CurrentLayerAtFront = GLOBALS.Settings.GeneralSettings.CurrentLayerAtFront,
+                        PropOpacity = (byte)GLOBALS.Settings.GeneralSettings.PropOpacity,
                     });
                     _shouldRedrawLevel = false;
                 }

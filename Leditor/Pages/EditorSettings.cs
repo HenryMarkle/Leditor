@@ -5,10 +5,7 @@ using rlImGui_cs;
 using static Raylib_cs.Raylib;
 using Leditor.Types;
 
-
 namespace Leditor.Pages;
-
-#nullable enable
 
 internal class SettingsPage : EditorPage
 {
@@ -346,8 +343,10 @@ internal class SettingsPage : EditorPage
 
                             //
 
-                            var keyboardShortcuts = shortcuts.Where(s => !s.isMouse).GroupBy(s => s.group);
-
+                            var keyboardShortcuts = shortcuts
+                                    .Where(s => !s.isMouse)
+                                    .GroupBy(s => s.group);
+                            
                             if (keyboardShortcuts.Any()) {
                                 ImGui.Spacing();
                                 ImGui.SeparatorText("Keyboard Shortcuts");
@@ -361,13 +360,19 @@ internal class SettingsPage : EditorPage
 
                                 if (!string.IsNullOrEmpty(group.Key)) ImGui.SeparatorText($"{group.Key}");
 
-                                if (ImGui.BeginTable($"##KeyboardShortcuts_{group.Key}", 3, ImGuiTableFlags.RowBg)) {
+                                if (ImGui.BeginTable($"##KeyboardShortcuts_{group.Key}", 4, ImGuiTableFlags.RowBg)) {
                                     ImGui.TableSetupColumn("Name");
                                     ImGui.TableSetupColumn("Combination");
 
                                     ImGui.TableHeadersRow();
+                                    
+                                    var duplicates = new Dictionary<KeyboardShortcut, int>();
                                 
                                     foreach (var (property, name, combination, _, isMouse) in group) {
+                                        // if (!duplicates.TryAdd(combination as KeyboardShortcut, 1))
+                                        // {
+                                        //     duplicates[combination as KeyboardShortcut] += 1;
+                                        // }
                                         counter++;
 
                                         ImGui.TableNextRow();
@@ -386,6 +391,20 @@ internal class SettingsPage : EditorPage
                                         ImGui.TableSetColumnIndex(2);
 
                                         var reset = ImGui.Button($"Delete##DELETE_{counter}");
+
+                                        ImGui.TableSetColumnIndex(3);
+
+                                        if (duplicates.TryGetValue(combination as KeyboardShortcut,
+                                                out var duplication))
+                                        {
+                                            Console.WriteLine(duplication);
+
+                                            if (duplication > 1)
+                                            {
+                                                // ImGui.ColorButton($"##DupIndicator{counter}", new Vector4(1, 0, 0, 1));
+                                                ImGui.Text("Duplicate!");
+                                            }
+                                        } 
 
                                         if (clicked) {
                                             _shortcutToAssign = (KeyboardShortcut?)combination;

@@ -746,7 +746,8 @@ internal class MainPage : EditorPage, IContextListener
                         Palette = GLOBALS.SelectedPalette,
                         CropTilePrevious = GLOBALS.Settings.GeneralSettings.CropTilePreviews,
                         VisibleStrayTileFragments = false,
-                        MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace
+                        MaterialWhiteSpace = GLOBALS.Settings.GeneralSettings.MaterialWhiteSpace,
+                        PropOpacity = (byte)GLOBALS.Settings.GeneralSettings.PropOpacity,
                     });
                     _shouldRedrawLevel = false;
                 }
@@ -1200,6 +1201,15 @@ internal class MainPage : EditorPage, IContextListener
                     ImGui.Spacing();
 
                     if (ImGui.Checkbox("Show Props", ref _showProps)) _shouldRedrawLevel = true;
+                    
+                    if (!_showProps) ImGui.BeginDisabled();
+                    var propOpacity = (int)GLOBALS.Settings.GeneralSettings.PropOpacity;
+                    if (ImGui.SliderInt("Prop Opacity", ref propOpacity, 1, 255))
+                    {
+                        GLOBALS.Settings.GeneralSettings.PropOpacity = (byte) propOpacity;
+                        _shouldRedrawLevel = true;
+                    }
+                    if (!_showProps) ImGui.EndDisabled();
 
                     if (ImGui.Combo("Props", ref propVisual, GLOBALS.Textures.Palettes.Length > 0 ?  "Untinted Texture\0Tinted Texture\0Palette" : "Untinted Texture\0Tinted Texture")) {
                         _shouldRedrawLevel = true;

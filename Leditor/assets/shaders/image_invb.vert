@@ -15,7 +15,7 @@ uniform vec2 vertex_pos[4];
 
 void main()
 {
-    fragTexCoord = vertex_pos[gl_VertexID];
+    fragTexCoord = vertexPosition.xy;
     
     fragColor = vertexColor;
 

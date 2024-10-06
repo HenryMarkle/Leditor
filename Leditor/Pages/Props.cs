@@ -76,7 +76,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 20, 
                 GLOBALS.Settings.GeneralSettings.DrawPropMode, 
                 GLOBALS.SelectedPalette,
-                GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation
+                GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation,
+                255
             );
 
             // Draw Rope Point
@@ -247,7 +248,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                 20, 
                 GLOBALS.Settings.GeneralSettings.DrawPropMode, 
                 GLOBALS.SelectedPalette,
-                GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation
+                GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation,
+                (byte)GLOBALS.Settings.GeneralSettings.PropOpacity
             );
         }
 
@@ -500,7 +502,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         20, 
                         GLOBALS.Settings.GeneralSettings.DrawPropMode, 
                         GLOBALS.SelectedPalette,
-                        GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation
+                        GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation,
+                        (byte)GLOBALS.Settings.GeneralSettings.PropOpacity
                     );
 
                     // Draw Rope Point
@@ -735,7 +738,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         20, 
                         GLOBALS.Settings.GeneralSettings.DrawPropMode, 
                         GLOBALS.SelectedPalette,
-                        GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation
+                        GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation,
+                        (byte)GLOBALS.Settings.GeneralSettings.PropOpacity
                     );
 
                     // Draw Rope Point
@@ -980,7 +984,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         20, 
                         GLOBALS.Settings.GeneralSettings.DrawPropMode, 
                         GLOBALS.SelectedPalette,
-                        GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation
+                        GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation,
+                        (byte)GLOBALS.Settings.GeneralSettings.PropOpacity
                     );
 
                     // Draw Rope Point
@@ -4196,7 +4201,8 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                 20, 
                                 GLOBALS.Settings.GeneralSettings.DrawPropMode, 
                                 GLOBALS.SelectedPalette,
-                                GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation
+                                GLOBALS.Settings.GeneralSettings.InverseBilinearInterpolation,
+                                (byte)GLOBALS.Settings.GeneralSettings.PropOpacity
                             );
                         }
                     }

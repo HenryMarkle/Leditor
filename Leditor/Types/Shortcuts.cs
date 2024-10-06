@@ -43,15 +43,6 @@ public class KeyboardShortcut(
                $"{Key switch { KeyboardKey.Space => "SPACE", KeyboardKey.Enter => "ENTER", KeyboardKey.LeftAlt => "ALT", KeyboardKey.LeftShift => "SHIFT", KeyboardKey.LeftControl => "CTRL", KeyboardKey.Null => "NONE", KeyboardKey.Escape => "ESCAPE", var k => k }}";
     }
 
-    public override int GetHashCode()
-    {
-        var ctrl = Ctrl is null ? 2 : Ctrl!.Value ? 3 : 5;
-        var shift = Shift is null ? 7 : Shift!.Value ? 11 : 13;
-        var alt = Alt is null ? 17 : Alt!.Value ? 19 : 23;
-
-        return ctrl * shift * alt * Key.GetHashCode();
-    }
-
     public override bool Equals(object? obj)
     {
         if (obj is null) return false;

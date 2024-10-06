@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 namespace Leditor.Data;
 
@@ -24,6 +25,10 @@ public struct Quad
         BottomRight = bottomRight;
         BottomLeft = bottomLeft;
     }
+    
+    public readonly bool IsRectangular => TopLeft.Y == TopRight.Y && 
+                                          TopRight.X == BottomRight.X && 
+                                          BottomRight.Y == BottomLeft.Y;
 
     // May need to be re-ordered
     public static implicit operator Vector2[](Quad q) => [ q.TopLeft, q.TopRight, q.BottomRight, q.BottomLeft ];
@@ -41,6 +46,18 @@ public struct Quad
     public static Quad operator -(Quad q1, Quad q2) => new(q1.TopLeft - q2.TopLeft, q1.TopRight - q2.TopRight, q1.BottomRight - q2.BottomRight, q1.BottomLeft - q2.BottomLeft);
     public static Quad operator *(Quad q1, Quad q2) => new(q1.TopLeft * q2.TopLeft, q1.TopRight * q2.TopRight, q1.BottomRight * q2.BottomRight, q1.BottomLeft * q2.BottomLeft);
     public static Quad operator /(Quad q1, Quad q2) => new(q1.TopLeft / q2.TopLeft, q1.TopRight / q2.TopRight, q1.BottomRight / q2.BottomRight, q1.BottomLeft / q2.BottomLeft);
+
+    public static bool operator ==(Quad q1, Quad q2) => q1.TopLeft == q2.TopLeft && q1.TopRight == q2.TopRight && q1.BottomRight == q2.BottomRight && q1.BottomLeft == q2.BottomLeft;
+    public static bool operator !=(Quad q1, Quad q2) => q1.TopLeft != q2.TopLeft || q1.TopRight != q2.TopRight || q1.BottomRight != q2.BottomRight || q1.BottomLeft != q2.BottomLeft;
+
+    public override bool Equals([NotNullWhen(true)] object? obj)
+    {
+        if (obj is not Quad q) return false;
+
+        return this == q;
+    }
+    
+    public override int GetHashCode() => HashCode.Combine(TopLeft, TopRight, BottomRight, BottomLeft);
 
     public readonly void Deconstruct(
         out Vector2 topLeft, 

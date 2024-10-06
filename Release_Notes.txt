@@ -1,10 +1,10 @@
-## Multi-level support (experimental)
+## Tile Editor
 
-- It's possible to load more than one level at once.
-  - A new window is added to manage loaded levels.
-  - A new option is added to load new levels as tabs or replace existing ones.
-  - Two new shortcuts are added to navigate between loaded levels (not bound by default).
+- Added the option to multi-place tiles/materials by holding `SHIFT` and left click.
+- Added the option to randomize the placement by configuring the chance between 1 and 100.
+  - A new window was added to contain this.
 
-## Other changes
+## Others
 
-- Removed the quick saving screen and is replaced with a throbber text in the lower left to the screen, to be less desruptive.
+- You can set now the opacity of props on pages other than the props editor.
+  - It's now in the visuals window, in the main page.

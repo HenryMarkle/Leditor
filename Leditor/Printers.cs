@@ -1663,7 +1663,8 @@ internal static class Printers
         PropDrawMode drawMode, 
         Texture2D? palette, 
         int scale,
-        bool invInterpolate)
+        bool invInterpolate,
+        byte opacity)
     {
         var scopeNear = -layer * 10;
         var scopeFar = -(layer*10 + 9);
@@ -1675,7 +1676,16 @@ internal static class Printers
 
             var (category, index) = current.Position;
             
-            DrawProp(category, index, current, scale, drawMode, palette, invInterpolate);
+            DrawProp(
+                category, 
+                index, 
+                current, 
+                scale, 
+                drawMode, 
+                palette, 
+                invInterpolate,
+                opacity
+            );
             
             // Draw Rope Point
             if (current.Type != InitPropType_Legacy.Rope) continue;
@@ -1717,6 +1727,7 @@ internal static class Printers
         internal bool GrayFilter { get; init; } = false;
         internal bool CurrentLayerAtFront { get; init; } = false;
         internal bool InverseBilinearInterpolation { get; init; } = true;
+        internal byte PropOpacity { get; init; } = 255;
     }
 
     private static RL.Managed.RenderTexture2D? _tempRT = null;
@@ -1820,7 +1831,14 @@ internal static class Printers
             if (parameters.PropsLayer3)
             {
                 BeginTextureMode(texture);
-                DrawPropLayer(2, parameters.PropDrawMode, parameters.Palette, parameters.Scale, parameters.InverseBilinearInterpolation);
+                DrawPropLayer(
+                    2, 
+                    parameters.PropDrawMode, 
+                    parameters.Palette, 
+                    parameters.Scale, 
+                    parameters.InverseBilinearInterpolation,
+                    parameters.PropOpacity
+                );
                 EndTextureMode();
             }
 
@@ -1943,7 +1961,14 @@ internal static class Printers
                 if (parameters.PropsLayer2)
                 {
 
-                    DrawPropLayer(1, parameters.PropDrawMode, parameters.Palette, parameters.Scale, parameters.InverseBilinearInterpolation);
+                    DrawPropLayer(
+                        1, 
+                        parameters.PropDrawMode, 
+                        parameters.Palette, 
+                        parameters.Scale, 
+                        parameters.InverseBilinearInterpolation,
+                        parameters.PropOpacity
+                    );
                 }
 
                 if (parameters.Shadows) {
@@ -2085,7 +2110,14 @@ internal static class Printers
 
                 if (parameters.PropsLayer1)
                 {
-                    DrawPropLayer(0, parameters.PropDrawMode, parameters.Palette, parameters.Scale, parameters.InverseBilinearInterpolation);
+                    DrawPropLayer(
+                        0, 
+                        parameters.PropDrawMode, 
+                        parameters.Palette, 
+                        parameters.Scale, 
+                        parameters.InverseBilinearInterpolation,
+                        parameters.PropOpacity
+                    );
                 }
 
                 if (parameters.Shadows) {
@@ -2218,7 +2250,14 @@ internal static class Printers
                 if (parameters.PropsLayer3)
                 {
                     BeginTextureMode(texture);
-                    DrawPropLayer(2, parameters.PropDrawMode, parameters.Palette, parameters.Scale, parameters.InverseBilinearInterpolation);
+                    DrawPropLayer(
+                        2, 
+                        parameters.PropDrawMode, 
+                        parameters.Palette, 
+                        parameters.Scale, 
+                        parameters.InverseBilinearInterpolation,
+                        parameters.PropOpacity
+                    );
                     EndTextureMode();
                 }
 
@@ -2333,7 +2372,14 @@ internal static class Printers
                 if (parameters.PropsLayer2)
                 {
 
-                    DrawPropLayer(1, parameters.PropDrawMode, parameters.Palette, parameters.Scale, parameters.InverseBilinearInterpolation);
+                    DrawPropLayer(
+                        1, 
+                        parameters.PropDrawMode, 
+                        parameters.Palette, 
+                        parameters.Scale, 
+                        parameters.InverseBilinearInterpolation,
+                        parameters.PropOpacity
+                    );
                 }
 
                 if (parameters.Shadows) {
@@ -2465,7 +2511,14 @@ internal static class Printers
 
                 if (parameters.PropsLayer1)
                 {
-                    DrawPropLayer(0, parameters.PropDrawMode, parameters.Palette, parameters.Scale, parameters.InverseBilinearInterpolation);
+                    DrawPropLayer(
+                        0, 
+                        parameters.PropDrawMode, 
+                        parameters.Palette, 
+                        parameters.Scale, 
+                        parameters.InverseBilinearInterpolation,
+                        parameters.PropOpacity
+                    );
                 }
 
                 if (parameters.Shadows) {
@@ -2611,7 +2664,14 @@ internal static class Printers
         if (parameters.PropsLayer3)
         {
             BeginTextureMode(texture);
-            DrawPropLayer(2, parameters.PropDrawMode, parameters.Palette, parameters.Scale, parameters.InverseBilinearInterpolation);
+            DrawPropLayer(
+                2, 
+                parameters.PropDrawMode, 
+                parameters.Palette, 
+                parameters.Scale, 
+                parameters.InverseBilinearInterpolation,
+                parameters.PropOpacity
+            );
             EndTextureMode();
         }
 
@@ -2682,7 +2742,14 @@ internal static class Printers
             if (parameters.PropsLayer2)
             {
 
-                DrawPropLayer(1, parameters.PropDrawMode, parameters.Palette, parameters.Scale, parameters.InverseBilinearInterpolation);
+                DrawPropLayer(
+                    1, 
+                    parameters.PropDrawMode, 
+                    parameters.Palette, 
+                    parameters.Scale, 
+                    parameters.InverseBilinearInterpolation,
+                    parameters.PropOpacity
+                );
             }
             
             //
@@ -2772,7 +2839,14 @@ internal static class Printers
 
             if (parameters.PropsLayer1)
             {
-                DrawPropLayer(0, parameters.PropDrawMode, parameters.Palette, parameters.Scale, parameters.InverseBilinearInterpolation);
+                DrawPropLayer(
+                    0, 
+                    parameters.PropDrawMode, 
+                    parameters.Palette, 
+                    parameters.Scale, 
+                    parameters.InverseBilinearInterpolation,
+                    parameters.PropOpacity
+                );
             }
 
             if (parameters.Water)
@@ -3098,6 +3172,55 @@ internal static class Printers
     }
     
     internal static void DrawTextureQuad(
+        in Texture2D texture, 
+        in Data.Quad quad
+    )
+    {
+        var flippedX = quad.TopLeft.X > quad.TopRight.X + 0.5f && quad.BottomLeft.X > quad.BottomRight.X + 0.5f;
+        var flippedY = quad.TopLeft.Y > quad.BottomLeft.Y + 0.5f && quad.TopRight.Y > quad.BottomRight.Y + 0.5f;
+
+        var (topRight, topLeft, bottomLeft, bottomRight) = (flippedX, flippedY) switch
+        {
+            (false, false) => (quad.TopRight, quad.TopLeft, quad.BottomLeft, quad.BottomRight),
+            (false, true ) => (quad.BottomRight, quad.BottomLeft, quad.TopLeft, quad.TopRight),
+            (true , false) => (quad.TopLeft, quad.TopRight, quad.BottomRight, quad.BottomLeft),
+            (true , true ) => (quad.BottomLeft, quad.BottomRight, quad.TopRight, quad.TopLeft)
+        };
+
+        var ((vTopRightX, vTopRightY), (vTopLeftX, vTopLeftY), (vBottomLeftX, vBottomLeftY), (vBottomRightX, vBottomRightY)) = (flippedX, flippedY) switch
+        {
+            (false, false) => ((1.0f, 0.0f), (0.0f, 0.0f), (0.0f, 1.0f), (1.0f, 1.0f)),
+            (false, true) => ((1.0f, 1.0f), (0.0f, 1.0f), (0.0f, 0.0f), (1.0f, 0.0f)),
+            (true, false) => ((0.0f, 0.0f), (1.0f, 0.0f), (1.0f, 1.0f), (0.0f, 1.0f)),
+            (true, true) => ((0.0f, 1.0f), (1.0f, 1.0f), (1.0f, 0.0f), (0.0f, 0.0f))
+        };
+
+        Rlgl.SetTexture(texture.Id);
+
+        Rlgl.Begin(0x0007);
+        Rlgl.Color4ub(Color.White.R, Color.White.G, Color.White.B, Color.White.A);
+        
+        Rlgl.TexCoord2f(vTopRightX, vTopRightY);
+        Rlgl.Vertex2f(topRight.X, topRight.Y);
+        
+        Rlgl.TexCoord2f(vTopLeftX, vTopLeftY);
+        Rlgl.Vertex2f(topLeft.X, topLeft.Y);
+
+        Rlgl.TexCoord2f(vBottomLeftX, vBottomLeftY);
+        Rlgl.Vertex2f(bottomLeft.X, bottomLeft.Y);
+        
+        Rlgl.TexCoord2f(vBottomRightX, vBottomRightY);
+        Rlgl.Vertex2f(bottomRight.X, bottomRight.Y);
+
+        Rlgl.TexCoord2f(vTopRightX, vTopRightY);
+        Rlgl.Vertex2f(topRight.X, topRight.Y);
+        
+        Rlgl.End();
+
+        Rlgl.SetTexture(0);
+    }
+    
+    internal static void DrawTextureQuad_Invb(
         in Texture2D texture, 
         in Data.Quad quad
     )
@@ -4236,7 +4359,7 @@ internal static class Printers
 
             SetShaderValueV(shader, vertLoc, [ quad.TopRight, quad.TopLeft, quad.BottomLeft, quad.BottomRight ], ShaderUniformDataType.Vec2, 4);
 
-            DrawTextureQuad(texture, quad);
+            DrawTextureQuad_Invb(texture, quad);
             EndShaderMode();
         }
         else
@@ -4625,7 +4748,8 @@ internal static class Printers
         int scale, 
         PropDrawMode drawMode, 
         Texture2D? palette,
-        bool invInterpolate
+        bool invInterpolate,
+        byte opacity
     )
     {
         var depth = -prop.Depth - GLOBALS.Layer*10;
@@ -4647,18 +4771,18 @@ internal static class Printers
 
                 switch (drawMode) {
                     case PropDrawMode.Untinted:
-                        if (invInterpolate) DrawTileAsProp_Intrpolated(prop.Tile, quads, depth);
-                        else DrawTileAsProp(prop.Tile, quads, depth);
+                        if (invInterpolate) DrawTileAsProp_Intrpolated(prop.Tile, quads, depth, alpha:opacity);
+                        else DrawTileAsProp(prop.Tile, quads, depth, alpha:opacity);
                     break;
 
                     case PropDrawMode.Tinted:
-                        if (invInterpolate) DrawTileAsPropColored_Interpolated(prop.Tile, quads, color, depth);
-                        else DrawTileAsPropColored(prop.Tile, quads, color, depth);
+                        if (invInterpolate) DrawTileAsPropColored_Interpolated(prop.Tile, quads, color with { A = opacity }, depth);
+                        else DrawTileAsPropColored(prop.Tile, quads, color with { A = opacity }, depth);
                     break;
 
                     case PropDrawMode.Palette:
-                        if (invInterpolate) DrawTileWithPalette_Interpolated(prop.Tile, palette!.Value, quads, -prop.Depth);
-                        else DrawTileWithPalette(prop.Tile, palette!.Value, quads, -prop.Depth);
+                        if (invInterpolate) DrawTileWithPalette_Interpolated(prop.Tile, palette!.Value, quads, -prop.Depth, alpha:opacity);
+                        else DrawTileWithPalette(prop.Tile, palette!.Value, quads, -prop.Depth, alpha:opacity);
                     break;
                 }
             }
@@ -4667,7 +4791,7 @@ internal static class Printers
             case InitPropType_Legacy.Long:
             {
                 var texture = GLOBALS.Textures.LongProps[index];
-                DrawLongProp(texture, quads, depth, 0);
+                DrawLongProp(texture, quads, depth, 0, alpha:opacity);
             }
                 break;
 
@@ -4686,15 +4810,15 @@ internal static class Printers
                     case InitVariedStandardProp variedStandard:
                         switch (drawMode) {
                             case PropDrawMode.Untinted:
-                            DrawVariedStandardProp(variedStandard, texture, quads, ((PropVariedSettings)prop.Extras.Settings).Variation, depth);
+                            DrawVariedStandardProp(variedStandard, texture, quads, ((PropVariedSettings)prop.Extras.Settings).Variation, depth, alpha:opacity);
                             break;
 
                             case PropDrawMode.Tinted:
-                            DrawVariedStandardPropColored(variedStandard, texture, color, quads, ((PropVariedSettings)prop.Extras.Settings).Variation, depth);
+                            DrawVariedStandardPropColored(variedStandard, texture, color with { A = opacity }, quads, ((PropVariedSettings)prop.Extras.Settings).Variation, depth);
                             break;
 
                             case PropDrawMode.Palette:
-                            DrawVariedStandardPropWithPalette(variedStandard, texture, palette!.Value, quads, ((PropVariedSettings)prop.Extras.Settings).Variation, -prop.Depth);
+                            DrawVariedStandardPropWithPalette(variedStandard, texture, palette!.Value, quads, ((PropVariedSettings)prop.Extras.Settings).Variation, -prop.Depth, alpha:opacity);
                             break;
                         }
                         break;
@@ -4706,7 +4830,7 @@ internal static class Printers
                             break;
 
                             case PropDrawMode.Tinted:
-                            DrawStandardPropColored(standard, texture, color, quads, depth);
+                            DrawStandardPropColored(standard, texture, color with { A = opacity }, quads, depth);
                             break;
 
                             case PropDrawMode.Palette:
@@ -4979,7 +5103,7 @@ internal static class Printers
         EndShaderMode();
     }
 
-    internal static void DrawLongProp(in Texture2D texture, in Data.Quad quads, int depth, int rotation)
+    internal static void DrawLongProp(in Texture2D texture, in Data.Quad quads, int depth, int rotation, byte alpha = 255)
     {
         var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
         var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
@@ -4992,7 +5116,7 @@ internal static class Printers
         SetShaderValueTexture(GLOBALS.Shaders.LongProp, textureLoc, texture);
         SetShaderValue(GLOBALS.Shaders.LongProp, depthLoc, depth, ShaderUniformDataType.Int);
         
-        DrawTextureQuad(texture, Utils.RotatePropQuads(quads, rotation), flippedX, flippedY);
+        DrawTextureQuad(texture, Utils.RotatePropQuads(quads, rotation), Color.White with { A = alpha });
         EndShaderMode();
     }
     
@@ -5198,12 +5322,10 @@ internal static class Printers
         in Texture2D texture, 
         Data.Quad quads,
         int variation,
-        int depth
+        int depth,
+        byte alpha = 255
     )
     {
-        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
-        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
-        
         var layerHeight = (float) init.Size.y * GLOBALS.Scale;
         var variationWidth = (float) init.Size.x * GLOBALS.Scale;
         
@@ -5228,7 +5350,7 @@ internal static class Printers
         SetShaderValue(GLOBALS.Shaders.VariedStandardProp, variationLoc, variation, ShaderUniformDataType.Int);
         SetShaderValue(GLOBALS.Shaders.VariedStandardProp, depthLoc, depth, ShaderUniformDataType.Int);
         
-        DrawTextureQuad(texture, quads, flippedX, flippedY);
+        DrawTextureQuad(texture, quads, Color.White with { A = alpha });
         EndShaderMode();
     }
 
@@ -7184,7 +7306,7 @@ internal static class Printers
 
             SetShaderValueV(shader, vertLoc, [ quads.TopRight, quads.TopLeft, quads.BottomLeft, quads.BottomRight ], ShaderUniformDataType.Vec2, 4);
 
-            DrawTextureQuad(texture, quads);
+            DrawTextureQuad_Invb(texture, quads);
             EndShaderMode();
         }
         else
@@ -7223,7 +7345,7 @@ internal static class Printers
 
             SetShaderValueV(voxelShader, vertLoc, [ quads.TopRight, quads.TopLeft, quads.BottomLeft, quads.BottomRight ], ShaderUniformDataType.Vec2, 4);
 
-            DrawTextureQuad(texture, quads);
+            DrawTextureQuad_Invb(texture, quads);
             EndShaderMode();
         }
     }
@@ -7276,14 +7398,12 @@ internal static class Printers
         in Texture2D palette,
         Data.Quad quads,
         int variation,
-        int depth
+        int depth,
+        byte alpha = 255
     )
     {
         var shader = GLOBALS.Shaders.VariedStandardPropPalette;
 
-        var flippedX = quads.TopLeft.X > quads.TopRight.X && quads.BottomLeft.X > quads.BottomRight.X;
-        var flippedY = quads.TopLeft.Y > quads.BottomLeft.Y && quads.TopRight.Y > quads.BottomRight.Y;
-        
         var layerHeight = (float) init.Size.y * GLOBALS.Scale;
         var variationWidth = (float) init.Size.x * GLOBALS.Scale;
         
@@ -7310,7 +7430,7 @@ internal static class Printers
         SetShaderValue(shader, variationLoc, variation, ShaderUniformDataType.Int);
         SetShaderValue(shader, depthLoc, depth, ShaderUniformDataType.Int);
         
-        DrawTextureQuad(texture, quads, flippedX, flippedY);
+        DrawTextureQuad(texture, quads, Color.White with { A = alpha });
         EndShaderMode();
     }
 
