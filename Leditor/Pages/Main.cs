@@ -1187,7 +1187,6 @@ internal class MainPage : EditorPage, IContextListener
 
                     if (GLOBALS.Settings.GeneralSettings.DrawTileMode != TileDrawMode.Preview) ImGui.EndDisabled();
 
-
                     var tileVisual = (int)GLOBALS.Settings.GeneralSettings.DrawTileMode;
                     var propVisual = (int)GLOBALS.Settings.GeneralSettings.DrawPropMode;
 
