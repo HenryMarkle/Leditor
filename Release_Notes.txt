@@ -1,10 +1,3 @@
-## Tile Editor
+## Bug fixes
 
-- Added the option to multi-place tiles/materials by holding `SHIFT` and left click.
-- Added the option to randomize the placement by configuring the chance between 1 and 100.
-  - A new window was added to contain this.
-
-## Others
-
-- You can set now the opacity of props on pages other than the props editor.
-  - It's now in the visuals window, in the main page.
+- Fixed a crash in the props editor when attempting to edit a rope simulated using bezier path.
