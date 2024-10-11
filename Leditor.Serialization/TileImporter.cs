@@ -564,7 +564,7 @@ public class TileImporter
                     logger?.Warning($"[TileImporter::GetTileCell_NoExcept] Undefined tile \"{name2}\"");
                 }
 
-                var secondChainHolder = (tileDefinition!.Tags.Contains("Chain Holder") && asList.Length > 2)
+                var secondChainHolder = ((tileDefinition?.Tags.Contains("Chain Holder") ?? false) && asList.Length > 2)
                     ? (asList[2] is AstNode.GlobalCall gc ? Utils.GetIntPair(gc) : (-1, -1)) 
                     : (-1, -1);;
 

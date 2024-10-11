@@ -3481,21 +3481,23 @@ internal class PropsEditorPage : EditorPage, IContextListener
                                     }
                                 );
                             } else if (current.model.EditType == RopeModel.EditTypeEnum.BezierPaths) {
-                                var (pA, pB) = Utils.RopeEnds(fetchedSelected[0].prop.Quad);
-                                
-                                fetchedSelected[0].prop.Extras.RopePoints = Utils.Casteljau(fetchedSelected[0].prop.Extras.RopePoints.Length, [ pA, ..current.model.BezierHandles, pB ]);
+                                if (fetchedSelected.Length > 0) {
+                                    var (pA, pB) = Utils.RopeEnds(fetchedSelected[0].prop.Quad);
+                                    
+                                    fetchedSelected[0].prop.Extras.RopePoints = Utils.Casteljau(fetchedSelected[0].prop.Extras.RopePoints.Length, [ pA, ..current.model.BezierHandles, pB ]);
 
-                                if ((IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) && _bezierHandleLock != -1)
-                                    _bezierHandleLock = -1;
+                                    if ((IsMouseButtonPressed(_shortcuts.SelectProps.Button) || IsKeyPressed(_shortcuts.SelectPropsAlt.Key)) && _bezierHandleLock != -1)
+                                        _bezierHandleLock = -1;
 
-                                if (IsMouseButtonDown(_shortcuts.SelectProps.Button))
-                                {
-                                    for (var b = 0; b < current.model.BezierHandles.Length; b++)
+                                    if (IsMouseButtonDown(_shortcuts.SelectProps.Button))
                                     {
-                                        if (_bezierHandleLock == -1 && CheckCollisionPointCircle(tileMouseWorld, current.model.BezierHandles[b], 5f))
-                                            _bezierHandleLock = b;
+                                        for (var b = 0; b < current.model.BezierHandles.Length; b++)
+                                        {
+                                            if (_bezierHandleLock == -1 && CheckCollisionPointCircle(tileMouseWorld, current.model.BezierHandles[b], 5f))
+                                                _bezierHandleLock = b;
 
-                                        if (_bezierHandleLock == b) current.model.BezierHandles[b] = tileMouseWorld;
+                                            if (_bezierHandleLock == b) current.model.BezierHandles[b] = tileMouseWorld;
+                                        }
                                     }
                                 }
                             }

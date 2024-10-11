@@ -1135,9 +1135,9 @@ internal static class Printers
         Color? unifiedTileColor = null,
         int materialColorSpace = 6)
     {
-        for (var y = 0; y < GLOBALS.Level.Height; y++)
+        for (var y = 0; y < GLOBALS.Level.TileMatrix.GetLength(0); y++)
         {
-            for (var x = 0; x < GLOBALS.Level.Width; x++)
+            for (var x = 0; x < GLOBALS.Level.TileMatrix.GetLength(1); x++)
             {
                 if (grid) DrawRectangleLinesEx(
                     new(x * scale, y * scale, scale, scale),

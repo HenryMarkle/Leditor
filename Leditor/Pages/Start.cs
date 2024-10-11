@@ -48,9 +48,9 @@ internal class StartPage : EditorPage
         HashSet<string> missingTextures = [];
         HashSet<string> missingMaterials = [];
         
-        for (int y = 0; y < res.Height; y++)
+        for (int y = 0; y < res.TileMatrix.GetLength(0); y++)
         {
-            for (int x = 0; x < res.Width; x++)
+            for (int x = 0; x < res.TileMatrix.GetLength(1); x++)
             {
                 for (int z = 0; z < 3; z++)
                 {

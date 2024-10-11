@@ -283,7 +283,15 @@ internal static class Utils
             // throw new Exception("Failed to parse level project file at line 9", e);
         }
 
+        var (foundWidth, foundHeight) = Serialization.Importers.GetLevelDimensions(obj2);
+
+
         var mtx = Serialization.Importers.GetGeoMatrix(obj, out int givenHeight, out int givenWidth);
+        if (foundWidth <= 0 || foundHeight <= 0)
+        {
+            foundWidth = givenWidth;
+            foundHeight = givenHeight;
+        }
         // var tlMtx = Serialization.Importers.GetTileMatrix(tilesObj, out _, out _);
         var tlMtx2 = Serialization.TileImporter.GetTileMatrix_NoExcept(tilesObj, GLOBALS.MaterialDex!.DefMap, GLOBALS.TileDex!.DefMap);
         var defaultMaterial = Serialization.Importers.GetDefaultMaterial(tilesObj);
@@ -292,11 +300,11 @@ internal static class Utils
         var lightMode = Serialization.Importers.GetLightMode(obj2);
         var seed = Serialization.Importers.GetSeed(obj2);
         var waterData = Serialization.Importers.GetWaterData(waterObj);
-        var effects = Serialization.Importers.GetEffects(effObj, givenWidth, givenHeight);
+        var effects = Serialization.Importers.GetEffects(effObj, foundWidth, foundHeight);
         var cams = Serialization.Importers.GetCameras(camsObj);
 
-        for (var x = 0; x < givenWidth; x++) {
-            for (var y = 0; y < givenHeight; y++) {
+        for (var x = 0; x < foundWidth; x++) {
+            for (var y = 0; y < foundHeight; y++) {
                 for (var z = 0; z < 3; z++) {
                     var body = tlMtx2[y, x, z];
 
@@ -363,6 +371,7 @@ internal static class Utils
             {
                 for (int z = 0; z < 3; z++)
                 {
+                    if (x < 0 || x >= tlMtx2.GetLength(1) || y < 0 || y >= tlMtx2.GetLength(0)) continue;
                     var cell = tlMtx2[y, x, z];
 
                     if (cell.Type is not TileCellType.Material) continue;

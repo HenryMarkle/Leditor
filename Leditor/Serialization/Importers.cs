@@ -886,4 +886,12 @@ public static class Importers {
 
         return materialBase.Value;
     }
+
+    public static (int, int) GetLevelDimensions(AstNode.Base node)
+    {
+        var szAst = (node as AstNode.PropertyList)!.Values.FirstOrDefault(k => string.Equals((k.Key as AstNode.Symbol)!.Value, "size", StringComparison.OrdinalIgnoreCase)).Value;
+        var point = (AstNode.GlobalCall)szAst;
+
+        return ((point.Arguments[0] as AstNode.Number)!.Value.IntValue, (point.Arguments[1] as AstNode.Number)!.Value.IntValue);
+    }
 }
