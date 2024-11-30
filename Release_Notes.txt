@@ -1,6 +1,11 @@
-## Bug fixes
+## Drizzle Update
 
-### Dimensions Editor
+Upstreamed Drizzle to v0.4.52
 
-- Removed the level resize window as it's rendered redundant and obsolete.
-- Added the level width and height labels to the options window
+### New Effects
+
+- Og Grass
+- Hand Growers
+- Grape Roots
+
+by @SomethingStupid on Discord.

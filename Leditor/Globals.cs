@@ -511,7 +511,8 @@ internal static class GLOBALS
         ["Fuzzy Growers", "Leaf Growers", "Meat Growers", "Hyacinths", "Seed Grass", "Orb Plants", "Storm Plants"], // 7
         ["Coral Growers", "Horror Growers"], // 2
         ["Thunder Growers"], // 1
-        ["Ice Growers", "Grass Growers", "Fancy Growers"] // 3
+        ["Ice Growers", "Grass Growers", "Fancy Growers"], // 3
+        ["Og Grass", "Hand Growers", "Grape Roots"] // 3
     ];
 
     public static string EffectType(string name) => name switch
@@ -577,7 +578,8 @@ internal static class GLOBALS
             "Root Plants" or "Arm Growers" or "Growers" or "Mini Growers" or
             "Left Facing Kelp" or "Right Facing Kelp" or "Mixed Facing Kelp" or 
             "Bubble Grower" or "Coral Growers" or "Horror Growers" or "Thunder Growers" or
-            "Leaf Growers" or "Ice Growsers" or "Grass Growers" or "Fancy Growers" => true,
+            "Leaf Growers" or "Ice Growsers" or "Grass Growers" or "Fancy Growers" or 
+            "Hand Growers" or "Grape Roots" => true,
         
         _ => false
     };
@@ -605,6 +607,7 @@ internal static class GLOBALS
         "Nautillo Plants 2",        // 19
         "Tronsx Plants",            // 20
         "Tronsx Intrepid Plants",   // 21
+        "April Plants",             // 22
     ];
     
     // Layers 2 and 3 do not show geo features like shortcuts and entrances 

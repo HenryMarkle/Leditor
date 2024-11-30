@@ -948,7 +948,7 @@ internal static class Utils
                 "Seed Pods" or "Grass" or "Arm Growers" or "Horse Tails" or "Circuit Plants" or 
                 "Feather Plants" or "Mini Growers" or "Left Facing Kelp" or "Right Facing Kelp" or 
                 "Club Moss" or "Moss Wall" or "Mixed Facing Kelp" or "Bubble Grower" or
-                "Storm Plants" or "Seed Grass" or "Hyacinths" or "Orb Plants" or "Dandelions" => [
+                "Storm Plants" or "Seed Grass" or "Hyacinths" or "Orb Plants" or "Dandelions" or "Og Grass" => [
                 new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
                 new("Color", ["Color1", "Color2", "Dead"], "Color2")
             ],
@@ -1035,6 +1035,11 @@ internal static class Utils
                 new("Variation", ["1", "2", "3"], "1"),
                 new("Color 1", ["EffectColor1", "EffectColor2", "None"], "EffectColor1"),
                 new("Color 2", ["EffectColor1", "EffectColor2", "None"], "EffectColor2")
+            ],
+
+            "Grape Roots" or "Hand Growers" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2")
             ],
             
             _ => []
