@@ -490,7 +490,7 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
                 
         if (GLOBALS.Settings.GeneralSettings.Navbar) GLOBALS.NavSignal = Printers.ImGui.Nav(out _);
 
-        var mainWinOpened = ImGui.Begin("Resizing##DimensionsWindow");
+        var mainWinOpened = false; //ImGui.Begin("Resizing##DimensionsWindow");
 
         var mainWinPos = ImGui.GetWindowPos();
         var mainWinSpace = ImGui.GetWindowSize();
@@ -624,6 +624,9 @@ internal class DimensionsEditorPage : EditorPage, IContextListener
         _isOptionsWinHovered = CheckCollisionPointRec(GetMousePosition(), new(optionsPos.X - 5, optionsPos.Y-5, optionsSpace.X + 10, optionsSpace.Y+10));
         
         if (optionsWinOpened) {
+            ImGui.Text($"Width: {GLOBALS.Level.Width}, Height: {GLOBALS.Level.Height}");
+            ImGui.Spacing();
+            
             ImGui.Checkbox("Grid", ref _grid);
 
             ImGui.Spacing();

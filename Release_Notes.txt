@@ -1,3 +1,6 @@
 ## Bug fixes
 
-- Fixed a crash in the props editor when attempting to edit a rope simulated using bezier path.
+### Dimensions Editor
+
+- Removed the level resize window as it's rendered redundant and obsolete.
+- Added the level width and height labels to the options window
