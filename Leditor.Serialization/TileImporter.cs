@@ -235,6 +235,8 @@ public class TileImporter
             "voxelStructRandomDisplaceVertical" => TileType.VoxelStructRandomDisplaceVertical,
             "voxelStructRockType" => TileType.VoxelStructRockType,
             "voxelStructSandType" => TileType.VoxelStructSandType,
+            "voxelStructSeamlessHorizontal" => TileType.VoxelStructSeamlessHorizontal,
+            "voxelStructSeamlessVertical" => TileType.VoxelStructSeamlessVertical,
 
             _ => throw new TileDefinitionParseException(name, $"Invalid property \"tp\" value {typeStr}")
         };

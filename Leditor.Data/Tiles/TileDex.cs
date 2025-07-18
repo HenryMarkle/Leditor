@@ -239,7 +239,7 @@ public class TileDex : IDisposable
             List<TileDefinition> tiles = [];
             foreach (var tile in orderedTiles)
             {
-                if (tile.Type == TileType.VoxelStruct && !tile.Tags.Contains("notProp"))
+                if (tile.Type is TileType.VoxelStruct or TileType.VoxelStructRockType && !tile.Tags.Contains("notProp"))
                     tiles.Add(tile);
             }
             

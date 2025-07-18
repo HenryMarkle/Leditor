@@ -174,7 +174,11 @@ internal class LightEditorPage : EditorPage, IContextListener
 
     private RL.Managed.Texture2D _stretchTexture;
 
-    private void ProceedGram() {
+    private Vector2 _pinnedBrushPos;
+    private bool _isRotatingWithCursor;
+
+    private void ProceedGram()
+    {
         if (_currentGram.Next is not null)
         {
             _currentGram = _currentGram.Next;
@@ -195,7 +199,8 @@ internal class LightEditorPage : EditorPage, IContextListener
 
             _gram.AddLast(canvas);
 
-            if (_gram.Count > GLOBALS.Settings.LightEditor.UndoLimit) {
+            if (_gram.Count > GLOBALS.Settings.LightEditor.UndoLimit)
+            {
                 var first = _gram.First;
 
                 UnloadRenderTexture(first.Value);
@@ -442,19 +447,45 @@ internal class LightEditorPage : EditorPage, IContextListener
         }
 
 
+        // Rotate with cursor 
+
+        if (IsKeyDown(KeyboardKey.LeftControl) && !_isRotatingWithCursor)
+        {
+            _pinnedBrushPos = worldMouse;
+            _isRotatingWithCursor = true;
+        }
+
+        if (IsKeyReleased(KeyboardKey.LeftControl) && _isRotatingWithCursor)
+        {
+            _isRotatingWithCursor = false;
+        }
+
+        if (_isRotatingWithCursor)
+        {
+            _lightBrushRotation = float.RadiansToDegrees(MathF.Atan2(
+                worldMouse.Y - _pinnedBrushPos.Y,
+                worldMouse.X - _pinnedBrushPos.X
+            )) + 90;
+
+            // if (_lightBrushRotation < 0) _lightBrushRotation += 2 * MathF.PI;
+        }
 
 
-        if (_shortcuts.IncreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness < 10) {
+        if (_shortcuts.IncreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness < 10)
+        {
             GLOBALS.Level.LightFlatness++;
 
-            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette)
+            {
                 _shouldRedrawLevel = true;
             }
         }
-        else if (_shortcuts.DecreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness > 1) {
+        else if (_shortcuts.DecreaseFlatness.Check(ctrl, shift, alt, true) && GLOBALS.Level.LightFlatness > 1)
+        {
             GLOBALS.Level.LightFlatness--;
 
-            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette) {
+            if (GLOBALS.Settings.GeneralSettings.DrawTileMode == TileDrawMode.Palette)
+            {
                 _shouldRedrawLevel = true;
             }
         }
@@ -502,7 +533,7 @@ internal class LightEditorPage : EditorPage, IContextListener
             var lightMouse = GetScreenToWorld2D(GetMousePosition(), _camera);
 
             _lightBrushSource = new(0, 0, texture.Width, texture.Height);
-            _lightBrushDest = new(lightMouse.X, lightMouse.Y, _lightBrushWidth, _lightBrushHeight);
+            _lightBrushDest = new(_isRotatingWithCursor ? _pinnedBrushPos : lightMouse, _lightBrushWidth, _lightBrushHeight);
             _lightBrushOrigin = new(_lightBrushWidth / 2, _lightBrushHeight / 2);
         }
 

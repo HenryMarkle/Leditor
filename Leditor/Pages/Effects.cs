@@ -6,6 +6,7 @@ using static Raylib_cs.Raylib;
 using Leditor.Types;
 
 using Leditor.Data.Effects;
+using Pidgin;
 
 namespace Leditor.Pages;
 
@@ -15,7 +16,7 @@ internal class EffectsEditorPage : EditorPage
     {
         Disposed = true;
     }
-    
+
     private readonly EffectsShortcuts _shortcuts = GLOBALS.Settings.Shortcuts.EffectsEditor;
 
     private Camera2D _camera = new() { Zoom = 1.0f };
@@ -255,11 +256,18 @@ internal class EffectsEditorPage : EditorPage
                     }
                 }
 
+                var isCustom = GLOBALS.CustomEffects.TryGetValue(effectToAdd, out var customDef);
+
                 GLOBALS.Level.Effects = [
                     .. GLOBALS.Level.Effects,
                     new() {
                         Name = effectToAdd,
-                        Options = Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
+                        Options = isCustom
+                            ? [
+                                new("Delete/Move", ["Delete", "Move Back", "Move Forth"], ""),
+                                new("Seed", [], new Random().Next(1000)), ..customDef!.GenerateOptions()
+                            ]
+                            : Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
                         Matrix = matrixToAdd
                     }
                 ];
@@ -333,11 +341,18 @@ internal class EffectsEditorPage : EditorPage
                                         }
                                     }
 
+                                    var isCustom = GLOBALS.CustomEffects.TryGetValue(effectToAdd, out var customDef);
+
                                     GLOBALS.Level.Effects = [
                                         .. GLOBALS.Level.Effects,
                                         new (){
                                             Name = effectToAdd,
-                                            Options = Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
+                                            Options = isCustom
+                                                ? [
+                                                    new("Delete/Move", ["Delete", "Move Back", "Move Forth"], ""),
+                                                    new("Seed", [], new Random().Next(1000)), ..customDef!.GenerateOptions()
+                                                ]
+                                                : Utils.NewEffectOptions(GLOBALS.Effects[_newEffectCategorySelectedValue][_newEffectSelectedValue]),
                                             Matrix = matrixToAdd
                                         }
                                     ];

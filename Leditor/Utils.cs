@@ -781,7 +781,11 @@ internal static class Utils
     {
         "BlackGoo" or "Fungi Flowers" or "Lighthouse Flowers" or
             "Fern" or "Giant Mushroom" or "Sprawlbush" or
-            "featherFern" or "Fungus Tree" or "Restore As Scaffolding" or "Restore As Pipes" or "Super BlackGoo" => 100,
+            "featherFern" or "Fungus Tree" or "Restore As Scaffolding" or
+            "Restore As Pipes" or
+            "Super BlackGoo" or
+            "Head Lamp" or
+            "Ceiling Lamp" or "Sprawlroots" or "Fungus Roots" => 100,
 
         _ => 10
     };
@@ -924,7 +928,7 @@ internal static class Utils
                 new("Color", ["Color1", "Color2", "Dead"], "Color2")
             ],
             
-            "Foliage" or "High Grass" or "High Fern" or "Mistletoe" or "Reeds" or "Lavenders" => [
+            "Foliage" or "High Grass" or "High Fern" or "Mistletoe" or "Reeds" or "Lavenders" or "Spindles"=> [
                 new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
                 new("Color", ["Color1", "Color2", "Dead"], "Color2")
             ],
@@ -939,7 +943,7 @@ internal static class Utils
                 new("Effect Color", ["EffectColor1", "EffectColor2", "None"], "None")
             ],
             
-            "Fern" or "Giant Mushroom" or "Sprawlbush" or "featherFern" or "Fungus Tree" => [
+            "Fern" or "Giant Mushroom" or "Sprawlbush" or "featherFern" or "Fungus Tree" or "Sprawlroots" or "Fungus Roots" => [
                 new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "1"),
                 new("Color", ["Color1", "Color2", "Dead"], "Color2")
             ],
@@ -948,7 +952,7 @@ internal static class Utils
                 "Seed Pods" or "Grass" or "Arm Growers" or "Horse Tails" or "Circuit Plants" or 
                 "Feather Plants" or "Mini Growers" or "Left Facing Kelp" or "Right Facing Kelp" or 
                 "Club Moss" or "Moss Wall" or "Mixed Facing Kelp" or "Bubble Grower" or
-                "Storm Plants" or "Seed Grass" or "Hyacinths" or "Orb Plants" or "Dandelions" or "Og Grass" => [
+                "Storm Plants" or "Seed Grass" or "Hyacinths" or "Orb Plants" or "Dandelions" or "Og Grass" or "Lollipop Mold" => [
                 new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
                 new("Color", ["Color1", "Color2", "Dead"], "Color2")
             ],
@@ -957,6 +961,39 @@ internal static class Utils
             "Leaf Growers" or "Meat Growers" or "Thunder Growers" or "Ice Growers" or "Grass Growers" or "Fancy Growers" or "Horror Growers" => [
                 new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
                 new("Color", ["Color1", "Color2", "Dead"], "Color2")
+            ],
+
+            "Mosaic Plants" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd"], "1"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2"),
+                new("Color Intensity", ["High", "Medium", "Low", "None", "Random"], "Medium"),
+                new("Flowers", ["Off", "On"], "Off"),
+                new("Detail Color", ["Color1", "Color2", "Dead"], "Color1"),
+            ],
+
+            "Cobwebs" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Effect Color", ["EffectColor1", "EffectColor2", "None"], "None"),
+                new("Color Intensity", ["High", "Medium", "Low", "None", "Random"], "Medium"),
+            ],
+
+            "Fingers" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2"),
+                new("Finger Thickness", ["Small", "Medium", "Fat", "Random"], "Medium"),
+                new("Finger Length", ["Short", "Medium", "Tall", "Random"], "Medium"),
+            ],
+
+            "Ceiling Lamp" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2"),
+                new("Lamp Color", ["Color1", "Color2", "Dead"], "Dead")
+            ],
+
+            "Head Lamp" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "1"),
+                new("Color", ["Color1", "Color2", "Dead"], "Color2"),
+                new("Lamp Color", ["Color1", "Color2", "Dead"], "Dead")
             ],
             
             "Wires" => [
@@ -979,6 +1016,13 @@ internal static class Utils
                 new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
                 new("Size", ["Small", "FAT"], "Small"),
                 new("Effect Color", ["EffectColor1", "EffectColor2", "None"], "EffectColor2")
+            ],
+
+            "Mushroom Stubs" => [
+                new("Color", ["Color1", "Color2", "Dead"], "Color2"),
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Mushroom Size", ["Small", "Medium", "Random"], "Random"),
+                new("Mushroom Width", ["Small", "Medium", "Wide", "Random"], "Random"),
             ],
             
             "DarkSlime" => [

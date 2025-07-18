@@ -1218,7 +1218,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             for (var t = 0; t < dex.OrderedTilesAsProps[c].Length; t++) {
                 var tile = dex.OrderedTilesAsProps[c][t];
 
-                if (tile.Name.Contains(_tileAsPropSearchText, StringComparison.InvariantCultureIgnoreCase)) {
+                if (tile.Name.Contains(_tileAsPropSearchText, StringComparison.OrdinalIgnoreCase)) {
                     foundTiles.Add((tile, t));
                 }
             }
@@ -1267,7 +1267,7 @@ internal class PropsEditorPage : EditorPage, IContextListener
             for (var p = 0; p < GLOBALS.Props[c].Length; p++) {
                 var prop = GLOBALS.Props[c][p];
 
-                if (prop.Name.Contains(_propSearchText, StringComparison.InvariantCultureIgnoreCase)) {
+                if (prop.Name.Contains(_propSearchText, StringComparison.OrdinalIgnoreCase)) {
                     foundProps.Add((prop, p));
                 }
             }
@@ -1751,7 +1751,6 @@ internal class PropsEditorPage : EditorPage, IContextListener
                           !_isPropsWinDragged && 
                           !_isShortcutsWinHovered && 
                           !_isShortcutsWinDragged && 
-                          !CheckCollisionPointRec(tileMouse, menuPanelRect) &&
                           !CheckCollisionPointRec(tileMouse, layer3Rect) &&
                           (GLOBALS.Layer != 1 || !CheckCollisionPointRec(tileMouse, layer2Rect)) &&
                           (GLOBALS.Layer != 0 || !CheckCollisionPointRec(tileMouse, layer1Rect));

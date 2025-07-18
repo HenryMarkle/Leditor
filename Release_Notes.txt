@@ -1,11 +1,50 @@
 ## Drizzle Update
 
-Upstreamed Drizzle to v0.4.52
+Upstreamed Drizzle to version 0.2.7.0
 
-### New Effects
+## Light
 
-- Og Grass
-- Hand Growers
-- Grape Roots
+- You can now rotate the light/shadow brush towards the cursor by holding down the left control key.
 
-by @SomethingStupid on Discord.
+## Props
+
+- Tiles of "voxelStructRockType" type now appear in the tiles category in the props editor menu.
+
+## New Effects
+
+Added the following effects from the community's editor recent updates:
+
+- April Plants
+    - Head Lamp
+    - Ceiling Lamp
+    - Spindles
+
+- LudoCrypt Plants
+    - Mushroom Stubs
+
+- Alduris Effects
+    - Mosaic Plants
+    - Lollipop Mold
+    - Cobwebs
+    - Fingers
+    - Fungus Roots
+
+## Custom Effect Support
+
+Added the custom effect system from the community editor. 
+For more instructions on utilizing it, consult the [wiki](https://github.com/Rain-World-Modding/CommunityEditor/blob/main/Scripts/effectsEditor.ls#L351-L693).
+
+This feature is not tested.
+
+## Notice on "Seamless Voxel Struct" Tile Type
+
+Support was added for the following new tile types: "voxelStructSeamlessHorizontal" and "voxelStructSeamlessVertical", allowing for the tiles of these types to be accepted and rendered. 
+However, no further support is given as I don't know how they work yet.
+
+## Bug Fixes
+
+- Fixed input stopping when the cursor is near the right edge of the screen.
+
+## End-of-Life Notice
+
+I have forgotten to announce EOL, last release, therefor I'm doing it now. This project is no longer in active development and no future updates shall be anticipated. 

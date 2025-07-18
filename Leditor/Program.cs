@@ -621,18 +621,18 @@ class Program
 
         // (string name, Color color)[] loadedPackageTileCategories = [];
         // InitTile[][] loadedPackageTiles = [];
-        
+
         if (!failedIntegrity)
         {
             // Load tiles and props
-            
+
             logger.Information("Indexing tiles and props");
 
             try
             {
                 // (GLOBALS.TileCategories, GLOBALS.Tiles) = LoadTileInitFromRenderer();
                 _tileLoader = new([
-                    GLOBALS.Paths.TilesAssetsDirectory, 
+                    GLOBALS.Paths.TilesAssetsDirectory,
                     ..Directory.GetDirectories(GLOBALS.Paths.TilePackagesDirectory)
                 ])
                 {
@@ -648,17 +648,20 @@ class Program
                 failedIntegrity = true;
                 throw new Exception(innerException: e, message: $"Failed to load tiles init: {e}");
             }
-            
+
             try
             {
                 var materialsInit = LoadMaterialInit();
 
-                GLOBALS.MaterialCategories = [..GLOBALS.MaterialCategories, ..materialsInit.Item1];
-                GLOBALS.Materials = [..GLOBALS.Materials, ..materialsInit.Item2];
+                GLOBALS.MaterialCategories = [.. GLOBALS.MaterialCategories, .. materialsInit.Item1];
+                GLOBALS.Materials = [.. GLOBALS.Materials, .. materialsInit.Item2];
 
-                foreach (var category in materialsInit.Item2) {
-                    foreach (var (material, color) in category) {
-                        if (!GLOBALS.MaterialColors.TryAdd(material, color)) {
+                foreach (var category in materialsInit.Item2)
+                {
+                    foreach (var (material, color) in category)
+                    {
+                        if (!GLOBALS.MaterialColors.TryAdd(material, color))
+                        {
                             throw new Exception($"Duplicate material definition \"{material}\"");
                         }
                     }
@@ -694,8 +697,8 @@ class Program
             {
                 var (categ, props) = LoadPropInitFromRenderer();
 
-                GLOBALS.Props = props.Select(c => 
-                    c.Where(p => 
+                GLOBALS.Props = props.Select(c =>
+                    c.Where(p =>
                         p.Type != InitPropType_Legacy.CustomRope && p.Type != InitPropType_Legacy.CustomLong
                     ).ToArray()
                 ).ToArray();
@@ -706,8 +709,8 @@ class Program
                     .Select((pair) => pair.Item1)
                     .ToArray();
 
-                GLOBALS.RopeProps = [..GLOBALS.RopeProps, ..props.SelectMany(c => c.Where(p => p.Type == InitPropType_Legacy.CustomRope).Cast<InitRopeProp>())];
-                GLOBALS.LongProps = [..GLOBALS.LongProps, ..props.SelectMany(c => c.Where(p => p.Type == InitPropType_Legacy.CustomLong).Cast<InitLongProp>())];
+                GLOBALS.RopeProps = [.. GLOBALS.RopeProps, .. props.SelectMany(c => c.Where(p => p.Type == InitPropType_Legacy.CustomRope).Cast<InitRopeProp>())];
+                GLOBALS.LongProps = [.. GLOBALS.LongProps, .. props.SelectMany(c => c.Where(p => p.Type == InitPropType_Legacy.CustomLong).Cast<InitLongProp>())];
 
                 _propLoader = new([GLOBALS.Paths.PropsAssetsDirectory]);
 
@@ -720,14 +723,28 @@ class Program
                 failedPropInitLoad = true;
                 goto right_before_gl_context;
             }
-            
+
             //
+            
+            logger.Information("Loading custom effects");
+
+            try
+            {
+                var customEffects = Importers.GetCustomEffectsFromInit();
+
+                GLOBALS.EffectCategories = [.. GLOBALS.EffectCategories, .. customEffects.Select(e => e.Category)];
+                GLOBALS.Effects = [.. GLOBALS.Effects, .. customEffects.GroupBy(e => e.Category).Select(e => e.Select(ef => ef.Name).ToArray())];
+
+                GLOBALS.CustomEffects = customEffects.ToDictionary(e => e.Name);
+            }
+            catch (Exception cepe)
+            {
+                logger.Error("Failed to import and parse custom effects: {ERROR}", cepe);
+            }
         }
         
         // Load Tile Textures
 
-        
-        
         // 1. Get all texture paths
         
         ropePropImagePaths = GLOBALS.RopeProps
@@ -1093,6 +1110,36 @@ void main() {
     FragColor = fragColor;
 }");
 
+        GLOBALS.Shaders.WhiteBackgroundRemover = LoadShaderFromMemory(null, @"#version 330
+        
+in vec2 fragTexCoord;
+in vec4 fragColor;
+
+out vec4 FragColor;
+
+uniform sampler2D inputTexture;
+uniform int vflip = 0;
+uniform float tint = 1;
+
+void main() {
+    vec4 color = vec4(0, 0, 0, 0);
+
+    if (vflip == 0) {
+        color = texture(inputTexture, fragTexCoord);
+    } else {
+        color = texture(inputTexture, vec2(fragTexCoord.x, 1.0 - fragTexCoord.y));
+    }
+
+    if (color.r == 1.0 && color.g == 1.0 && color.b == 1.0) { discard; }
+
+    FragColor = vec4(clamp(vec3(color.r * tint, color.g * tint, color.b * tint), 0.001, 0.98), fragColor.a);
+}");
+
+        GLOBALS.Shaders.WhiteBackgroundRemoverInvb = LoadShader(
+            Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "image_invb2.vert"), 
+            Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "white_background_remover_invb.frag")
+        );
+
         GLOBALS.Shaders.PropInvb = LoadShader(
             Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "image_invb.vert"), 
             Path.Combine(GLOBALS.Paths.ShadersAssetsDirectory, "prop_invb.frag")
@@ -1163,7 +1210,6 @@ void main() {
             LingoRuntime.MovieBasePath = GLOBALS.Paths.RendererDirectory + Path.DirectorySeparatorChar;
             LingoRuntime.CastPath = Path.Combine(LingoRuntime.MovieBasePath, "Cast");
         }
-        
         
         
         logger.Information("Initializing events");
@@ -1270,8 +1316,6 @@ void main() {
         // Tile & Prop Textures
 
         if (!failedIntegrity) Task.WaitAll([loadPropImagesTask, loadLightImagesTask]);
-
-        
 
         if (!failedIntegrity) {
             loadPropTexturesList = loadPropImagesTask.Result;
@@ -2622,6 +2666,8 @@ void main() {
         logger.Debug("Unloading shaders");
 
         // UnloadShader(GLOBALS.Shaders.OppositeBrightness);
+        UnloadShader(GLOBALS.Shaders.WhiteBackgroundRemover);
+        UnloadShader(GLOBALS.Shaders.WhiteBackgroundRemoverInvb);
         UnloadShader(GLOBALS.Shaders.Palette);
         UnloadShader(GLOBALS.Shaders.GeoPalette);
         UnloadShader(GLOBALS.Shaders.TilePreview);

@@ -3,13 +3,16 @@ using Raylib_cs;
 
 namespace Leditor.Data.Tiles;
 
-public enum TileType { 
-    Box, 
-    VoxelStruct, 
+public enum TileType
+{
+    Box,
+    VoxelStruct,
     VoxelStructRandomDisplaceHorizontal,
     VoxelStructRandomDisplaceVertical,
     VoxelStructRockType,
-    VoxelStructSandType
+    VoxelStructSandType,
+    VoxelStructSeamlessHorizontal,
+    VoxelStructSeamlessVertical
 }
 
 /// <summary>

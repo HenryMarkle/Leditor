@@ -6,6 +6,7 @@ using Leditor.Pages;
 using Leditor.Data.Props.Definitions;
 using Leditor.Data.Props.Legacy;
 using Leditor.Data.Materials;
+using Leditor.Data.Effects;
 
 namespace Leditor;
 
@@ -65,8 +66,11 @@ internal static class GLOBALS
     /// </summary>
     internal class ShaderService
     {
-        internal Shader LightMapMask { get; set; }        
-        
+        internal Shader LightMapMask { get; set; }  
+
+        internal Shader WhiteBackgroundRemover { get; set; }        
+        internal Shader WhiteBackgroundRemoverInvb { get; set; }        
+
         internal Shader TilePreviewFragment { get; set; }
         internal Shader Palette { get; set; }
         internal Shader GeoPalette { get; set; }
@@ -162,6 +166,7 @@ internal static class GLOBALS
         internal static string TilesInitPath => Path.Combine(RendererDirectory, "Graphics", "Init.txt");
         internal static string MaterialsInitPath => Path.Combine(RendererDirectory, "Materials", "Init.txt");
         internal static string EffectsInitPath => Path.Combine(IndexDirectory, "effects.txt");
+        internal static string CustomEffectsInitPath => Path.Combine(RendererDirectory, "Effects", "Init.txt");
         internal static string PropsInitPath => Path.Combine(RendererDirectory, "Props", "Init.txt");
         
         internal static string SettingsPath => Path.Combine(ExecutableDirectory, "settings.json");
@@ -202,7 +207,7 @@ internal static class GLOBALS
 
     internal static System.Timers.Timer AutoSaveTimer = new(30_000);
     
-    internal static string Version { get; set; } = "Henry's Leditor v0";
+    internal static string Version { get; set; } = "Henry's Leditor v";
     internal const string RaylibVersion = "Raylib v5.0.0";
     internal static string BuildConfiguration { get; set; } = "Build Configuration: Unknown";
     internal static string OperatingSystem { get; set; } = "Operating System: Unknown";
@@ -312,7 +317,7 @@ internal static class GLOBALS
         new("Huge Bike Chain", InitPropType_Legacy.Rope, 9, 152, 3, 66, 0.9f, 0.8f, 0.95f, true, new(100,200,100, 255), 1, 0, 0, 66f, 0),
     ];
 
-    internal static Rope[] Ropes => 
+    internal static Rope[] Ropes =>
     [
         new("Wire",                 0,  3, 0,   1f, 0.5f, 0.5f,  0.9f, false,    0,    0,    0,    0),
         new("Tube",                 3,  4, 1,   2f, 0.5f, 0.8f,  0.9f,  true,    0, 0.2f,    0,    0),
@@ -489,7 +494,7 @@ internal static class GLOBALS
         ["Dune Sand"] = new(255, 255, 100, 255)
     };
     
-    public static string[][] Effects { get; } = [
+    public static string[][] Effects { get; set; } = [
         ["Slime", "Melt", "Rust", "Barnacles", "Rubble", "DecalsOnlySlime"], // 6
         ["Roughen", "SlimeX3", "Super Melt", "Destructive Melt", "Erode", "Super Erode", "DaddyCorruption"], // 7
         ["Wires", "Chains"], // 2
@@ -512,16 +517,20 @@ internal static class GLOBALS
         ["Coral Growers", "Horror Growers"], // 2
         ["Thunder Growers"], // 1
         ["Ice Growers", "Grass Growers", "Fancy Growers"], // 3
-        ["Og Grass", "Hand Growers", "Grape Roots"] // 3
+        [ "Mushroom Stubs" ], // 1
+        [ "Mosaic Plants", "Lollipop Mold", "Cobwebs", "Sprawlroots", "Fungus Roots" ], // 5
+        ["Og Grass", "Hand Growers", "Grape Roots", "Head Lamp", "Ceiling Lamp", "Spindles"] // 6
     ];
+
+    public static Dictionary<string, CustomEffectDef> CustomEffects { get; set; } = [];
 
     public static string EffectType(string name) => name switch
     {
-        "Slime" or "LSlime" or "Fat Slime" or "Scales" or "SlimeX3" or 
-            "DecalsOnlySlime" or "Melt" or "Rust" or "Barnacles" or "Colored Barnacles" or 
-            "Clovers" or "Erode" or "Sand" or "Super Erode" or "Ultra Super Erode" or 
+        "Slime" or "LSlime" or "Fat Slime" or "Scales" or "SlimeX3" or
+            "DecalsOnlySlime" or "Melt" or "Rust" or "Barnacles" or "Colored Barnacles" or
+            "Clovers" or "Erode" or "Sand" or "Super Erode" or "Ultra Super Erode" or
             "Roughen" or "Impacts" or "Super Melt" or "Destructive Melt" => "standardErosion",
-        
+
         _ => "nn"
     };
 
@@ -579,12 +588,12 @@ internal static class GLOBALS
             "Left Facing Kelp" or "Right Facing Kelp" or "Mixed Facing Kelp" or 
             "Bubble Grower" or "Coral Growers" or "Horror Growers" or "Thunder Growers" or
             "Leaf Growers" or "Ice Growsers" or "Grass Growers" or "Fancy Growers" or 
-            "Hand Growers" or "Grape Roots" => true,
+            "Hand Growers" or "Grape Roots" or "Mosaic Plants" or "Cobwebs" => true,
         
         _ => false
     };
 
-    public static string[] EffectCategories { get; } = [
+    public static string[] EffectCategories { get; set; } = [
         "Natural",                  // 0
         "Erosion",                  // 1
         "Artificial",               // 2
@@ -606,30 +615,33 @@ internal static class GLOBALS
         "Nautillo Plants",          // 18
         "Nautillo Plants 2",        // 19
         "Tronsx Plants",            // 20
-        "Tronsx Intrepid Plants",   // 21
-        "April Plants",             // 22
+        "Intrepid Plants",          // 21
+        "LudoCrypt Plants",         // 22
+        "Alduris Effects",          // 23
+        "April Plants",             // 24
     ];
-    
+
+
     // Layers 2 and 3 do not show geo features like shortcuts and entrances 
     internal static readonly bool[] LayerStackableFilter =
     [
-        false, 
-        true, 
-        true, 
-        true, 
+        false,
+        true,
+        true,
+        true,
         false, // 5
         false, // 6
         false, // 7
-        true, 
+        true,
         false, // 9
         false, // 10
-        true, 
+        true,
         false, // 12
         false, // 13
-        true, 
-        true, 
-        true, 
-        true, 
+        true,
+        true,
+        true,
+        true,
         false, // 18
         false, // 19
         false, // 20
