@@ -392,6 +392,20 @@ internal static class Utils
 
         //
 
+        // foreach (var p in props)
+        // {
+        //     if (p.Type is InitPropType_Legacy.Rope)
+        //     {
+        //         for (var i = 0; i < GLOBALS.Ropes.Length; i++) {
+        //             if (GLOBALS.Ropes[i].Name == p.Name)
+        //             {
+        //                 p.Position = p.Position with { index = i };
+        //                 break;
+        //             }
+        //         }
+        //     }
+        // }
+
         return new LoadFileResult
         {
             Success = true,

@@ -2027,7 +2027,14 @@ internal class PropsEditorPage : EditorPage, IContextListener
                         }
 
                         // Adjust segment count
-                        var init = GLOBALS.Ropes[current.Position.index];
+                        Console.WriteLine($"SIZE: {GLOBALS.Ropes.Length}");
+                        Console.WriteLine($"Index: {current.Position.index}");
+
+                        for (var p = 0; p < GLOBALS.Ropes.Length; p++)
+                        {
+                            Console.WriteLine($"Prop: {GLOBALS.Ropes[p].Name}");
+                        }
+                        var init = GLOBALS.RopeProps[current.Position.index];
                         var endsDistance = (int)Raymath.Vector2Distance(middleLeft, middleRight) / (10 + init.SegmentLength);
                         if (endsDistance > 0 && ++_ropeSimulationFrame % 6 == 0) {
                             var ropePoints = current.Extras.RopePoints;

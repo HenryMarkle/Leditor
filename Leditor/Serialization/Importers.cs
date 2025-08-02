@@ -566,13 +566,13 @@ public static class Importers
 
             // check if it's a rope prop
 
-            for (var c = 0; c < GLOBALS.RopeProps.Length; c++)
+            for (var c = 0; c < GLOBALS.Ropes.Length; c++)
             {
-                var initProp = GLOBALS.RopeProps[c];
+                var initProp = GLOBALS.Ropes[c];
 
                 if (initProp.Name == name)
                 {
-                    type = initProp.Type;
+                    type = InitPropType_Legacy.Rope;
                     position = (-1, c);
 
                     goto end_check;

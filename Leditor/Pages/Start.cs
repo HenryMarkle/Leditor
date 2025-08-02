@@ -455,6 +455,7 @@ internal class StartPage : EditorPage
                         (12, 6, 12, 5), 
                         result.DefaultMaterial
                     );
+
                     
                     newLevel.Import(
                         result.Width, 
