@@ -517,9 +517,14 @@ internal static class GLOBALS
         ["Coral Growers", "Horror Growers"], // 2
         ["Thunder Growers"], // 1
         ["Ice Growers", "Grass Growers", "Fancy Growers"], // 3
-        [ "Mushroom Stubs" ], // 1
-        [ "Mosaic Plants", "Lollipop Mold", "Cobwebs", "Sprawlroots", "Fungus Roots" ], // 5
-        ["Og Grass", "Hand Growers", "Grape Roots", "Head Lamp", "Ceiling Lamp", "Spindles"] // 6
+        ["Mushroom Stubs"], // 1
+        ["Mosaic Plants", "Lollipop Mold", "Cobwebs", "Sprawlroots", "Fungus Roots"], // 5
+        ["Og Grass", "Hand Growers", "Grape Roots", "Head Lamp", "Ceiling Lamp", "Spindles", "Wire Bunches", "Orblings", "Mama Orblings", "Box Grubs"], // 10
+        ["Ripcords", "Spud Buds", "Cross Roses", "Cables", "Smoke Weeds", "Mushroom Colonies"], // 6
+    ];
+
+    public static HashSet<string> PrivateEffects { get; set; } = [
+        "Wire Bunches", "Orblings", "Mama Orblings", "Box Grubs"
     ];
 
     public static Dictionary<string, CustomEffectDef> CustomEffects { get; set; } = [];
@@ -588,7 +593,8 @@ internal static class GLOBALS
             "Left Facing Kelp" or "Right Facing Kelp" or "Mixed Facing Kelp" or 
             "Bubble Grower" or "Coral Growers" or "Horror Growers" or "Thunder Growers" or
             "Leaf Growers" or "Ice Growsers" or "Grass Growers" or "Fancy Growers" or 
-            "Hand Growers" or "Grape Roots" or "Mosaic Plants" or "Cobwebs" => true,
+            "Hand Growers" or "Grape Roots" or "Mosaic Plants" or "Cobwebs" or "Orblings" or
+            "Spud Buds" or "Cables" or "Smoke Weeds" => true,
         
         _ => false
     };
@@ -619,6 +625,9 @@ internal static class GLOBALS
         "LudoCrypt Plants",         // 22
         "Alduris Effects",          // 23
         "April Plants",             // 24
+        "HB special",               // 25
+        "Hog special",              // 26
+        "Addy Effects",             // 27
     ];
 
 

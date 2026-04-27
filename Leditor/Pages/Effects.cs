@@ -48,6 +48,8 @@ internal class EffectsEditorPage : EditorPage
     private bool _shouldRedrawLevel = true;
 
     private int _optionsIndex = 1;
+
+    private bool _enablePrivateEffects = false;
     
     public void OnLevelSelected(int previous, int next)
     {
@@ -323,9 +325,13 @@ internal class EffectsEditorPage : EditorPage
                     {
                         for (var index = 0; index < _newEffectNames[_newEffectCategorySelectedValue].Length; index++)
                         {
-                            var selected =
-                                ImGui.Selectable(
-                                    _newEffectNames[_newEffectCategorySelectedValue][index],index == _newEffectSelectedValue);
+                            var nEff = _newEffectNames[_newEffectCategorySelectedValue][index];
+
+                            var isPrivate = GLOBALS.PrivateEffects.Contains(nEff);
+
+                            if (isPrivate && !_enablePrivateEffects) ImGui.BeginDisabled();
+                            var selected = ImGui.Selectable(nEff, index == _newEffectSelectedValue);
+                            if (isPrivate && !_enablePrivateEffects) ImGui.EndDisabled();
 
                             if (selected) {
                                 if (_newEffectSelectedValue != index) _newEffectSelectedValue = index;
@@ -1323,6 +1329,8 @@ internal class EffectsEditorPage : EditorPage
 
                     if (ImGui.Checkbox("Blocky Brush Style", ref blockyBrush))
                         GLOBALS.Settings.EffectsSettings.BlockyBrush = blockyBrush;
+
+                    ImGui.Checkbox("Enable Private Effects", ref _enablePrivateEffects);
                     
                     ImGui.End();
                 }

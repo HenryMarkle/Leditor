@@ -799,7 +799,9 @@ internal static class Utils
             "Restore As Pipes" or
             "Super BlackGoo" or
             "Head Lamp" or
-            "Ceiling Lamp" or "Sprawlroots" or "Fungus Roots" => 100,
+            "Ceiling Lamp" or "Sprawlroots" or "Fungus Roots" or 
+            "Mushroom Colonies" or "Mama Orblings" or "Smoke Weeds" or
+            "Mushroom Colonies" => 100,
 
         _ => 10
     };
@@ -924,7 +926,7 @@ internal static class Utils
                 new("Affect Gradients and Decals", ["Yes", "No"], "No")
             ],
             
-            "Rubble" => [
+            "Rubble" or "Wire Bunches" => [
                 new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All")
             ],
             
@@ -942,7 +944,7 @@ internal static class Utils
                 new("Color", ["Color1", "Color2", "Dead"], "Color2")
             ],
             
-            "Foliage" or "High Grass" or "High Fern" or "Mistletoe" or "Reeds" or "Lavenders" or "Spindles"=> [
+            "Foliage" or "High Grass" or "High Fern" or "Mistletoe" or "Reeds" or "Lavenders" or "Spindles" or "Box Grubs" => [
                 new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
                 new("Color", ["Color1", "Color2", "Dead"], "Color2")
             ],
@@ -957,7 +959,7 @@ internal static class Utils
                 new("Effect Color", ["EffectColor1", "EffectColor2", "None"], "None")
             ],
             
-            "Fern" or "Giant Mushroom" or "Sprawlbush" or "featherFern" or "Fungus Tree" or "Sprawlroots" or "Fungus Roots" => [
+            "Fern" or "Giant Mushroom" or "Sprawlbush" or "featherFern" or "Fungus Tree" or "Sprawlroots" or "Fungus Roots" or "Mama Orblings" or "Mushroom Colonies" => [
                 new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "1"),
                 new("Color", ["Color1", "Color2", "Dead"], "Color2")
             ],
@@ -966,10 +968,21 @@ internal static class Utils
                 "Seed Pods" or "Grass" or "Arm Growers" or "Horse Tails" or "Circuit Plants" or 
                 "Feather Plants" or "Mini Growers" or "Left Facing Kelp" or "Right Facing Kelp" or 
                 "Club Moss" or "Moss Wall" or "Mixed Facing Kelp" or "Bubble Grower" or
-                "Storm Plants" or "Seed Grass" or "Hyacinths" or "Orb Plants" or "Dandelions" or "Og Grass" or "Lollipop Mold" => [
-                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
-                new("Color", ["Color1", "Color2", "Dead"], "Color2")
-            ],
+                "Storm Plants" or "Seed Grass" or "Hyacinths" or "Orb Plants" or "Dandelions" or "Og Grass" or "Orblings" or "Ripcords" or "Cross Roses" or "Lollipop Mold" =>
+                
+                name is "Arm Growers" or "Growers" or "Mini Growers" or "Left Facing Kelp" 
+                    or "Right Facing Kelp" or "Mixed Facing Kelp" or "Bubble Grower" 
+                    or "Coral Growers" or "Leaf Growers" or "Meat Growers" or "Orblings" 
+                ? [
+                    new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                    new("Color", ["Color1", "Color2", "Dead"], "Color2"),
+                    new("Require In-Bounds", ["Yes", "No"], "No")
+                ] 
+                : [
+                    new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                    new("Color", ["Color1", "Color2", "Dead"], "Color2")
+                ]
+            ,
             
             "Rollers" or "Thorn Growers" or "Garbage Spirals" or "Spinets" or "Small Springs" or "Fuzzy Growers" or
             "Leaf Growers" or "Meat Growers" or "Thunder Growers" or "Ice Growers" or "Grass Growers" or "Fancy Growers" or "Horror Growers" => [
@@ -1098,6 +1111,27 @@ internal static class Utils
             "Grape Roots" or "Hand Growers" => [
                 new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
                 new("Color", ["Color1", "Color2", "Dead"], "Color2")
+            ],
+
+            "Spud Buds" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Color", ["Color1", "Color2", "Dead"], "Dead"),
+                new("Frond Size", ["None", "Small", "Large"], "Large"),
+                new("Frond Color", ["Color1", "Color2", "Dead"], "Color2"),
+                new("Require In-Bounds", ["Yes", "No"], "No")
+            ],
+
+            "Cables" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "All"),
+                new("Fatness", ["1px", "2px", "3px", "random"], "2px"),
+                new("Effect Color", ["EffectColor1", "EffectColor2", "None"], "None"),
+            ],
+
+            "Smoke Weeds" => [
+                new("Layers", ["All", "1", "2", "3", "1:st and 2:nd", "2:nd and 3:rd"], "1"),
+                new("Color", ["Color1", "Color2", "Dead"], "Dead"),
+                new("Head Size", ["Small", "Large", "GIANT"], "Large"),
+                new("Flowers", ["Off", "On"], "Off")
             ],
             
             _ => []

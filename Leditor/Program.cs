@@ -874,6 +874,8 @@ class Program
         SetWindowMinSize(GLOBALS.MinScreenWidth, GLOBALS.MinScreenHeight);
         SetExitKey(KeyboardKey.Null);
 
+        // SetWindowState(ConfigFlags.HighDpiWindow);
+
         
         if (failedIntegrity || failedTileInitLoad || failedPropInitLoad) goto skip_loading;
 
