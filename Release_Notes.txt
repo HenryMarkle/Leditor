@@ -2,6 +2,11 @@
 
 Upstreamed Drizzle to version 0.3.0.3
 
+## Effects
+
+- "Private" effects are now disabled by default to prevent users from unknowingly applying them. 
+- Added "Enable Private Effects" option to reverse the previous change if you know what you're doing.
+
 ## New Effects
 
 - April Plants
